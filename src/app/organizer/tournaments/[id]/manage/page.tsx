@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, Users, Video, Zap, Pencil } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, User, Users, Video, Zap, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -15,7 +15,6 @@ import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
 import { RegistrationTab } from './components/RegistrationTab';
-import { RegistrationFormBuilder } from './components/RegistrationFormBuilder';
 import { BracketTab } from './components/BracketTab';
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
@@ -43,16 +42,47 @@ function SummarySection({ title, children }: { title: string; children: ReactNod
   );
 }
 
+function getDivisionGenderMeta(div: { name: string; matchType?: string | null; genderRestriction?: string | null }) {
+  const nameLower = (div.name || '').toLowerCase();
+  const gender = (div.genderRestriction || '').toUpperCase();
+  const isDoubles = (div.matchType || '').toUpperCase().includes('DOUBLE') || nameLower.includes('đôi');
+  
+  if (nameLower.includes('nam nữ') || nameLower.includes('hỗn hợp') || gender === 'MIXED') {
+    return {
+      badgeText: isDoubles ? 'Đôi Nam Nữ' : 'Nam Nữ',
+      badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/80',
+      iconBoxClass: 'bg-purple-100/70 text-purple-600 border-purple-200',
+      isDoubles: true,
+    };
+  }
+  if (nameLower.includes('nữ') || gender === 'FEMALE') {
+    return {
+      badgeText: isDoubles ? 'Đôi Nữ' : 'Đơn Nữ',
+      badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/80',
+      iconBoxClass: 'bg-rose-100/70 text-rose-600 border-rose-200',
+      isDoubles,
+    };
+  }
+  if (nameLower.includes('nam') || gender === 'MALE') {
+    return {
+      badgeText: isDoubles ? 'Đôi Nam' : 'Đơn Nam',
+      badgeClass: 'bg-sky-50 text-sky-700 border-sky-200/80',
+      iconBoxClass: 'bg-sky-100/70 text-sky-600 border-sky-200',
+      isDoubles,
+    };
+  }
+  return {
+    badgeText: isDoubles ? 'Đôi' : 'Đơn',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+    iconBoxClass: 'bg-slate-100 text-slate-600 border-slate-200',
+    isDoubles,
+  };
+}
+
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const s = useManageState(id);
-  const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
-  const bracketSectionRef = useRef<HTMLDivElement | null>(null);
-  const sportPresentation = getSportRulePresentation(s.sportRuleKind);
-  const supportsTiebreakInput = s.sportRuleKind === 'TENNIS' || s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
-  const isPickleballSideOut = s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
-  const scoreGuidance = getScoreEntryGuidance(s.sportRuleKind);
   const sportPresets = getSportRulePresets(s.sportRuleKind);
   const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
@@ -65,6 +95,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       </div>
     </div>
   );
+  const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
+  const bracketSectionRef = useRef<HTMLDivElement | null>(null);
+  const sportPresentation = getSportRulePresentation(s.sportRuleKind);
+  const supportsTiebreakInput = s.sportRuleKind === 'TENNIS' || s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
+  const isPickleballSideOut = s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
+  const scoreGuidance = getScoreEntryGuidance(s.sportRuleKind);
+
 
   if (!s.tournament) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-center">
@@ -181,45 +218,95 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </Button>
           </div>
           {s.divisions.length > 0 && (
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {s.divisions.map(div => {
                 const isActive = div.id === s.selectedDivisionId;
                 const bracketFormatLabel = s.getBracketLabel(div.bracketType);
+                const genderMeta = getDivisionGenderMeta(div);
+                const IconComponent = genderMeta.isDoubles ? Users : User;
+
                 return (
-                  <div key={div.id} className={`group inline-flex items-center rounded-lg border transition-all ${isActive ? 'border-blue-600 bg-blue-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-650 hover:border-blue-300'}`}>
+                  <div
+                    key={div.id}
+                    className={`group relative flex items-stretch justify-between rounded-xl border transition-all duration-150 ${
+                      isActive
+                        ? 'border-blue-600 bg-gradient-to-br from-blue-600 to-indigo-650 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500/30'
+                        : 'border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:shadow-xs hover:bg-slate-50/50'
+                    }`}
+                  >
                     <button 
                       type="button" 
                       onClick={() => { s.setSelectedDivisionId(div.id); s.applyDivisionFormValues(div); }}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-left cursor-pointer"
+                      className="flex items-start gap-2.5 p-3 text-left cursor-pointer flex-1 min-w-0"
                       title="Nhấn để xem chi tiết & thiết lập cấu hình riêng"
                     >
-                      <span className="min-w-0">
-                        <span className="block max-w-[150px] truncate text-xs font-bold">{div.name}</span>
-                        <span className={`block text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
-                          {s.getFormatLabel(div.matchType, div.genderRestriction)} • <span className="underline">{bracketFormatLabel}</span>
-                        </span>
-                        <span className={`block text-[10px] font-medium mt-1 ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                          Tối đa: {div.maxParticipants ?? 'Theo giải'}
-                          {' • '}
-                          {div.minElo != null || div.maxElo != null
-                            ? `ELO ${div.minElo ?? 0}–${div.maxElo ?? '∞'}`
-                            : 'ELO theo giải'}
-                        </span>
-                      </span>
+                      {/* Icon Avatar */}
+                      <div
+                        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${
+                          isActive
+                            ? 'bg-white/15 text-white border-white/20 backdrop-blur-xs'
+                            : genderMeta.iconBoxClass
+                        }`}
+                      >
+                        <IconComponent className="h-4 w-4" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 justify-between">
+                          <span className="block truncate text-xs font-bold tracking-tight">
+                            {div.name}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${
+                              isActive
+                                ? 'bg-white/20 text-white border-white/30'
+                                : genderMeta.badgeClass
+                            }`}
+                          >
+                            {genderMeta.badgeText}
+                          </span>
+                          <span className={`text-[10px] font-medium truncate ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                            {bracketFormatLabel}
+                          </span>
+                        </div>
+
+                        <div className={`flex items-center gap-1 text-[10px] font-medium mt-1.5 ${isActive ? 'text-blue-100/90' : 'text-slate-400'}`}>
+                          <span>Tối đa: <strong className={isActive ? 'text-white font-semibold' : 'text-slate-600 font-semibold'}>{div.maxParticipants ?? 'Theo giải'}</strong></span>
+                          <span>•</span>
+                          <span>{div.minElo != null || div.maxElo != null ? `ELO ${div.minElo ?? 0}–${div.maxElo ?? '∞'}` : 'ELO theo giải'}</span>
+                        </div>
+                      </div>
                     </button>
-                    <button type="button" onClick={() => { s.requestDeleteDivision(div); }}
-                      className={`p-2.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-rose-600'}`}
-                      title="Xóa nội dung này"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <button type="button" onClick={() => s.openDivisionEditor(div)}
-                      disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
-                      className={`p-2.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-blue-600'}`}
-                      title="Chỉnh sửa nội dung"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
+
+                    {/* Action buttons (Edit / Delete) */}
+                    <div className="flex flex-col justify-between border-l border-slate-100/40 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button" 
+                        onClick={() => s.openDivisionEditor(div)}
+                        disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
+                        className={`p-1.5 rounded-md transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 ${
+                          isActive ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                        }`}
+                        title="Chỉnh sửa nội dung"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button 
+                        type="button" 
+                        onClick={() => { s.requestDeleteDivision(div); }}
+                        className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                          isActive ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                        }`}
+                        title="Xóa nội dung này"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}

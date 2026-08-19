@@ -783,13 +783,8 @@ export default function HomePage() {
     return getWeight(a.status, a.winnerId) - getWeight(b.status, b.winnerId);
   });
 
-  // Pagination for live matches (Max 6 matches per page)
-  const LIVE_MATCHES_PER_PAGE = 6;
-  const totalLivePages = Math.ceil(liveMatches.length / LIVE_MATCHES_PER_PAGE);
-  const paginatedLiveMatches = liveMatches.slice((liveMatchPage - 1) * LIVE_MATCHES_PER_PAGE, liveMatchPage * LIVE_MATCHES_PER_PAGE);
-
-  // Group live matches by tournament name for the current page
-  const liveMatchesByTournament = paginatedLiveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
+  // Group all live matches by tournament name
+  const liveMatchesByTournament = liveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
@@ -804,6 +799,12 @@ export default function HomePage() {
     acc[tournamentName].matches.push(match);
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
+
+  // Pagination for live tournaments (Max 2 tournaments per page)
+  const LIVE_TOURNAMENTS_PER_PAGE = 2;
+  const liveTournamentEntries = Object.entries(liveMatchesByTournament);
+  const totalLivePages = Math.ceil(liveTournamentEntries.length / LIVE_TOURNAMENTS_PER_PAGE);
+  const paginatedLiveTournamentEntries = liveTournamentEntries.slice((liveMatchPage - 1) * LIVE_TOURNAMENTS_PER_PAGE, liveMatchPage * LIVE_TOURNAMENTS_PER_PAGE);
 
   // Group upcoming matches by tournament name
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
@@ -1189,8 +1190,12 @@ export default function HomePage() {
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="space-y-4"
                     >
-                      {Object.entries(liveMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
+                      {paginatedLiveTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
+                        const tournamentId = group.id || tournamentName;
+                        const currentPage = tournamentPages[tournamentId] || 1;
+                        const totalPages = Math.ceil(group.matches.length / 4);
+                        const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
                         const matchedTournament = tournaments.find(t => t.id === group.id);
                         const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
                         return (
@@ -1218,10 +1223,35 @@ export default function HomePage() {
                                   </h3>
                                 </div>
                               </Link>
+
+                              <div className="flex items-center gap-3 shrink-0">
+                                {/* Mini Pagination controls for tournament matches */}
+                                {totalPages > 1 && (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                      disabled={currentPage === 1}
+                                      className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    >
+                                      <ChevronLeft className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="text-[11px] font-semibold text-slate-400 px-1">
+                                      {currentPage}/{totalPages}
+                                    </span>
+                                    <button
+                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                      disabled={currentPage === totalPages}
+                                      className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    >
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             {/* Matches List Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {group.matches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
+                              {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                             </div>
                           </div>
                         );

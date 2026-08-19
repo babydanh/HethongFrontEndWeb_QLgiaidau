@@ -5526,6 +5526,7 @@
     "startReview": "Bắt đầu xác minh",
     "escalate": "Chuyển admin",
     "resolve": "Xác nhận vi phạm",
-    "reject": "Bác báo cáo"
+    "reject": "Bác báo cáo",
+    "unknown": "Không xác định"
   }
 }

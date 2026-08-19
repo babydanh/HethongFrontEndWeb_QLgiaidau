@@ -65,6 +65,7 @@ const entries = {
   tableActions: ['Actions', 'Xử lý'],
   process: ['Review', 'Xử lý'],
   openCase: ['Open review case', 'Mở hồ sơ xử lý'],
+  unknown: ['Unknown', 'Không xác định'],
   page: ['Page {page}/{totalPages}', 'Trang {page}/{totalPages}'],
   filtersTitle: ['Report filters', 'Bộ lọc báo cáo'],
   searchPlaceholder: ['Search reports...', 'Tìm kiếm báo cáo...'],

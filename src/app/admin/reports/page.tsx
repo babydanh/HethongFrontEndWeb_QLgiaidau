@@ -119,7 +119,7 @@ export default function ReportsPage() {
                 {reports.map((report) => (
                   <tr key={report.id} onClick={() => setSelectedReport(report)} className="hover:bg-slate-50/70 cursor-pointer transition-colors">
                     <td className="p-4">
-                      <p className="font-semibold text-slate-900">{report.reporter?.fullName ?? 'Không xác định'}</p>
+                      <p className="font-semibold text-slate-900">{report.reporter?.fullName ?? translate('unknown')}</p>
                       <p className="text-xs text-slate-500">{report.reporter?.email}</p>
                       {report.source ? <p className="mt-1 text-[11px] font-semibold text-slate-400">{sourceLabels[report.source]}</p> : null}
                     </td>

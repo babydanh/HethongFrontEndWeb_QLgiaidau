@@ -92,7 +92,7 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
           <div className="flex flex-wrap items-center gap-2"><ReportStatusBadge status={report.status} /><span className="text-xs font-semibold text-slate-500">{translate('caseId', { id: report.id?.slice(0, 8) ?? 'N/A' })}</span></div>
           <ModalTitle className="pt-2 text-xl font-black text-slate-950">{translate('reviewTitle', { targetType: targetLabels[report.targetType].toLowerCase() })}</ModalTitle>
           <ModalDescription className="text-slate-600">
-            {translate('reporter')}: {report.reporter?.fullName ?? report.reporter?.email ?? 'Unknown'}
+            {translate('reporter')}: {report.reporter?.fullName ?? report.reporter?.email ?? translate('unknown')}
             {report.source ? ` · ${translate('source')}: ${sourceLabels[report.source]}` : null}
           </ModalDescription>
         </ModalHeader>

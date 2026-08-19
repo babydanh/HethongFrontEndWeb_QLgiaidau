@@ -5526,6 +5526,7 @@
     "startReview": "Start review",
     "escalate": "Escalate to admin",
     "resolve": "Confirm violation",
-    "reject": "Reject report"
+    "reject": "Reject report",
+    "unknown": "Unknown"
   }
 }

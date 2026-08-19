@@ -131,19 +131,25 @@ class SocketClient {
   }
 
   public setNotificationAuthToken(token?: string | null) {
+    const previousToken = this.getNotificationAuthPayload().token ?? null;
     this.notificationAuthToken = token ?? null;
+    const nextAuth = this.getNotificationAuthPayload();
+    const tokenChanged = previousToken !== (nextAuth.token ?? null);
 
-    if (this.chatSocket) {
-      this.chatSocket.auth = this.getNotificationAuthPayload();
-    }
+    const refreshSocketAuth = (socket: Socket | null) => {
+      if (!socket) return;
+      socket.auth = nextAuth;
+      if (tokenChanged && socket.connected) {
+        // Socket.IO only sends auth during the handshake. Reconnect so a token
+        // refresh or logout cannot leave an anonymous/stale identity attached.
+        socket.disconnect();
+        socket.connect();
+      }
+    };
 
-    if (this.matchSocket) {
-      this.matchSocket.auth = this.getNotificationAuthPayload();
-    }
-
-    if (this.notificationSocket) {
-      this.notificationSocket.auth = this.getNotificationAuthPayload();
-    }
+    refreshSocketAuth(this.chatSocket);
+    refreshSocketAuth(this.matchSocket);
+    refreshSocketAuth(this.notificationSocket);
   }
 
   public refreshChatAuthentication(): Socket {

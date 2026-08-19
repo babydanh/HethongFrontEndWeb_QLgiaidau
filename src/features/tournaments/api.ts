@@ -285,6 +285,7 @@ export interface MyRegistrationParticipant extends Omit<TournamentParticipant, '
 
 export interface MyRegistrationResponse {
   registered: boolean;
+  paymentEligible?: boolean;
   participant?: MyRegistrationParticipant | null;
 }
 

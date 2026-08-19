@@ -35,11 +35,13 @@ interface Props {
 
 type RegistrationParticipant = TournamentParticipant & {
   teamInviteLink?: string | null;
+  paymentEligible?: boolean;
 };
 
 const normalizeRegistrationParticipant = (
-  participant?: MyRegistrationParticipant | TournamentParticipant | null,
+  participant?: (MyRegistrationParticipant | TournamentParticipant) & { paymentEligible?: boolean } | null,
   fallbackTeamInviteLink?: string | null,
+  paymentEligible?: boolean,
 ): RegistrationParticipant | null => {
   if (!participant) {
     return null;
@@ -49,6 +51,7 @@ const normalizeRegistrationParticipant = (
     ...participant,
     members: participant.members ?? ('teamMembers' in participant ? participant.teamMembers : undefined) ?? [],
     teamInviteLink: ('teamInviteLink' in participant ? participant.teamInviteLink : undefined) ?? fallbackTeamInviteLink ?? null,
+    paymentEligible: paymentEligible ?? participant.paymentEligible,
   };
 };
 
@@ -122,7 +125,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       try {
         const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
         if (res.data && res.data.registered && res.data.participant) {
-          const part = normalizeRegistrationParticipant(res.data.participant);
+          const part = normalizeRegistrationParticipant(res.data.participant, undefined, res.data.paymentEligible);
           if (!part) {
             return;
           }
@@ -154,7 +157,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         try {
           const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
           if (res.data && res.data.registered && res.data.participant) {
-            const part = normalizeRegistrationParticipant(res.data.participant);
+            const part = normalizeRegistrationParticipant(res.data.participant, undefined, res.data.paymentEligible);
             if (!part) {
               return;
             }
@@ -246,7 +249,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       });
 
       if (res.data) {
-        const part = normalizeRegistrationParticipant(res.data.participant, res.data.teamInviteLink);
+        const part = normalizeRegistrationParticipant(res.data.participant, res.data.teamInviteLink, res.data.paymentEligible);
         if (!part) {
           toast.error(doublesTranslate('validRegistrationData'));
           return;
@@ -277,7 +280,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       toast.loading(doublesTranslate('manualCheckLoading'), { id: 'manual-check' });
       const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
       if (res.data && res.data.registered && res.data.participant) {
-        const part = normalizeRegistrationParticipant(res.data.participant);
+        const part = normalizeRegistrationParticipant(res.data.participant, undefined, res.data.paymentEligible);
         if (!part) {
           toast.error(doublesTranslate('manualCheckError'), { id: 'manual-check' });
           return;
@@ -354,7 +357,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   };
 
   const handlePayment = () => {
-    if (!participant?.id) return;
+    if (!participant?.id || participant.paymentEligible !== true) return;
     const params = new URLSearchParams({
       participantId: participant.id,
       tournamentId,
@@ -768,7 +771,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 </div>
               </div>
 
-              {participant.teamStatus === 'COMPLETE' && !participant.isPaid && (
+              {participant?.paymentEligible === true && (
                 <div className="flex gap-3 pt-2">
                   <Button
                     variant="outline"

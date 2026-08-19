@@ -99,7 +99,7 @@ export function ScheduleTab({
               <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
                 <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                 <span>
-                  Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                  <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
                   {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
                 </span>
               </div>

@@ -469,16 +469,7 @@ export function useManageState(id: string) {
   const handleSaveRegistrationSettings = async () => {
     setIsSavingConfig(true);
     try {
-      const currentNow = new Date();
-      currentNow.setMinutes(currentNow.getMinutes() - 2);
-
-      let finalRegStart = registrationStartDate;
-      if (!finalRegStart || new Date(finalRegStart) < currentNow) {
-        const now = new Date();
-        const pad = (v: number) => String(v).padStart(2, '0');
-        finalRegStart = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        setRegistrationStartDate(finalRegStart);
-      }
+      const finalRegStart = registrationStartDate;
 
       if (finalRegStart && registrationEndDate && new Date(registrationEndDate) <= new Date(finalRegStart)) {
         toast.error('Hạn chót đăng ký phải sau ngày mở đăng ký');

@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Loader2, X } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import type {
@@ -12,13 +13,11 @@ import type {
 } from '@/features/users/adminModerationApi';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 
-const banSchema = z.object({
-  banType: z.enum(['WARN', 'SOFT_BAN', 'HARD_BAN']),
-  reason: z.string().trim().min(1, 'Vui lòng nhập lý do phạt/khóa.'),
-  durationDays: z.enum(['7', '15', '30']),
-});
-
-type BanFormValues = z.infer<typeof banSchema>;
+type BanFormValues = {
+  banType: BanType;
+  reason: string;
+  durationDays: '7' | '15' | '30';
+};
 
 interface AdminBanModalProps {
   user: AdminUser;
@@ -33,6 +32,12 @@ export function AdminBanModal({
   onClose,
   onSubmit,
 }: AdminBanModalProps) {
+  const translate = useTranslations('AdminModeration');
+  const banSchema = z.object({
+    banType: z.enum(['WARN', 'SOFT_BAN', 'HARD_BAN']),
+    reason: z.string().trim().min(1, translate('reasonRequired')),
+    durationDays: z.enum(['7', '15', '30']),
+  });
   const form = useForm<BanFormValues>({
     resolver: zodResolver(banSchema),
     defaultValues: {
@@ -70,12 +75,12 @@ export function AdminBanModal({
         <div className="flex items-center justify-between border-b border-slate-200 p-6">
           <h3 id="ban-user-title" className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <AlertTriangle className="h-5 w-5 text-rose-500" />
-            Áp dụng chế tài xử phạt
+            {translate('banTitle')}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={translate('close')}
             className="text-slate-400 transition-colors hover:text-slate-700"
           >
             <X className="h-5 w-5" />
@@ -84,45 +89,45 @@ export function AdminBanModal({
 
         <div className="space-y-4 p-6">
           <div>
-            <p className="mb-1 text-xs text-slate-500">Người dùng</p>
+            <p className="mb-1 text-xs text-slate-500">{translate('user')}</p>
             <p className="text-sm font-semibold text-slate-800">
-              {user.profile?.fullName || 'Người dùng'}
+              {user.profile?.fullName || translate('defaultUser')}
             </p>
             <p className="text-xs text-slate-500">{user.email}</p>
           </div>
 
           <label className="block space-y-1.5">
-            <span className="text-xs text-slate-500">Hình thức xử phạt</span>
+            <span className="text-xs text-slate-500">{translate('banType')}</span>
             <select
               {...form.register('banType')}
               className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500"
             >
-              <option value="WARN">Cảnh cáo (gửi thông báo)</option>
-              <option value="SOFT_BAN">Khóa tạm thời</option>
-              <option value="HARD_BAN">Khóa vĩnh viễn</option>
+              <option value="WARN">{translate('warnOption')}</option>
+              <option value="SOFT_BAN">{translate('softBanOption')}</option>
+              <option value="HARD_BAN">{translate('hardBanOption')}</option>
             </select>
           </label>
 
           {banType === 'SOFT_BAN' && (
             <label className="block space-y-1.5">
-              <span className="text-xs text-slate-500">Thời hạn khóa</span>
+              <span className="text-xs text-slate-500">{translate('duration')}</span>
               <select
                 {...form.register('durationDays')}
                 className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500"
               >
-                <option value="7">7 ngày</option>
-                <option value="15">15 ngày</option>
-                <option value="30">30 ngày</option>
+                <option value="7">{translate('days', { count: 7 })}</option>
+                <option value="15">{translate('days', { count: 15 })}</option>
+                <option value="30">{translate('days', { count: 30 })}</option>
               </select>
             </label>
           )}
 
           <label className="block space-y-1.5">
-            <span className="text-xs text-slate-500">Lý do vi phạm</span>
+            <span className="text-xs text-slate-500">{translate('violationReason')}</span>
             <textarea
               rows={4}
               {...form.register('reason')}
-              placeholder="Mô tả hành vi vi phạm điều lệ..."
+              placeholder={translate('reasonPlaceholder')}
               className="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500"
             />
             {form.formState.errors.reason?.message && (
@@ -140,7 +145,7 @@ export function AdminBanModal({
             onClick={onClose}
             disabled={processing || form.formState.isSubmitting}
           >
-            Hủy
+                {translate('cancel')}
           </Button>
           <Button
             type="submit"
@@ -148,7 +153,7 @@ export function AdminBanModal({
             disabled={processing || form.formState.isSubmitting}
           >
             {processing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Xác nhận phạt
+            {translate('confirmBan')}
           </Button>
         </div>
       </form>

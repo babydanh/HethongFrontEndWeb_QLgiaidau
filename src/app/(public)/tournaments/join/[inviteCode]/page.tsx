@@ -18,42 +18,40 @@ import { formatDate, formatCurrency } from '@/utils/format';
 import type { TournamentDisplayLabels } from '@/utils/tournament-display';
 import toast from 'react-hot-toast';
 
-const registerSchema = z.object({
-  teamName: z.string().max(100, 'Tên đội quá dài').optional(),
-  partnerEmailOrPhone: z.string().optional(),
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = {
+  teamName?: string;
+  partnerEmailOrPhone?: string;
+};
 
 const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null, labels?: TournamentDisplayLabels) => {
   const genderLabel =
-    genderRestriction === 'MALE' ? (labels?.maleGender ?? 'Nam') :
-    genderRestriction === 'FEMALE' ? (labels?.femaleGender ?? 'Nữ') :
-    genderRestriction === 'MIXED' ? (labels?.mixedGender ?? 'Nam Nữ') : '';
+genderRestriction === 'MALE' ? (labels?.maleGender ?? 'Male') :
+    genderRestriction === 'FEMALE' ? (labels?.femaleGender ?? 'Female') :
+    genderRestriction === 'MIXED' ? (labels?.mixedGender ?? 'Mixed') : '';
 
   if (matchType === 'SINGLES') {
-    return (labels?.singlesFormat ?? 'Đơn {gender}').replace('{gender}', genderLabel).replace(/\s+/g, ' ').trim();
+    return (labels?.singlesFormat ?? 'Singles {gender}').replace('{gender}', genderLabel).replace(/\s+/g, ' ').trim();
   }
   if (matchType === 'DOUBLES') {
-    return (labels?.doublesFormat ?? 'Đôi {gender}').replace('{gender}', genderLabel).replace(/\s+/g, ' ').trim();
+    return (labels?.doublesFormat ?? 'Doubles {gender}').replace('{gender}', genderLabel).replace(/\s+/g, ' ').trim();
   }
   if (matchType === 'MIXED_DOUBLES') {
-    return labels?.mixedDoublesFormat ?? 'Đôi Nam Nữ';
+    return labels?.mixedDoublesFormat ?? 'Mixed doubles';
   }
-  return labels?.unknownFormat ?? 'Chưa rõ';
+  return labels?.unknownFormat ?? 'Unknown';
 };
 
 const getDivisionBracketLabel = (bracketType?: string | null, labels?: TournamentDisplayLabels) => {
   if (bracketType === 'SINGLE_ELIMINATION') {
-    return labels?.bracketSingleElimination ?? 'Loại trực tiếp';
+    return labels?.bracketSingleElimination ?? 'Single elimination';
   }
   if (bracketType === 'DOUBLE_ELIMINATION') {
-    return labels?.bracketDoubleElimination ?? 'Nhánh thắng/thua';
+    return labels?.bracketDoubleElimination ?? 'Double elimination';
   }
   if (bracketType === 'ROUND_ROBIN') {
-    return labels?.bracketRoundRobin ?? 'Vòng tròn';
+    return labels?.bracketRoundRobin ?? 'Round robin';
   }
-  return labels?.unknownBracket ?? 'Chưa rõ';
+  return labels?.unknownBracket ?? 'Unknown';
 };
 
 export default function JoinTournamentPage({ params }: { params: Promise<{ inviteCode: string }> }) {
@@ -61,7 +59,8 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   const inviteCode = resolvedParams.inviteCode;
   
   const router = useRouter();
-  const translate = useTranslations('Common');
+    const translate = useTranslations('Common');
+  const inviteTranslate = useTranslations('TournamentInviteJoin');
   const displayTranslate = useTranslations('TournamentDisplay');
   const displayLabels: TournamentDisplayLabels = {
     maleGender: displayTranslate('maleGender'),
@@ -84,6 +83,10 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const registerSchema = z.object({
+    teamName: z.string().max(100, inviteTranslate('teamNameTooLong')).optional(),
+    partnerEmailOrPhone: z.string().optional(),
+  });
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
@@ -253,26 +256,26 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
           <div className="p-6 md:p-8 space-y-6">
             <div>
               <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" /> Đăng ký tham gia giải đấu
+                <Users className="w-5 h-5 text-blue-600" /> {inviteTranslate('registerTitle')}
               </h2>
               <p className="text-slate-500 text-xs mt-1">
-                Giải đấu yêu cầu nhập thông tin tên đội của bạn để ghi nhận thi đấu.
+                {inviteTranslate('registerDescription')}
               </p>
             </div>
 
             {availableDivisions.length > 0 && selectedDivision && (
               <div className="space-y-3 pb-2 border-b border-slate-100">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 block">Nội dung thi đấu</label>
+                  <label className="text-xs font-bold text-slate-700 block">{inviteTranslate('eventContent')}</label>
                   <div className="rounded-lg border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
-                    Bạn đang đăng ký cho hình thức: <span className="font-bold">{selectedDivision.name} ({selectedDivisionLabel})</span>
+                    {inviteTranslate('registrationFor')} <span className="font-bold">{selectedDivision.name} ({selectedDivisionLabel})</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
                       {getDivisionBracketLabel(selectedDivision.bracketType, displayLabels)}
                     </span>
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
-                      {selectedDivision._count?.participants ?? 0} hồ sơ tham gia
+                      {inviteTranslate('participantCount', { count: selectedDivision._count?.participants ?? 0 })}
                     </span>
                   </div>
                 </div>
@@ -321,7 +324,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                        Nội dung đang chọn
+                        {inviteTranslate('selectedContent')}
                       </p>
                       <h3 className="text-base font-bold text-slate-900">{selectedDivision.name}</h3>
                       <p className="text-xs font-semibold text-slate-500">
@@ -334,10 +337,10 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                       </span>
                       <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">
                         {selectedDivision._count?.participants ?? 0}
-                        {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
+                        {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} {inviteTranslate('registrations')}
                       </span>
                       <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
-                        {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                        {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : inviteTranslate('free')}
                       </span>
                     </div>
                   </div>
@@ -348,14 +351,14 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {effectiveDivision.matchType === 'SINGLES' ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
+                  <p className="text-xs text-blue-600 font-medium mb-1">{inviteTranslate('competitionName')}</p>
                   <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
-                  <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+                  <p className="text-xs text-slate-500 mt-1">{inviteTranslate('competitionNameHint')}</p>
                 </div>
               ) : (
                 <Input
-                  label="Tên đội"
-                  placeholder="Ví dụ: Team Lan Anh Cầu Giấy"
+                  label={inviteTranslate('teamName')}
+                  placeholder={inviteTranslate('teamNamePlaceholder')}
                   {...register('teamName')}
                   error={errors.teamName?.message}
                 />
@@ -377,16 +380,16 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
 
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500 font-semibold">Lệ phí giải đấu:</span>
+                  <span className="text-slate-500 font-semibold">{inviteTranslate('entryFee')}</span>
                   <span className="font-bold text-slate-900">
-                    {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                    {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : inviteTranslate('free')}
                   </span>
                 </div>
               </div>
 
               {!isAuthenticated ? (
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-700 leading-relaxed">
-                  {translate('loginBeforeComplete')} chuyển hướng bạn quay lại trang này sau khi đăng nhập thành công.
+                  {inviteTranslate('loginRedirectNotice')}
                 </div>
               ) : null}
 

@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -42,6 +43,7 @@ type JoinStatus = {
 export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode: string }> }) {
   const { inviteCode } = use(params);
   const router = useRouter();
+  const translate = useTranslations('LiteJoin');
   const { user, isAuthenticated } = useAuthStore();
   const [status, setStatus] = useState<JoinStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +80,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
     setIsJoining(true);
     try {
       await tournamentsApi.joinLite(inviteCode);
-      toast.success('Tham gia giải đấu thành công!');
+      toast.success(translate('joinSuccess'));
       if (status?.tournament?.id) router.push(`/tournaments/${status.tournament.id}`);
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -92,7 +94,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
     setIsRequestingClub(true);
     try {
       await communitiesApi.joinCommunity(status.communityId);
-      toast.success('Đã gửi yêu cầu tham gia CLB!');
+      toast.success(translate('clubJoinRequestSent'));
       fetchStatus();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -120,11 +122,11 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
             height={80}
             className="h-20 w-auto object-contain mx-auto"
           />
-          <h2 className="text-base font-bold text-slate-800">Không tìm thấy giải đấu</h2>
-          <p className="text-xs text-slate-500">Mã mời không tồn tại hoặc đã hết hạn.</p>
+          <h2 className="text-base font-bold text-slate-800">{translate('invalidTournament')}</h2>
+          <p className="text-xs text-slate-500">{translate('invalidInvite')}</p>
           <Link href="/tournaments">
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-2">
-              Xem danh sách giải đấu
+              {translate('viewTournamentList')}
             </Button>
           </Link>
         </div>
@@ -172,12 +174,12 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
           <div className="space-y-4 pt-2 text-center">
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-1">
               <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto mb-1" />
-              <p className="text-sm font-bold text-emerald-900">Bạn đã tham gia giải này</p>
-              <p className="text-xs text-emerald-700">Hồ sơ thi đấu của bạn đã sẵn sàng.</p>
+              <p className="text-sm font-bold text-emerald-900">{translate('alreadyJoined')}</p>
+              <p className="text-xs text-emerald-700">{translate('profileReady')}</p>
             </div>
             <Link href={`/tournaments/${t.id}`}>
               <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg cursor-pointer">
-                Xem chi tiết giải đấu
+                {translate('viewTournamentDetails')}
               </Button>
             </Link>
           </div>
@@ -185,42 +187,42 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
           /* State 2: Registration Closed */
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center space-y-1">
             <AlertTriangle className="w-7 h-7 text-amber-600 mx-auto mb-1" />
-            <p className="text-sm font-bold text-amber-900">Giải đấu đã đóng đăng ký</p>
+            <p className="text-sm font-bold text-amber-900">{translate('registrationClosed')}</p>
           </div>
         ) : status.tournamentFull ? (
           /* State 3: Tournament Full */
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center space-y-1">
             <AlertTriangle className="w-7 h-7 text-amber-600 mx-auto mb-1" />
-            <p className="text-sm font-bold text-amber-900">Giải đấu đã đủ số lượng</p>
+            <p className="text-sm font-bold text-amber-900">{translate('tournamentFull')}</p>
           </div>
         ) : status.requiresClubJoin ? (
           /* State 4: Requires Club Join */
           <div className="space-y-4 pt-2 text-center">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-1">
               <Users className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-              <p className="text-xs font-bold text-slate-900">Yêu cầu tham gia CLB</p>
+              <p className="text-xs font-bold text-slate-900">{translate('clubJoinRequired')}</p>
               <p className="text-xs text-slate-600">
-                Giải thuộc CLB <strong>{status.communityName}</strong>. Vui lòng tham gia CLB trước.
+                {translate('clubTournamentJoinHint', { club: status.communityName || '' })}
               </p>
             </div>
             <Button onClick={handleRequestClub} disabled={isRequestingClub} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg cursor-pointer">
-              {isRequestingClub ? 'Đang xử lý...' : 'Tham gia CLB'}
+              {isRequestingClub ? translate('processing') : translate('joinClub')}
             </Button>
           </div>
         ) : showAuthRequired ? (
           /* State 5: Requires Auth (Only if NOT logged in) */
           <div className="space-y-4 pt-2">
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center space-y-1">
-              <p className="text-xs font-bold text-slate-800">Yêu cầu đăng nhập</p>
+              <p className="text-xs font-bold text-slate-800">{translate('loginRequired')}</p>
               <p className="text-xs text-slate-500">
-                Đăng nhập tài khoản để xác nhận tham gia giải đấu này.
+                {translate('loginTournamentHint')}
               </p>
             </div>
             <Button
               onClick={() => router.push(`/login?redirect=/lite/tournaments/join/${inviteCode}`)}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Đăng nhập ngay</span>
+              <span>{translate('loginNow')}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -228,15 +230,15 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
           /* State 6: Can Join / Logged In — Primary Join Action */
           <div className="space-y-4 pt-2">
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Tên thi đấu:</span>
-              <span className="font-bold text-slate-900">{user?.fullName || user?.email || 'Tài khoản thi đấu'}</span>
+              <span className="text-slate-500 font-medium">{translate('competitionName')}</span>
+              <span className="font-bold text-slate-900">{user?.fullName || user?.email || translate('competitionAccount')}</span>
             </div>
             <Button
               onClick={handleJoin}
               disabled={isJoining}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg cursor-pointer transition-colors"
             >
-              {isJoining ? 'Đang xử lý...' : 'Xác nhận tham gia'}
+              {isJoining ? translate('processing') : translate('confirmJoin')}
             </Button>
           </div>
         )}

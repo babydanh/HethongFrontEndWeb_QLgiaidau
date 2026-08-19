@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KeyRound, Loader2, X } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { toast } from 'react-hot-toast';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
@@ -24,11 +25,11 @@ interface RoleOption {
 }
 
 export const SYSTEM_ROLE_OPTIONS: readonly RoleOption[] = [
-  { value: 'PLAYER', label: 'Vận động viên', description: 'Quyền nền của mọi tài khoản.' },
-  { value: 'REFEREE', label: 'Trọng tài', description: 'Nghiệp vụ trọng tài cấp hệ thống.' },
-  { value: 'ORGANIZER', label: 'Ban tổ chức', description: 'Đủ điều kiện tạo giải ngoài CLB.' },
-  { value: 'MODERATOR', label: 'Điều phối viên', description: 'Xử lý báo cáo và kiểm duyệt.', sensitive: true },
-  { value: 'ADMIN', label: 'Quản trị viên', description: 'Toàn quyền quản trị nền tảng.', sensitive: true },
+  { value: 'PLAYER', label: 'Player', description: 'Base role for every account.' },
+  { value: 'REFEREE', label: 'Referee', description: 'System-level referee operations.' },
+  { value: 'ORGANIZER', label: 'Organizer', description: 'Eligible to create tournaments outside clubs.' },
+  { value: 'MODERATOR', label: 'Moderator', description: 'Handle reports and moderation.', sensitive: true },
+  { value: 'ADMIN', label: 'Administrator', description: 'Full platform administration access.', sensitive: true },
 ];
 
 export const roleLabel = (role: SystemRole): string =>
@@ -54,6 +55,7 @@ const sameRoles = (left: SystemRole[], right: SystemRole[]): boolean =>
   [...left].sort().join('|') === [...right].sort().join('|');
 
 export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps) {
+  const translate = useTranslations('AdminModeration');
   const currentRoles = normalizedRoles(user.roles);
   const form = useForm<RoleForm>({
     resolver: zodResolver(roleSchema),
@@ -73,7 +75,7 @@ export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps
     }
     if (touchesSensitiveRole && !values.acknowledgeSensitive) {
       form.setError('acknowledgeSensitive', {
-        message: 'Vui lòng xác nhận thay đổi quyền nhạy cảm trước khi lưu.',
+        message: translate('sensitiveRoleError'),
       });
       return;
     }
@@ -81,10 +83,10 @@ export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps
     try {
       const result = await usersApi.updateSystemRoles(user.id, nextRoles);
       onSaved(result.roles ?? nextRoles);
-      toast.success('Đã cập nhật vai trò hệ thống.');
+      toast.success(translate('roleUpdated'));
       onClose();
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật vai trò.'));
+      toast.error(getErrorMessage(error, translate('roleUpdateFailed')));
     }
   });
 
@@ -101,25 +103,25 @@ export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps
           <div>
             <h3 id="system-role-title" className="flex items-center gap-2 text-lg font-bold text-slate-900">
               <KeyRound className="h-5 w-5 text-blue-600" />
-              Gán vai trò hệ thống
+              {translate('roleModalTitle')}
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              Không thay đổi vai trò trong CLB hoặc phân công theo từng giải.
+              {translate('roleModalDescription')}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Đóng" className="text-slate-400 hover:text-slate-700">
+          <button type="button" onClick={onClose} aria-label={translate('close')} className="text-slate-400 hover:text-slate-700">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="space-y-4 p-6">
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">{user.profile?.fullName || 'Người dùng'}</p>
+            <p className="text-sm font-semibold text-slate-900">{user.profile?.fullName || translate('defaultUser')}</p>
             <p className="text-xs text-slate-500">{user.email}</p>
           </div>
 
           <fieldset>
-            <legend className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Vai trò được áp dụng</legend>
+            <legend className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">{translate('rolesApplied')}</legend>
             <div className="space-y-2">
               {SYSTEM_ROLE_OPTIONS.map((option) => {
                 const selected = selectedRoles.includes(option.value);
@@ -144,10 +146,32 @@ export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps
                     />
                     <span>
                       <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                        {option.label}
-                        {option.sensitive && <span className="text-[10px] font-bold uppercase text-amber-700">Nhạy cảm</span>}
+                        {translate(
+                          option.value === 'PLAYER'
+                            ? 'rolePlayer'
+                            : option.value === 'REFEREE'
+                              ? 'roleReferee'
+                              : option.value === 'ORGANIZER'
+                                ? 'roleOrganizer'
+                                : option.value === 'MODERATOR'
+                                  ? 'roleModerator'
+                                  : 'roleAdmin',
+                        )}
+                        {option.sensitive && <span className="text-[10px] font-bold uppercase text-amber-700">{translate('sensitive')}</span>}
                       </span>
-                      <span className="block text-xs text-slate-500">{option.description}</span>
+                      <span className="block text-xs text-slate-500">
+                        {translate(
+                          option.value === 'PLAYER'
+                            ? 'rolePlayerDescription'
+                            : option.value === 'REFEREE'
+                              ? 'roleRefereeDescription'
+                              : option.value === 'ORGANIZER'
+                                ? 'roleOrganizerDescription'
+                                : option.value === 'MODERATOR'
+                                  ? 'roleModeratorDescription'
+                                  : 'roleAdminDescription',
+                        )}
+                      </span>
                     </span>
                   </label>
                 );
@@ -162,7 +186,7 @@ export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps
                 {...form.register('acknowledgeSensitive')}
                 className="mt-0.5 h-4 w-4 rounded border-amber-300 text-amber-600"
               />
-              Tôi đã kiểm tra trách nhiệm người dùng và xác nhận thay đổi ADMIN/MODERATOR.
+              {translate('acknowledgeSensitive')}
             </label>
           )}
           {form.formState.errors.acknowledgeSensitive?.message && (
@@ -171,10 +195,10 @@ export function SystemRoleModal({ user, onClose, onSaved }: SystemRoleModalProps
         </div>
 
         <div className="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 p-6">
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{translate('cancel')}</Button>
           <Button type="submit" disabled={form.formState.isSubmitting || !hasChanges}>
             {form.formState.isSubmitting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Lưu vai trò
+            {translate('saveRoles')}
           </Button>
         </div>
       </form>

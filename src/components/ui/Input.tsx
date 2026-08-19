@@ -75,23 +75,32 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
 
     const formatDateTime = (isoStr: string) => {
       if (!isoStr) return '';
-      const parts = isoStr.split('T');
-      if (parts.length !== 2) {
-        const dateObj = new Date(isoStr);
-        if (isNaN(dateObj.getTime())) return '';
-        const dayObj = String(dateObj.getDate()).padStart(2, '0');
-        const monthObj = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const yearObj = dateObj.getFullYear();
-        const hoursObj = String(dateObj.getHours()).padStart(2, '0');
-        const minutesObj = String(dateObj.getMinutes()).padStart(2, '0');
-        return `${dayObj}/${monthObj}/${yearObj} ${hoursObj}:${minutesObj}`;
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(isoStr)) {
+        const [datePart, timePart] = isoStr.split('T');
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year} ${timePart}`;
       }
-      const [datePart, timePart] = parts;
-      const dateSplit = datePart.split('-');
-      if (dateSplit.length !== 3) return isoStr;
-      const [year, month, day] = dateSplit;
-      const [hours, minutes] = timePart.split(':');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
+      const dateObj = new Date(isoStr);
+      if (isNaN(dateObj.getTime())) return '';
+      const dayObj = String(dateObj.getDate()).padStart(2, '0');
+      const monthObj = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yearObj = dateObj.getFullYear();
+      const hoursObj = String(dateObj.getHours()).padStart(2, '0');
+      const minutesObj = String(dateObj.getMinutes()).padStart(2, '0');
+      return `${dayObj}/${monthObj}/${yearObj} ${hoursObj}:${minutesObj}`;
+    };
+
+    const toLocalInputValue = (isoStr: string) => {
+      if (!isoStr) return '';
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(isoStr)) return isoStr;
+      const dateObj = new Date(isoStr);
+      if (isNaN(dateObj.getTime())) return '';
+      const dayObj = String(dateObj.getDate()).padStart(2, '0');
+      const monthObj = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yearObj = dateObj.getFullYear();
+      const hoursObj = String(dateObj.getHours()).padStart(2, '0');
+      const minutesObj = String(dateObj.getMinutes()).padStart(2, '0');
+      return `${yearObj}-${monthObj}-${dayObj}T${hoursObj}:${minutesObj}`;
     };
 
     React.useEffect(() => {
@@ -159,7 +168,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             type="datetime-local"
             name={name}
             ref={activeRef}
-            value={value}
+            value={toLocalInputValue(value)}
             min={min}
             max={max}
             disabled={disabled}
@@ -185,10 +194,12 @@ export interface DatePickerProps {
   error?: string;
   className?: string;
   disabled?: boolean;
+  min?: string;
+  max?: string;
 }
 
 const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
-  ({ name, label, value, onChange, error, className, disabled }, ref) => {
+  ({ name, label, value, onChange, error, className, disabled, min, max }, ref) => {
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
 
@@ -197,7 +208,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       if (activeRef.current) {
         try {
           activeRef.current.showPicker();
-        } catch (err) {
+        } catch {
           activeRef.current.focus();
         }
       }
@@ -205,10 +216,27 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 
     const formatDate = (isoStr: string) => {
       if (!isoStr) return '';
-      const parts = isoStr.split('-');
-      if (parts.length !== 3) return isoStr;
-      const [year, month, day] = parts;
-      return `${day}/${month}/${year}`;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) {
+        const [year, month, day] = isoStr.split('-');
+        return `${day}/${month}/${year}`;
+      }
+      const dateObj = new Date(isoStr);
+      if (isNaN(dateObj.getTime())) return '';
+      const dayObj = String(dateObj.getDate()).padStart(2, '0');
+      const monthObj = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yearObj = dateObj.getFullYear();
+      return `${dayObj}/${monthObj}/${yearObj}`;
+    };
+
+    const toLocalDateInputValue = (isoStr: string) => {
+      if (!isoStr) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return isoStr;
+      const dateObj = new Date(isoStr);
+      if (isNaN(dateObj.getTime())) return '';
+      const dayObj = String(dateObj.getDate()).padStart(2, '0');
+      const monthObj = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yearObj = dateObj.getFullYear();
+      return `${yearObj}-${monthObj}-${dayObj}`;
     };
 
     return (
@@ -255,7 +283,9 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             type="date"
             name={name}
             ref={activeRef}
-            value={value}
+            value={toLocalDateInputValue(value)}
+            min={min}
+            max={max}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"

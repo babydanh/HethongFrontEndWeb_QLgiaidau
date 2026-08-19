@@ -1,11 +1,11 @@
 'use client';
 
 import { Ban, ShieldCheck, UserCheck } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import type { AdminUser } from '@/features/users/adminModerationApi';
 import { cn } from '@/utils/cn';
-import { roleLabel } from './SystemRoleModal';
 
 interface AdminUsersTableProps {
   users: AdminUser[];
@@ -17,12 +17,6 @@ interface AdminUsersTableProps {
   onUnban: (userId: string) => void;
   onManageRoles: (user: AdminUser) => void;
 }
-
-const BAN_LABELS = {
-  WARN: 'Cảnh cáo',
-  SOFT_BAN: 'Khóa tạm thời',
-  HARD_BAN: 'Khóa vĩnh viễn',
-} as const;
 
 const getBanBadgeClassName = (user: AdminUser): string => {
   if (user.activeBan?.banType === 'HARD_BAN') {
@@ -47,9 +41,11 @@ export function AdminUsersTable({
   onUnban,
   onManageRoles,
 }: AdminUsersTableProps) {
+  const translate = useTranslations('AdminModeration');
+  const locale = useLocale();
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20" aria-label="Đang tải người dùng">
+      <div className="flex items-center justify-center py-20" aria-label={translate('loadingUsers')}>
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
       </div>
     );
@@ -58,9 +54,9 @@ export function AdminUsersTable({
   if (users.length === 0) {
     return (
       <div className="space-y-1 rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-        <p className="text-base font-bold text-slate-800">Không tìm thấy người dùng nào</p>
+        <p className="text-base font-bold text-slate-800">{translate('noUsers')}</p>
         <p className="text-xs font-medium text-slate-500">
-          Hãy thử tìm với từ khóa hoặc bộ lọc khác.
+          {translate('noUsersHint')}
         </p>
       </div>
     );
@@ -72,17 +68,17 @@ export function AdminUsersTable({
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-              <th className="p-4 pl-6">Người dùng</th>
-              <th className="p-4">Trạng thái</th>
-              <th className="p-4">Vai trò hệ thống</th>
-              <th className="p-4">Ngày tham gia</th>
-              <th className="p-4">Xác minh</th>
-              <th className="p-4 pr-6 text-right">Hành động</th>
+              <th className="p-4 pl-6">{translate('usersHeader')}</th>
+              <th className="p-4">{translate('statusHeader')}</th>
+              <th className="p-4">{translate('rolesHeader')}</th>
+              <th className="p-4">{translate('joinedHeader')}</th>
+              <th className="p-4">{translate('verifiedHeader')}</th>
+              <th className="p-4 pr-6 text-right">{translate('actionsHeader')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm font-medium text-slate-700">
             {users.map((user) => {
-              const name = user.profile?.fullName || 'Người dùng';
+              const name = user.profile?.fullName || translate('defaultUser');
               const isSelf = user.id === currentUserId;
               const punishmentDisabled = processing || isSelf;
 
@@ -111,7 +107,15 @@ export function AdminUsersTable({
                         getBanBadgeClassName(user),
                       )}
                     >
-                      {user.activeBan ? BAN_LABELS[user.activeBan.banType] : 'Hoạt động'}
+                      {user.activeBan
+                        ? translate(
+                            user.activeBan.banType === 'WARN'
+                              ? 'warnShort'
+                              : user.activeBan.banType === 'SOFT_BAN'
+                                ? 'softBanShort'
+                                : 'hardBanShort',
+                          )
+                        : translate('active')}
                     </span>
                   </td>
                   <td className="p-4">
@@ -122,25 +126,35 @@ export function AdminUsersTable({
                             key={role}
                             className="inline-flex rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700"
                           >
-                            {roleLabel(role)}
+                            {translate(
+                              role === 'PLAYER'
+                                ? 'rolePlayer'
+                                : role === 'REFEREE'
+                                  ? 'roleReferee'
+                                  : role === 'ORGANIZER'
+                                    ? 'roleOrganizer'
+                                    : role === 'MODERATOR'
+                                      ? 'roleModerator'
+                                      : 'roleAdmin',
+                            )}
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs font-semibold text-slate-400">Chưa gán</span>
+                        <span className="text-xs font-semibold text-slate-400">{translate('unassigned')}</span>
                       )}
                     </div>
                   </td>
                   <td className="p-4 text-xs font-semibold text-slate-500">
-                    {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+                    {new Date(user.createdAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                   </td>
                   <td className="p-4">
                     {user.profile?.isVerified ? (
                       <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-600">
                         <ShieldCheck className="h-3.5 w-3.5" />
-                        Đã xác minh
+                        {translate('verified')}
                       </span>
                     ) : (
-                      <span className="text-xs font-semibold text-slate-400">Chưa xác minh</span>
+                      <span className="text-xs font-semibold text-slate-400">{translate('unverified')}</span>
                     )}
                   </td>
                   <td className="p-4 pr-6 text-right">
@@ -151,11 +165,11 @@ export function AdminUsersTable({
                           onClick={() => onUnban(user.id)}
                           disabled={punishmentDisabled}
                           size="sm"
-                          title={isSelf ? 'Không thể tự gỡ phạt tài khoản của mình' : 'Gỡ phạt'}
+                          title={isSelf ? translate('cannotUnbanSelf') : translate('unban')}
                           className="bg-emerald-600 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
                         >
                           <UserCheck className="mr-1 h-3.5 w-3.5" />
-                          Gỡ phạt
+                          {translate('unban')}
                         </Button>
                       ) : (
                         <Button
@@ -164,11 +178,11 @@ export function AdminUsersTable({
                           disabled={punishmentDisabled}
                           variant="destructive"
                           size="sm"
-                          title={isSelf ? 'Không thể tự xử phạt tài khoản của mình' : 'Xử phạt'}
+                          title={isSelf ? translate('cannotBanSelf') : translate('ban')}
                           className="bg-rose-600 text-xs font-bold text-white shadow-sm hover:bg-rose-700"
                         >
                           <Ban className="mr-1 h-3.5 w-3.5" />
-                          {isSelf ? 'Không thể tự phạt' : 'Xử phạt'}
+                          {isSelf ? translate('cannotSelfBan') : translate('ban')}
                         </Button>
                       )}
                       <Button
@@ -179,14 +193,14 @@ export function AdminUsersTable({
                         variant="outline"
                         title={
                           isSelf
-                            ? 'Không thể tự thay đổi vai trò của mình'
+                            ? translate('cannotChangeOwnRoles')
                             : canManageSystemRoles
-                              ? 'Gán vai trò hệ thống'
-                              : 'Chỉ quản trị viên mới được gán vai trò hệ thống'
+                              ? translate('assignRoles')
+                              : translate('adminOnlyRoleAssignment')
                         }
                         className="border-blue-200 text-xs font-bold text-blue-700 hover:bg-blue-50"
                       >
-                        Vai trò
+                        {translate('roles')}
                       </Button>
                     </div>
                   </td>

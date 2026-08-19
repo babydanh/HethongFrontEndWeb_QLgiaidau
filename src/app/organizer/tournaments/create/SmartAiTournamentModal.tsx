@@ -28,7 +28,7 @@ import {
   downloadParticipantsTemplateExcel,
   type ParsedExcelResult,
 } from '@/utils/exportTournament';
-import { tournamentsApi, divisionsApi, type CreateDivisionInput } from '@/features/tournaments/api';
+import { tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { MatchTypeDB, GenderRestriction } from '@/types/tournament';
 import { useLocale, useTranslations } from 'next-intl';
@@ -159,12 +159,33 @@ export default function SmartAiTournamentModal({
 
       // 1. Create lite tournament
       const primaryFormat = parsedData.formats?.[0] || { formatKey: 'DOUBLES_MALE', name: 'Đôi Nam', bracketType: 'SINGLE_ELIMINATION' as const, maxParticipants: 16 };
-      const matchType: 'singles' | 'doubles' = primaryFormat.formatKey.includes('SINGLES') ? 'singles' : 'doubles';
+      const matchType: 'singles' | 'doubles' | 'mixed_doubles' = primaryFormat.formatKey.includes('SINGLES')
+        ? 'singles'
+        : primaryFormat.formatKey.includes('MIXED') ? 'mixed_doubles' : 'doubles';
       const genderRestriction: 'MALE' | 'FEMALE' | 'MIXED' = primaryFormat.formatKey.includes('FEMALE')
         ? 'FEMALE'
         : primaryFormat.formatKey.includes('MIXED')
         ? 'MIXED'
         : 'MALE';
+
+      const formats = parsedData.formats?.length ? parsedData.formats : [primaryFormat];
+      const divisionInputs: CreateDivisionInput[] = formats.map((fmt, index) => ({
+        name: fmt.name?.trim() || `Hạng đấu ${index + 1}`,
+        matchType: fmt.formatKey.includes('SINGLES')
+          ? MatchTypeDB.SINGLES
+          : fmt.formatKey.includes('MIXED')
+            ? MatchTypeDB.MIXED_DOUBLES
+            : MatchTypeDB.DOUBLES,
+        genderRestriction: fmt.formatKey.includes('FEMALE')
+          ? GenderRestriction.FEMALE
+          : fmt.formatKey.includes('MIXED')
+            ? GenderRestriction.MIXED
+            : GenderRestriction.MALE,
+        bracketType: fmt.bracketType || 'SINGLE_ELIMINATION',
+        maxParticipants: fmt.maxParticipants || primaryFormat.maxParticipants || 16,
+        minElo: fmt.minElo ?? null,
+        maxElo: fmt.maxElo ?? null,
+      }));
 
       const createRes = await tournamentsApi.createLiteTournament({
         name: parsedData.name.trim() || 'Giải đấu thể thao',
@@ -181,51 +202,14 @@ export default function SmartAiTournamentModal({
         province: parsedData.province || undefined,
         description: parsedData.description || undefined,
         bannerUrl: parsedData.bannerUrl || undefined,
-        bracketType: (primaryFormat.bracketType?.toLowerCase() as any) || 'single_elimination',
+        bracketType: (primaryFormat.bracketType?.toLowerCase() as 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout') || 'single_elimination',
         maxTeams: primaryFormat.maxParticipants || 16,
+        divisions: divisionInputs,
       });
 
       const tournamentId = createRes.id;
-      let primaryDivisionId: string | undefined = undefined;
-      const createdDivisionIds: string[] = [];
-
-      // 2. Create divisions
-      if (parsedData.formats.length > 0) {
-        const existingDivs = await divisionsApi.getDivisions(tournamentId);
-        const existingList = (existingDivs as any)?.data ?? existingDivs ?? [];
-
-        for (const [idx, fmt] of parsedData.formats.entries()) {
-          const divMatchType = fmt.formatKey.includes('SINGLES') ? MatchTypeDB.SINGLES : MatchTypeDB.DOUBLES;
-          const divGender = fmt.formatKey.includes('FEMALE')
-            ? GenderRestriction.FEMALE
-            : fmt.formatKey.includes('MIXED')
-            ? GenderRestriction.MIXED
-            : GenderRestriction.MALE;
-
-          const divInput: CreateDivisionInput = {
-            name: fmt.name || `Hạng đấu ${idx + 1}`,
-            matchType: divMatchType,
-            genderRestriction: divGender,
-            bracketType: fmt.bracketType || 'SINGLE_ELIMINATION',
-            maxParticipants: fmt.maxParticipants || 16,
-            minElo: fmt.minElo ?? null,
-            maxElo: fmt.maxElo ?? null,
-          };
-
-          if (idx === 0 && existingList.length > 0) {
-            primaryDivisionId = existingList[0].id;
-            createdDivisionIds.push(existingList[0].id);
-            await divisionsApi.updateDivision(existingList[0].id, divInput);
-          } else {
-            const createdDiv = await divisionsApi.createDivision(tournamentId, divInput);
-            const divisionId = (createdDiv as any)?.data?.id || (createdDiv as any)?.id;
-            if (divisionId) {
-              createdDivisionIds.push(divisionId);
-              if (idx === 0) primaryDivisionId = divisionId;
-            }
-          }
-        }
-      }
+      const createdDivisionIds = createRes.divisionIds;
+      const primaryDivisionId = createdDivisionIds[0];
 
       // 3. Batch import participants from Excel if available
       // 3. Clone the detected Google Form questions into a draft registration form.

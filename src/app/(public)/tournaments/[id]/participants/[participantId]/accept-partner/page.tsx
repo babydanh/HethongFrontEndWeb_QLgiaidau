@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldCheck, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
@@ -16,6 +17,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
   const { id, participantId } = resolvedParams;
 
   const router = useRouter();
+  const translate = useTranslations('AcceptPartner');
   const { user, isAuthenticated } = useAuthStore();
   
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -27,7 +29,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     const fetchData = async () => {
       if (!id || !participantId) {
-        toast.error('Thông tin lời mời tham gia đội không hợp lệ hoặc thiếu tham số.');
+        toast.error(translate('invalidInvite'));
         router.push('/tournaments');
         return;
       }
@@ -47,12 +49,12 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
           if (targetTeam) {
             setParticipant(targetTeam);
           } else {
-            toast.error('Đội thi đấu không tồn tại hoặc đã bị hủy.');
+            toast.error(translate('teamNotFound'));
             router.push(`/tournaments/${id}`);
           }
         }
       } catch (err) {
-        toast.error('Không thể tải thông tin lời mời.');
+        toast.error(translate('loadInviteFailed'));
         router.push(`/tournaments/${id}`);
       } finally {
         setIsLoading(false);
@@ -64,7 +66,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
 
   const handleJoin = async () => {
     if (!isAuthenticated || !user) {
-      toast.error('Vui lòng đăng nhập để chấp nhận lời mời.');
+      toast.error(translate('loginToAccept'));
       const redirectUrl = `/tournaments/${id}/participants/${participantId}/accept-partner`;
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
@@ -76,11 +78,11 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
       const restriction = tournament.genderRestriction.toUpperCase();
 
       if (restriction === 'MALE' && userGender !== 'MALE') {
-        toast.error('Giải đấu này chỉ dành cho Nam. Giới tính của bạn không phù hợp.');
+        toast.error(translate('maleOnly'));
         return;
       }
       if (restriction === 'FEMALE' && userGender !== 'FEMALE') {
-        toast.error('Giải đấu này chỉ dành cho Nữ. Giới tính của bạn không phù hợp.');
+        toast.error(translate('femaleOnly'));
         return;
       }
     }
@@ -89,7 +91,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
       setIsSubmitting(true);
       await tournamentsApi.acceptPartnerInvite(participantId);
 
-      toast.success('Gia nhập đội thi đấu thành công!');
+      toast.success(translate('joinSuccess'));
 
       const entryFee = Number(tournament?.entryFee || 0);
 
@@ -114,7 +116,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
 
   const handleReject = async () => {
     if (!isAuthenticated || !user) {
-      toast.error('Vui lòng đăng nhập để thao tác.');
+      toast.error(translate('loginToAct'));
       const redirectUrl = `/tournaments/${id}/participants/${participantId}/accept-partner`;
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
@@ -123,7 +125,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
     try {
       setIsRejecting(true);
       await tournamentsApi.rejectPartnerInvite(participantId);
-      toast.success('Đã từ chối lời mời.');
+      toast.success(translate('rejectSuccess'));
       router.push(`/tournaments/${id}`);
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -136,7 +138,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
-        <p className="text-slate-500 font-medium text-sm">Đang tải thông tin đội bóng...</p>
+        <p className="text-slate-500 font-medium text-sm">{translate('loadingTeam')}</p>
       </div>
     );
   }
@@ -151,17 +153,17 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
     tournament.status !== 'DRAFT';
 
   if (isLocked || isExpired || isNotOpen || participant.teamStatus !== 'PENDING_PARTNER') {
-    let title = 'Lời mời không hợp lệ';
-    let message = 'Lời mời này đã hết hạn hoặc đội không còn ở trạng thái chờ ghép đôi.';
+    let title = translate('invalidTitle');
+    let message = translate('invalidMessage');
     if (isLocked) {
-      title = 'Đăng ký đã khóa';
-      message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+      title = translate('registrationLockedTitle');
+      message = translate('registrationLockedMessage');
     } else if (isExpired) {
-      title = 'Đăng ký hết hạn';
-      message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+      title = translate('registrationExpiredTitle');
+      message = translate('registrationExpiredMessage');
     } else if (isNotOpen) {
-      title = 'Đăng ký đã đóng';
-      message = 'Giải đấu hiện không nhận đăng ký mới.';
+      title = translate('registrationClosedTitle');
+      message = translate('registrationClosedMessage');
     }
 
     return (
@@ -180,7 +182,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
             onClick={() => router.push(`/tournaments/${tournament.id}`)}
             className="w-full border-slate-200 hover:bg-slate-50 text-slate-650 text-xs font-bold"
           >
-            Quay lại trang giải đấu
+            {translate('backToTournament')}
           </Button>
         </div>
       </div>
@@ -196,7 +198,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
           onClick={() => router.push(`/tournaments/${tournament.id}`)}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
+          <ArrowLeft className="w-4 h-4" /> {translate('backToTournamentShort')}
         </button>
 
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
@@ -209,18 +211,18 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
                   <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
                 ) : null;
               })()}
-              {tournament.category?.name || 'Cầu Lông'}
+              {tournament.category?.name || translate('defaultSport')}
             </span>
             <h1 className="text-xl md:text-2xl font-bold mt-2 mb-3 text-white">{tournament.name}</h1>
 
             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-350 font-semibold">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-blue-400" />
-                <span>Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa xếp lịch'}</span>
+                <span>{translate('opening')} {tournament.startDate ? formatDate(tournament.startDate) : translate('notScheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-rose-400" />
-                <span className="truncate">{tournament.locationAddress || 'Chưa cập nhật'}</span>
+                <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
               </div>
             </div>
           </div>
@@ -231,9 +233,9 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-105 text-blue-600 mb-1">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900">Lời mời ghép đôi trực tiếp</h2>
+              <h2 className="text-lg font-bold text-slate-900">{translate('directPairInvite')}</h2>
               <p className="text-slate-500 text-xs leading-relaxed">
-                Bạn được mời gia nhập đội <strong className="text-slate-800">{participant.teamName}</strong> tham gia giải đấu này.
+                {translate('invitedToTeam', { team: participant.teamName || '' })}
               </p>
             </div>
 
@@ -245,8 +247,8 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
                     {leader.fullName?.substring(0, 2) || 'LD'}
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Trưởng nhóm (Leader)</p>
-                    <p className="text-sm font-bold text-slate-800">{leader.fullName || 'Người dùng'}</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{translate('teamLeader')}</p>
+                    <p className="text-sm font-bold text-slate-800">{leader.fullName || translate('defaultUser')}</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
@@ -260,13 +262,16 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
                 <div className="flex items-start gap-2.5 bg-slate-50 text-slate-700 text-xs font-semibold p-3.5 rounded-lg border border-slate-200/50">
                   <AlertTriangle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-amber-900">Yêu cầu giới tính</p>
+                    <p className="font-bold text-amber-900">{translate('genderRequirement')}</p>
                     <p className="mt-0.5 leading-relaxed text-slate-600 font-medium">
-                      Giải đấu yêu cầu ràng buộc giới tính: {
-                        tournament.genderRestriction === 'MALE' ? 'Chỉ Nam' :
-                        tournament.genderRestriction === 'FEMALE' ? 'Chỉ Nữ' :
-                        'Đôi Nam Nữ (1 Nam + 1 Nữ)'
-                      }. Hệ thống sẽ đối chiếu giới tính hồ sơ của bạn.
+                      {translate('genderRestrictionHint', {
+                        restriction:
+                          tournament.genderRestriction === 'MALE'
+                            ? translate('maleOnlyLabel')
+                            : tournament.genderRestriction === 'FEMALE'
+                              ? translate('femaleOnlyLabel')
+                              : translate('mixedDoublesLabel'),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -276,10 +281,9 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
                 <div className="flex items-start gap-2.5 bg-blue-50 text-blue-800 text-xs font-semibold p-3.5 rounded-lg border border-blue-200/50">
                   <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-blue-950">Lệ phí giải đấu</p>
+                    <p className="font-bold text-blue-950">{translate('entryFeeTitle')}</p>
                     <p className="mt-0.5 leading-relaxed text-slate-650 font-medium">
-                      Lệ phí tham gia: <strong className="text-slate-900">{formatCurrency(Number(tournament.entryFee))} / Đội</strong>.
-                      Nếu chưa thanh toán, bạn hoặc trưởng nhóm sẽ cần đóng phí để xác nhận hoàn tất vị trí.
+                      {translate('entryFeeHint', { fee: `${formatCurrency(Number(tournament.entryFee))}` })}
                     </p>
                   </div>
                 </div>
@@ -290,7 +294,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
             <div className="space-y-3 pt-2">
               {!isAuthenticated && (
                 <p className="text-xs text-blue-600 font-semibold text-center mb-2">
-                  Bạn cần đăng nhập tài khoản để phản hồi lời mời.
+                  {translate('loginToRespond')}
                 </p>
               )}
               <Button
@@ -300,12 +304,12 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...
+                    <Loader2 className="w-4 h-4 animate-spin" /> {translate('processing')}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="w-4 h-4" />
-                    {!isAuthenticated ? 'Đăng nhập & Chấp nhận lời mời' : 'Đồng ý gia nhập đội'}
+                    {!isAuthenticated ? translate('loginAndAccept') : translate('acceptTeam')}
                   </>
                 )}
               </Button>
@@ -317,12 +321,12 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
               >
                 {isRejecting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...
+                    <Loader2 className="w-4 h-4 animate-spin" /> {translate('processing')}
                   </>
                 ) : (
                   <>
                     <XCircle className="w-4 h-4" />
-                    Từ chối lời mời
+                    {translate('rejectInvitation')}
                   </>
                 )}
               </Button>

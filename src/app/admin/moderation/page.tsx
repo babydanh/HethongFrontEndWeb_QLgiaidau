@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -38,6 +39,7 @@ const appendUniqueUsers = (current: AdminUser[], incoming: AdminUser[]): AdminUs
 };
 
 export default function ModerationPage() {
+  const translate = useTranslations('AdminModeration');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -88,7 +90,7 @@ export default function ModerationPage() {
       setHasMoreUsers(result.hasMore);
     } catch (error: unknown) {
       if (requestId === requestSequence.current) {
-        toast.error(getErrorMessage(error, 'Không thể tải danh sách người dùng.'));
+        toast.error(getErrorMessage(error, translate('loadUsersFailed')));
       }
     } finally {
       if (requestId === requestSequence.current) {
@@ -124,17 +126,17 @@ export default function ModerationPage() {
     const parsedFrom = dateFrom.trim() ? parseDateInputToIso(dateFrom) : undefined;
     const parsedTo = dateTo.trim() ? parseDateInputToIso(dateTo) : undefined;
     if (parsedFrom === null) {
-      toast.error('Ngày bắt đầu không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy.');
+      toast.error(translate('invalidStartDate'));
       return;
     }
     if (parsedTo === null) {
-      toast.error('Ngày kết thúc không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy.');
+      toast.error(translate('invalidEndDate'));
       return;
     }
     const from = parsedFrom ?? undefined;
     const to = parsedTo ?? undefined;
     if (from && to && from > to) {
-      toast.error('Ngày bắt đầu không được sau ngày kết thúc.');
+      toast.error(translate('startAfterEnd'));
       return;
     }
 
@@ -146,11 +148,11 @@ export default function ModerationPage() {
     setProcessing(true);
     try {
       await adminModerationApi.banUser(banUser.id, payload);
-      toast.success('Đã áp dụng chế tài thành công.');
+      toast.success(translate('banSuccess'));
       setBanUser(null);
       await refreshUsers();
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể xử phạt tài khoản.'));
+      toast.error(getErrorMessage(error, translate('banError')));
     } finally {
       setProcessing(false);
     }
@@ -161,10 +163,10 @@ export default function ModerationPage() {
     setProcessing(true);
     try {
       await adminModerationApi.unbanUser(userId);
-      toast.success('Đã gỡ phạt tài khoản.');
+      toast.success(translate('unbanSuccess'));
       await refreshUsers();
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể gỡ phạt tài khoản.'));
+      toast.error(getErrorMessage(error, translate('unbanError')));
     } finally {
       setProcessing(false);
     }
@@ -220,7 +222,7 @@ export default function ModerationPage() {
             className="text-xs font-bold"
           >
             {loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Xem thêm người dùng
+            {translate('loadMoreUsers')}
           </Button>
         </div>
       )}

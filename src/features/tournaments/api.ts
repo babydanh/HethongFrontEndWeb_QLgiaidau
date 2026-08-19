@@ -589,7 +589,7 @@ export const tournamentsApi = {
   }) => {
     // Lite API derives the scope from communityId (PUBLIC when standalone,
     // CLUB when communityId is present), so no tournamentType is sent.
-    return api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>(
+    return api.post<ApiResponse<{ id: string; name: string; status: string; divisionIds: string[]; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>(
       '/tournaments/lite',
       data,
     ).then(res => res.data);

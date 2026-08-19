@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Ban,
   Check,
@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { communitiesApi, type CommunityMemberRecord } from '@/features/communities/api';
+import { communitiesApi, type CommunityMemberRecord, type CommunityReport } from '@/features/communities/api';
 import type { CommunityPost } from '@/types/community-social';
 import { usersApi } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
@@ -36,6 +36,7 @@ export default function ModerationTab({
   isOwner: boolean;
 }) {
   const translate = useTranslations('Common');
+  const locale = useLocale();
   const { openUserProfile } = useUserProfileModalStore();
   const [requests, setRequests] = useState<CommunityMemberRecord[]>([]);
   const [invitedMembers, setInvitedMembers] = useState<CommunityMemberRecord[]>([]);
@@ -51,6 +52,7 @@ export default function ModerationTab({
   const [cancelInviteUserId, setCancelInviteUserId] = useState<string | null>(null);
   const [unbanUserId, setUnbanUserId] = useState<string | null>(null);
   const [pendingPosts, setPendingPosts] = useState<CommunityPost[]>([]);
+  const [reports, setReports] = useState<CommunityReport[]>([]);
 
   const joinedMembers = useMemo(
     () => memberRecords.filter((item) => item.member?.status === 'JOINED'),
@@ -71,10 +73,11 @@ export default function ModerationTab({
 
     const loadData = async () => {
       try {
-        const [reqRes, memRes, pendingRes] = await Promise.all([
+        const [reqRes, memRes, pendingRes, reportRes] = await Promise.all([
           communitiesApi.getJoinRequests(communityId),
           communitiesApi.getMembers(communityId, { limit: 200 }),
           communitiesApi.getPendingPosts(communityId),
+          communitiesApi.getCommunityReports(communityId, 'OPEN'),
         ]);
 
         if (!active) {
@@ -100,6 +103,7 @@ export default function ModerationTab({
           topics: post.topics || [],
           mentions: post.mentions || [],
         })));
+        setReports(reportRes.data || []);
       } catch (error) {
         console.error('Failed to fetch moderation data', error);
         if (active) {
@@ -205,25 +209,35 @@ export default function ModerationTab({
     }
   };
 
+  const handleReportStatus = async (reportId: string, status: CommunityReport['status']) => {
+    try {
+      await communitiesApi.updateCommunityReport(communityId, reportId, status);
+      setReports((items) => items.filter((item) => item.id !== reportId));
+      toast.success(status === 'DISMISSED' ? translate('reportDismissed') : translate('reportResolved'));
+    } catch (error) {
+      toast.error(getErrorMessage(error, translate('reportUpdateFailed')));
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
       <section className="rounded-lg border border-amber-200 bg-amber-50/40 p-6 shadow-sm xl:col-span-2">
         <div className="mb-5 flex items-center gap-2 border-b border-amber-100 pb-3">
           <Ban className="h-4 w-4 text-amber-600" />
-          <h3 className="text-lg font-bold text-slate-900">Bài viết chờ duyệt</h3>
+          <h3 className="text-lg font-bold text-slate-900">{translate('pendingPostsTitle')}</h3>
           <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">{pendingPosts.length}</span>
         </div>
         {pendingPosts.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-amber-200 bg-white px-4 py-8 text-center text-sm text-slate-500">Không có bài viết chờ duyệt.</p>
+          <p className="rounded-lg border border-dashed border-amber-200 bg-white px-4 py-8 text-center text-sm text-slate-500">{translate('noPendingPosts')}</p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {pendingPosts.map((post) => (
               <article key={post.id} className="rounded-lg border border-slate-200 bg-white p-4">
                 <p className="text-sm font-semibold text-slate-900">{post.author.fullName}</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{post.content || '(Bài viết hình ảnh)'}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{post.content || translate('imagePostFallback')}</p>
                 <div className="mt-4 flex gap-2">
-                  <button type="button" onClick={() => handleModeratePost(post.id, 'PUBLISHED')} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Duyệt</button>
-                  <button type="button" onClick={() => handleModeratePost(post.id, 'REJECTED')} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Từ chối</button>
+                  <button type="button" onClick={() => handleModeratePost(post.id, 'PUBLISHED')} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">{translate('approveAction')}</button>
+                  <button type="button" onClick={() => handleModeratePost(post.id, 'REJECTED')} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">{translate('rejectAction')}</button>
                 </div>
               </article>
             ))}
@@ -231,10 +245,15 @@ export default function ModerationTab({
         )}
       </section>
 
+      <section className="rounded-lg border border-rose-200 bg-rose-50/40 p-6 shadow-sm xl:col-span-2">
+        <div className="mb-5 flex items-center gap-2 border-b border-rose-100 pb-3"><Ban className="h-4 w-4 text-rose-600" /><div><h3 className="text-lg font-bold text-slate-900">{translate('reportPostsTitle')}</h3><p className="text-xs text-slate-500">{translate('reportPostsDescription')}</p></div><span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">{reports.length}</span></div>
+        {reports.length === 0 ? <p className="rounded-lg border border-dashed border-rose-200 bg-white px-4 py-8 text-center text-sm text-slate-500">{translate('noOpenReports')}</p> : <div className="space-y-3">{reports.map((report) => <article key={report.id} className="rounded-lg border border-slate-200 bg-white p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">{report.reason === 'SPAM' ? translate('reportReasonSpam') : report.reason === 'HARASSMENT' ? translate('reportReasonHarassment') : report.reason === 'HATE' ? translate('reportReasonHate') : report.reason === 'SEXUAL' ? translate('reportReasonSexual') : report.reason === 'VIOLENCE' ? translate('reportReasonViolence') : translate('reportReasonOther')}</p><p className="mt-1 text-xs text-slate-500">{translate('reportedBy')} {report.reporter?.fullName || report.reporter?.email || translate('unknownMember')} · {new Date(report.createdAt).toLocaleString(locale)}</p></div><span className="rounded-full bg-rose-100 px-2 py-1 text-[11px] font-bold text-rose-700">{translate('openStatus')}</span></div>{report.details && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{report.details}</p>}{report.post?.body && <p className="mt-3 line-clamp-2 text-sm text-slate-600">“{report.post.body}”</p>}<div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => void handleReportStatus(report.id, 'DISMISSED')} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600">{translate('dismissReport')}</button><button type="button" onClick={() => void handleReportStatus(report.id, 'RESOLVED')} className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white">{translate('resolveReport')}</button></div></article>)}</div>}
+      </section>
+
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
           <Users className="h-4 w-4 text-blue-600" />
-          <h3 className="text-lg font-bold text-slate-900">Đơn tham gia chờ duyệt</h3>
+          <h3 className="text-lg font-bold text-slate-900">{translate('pendingJoinRequests')}</h3>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
             {requests.length}
           </span>
@@ -243,17 +262,17 @@ export default function ModerationTab({
         {isLoading ? (
           <div className="flex items-center justify-center py-10 text-sm text-slate-500">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Đang tải dữ liệu...
+            {translate('loadingData')}
           </div>
         ) : requests.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-            Chưa có đơn xin tham gia nào.
+            {translate('noJoinRequests')}
           </div>
         ) : (
           <div className="space-y-3">
             {requests.map((req) => {
               const userId = req.member?.userId || req.user?.id || '';
-              const fullName = req.user?.fullName || req.user?.email || 'Người dùng';
+              const fullName = req.user?.fullName || req.user?.email || translate('unknownMember');
               const avatarUrl = req.user?.avatarUrl;
               const joinedAt = req.member?.joinedAt;
               const joinAnswers = req.member?.joinAnswers;
@@ -287,7 +306,7 @@ export default function ModerationTab({
                             {fullName}
                           </h4>
                           <p className="text-[11px] text-slate-400">
-                            Gửi đơn: {joinedAt ? new Date(joinedAt).toLocaleDateString('vi-VN') : 'Không rõ'}
+                            {translate('submittedAt', { date: joinedAt ? new Date(joinedAt).toLocaleDateString(locale) : translate('unknownDate') })}
                           </p>
                         </div>
                       </button>
@@ -331,10 +350,10 @@ export default function ModerationTab({
       <div className="space-y-6">
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'Đang hoạt động', value: joinedMembers.length, tone: 'text-slate-900' },
-            { label: 'Chờ duyệt', value: requests.length, tone: 'text-amber-700' },
-            { label: 'Đã mời', value: invitedMembers.length, tone: 'text-blue-700' },
-            { label: 'Đã cấm', value: bannedMembers.length, tone: 'text-rose-700' },
+            { label: translate('activeMembers'), value: joinedMembers.length, tone: 'text-slate-900' },
+            { label: translate('pendingMembers'), value: requests.length, tone: 'text-amber-700' },
+            { label: translate('invitedMembers'), value: invitedMembers.length, tone: 'text-blue-700' },
+            { label: translate('bannedMembers'), value: bannedMembers.length, tone: 'text-rose-700' },
           ].map((item) => (
             <div key={item.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
@@ -348,18 +367,18 @@ export default function ModerationTab({
         <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
             <UserPlus className="h-4 w-4 text-blue-600" />
-            <h3 className="text-lg font-bold text-slate-900">Mời thành viên mới</h3>
+            <h3 className="text-lg font-bold text-slate-900">{translate('inviteNewMember')}</h3>
           </div>
 
           <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
             {isOwner
-              ? 'Chủ sở hữu có thể mời người dùng vào vai trò Thành viên hoặc Quản trị viên.'
-              : 'Quản trị viên chỉ có thể mời người dùng vào vai trò Thành viên.'}
+              ? translate('ownerInviteDescription')
+              : translate('moderatorInviteDescription')}
           </div>
 
           <div className="mb-4">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Vai trò khi mời
+              {translate('inviteRoleLabel')}
             </p>
             <div className="inline-flex rounded-lg bg-slate-100 p-1">
               <button
@@ -371,7 +390,7 @@ export default function ModerationTab({
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                Thành viên
+                {translate('memberRole')}
               </button>
               <button
                 type="button"
@@ -387,7 +406,7 @@ export default function ModerationTab({
                     : 'text-slate-500 hover:text-slate-700'
                 } ${!isOwner ? 'cursor-not-allowed opacity-50' : ''}`}
               >
-                Quản trị viên
+                {translate('moderatorRole')}
               </button>
             </div>
           </div>
@@ -417,7 +436,7 @@ export default function ModerationTab({
                       openUserProfile(
                         {
                           id: user.id,
-                          fullName: user.fullName || 'Người dùng',
+                          fullName: user.fullName || translate('unknownMember'),
                           avatarUrl: user.avatarUrl,
                         },
                         rect,
@@ -429,7 +448,7 @@ export default function ModerationTab({
                     <CommunityAvatar src={user.avatarUrl} name={user.fullName || 'U'} size={32} />
                     <div className="min-w-0">
                       <p className="truncate text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        {user.fullName || 'Người dùng'}
+                        {user.fullName || translate('unknownMember')}
                       </p>
                       <p className="truncate text-[10px] text-slate-400">{user.email}</p>
                     </div>
@@ -440,7 +459,7 @@ export default function ModerationTab({
                     disabled={isInviting[user.id]}
                     className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-60 shadow-2xs"
                   >
-                    {isInviting[user.id] ? translate('sending') : 'Mời'}
+                    {isInviting[user.id] ? translate('sending') : translate('inviteAction')}
                   </button>
                 </div>
               ))}
@@ -455,21 +474,21 @@ export default function ModerationTab({
         <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
             <UserPlus className="h-4 w-4 text-slate-600" />
-            <h3 className="text-base font-bold text-slate-900">Lời mời đã gửi</h3>
+            <h3 className="text-base font-bold text-slate-900">{translate('sentInvitations')}</h3>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
               {invitedMembers.length}
             </span>
           </div>
 
           {isLoading ? (
-            <div className="py-6 text-center text-xs text-slate-400">Đang tải...</div>
+            <div className="py-6 text-center text-xs text-slate-400">{translate('loadingData')}</div>
           ) : invitedMembers.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400">Chưa có lời mời nào.</div>
+            <div className="py-6 text-center text-xs text-slate-400">{translate('noInvitations')}</div>
           ) : (
             <div className="space-y-3">
               {invitedMembers.map((invited) => {
                 const targetUserId = invited.user?.id || invited.member?.userId || '';
-                const fullName = invited.user?.fullName || invited.user?.email || 'Người dùng';
+                const fullName = invited.user?.fullName || invited.user?.email || translate('unknownMember');
                 const avatarUrl = invited.user?.avatarUrl;
                 const role = invited.member?.role || 'MEMBER';
 
@@ -504,7 +523,7 @@ export default function ModerationTab({
                           {fullName}
                         </p>
                         <p className="truncate text-[11px] font-semibold text-slate-400">
-                          {role === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên'} • Chờ chấp thuận
+                          {role === 'MODERATOR' ? translate('moderatorRole') : translate('memberRole')} • {translate('pendingMemberStatus')}
                         </p>
                       </div>
                     </button>
@@ -527,21 +546,21 @@ export default function ModerationTab({
         <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
             <Ban className="h-4 w-4 text-rose-600" />
-            <h3 className="text-base font-bold text-slate-900">Thành viên đã cấm</h3>
+            <h3 className="text-base font-bold text-slate-900">{translate('bannedMembers')}</h3>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
               {bannedMembers.length}
             </span>
           </div>
 
           {isLoading ? (
-            <div className="py-6 text-center text-xs text-slate-400">Đang tải...</div>
+            <div className="py-6 text-center text-xs text-slate-400">{translate('loadingData')}</div>
           ) : bannedMembers.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400">Chưa có thành viên nào bị cấm.</div>
+            <div className="py-6 text-center text-xs text-slate-400">{translate('noBannedMembers')}</div>
           ) : (
             <div className="space-y-3">
               {bannedMembers.map((member) => {
                 const targetUserId = member.user?.id || member.member?.userId || '';
-                const fullName = member.user?.fullName || member.user?.email || 'Người dùng';
+                const fullName = member.user?.fullName || member.user?.email || translate('unknownMember');
                 const avatarUrl = member.user?.avatarUrl;
 
                 return (
@@ -574,7 +593,7 @@ export default function ModerationTab({
                         <p className="truncate font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
                           {fullName}
                         </p>
-                        <p className="truncate text-[11px] font-medium text-rose-500">{translate('bannedStatus')} khỏi cộng đồng</p>
+                        <p className="truncate text-[11px] font-medium text-rose-500">{translate('bannedFromCommunity')}</p>
                       </div>
                     </button>
 
@@ -582,7 +601,7 @@ export default function ModerationTab({
                       type="button"
                       onClick={() => targetUserId && setUnbanUserId(targetUserId)}
                       className="rounded-lg border border-slate-200 bg-white p-2 text-blue-600 shadow-2xs transition-colors hover:bg-blue-50 hover:border-blue-200 shrink-0"
-                      title="Gỡ cấm"
+                      title={translate('unbanAction')}
                     >
                       <Check className="h-4 w-4" />
                     </button>

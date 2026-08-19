@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   CheckCircle2,
   Clock3,
@@ -49,22 +50,23 @@ const roleMap: Record<'organizers' | 'referees' | 'viewers', string> = {
 
 const refereeStatusMeta: Record<
   string,
-  { label: string; badgeClassName: string; cardClassName: string; icon: React.ReactNode }
+  { labelKey: 'statusInvited' | 'statusAccepted' | 'statusDeclined'; badgeClassName: string; cardClassName: string; icon: React.ReactNode }
+
 > = {
   INVITED: {
-    label: 'Chờ phản hồi',
+    labelKey: 'statusInvited',
     badgeClassName: 'bg-amber-50 text-amber-700 border-amber-200',
     cardClassName: 'border-amber-200 bg-amber-50/50',
     icon: <Clock3 className="w-4 h-4 text-blue-600" />,
   },
   ACCEPTED: {
-    label: 'Đã nhận lời',
+    labelKey: 'statusAccepted',
     badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
     cardClassName: 'border-blue-200 bg-blue-50/40',
     icon: <CheckCircle2 className="w-4 h-4 text-blue-600" />,
   },
   DECLINED: {
-    label: 'Đã từ chối',
+    labelKey: 'statusDeclined',
     badgeClassName: 'bg-rose-50 text-rose-700 border-slate-200',
     cardClassName: 'border-slate-200 bg-rose-50/40',
     icon: <XCircle className="w-4 h-4 text-rose-600" />,
@@ -72,6 +74,7 @@ const refereeStatusMeta: Record<
 };
 
 export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
+  const translate = useTranslations('OrganizerPermissions');
   const [subTab, setSubTab] = useState<'organizers' | 'referees' | 'viewers'>('organizers');
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [referees, setReferees] = useState<TournamentReferee[]>([]);
@@ -96,11 +99,11 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
       if (refereesRes.data) setReferees(refereesRes.data);
     } catch (err) {
       console.error(err);
-      toast.error('Không thể tải danh sách phân quyền.');
+      toast.error(translate('loadFailed'));
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, translate]);
 
   useEffect(() => {
     void fetchData();
@@ -125,11 +128,11 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
     try {
       if (subTab === 'referees') {
         await tournamentsApi.addTournamentReferee(id, trimmedEmail);
-        toast.success('Đã gửi lời mời trọng tài. Họ sẽ thấy lời mời trong thông báo hệ thống và xác nhận tại đây.');
+        toast.success(translate('refereeInviteSent'));
       } else {
         await tournamentsApi.addTournamentStaff(id, { email: trimmedEmail, role: currentRole });
-        const roleLabel = currentRole === 'REFEREE' ? 'trọng tài' : currentRole === 'SPECTATOR' ? 'khách xem' : 'ban tổ chức';
-        toast.success(`Đã thêm ${trimmedEmail} làm ${roleLabel}. Người dùng này sẽ được gửi thông báo và xuất hiện trong danh sách ${roleLabel} bên dưới.`);
+        const roleLabel = currentRole === 'REFEREE' ? translate('refereeRole') : currentRole === 'SPECTATOR' ? translate('viewerRole') : translate('organizerRole');
+        toast.success(translate('staffAdded', { email: trimmedEmail, role: roleLabel }));
       }
       setEmail('');
       await fetchData();
@@ -143,7 +146,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
   const handleRemove = async (userId: string) => {
     try {
       await tournamentsApi.removeTournamentStaff(id, userId);
-      toast.success('Đã xóa nhân sự.');
+      toast.success(translate('staffRemoved'));
       await fetchData();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -154,7 +157,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
     try {
       setBusyRefereeId(referee.id);
       await tournamentsApi.addTournamentReferee(id, referee.email);
-      toast.success('Đã gửi lại lời mời trọng tài.');
+      toast.success(translate('refereeInviteResent'));
       await fetchData();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -167,7 +170,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
     try {
       setBusyRefereeId(referee.id);
       await tournamentsApi.removeTournamentRefereeInvite(id, referee.id);
-      toast.success('Đã thu hồi lời mời trọng tài.');
+      toast.success(translate('refereeInviteRevoked'));
       await fetchData();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -177,19 +180,19 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
   };
 
   const filterEmptyLabelMap: Record<typeof refereeFilter, string> = {
-    all: 'Chưa có trọng tài nào. Hãy gửi lời mời đầu tiên bằng email ở trên.',
-    INVITED: 'Hiện không còn lời mời nào đang chờ phản hồi.',
-    ACCEPTED: 'Chưa có trọng tài nào nhận lời để sẵn sàng điều hành trận.',
-    DECLINED: 'Chưa có trọng tài nào từ chối lời mời.',
+    all: translate('noReferees'),
+    INVITED: translate('noPendingInvitations'),
+    ACCEPTED: translate('noAcceptedReferees'),
+    DECLINED: translate('noDeclinedReferees'),
   };
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <div className="border-b pb-2 flex flex-col gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Quản lý phân quyền</h2>
+          <h2 className="text-xl font-bold text-slate-900">{translate('title')}</h2>
           <p className="text-xs text-slate-500 mt-1 font-semibold">
-            Mời đúng người vào đúng vai trò để vận hành giải rõ ràng và có kiểm soát.
+            {translate('description')}
           </p>
         </div>
         <div className="flex border-b border-slate-200 gap-6 mt-2">
@@ -204,7 +207,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                   : 'border-transparent text-slate-500 hover:text-slate-800')
               }
             >
-              {tab === 'organizers' ? 'Ban tổ chức' : tab === 'referees' ? 'Trọng tài' : 'Khách xem'}
+              {tab === 'organizers' ? translate('organizersTab') : tab === 'referees' ? translate('refereesTab') : translate('viewersTab')}
             </button>
           ))}
         </div>
@@ -214,29 +217,29 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-700">Đang chờ phản hồi</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-amber-700">{translate('pendingSummary')}</div>
               <div className="mt-2 text-3xl font-bold text-amber-800">{pendingReferees.length}</div>
-              <div className="mt-1 text-xs text-amber-700">Đã mời nhưng chưa nhận vai trò.</div>
+              <div className="mt-1 text-xs text-amber-700">{translate('pendingSummaryDescription')}</div>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Đã nhận lời</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">{translate('acceptedSummary')}</div>
               <div className="mt-2 text-3xl font-bold text-emerald-800">{acceptedReferees.length}</div>
-              <div className="mt-1 text-xs text-emerald-700">Có thể phân công vào các trận đấu.</div>
+              <div className="mt-1 text-xs text-emerald-700">{translate('acceptedSummaryDescription')}</div>
             </div>
             <div className="rounded-lg border border-slate-200 bg-rose-50/70 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-rose-700">Đã từ chối</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-rose-700">{translate('declinedSummary')}</div>
               <div className="mt-2 text-3xl font-bold text-rose-800">{declinedReferees.length}</div>
-              <div className="mt-1 text-xs text-rose-700">Cần mời người thay thế nếu vẫn thiếu.</div>
+              <div className="mt-1 text-xs text-rose-700">{translate('declinedSummaryDescription')}</div>
             </div>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-600">
             {refereeFilter === 'INVITED'
-              ? 'Các lời mời đang chờ phản hồi có thể được thu hồi nếu bạn muốn đổi người.'
+              ? translate('invitedGuidance')
               : refereeFilter === 'DECLINED'
-                ? 'Với người đã từ chối, bạn có thể mời lại nếu đã trao đổi xong hoặc họ đổi quyết định.'
+                ? translate('declinedGuidance')
                 : refereeFilter === 'ACCEPTED'
-                  ? 'Người đã nhận lời là nguồn trọng tài sẵn sàng để bạn gán vào lịch trận.'
-                  : 'Theo dõi toàn bộ trạng thái trọng tài tại đây để tránh thiếu người ở ngày thi đấu.'}
+                  ? translate('acceptedGuidance')
+                  : translate('allGuidance')}
           </div>
         </div>
       ) : null}
@@ -247,7 +250,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
       >
         <div className="flex-1 w-full space-y-1">
           <label className="block text-xs font-bold text-slate-700">
-            {subTab === 'referees' ? 'Email trọng tài' : 'Email người dùng'}
+            {subTab === 'referees' ? translate('refereeEmailLabel') : translate('userEmailLabel')}
           </label>
           <Input
             type="email"
@@ -265,11 +268,11 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
         >
           {isAdding
             ? subTab === 'referees'
-              ? 'Đang gửi mời...'
-              : 'Đang thêm...'
+                            ? translate('sendingInvitation')
+              : translate('adding')
             : subTab === 'referees'
-              ? 'Gửi lời mời'
-              : 'Thêm'}
+              ? translate('sendInvitation')
+              : translate('add')}
         </Button>
       </form>
 
@@ -283,23 +286,24 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
             <UserCheck className="w-5 h-5 text-blue-600" />
           )}
           {subTab === 'referees'
-            ? 'Danh sách trọng tài và trạng thái phản hồi'
-            : `Danh sách ${subTab === 'organizers' ? 'ban tổ chức' : 'khách xem'}`}
+            ? translate('refereeList')
+            : translate('staffList', { role: subTab === 'organizers' ? translate('organizerRole') : translate('viewerRole') })}
         </h3>
 
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-slate-500 text-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Đang tải dữ liệu phân quyền...
+                        {translate('loading')}
+
           </div>
         ) : subTab === 'referees' ? (
           <>
             <div className="flex flex-wrap gap-2">
               {[
-                { key: 'all', label: 'Tất cả', count: referees.length },
-                { key: 'INVITED', label: 'Chờ phản hồi', count: pendingReferees.length },
-                { key: 'ACCEPTED', label: 'Đã nhận lời', count: acceptedReferees.length },
-                { key: 'DECLINED', label: 'Đã từ chối', count: declinedReferees.length },
+                { key: 'all', label: translate('allFilter'), count: referees.length },
+                { key: 'INVITED', label: translate('statusInvited'), count: pendingReferees.length },
+                { key: 'ACCEPTED', label: translate('statusAccepted'), count: acceptedReferees.length },
+                { key: 'DECLINED', label: translate('statusDeclined'), count: declinedReferees.length },
               ].map((filterOption) => (
                 <button
                   key={filterOption.key}
@@ -345,15 +349,15 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                             <div className="text-[11px] text-slate-500 mt-1 truncate">{referee.email}</div>
                             <div className="text-xs text-slate-500 mt-1">
                               {referee.status === 'ACCEPTED'
-                                ? 'Đã sẵn sàng để được gán trận.'
+                                ? translate('refereeReady')
                                 : referee.status === 'DECLINED'
-                                  ? 'Người này đã từ chối lời mời hiện tại.'
-                                  : 'Đang chờ người dùng phản hồi lời mời.'}
+                                  ? translate('refereeDeclined')
+                                  : translate('refereeWaiting')}
                             </div>
                           </div>
                           <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold whitespace-nowrap ${meta.badgeClassName}`}>
                             {meta.icon}
-                            {meta.label}
+                            {translate(meta.labelKey)}
                           </span>
                         </div>
                         <div className="mt-3 flex justify-end gap-2">
@@ -367,7 +371,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                               className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50 font-bold"
                             >
                               {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1.5" />}
-                              Mời lại
+                              {translate('reinvite')}
                             </Button>
                           ) : null}
                           {referee.status === 'INVITED' ? (
@@ -380,7 +384,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                               className="h-8 border-rose-200 text-rose-700 hover:bg-rose-50 font-bold"
                             >
                               {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
-                              Thu hồi
+                              {translate('revoke')}
                             </Button>
                           ) : null}
                         </div>
@@ -394,7 +398,8 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
           </>
         ) : filteredStaff.length === 0 ? (
           <div className="text-center py-10 text-slate-400 italic text-xs border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-            Chưa có ai. Nhập email bên trên để thêm vào vai trò này.
+                        {translate('noStaff')}
+
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -417,7 +422,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                 <button
                   onClick={() => handleRemove(member.userId)}
                   className="text-rose-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                  title="Xóa"
+                  title={translate('remove')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -431,22 +436,22 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
         <ModalContent className="max-w-md rounded-lg bg-white p-6">
           <ModalHeader>
             <ModalTitle className="text-slate-900">
-              {confirmAction?.type === 'revoke' ? 'Thu hồi lời mời trọng tài?' : 'Gửi lại lời mời trọng tài?'}
+              {confirmAction?.type === 'revoke' ? translate('revokeTitle') : translate('reinviteTitle')}
             </ModalTitle>
             <ModalDescription className="text-slate-500">
               {confirmAction?.type === 'revoke'
-                ? `Lời mời đang chờ phản hồi của ${confirmAction?.referee.fullName} sẽ bị xóa khỏi danh sách chờ.`
-                : `Hệ thống sẽ gửi lại lời mời trọng tài cho ${confirmAction?.referee.fullName} qua email ${confirmAction?.referee.email}.`}
+                ? translate('revokeDescription', { name: confirmAction?.referee.fullName ?? '' })
+                : translate('reinviteDescription', { name: confirmAction?.referee.fullName ?? '', email: confirmAction?.referee.email ?? '' })}
             </ModalDescription>
           </ModalHeader>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
             {confirmAction?.type === 'revoke'
-              ? 'Chỉ nên thu hồi khi bạn đã quyết định đổi người hoặc lời mời được gửi nhầm.'
-              : 'Chỉ nên mời lại khi bạn đã trao đổi trước với người được mời để tránh gây phiền.'}
+              ? translate('revokeAdvice')
+              : translate('reinviteAdvice')}
           </div>
           <ModalFooter className="mt-2">
             <Button variant="outline" onClick={() => setConfirmAction(null)} className="border-slate-200">
-              Hủy
+              {translate('cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -467,9 +472,9 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
               {confirmAction && busyRefereeId === confirmAction.referee.id ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : confirmAction?.type === 'revoke' ? (
-                'Xác nhận thu hồi'
+                translate('confirmRevoke')
               ) : (
-                'Xác nhận mời lại'
+                translate('confirmReinvite')
               )}
             </Button>
           </ModalFooter>

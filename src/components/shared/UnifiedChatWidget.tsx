@@ -1300,17 +1300,28 @@ export default function UnifiedChatWidget() {
             if (!line.startsWith('data: ')) return;
             const payload = line.slice(6);
             if (payload === '[DONE]') return;
+            let parsed: unknown;
             try {
-              const parsed: unknown = JSON.parse(payload);
-              if (
-                typeof parsed === 'object' &&
-                parsed !== null &&
-                'content' in parsed &&
-                typeof parsed.content === 'string'
-              )
-                append(parsed.content);
+              parsed = JSON.parse(payload);
             } catch {
-              // wait next chunk
+              // Wait for a complete SSE payload.
+              return;
+            }
+            if (
+              typeof parsed === 'object' &&
+              parsed !== null &&
+              'error' in parsed &&
+              typeof parsed.error === 'string'
+            ) {
+              throw new Error(parsed.error);
+            }
+            if (
+              typeof parsed === 'object' &&
+              parsed !== null &&
+              'content' in parsed &&
+              typeof parsed.content === 'string'
+            ) {
+              append(parsed.content);
             }
           }),
         );

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Settings, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -54,6 +55,7 @@ export function ConfigTab({
   bracketTypeState,
   setBracketTypeState,
 }: ConfigTabProps) {
+  const translate = useTranslations('TournamentDetail');
   const isRegistrationOpen = isTournamentRegistrationOpen(tournament.status) || isTournamentRegistrationClosed(tournament.status);
   // Category is authoritative. Older tournaments can contain a stale
   // sportRules.kind from the previous preset, which must not relabel the UI.
@@ -61,13 +63,13 @@ export function ConfigTab({
     getSportRuleKind(tournament.sportRules),
     tournament.category ?? null,
   );
-  const presentation = getSportRulePresentation(sportRuleKind);
+  const presentation = getSportRulePresentation(sportRuleKind, translate);
   const setUnitLabel = presentation.setUnitLabel;
   const winByTwoLabel = presentation.winByTwoLabel;
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <div className="flex items-center justify-between border-b pb-2 mb-4">
-        <h2 className="text-xl font-bold text-slate-900">Cấu hình luật chơi</h2>
+        <h2 className="text-xl font-bold text-slate-900">{translate('configurationTitle')}</h2>
       </div>
 
       {tournament.inviteCode && (
@@ -76,9 +78,9 @@ export function ConfigTab({
             <QRCodeSVG value={tournament.inviteCode} size={120} level="M" />
           </div>
           <div className="space-y-2 text-center md:text-left flex-1">
-            <h3 className="text-lg font-bold text-blue-900">Mã mời giải đấu (QR Code)</h3>
+            <h3 className="text-lg font-bold text-blue-900">{translate('inviteCodeTitle')}</h3>
             <p className="text-sm text-blue-800 leading-relaxed">
-              Hãy chia sẻ mã QR này hoặc mã <strong>{tournament.inviteCode}</strong> cho vận động viên để họ có quyền đăng ký tham gia giải đấu của bạn.
+              {translate('inviteCodeDescription', { code: tournament.inviteCode })}
             </p>
           </div>
         </div>
@@ -87,7 +89,7 @@ export function ConfigTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-2 bg-slate-50 border p-4 rounded-lg">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-slate-700">Giới hạn số đội đăng ký</label>
+            <label className="text-sm font-semibold text-slate-700">{translate('registrationLimit')}</label>
             <input
               type="checkbox"
               checked={isLimitEnabled}
@@ -97,7 +99,7 @@ export function ConfigTab({
           </div>
           {isLimitEnabled && (
             <Input
-              label="Số lượng đội đăng ký tối đa"
+              label={translate('maxRegistrationTeams')}
               type="number"
               value={maxParticipants}
               onChange={(e) => setMaxParticipants(Number(e.target.value))}
@@ -105,54 +107,54 @@ export function ConfigTab({
             />
           )}
           {!isLimitEnabled && (
-            <p className="text-xs font-semibold text-slate-400 mt-2">Không giới hạn số lượng đăng ký tham gia giải đấu.</p>
+            <p className="text-xs font-semibold text-slate-400 mt-2">{translate('unlimitedRegistration')}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-lg">
-          <label className="text-sm font-semibold text-slate-700">Nội dung / Thể loại thi đấu</label>
+          <label className="text-sm font-semibold text-slate-700">{translate('matchContent')}</label>
           <select
             value={matchType}
             onChange={(e) => setMatchType(e.target.value)}
             disabled={isRegistrationOpen}
             className={`border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11 ${isRegistrationOpen ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
-            <option value="MALE_SINGLES">Đơn Nam</option>
-            <option value="FEMALE_SINGLES">Đơn Nữ</option>
-            <option value="MALE_DOUBLES">Đôi Nam</option>
-            <option value="FEMALE_DOUBLES">Đôi Nữ</option>
-            <option value="MIXED_DOUBLES">Đôi Nam Nữ (Mixed Doubles)</option>
+            <option value="MALE_SINGLES">{translate('maleSingles')}</option>
+            <option value="FEMALE_SINGLES">{translate('femaleSingles')}</option>
+            <option value="MALE_DOUBLES">{translate('maleDoubles')}</option>
+            <option value="FEMALE_DOUBLES">{translate('femaleDoubles')}</option>
+            <option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option>
           </select>
           {isRegistrationOpen && (
             <p className="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
-              <span>⚠</span> Không thể thay đổi nội dung thi đấu khi đang mở đăng ký.
+              <span>⚠</span> {translate('cannotChangeContent')}
             </p>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-lg">
-          <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu (Sơ đồ giải)</label>
+          <label className="text-sm font-semibold text-slate-700">{translate('formatTitle')}</label>
           <select
             value={bracketTypeState}
             onChange={(e) => setBracketTypeState(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT')}
             disabled={isRegistrationOpen}
             className={`border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11 ${isRegistrationOpen ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
-            <option value="SINGLE_ELIMINATION">Loại Trực Tiếp (Single Elimination)</option>
-            <option value="DOUBLE_ELIMINATION">Nhánh Thắng / Nhánh Thua (Double Elimination)</option>
-            <option value="ROUND_ROBIN">Vòng Tròn Tính Điểm (Round Robin)</option>
-            <option value="GROUP_STAGE_KNOCKOUT">Vòng Bảng + Loại Trực Tiếp (Group Stage + Playoff)</option>
+            <option value="SINGLE_ELIMINATION">{translate('singleEliminationFormat')}</option>
+            <option value="DOUBLE_ELIMINATION">{translate('doubleEliminationFormat')}</option>
+            <option value="ROUND_ROBIN">{translate('roundRobinFormat')}</option>
+            <option value="GROUP_STAGE_KNOCKOUT">{translate('groupStagePlayoffFormat')}</option>
           </select>
           {isRegistrationOpen && (
             <p className="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
-              <span>⚠</span> Không thể thay đổi thể thức thi đấu khi đang mở đăng ký.
+              <span>⚠</span> {translate('cannotChangeFormat')}
             </p>
           )}
           {bracketTypeState === 'ROUND_ROBIN' && isLimitEnabled && maxParticipants > 15 && (
             <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2.5">
               <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-900 leading-relaxed font-medium">
-                <strong className="font-bold text-amber-950">⚠️ Giới hạn số lượng đội:</strong> Thể thức Vòng Tròn hỗ trợ tối đa <strong>15 đội/bảng</strong> để đảm bảo lịch thi đấu khả thi. Với quy mô <strong>{maxParticipants} đội</strong>, bạn nên chuyển sang thể thức <strong>Vòng Bảng + Loại Trực Tiếp (Group Stage + Knockout)</strong>.
+                <strong className="font-bold text-amber-950">⚠️ {translate('registrationLimit')}:</strong> {translate('roundRobinWarning', { participants: maxParticipants })}
               </div>
             </div>
           )}
@@ -161,13 +163,13 @@ export function ConfigTab({
 
       {/* Sport Rules Card */}
       <div className="bg-slate-50 rounded-lg border p-5 space-y-4">
-        <h4 className="font-bold text-slate-800 border-b pb-2">Luật tính điểm mặc định</h4>
+        <h4 className="font-bold text-slate-800 border-b pb-2">{translate('rulesDefaultsTitle')}</h4>
         <p className="text-xs font-semibold text-slate-500">
           {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-slate-700">Số Set chạm thắng</label>
+            <label className="text-sm font-semibold text-slate-700">{translate('setsToWin')}</label>
             <select
               value={setsToWin}
               onChange={(e) => setSetsToWin(Number(e.target.value))}
@@ -206,7 +208,7 @@ export function ConfigTab({
           disabled={isSavingConfig}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
         >
-          {isSavingConfig ? 'Đang lưu...' : 'Lưu cấu hình mặc định'}
+          {isSavingConfig ? translate('saving') : translate('saveDefaultConfiguration')}
         </Button>
       </div>
     </div>

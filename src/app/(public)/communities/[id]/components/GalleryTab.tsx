@@ -104,7 +104,7 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
   };
 
   const displayImages: Array<{ id: string; imageUrl: string; title: string; isSystem?: boolean }> = [
-    ...(community?.logoUrl ? [{ id: 'sys-logo', imageUrl: community.logoUrl, title: 'Logo CLB', isSystem: true }] : []),
+    ...(community?.logoUrl ? [{ id: 'sys-logo', imageUrl: community.logoUrl, title: translate('galleryClubLogo'), isSystem: true }] : []),
     ...(community?.bannerUrl ? [{ id: 'sys-banner', imageUrl: community.bannerUrl, title: translate('bannerImageTitle'), isSystem: true }] : []),
     ...images.map(img => ({ id: img.id, imageUrl: img.imageUrl, title: translate('activityImageTitle'), isSystem: false })),
   ];
@@ -125,7 +125,7 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
             >
               {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              {isUploading ? 'Đang tải lên...' : 'Upload ảnh mới'}
+              {isUploading ? translate('galleryUploading') : translate('galleryUploadNewImage')}
             </Button>
           </>
         )}

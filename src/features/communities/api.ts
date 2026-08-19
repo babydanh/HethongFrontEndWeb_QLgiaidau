@@ -90,6 +90,19 @@ export interface MemberStreak {
   label?: string;
 }
 
+export interface CommunityReport {
+  id: string;
+  communityId: string;
+  postId: string | null;
+  reason: 'SPAM' | 'HARASSMENT' | 'HATE' | 'SEXUAL' | 'VIOLENCE' | 'OTHER' | string;
+  details: string | null;
+  status: 'OPEN' | 'REVIEWING' | 'RESOLVED' | 'DISMISSED' | string;
+  createdAt: string;
+  resolvedAt: string | null;
+  post?: { id: string; body: string | null; status: string } | null;
+  reporter?: { id: string; fullName: string | null; email: string | null } | null;
+}
+
 export interface CommunityMemberRecord {
   member: {
     id: string;
@@ -213,6 +226,15 @@ export const communitiesApi = {
 
   reportPost: (communityId: string, postId: string, data: { reason: string; details?: string }) =>
     api.post<ApiResponse<unknown>>(`/communities/${communityId}/posts/${postId}/report`, data),
+
+  getCommunityReports: (communityId: string, status?: string) =>
+    api.get<ApiResponse<Array<{ report: CommunityReport; post: CommunityReport['post']; reporter: CommunityReport['reporter'] }>>>(`/communities/${communityId}/moderation/reports`, { params: status ? { status } : undefined }).then((response) => ({
+      ...response,
+      data: (response.data ?? []).map((item) => ({ ...item.report, post: item.post, reporter: item.reporter })),
+    })),
+
+  updateCommunityReport: (communityId: string, reportId: string, status: CommunityReport['status']) =>
+    api.patch<ApiResponse<CommunityReport>>(`/communities/${communityId}/moderation/reports/${reportId}`, { status }),
 
   votePoll: (communityId: string, pollId: string, optionId: string) =>
     api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/vote`, { optionId }),

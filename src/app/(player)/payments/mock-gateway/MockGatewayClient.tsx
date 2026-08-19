@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { paymentsApi } from '@/features/payments/api';
 import { Button } from '@/components/ui/Button';
@@ -25,7 +26,7 @@ const GATEWAY_INFO: Record<string, { name: string; color: string; bgColor: strin
     borderColor: 'border-pink-200',
   },
   TRANSFER: {
-    name: 'Chuyển khoản ngân hàng',
+    name: 'TRANSFER',
     color: 'from-emerald-500 to-emerald-600',
     bgColor: 'bg-emerald-50',
     textColor: 'text-blue-600',
@@ -34,15 +35,17 @@ const GATEWAY_INFO: Record<string, { name: string; color: string; bgColor: strin
 };
 
 export default function MockGatewayClient() {
+  const translate = useTranslations('PaymentCheckout');
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const paymentId = searchParams.get('paymentId') || '';
   const gatewayParam = searchParams.get('gateway') || 'VNPAY';
   const amount = searchParams.get('amount') || '0';
-  const description = searchParams.get('description') || 'Thanh toán lệ phí giải đấu';
+  const description = searchParams.get('description') || translate('defaultDescription');
 
   const gateway = GATEWAY_INFO[gatewayParam.toUpperCase()] || GATEWAY_INFO.VNPAY;
+  const gatewayName = gatewayParam.toUpperCase() === 'TRANSFER' ? translate('bankTransferGateway') : gateway.name;
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
@@ -108,17 +111,17 @@ export default function MockGatewayClient() {
   const handleSubmit = async () => {
     const otpCode = otp.join('');
     if (otpCode.length !== 6) {
-      toast.error('Vui lòng nhập đầy đủ 6 chữ số mã OTP');
+      toast.error(translate('otpIncomplete'));
       return;
     }
 
     if (isExpired) {
-      toast.error('Mã OTP đã hết hạn. Vui lòng quay lại và thử lại.');
+      toast.error(translate('otpExpiredError'));
       return;
     }
 
     if (!paymentId) {
-      toast.error('Thiếu thông tin giao dịch');
+      toast.error(translate('missingTransaction'));
       return;
     }
 
@@ -126,7 +129,7 @@ export default function MockGatewayClient() {
       setIsSubmitting(true);
       setIsVerifying(true);
       await paymentsApi.mockVerify(paymentId);
-      toast.success('Xác thực OTP thành công!');
+      toast.success(translate('otpSuccess'));
       router.push(`/payments/result?paymentId=${paymentId}&status=success`);
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -142,15 +145,15 @@ export default function MockGatewayClient() {
 
   const handleResendOtp = () => {
     setTimeLeft(180);
-    toast.success('Mã OTP mới đã được gửi đến số điện thoại của bạn');
+    toast.success(translate('resendOtpSuccess'));
   };
 
   if (!paymentId) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
         <AlertTriangle className="w-12 h-12 text-blue-500" />
-        <p className="text-slate-600 font-medium">Thiếu thông tin giao dịch</p>
-        <Button onClick={() => router.push('/tournaments')}>Quay lại danh sách giải</Button>
+        <p className="text-slate-600 font-medium">{translate('missingTransaction')}</p>
+        <Button onClick={() => router.push('/tournaments')}>{translate('backToList')}</Button>
       </div>
     );
   }
@@ -163,7 +166,7 @@ export default function MockGatewayClient() {
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition-colors mb-6 text-sm font-semibold"
         >
-          <ChevronLeft className="w-4 h-4" /> Quay lại
+          <ChevronLeft className="w-4 h-4" /> {translate('back')}
         </button>
 
         {/* Gateway Card */}
@@ -175,8 +178,8 @@ export default function MockGatewayClient() {
                 {gatewayParam.toUpperCase() === 'VNPAY' ? 'VN' : gatewayParam.toUpperCase() === 'MOMO' ? 'Mo' : '$'}
               </span>
             </div>
-            <h1 className="text-xl font-bold">Thanh toán qua {gateway.name}</h1>
-            <p className="text-sm text-white/70 mt-1">Cổng thanh toán mô phỏng (Mock Gateway)</p>
+            <h1 className="text-xl font-bold">{translate('gatewayPaymentTitle', { gateway: gatewayName })}</h1>
+            <p className="text-sm text-white/70 mt-1">{translate('mockGatewaySubtitle')}</p>
           </div>
 
           {/* Content */}
@@ -185,18 +188,18 @@ export default function MockGatewayClient() {
             {/* Amount & Transaction ID */}
             <div className={`${gateway.bgColor} border ${gateway.borderColor} rounded-lg p-5 space-y-3`}>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600 font-medium">Số tiền</span>
+                <span className="text-sm text-slate-600 font-medium">{translate('amountLabel').replace(':', '')}</span>
                 <span className={`text-2xl font-bold ${gateway.textColor}`}>
                   {formatCurrency(Number(amount))}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600 font-medium">Mã giao dịch</span>
+                <span className="text-sm text-slate-600 font-medium">{translate('transactionId')}</span>
                 <span className="text-sm font-bold text-slate-800 font-mono">{paymentId}</span>
               </div>
               {description && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600 font-medium">Mô tả</span>
+                  <span className="text-sm text-slate-600 font-medium">{translate('descriptionLabel')}</span>
                   <span className="text-sm font-semibold text-slate-700 text-right max-w-[200px] truncate">{description}</span>
                 </div>
               )}
@@ -205,10 +208,10 @@ export default function MockGatewayClient() {
             {/* OTP Input */}
             <div className="space-y-3">
               <label className="block text-sm font-bold text-slate-700 text-center">
-                Nhập mã OTP
+                {translate('enterOtp')}
               </label>
               <p className="text-xs text-slate-400 text-center">
-                Mã OTP gồm 6 chữ số đã được gửi đến số điện thoại đăng ký của bạn
+                {translate('otpSent')}
               </p>
 
               <div className="flex justify-center gap-3 py-2">
@@ -243,7 +246,7 @@ export default function MockGatewayClient() {
               <span className={`font-bold font-mono tracking-wider ${
                 isExpired ? 'text-rose-500' : timeLeft <= 30 ? 'text-blue-500' : 'text-slate-600'
               }`}>
-                Còn {formatTime(timeLeft)}
+                {translate('timeRemaining', { time: formatTime(timeLeft) })}
               </span>
             </div>
 
@@ -252,8 +255,8 @@ export default function MockGatewayClient() {
               <div className="bg-rose-50 border border-slate-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-bold text-rose-800">Mã OTP đã hết hạn</p>
-                  <p className="text-xs text-rose-600 mt-1">Vui lòng nhấn &quot;Gửi lại mã&quot; để nhận mã OTP mới.</p>
+                  <p className="text-sm font-bold text-rose-800">{translate('otpExpiredTitle')}</p>
+                  <p className="text-xs text-rose-600 mt-1">{translate('otpExpiredHint')}</p>
                 </div>
               </div>
             )}
@@ -265,7 +268,7 @@ export default function MockGatewayClient() {
                 disabled={!isExpired && timeLeft > 120}
                 className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline underline-offset-2 disabled:text-slate-300 disabled:no-underline disabled:cursor-not-allowed"
               >
-                Gửi lại mã OTP
+                {translate('resendCode')}
               </button>
             </div>
 
@@ -273,8 +276,7 @@ export default function MockGatewayClient() {
             <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-4 border border-slate-100">
               <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
               <p>
-                Đây là cổng thanh toán mô phỏng dành cho mục đích kiểm thử. Mã OTP mặc định là <strong className="text-slate-600">123456</strong>.
-                Không có giao dịch thực tế nào được xử lý.
+                {translate('mockSecurityNotice', { otp: '123456' })}
               </p>
             </div>
 
@@ -286,7 +288,7 @@ export default function MockGatewayClient() {
                 disabled={isSubmitting}
                 className="flex-1 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-3 text-sm"
               >
-                Hủy
+                {translate('cancel')}
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -295,10 +297,10 @@ export default function MockGatewayClient() {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> {isVerifying ? 'Đang xác thực...' : 'Đang xử lý...'}
+                    <Loader2 className="w-4 h-4 animate-spin" /> {isVerifying ? translate('verifying') : translate('processing')}
                   </>
                 ) : (
-                  'Xác nhận thanh toán'
+                  translate('confirmPaymentAction')
                 )}
               </Button>
             </div>
@@ -308,7 +310,7 @@ export default function MockGatewayClient() {
 
         {/* Footer */}
         <p className="text-center text-[10px] text-slate-400 mt-6">
-          &copy; {new Date().getFullYear()} Quản Lý Giải Đấu - Mock Gateway (Môi trường kiểm thử)
+          &copy; {new Date().getFullYear()} {translate('mockFooter')}
         </p>
       </div>
     </div>

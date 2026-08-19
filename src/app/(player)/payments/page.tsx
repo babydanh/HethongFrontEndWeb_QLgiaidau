@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { paymentsApi } from '@/features/payments/api';
 import { Payment, PaymentStatus } from '@/types/payment';
 import { formatCurrency } from '@/utils/format';
@@ -19,16 +20,26 @@ import {
   History
 } from 'lucide-react';
 
-const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { bg: string; text: string; icon: typeof AlertCircle }> = {
-  PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ thanh toán', icon: AlertCircle },
-  COMPLETED: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Thành công', icon: CheckCircle2 },
-  FAILED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', text: 'Thất bại', icon: XCircle },
-  CANCELLED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hủy', icon: XCircle },
-  EXPIRED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Hết hạn', icon: XCircle },
-  REFUNDED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hoàn tiền', icon: XCircle },
+type PaymentStatusLabelKey =
+  | 'statusPending'
+  | 'statusCompleted'
+  | 'statusFailed'
+  | 'statusCancelled'
+  | 'statusExpired'
+  | 'statusRefunded';
+
+const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { bg: string; labelKey: PaymentStatusLabelKey; icon: typeof AlertCircle }> = {
+  PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', labelKey: 'statusPending', icon: AlertCircle },
+  COMPLETED: { bg: 'bg-green-50 text-green-600 border-green-100', labelKey: 'statusCompleted', icon: CheckCircle2 },
+  FAILED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', labelKey: 'statusFailed', icon: XCircle },
+  CANCELLED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', labelKey: 'statusCancelled', icon: XCircle },
+  EXPIRED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', labelKey: 'statusExpired', icon: XCircle },
+  REFUNDED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', labelKey: 'statusRefunded', icon: XCircle },
 };
 
 export default function PaymentsPage() {
+  const translate = useTranslations('Payments');
+  const locale = useLocale();
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   
@@ -73,7 +84,7 @@ export default function PaymentsPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">Đang tải lịch sử giao dịch...</p>
+        <p className="text-slate-500 font-medium">{translate('loadingHistory')}</p>
       </div>
     );
   }
@@ -85,9 +96,9 @@ export default function PaymentsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-6 h-6 text-blue-600" /> Lịch sử thanh toán
+            <History className="w-6 h-6 text-blue-600" /> {translate('title')}
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Quản lý hóa đơn lệ phí giải đấu của bạn</p>
+          <p className="text-slate-500 text-sm mt-1">{translate('description')}</p>
         </div>
 
         {/* Stats Grid */}
@@ -97,7 +108,7 @@ export default function PaymentsPage() {
               <DollarSign className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tổng tiền đã chi</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{translate('totalSpent')}</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">{formatCurrency(totalSpent)}</h3>
             </div>
           </div>
@@ -107,7 +118,7 @@ export default function PaymentsPage() {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Giao dịch thành công</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{translate('successfulTransactions')}</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">{successCount}</h3>
             </div>
           </div>
@@ -117,7 +128,7 @@ export default function PaymentsPage() {
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Giao dịch chờ xử lý</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{translate('pendingTransactions')}</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">{pendingCount}</h3>
             </div>
           </div>
@@ -126,21 +137,21 @@ export default function PaymentsPage() {
         {/* History Table */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-            <h2 className="font-bold text-slate-850">Chi tiết các hóa đơn</h2>
+            <h2 className="font-bold text-slate-850">{translate('invoiceDetails')}</h2>
             <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-              {payments.length} Hóa đơn
+              {translate('invoiceCount', { count: payments.length })}
             </span>
           </div>
 
           {payments.length === 0 ? (
             <div className="py-16 text-center">
               <ShoppingBag className="w-12 h-12 text-slate-350 mx-auto mb-3" />
-              <p className="text-slate-500 font-semibold">Bạn chưa thực hiện giao dịch thanh toán nào</p>
+              <p className="text-slate-500 font-semibold">{translate('noPayments')}</p>
               <button
                 onClick={() => router.push('/tournaments')}
                 className="mt-4 text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1 mx-auto hover:underline"
               >
-                Khám phá các giải đấu <ArrowUpRight className="w-4 h-4" />
+                {translate('exploreTournaments')} <ArrowUpRight className="w-4 h-4" />
               </button>
             </div>
           ) : (
@@ -148,12 +159,12 @@ export default function PaymentsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                    <th className="py-4 px-6">Thời gian</th>
-                    <th className="py-4 px-6">Giải đấu</th>
-                    <th className="py-4 px-6">Số tiền</th>
-                    <th className="py-4 px-6">Phương thức</th>
-                    <th className="py-4 px-6">Trạng thái</th>
-                    <th className="py-4 px-6 text-right">Chi tiết</th>
+                    <th className="py-4 px-6">{translate('date')}</th>
+                    <th className="py-4 px-6">{translate('tournament')}</th>
+                    <th className="py-4 px-6">{translate('amount')}</th>
+                    <th className="py-4 px-6">{translate('method')}</th>
+                    <th className="py-4 px-6">{translate('status')}</th>
+                    <th className="py-4 px-6 text-right">{translate('details')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
@@ -165,10 +176,10 @@ export default function PaymentsPage() {
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/55 transition-colors">
                         <td className="py-4 px-6 whitespace-nowrap text-xs">
-                          {new Date(p.createdAt).toLocaleString('vi-VN')}
+                          {new Date(p.createdAt).toLocaleString(locale)}
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-800 max-w-[280px] truncate">
-                          {p.tournament?.name || 'Giải đấu đã bị xóa'}
+                          {p.tournament?.name || translate('deletedTournament')}
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-950">
                           {formatCurrency(Number(p.amount))}
@@ -179,7 +190,7 @@ export default function PaymentsPage() {
                         <td className="py-4 px-6">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusConfig.bg}`}>
                             <StatusIcon className="w-3 h-3" />
-                            {statusConfig.text}
+                            {translate(statusConfig.labelKey)}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-right">
@@ -187,7 +198,7 @@ export default function PaymentsPage() {
                             onClick={() => router.push(`/payments/result?paymentId=${p.id}`)}
                             className="text-blue-600 hover:text-blue-800 text-xs font-bold hover:underline"
                           >
-                            Xem hóa đơn
+                            {translate('viewInvoice')}
                           </button>
                         </td>
                       </tr>

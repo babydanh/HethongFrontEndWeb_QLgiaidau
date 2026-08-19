@@ -133,7 +133,7 @@ interface RegistrationTabProps {
 }
 
 // ─── SortableSeedItem (Declared outside to avoid recreation & re-mounting on each parent render) ───
-const SortableSeedItem = React.memo(function SortableSeedItem({ p }: { p: TournamentParticipant }) {
+const SortableSeedItem = React.memo(function SortableSeedItem({ p, dragTitle }: { p: TournamentParticipant; dragTitle: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
 
   const style: React.CSSProperties = {
@@ -160,7 +160,7 @@ const SortableSeedItem = React.memo(function SortableSeedItem({ p }: { p: Tourna
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors touch-none"
-          title="Kéo để sắp xếp"
+          title={dragTitle}
         >
           <GripVertical className="w-4 h-4" />
         </button>
@@ -237,7 +237,20 @@ export function RegistrationTab({
     [tournament.tournamentConfig?.registrationForm, divisions],
   );
   const selectedDivisionName = selectedParticipant
-    ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.name || 'Chưa phân nội dung')
+    ? divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.name || ''
+    : '';
+  const selectedDivision = selectedParticipant
+    ? divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)
+    : undefined;
+  const selectedIsPair = Boolean(
+    selectedParticipant &&
+      (selectedDivision?.matchType === 'DOUBLES' || selectedDivision?.matchType === 'MIXED_DOUBLES' || selectedParticipant.members.length > 1),
+  );
+  const selectedLeader = selectedParticipant?.members.find((member) => member.role === 'MAIN') ?? selectedParticipant?.members[0];
+  const selectedDisplayName = selectedParticipant
+    ? selectedIsPair && selectedParticipant.members.length > 1 && selectedParticipant.teamName === selectedLeader?.fullName
+      ? selectedParticipant.members.map((member) => member.fullName).filter(Boolean).join(' & ')
+      : selectedParticipant.teamName
     : '';
   const selectedParticipantFee = selectedParticipant
     ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.entryFee ?? tournament.entryFee ?? 0)
@@ -348,7 +361,7 @@ export function RegistrationTab({
     }
   };
 
-  // ─── Kéo thả hạt giống ─────────────────────────────────────────────
+  // ─── Seed drag and drop ─────────────────────────────────────────────
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -425,8 +438,8 @@ export function RegistrationTab({
             <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
               <span className="mt-0.5 text-lg text-amber-600" aria-hidden="true">⏳</span>
               <div>
-                <p className="font-bold text-amber-900 text-sm">Đang chờ Admin duyệt công khai</p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-800">Giải đã được lưu đầy đủ và chỉ hiển thị trong khu vực quản lý của bạn. Sau khi được duyệt, hệ thống sẽ mở trang công khai và nhận đăng ký theo cấu hình bên dưới.</p>
+                <p className="font-bold text-amber-900 text-sm">{registrationTranslate('pendingApprovalTitle')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">{registrationTranslate('pendingApprovalDescription')}</p>
               </div>
             </div>
           ) : (
@@ -436,7 +449,7 @@ export function RegistrationTab({
                   <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-emerald-950 text-sm">{registrationTranslate('publishedSuccess')}</p>
-                    <p className="text-emerald-700 text-xs mt-1">Người chơi có thể đăng ký tài khoản và truy cập link để tham gia.</p>
+                    <p className="text-emerald-700 text-xs mt-1">{registrationTranslate('publishedParticipantDescription')}</p>
                   </div>
                 </div>
                 
@@ -446,7 +459,7 @@ export function RegistrationTab({
                     onClick={handleOpenLockModal}
                     className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
                   >
-                    <Lock className="w-4 h-4" /> Chốt danh sách & Tạo sơ đồ
+                    <Lock className="w-4 h-4" /> {registrationTranslate('lockListAndCreateBracket')}
                   </Button>
                 )}
               </div>
@@ -457,43 +470,43 @@ export function RegistrationTab({
         <div className="bg-white rounded-xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="flex items-start gap-4 justify-between border-b border-slate-100 pb-5">
             <div>
-              <h3 className="font-bold text-slate-900 text-lg">Thông tin đăng ký</h3>
+              <h3 className="font-bold text-slate-900 text-lg">{registrationTranslate('registrationInfoTitle')}</h3>
               <p className="mt-1.5 text-xs font-semibold text-slate-455">
-                Quản lý cách VĐV đi vào giải, khung thời gian mở đơn và bộ công cụ mời riêng cho đăng ký.
+                {registrationTranslate('registrationInfoDescription')}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Cột 1: Chế độ & Quyền truy cập */}
+            {/* Column 1: Mode and access */}
             <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-lg">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Quyền truy cập & Xét duyệt</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{registrationTranslate('accessApprovalTitle')}</h4>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Hiển thị giải đấu</label>
+                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('visibilityLabel')}</label>
                   <select
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
                     className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
-                    <option value="PUBLIC">Công khai (Tìm kiếm được)</option>
-                    <option value="PRIVATE">Không niêm yết (Chỉ truy cập qua link)</option>
+                    <option value="PUBLIC">{registrationTranslate('publicVisibilityOption')}</option>
+                    <option value="PRIVATE">{registrationTranslate('privateVisibilityOption')}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Chế độ nhận đăng ký</label>
+                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('registrationModeLabel')}</label>
                   <select
                     value={registrationMode}
                     onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
                     className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
-                    <option value="OPEN">Tự do (Vào thẳng danh sách)</option>
-                    <option value="APPROVAL">Xét duyệt (Chờ BTC phê duyệt)</option>
-                    <option value="INVITE_ONLY">Chỉ nhận mã mời (Cần mã Code)</option>
+                    <option value="OPEN">{registrationTranslate('openRegistrationOption')}</option>
+                    <option value="APPROVAL">{registrationTranslate('approvalRegistrationOption')}</option>
+                    <option value="INVITE_ONLY">{registrationTranslate('inviteOnlyRegistrationOption')}</option>
                   </select>
                 </div>
               </div>
@@ -505,29 +518,29 @@ export function RegistrationTab({
                     registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
                   }`} />
                   <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    {registrationMode === 'INVITE_ONLY' && 'Đăng ký đóng kín'}
-                    {registrationMode === 'APPROVAL' && 'Xét duyệt thủ công'}
-                    {registrationMode === 'OPEN' && 'Mở tự do'}
+                    {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyStatus')}
+                    {registrationMode === 'APPROVAL' && registrationTranslate('manualApprovalStatus')}
+                    {registrationMode === 'OPEN' && registrationTranslate('openStatus')}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
-                  {registrationMode === 'OPEN' && 'Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.'}
-                  {registrationMode === 'APPROVAL' && 'Đăng ký của VĐV sẽ ở trạng thái chờ duyệt. BTC xét duyệt hồ sơ thủ công.'}
-                  {registrationMode === 'INVITE_ONLY' && 'Chỉ những ai có link hoặc mã mời mới có thể truy cập và đăng ký tham gia.'}
+                  {registrationMode === 'OPEN' && registrationTranslate('openDescription')}
+                  {registrationMode === 'APPROVAL' && registrationTranslate('approvalDescription')}
+                  {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyDescription')}
                 </p>
               </div>
             </div>
 
-            {/* Cột 2: Khung thời gian nhận đăng ký */}
+            {/* Column 2: Registration window */}
             <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-lg flex flex-col justify-between">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Khung thời gian đăng ký</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{registrationTranslate('registrationWindowTitle')}</h4>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <DateTimePicker
-                    label="Thời gian mở đăng ký"
+                    label={registrationTranslate('registrationOpenLabel')}
                     value={registrationStartDate}
                     min={(() => {
                       const now = new Date();
@@ -550,7 +563,7 @@ export function RegistrationTab({
 
                 <div>
                   <DateTimePicker
-                    label="Thời gian đóng đăng ký"
+                    label={registrationTranslate('registrationCloseLabel')}
                     value={registrationEndDate}
                     min={registrationStartDate || (() => {
                       const now = new Date();
@@ -573,7 +586,7 @@ export function RegistrationTab({
               </div>
 
               <p className="text-[11px] text-slate-400 font-semibold leading-relaxed pt-2 border-t border-slate-200/60 mt-3">
-                💡 Lưu ý: Trạng thái đóng/mở đăng ký sẽ tự động cập nhật theo dòng thời gian thiết lập ở trên.
+                💡 {registrationTranslate('timelineNotice')}
               </p>
             </div>
           </div>
@@ -588,8 +601,8 @@ export function RegistrationTab({
                 className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
               <div>
-                <span className="text-sm font-bold text-slate-800">Ràng buộc ELO</span>
-                <p className="text-xs text-slate-500">Giới hạn trình độ VĐV khi đăng ký</p>
+                <span className="text-sm font-bold text-slate-800">{registrationTranslate('eloConstraintTitle')}</span>
+                <p className="text-xs text-slate-500">{registrationTranslate('eloConstraintDescription')}</p>
               </div>
             </label>
 
@@ -599,13 +612,13 @@ export function RegistrationTab({
               return (
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-500">ELO tối thiểu</label>
+                  <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloMinimum')}</label>
                   <input type="number" min={0} max={3000} value={eloMin}
                     onChange={(e) => setEloMin(Math.max(0, Number(e.target.value)))}
                     className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-500">ELO tối đa</label>
+                  <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloMaximum')}</label>
                   <input type="number" min={0} max={3000} value={eloMax}
                     onChange={(e) => setEloMax(Math.max(0, Number(e.target.value)))}
                     className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
@@ -613,13 +626,13 @@ export function RegistrationTab({
                 {isDoubles && (
                   <>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500">Tổng ELO tối đa (đôi)</label>
+                    <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloCombinedMaximum')}</label>
                     <input type="number" min={0} max={6000} value={eloMaxCombined}
                       onChange={(e) => setEloMaxCombined(Math.max(0, Number(e.target.value)))}
                       className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500">Chênh lệch tối đa (đôi)</label>
+                    <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloMaximumGap')}</label>
                     <input type="number" min={0} max={1000} value={eloMaxGap}
                       onChange={(e) => setEloMaxGap(Math.max(0, Number(e.target.value)))}
                       className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
@@ -634,14 +647,14 @@ export function RegistrationTab({
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
-                  <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{registrationTranslate('quickInviteTitle')}</p>
+                  <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || registrationTranslate('inviteCodeMissing')}</p>
                   <p className="text-xs font-medium text-slate-600">
                     {registrationMode === 'INVITE_ONLY'
-                      ? 'Giải chỉ nhận mã mời: VĐV bắt buộc dùng mã/link này mới mở được form đăng ký.'
+                      ? registrationTranslate('inviteOnlyCodeDescription')
                       : visibility === 'PRIVATE'
-                        ? 'Giải không niêm yết trong danh sách: chia sẻ link này để VĐV vào đăng ký (mã không bắt buộc).'
-                        : 'Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.'}
+                        ? registrationTranslate('privateTournamentDescription')
+                        : registrationTranslate('shareCodeDescription')}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -649,11 +662,11 @@ export function RegistrationTab({
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(tournament.inviteCode || '');
-                        toast.success('Đã sao chép mã mời!');
+                        toast.success(registrationTranslate('copyCode'));
                       }}
                     className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
                   >
-                    Sao chép mã
+                    {registrationTranslate('copyCode')}
                   </Button>
                   <Button
                     variant="outline"
@@ -661,7 +674,7 @@ export function RegistrationTab({
                     className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
                   >
                     <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                    Tạo lại mã
+                    {registrationTranslate('regenerateCode')}
                   </Button>
                 </div>
               </div>
@@ -674,7 +687,7 @@ export function RegistrationTab({
 
               <div className="mt-4 rounded-lg border border-white/80 bg-white/80 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                  {visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký hiện tại'}
+                  {visibility === 'PRIVATE' ? registrationTranslate('privateRegistrationLink') : registrationTranslate('currentRegistrationLink')}
                 </p>
                 <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
                   <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{inviteLink}</p>
@@ -683,7 +696,7 @@ export function RegistrationTab({
                     onClick={onCopyInviteLink}
                     className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold"
                   >
-                    Sao chép link
+                    {registrationTranslate('copyLink')}
                   </Button>
                 </div>
               </div>
@@ -704,7 +717,7 @@ export function RegistrationTab({
               disabled={isSavingConfig}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
             >
-              {isSavingConfig ? 'Đang lưu...' : 'Lưu thông tin đăng ký'}
+              {isSavingConfig ? registrationTranslate('saving') : registrationTranslate('saveRegistrationInfo')}
             </Button>
           </div>
         </div>
@@ -712,9 +725,9 @@ export function RegistrationTab({
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="font-bold text-slate-900 text-lg">Duyệt hồ sơ đăng ký</h3>
+              <h3 className="font-bold text-slate-900 text-lg">{registrationTranslate('approvalHeading')}</h3>
               <p className="mt-1 text-xs font-semibold text-slate-455">
-                Theo dõi toàn bộ trạng thái đăng ký, thanh toán và quyết định duyệt trước khi chốt danh sách.
+                {registrationTranslate('approvalDescriptionLong')}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -729,12 +742,12 @@ export function RegistrationTab({
                     participants,
                     locale,
                   );
-                  toast.success('Đã xuất file Excel danh sách VĐV!');
+                  toast.success(registrationTranslate('exportParticipantsSuccess'));
                 }}
                 className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs"
               >
                 <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
-                Xuất Excel
+                {registrationTranslate('exportExcel')}
               </Button>
               <Button
                 variant="outline"
@@ -743,7 +756,7 @@ export function RegistrationTab({
                 className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs"
               >
                 <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
-                Mẫu Excel
+                {registrationTranslate('excelTemplate')}
               </Button>
               <Button
                 type="button"
@@ -752,26 +765,26 @@ export function RegistrationTab({
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />
-                Nhập Excel
+                {registrationTranslate('importExcel')}
               </Button>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-6">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{registrationTranslate('totalProfiles')}</p>
               <p className="mt-2 text-lg font-bold text-slate-900">{participantSummary.total}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">{registrationTranslate('pendingProfiles')}</p>
               <p className="mt-2 text-lg font-bold text-amber-700">{participantSummary.pending}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đã duyệt</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{registrationTranslate('approvedProfiles')}</p>
               <p className="mt-2 text-lg font-bold text-emerald-700">{participantSummary.approved}</p>
             </div>
             <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Bị từ chối</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">{registrationTranslate('rejectedProfiles')}</p>
               <p className="mt-2 text-lg font-bold text-amber-700">{participantSummary.rejected}</p>
             </div>
             <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
@@ -779,7 +792,7 @@ export function RegistrationTab({
               <p className="mt-2 text-lg font-bold text-rose-700">{participantSummary.unpaid}</p>
             </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đang chờ ghép</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{registrationTranslate('waitingForPartner')}</p>
               <p className="mt-2 text-lg font-bold text-blue-700">{participantSummary.partnerInvite}</p>
             </div>
           </div>
@@ -793,11 +806,11 @@ export function RegistrationTab({
             />
             <div className="flex flex-wrap gap-2">
               {[
-                { value: 'ALL', label: 'Tất cả' },
-                { value: 'PENDING', label: 'Chờ duyệt' },
-                { value: 'COMPLETE', label: 'Đã duyệt' },
+                { value: 'ALL', label: registrationTranslate('filterAll') },
+                { value: 'PENDING', label: registrationTranslate('filterPending') },
+                { value: 'COMPLETE', label: registrationTranslate('filterApproved') },
                 { value: 'UNPAID', label: registrationTranslate('unpaidStatus') },
-                { value: 'REJECTED', label: 'Bị từ chối' },
+                { value: 'REJECTED', label: registrationTranslate('filterRejected') },
               ].map((option) => (
                 <button
                   key={option.value}
@@ -820,11 +833,11 @@ export function RegistrationTab({
             <table className="min-w-full divide-y divide-slate-100">
               <thead>
                 <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  <th className="pb-3 pr-4">Đội/Cặp</th>
-                  <th className="pb-3 pr-4">Thành viên</th>
-                  <th className="pb-3 pr-4">Trạng thái</th>
-                  <th className="pb-3 pr-4">Thanh toán</th>
-                  <th className="pb-3 text-right">Hành động</th>
+                  <th className="pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
+                  <th className="pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
+                  <th className="pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
+                  <th className="pb-3 pr-4">{registrationTranslate('paymentHeader')}</th>
+                  <th className="pb-3 text-right">{registrationTranslate('actionsHeader')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -835,7 +848,7 @@ export function RegistrationTab({
                         <Users className="h-8 w-8 text-slate-300" />
                         <p className="mt-3 text-sm font-bold text-slate-700">{registrationTranslate('noMatchingProfiles')}</p>
                         <p className="mt-1 text-xs font-medium text-slate-500">
-                          Thử đổi bộ lọc hoặc từ khóa để rà lại toàn bộ danh sách đăng ký.
+                          {registrationTranslate('changeFilterHint')}
                         </p>
                       </div>
                     </td>
@@ -870,7 +883,7 @@ export function RegistrationTab({
                               {participant.seed != null && (
                                 <span
                                   className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-full border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-bold cursor-pointer hover:bg-blue-100 transition-colors px-2"
-                                  title="Nhấp để sửa seed"
+                                  title={registrationTranslate('clickToEditSeed')}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSeedEditStart(participant.id, participant.seed);
@@ -903,27 +916,27 @@ export function RegistrationTab({
                             )}
                             {participant.isWildcard ? (
                               <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
-                                Đặc cách
+                                {registrationTranslate('wildcardLabel')}
                               </span>
                             ) : participant.teamInviteToken ? (
                               <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
-                                Chờ ghép partner
+                                {registrationTranslate('waitingForPartner')}
                               </span>
                             ) : null}
                           </div>
                           <p className="mt-1 text-xs font-medium text-slate-500">
-                            Đăng ký {formatDate(participant.registeredAt)}
-                            {participant.seed != null ? '' : ` • Seed: Chưa có`}
+                            {registrationTranslate('registeredAt')} {formatDate(participant.registeredAt)}
+                            {participant.seed != null ? '' : ` • ${registrationTranslate('seedMissing')}`}
                           </p>
                         </td>
                         <td className="py-4 pr-4">
                           <div className="flex flex-wrap gap-2">
                             {(participant.members || []).map((member) => (
                               <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
-                                {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
+                                {member.isMock ? registrationTranslate('virtualAthlete') : (member.fullName || registrationTranslate('unknownMemberName'))}
                                 {member.role === 'RESERVE' && (
                                   <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700">
-                                    Dự bị
+                                    {registrationTranslate('reserveRole')}
                                   </span>
                                 )}
                               </span>
@@ -951,10 +964,10 @@ export function RegistrationTab({
                                 onClick={() => { void handleRosterLock(participant); }}
                                 disabled={rosterActionId === participant.id || isBusy || !isParticipantApproved(participant.teamStatus)}
                                 className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold"
-                                title="Roster chỉ mở khóa được trước khi giải bắt đầu"
+                                title={registrationTranslate('rosterUnlockHint')}
                               >
                                 {rosterActionId === participant.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? 'Mở khóa roster' : 'Khóa roster'}
+                                {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? registrationTranslate('unlockRoster') : registrationTranslate('lockRoster')}
                               </Button>
                             )}
                             <Button
@@ -963,7 +976,7 @@ export function RegistrationTab({
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                             >
                               {isBusy && canApprove ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                              Duyệt
+                              {registrationTranslate('approve')}
                             </Button>
                             <Button
                               variant="outline"
@@ -971,7 +984,7 @@ export function RegistrationTab({
                                 const confirmed = window.confirm(
                                   isMockParticipant
                                     ? registrationTranslate('mockDeleteConfirm', { name: participant.teamName })
-                                    : `Bạn có chắc muốn từ chối hồ sơ của "${participant.teamName}" không?`,
+                                    : registrationTranslate('rejectConfirm', { name: participant.teamName }),
                                 );
                                 if (confirmed) {
                                   void handleRejectParticipant(participant.id);
@@ -1005,19 +1018,19 @@ export function RegistrationTab({
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm dữ liệu ảo
+              <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> {registrationTranslate('mockDataTitle')}
             </h3>
             <p className="text-xs text-slate-500 mt-1 font-semibold">
-              Tạo danh sách vận động viên ảo để thử nghiệm ghép cặp, bốc thăm và kiểm thử sơ đồ thi đấu bất kỳ lúc nào.
+              {registrationTranslate('mockDataDescription')}
             </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách VĐV ảo</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('virtualAthletesLabel')}</label>
               <label className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors">
                 <Upload className="w-3 h-3" />
-                Đọc từ Excel
+                {registrationTranslate('loadFromExcel')}
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
@@ -1038,10 +1051,10 @@ export function RegistrationTab({
                         .filter(Boolean)
                         .join('\n');
                       setMockNamesText(names);
-                      toast.success(`Đã nạp ${res.rows.length} VĐV từ Excel!`);
+                      toast.success(registrationTranslate('loadedAthletes', { count: res.rows.length }));
                     } catch (err: unknown) {
                       const message = err instanceof Error ? err.message : String(err);
-                      toast.error('Lỗi khi đọc file: ' + message);
+                      toast.error(registrationTranslate('readFileError', { message }));
                     }
                   }}
                 />
@@ -1063,7 +1076,7 @@ export function RegistrationTab({
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
             >
               {isSeedingMock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              Sinh VĐV ảo
+              {registrationTranslate('generateVirtualAthletes')}
             </Button>
             <Button
               variant="outline"
@@ -1072,31 +1085,31 @@ export function RegistrationTab({
               className="border-rose-250 hover:bg-rose-50 text-rose-600 font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 animate-none"
             >
               {isClearingMock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-              Dọn dẹp
+              {registrationTranslate('clearData')}
             </Button>
           </div>
         </div>
 
-        {/* Xếp hạt giống */}
+        {/* Seeding */}
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <Shuffle className="w-4 h-4 text-purple-600" /> Xếp hạt giống
+              <Shuffle className="w-4 h-4 text-purple-600" /> {registrationTranslate('seedingTitle')}
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">Phân loại đội mạnh yếu để tránh chạm nhau sớm.</p>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">{registrationTranslate('seedingDescription')}</p>
           </div>
 
-          {/* Phương pháp xếp hạt giống */}
+          {/* Seeding method */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phương pháp xếp hạt giống</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('seedingMethodLabel')}</label>
             <select
               value={seedingMethod}
               onChange={(e) => setSeedingMethod(e.target.value as 'ELO' | 'RANDOM' | 'MANUAL')}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="MANUAL">Xếp thủ công</option>
-              <option value="ELO">Tự động theo ELO</option>
-              <option value="RANDOM">Ngẫu nhiên</option>
+              <option value="MANUAL">{registrationTranslate('manualSeeding')}</option>
+              <option value="ELO">{registrationTranslate('eloSeeding')}</option>
+              <option value="RANDOM">{registrationTranslate('randomSeeding')}</option>
             </select>
           </div>
 
@@ -1108,9 +1121,9 @@ export function RegistrationTab({
               className="w-full text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none font-bold"
             >
               {isAutoSeeding ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xếp hạt giống...</>
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {registrationTranslate('seedingInProgress')}</>
               ) : (
-                <><Shuffle className="w-3.5 h-3.5" /> Tự động xếp hạt giống</>
+                <><Shuffle className="w-3.5 h-3.5" /> {registrationTranslate('autoSeed')}</>
               )}
             </Button>
           )}
@@ -1129,7 +1142,7 @@ export function RegistrationTab({
                   return (
                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
                       <Shuffle className="w-6 h-6 text-slate-300" />
-                      <p className="mt-2 text-sm font-bold text-slate-500">Chưa có đội nào được đăng ký</p>
+                      <p className="mt-2 text-sm font-bold text-slate-500">{registrationTranslate('noRegisteredTeams')}</p>
                     </div>
                   );
                 }
@@ -1151,7 +1164,7 @@ export function RegistrationTab({
                         <SortableContext items={seeded.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                           <div className="space-y-1">
                             {seeded.map((p) => (
-                              <SortableSeedItem key={p.id} p={p} />
+                              <SortableSeedItem key={p.id} p={p} dragTitle={registrationTranslate('dragToSort')} />
                             ))}
                           </div>
                         </SortableContext>
@@ -1175,7 +1188,7 @@ export function RegistrationTab({
                     {unseeded.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-dashed border-slate-200">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                          Chưa có seed ({unseeded.length} đội)
+                          {registrationTranslate('unseededCount', { count: unseeded.length })}
                         </p>
                         <div className="space-y-1">
                           {unseeded.map((p) => (
@@ -1191,7 +1204,7 @@ export function RegistrationTab({
                                 onClick={() => handleSeedEditStart(p.id, null)}
                                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
                               >
-                                Gán seed
+                                {registrationTranslate('assignSeed')}
                               </button>
                             </div>
                           ))}
@@ -1277,7 +1290,7 @@ export function RegistrationTab({
                   disabled={isAssigningWildcard}
                 />
 
-                {/* Partner Email (chỉ hiện khi đánh đôi) */}
+                {/* Partner email for doubles */}
                 {isDoubles && (
                   <Input
                     label={registrationTranslate('teammateLabel')}
@@ -1372,8 +1385,11 @@ export function RegistrationTab({
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">{selectedParticipant.teamName}</h3>
-                      <p className="mt-1 text-xs text-slate-500">{selectedDivisionName} · {registrationTranslate('registeredLabel')} {formatDate(selectedParticipant.registeredAt)}</p>
+                      <div className="flex items-center gap-2">
+                        {selectedIsPair && <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">{registrationTranslate('pairBadge')}</span>}
+                        <h3 className="text-base font-bold text-slate-900">{selectedDisplayName}</h3>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">{selectedDivisionName || registrationTranslate('unassignedDivision')} · {formatDate(selectedParticipant.registeredAt)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-bold">
                       <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">{getParticipantStatusLabel(selectedParticipant.teamStatus, participantStatusLabels)}</span>
@@ -1385,17 +1401,17 @@ export function RegistrationTab({
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationTranslate('registeredMembers')}</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{selectedIsPair ? registrationTranslate('pairMembersHeading') : registrationTranslate('athleteHeading')}</h3>
                   <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                     {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
-                      <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                        <div><p className="text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p><p className="mt-0.5 text-xs text-slate-500">{member.email || registrationTranslate('hiddenEmail')}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}{member.gender ? ` · ${member.gender}` : ''}{member.role ? ` · ${member.role}` : ''}</p></div>
+                      <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
+                        <div className="min-w-0"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>{member.role === 'MAIN' && <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">Leader</span>}</div><p className="mt-0.5 truncate text-xs text-slate-500">{member.email || registrationTranslate('hiddenEmail')}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}</p></div>
                         <span className="text-xs font-semibold text-slate-500">ELO {member.elo?.eloPoints ?? '—'}</span>
                       </div>
                     )) : <p className="px-4 py-4 text-sm text-slate-500">{registrationTranslate('noMembers')}</p>}
                   </div>
-                  {selectedParticipant.registeredBy && (
-                    <p className="mt-2 text-xs text-slate-500">{registrationTranslate('createdBy')}: <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</span> · {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}{selectedParticipant.registeredBy.phoneNumber ? ` · ${selectedParticipant.registeredBy.phoneNumber}` : ''}{selectedParticipant.registeredBy.gender ? ` · ${selectedParticipant.registeredBy.gender}` : ''}</p>
+                  {selectedParticipant.registeredBy && selectedParticipant.registeredBy.id !== selectedLeader?.userId && (
+                    <p className="mt-2 text-xs text-slate-500">{registrationTranslate('enteredBy')} <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</span> · {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}</p>
                   )}
                 </section>
 

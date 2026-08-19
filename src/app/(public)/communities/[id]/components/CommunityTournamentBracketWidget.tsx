@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Trophy, Maximize2, ArrowUpRight, Loader2, Sparkles } from 'lucide-react';
 import { tournamentsApi, type Tournament } from '@/features/tournaments/api';
@@ -23,6 +24,7 @@ export default function CommunityTournamentBracketWidget({
   status,
   isLite = false,
 }: CommunityTournamentBracketWidgetProps) {
+  const translate = useTranslations('Common');
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,12 +42,12 @@ export default function CommunityTournamentBracketWidget({
         if (res.data) {
           setTournament(res.data);
         } else {
-          setError('Không tìm thấy dữ liệu giải đấu');
+          setError(translate('communityBracketLoadMissing'));
         }
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(err?.message || 'Không thể tải sơ đồ giải đấu');
+        setError(translate('communityBracketLoadFailed'));
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -54,7 +56,7 @@ export default function CommunityTournamentBracketWidget({
     return () => {
       mounted = false;
     };
-  }, [tournamentId]);
+  }, [tournamentId, translate]);
 
   const currentStatus = tournament?.status || status || 'ONGOING';
   const isOngoing = currentStatus === 'ONGOING' || currentStatus === 'IN_PROGRESS';
@@ -75,7 +77,7 @@ export default function CommunityTournamentBracketWidget({
         </div>
         <div className="h-48 bg-white/80 rounded-xl border border-slate-200/60 animate-pulse flex items-center justify-center text-xs text-slate-400 gap-2 font-medium">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-          <span>Đang tải sơ đồ nhánh đấu...</span>
+          <span>{translate('communityBracketLoading')}</span>
         </div>
       </div>
     );
@@ -91,10 +93,10 @@ export default function CommunityTournamentBracketWidget({
             </div>
             <div>
               <h4 className="text-sm font-bold text-slate-900">
-                {initialTournamentName || 'Giải đấu CLB'}
+                {initialTournamentName || translate('communityTournamentFallback')}
               </h4>
               <p className="text-xs text-slate-500">
-                {error || 'Sơ đồ thi đấu sẽ sẵn sàng khi giải đấu bắt đầu'}
+                {error || translate('communityBracketUnavailable')}
               </p>
             </div>
           </div>
@@ -102,7 +104,7 @@ export default function CommunityTournamentBracketWidget({
             href={`/tournaments/${tournamentId}`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
           >
-            <span>Xem chi tiết</span>
+            <span>{translate('communityViewDetails')}</span>
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -131,7 +133,7 @@ export default function CommunityTournamentBracketWidget({
                       : 'bg-blue-100 text-blue-700 border border-blue-200/80',
                   )}
                 >
-                  {isOngoing ? '⚡ ĐANG THI ĐẤU' : isCompleted ? '🏆 ĐÃ KẾT THÚC' : 'SƠ ĐỒ THI ĐẤU'}
+                  {isOngoing ? `⚡ ${translate('communityOngoingStatus')}` : isCompleted ? `🏆 ${translate('communityCompletedStatus')}` : translate('communityBracketStatus')}
                 </span>
                 {(tournament.category?.name || categoryName) && (
                   <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
@@ -154,16 +156,16 @@ export default function CommunityTournamentBracketWidget({
             <button
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-blue-600 transition-colors"
-              title="Mở toàn màn hình"
+              title={translate('communityFullscreen')}
             >
               <Maximize2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Toàn màn hình</span>
+              <span className="hidden sm:inline">{translate('communityFullscreenLabel')}</span>
             </button>
             <Link
               href={`/tournaments/${tournamentId}`}
               className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
             >
-              <span>Xem giải</span>
+              <span>{translate('communityViewTournament')}</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>

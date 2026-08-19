@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { Loader2, MessageCircle, Send, X, Users, Sparkles } from 'lucide-react';
 import { chatApi } from '@/features/chat/api';
@@ -22,6 +23,7 @@ export default function ClubChatLauncher({
   onOpenChange,
 }: ClubChatLauncherProps) {
   const translate = useTranslations('Common');
+  const locale = useLocale();
   const { user } = useAuthStore();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : internalOpen;
@@ -154,7 +156,7 @@ export default function ClubChatLauncher({
                 <p className="text-sm font-bold leading-tight">{translate('clubChatTitle')}</p>
                 <p className="text-[11px] text-blue-100 flex items-center gap-1 mt-0.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Giao lưu & hẹn lịch thi đấu
+                  {translate('clubChatSchedulePrompt')}
                 </p>
               </div>
             </div>
@@ -216,7 +218,7 @@ export default function ClubChatLauncher({
                           isMe ? 'text-blue-100 text-right' : 'text-slate-400'
                         }`}
                       >
-                        {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                        {new Date(message.createdAt).toLocaleTimeString(locale === 'vi' ? 'vi-VN' : 'en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}

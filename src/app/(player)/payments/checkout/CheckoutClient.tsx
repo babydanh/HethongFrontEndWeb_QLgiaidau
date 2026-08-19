@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { divisionsApi, tournamentsApi, Tournament, TournamentParticipant, type Division } from '@/features/tournaments/api';
 import { paymentsApi } from '@/features/payments/api';
@@ -11,6 +12,7 @@ import toast from 'react-hot-toast';
 import { Loader2, CreditCard, ChevronLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function CheckoutClient() {
+  const translate = useTranslations('PaymentCheckout');
   const router = useRouter();
   const searchParams = useSearchParams();
   const tournamentId = searchParams.get('tournamentId');
@@ -34,7 +36,7 @@ export default function CheckoutClient() {
 
   useEffect(() => {
     if (!tournamentId || !participantId) {
-      toast.error('Thiếu thông tin giải đấu hoặc lượt đăng ký');
+      toast.error(translate('missingInfo'));
       router.push('/tournaments');
       return;
     }
@@ -89,13 +91,13 @@ export default function CheckoutClient() {
           clearInterval(intervalId);
           setShowQrModal(false);
           setSubmitting(false);
-          toast.error('Phiên chờ thanh toán đã hết hạn.');
+          toast.error(translate('sessionExpired'));
           return;
         }
         const res = await paymentsApi.getPaymentById(paymentId);
         if (res.data && res.data.status === 'COMPLETED') {
           clearInterval(intervalId);
-          toast.success('Thanh toán thành công! Hệ thống đang cập nhật...');
+          toast.success(translate('paymentSuccess'));
           setShowQrModal(false);
           setQrOpenedAt(null);
           const params = new URLSearchParams({
@@ -117,7 +119,7 @@ export default function CheckoutClient() {
           clearInterval(intervalId);
           setShowQrModal(false);
           setQrOpenedAt(null);
-          toast.error('Thanh toán không thành công hoặc đã hết hạn.');
+          toast.error(translate('paymentFailed'));
         }
       } catch (error) {
         console.error('Failed to poll payment status:', error);
@@ -132,7 +134,7 @@ export default function CheckoutClient() {
 
     const payableAmount = Number(division?.entryFee ?? tournament.entryFee) || 0;
     if (payableAmount <= 0) {
-      toast.success('Đăng ký miễn phí đã được xác nhận, không cần thanh toán.');
+      toast.success(translate('freeRegistration'));
       router.replace(`/tournaments/${tournamentId}`);
       return;
     }
@@ -154,7 +156,7 @@ export default function CheckoutClient() {
       }
 
       if (!Number.isFinite(backendAmount)) {
-        throw new Error('Không nhận được số tiền đã xác nhận từ hệ thống');
+        throw new Error(translate('confirmedAmountMissing'));
       }
       setConfirmedAmount(backendAmount);
 
@@ -164,17 +166,17 @@ export default function CheckoutClient() {
         setQrOpenedAt(Date.now());
         setShowQrModal(true);
         setSubmitting(false);
-        toast.success('Đã tạo mã QR thanh toán PayOS');
+        toast.success(translate('qrCreated'));
         return;
       }
 
       const paymentUrl = payment.paymentUrl ?? payment.checkoutUrl;
       
       if (paymentUrl) {
-        toast.success('Đang chuyển hướng đến cổng thanh toán...');
+        toast.success(translate('redirecting'));
         router.push(paymentUrl);
       } else {
-        throw new Error('Không nhận được URL thanh toán từ hệ thống');
+        throw new Error(translate('paymentUrlMissing'));
       }
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -186,7 +188,7 @@ export default function CheckoutClient() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">Đang tải thông tin thanh toán...</p>
+        <p className="text-slate-500 font-medium">{translate('loadingPaymentInfo')}</p>
       </div>
     );
   }
@@ -194,8 +196,8 @@ export default function CheckoutClient() {
   if (!tournament) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
-        <p className="text-slate-600 font-medium">Không tìm thấy thông tin giải đấu</p>
-        <Button onClick={() => router.push('/tournaments')}>Quay lại danh sách</Button>
+        <p className="text-slate-600 font-medium">{translate('tournamentNotFound')}</p>
+        <Button onClick={() => router.push('/tournaments')}>{translate('backToList')}</Button>
       </div>
     );
   }
@@ -210,7 +212,7 @@ export default function CheckoutClient() {
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition-colors mb-6 text-sm font-semibold"
         >
-          <ChevronLeft className="w-4 h-4" /> Quay lại
+          <ChevronLeft className="w-4 h-4" /> {translate('back')}
         </button>
 
         {/* Title */}
@@ -218,26 +220,26 @@ export default function CheckoutClient() {
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3">
             <CreditCard className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Thanh Toán Lệ Phí</h1>
-          <p className="text-sm text-slate-500 mt-1">Hoàn thành thanh toán để xác nhận vị trí trong giải đấu</p>
+          <h1 className="text-2xl font-bold text-slate-900">{translate('title')}</h1>
+          <p className="text-sm text-slate-500 mt-1">{translate('subtitle')}</p>
         </div>
 
         {/* Invoice Card */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-6">
           <div className="p-6 md:p-8">
-            <h2 className="text-slate-900 font-bold border-b border-slate-100 pb-3 mb-4">Chi tiết hóa đơn</h2>
+            <h2 className="text-slate-900 font-bold border-b border-slate-100 pb-3 mb-4">{translate('invoiceDetails')}</h2>
             
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-start">
-                <span className="text-sm text-slate-500">Giải đấu</span>
+                <span className="text-sm text-slate-500">{translate('tournament')}</span>
                 <span className="text-sm font-bold text-slate-900 text-right max-w-[250px] truncate">{tournament.name}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-500">Tên đội thi đấu</span>
-                <span className="text-sm font-semibold text-slate-800">{teamName || 'Đội đăng ký'}</span>
+                <span className="text-sm text-slate-500">{translate('teamName')}</span>
+                <span className="text-sm font-semibold text-slate-800">{teamName || translate('registeredTeam')}</span>
               </div>
               <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-2">
-                <span className="text-base font-bold text-slate-900">Tổng cộng</span>
+                <span className="text-base font-bold text-slate-900">{translate('total')}</span>
                 <span className="text-xl font-bold text-blue-600">{formatCurrency(entryFeeVal)}</span>
               </div>
             </div>
@@ -246,7 +248,7 @@ export default function CheckoutClient() {
 
         {/* Payment Gateway */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-6">
-          <h2 className="text-slate-900 font-bold mb-4">Phương thức thanh toán</h2>
+          <h2 className="text-slate-900 font-bold mb-4">{translate('paymentMethod')}</h2>
 
           <div className="rounded-lg border-2 border-blue-600 bg-blue-50/50 p-4 flex items-center gap-4 shadow-sm">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
@@ -254,7 +256,7 @@ export default function CheckoutClient() {
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900">PayOS VietQR</p>
-                <p className="text-xs text-slate-500 mt-1">Quét mã bằng ứng dụng ngân hàng; hệ thống tự đối soát qua webhook.</p>
+                <p className="text-xs text-slate-500 mt-1">{translate('qrInstructions')}</p>
               </div>
           </div>
         </div>
@@ -263,7 +265,7 @@ export default function CheckoutClient() {
         <div className="flex items-center gap-2 text-slate-500 mb-8 px-1">
           <ShieldCheck className="w-5 h-5 text-blue-500 flex-shrink-0" />
           <p className="text-xs leading-normal">
-            Giao dịch được bảo mật tuyệt đối. Chúng tôi không lưu trữ thông tin thẻ ngân hàng của bạn.
+            {translate('securityNotice')}
           </p>
         </div>
 
@@ -275,11 +277,11 @@ export default function CheckoutClient() {
         >
           {submitting ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" /> Đang chuẩn bị giao dịch...
+              <Loader2 className="w-5 h-5 animate-spin" /> {translate('preparingPayment')}
             </>
           ) : (
             <>
-              Xác nhận và Thanh toán <ArrowRight className="w-5 h-5" />
+              {translate('confirmPayment')} <ArrowRight className="w-5 h-5" />
             </>
           )}
         </Button>
@@ -290,10 +292,10 @@ export default function CheckoutClient() {
             <div className="bg-white rounded-xl max-w-md w-full p-6 md:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
               <div className="text-center">
                 <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full mb-3">
-                  Cổng Thanh Toán VietQR
+                  {translate('vietQrGateway')}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">Quét mã QR để thanh toán</h3>
-                <p className="text-xs text-slate-500 mt-1">Mã QR động tự điền số tiền và thông tin chuyển khoản</p>
+                <h3 className="text-xl font-bold text-slate-900">{translate('scanQr')}</h3>
+                <p className="text-xs text-slate-500 mt-1">{translate('qrDynamic')}</p>
                 
                 <div className="bg-slate-50 rounded-lg p-4 my-6 inline-block border border-slate-100">
                   <img
@@ -305,20 +307,20 @@ export default function CheckoutClient() {
 
                 <div className="bg-slate-50 rounded-lg p-4 text-left border border-slate-100 space-y-2 mb-6">
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Số tiền:</span>
+                    <span className="text-slate-500 font-medium">{translate('amountLabel')}</span>
                     <span className="text-slate-900 font-bold text-sm text-blue-600">
                       {formatCurrency(confirmedAmount ?? 0)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Nội dung thanh toán:</span>
+                    <span className="text-slate-500 font-medium">{translate('paymentContent')}</span>
                     <span className="text-slate-900 font-bold max-w-[200px] truncate">{tournament.name}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold text-sm py-2">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Đang đợi giao dịch qua Banking...
+                    <Loader2 className="w-4 h-4 animate-spin" /> {translate('waitingBanking')}
                   </div>
                   <Button
                     onClick={() => {
@@ -329,7 +331,7 @@ export default function CheckoutClient() {
                     variant="outline"
                     className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg"
                   >
-                    Hủy giao dịch
+                    {translate('cancelTransaction')}
                   </Button>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight } from "lucide-react";
 import toast from "react-hot-toast";
@@ -40,7 +40,8 @@ export default function CommunityPostCard({
   onDelete,
   canManage = false,
 }: CommunityPostCardProps) {
-  const translate = useTranslations('Common');
+  const translate = useTranslations("Common");
+  const locale = useLocale();
   const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [overrideCommentCount, setOverrideCommentCount] = useState<number | null>(null);
@@ -488,7 +489,7 @@ export default function CommunityPostCard({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="rounded-md bg-blue-100/80 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                          GIẢI ĐẤU CLB
+                          {translate('clubTournamentBadge')}
                         </span>
                         {post.tournament?.categoryName && (
                           <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
@@ -503,7 +504,7 @@ export default function CommunityPostCard({
                         <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                           <Calendar className="h-3.5 w-3.5 text-slate-400" />
                           <span>
-                            {translate('tournamentStarts')} {new Date(post.tournament.startDate).toLocaleDateString("vi-VN")}
+                            {translate('tournamentStarts')} {new Date(post.tournament.startDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                           </span>
                         </div>
                       )}
@@ -570,7 +571,7 @@ export default function CommunityPostCard({
                 <div className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
                   <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white shadow-md">
                     <Maximize2 className="h-3.5 w-3.5" />
-                    Phóng to
+                    {translate('zoomImage')}
                   </div>
                 </div>
               </div>

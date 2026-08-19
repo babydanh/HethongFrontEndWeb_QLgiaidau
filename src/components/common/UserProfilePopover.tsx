@@ -84,12 +84,7 @@ export default function UserProfilePopover({
       }
     : null;
 
-  // Sync selected tags when editing starts or profileData changes
-  useEffect(() => {
-    if (profileData?.tags) {
-      setSelectedTags(profileData.tags);
-    }
-  }, [profileData?.tags]);
+
 
   // Fetch additional details from public profile API and community members
   useEffect(() => {
@@ -135,33 +130,40 @@ export default function UserProfilePopover({
         .getMembers(communityId, { limit: 100 })
         .then((res) => {
           if (!isMounted) return;
+          type RawMemberItem = Partial<CommunityMemberRecord> & {
+            userId?: string;
+            role?: string;
+            tags?: string[];
+            joinedAt?: string;
+          };
+
           const raw = res.data;
-          const members = Array.isArray(raw)
-            ? raw
-            : Array.isArray((raw as any)?.data)
-            ? (raw as any).data
+          const rawObj = raw as unknown as { data?: RawMemberItem[] };
+          const members: RawMemberItem[] = Array.isArray(raw)
+            ? (raw as RawMemberItem[])
+            : Array.isArray(rawObj?.data)
+            ? rawObj.data
             : [];
 
           // Find current viewed user's membership
           const found = members.find(
-            (m: any) => m.user?.id === user.id || m.member?.userId === user.id || m.userId === user.id,
+            (m: RawMemberItem) => m.user?.id === user.id || m.member?.userId === user.id || m.userId === user.id,
           );
           if (found) {
-            const rawFound = found as Partial<CommunityMemberRecord> & { role?: string; tags?: string[]; joinedAt?: string };
             setFetchedDetails((prev) => ({
               ...(prev?.id === user.id ? prev : {}),
               id: user.id,
-              role: found.member?.role || rawFound.role || prev?.role,
-              tags: found.member?.tags || rawFound.tags || prev?.tags,
+              role: found.member?.role || found.role || prev?.role,
+              tags: found.member?.tags || found.tags || prev?.tags,
               streak: found.streak || prev?.streak,
-              joinedAt: found.member?.joinedAt || rawFound.joinedAt || prev?.joinedAt,
+              joinedAt: found.member?.joinedAt || found.joinedAt || prev?.joinedAt,
             }));
           }
 
           // Check viewer's role in this community
           if (currentUser?.id) {
             const viewerMember = members.find(
-              (m: any) => m.user?.id === currentUser.id || m.member?.userId === currentUser.id || m.userId === currentUser.id,
+              (m: RawMemberItem) => m.user?.id === currentUser.id || m.member?.userId === currentUser.id || m.userId === currentUser.id,
             );
             if (viewerMember) {
               setViewerRole(viewerMember.member?.role || viewerMember.role || null);
@@ -260,6 +262,12 @@ export default function UserProfilePopover({
   const profileRanks = (profileData.ranks ?? []).filter((rank) => rank.matchesPlayed > 0).slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
+
+  // Start tag editing mode
+  const handleStartEditTags = () => {
+    setSelectedTags(profileData?.tags ? [...profileData.tags] : []);
+    setIsEditingTags(true);
+  };
 
   // Toggle tag selection
   const handleToggleTag = (tag: string) => {
@@ -481,7 +489,7 @@ export default function UserProfilePopover({
               {canManageTags && !isEditingTags && (
                 <button
                   type="button"
-                  onClick={() => setIsEditingTags(true)}
+                  onClick={handleStartEditTags}
                   className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200/80 hover:bg-blue-100 transition-colors"
                 >
                   <Plus className="h-3 w-3" />

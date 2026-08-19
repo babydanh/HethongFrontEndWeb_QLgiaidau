@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Camera, Copy, Loader2, Play, Radio, Trash2, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -14,12 +15,12 @@ interface LivestreamTabProps {
   bracket: { stages: BracketStage[] } | null;
 }
 
-const statusLabel: Record<LivestreamCamera['status'], string> = {
-  IDLE: 'Sẵn sàng',
-  WAITING: 'Chờ tín hiệu',
-  LIVE: 'Đang live',
-  OFFLINE: 'Offline',
-  ERROR: 'Lỗi',
+const statusLabelKey: Record<LivestreamCamera['status'], 'ready' | 'waitingSignal' | 'live' | 'offline' | 'error'> = {
+  IDLE: 'ready',
+  WAITING: 'waitingSignal',
+  LIVE: 'live',
+  OFFLINE: 'offline',
+  ERROR: 'error',
 };
 
 const flattenMatches = (bracket: { stages: BracketStage[] } | null): BracketMatch[] => {
@@ -39,6 +40,8 @@ const flattenMatches = (bracket: { stages: BracketStage[] } | null): BracketMatc
 };
 
 export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
+  const livestreamTranslate = useTranslations('OrganizerLivestream');
+
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
   const [matchStreams, setMatchStreams] = useState<Record<string, MatchLivestream>>({});
   const [cameraName, setCameraName] = useState('');
@@ -87,12 +90,12 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
   const copyText = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);
-    toast.success(`Đã sao chép ${label}`);
+    toast.success(livestreamTranslate('copied', { label }));
   };
 
   const handleCreateCamera = async () => {
     if (!cameraName.trim()) {
-      toast.error('Nhập tên camera trước');
+      toast.error(livestreamTranslate('enterCameraName'));
       return;
     }
 
@@ -107,7 +110,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
       }
       setCameraName('');
       await loadLivestreamData();
-      toast.success('Đã tạo camera livestream');
+      toast.success(livestreamTranslate('cameraCreated'));
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -122,7 +125,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
       }
       await livestreamApi.deleteCamera(cameraId);
       await loadLivestreamData();
-      toast.success('Đã xóa camera');
+      toast.success(livestreamTranslate('cameraDeleted'));
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
@@ -130,7 +133,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
   const handleAssignCamera = async () => {
     if (!selectedMatchId || !selectedCameraId) {
-      toast.error('Chọn trận và camera trước');
+      toast.error(livestreamTranslate('chooseMatchCamera'));
       return;
     }
 
@@ -138,7 +141,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     try {
       await livestreamApi.assignCamera(selectedMatchId, selectedCameraId);
       await loadLivestreamData();
-      toast.success('Đã gán camera cho trận');
+      toast.success(livestreamTranslate('cameraAssigned'));
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -151,9 +154,9 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     try {
       const response = await livestreamApi.startMatchStream(matchId);
       if (response.data?.publish) {
-        await copyText(response.data.publish.url, 'link publish');
+        await copyText(response.data.publish.url, livestreamTranslate('publishLink'));
       }
-      toast.success('Đã tạo link start stream cho trận');
+      toast.success(livestreamTranslate('publishLinkCreated'));
       await loadLivestreamData();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -166,7 +169,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     setActiveMatchId(matchId);
     try {
       await livestreamApi.stopMatchStream(matchId);
-      toast.success('Đã tắt phát trực tiếp. Bạn có thể bật lại bất cứ lúc nào.');
+      toast.success(livestreamTranslate('streamStopped'));
       await loadLivestreamData();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -183,9 +186,10 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             <Radio className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Trực tiếp</h2>
+            <h2 className="text-lg font-bold text-slate-900">{livestreamTranslate('title')}</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">
-              BTC tạo camera và gán camera vào trận. Trọng tài chỉ được start/dừng stream nếu đã được phân công đúng trận đó và trận đã có camera.
+                            {livestreamTranslate('description')}
+
             </p>
           </div>
         </div>
@@ -193,41 +197,41 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Thêm camera PUSH</h3>
+          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">{livestreamTranslate('addPushCamera')}</h3>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-500">Tên camera</label>
+              <label className="text-xs font-bold text-slate-500">{livestreamTranslate('cameraName')}</label>
               <input
                 value={cameraName}
                 onChange={(event) => setCameraName(event.target.value)}
                 className="mt-1 h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
-                placeholder="Ví dụ: Camera sân 1"
+                placeholder={livestreamTranslate('cameraNamePlaceholder')}
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-500">Giao thức</label>
+              <label className="text-xs font-bold text-slate-500">{livestreamTranslate('protocol')}</label>
               <select
                 value={protocol}
                 onChange={(event) => setProtocol(event.target.value as 'RTMP' | 'SRT')}
                 className="mt-1 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
               >
-                <option value="RTMP">RTMP - OBS/Larix dễ dùng</option>
-                <option value="SRT">SRT - ổn định hơn nếu app hỗ trợ</option>
+                <option value="RTMP">{livestreamTranslate('rtmpOption')}</option>
+                <option value="SRT">{livestreamTranslate('srtOption')}</option>
               </select>
             </div>
             <Button onClick={() => void handleCreateCamera()} disabled={isCreating} className="w-full bg-blue-600 text-white hover:bg-blue-700">
               {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-              Tạo camera
+              {livestreamTranslate('createCamera')}
             </Button>
           </div>
 
           {lastPublish ? (
             <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Link publish vừa tạo</p>
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">{livestreamTranslate('publishLinkCreatedLabel')}</p>
               <p className="mt-2 break-all text-xs font-semibold text-blue-900">{lastPublish.url}</p>
               <Button variant="outline" className="mt-3" onClick={() => void copyText(lastPublish.url, 'link publish')}>
                 <Copy className="mr-2 h-4 w-4" />
-                Sao chép
+                {livestreamTranslate('copy')}
               </Button>
             </div>
           ) : null}
@@ -235,13 +239,14 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Camera của giải</h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">{livestreamTranslate('tournamentCameras')}</h3>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : null}
           </div>
           <div className="mt-4 space-y-3">
             {cameras.length === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-bold text-slate-500">
-                Chưa có camera. Tạo camera trước rồi gán vào trận.
+                                {livestreamTranslate('noCameras')}
+
               </div>
             ) : (
               cameras.map((camera) => {
@@ -260,11 +265,11 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                             {camera.protocol}
                           </span>
                           <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-200 text-slate-700">
-                            {statusLabel[camera.status] ?? camera.status}
+                            {livestreamTranslate(statusLabelKey[camera.status])}
                           </span>
                         </div>
                       </div>
-                      <Button variant="destructive" size="sm" onClick={() => void handleDeleteCamera(camera.id)} title="Xóa camera">
+                      <Button variant="destructive" size="sm" onClick={() => void handleDeleteCamera(camera.id)} title={livestreamTranslate('deleteCamera')}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -275,8 +280,8 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                         <span className="text-xs font-bold text-slate-500 shrink-0">Server URL:</span>
                         <span className="font-mono text-xs md:text-sm font-bold text-slate-900 select-all truncate">{serverUrl}</span>
                         <button 
-                          onClick={() => void copyText(serverUrl, 'Server URL')}
-                          title="Sao chép Server URL"
+                          onClick={() => void copyText(serverUrl, livestreamTranslate('copyServerUrl'))}
+                          title={livestreamTranslate('copyServerUrl')}
                           className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors shrink-0 cursor-pointer"
                         >
                           <Copy className="w-4 h-4" />
@@ -287,8 +292,8 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                         <span className="text-xs font-bold text-slate-500 shrink-0">Stream Key:</span>
                         <span className="font-mono text-xs md:text-sm font-bold text-slate-900 select-all truncate">{streamKey}</span>
                         <button 
-                          onClick={() => void copyText(streamKey, 'Stream Key')}
-                          title="Sao chép Stream Key"
+                          onClick={() => void copyText(streamKey, livestreamTranslate('copyStreamKey'))}
+                          title={livestreamTranslate('copyStreamKey')}
                           className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors shrink-0 cursor-pointer"
                         >
                           <Copy className="w-4 h-4" />
@@ -297,7 +302,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
                       {camera.playbackUrl && (
                         <div className="pt-1">
-                          <span className="text-[11px] font-bold text-slate-500 block mb-1">Stream Playback HLS URL:</span>
+                          <span className="text-[11px] font-bold text-slate-500 block mb-1">{livestreamTranslate('playbackHlsUrl')}:</span>
                           <p className="break-all font-mono text-xs font-semibold text-slate-700 bg-white p-2 rounded-lg border border-slate-200 select-all">{camera.playbackUrl}</p>
                         </div>
                       )}
@@ -311,17 +316,17 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Gán camera vào trận</h3>
+        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">{livestreamTranslate('assignCameraToMatch')}</h3>
         <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <select
             value={selectedMatchId}
             onChange={(event) => setSelectedMatchId(event.target.value)}
             className="h-11 flex-1 min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"
           >
-            <option value="">Chọn trận</option>
+            <option value="">{livestreamTranslate('chooseMatch')}</option>
             {readyMatches.map((match) => (
               <option key={match.id} value={match.id}>
-                {getCameraMatchLabel(match)} • Trận {match.matchOrder} • {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'}
+                {getCameraMatchLabel(match)} • {livestreamTranslate('matchLabel')} {match.matchOrder} • {match.participant1?.teamName || livestreamTranslate('teamOne')} vs {match.participant2?.teamName || livestreamTranslate('teamTwo')}
               </option>
             ))}
           </select>
@@ -331,7 +336,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             onChange={(event) => setSelectedCameraId(event.target.value)}
             className="h-11 flex-1 min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"
           >
-            <option value="">Chọn camera</option>
+            <option value="">{livestreamTranslate('chooseCamera')}</option>
             {cameras.map((camera) => (
               <option key={camera.id} value={camera.id}>
                 {camera.name} • {camera.protocol}
@@ -343,8 +348,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             onClick={() => void handleAssignCamera()} 
             disabled={!selectedMatchId || !selectedCameraId || activeMatchId === selectedMatchId} 
             className="h-11 px-6 bg-blue-600 text-white hover:bg-blue-700 font-bold whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            Gán camera
+          >              {livestreamTranslate('assignCamera')}
           </Button>
         </div>
 
@@ -363,13 +367,13 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             <div key={match.id} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-bold text-slate-900">
-                  {getCameraMatchLabel(match)} • Trận {match.matchOrder}
+                  {getCameraMatchLabel(match)} • {livestreamTranslate('matchLabel')} {match.matchOrder}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-slate-500">
-                  {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'} • Trọng tài: {match.refereeId ? 'đã phân công' : 'chưa phân công'}
+                  {match.participant1?.teamName || livestreamTranslate('teamOne')} vs {match.participant2?.teamName || livestreamTranslate('teamTwo')} • {livestreamTranslate('refereeLabel')}: {match.refereeId ? livestreamTranslate('refereeAssigned') : livestreamTranslate('refereeUnassigned')}
                 </p>
                 <p className="mt-1 text-xs font-bold text-slate-500">
-                  {isLive ? 'Livestream đang phát' : hasCamera ? `Đã gán camera${stream?.cameraName ? `: ${stream.cameraName}` : ''}` : 'Chưa gán camera'}
+                  {isLive ? livestreamTranslate('liveNow') : hasCamera ? livestreamTranslate('cameraAssignedWithName', { name: stream?.cameraName || '' }) : livestreamTranslate('cameraUnassignedStatus')}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -379,7 +383,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                   onClick={() => {
                     if (!hasCamera) {
                       setSelectedMatchId(match.id);
-                      toast('Hãy chọn camera ở mục “Gán camera vào trận” trước.');
+                      toast(livestreamTranslate('selectCameraBeforeAssign'));
                     } else if (isLive) {
                       void handleStop(match.id);
                     } else {
@@ -389,11 +393,12 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                   disabled={isBusy}
                 >
                   {isBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                  {isLive ? 'Dừng phát' : hasCamera ? 'Bật phát' : 'Gán camera'}
+                  {isLive ? livestreamTranslate('stopStream') : hasCamera ? livestreamTranslate('startStream') : livestreamTranslate('assignCamera')}
                 </Button>
                 <Button variant="outline" className="font-bold border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => window.open(`/live/${match.id}`, '_blank')}>
                   <Video className="mr-2 h-4 w-4" />
-                  Xem live
+                                    {livestreamTranslate('watchLive')}
+
                 </Button>
               </div>
             </div>

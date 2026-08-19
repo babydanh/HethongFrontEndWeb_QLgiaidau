@@ -231,6 +231,9 @@ export function RegistrationTab({
     () => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)).fields,
     [tournament.tournamentConfig?.registrationForm, divisions],
   );
+  const selectedDivisionName = selectedParticipant
+    ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.name || 'Chưa phân nội dung')
+    : '';
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
@@ -1349,7 +1352,7 @@ export function RegistrationTab({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-bold text-slate-900">{selectedParticipant.teamName}</h3>
-                      <p className="mt-1 text-xs text-slate-500">Đăng ký {formatDate(selectedParticipant.registeredAt)}</p>
+                      <p className="mt-1 text-xs text-slate-500">{selectedDivisionName} · Đăng ký {formatDate(selectedParticipant.registeredAt)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-bold">
                       <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">{getParticipantStatusLabel(selectedParticipant.teamStatus, participantStatusLabels)}</span>
@@ -1377,11 +1380,15 @@ export function RegistrationTab({
 
                 <section>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Câu trả lời form đăng ký</h3>
-                  {selectedParticipant.customResponses && Object.keys(selectedParticipant.customResponses).length > 0 ? (
+                  {registrationFormFields.length > 0 || (selectedParticipant.customResponses && Object.keys(selectedParticipant.customResponses).length > 0) ? (
                     <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                      {Object.entries(selectedParticipant.customResponses).map(([fieldId, value]) => (
-                        <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{registrationFormFields.find((field) => field.id === fieldId)?.label || fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</span></div>
-                      ))}
+                      {registrationFormFields.map((field) => {
+                        const value = selectedParticipant.customResponses?.[field.id];
+                        const hasValue = value !== undefined && value !== null && value !== '';
+                        const textValue = hasValue ? (typeof value === 'string' ? value : JSON.stringify(value)) : 'Chưa trả lời';
+                        return <div key={field.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>{hasValue && typeof textValue === 'string' && /^https?:\/\//i.test(textValue) ? <a href={textValue} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">Mở tệp / liên kết</a> : <span className={`whitespace-pre-wrap break-words text-sm ${hasValue ? 'text-slate-800' : 'text-slate-400'}`}>{textValue}</span>}</div>;
+                      })}
+                      {Object.entries(selectedParticipant.customResponses ?? {}).filter(([fieldId]) => !registrationFormFields.some((field) => field.id === fieldId)).map(([fieldId, value]) => <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</span></div>)}
                     </div>
                   ) : <p className="mt-2 rounded-xl border border-dashed border-slate-200 px-4 py-4 text-sm text-slate-500">Hồ sơ không có câu trả lời form tùy chỉnh.</p>}
                 </section>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
-import { Trophy, Calendar, Users, Plus, Eye, Settings, Trash2 } from 'lucide-react';
+import { Trophy, Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
@@ -260,6 +260,14 @@ export default function MyTournamentsPage() {
                       }`}>
                         {firstDivision?.isRanked ? 'Tính ELO' : 'Không tính ELO'}
                       </span>
+                      {divisions.some(div => {
+                        const cfg = div.tournamentConfig as Record<string, any> | undefined;
+                        return Boolean(cfg?.recurring?.enabled || cfg?.recurring?.frequency);
+                      }) && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit bg-purple-600/95 flex items-center gap-1">
+                          <RotateCw className="w-2.5 h-2.5" /> Định kỳ
+                        </span>
+                      )}
                     </div>
 
                     {/* Status & Action Badges */}

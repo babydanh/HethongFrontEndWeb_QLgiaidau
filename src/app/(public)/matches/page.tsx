@@ -189,10 +189,10 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
 
 const getBracketTypeLabel = (type?: string, labels?: { singleElimination?: string; doubleElimination?: string; roundRobin?: string; groupStageKnockout?: string }) => {
   if (!type) return '';
-  if (type === 'SINGLE_ELIMINATION') return labels?.singleElimination ?? 'LOẠI TRỰC TIẾP';
-  if (type === 'DOUBLE_ELIMINATION') return labels?.doubleElimination ?? 'NHÁNH THẮNG THUA';
-  if (type === 'ROUND_ROBIN') return labels?.roundRobin ?? 'VÒNG TRÒN';
-  if (type === 'GROUP_STAGE_KNOCKOUT') return labels?.groupStageKnockout ?? 'VÒNG BẢNG + PLAYOFFS';
+  if (type === 'SINGLE_ELIMINATION') return labels?.singleElimination ?? 'Single elimination';
+  if (type === 'DOUBLE_ELIMINATION') return labels?.doubleElimination ?? 'Winners/losers bracket';
+  if (type === 'ROUND_ROBIN') return labels?.roundRobin ?? 'Round robin';
+  if (type === 'GROUP_STAGE_KNOCKOUT') return labels?.groupStageKnockout ?? 'Group stage + playoffs';
   return type;
 };
 
@@ -215,15 +215,15 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null, l
   const mt = matchType || '';
   const gr = genderRestriction || '';
   if (mt === 'SINGLES') {
-    return gr === 'FEMALE' ? (labels?.singleFemale ?? 'Đơn Nữ') : (labels?.singleMale ?? 'Đơn Nam');
+    return gr === 'FEMALE' ? (labels?.singleFemale ?? 'Women singles') : (labels?.singleMale ?? 'Men singles');
   }
   if (mt === 'DOUBLES') {
-    return gr === 'FEMALE' ? (labels?.doubleFemale ?? 'Đôi Nữ') : (labels?.doubleMale ?? 'Đôi Nam');
+    return gr === 'FEMALE' ? (labels?.doubleFemale ?? 'Women doubles') : (labels?.doubleMale ?? 'Men doubles');
   }
   if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-    return labels?.mixedDoubles ?? 'Đôi Nam Nữ';
+    return labels?.mixedDoubles ?? 'Mixed doubles';
   }
-  return mt === 'DOUBLES' ? (labels?.doubles ?? 'Đôi') : mt === 'SINGLES' ? (labels?.singles ?? 'Đơn') : (labels?.mixedDoubles ?? 'Đôi Nam Nữ');
+  return mt === 'DOUBLES' ? (labels?.doubles ?? 'Doubles') : mt === 'SINGLES' ? (labels?.singles ?? 'Singles') : (labels?.mixedDoubles ?? 'Mixed doubles');
 };
 
 export default function MatchesListPage() {
@@ -1043,7 +1043,7 @@ export default function MatchesListPage() {
                     setPage(1);
                   }}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
-                  title="Xóa bộ lọc"
+                  title={translate('clearAll')}
                 >
                   <span className="font-bold text-rose-650">{translate("clearAll")}</span>
                 </button>
@@ -1055,7 +1055,7 @@ export default function MatchesListPage() {
       <div className="flex items-end justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900">{translate("title")}</h2>
-          <p className="mt-0.5 text-xs font-medium text-slate-500">Các trận được nhóm theo từng giải để dễ theo dõi.</p>
+          <p className="mt-0.5 text-xs font-medium text-slate-500">{translate('groupedMatchesHint')}</p>
         </div>
       </div>
 
@@ -1065,14 +1065,14 @@ export default function MatchesListPage() {
       ) : isRateLimited ? (
         <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />
-          <p className="text-sm font-bold text-slate-600">Hệ thống đang nhận nhiều yêu cầu.</p>
-          <p className="text-xs text-slate-400 mt-1">Vui lòng chờ vài giây rồi thử lại.</p>
+          <p className="text-sm font-bold text-slate-600">{translate('rateLimitTitle')}</p>
+          <p className="text-xs text-slate-400 mt-1">{translate('rateLimitHint')}</p>
           <button
             type="button"
             onClick={() => setMatchesRefreshTick((value) => value + 1)}
             className="mt-4 px-4 py-2 rounded-lg bg-sky-500 text-white text-sm font-bold hover:bg-sky-600 transition-colors"
           >
-            Thử lại
+            {translate('retry')}
           </button>
         </div>
       ) : currentTournaments.length === 0 ? (

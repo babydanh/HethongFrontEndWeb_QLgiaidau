@@ -393,6 +393,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           Giải Nâng Cao
                         </span>
                       )}
+                      {Boolean((t.tournamentConfig as Record<string, any>)?.recurring?.enabled || (t.tournamentConfig as Record<string, any>)?.recurring?.frequency) && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                          <RotateCw className="w-2.5 h-2.5" /> Định kỳ
+                        </span>
+                      )}
                     </div>
                     {getStatusBadge(t.status)}
                   </div>

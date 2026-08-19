@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Trophy, Calendar, DollarSign, Loader2, Trash2 } from 'lucide-react';
+import { Trophy, Calendar, DollarSign, Loader2, Trash2, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { TournamentTypeChoiceModal } from '@/components/TournamentTypeChoiceModal';
 import { communitiesApi } from '@/features/communities/api';
@@ -344,6 +344,15 @@ export default function TournamentsTab({
                               return logo ? <img src={logo} alt="" className="w-3 h-3 object-contain" /> : null;
                             })()}
                             {t.divisions[0].category.name}
+                          </span>
+                        )}
+
+                        {t.divisions.some(d => {
+                          const cfg = d.tournamentConfig as Record<string, any> | undefined;
+                          return Boolean(cfg?.recurring?.enabled || cfg?.recurring?.frequency);
+                        }) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                            <RotateCw className="w-2.5 h-2.5" /> Định kỳ
                           </span>
                         )}
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { seriesApi } from '@/features/series/api';
 import { tournamentsApi } from '@/features/tournaments/api';
@@ -18,6 +19,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export default function SeriesManagePage() {
+  const translate = useTranslations('OrganizerSeriesManage');
+  const locale = useLocale();
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -59,7 +62,7 @@ export default function SeriesManagePage() {
         setSelectedLegId(res.legs[0].id);
       }
     } catch (err: unknown) {
-      toast.error('Không thể tải chi tiết chuỗi giải đấu');
+      toast.error(translate('loadError'));
       router.push('/organizer/series');
     } finally {
       setIsLoading(false);
@@ -96,7 +99,7 @@ export default function SeriesManagePage() {
       setLegWildcardSlots(leg.wildcardSlots);
     } else {
       setEditingLeg(null);
-      setLegName(`Chặng ${legs.length + 1}`);
+      setLegName(translate('defaultLegName', { count: legs.length + 1 }));
       setLegOrder(legs.length + 1);
       setLegStartDate('');
       setLegEndDate('');
@@ -109,7 +112,7 @@ export default function SeriesManagePage() {
   const handleSaveLeg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!legName) {
-      toast.error('Vui lòng nhập tên chặng đấu');
+      toast.error(translate('legNameRequired'));
       return;
     }
 
@@ -125,37 +128,37 @@ export default function SeriesManagePage() {
 
       if (editingLeg) {
         await seriesApi.updateLeg(id, editingLeg.id, payload);
-        toast.success('Cập nhật chặng đấu thành công');
+        toast.success(translate('updateLegSuccess'));
       } else {
         const newLeg = await seriesApi.createLeg(id, payload);
-        toast.success('Thêm chặng đấu thành công');
+        toast.success(translate('createLegSuccess'));
         setSelectedLegId(newLeg.id);
       }
       setIsLegModalOpen(false);
       fetchDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi xử lý chặng đấu';
+      const msg = err instanceof Error ? err.message : translate('legActionError');
       toast.error(msg);
     }
   };
 
   const handleDeleteLeg = async (legId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa chặng đấu này? Tất cả các liên kết sự kiện bên trong chặng sẽ bị hủy.')) return;
+    if (!confirm(translate('deleteLegConfirm'))) return;
     try {
       await seriesApi.deleteLeg(id, legId);
-      toast.success('Xóa chặng đấu thành công');
+      toast.success(translate('deleteLegSuccess'));
       if (selectedLegId === legId) {
         setSelectedLegId('');
       }
       fetchDetail();
     } catch (err: unknown) {
-      toast.error('Lỗi khi xóa chặng đấu');
+      toast.error(translate('deleteLegError'));
     }
   };
 
   const handleOpenLinkModal = () => {
     if (legs.length === 0) {
-      toast.error('Vui lòng tạo chặng đấu trước khi liên kết giải đấu');
+      toast.error(translate('createLegFirst'));
       return;
     }
     
@@ -164,7 +167,7 @@ export default function SeriesManagePage() {
     const available = myTournaments.filter(t => !linkedTournamentIds.has(t.id));
     
     if (available.length === 0) {
-      toast.error('Không còn giải đấu nào khả dụng để liên kết. Vui lòng tạo thêm giải đấu.');
+      toast.error(translate('noAvailableTournaments'));
       return;
     }
 
@@ -179,7 +182,7 @@ export default function SeriesManagePage() {
   const handleLinkTournament = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetTournamentId || !selectedLegId) {
-      toast.error('Vui lòng chọn thông tin hợp lệ');
+      toast.error(translate('validSelectionRequired'));
       return;
     }
 
@@ -192,11 +195,11 @@ export default function SeriesManagePage() {
         pointMultiplier: eventMultiplier,
       });
 
-      toast.success('Liên kết giải đấu thành công!');
+      toast.success(translate('linkSuccess'));
       setIsLinkModalOpen(false);
       fetchDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể liên kết giải đấu';
+      const msg = err instanceof Error ? err.message : translate('linkError');
       toast.error(msg);
     } finally {
       setIsLinking(false);
@@ -204,13 +207,13 @@ export default function SeriesManagePage() {
   };
 
   const handleUnlinkTournament = async (eventId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn hủy liên kết giải đấu này khỏi chặng? Điểm số PSR cũ vẫn giữ nguyên, nhưng giải sẽ không thuộc chặng này nữa.')) return;
+    if (!confirm(translate('unlinkConfirm'))) return;
     try {
       await seriesApi.unlinkEvent(id, selectedLegId, eventId);
-      toast.success('Hủy liên kết thành công');
+      toast.success(translate('unlinkSuccess'));
       fetchDetail();
     } catch (err: unknown) {
-      toast.error('Lỗi khi hủy liên kết giải đấu');
+      toast.error(translate('unlinkError'));
     }
   };
 
@@ -219,7 +222,7 @@ export default function SeriesManagePage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <LoadingSpinner className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-500 font-medium">Đang tải cấu hình chuỗi giải...</p>
+          <p className="text-slate-500 font-medium">{translate('loadingSeries')}</p>
         </div>
       </div>
     );
@@ -238,7 +241,7 @@ export default function SeriesManagePage() {
           href="/organizer/series"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại danh sách chuỗi giải
+          <ArrowLeft className="w-4 h-4" /> {translate('backToSeries')}
         </Link>
 
         {/* Dashboard Header */}
@@ -249,7 +252,7 @@ export default function SeriesManagePage() {
             </div>
             <div>
               <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-blue-100 tracking-wider">
-                QUẢN LÝ CHUỖI GIẢI
+                {translate('manageSeriesBadge')}
               </span>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 mt-1">{series.name}</h1>
             </div>
@@ -257,7 +260,7 @@ export default function SeriesManagePage() {
           <div className="flex gap-2 w-full md:w-auto">
             <Link href={`/series/${series.slug}`} target="_blank" className="flex-1 md:flex-none">
               <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center justify-center gap-1.5 font-bold text-xs py-2">
-                Xem giao diện VĐV <ChevronRight className="w-4 h-4" />
+                {translate('viewPlayerPage')} <ChevronRight className="w-4 h-4" />
               </Button>
             </Link>
           </div>
@@ -271,20 +274,20 @@ export default function SeriesManagePage() {
             <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                  <Layers className="w-4.5 h-4.5 text-blue-500" /> Các chặng đấu ({legs.length})
+                  <Layers className="w-4.5 h-4.5 text-blue-500" /> {translate('legsTitle')} ({legs.length})
                 </h3>
                 <Button 
                   type="button" 
                   onClick={() => handleOpenLegModal()}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-1 px-2.5 flex items-center gap-1"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Thêm chặng
+                  <Plus className="w-3.5 h-3.5" /> {translate('addLeg')}
                 </Button>
               </div>
 
               {legs.length === 0 ? (
                 <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-                  Chưa có chặng đấu nào. Nhấp &quot;Thêm chặng&quot; để tạo.
+                  {translate('noLegs')}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -305,14 +308,14 @@ export default function SeriesManagePage() {
                             #{leg.order}. {leg.name}
                           </span>
                           <span className="text-[10px] text-slate-400 font-medium">
-                            {leg.startDate ? new Date(leg.startDate).toLocaleDateString('vi-VN') : '—'} &rarr; {leg.endDate ? new Date(leg.endDate).toLocaleDateString('vi-VN') : '—'}
+                            {leg.startDate ? new Date(leg.startDate).toLocaleDateString(locale) : '—'} &rarr; {leg.endDate ? new Date(leg.endDate).toLocaleDateString(locale) : '—'}
                           </span>
                           <div className="flex gap-2 mt-1">
                             <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-semibold border">
-                              Vé thẳng: {leg.directEntrySlots}
+                              {translate('directSlots')}: {leg.directEntrySlots}
                             </span>
                             <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-semibold border">
-                              Vé vớt: {leg.wildcardSlots}
+                              {translate('wildcardSlots')}: {leg.wildcardSlots}
                             </span>
                           </div>
                         </div>
@@ -325,7 +328,7 @@ export default function SeriesManagePage() {
                               handleOpenLegModal(leg);
                             }}
                             className="p-1.5 hover:bg-blue-100/70 text-slate-400 hover:text-blue-700 rounded-lg transition-colors"
-                            title="Sửa chặng"
+                            title={translate('editLeg')}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -338,7 +341,7 @@ export default function SeriesManagePage() {
                             variant="ghost"
                             size="icon"
                             className="text-slate-400 hover:text-rose-600"
-                            title="Xóa chặng"
+                            title={translate('deleteLeg')}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -358,10 +361,10 @@ export default function SeriesManagePage() {
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
-                      Giải đấu trong chặng: {selectedLeg.name}
+                      {translate('linkedTournamentsTitle', { name: selectedLeg.name })}
                     </h3>
                     <p className="text-[10px] text-slate-400 mt-0.5">
-                      Khi giải đấu hoàn tất (COMPLETED), điểm số sẽ tự động phân phối cho VĐV.
+                      {translate('scoreDistributionHint')}
                     </p>
                   </div>
                   <Button 
@@ -369,7 +372,7 @@ export default function SeriesManagePage() {
                     onClick={handleOpenLinkModal}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-1 px-3 flex items-center gap-1"
                   >
-                    <LinkIcon className="w-3.5 h-3.5" /> Liên kết giải đấu
+                    <LinkIcon className="w-3.5 h-3.5" /> {translate('linkTournament')}
                   </Button>
                 </div>
 
@@ -388,7 +391,7 @@ export default function SeriesManagePage() {
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                                  GIẢI #{event.order}
+                                  {translate('eventBadge', { order: event.order })}
                                 </span>
                                 {event.region && (
                                   <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500 bg-slate-200/50 px-1.5 py-0.5 rounded">
@@ -397,7 +400,7 @@ export default function SeriesManagePage() {
                                 )}
                                 {event.pointMultiplier > 1 && (
                                   <span className="inline-flex items-center gap-1 text-[9px] font-bold text-blue-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
-                                    Hệ số x{event.pointMultiplier}
+                                    {translate('pointsMultiplier', { value: event.pointMultiplier })}
                                   </span>
                                 )}
                               </div>
@@ -405,7 +408,7 @@ export default function SeriesManagePage() {
                                 {t.name}
                               </h4>
                               <span className="text-[10px] text-slate-400 font-medium">
-                                Trạng thái: {t.status === 'COMPLETED' ? '✅ Đã kết thúc (Đã tính điểm)' : '⏳ Chưa kết thúc'}
+                                {t.status === 'COMPLETED' ? `✅ ${translate('completedStatus')}` : `⏳ ${translate('notCompletedStatus')}`}
                               </span>
                             </div>
 
@@ -416,7 +419,7 @@ export default function SeriesManagePage() {
                               size="sm"
                               className="font-bold"
                             >
-                              <X className="w-3.5 h-3.5" /> Hủy liên kết
+                              <X className="w-3.5 h-3.5" /> {translate('unlinkTournament')}
                             </Button>
                           </div>
                         );
@@ -425,13 +428,13 @@ export default function SeriesManagePage() {
                 ) : (
                   <div className="py-12 text-center text-slate-400 text-xs font-semibold flex flex-col items-center justify-center gap-2">
                     <LinkIcon className="w-10 h-10 text-slate-200" />
-                    Chưa có giải đấu nào được liên kết vào chặng này.
+                    {translate('noLinkedTournaments')}
                   </div>
                 )}
               </div>
             ) : (
               <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-400 text-xs font-semibold">
-                Vui lòng tạo chặng đấu hoặc chọn chặng bên trái để quản lý giải đấu thành viên.
+                {translate('selectLegPrompt')}
               </div>
             )}
           </div>
@@ -444,7 +447,7 @@ export default function SeriesManagePage() {
           <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="text-sm font-bold text-slate-950 uppercase tracking-wide">
-                {editingLeg ? 'Sửa chặng đấu' : 'Thêm chặng đấu mới'}
+                {editingLeg ? translate('editLegTitle') : translate('addLegTitle')}
               </h3>
               <button onClick={() => setIsLegModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
                 <X className="w-5 h-5" />
@@ -453,18 +456,18 @@ export default function SeriesManagePage() {
             
             <form onSubmit={handleSaveLeg} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Tên chặng *</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('legName')}</label>
                 <Input
                   value={legName}
                   onChange={(e) => setLegName(e.target.value)}
-                  placeholder="Ví dụ: Chặng 1: Mùa xuân"
+                  placeholder={translate('legNamePlaceholder')}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Thứ tự chặng</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('legOrder')}</label>
                   <Input
                     type="number"
                     min={1}
@@ -475,7 +478,7 @@ export default function SeriesManagePage() {
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Số vé thẳng (Top đầu)</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('directEntrySlots')}</label>
                   <Input
                     type="number"
                     min={0}
@@ -488,7 +491,7 @@ export default function SeriesManagePage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Ngày bắt đầu</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('startDate')}</label>
                   <Input
                     type="date"
                     value={legStartDate}
@@ -497,7 +500,7 @@ export default function SeriesManagePage() {
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Ngày kết thúc</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('endDate')}</label>
                   <Input
                     type="date"
                     value={legEndDate}
@@ -507,7 +510,7 @@ export default function SeriesManagePage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Số suất vé vớt tích lũy PSR</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('psrWildcardSlots')}</label>
                 <Input
                   type="number"
                   min={0}
@@ -519,10 +522,10 @@ export default function SeriesManagePage() {
 
               <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
                 <Button type="button" variant="outline" onClick={() => setIsLegModalOpen(false)} className="text-xs text-slate-600">
-                  Hủy
+                  {translate('cancel')}
                 </Button>
                 <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4">
-                  Lưu chặng đấu
+                  {translate('saveLeg')}
                 </Button>
               </div>
             </form>
@@ -536,7 +539,7 @@ export default function SeriesManagePage() {
           <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="text-sm font-bold text-slate-950 uppercase tracking-wide">
-                Liên kết giải đấu thành viên
+                {translate('linkTournamentTitle')}
               </h3>
               <button onClick={() => setIsLinkModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
                 <X className="w-5 h-5" />
@@ -545,7 +548,7 @@ export default function SeriesManagePage() {
             
             <form onSubmit={handleLinkTournament} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Chọn giải đấu khả dụng</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('chooseTournament')}</label>
                 <select
                   value={targetTournamentId}
                   onChange={(e) => setTargetTournamentId(e.target.value)}
@@ -553,7 +556,7 @@ export default function SeriesManagePage() {
                 >
                   {availableTournaments.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} ({t.category?.name || 'Môn đấu'})
+                      {t.name} ({t.category?.name || translate('sportFallback')})
                     </option>
                   ))}
                 </select>
@@ -561,7 +564,7 @@ export default function SeriesManagePage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Thứ tự trong chặng</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('eventOrder')}</label>
                   <Input
                     type="number"
                     min={1}
@@ -572,7 +575,7 @@ export default function SeriesManagePage() {
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Hệ số điểm (Multiplier)</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('eventMultiplier')}</label>
                   <Input
                     type="number"
                     step={0.1}
@@ -585,24 +588,24 @@ export default function SeriesManagePage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Khu vực / Tỉnh thành tổ chức</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{translate('region')}</label>
                 <Input
                   value={eventRegion}
                   onChange={(e) => setEventRegion(e.target.value)}
-                  placeholder="Ví dụ: Tây Nguyên, Hà Nội..."
+                  placeholder={translate('regionPlaceholder')}
                 />
               </div>
 
               <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
                 <Button type="button" variant="outline" onClick={() => setIsLinkModalOpen(false)} className="text-xs text-slate-600">
-                  Hủy
+                  {translate('cancel')}
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4"
                   isLoading={isLinking}
                 >
-                  Liên kết giải
+                  {translate('linkTournamentAction')}
                 </Button>
               </div>
             </form>

@@ -4,6 +4,22 @@ import toast from 'react-hot-toast';
 
 let lastServerErrorToastAt = 0;
 const SERVER_ERROR_TOAST_COOLDOWN_MS = 10000;
+const ANONYMOUS_CLIENT_ID_KEY = 'sporto_anonymous_client_id_v1';
+
+function getAnonymousClientId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const existing = window.localStorage.getItem(ANONYMOUS_CLIENT_ID_KEY);
+    if (existing && /^[a-zA-Z0-9._:-]{8,128}$/.test(existing)) return existing;
+    const generated = typeof crypto?.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+    window.localStorage.setItem(ANONYMOUS_CLIENT_ID_KEY, generated);
+    return generated;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Đọc giá trị cookie theo tên
@@ -60,6 +76,11 @@ export const api = axios.create({
 // Request interceptor — gắn CSRF token cho state-changing requests
 api.interceptors.request.use(
   (config) => {
+    const anonymousClientId = getAnonymousClientId();
+    if (anonymousClientId) {
+      config.headers = config.headers ?? {};
+      config.headers['x-client-id'] = anonymousClientId;
+    }
     const method = config.method?.toUpperCase();
     if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
       const csrfToken = getCookie('csrf-token');

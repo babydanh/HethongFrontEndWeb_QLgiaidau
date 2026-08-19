@@ -105,70 +105,75 @@ export function resolveMatchSportRules(
   return resolveSportRuleView(match.matchConfig ?? match.tournament?.sportRules, inferredFromTournament ?? fallbackKind);
 }
 
-export function getMatchScorePresentation(kind: SportRuleKind) {
-  const sportPresentation = getSportRulePresentation(kind) || { sportLabel: 'Thể thao' };
+type ScoreTranslate = (key: string, values?: Record<string, string | number>) => string;
+
+export function getMatchScorePresentation(kind: SportRuleKind, translate?: ScoreTranslate) {
+  const sportPresentation = getSportRulePresentation(kind, translate) || { sportLabel: translate?.('scorePresentation.FOOTBALL.sportLabel') ?? 'Football' };
+  const label = (key: string, fallback: string) => translate?.(`scorePresentation.${kind}.${key}`) ?? fallback;
 
   if (kind === 'TENNIS') {
     return {
-      sportLabel: sportPresentation.sportLabel || 'Tennis',
-      scoreUnit: 'game',
-      scoreUnitPlural: 'game',
-      currentScoreLabel: 'Game hiện tại',
-      sequenceLabel: 'set',
-      sequenceLabelPlural: 'set',
-      summaryLabel: 'Tỉ số các set',
-      completeActionLabel: 'Chốt set hiện tại',
-      wonSummaryLabel: 'Set thắng',
+      sportLabel: sportPresentation.sportLabel || label('sportLabel', 'Tennis'),
+      scoreUnit: label('scoreUnit', 'games'),
+      scoreUnitPlural: label('scoreUnit', 'games'),
+      currentScoreLabel: label('currentScoreLabel', 'Current game score'),
+      sequenceLabel: label('sequenceLabel', 'set'),
+      sequenceLabelPlural: label('sequenceLabel', 'set'),
+      summaryLabel: label('summaryLabel', 'Set scores'),
+      completeActionLabel: label('completeActionLabel', 'Finalize current set'),
+      wonSummaryLabel: label('wonSummaryLabel', 'Sets won'),
     };
   }
 
   if (kind === 'PICKLEBALL_SIDE_OUT') {
     return {
-      sportLabel: sportPresentation.sportLabel || 'Pickleball',
-      scoreUnit: 'điểm',
-      scoreUnitPlural: 'điểm',
-      currentScoreLabel: 'Điểm game hiện tại',
-      sequenceLabel: 'game',
-      sequenceLabelPlural: 'game',
-      summaryLabel: 'Tỉ số các game',
-      completeActionLabel: 'Chốt game hiện tại',
-      wonSummaryLabel: 'Game thắng',
+      sportLabel: sportPresentation.sportLabel || label('sportLabel', 'Pickleball'),
+      scoreUnit: label('scoreUnit', 'points'),
+      scoreUnitPlural: label('scoreUnit', 'points'),
+      currentScoreLabel: label('currentScoreLabel', 'Current game score'),
+      sequenceLabel: label('sequenceLabel', 'game'),
+      sequenceLabelPlural: label('sequenceLabel', 'game'),
+      summaryLabel: label('summaryLabel', 'Game scores'),
+      completeActionLabel: label('completeActionLabel', 'Finalize current game'),
+      wonSummaryLabel: label('wonSummaryLabel', 'Games won'),
     };
   }
 
   if (kind === 'FOOTBALL') {
     return {
-      sportLabel: sportPresentation.sportLabel || 'Bóng đá',
-      scoreUnit: 'bàn',
-      scoreUnitPlural: 'bàn',
-      currentScoreLabel: 'Tỉ số hiện tại',
-      sequenceLabel: 'hiệp',
-      sequenceLabelPlural: 'hiệp',
-      summaryLabel: 'Tỉ số trận',
-      completeActionLabel: 'Chốt trận đấu',
-      wonSummaryLabel: 'Tỉ số',
+      sportLabel: sportPresentation.sportLabel || label('sportLabel', 'Football'),
+      scoreUnit: label('scoreUnit', 'goals'),
+      scoreUnitPlural: label('scoreUnit', 'goals'),
+      currentScoreLabel: label('currentScoreLabel', 'Current score'),
+      sequenceLabel: label('sequenceLabel', 'half'),
+      sequenceLabelPlural: label('sequenceLabel', 'half'),
+      summaryLabel: label('summaryLabel', 'Match score'),
+      completeActionLabel: label('completeActionLabel', 'Finalize match'),
+      wonSummaryLabel: label('wonSummaryLabel', 'Score'),
     };
   }
 
   return {
-    sportLabel: sportPresentation.sportLabel || 'Cầu lông/Khác',
-    scoreUnit: 'điểm',
-    scoreUnitPlural: 'điểm',
-    currentScoreLabel: 'Điểm set hiện tại',
-    sequenceLabel: 'set',
-    sequenceLabelPlural: 'set',
-    summaryLabel: 'Tỉ số các set',
-    completeActionLabel: 'Chốt set hiện tại',
-    wonSummaryLabel: 'Set thắng',
+          sportLabel: sportPresentation.sportLabel || label('sportLabel', 'Badminton / Other'),
+      scoreUnit: label('scoreUnit', 'points'),
+      scoreUnitPlural: label('scoreUnit', 'points'),
+      currentScoreLabel: label('currentScoreLabel', 'Current set score'),
+      sequenceLabel: label('sequenceLabel', 'set'),
+      sequenceLabelPlural: label('sequenceLabel', 'set'),
+      summaryLabel: label('summaryLabel', 'Set scores'),
+      completeActionLabel: label('completeActionLabel', 'Finalize current set'),
+      wonSummaryLabel: label('wonSummaryLabel', 'Sets won'),
+
   };
 }
 
 export function buildMatchScoreSummary(
   match: MatchSportContext & { p1SetsWon: number; p2SetsWon: number },
   fallbackKind: SportRuleKind = 'BADMINTON',
+  translate?: ScoreTranslate,
 ): string {
   const resolved = resolveMatchSportRules(match, fallbackKind);
-  const presentation = getMatchScorePresentation(resolved.kind);
+  const presentation = getMatchScorePresentation(resolved.kind, translate);
   if (resolved.kind === 'FOOTBALL') {
     const football = match.scoreDetails?.football;
     if (football && typeof football === 'object' && !Array.isArray(football)) {
@@ -177,7 +182,7 @@ export function buildMatchScoreSummary(
       const team2Goals = Number(value.team2Goals);
       if (Number.isFinite(team1Goals) && Number.isFinite(team2Goals)) {
         const phase = typeof value.phase === 'string' ? value.phase : null;
-        return `${team1Goals}-${team2Goals}${phase ? ` · ${phaseLabel(phase)}` : ''}`;
+        return `${team1Goals}-${team2Goals}${phase ? ` · ${phaseLabel(phase, translate)}` : ''}`;
       }
     }
   }
@@ -190,14 +195,8 @@ export function buildMatchScoreSummary(
   return `${presentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon}`;
 }
 
-function phaseLabel(phase: string): string {
-  const labels: Record<string, string> = {
-    FIRST_HALF: 'Hiệp 1', HALFTIME: 'Giải lao', SECOND_HALF: 'Hiệp 2',
-    STOPPAGE_TIME: 'Bù giờ', FULL_TIME: 'Hết giờ', EXTRA_TIME_FIRST_HALF: 'Hiệp phụ 1',
-    EXTRA_TIME_BREAK: 'Nghỉ hiệp phụ', EXTRA_TIME_SECOND_HALF: 'Hiệp phụ 2',
-    PENALTY_SHOOTOUT: 'Luân lưu', COMPLETED: 'Hoàn thành',
-  };
-  return labels[phase] ?? phase;
+function phaseLabel(phase: string, translate?: ScoreTranslate): string {
+  return translate?.(`scorePhases.${phase}`) ?? phase;
 }
 
 export function buildAutoWinnerScore(

@@ -6,8 +6,19 @@ export interface ScoreRuleWarning {
   message: string;
 }
 
-const buildSequenceLabel = (rules: ResolvedSportRuleView, index: number) =>
-  `${rules.kind === 'PICKLEBALL_SIDE_OUT' ? 'Ván' : 'Set'} ${index + 1}`;
+type WarningTranslate = (key: string, values?: Record<string, string | number>) => string;
+
+const buildSequenceLabel = (
+  rules: ResolvedSportRuleView,
+  index: number,
+  translate?: WarningTranslate,
+) => {
+  const sequenceKey = rules.kind === 'PICKLEBALL_SIDE_OUT'
+    ? 'scorePresentation.PICKLEBALL_SIDE_OUT.sequenceLabel'
+    : 'scorePresentation.BADMINTON.sequenceLabel';
+  const sequence = translate?.(sequenceKey) ?? (rules.kind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set');
+  return `${sequence.charAt(0).toUpperCase() + sequence.slice(1)} ${index + 1}`;
+};
 
 /** Keep the operator warning aligned with backend validate-tennis-score. */
 export function isValidTennisSetScore(
@@ -34,13 +45,14 @@ export function isValidTennisSetScore(
 export function getScoreRuleWarnings(
   sets: MatchScore[],
   rules: ResolvedSportRuleView,
+  translate?: WarningTranslate,
 ): ScoreRuleWarning[] {
   const warnings: ScoreRuleWarning[] = [];
   let p1Won = 0;
   let p2Won = 0;
 
   sets.forEach((set, index) => {
-    const label = buildSequenceLabel(rules, index);
+    const label = buildSequenceLabel(rules, index, translate);
     const team1Score = set.team1Score;
     const team2Score = set.team2Score;
     const hasStarted = team1Score > 0 || team2Score > 0;
@@ -52,7 +64,8 @@ export function getScoreRuleWarnings(
     if (team1Score === team2Score) {
       warnings.push({
         id: `draw-${index}`,
-        message: `${label} đang hòa ${team1Score}-${team2Score}. Nếu đã chốt kết quả thì cần sửa lại hoặc bật chế độ ngoại lệ.`,
+        message: translate?.('scoreWarnings.draw', { label, team1: team1Score, team2: team2Score })
+          ?? `${label} is tied at ${team1Score}-${team2Score}. If the result is final, correct it or enable override mode.`,
       });
       return;
     }
@@ -78,7 +91,14 @@ export function getScoreRuleWarnings(
       if (!isValidTennisSetScore(winnerScore, loserScore, rules)) {
         warnings.push({
           id: `tennis-${index}`,
-          message: `${label} có tỷ số ${team1Score}-${team2Score}, không hợp lệ theo mốc ${rules.pointsPerSet} game và giới hạn ${rules.maxPoints} game của preset.`,
+          message: translate?.('scoreWarnings.tennisInvalid', {
+            label,
+            team1: team1Score,
+            team2: team2Score,
+            pointsPerSet: rules.pointsPerSet,
+            maxPoints: rules.maxPoints,
+          })
+            ?? `${label} has score ${team1Score}-${team2Score}, which is invalid for the ${rules.pointsPerSet}-game target and ${rules.maxPoints}-game preset limit.`,
         });
       }
       return;
@@ -88,7 +108,13 @@ export function getScoreRuleWarnings(
       if (winnerScore < rules.pointsPerSet) {
         warnings.push({
           id: `target-${index}`,
-          message: `${label} đang chốt ở ${team1Score}-${team2Score} nhưng bên thắng chưa chạm mốc ${rules.pointsPerSet}.`,
+          message: translate?.('scoreWarnings.target', {
+          label,
+          team1: team1Score,
+          team2: team2Score,
+          pointsPerSet: rules.pointsPerSet,
+        })
+          ?? `${label} is finalized at ${team1Score}-${team2Score}, but the winner has not reached the target of ${rules.pointsPerSet}.`,
         });
       }
       return;
@@ -97,7 +123,13 @@ export function getScoreRuleWarnings(
     if (winnerScore < rules.pointsPerSet) {
       warnings.push({
         id: `min-target-${index}`,
-        message: `${label} đang chốt ở ${team1Score}-${team2Score} nhưng bên thắng chưa đủ ${rules.pointsPerSet} điểm.`,
+        message: translate?.('scoreWarnings.minTarget', {
+          label,
+          team1: team1Score,
+          team2: team2Score,
+          pointsPerSet: rules.pointsPerSet,
+        })
+          ?? `${label} is finalized at ${team1Score}-${team2Score}, but the winner has not reached ${rules.pointsPerSet} points.`,
       });
       return;
     }
@@ -106,14 +138,20 @@ export function getScoreRuleWarnings(
     if (!reachedCap && winnerScore - loserScore < 2) {
       warnings.push({
         id: `margin-${index}`,
-        message: `${label} đang chốt ở ${team1Score}-${team2Score} nhưng chưa đủ cách biệt 2 điểm theo cấu hình mặc định.`,
+        message: translate?.('scoreWarnings.margin', {
+          label,
+          team1: team1Score,
+          team2: team2Score,
+        })
+          ?? `${label} is finalized at ${team1Score}-${team2Score}, but the default two-point margin has not been reached.`,
       });
     }
 
     if (winnerScore > rules.maxPoints) {
       warnings.push({
         id: `cap-${index}`,
-        message: `${label} vượt trần ${rules.maxPoints} điểm của cấu hình hiện tại.`,
+        message: translate?.('scoreWarnings.cap', { label, maxPoints: rules.maxPoints })
+          ?? `${label} exceeds the current configuration cap of ${rules.maxPoints} points.`,
       });
     }
   });
@@ -121,7 +159,13 @@ export function getScoreRuleWarnings(
   if (p1Won > rules.setsToWin || p2Won > rules.setsToWin) {
     warnings.push({
       id: 'too-many-wins',
-      message: `Một bên đang có số ${rules.kind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'} thắng vượt mức cần thiết (${rules.setsToWin}).`,
+      message: translate?.('scoreWarnings.tooManyWins', {
+        unit: rules.kind === 'PICKLEBALL_SIDE_OUT'
+          ? (translate?.('scorePresentation.PICKLEBALL_SIDE_OUT.sequenceLabel') ?? 'game')
+          : (translate?.('scorePresentation.BADMINTON.sequenceLabel') ?? 'set'),
+        setsToWin: rules.setsToWin,
+      })
+        ?? `One side has more ${rules.kind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'} wins than required (${rules.setsToWin}).`,
     });
   }
 

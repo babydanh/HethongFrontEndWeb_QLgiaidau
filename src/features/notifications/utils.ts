@@ -155,7 +155,21 @@ export const getNotificationTypeLabel = (
   const explicitLabel = NOTIFICATION_TYPE_LABELS[trimmedType];
 
   if (explicitLabel) {
-    return translate ? translate(`notificationType_${trimmedType}`) : explicitLabel;
+    if (translate) {
+      try {
+        const translated = translate(`notificationType_${trimmedType}`);
+        if (
+          translated &&
+          !translated.startsWith('Notifications.notificationType_') &&
+          !translated.startsWith('notificationType_')
+        ) {
+          return translated;
+        }
+      } catch {
+        // fallback to explicitLabel below
+      }
+    }
+    return explicitLabel;
   }
 
   const normalizedType = trimmedType.toLowerCase();
@@ -166,6 +180,10 @@ export const getNotificationTypeLabel = (
 
   if (normalizedType.includes('tournament')) {
     return translate ? translate('notificationTypeTournament') : 'Giải đấu';
+  }
+
+  if (normalizedType.includes('community') || normalizedType.includes('club')) {
+    return translate ? translate('notificationTypeCommunity') : 'Câu lạc bộ';
   }
 
   if (normalizedType.includes('chat') || normalizedType.includes('message')) {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { Dispatch, SetStateAction } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ModalFooter } from '@/components/ui/Modal';
@@ -102,10 +103,15 @@ export function ScoringPanel({
   onCancel,
   onSubmit,
 }: ScoringPanelProps) {
+  const translate = useTranslations('TournamentDetail');
+  const scoringTranslate = useTranslations('OrganizerScoring');
+  const team1Fallback = scoringTranslate('team1');
+  const team2Fallback = scoringTranslate('team2');
+
   if (!match) {
     return (
       <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
-        Không có dữ liệu trận để nhập điểm.
+        {scoringTranslate('noMatch')}
       </div>
     );
   }
@@ -114,12 +120,13 @@ export function ScoringPanel({
     matchConfig: match.matchConfig,
     tournament: { sportRules: tournamentSportRules },
   });
-  const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
-  const scoreGuidance = getScoreEntryGuidance(resolvedRules.kind);
+  const scorePresentation = getMatchScorePresentation(resolvedRules.kind, translate);
+  const scoreGuidance = getScoreEntryGuidance(resolvedRules.kind, translate);
   const quickScoreTemplates = getQuickScoreTemplates(
     resolvedRules.kind,
     resolvedRules.pointsPerSet,
     resolvedRules.maxPoints,
+    translate,
   );
   const sideOutState =
     resolvedRules.kind === 'PICKLEBALL_SIDE_OUT'
@@ -127,9 +134,9 @@ export function ScoringPanel({
       : null;
   const servingTeamLabel =
     sideOutState?.servingTeam === 1
-      ? match.participant1?.teamName || 'Đội 1'
+      ? match.participant1?.teamName || team1Fallback
       : sideOutState?.servingTeam === 2
-        ? match.participant2?.teamName || 'Đội 2'
+        ? match.participant2?.teamName || team2Fallback
         : null;
   const activeSetIndex = scoreDraft.sets.findIndex((set) => !set.isFinished);
   const activeSet = activeSetIndex !== -1
@@ -148,7 +155,7 @@ export function ScoringPanel({
     overrideEnabled
       ? Math.max(0, value)
       : Math.min(resolvedRules.maxPoints, Math.max(0, value));
-  const scoreWarnings = getScoreRuleWarnings(scoreDraft.sets, resolvedRules);
+  const scoreWarnings = getScoreRuleWarnings(scoreDraft.sets, resolvedRules, translate);
   const isFootball = resolvedRules.kind === 'FOOTBALL';
   // Bóng đá: cho phép hòa nếu đã nhập luân lưu (shootout) để phân định.
   const hasShootout = isFootball && scoreDraft.shootout?.winnerId != null;
@@ -280,7 +287,7 @@ export function ScoringPanel({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
                 )}
               >
-                {match.participant1?.teamName || 'Đội 1'} giao
+                {match.participant1?.teamName || team1Fallback} giao
               </button>
               <button
                 type="button"
@@ -300,7 +307,7 @@ export function ScoringPanel({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
                 )}
               >
-                {match.participant2?.teamName || 'Đội 2'} giao
+                {match.participant2?.teamName || team2Fallback} giao
               </button>
             </div>
 
@@ -426,7 +433,7 @@ export function ScoringPanel({
                       }
                       className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100"
                     >
-                      {match.participant1?.teamName || 'Đội 1'} {template.winnerScore}-{template.loserScore}
+                      {match.participant1?.teamName || team1Fallback} {template.winnerScore}-{template.loserScore}
                     </button>
                     <button
                       type="button"
@@ -438,7 +445,7 @@ export function ScoringPanel({
                       }
                       className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100"
                     >
-                      {match.participant2?.teamName || 'Đội 2'} {template.loserScore}-{template.winnerScore}
+                      {match.participant2?.teamName || team2Fallback} {template.loserScore}-{template.winnerScore}
                     </button>
                   </div>
                 ))}
@@ -461,7 +468,7 @@ export function ScoringPanel({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-600">{match.participant1?.teamName || 'Đội 1'}</label>
+              <label className="text-xs font-bold text-slate-600">{match.participant1?.teamName || team1Fallback}</label>
                 <input
                 type="number"
                 min={0}
@@ -485,7 +492,7 @@ export function ScoringPanel({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-600">{match.participant2?.teamName || 'Đội 2'}</label>
+              <label className="text-xs font-bold text-slate-600">{match.participant2?.teamName || team2Fallback}</label>
                 <input
                 type="number"
                 min={0}
@@ -513,10 +520,10 @@ export function ScoringPanel({
 
       <div className="grid grid-cols-2 gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-900">
         <div>
-          {scorePresentation.wonSummaryLabel} {match.participant1?.teamName || 'Đội 1'}: <span className="font-bold">{p1Won}</span>
+          {scorePresentation.wonSummaryLabel} {match.participant1?.teamName || team1Fallback}: <span className="font-bold">{p1Won}</span>
         </div>
         <div>
-          {scorePresentation.wonSummaryLabel} {match.participant2?.teamName || 'Đội 2'}: <span className="font-bold">{p2Won}</span>
+          {scorePresentation.wonSummaryLabel} {match.participant2?.teamName || team2Fallback}: <span className="font-bold">{p2Won}</span>
         </div>
       </div>
 
@@ -542,7 +549,7 @@ export function ScoringPanel({
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-amber-800">{match.participant1?.teamName || 'Đội 1'} (luân lưu)</label>
+              <label className="text-xs font-bold text-amber-800">{match.participant1?.teamName || team1Fallback} (luân lưu)</label>
               <input
                 type="number"
                 min={0}
@@ -560,7 +567,7 @@ export function ScoringPanel({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-amber-800">{match.participant2?.teamName || 'Đội 2'} (luân lưu)</label>
+              <label className="text-xs font-bold text-amber-800">{match.participant2?.teamName || team2Fallback} (luân lưu)</label>
               <input
                 type="number"
                 min={0}
@@ -596,7 +603,7 @@ export function ScoringPanel({
               }
               className="flex-1"
             >
-              {match.participant1?.teamName || 'Đội 1'} thắng luân lưu
+              {match.participant1?.teamName || team1Fallback} thắng luân lưu
             </Button>
             <Button
               type="button"
@@ -615,7 +622,7 @@ export function ScoringPanel({
               }
               className="flex-1"
             >
-              {match.participant2?.teamName || 'Đội 2'} thắng luân lưu
+              {match.participant2?.teamName || team2Fallback} thắng luân lưu
             </Button>
           </div>
         </div>

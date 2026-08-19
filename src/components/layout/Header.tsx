@@ -418,12 +418,12 @@ export function Header() {
                                       }
                                       className="w-full text-left"
                                     >
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                                      <div className="flex items-start justify-between gap-2.5">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
                                             <span
                                               className={cn(
-                                                'rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em]',
+                                                'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
                                                 getNotificationTypeMeta(notification.type).badgeClassName,
                                               )}
                                             >

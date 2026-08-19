@@ -167,7 +167,51 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
               <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationFormTranslate('preview')}</p>
                 <h3 className="mt-2 text-base font-bold text-slate-900">{tournament.name}</h3>
-                <div className="mt-4 space-y-3">{config.fields.map((field) => <div key={field.id}><label className="text-xs font-semibold text-slate-700">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</label>{field.type === 'TEXTAREA' ? <textarea className="mt-1 min-h-16 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-xs" placeholder={field.helpText} /> : field.type === 'CHECKBOX' ? <label className="mt-1 flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" /> {registrationFormTranslate('agree')}</label> : <input className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2.5 text-xs" type={field.type === 'EMAIL' ? 'email' : field.type === 'NUMBER' ? 'number' : 'text'} placeholder={field.helpText} />}</div>)}</div>
+
+                {/* Các trường mặc định có sẵn từ hệ thống */}
+                <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 space-y-2 text-[11px] text-slate-500">
+                  <p className="font-bold text-slate-700 text-xs">Thông tin mặc định (Hệ thống tự lấy):</p>
+                  <div className="flex justify-between py-0.5 border-b border-slate-200/60">
+                    <span>Họ và tên VĐV:</span>
+                    <span className="font-semibold text-slate-700">Lấy từ Profile</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-slate-200/60">
+                    <span>Email & Số ĐT:</span>
+                    <span className="font-semibold text-slate-700">Lấy từ Profile</span>
+                  </div>
+                  <div className="flex justify-between py-0.5">
+                    <span>Partner / Tên đội:</span>
+                    <span className="font-semibold text-slate-700">Tự động ghép đôi</span>
+                  </div>
+                </div>
+
+                {/* Các câu hỏi tùy chỉnh do BTC thêm */}
+                {config.fields.length > 0 && (
+                  <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                    <p className="font-bold text-slate-700 text-xs">Câu hỏi bổ sung:</p>
+                    {config.fields.map((field) => (
+                      <div key={field.id}>
+                        <label className="text-xs font-semibold text-slate-700">
+                          {field.label}
+                          {field.required && <span className="ml-1 text-rose-500">*</span>}
+                        </label>
+                        {field.type === 'TEXTAREA' ? (
+                          <textarea className="mt-1 min-h-16 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-xs" placeholder={field.helpText} />
+                        ) : field.type === 'CHECKBOX' ? (
+                          <label className="mt-1 flex items-center gap-2 text-xs text-slate-600">
+                            <input type="checkbox" /> {registrationFormTranslate('agree')}
+                          </label>
+                        ) : (
+                          <input
+                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2.5 text-xs"
+                            type={field.type === 'EMAIL' ? 'email' : field.type === 'NUMBER' ? 'number' : 'text'}
+                            placeholder={field.helpText}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </aside>
             </div>
             <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-white px-5 py-3">

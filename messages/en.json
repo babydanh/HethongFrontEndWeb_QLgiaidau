@@ -2417,7 +2417,227 @@
     "rankingDataUnavailable": "Ranking data is unavailable.",
     "organizerLabel": "Tournament organizer",
     "profilesByTable": "Profiles per table",
-    "scheduleMayChange": "Schedule may change"
+    "scheduleMayChange": "Schedule may change",
+    "roundOf": "Round of {round}",
+    "statGameLabel": "Games",
+    "statGameDifferenceLabel": "Game difference",
+    "statGameDifferenceExample": "Example: a 6–4 set equals +2 games.",
+    "targetGameSet": "games/set",
+    "statGamePointsLabel": "Game points",
+    "statGamePointsDifferenceLabel": "Game-point difference",
+    "statGamePointsDifferenceExample": "Example: an 11–8 game equals +3 game points.",
+    "targetPointsGame": "points/game",
+    "statPointsLabel": "Points",
+    "statPointsDifferenceLabel": "Point difference",
+    "statPointsDifferenceExample": "Example: a 21–19 set equals +2 points.",
+    "targetPointsSet": "points/set",
+    "bestOfOneSet": "1 set",
+    "bestOfSets": "Best of {bestOf}, first to {setsToWin}",
+    "tiebreakSummary": "tie-break to {points}",
+    "maxScoreSummary": "first to {points}",
+    "footballPointsRule": "Points — 3 for a win, 1 for a draw, 0 for a loss; shootout points are not added separately.",
+    "footballGoalDifferenceRule": "Goal difference (GD) — goals for (GF) minus goals against (GA).",
+    "footballGoalsForRule": "Goals for (GF) — total goals scored in group-stage matches.",
+    "footballHeadToHeadRule": "Head-to-head (H2H) — head-to-head points remain a tie-break criterion.",
+    "footballFairPlayRule": "Fair play — a yellow card is 1 penalty point and a red card is 3; fewer points rank higher.",
+    "footballWinsRule": "Wins — used when the criteria above are still equal.",
+    "footballPlayoffRule": "Play-off — create an extra match when required by tournament settings.",
+    "footballSplitRule": "Tied rank — keep the same rank when no further tie-break criterion is available.",
+    "standingsPointsRule": "Ranking points — based on the sport rules and tournament configuration.",
+    "standingsHeadToHeadRule": "Head-to-head (H2H) — points from matches between tied teams.",
+    "standingsHeadToHeadSetDifferenceRule": "H2H set difference — sets won minus sets lost in head-to-head matches.",
+    "standingsHeadToHeadStatRule": "H2H {label} — calculated only from head-to-head matches. {example}",
+    "standingsSetDifferenceRule": "Total set difference — total sets won minus total sets lost.",
+    "standingsAggregateDifferenceRule": "Total {difference} — total {aggregate} for minus total {aggregate} against.",
+    "standingsPlayoffRule": "Play-off — play an extra match when teams remain tied.",
+    "standingsSplitRule": "Tied rank — keep the same rank when no tie-break can separate teams.",
+    "differenceFormula": "Difference = total {aggregate} for − total {aggregate} against ({aggregate} +/−) across all entered sets.",
+    "pointsColumn": "Pts",
+    "differenceColumn": "Difference",
+    "advancesBadge": "Advances",
+    "sportRules": {
+      "BADMINTON": {
+        "sportLabel": "Badminton",
+        "scoringLabel": "Rally-point 21 scoring",
+        "setUnitLabel": "Points per set",
+        "winByTwoLabel": "Win by two points",
+        "maxScoreLabel": "Set cap when tied at 20–20",
+        "presetSummary": "Typical default: best of 3, 21 points per set, first to 30 wins.",
+        "roundConfigHint": "Useful for lowering points in early rounds while keeping 21 points for the semifinals and final.",
+        "setOption1": "1 set",
+        "setOption2": "Best of 3 sets",
+        "setOption3": "Best of 5 sets",
+        "maxScorePlaceholder": "Example: 30",
+        "tiebreakLabel": "Super tie-break / set-closing points"
+      },
+      "TABLE_TENNIS": {
+        "sportLabel": "Table tennis",
+        "scoringLabel": "Rally-point 11 scoring",
+        "setUnitLabel": "Points per set",
+        "winByTwoLabel": "Win by two points",
+        "maxScoreLabel": "Set cap when the organizer wants to close a set",
+        "presetSummary": "Typical default: best of 5, 11 points per set, with service alternating under table-tennis rules.",
+        "roundConfigHint": "Useful when early rounds use best of 3 and later rounds move to best of 5.",
+        "setOption1": "1 set",
+        "setOption2": "Best of 3 sets (BO3)",
+        "setOption3": "Best of 5 sets (BO5)",
+        "setOption4": "Best of 7 sets (BO7)",
+        "maxScorePlaceholder": "Example: 99, or leave open",
+        "tiebreakLabel": "Special tie-break points"
+      },
+      "PICKLEBALL_RALLY": {
+        "sportLabel": "Pickleball",
+        "scoringLabel": "Rally-point 11 scoring",
+        "setUnitLabel": "Target points per set",
+        "winByTwoLabel": "Win by two points",
+        "maxScoreLabel": "Set cap during deuce",
+        "presetSummary": "Rally mode: every rally awards a point. Typical default: best of 3, 11 points per set, first to 15 when needed.",
+        "roundConfigHint": "You can raise the cap or add a super tie-break for later rounds.",
+        "setOption1": "1 set",
+        "setOption2": "Best of 3 sets",
+        "setOption3": "Best of 5 sets",
+        "maxScorePlaceholder": "Example: 15",
+        "tiebreakLabel": "Super tie-break points"
+      },
+      "PICKLEBALL_SIDE_OUT": {
+        "sportLabel": "Pickleball",
+        "scoringLabel": "Side-out scoring",
+        "setUnitLabel": "Target points per game",
+        "winByTwoLabel": "Only the serving side scores; still win by two",
+        "maxScoreLabel": "Game target points",
+        "presetSummary": "Side-out mode: only the serving team scores. This mode needs detailed service and server management.",
+        "roundConfigHint": "Prioritize this for detailed live scoring; final-score-only entry needs a clear completed-game convention.",
+        "setOption1": "1 game",
+        "setOption2": "Best of 3 games",
+        "setOption3": "Best of 5 games",
+        "maxScorePlaceholder": "Example: 11",
+        "tiebreakLabel": "Target game points"
+      },
+      "TENNIS": {
+        "sportLabel": "Tennis",
+        "scoringLabel": "Games per set + tie-break",
+        "setUnitLabel": "Games per set",
+        "winByTwoLabel": "A set must lead by two games or reach a tie-break",
+        "maxScoreLabel": "Maximum games in a set",
+        "presetSummary": "Typical default: best of 3, 6 games per set, with a 7-point tie-break at 6–6.",
+        "roundConfigHint": "Useful when early rounds use a pro set and later rounds return to standard best-of-3.",
+        "setOption1": "1 set",
+        "setOption2": "Best of 3 sets (BO3)",
+        "setOption3": "Best of 5 sets (BO5)",
+        "maxScorePlaceholder": "Example: 7",
+        "tiebreakLabel": "Tie-break points (usually 7)"
+      },
+      "FOOTBALL": {
+        "sportLabel": "Football",
+        "scoringLabel": "Goal scoring",
+        "setUnitLabel": "Goals",
+        "winByTwoLabel": "Not required",
+        "maxScoreLabel": "No limit",
+        "presetSummary": "Typical default: two halves, with the winner decided by total goals.",
+        "roundConfigHint": "For 5-a-side, 7-a-side, and 11-a-side football.",
+        "setOption1": "1 match",
+        "maxScorePlaceholder": "Leave blank",
+        "tiebreakLabel": "Penalty shootout"
+      },
+      "presets": {
+        "badminton-quick": {
+          "label": "Fast early round",
+          "description": "Play 1 set to 21, suitable for qualifiers or large tournaments."
+        },
+        "badminton-standard": {
+          "label": "Standard recreational",
+          "description": "Best of 3 to 21, first to 30 wins."
+        },
+        "badminton-short": {
+          "label": "Time-saving",
+          "description": "Best of 3 to 15, for shorter match duration."
+        },
+        "table-tennis-bo3": {
+          "label": "Fast standard BO3",
+          "description": "Best of 3 to 11 points, suitable for groups or early rounds."
+        },
+        "table-tennis-bo5": {
+          "label": "BO5 elimination",
+          "description": "Best of 5 to 11 points, suitable for semifinals or the final."
+        },
+        "table-tennis-single": {
+          "label": "Fast single set",
+          "description": "One set to 11 points for quick rotation."
+        },
+        "pickleball-rally-quick": {
+          "label": "1 game to 11",
+          "description": "One rally-point game to 11, concise for early rounds."
+        },
+        "pickleball-rally-standard": {
+          "label": "Standard rally",
+          "description": "Best of 3 games to 11, easy to live-score and coordinate."
+        },
+        "pickleball-rally-extended": {
+          "label": "Game to 15",
+          "description": "Best of 3 games to 15 for later matches with less variation."
+        },
+        "pickleball-sideout-standard": {
+          "label": "Standard side-out",
+          "description": "1 game to 11; only the serving side scores."
+        },
+        "pickleball-sideout-15": {
+          "label": "Game to 15",
+          "description": "1 game to 15 for longer matches while keeping side-out scoring."
+        },
+        "pickleball-sideout-finals": {
+          "label": "Best of 3",
+          "description": "Best of 3 games to 11, suitable for longer semifinals/finals."
+        },
+        "tennis-pro-set": {
+          "label": "Pro set",
+          "description": "1 set to 8 games, suitable for groups or strict time limits."
+        },
+        "tennis-standard": {
+          "label": "Standard BO3",
+          "description": "Best of 3, 6 games per set, 7-point tie-break at 6–6."
+        },
+        "tennis-short-set": {
+          "label": "Short set",
+          "description": "1 set to 4 games for recreational events or many consecutive matches."
+        },
+        "football-standard": {
+          "label": "Standard",
+          "description": "Two halves of 20 minutes each."
+        }
+      },
+      "guidance": {
+        "BADMINTON": {
+          "targetSummary": "Default first to 21; at 20–20, win by two, usually capped at 30.",
+          "operatorHint": "Enter each completed set. If a set has not been played, leave both sides at 0."
+        },
+        "TABLE_TENNIS": {
+          "targetSummary": "Default first to 11; at 10–10, win by two.",
+          "operatorHint": "Table tennis commonly uses BO3 or BO5, so entered sets must match the match configuration."
+        },
+        "PICKLEBALL_RALLY": {
+          "targetSummary": "Rally point: the side winning any rally receives a point.",
+          "operatorHint": "Use this mode when the organizer needs fast score entry with less side-out risk."
+        },
+        "PICKLEBALL_SIDE_OUT": {
+          "targetSummary": "Side-out: only the serving side scores, usually first to 11 or 15 and still win by two when extended.",
+          "operatorHint": "This panel closes the game score; current serving rights remain in the live-score table."
+        },
+        "TENNIS": {
+          "targetSummary": "Tennis is entered by games within each set, not 15/30/40 points here.",
+          "operatorHint": "If a set reaches a tie-break, enter the final set result such as 7–6 rather than separate tie-break points."
+        },
+        "FOOTBALL": {
+          "targetSummary": "Enter the goal score.",
+          "operatorHint": "Update the score after each goal or when the match ends."
+        }
+      },
+      "quickScore": {
+        "standard": "Standard",
+        "close": "Close game",
+        "extended": "Extended game",
+        "tiebreak": "Tie-break"
+      }
+    }
   },
   "LiveMatch": {
     "unknown": "Unknown",
@@ -3199,6 +3419,14 @@
     },
     "noMatchesCanEnd": "There are no matches yet. You can still complete this tournament.",
     "cancel": "Cancel",
-    "endTournament": "Complete tournament"
+    "endTournament": "Complete tournament",
+    "checks": {
+      "registrationLocked": "Registration is locked",
+      "paid": "All entry fees are paid",
+      "bracket": "Bracket is configured",
+      "minimumTeams": "Minimum number of teams reached",
+      "schedule": "Schedule is set",
+      "venue": "Venue is set"
+    }
   }
 }

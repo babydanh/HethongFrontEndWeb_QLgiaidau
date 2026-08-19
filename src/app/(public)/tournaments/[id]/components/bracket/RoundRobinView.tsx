@@ -67,7 +67,7 @@ export function RoundRobinView({
   const effectiveRuleKind = sampleMatch
     ? resolveBracketMatchRules(sampleMatch, fallbackSportRuleKind).kind
     : (fallbackSportRuleKind ?? 'BADMINTON');
-  const statLabels = getBracketStatLabels(effectiveRuleKind);
+  const statLabels = getBracketStatLabels(effectiveRuleKind, translate);
   const isFootball = effectiveRuleKind === 'FOOTBALL' || Boolean(sampleMatch?.scoreDetails?.football);
   const { standings, ties } = calculateStandings(matches, {
     tiebreakerMode,
@@ -135,27 +135,27 @@ export function RoundRobinView({
             <p className="font-bold mb-1.5">{translate("standingsHowItWorks")}:</p>
             {isFootball ? (
               <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
-                <li><b>Điểm</b> - Thắng 3, hòa 1, thua 0; không cộng điểm luân lưu riêng.</li>
-                <li><b>Hiệu số bàn (GD)</b> - Bàn ghi (GF) trừ bàn thua (GA).</li>
-                <li><b>Bàn ghi (GF)</b> - Tổng số bàn thắng trong các trận vòng bảng.</li>
-                <li><b>Đối đầu (H2H)</b> - Điểm đối đầu giữa các đội vẫn bằng chỉ số.</li>
-                <li><b>Fair-play</b> - Thẻ vàng 1 điểm phạt, thẻ đỏ 3 điểm phạt; ít hơn xếp trên.</li>
-                <li><b>Số trận thắng</b> - Dùng khi các chỉ số trên vẫn bằng nhau.</li>
-                <li>{tiebreakerMode === 'playoff' ? <><b>Play-off</b> - Tạo trận phụ khi cấu hình giải yêu cầu.</> : <><b>Đồng hạng</b> - Giữ cùng hạng nếu không có tiêu chí phân định thêm.</>}</li>
+                <li>{translate('footballPointsRule')}</li>
+                <li>{translate('footballGoalDifferenceRule')}</li>
+                <li>{translate('footballGoalsForRule')}</li>
+                <li>{translate('footballHeadToHeadRule')}</li>
+                <li>{translate('footballFairPlayRule')}</li>
+                <li>{translate('footballWinsRule')}</li>
+                <li>{tiebreakerMode === 'playoff' ? translate('footballPlayoffRule') : translate('footballSplitRule')}</li>
               </ol>
             ) : (
               <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
-                <li><b>Điểm xếp hạng (Đ)</b> - Theo luật chấm điểm của môn và cấu hình giải.</li>
-                <li><b>Đối đầu (H2H)</b> - Xét điểm trong các trận giữa các đội đang bằng điểm.</li>
-                <li><b>H2H Hiệu số set</b> - Set thắng trừ set thua trong các trận đối đầu.</li>
-                <li><b>H2H {statLabels.aggregateDiffLabel}</b> - Chỉ tính các trận đối đầu. <span className="text-blue-600">{statLabels.aggregateExample}</span></li>
-                <li><b>Hiệu số set tổng</b> - Tổng set thắng trừ tổng set thua.</li>
-                <li><b>{statLabels.aggregateDiffLabel} tổng</b> - Tổng {statLabels.aggregateLabel.toLowerCase()} ghi trừ tổng {statLabels.aggregateLabel.toLowerCase()} mất.</li>
-                <li>{tiebreakerMode === 'playoff' ? <><b>Play-off</b> - Đánh trận phụ khi vẫn hòa.</> : <><b>Đồng hạng</b> - Giữ cùng hạng khi không phân định được.</>}</li>
+                <li>{translate('standingsPointsRule')}</li>
+                <li>{translate('standingsHeadToHeadRule')}</li>
+                <li>{translate('standingsHeadToHeadSetDifferenceRule')}</li>
+                <li>{translate('standingsHeadToHeadStatRule', { label: statLabels.aggregateDiffLabel, example: statLabels.aggregateExample })}</li>
+                <li>{translate('standingsSetDifferenceRule')}</li>
+                <li>{translate('standingsAggregateDifferenceRule', { difference: statLabels.aggregateDiffLabel, aggregate: statLabels.aggregateLabel })}</li>
+                <li>{tiebreakerMode === 'playoff' ? translate('standingsPlayoffRule') : translate('standingsSplitRule')}</li>
               </ol>
             )}
             <p className="mt-2 pt-2 border-t border-blue-200 text-blue-700">
-              <b>Hiệu số</b> = Tổng {statLabels.aggregateLabel.toLowerCase()} ghi - tổng {statLabels.aggregateLabel.toLowerCase()} mất ({statLabels.aggregateLabel} +/-) từ mọi set đã nhập.<br />
+              {translate('differenceFormula', { aggregate: statLabels.aggregateLabel })}<br />
               <span className="text-blue-600">{statLabels.aggregateExample}</span>
             </p>
           </div>
@@ -183,8 +183,8 @@ export function RoundRobinView({
                   <>
                     <th className="px-3 py-3 text-center text-blue-600 w-9">T</th>
                     <th className="px-3 py-3 text-center text-rose-500 w-9">B</th>
-                    <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
-                    <th className="px-3 py-3 text-center min-w-[80px]">Hiệu số</th>
+                    <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">{translate('pointsColumn')}</th>
+                    <th className="px-3 py-3 text-center min-w-[80px]">{translate('differenceColumn')}</th>
                   </>
                 )}
                 <th className="px-3 py-3 text-center w-10" />
@@ -233,7 +233,7 @@ export function RoundRobinView({
                         {teamsAdvancing > 0 && idx < teamsAdvancing && (
                           <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                             <CheckCircle2 className="w-2.5 h-2.5" />
-                            Đi tiếp
+                            {translate('advancesBadge')}
                           </span>
                         )}
                       </span>

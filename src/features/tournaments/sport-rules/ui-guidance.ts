@@ -232,36 +232,52 @@ const SCORE_ENTRY_GUIDANCE: Record<SportRuleKind, ScoreEntryGuidance> = {
   },
 };
 
-export function getSportRulePresets(kind: SportRuleKind): SportRulePreset[] {
-  return SPORT_RULE_PRESETS[kind];
+type RuleTranslate = (key: string, values?: Record<string, string | number>) => string;
+
+export function getSportRulePresets(kind: SportRuleKind, translate?: RuleTranslate): SportRulePreset[] {
+  const presets = SPORT_RULE_PRESETS[kind];
+  if (!translate) return presets;
+  return presets.map((preset) => ({
+    ...preset,
+    label: translate(`sportRules.presets.${preset.id}.label`),
+    description: translate(`sportRules.presets.${preset.id}.description`),
+  }));
 }
 
-export function getScoreEntryGuidance(kind: SportRuleKind): ScoreEntryGuidance {
-  return SCORE_ENTRY_GUIDANCE[kind];
+export function getScoreEntryGuidance(kind: SportRuleKind, translate?: RuleTranslate): ScoreEntryGuidance {
+  const guidance = SCORE_ENTRY_GUIDANCE[kind];
+  if (!translate) return guidance;
+  return {
+    ...guidance,
+    targetSummary: translate(`sportRules.guidance.${kind}.targetSummary`),
+    operatorHint: translate(`sportRules.guidance.${kind}.operatorHint`),
+  };
 }
 
 export function getQuickScoreTemplates(
   kind: SportRuleKind,
   pointsPerSet: number,
   maxPoints: number,
+  translate?: RuleTranslate,
 ): QuickScoreTemplate[] {
   if (kind === 'TENNIS') {
+    const label = (key: string, fallback: string) => translate?.(`sportRules.quickScore.${key}`) ?? fallback;
     return [
       {
         id: 'tennis-standard',
-        label: 'Chuẩn',
+        label: label('standard', 'Chuẩn'),
         winnerScore: pointsPerSet,
         loserScore: Math.max(pointsPerSet - 2, 0),
       },
       {
         id: 'tennis-close',
-        label: 'Sát nút',
+        label: label('close', 'Sát nút'),
         winnerScore: Math.min(pointsPerSet + 1, maxPoints),
         loserScore: Math.max(pointsPerSet - 1, 0),
       },
       {
         id: 'tennis-tiebreak',
-        label: 'Tie-break',
+        label: label('tiebreak', 'Tie-break'),
         winnerScore: maxPoints,
         loserScore: Math.max(maxPoints - 1, 0),
       },
@@ -269,22 +285,23 @@ export function getQuickScoreTemplates(
   }
 
   const safeCap = Math.max(pointsPerSet, maxPoints);
+  const label = (key: string, fallback: string) => translate?.(`sportRules.quickScore.${key}`) ?? fallback;
   return [
     {
       id: `${kind.toLowerCase()}-standard`,
-      label: 'Chuẩn',
+      label: label('standard', 'Chuẩn'),
       winnerScore: pointsPerSet,
       loserScore: Math.max(pointsPerSet - 4, 0),
     },
     {
       id: `${kind.toLowerCase()}-close`,
-      label: 'Sát nút',
+      label: label('close', 'Sát nút'),
       winnerScore: pointsPerSet,
       loserScore: Math.max(pointsPerSet - 2, 0),
     },
     {
       id: `${kind.toLowerCase()}-extended`,
-      label: 'Kéo dài',
+      label: label('extended', 'Kéo dài'),
       winnerScore: safeCap,
       loserScore: Math.max(safeCap - 1, 0),
     },

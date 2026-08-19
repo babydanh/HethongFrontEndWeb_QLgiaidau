@@ -2417,7 +2417,227 @@
     "rankingDataUnavailable": "Không tìm thấy dữ liệu phân hạng.",
     "organizerLabel": "Người sáng lập giải đấu",
     "profilesByTable": "Số lượng hồ sơ theo bảng",
-    "scheduleMayChange": "Lịch có thể thay đổi"
+    "scheduleMayChange": "Lịch có thể thay đổi",
+    "roundOf": "Vòng {round}",
+    "statGameLabel": "Game",
+    "statGameDifferenceLabel": "Hiệu game",
+    "statGameDifferenceExample": "Ví dụ: set 6–4 tương đương +2 game.",
+    "targetGameSet": "game/set",
+    "statGamePointsLabel": "Điểm game",
+    "statGamePointsDifferenceLabel": "Hiệu điểm game",
+    "statGamePointsDifferenceExample": "Ví dụ: game 11–8 tương đương +3 điểm game.",
+    "targetPointsGame": "điểm/game",
+    "statPointsLabel": "Điểm",
+    "statPointsDifferenceLabel": "Hiệu điểm",
+    "statPointsDifferenceExample": "Ví dụ: set 21–19 tương đương +2 điểm.",
+    "targetPointsSet": "điểm/set",
+    "bestOfOneSet": "1 set",
+    "bestOfSets": "Đấu {bestOf} set chạm {setsToWin}",
+    "tiebreakSummary": "loạt phụ (tie-break) {points}",
+    "maxScoreSummary": "chạm {points} tối đa",
+    "footballPointsRule": "Điểm — thắng 3, hòa 1, thua 0; không cộng điểm luân lưu riêng.",
+    "footballGoalDifferenceRule": "Hiệu số bàn (GD) — bàn ghi (GF) trừ bàn thua (GA).",
+    "footballGoalsForRule": "Bàn ghi (GF) — tổng số bàn thắng trong các trận vòng bảng.",
+    "footballHeadToHeadRule": "Đối đầu (H2H) — điểm đối đầu giữa các đội vẫn là tiêu chí phân hạng.",
+    "footballFairPlayRule": "Fair-play — thẻ vàng 1 điểm phạt, thẻ đỏ 3 điểm phạt; ít hơn xếp trên.",
+    "footballWinsRule": "Số trận thắng — dùng khi các chỉ số trên vẫn bằng nhau.",
+    "footballPlayoffRule": "Play-off — tạo trận phụ khi cấu hình giải yêu cầu.",
+    "footballSplitRule": "Đồng hạng — giữ cùng hạng nếu không có tiêu chí phân định thêm.",
+    "standingsPointsRule": "Điểm xếp hạng — theo luật chấm điểm của môn và cấu hình giải.",
+    "standingsHeadToHeadRule": "Đối đầu (H2H) — xét điểm trong các trận giữa các đội đang bằng điểm.",
+    "standingsHeadToHeadSetDifferenceRule": "H2H hiệu số set — set thắng trừ set thua trong các trận đối đầu.",
+    "standingsHeadToHeadStatRule": "H2H {label} — chỉ tính các trận đối đầu. {example}",
+    "standingsSetDifferenceRule": "Hiệu số set tổng — tổng set thắng trừ tổng set thua.",
+    "standingsAggregateDifferenceRule": "{difference} tổng — tổng {aggregate} ghi trừ tổng {aggregate} mất.",
+    "standingsPlayoffRule": "Play-off — đánh trận phụ khi vẫn hòa.",
+    "standingsSplitRule": "Đồng hạng — giữ cùng hạng khi không phân định được.",
+    "differenceFormula": "Hiệu số = tổng {aggregate} ghi − tổng {aggregate} mất ({aggregate} +/−) từ mọi set đã nhập.",
+    "pointsColumn": "Điểm",
+    "differenceColumn": "Hiệu số",
+    "advancesBadge": "Đi tiếp",
+    "sportRules": {
+      "BADMINTON": {
+        "sportLabel": "Cầu lông",
+        "scoringLabel": "Rally point 21 điểm",
+        "setUnitLabel": "Điểm mỗi set",
+        "winByTwoLabel": "Thắng cách biệt 2 điểm",
+        "maxScoreLabel": "Điểm tối đa của set khi hòa 20–20",
+        "presetSummary": "Mặc định thường là thắng 2 set, 21 điểm/set, chạm 30 thắng luôn.",
+        "roundConfigHint": "Phù hợp khi cần giảm điểm ở vòng ngoài, giữ 21 điểm cho bán kết và chung kết.",
+        "setOption1": "1 set",
+        "setOption2": "Thắng 2 set",
+        "setOption3": "Thắng 3 set",
+        "maxScorePlaceholder": "Ví dụ: 30",
+        "tiebreakLabel": "Điểm super tie-break / điểm chốt set"
+      },
+      "TABLE_TENNIS": {
+        "sportLabel": "Bóng bàn",
+        "scoringLabel": "Rally point 11 điểm",
+        "setUnitLabel": "Điểm mỗi set",
+        "winByTwoLabel": "Thắng cách biệt 2 điểm",
+        "maxScoreLabel": "Điểm trần nếu BTC muốn chốt set",
+        "presetSummary": "Mặc định thường là thắng 3 set, 11 điểm/set, giao bóng đổi nhịp theo luật bóng bàn.",
+        "roundConfigHint": "Hữu ích khi vòng đầu đánh BO3 còn các vòng sâu nâng lên BO5.",
+        "setOption1": "1 set",
+        "setOption2": "Thắng 2 set (BO3)",
+        "setOption3": "Thắng 3 set (BO5)",
+        "setOption4": "Thắng 4 set (BO7)",
+        "maxScorePlaceholder": "Ví dụ: 99 hoặc để luật mở",
+        "tiebreakLabel": "Điểm tie-break đặc biệt"
+      },
+      "PICKLEBALL_RALLY": {
+        "sportLabel": "Pickleball",
+        "scoringLabel": "Rally point 11 điểm",
+        "setUnitLabel": "Điểm mục tiêu mỗi set",
+        "winByTwoLabel": "Thắng cách biệt 2 điểm",
+        "maxScoreLabel": "Điểm trần của set khi deuce",
+        "presetSummary": "Mode rally: mỗi pha bóng đều có điểm. Mặc định thường là thắng 2 set, 11 điểm/set, chạm 15 để chốt set nếu cần.",
+        "roundConfigHint": "Có thể tăng điểm trần hoặc thêm super tie-break cho các vòng cuối.",
+        "setOption1": "1 set",
+        "setOption2": "Thắng 2 set",
+        "setOption3": "Thắng 3 set",
+        "maxScorePlaceholder": "Ví dụ: 15",
+        "tiebreakLabel": "Điểm super tie-break"
+      },
+      "PICKLEBALL_SIDE_OUT": {
+        "sportLabel": "Pickleball",
+        "scoringLabel": "Side-out scoring",
+        "setUnitLabel": "Điểm mục tiêu mỗi game",
+        "winByTwoLabel": "Chỉ bên giao mới ghi điểm, vẫn phải hơn 2",
+        "maxScoreLabel": "Điểm đích của game",
+        "presetSummary": "Mode side-out: chỉ đội giao bóng mới lên điểm. Đây là mode nghiệp vụ sâu hơn, cần quản lý lượt giao và server.",
+        "roundConfigHint": "Ưu tiên dùng cho live score chi tiết; nếu chỉ nhập kết quả cuối trận thì cần quy ước rõ score game hoàn chỉnh.",
+        "setOption1": "1 game",
+        "setOption2": "Thắng 2 game",
+        "setOption3": "Thắng 3 game",
+        "maxScorePlaceholder": "Ví dụ: 11",
+        "tiebreakLabel": "Điểm game đích"
+      },
+      "TENNIS": {
+        "sportLabel": "Tennis",
+        "scoringLabel": "Set theo game + tie-break",
+        "setUnitLabel": "Game mỗi set",
+        "winByTwoLabel": "Set phải hơn 2 game hoặc vào tie-break",
+        "maxScoreLabel": "Game tối đa của set",
+        "presetSummary": "Mặc định thường là thắng 2 set, 6 game/set, 6-6 vào tie-break 7 điểm.",
+        "roundConfigHint": "Dùng tốt khi vòng đầu đánh pro-set, các vòng sâu mới quay về best-of-3 chuẩn.",
+        "setOption1": "1 set",
+        "setOption2": "Thắng 2 set (BO3)",
+        "setOption3": "Thắng 3 set (BO5)",
+        "maxScorePlaceholder": "Ví dụ: 7",
+        "tiebreakLabel": "Điểm tie-break (thường là 7)"
+      },
+      "FOOTBALL": {
+        "sportLabel": "Bóng đá",
+        "scoringLabel": "Tính bàn thắng",
+        "setUnitLabel": "Bàn thắng",
+        "winByTwoLabel": "Không bắt buộc",
+        "maxScoreLabel": "Không giới hạn",
+        "presetSummary": "Mặc định thường là 2 hiệp, phân định thắng thua qua tổng bàn thắng.",
+        "roundConfigHint": "Sử dụng cho bóng đá sân 5, 7, 11 người.",
+        "setOption1": "1 trận",
+        "maxScorePlaceholder": "Để trống",
+        "tiebreakLabel": "Luân lưu"
+      },
+      "presets": {
+        "badminton-quick": {
+          "label": "Vòng đầu nhanh",
+          "description": "Đánh 1 set 21, phù hợp vòng loại hoặc giải đông VĐV."
+        },
+        "badminton-standard": {
+          "label": "Chuẩn phong trào",
+          "description": "Thắng 2 set 21, chạm 30 thắng luôn."
+        },
+        "badminton-short": {
+          "label": "Tiết kiệm thời gian",
+          "description": "Thắng 2 set 15, dùng khi cần rút ngắn thời lượng."
+        },
+        "table-tennis-bo3": {
+          "label": "BO3 chuẩn nhanh",
+          "description": "Thắng 2 set 11 điểm, hợp vòng bảng hoặc vòng đầu."
+        },
+        "table-tennis-bo5": {
+          "label": "BO5 loại trực tiếp",
+          "description": "Thắng 3 set 11 điểm, hợp bán kết hoặc chung kết."
+        },
+        "table-tennis-single": {
+          "label": "1 set chốt nhanh",
+          "description": "Một set 11 điểm để xoay vòng đấu thật nhanh."
+        },
+        "pickleball-rally-quick": {
+          "label": "1 game 11",
+          "description": "Một game 11 rally point, gọn cho vòng đầu."
+        },
+        "pickleball-rally-standard": {
+          "label": "Chuẩn rally",
+          "description": "Thắng 2 game 11, dễ live score và dễ điều phối."
+        },
+        "pickleball-rally-extended": {
+          "label": "Game 15",
+          "description": "Thắng 2 game 15 cho các trận sâu, ít biến động hơn."
+        },
+        "pickleball-sideout-standard": {
+          "label": "Chuẩn side-out",
+          "description": "1 game 11, chỉ bên giao bóng mới ghi điểm."
+        },
+        "pickleball-sideout-15": {
+          "label": "Game 15",
+          "description": "1 game 15, hợp trận kéo dài hơn nhưng vẫn giữ side-out."
+        },
+        "pickleball-sideout-finals": {
+          "label": "Best of 3",
+          "description": "Thắng 2 game 11, hợp bán kết/chung kết có thời lượng tốt hơn."
+        },
+        "tennis-pro-set": {
+          "label": "Pro set",
+          "description": "1 set 8 game, hợp vòng bảng hoặc vòng tính thời gian chặt."
+        },
+        "tennis-standard": {
+          "label": "BO3 chuẩn",
+          "description": "Thắng 2 set, mỗi set 6 game, 6-6 tie-break 7."
+        },
+        "tennis-short-set": {
+          "label": "Short set",
+          "description": "1 set 4 game, hợp giải phong trào hoặc nhiều trận liên tiếp."
+        },
+        "football-standard": {
+          "label": "Chuẩn",
+          "description": "2 hiệp, mỗi hiệp 20 phút"
+        }
+      },
+      "guidance": {
+        "BADMINTON": {
+          "targetSummary": "Mặc định chạm 21, hòa 20-20 thì hơn 2, tối đa thường 30.",
+          "operatorHint": "Nhập từng set đã chốt. Nếu chưa đánh tới set đó, để cả hai bên = 0."
+        },
+        "TABLE_TENNIS": {
+          "targetSummary": "Mặc định chạm 11, hòa 10-10 thì hơn 2.",
+          "operatorHint": "Bóng bàn thường dùng BO3 hoặc BO5, nên số set nhập phải khớp cấu hình trận."
+        },
+        "PICKLEBALL_RALLY": {
+          "targetSummary": "Rally point: bên thắng pha bóng nào cũng có điểm.",
+          "operatorHint": "Dùng mode này nếu BTC cần nhập tỷ số nhanh và ít rủi ro hơn side-out."
+        },
+        "PICKLEBALL_SIDE_OUT": {
+          "targetSummary": "Side-out: chỉ bên giao bóng mới ghi điểm, thường chạm 11 hoặc 15 và vẫn cần hơn 2 nếu kéo dài.",
+          "operatorHint": "Panel này chỉ chốt score game. Trạng thái quyền giao hiện tại được giữ từ bảng điểm trực tiếp."
+        },
+        "TENNIS": {
+          "targetSummary": "Tennis nhập theo game trong từng set, không nhập điểm 15/30/40 ở đây.",
+          "operatorHint": "Nếu set vào tie-break, dùng kết quả cuối set như 7-6 thay vì nhập điểm tie-break riêng."
+        },
+        "FOOTBALL": {
+          "targetSummary": "Nhập tỷ số bàn thắng.",
+          "operatorHint": "Cập nhật tỷ số sau mỗi bàn thắng hoặc khi hết trận."
+        }
+      },
+      "quickScore": {
+        "standard": "Chuẩn",
+        "close": "Sát nút",
+        "extended": "Kéo dài",
+        "tiebreak": "Tie-break"
+      }
+    }
   },
   "LiveMatch": {
     "unknown": "Chưa xác định",
@@ -3199,6 +3419,14 @@
     },
     "noMatchesCanEnd": "Chưa có trận đấu nào. Bạn vẫn có thể hoàn tất giải đấu này.",
     "cancel": "Hủy",
-    "endTournament": "Hoàn tất giải đấu"
+    "endTournament": "Hoàn tất giải đấu",
+    "checks": {
+      "registrationLocked": "Đã khóa đăng ký",
+      "paid": "Đã thanh toán đủ phí tham dự",
+      "bracket": "Đã cấu hình sơ đồ",
+      "minimumTeams": "Đủ số đội tối thiểu",
+      "schedule": "Đã thiết lập lịch thi đấu",
+      "venue": "Đã thiết lập địa điểm"
+    }
   }
 }

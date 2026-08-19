@@ -118,7 +118,28 @@ const SPORT_RULE_PRESENTATIONS: Record<SportRuleKind, SportRulePresentation> = {
   },
 };
 
-export function getSportRulePresentation(kind: SportRuleKind): SportRulePresentation {
-  return SPORT_RULE_PRESENTATIONS[kind];
+type RuleTranslate = (key: string, values?: Record<string, string | number>) => string;
+
+export function getSportRulePresentation(kind: SportRuleKind, translate?: RuleTranslate): SportRulePresentation {
+  const base = SPORT_RULE_PRESENTATIONS[kind];
+  if (!translate) return base;
+
+  const key = (suffix: string) => `sportRules.${kind}.${suffix}`;
+  return {
+    ...base,
+    sportLabel: translate(key('sportLabel')),
+    scoringLabel: translate(key('scoringLabel')),
+    setUnitLabel: translate(key('setUnitLabel')),
+    winByTwoLabel: translate(key('winByTwoLabel')),
+    maxScoreLabel: translate(key('maxScoreLabel')),
+    presetSummary: translate(key('presetSummary')),
+    roundConfigHint: translate(key('roundConfigHint')),
+    setOptions: base.setOptions.map((option) => ({
+      ...option,
+      label: translate(key(`setOption${option.value}`)),
+    })),
+    maxScorePlaceholder: translate(key('maxScorePlaceholder')),
+    tiebreakLabel: translate(key('tiebreakLabel')),
+  };
 }
 

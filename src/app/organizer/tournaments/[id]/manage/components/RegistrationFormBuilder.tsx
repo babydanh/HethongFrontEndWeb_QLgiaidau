@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, ChevronDown, ChevronUp, GripVertical, Plus, Save, Settings2, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Copy, GripVertical, Plus, Save, Settings2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
@@ -48,6 +48,17 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
       if (index < 0 || nextIndex < 0 || nextIndex >= current.fields.length) return current;
       const fields = [...current.fields];
       [fields[index], fields[nextIndex]] = [fields[nextIndex], fields[index]];
+      return { ...current, fields };
+    });
+  };
+  const duplicateField = (fieldId: string) => {
+    setConfig((current) => {
+      const index = current.fields.findIndex((field) => field.id === fieldId);
+      if (index < 0) return current;
+      const source = current.fields[index];
+      const duplicate: RegistrationField = { ...source, id: `${source.id}_copy_${Date.now()}`, label: `${source.label} (bản sao)`, options: source.options ? [...source.options] : undefined };
+      const fields = [...current.fields];
+      fields.splice(index + 1, 0, duplicate);
       return { ...current, fields };
     });
   };
@@ -118,6 +129,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                             <button type="button" onClick={() => moveField(field.id, -1)} disabled={index === 0} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-30" aria-label="Đưa lên"><ChevronUp className="h-4 w-4" /></button>
                             <button type="button" onClick={() => moveField(field.id, 1)} disabled={index === config.fields.length - 1} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-30" aria-label="Đưa xuống"><ChevronDown className="h-4 w-4" /></button>
                             <button type="button" onClick={() => setEditingFieldId(field.id)} className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50" aria-label="Sửa trường"><Settings2 className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => duplicateField(field.id)} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Nhân bản trường"><Copy className="h-4 w-4" /></button>
                             <button type="button" onClick={() => setConfig((current) => ({ ...current, fields: current.fields.filter((item) => item.id !== field.id) }))} className="rounded-md p-1.5 text-rose-500 hover:bg-rose-50" aria-label="Xóa trường"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </div>
@@ -152,7 +164,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
               <label className="block text-xs font-semibold text-slate-700">Loại trường<select value={editingField.type} onChange={(event) => updateField(editingField.id, { type: event.target.value as RegistrationFieldType })} className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm">{Object.entries(REGISTRATION_FIELD_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label className="block text-xs font-semibold text-slate-700">Mô tả hướng dẫn<textarea value={editingField.helpText ?? ''} onChange={(event) => updateField(editingField.id, { helpText: event.target.value })} className="mt-1.5 min-h-20 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Ví dụ: Nhập đầy đủ họ tên trên CCCD" /></label>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-800"><input type="checkbox" checked={editingField.required} onChange={(event) => updateField(editingField.id, { required: event.target.checked })} /> Bắt buộc người đăng ký trả lời</label>
-              {editingField.type === 'SELECT' && <label className="block text-xs font-semibold text-slate-700">Các lựa chọn, mỗi dòng một lựa chọn<textarea value={(editingField.options ?? []).join('\n')} onChange={(event) => updateField(editingField.id, { options: event.target.value.split('\n').map((value) => value.trim()).filter(Boolean) })} className="mt-1.5 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>}
+              {(editingField.type === 'SELECT' || editingField.type === 'MULTI_SELECT') && <label className="block text-xs font-semibold text-slate-700">Các lựa chọn, mỗi dòng một lựa chọn<textarea value={(editingField.options ?? []).join('\n')} onChange={(event) => updateField(editingField.id, { options: event.target.value.split('\n').map((value) => value.trim()).filter(Boolean) })} className="mt-1.5 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>}
               {editingField.type === 'NUMBER' && <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold text-slate-700">Giá trị nhỏ nhất<input type="number" value={editingField.min ?? ''} onChange={(event) => updateField(editingField.id, { min: event.target.value === '' ? undefined : Number(event.target.value) })} className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label><label className="block text-xs font-semibold text-slate-700">Giá trị lớn nhất<input type="number" value={editingField.max ?? ''} onChange={(event) => updateField(editingField.id, { max: event.target.value === '' ? undefined : Number(event.target.value) })} className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label></div>}
               {editingField.type === 'FILE' && <label className="block text-xs font-semibold text-slate-700">Dung lượng tối đa (MB)<input type="number" min={1} max={20} value={editingField.maxFileSizeMb ?? 10} onChange={(event) => updateField(editingField.id, { maxFileSizeMb: Number(event.target.value) })} className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
               <Button type="button" onClick={() => setEditingFieldId(null)} className="w-full bg-blue-600 text-white hover:bg-blue-700"><Check className="mr-1.5 h-4 w-4" /> Xong</Button>

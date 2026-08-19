@@ -10,48 +10,53 @@ export function resolveBracketMatchRules(
   return resolveSportRuleView(match.matchConfig, fallbackKind);
 }
 
-export function getBracketStatLabels(kind: SportRuleKind) {
+type BracketTranslate = (key: string, values?: Record<string, string | number>) => string;
+
+export function getBracketStatLabels(kind: SportRuleKind, translate?: BracketTranslate) {
   if (kind === 'TENNIS') {
     return {
-      aggregateLabel: 'Game',
-      aggregateDiffLabel: 'Hiệu game',
-      aggregateExample: 'VD: set 6-4 tương đương +2 game.',
-      targetSummary: 'game/set',
+      aggregateLabel: translate?.('statGameLabel') ?? 'Game',
+      aggregateDiffLabel: translate?.('statGameDifferenceLabel') ?? 'Game difference',
+      aggregateExample: translate?.('statGameDifferenceExample') ?? 'Example: a 6-4 set equals +2 games.',
+      targetSummary: translate?.('targetGameSet') ?? 'games/set',
     };
   }
 
   if (kind === 'PICKLEBALL_SIDE_OUT') {
     return {
-      aggregateLabel: 'Điểm game',
-      aggregateDiffLabel: 'Hiệu điểm game',
-      aggregateExample: 'VD: game 11-8 tương đương +3 điểm game.',
-      targetSummary: 'điểm/game',
+      aggregateLabel: translate?.('statGamePointsLabel') ?? 'Game points',
+      aggregateDiffLabel: translate?.('statGamePointsDifferenceLabel') ?? 'Game-point difference',
+      aggregateExample: translate?.('statGamePointsDifferenceExample') ?? 'Example: an 11-8 game equals +3 game points.',
+      targetSummary: translate?.('targetPointsGame') ?? 'points/game',
     };
   }
 
   return {
-    aggregateLabel: 'Điểm',
-    aggregateDiffLabel: 'Hiệu điểm',
-    aggregateExample: 'VD: set 21-19 tương đương +2 điểm.',
-    targetSummary: 'điểm/set',
+    aggregateLabel: translate?.('statPointsLabel') ?? 'Points',
+    aggregateDiffLabel: translate?.('statPointsDifferenceLabel') ?? 'Point difference',
+    aggregateExample: translate?.('statPointsDifferenceExample') ?? 'Example: a 21-19 set equals +2 points.',
+    targetSummary: translate?.('targetPointsSet') ?? 'points/set',
   };
 }
 
 export function buildMatchRuleSummary(
   match: BracketMatch,
   fallbackKind: SportRuleKind = 'BADMINTON',
+  translate?: BracketTranslate,
 ): string {
   const resolved = resolveBracketMatchRules(match, fallbackKind);
-  const presentation = getSportRulePresentation(resolved.kind);
-  const statLabels = getBracketStatLabels(resolved.kind);
-  const bestOfLabel = resolved.bestOf === 1 ? '1 set' : `Đấu ${resolved.bestOf} set chạm ${resolved.setsToWin}`;
+  const presentation = getSportRulePresentation(resolved.kind, translate);
+  const statLabels = getBracketStatLabels(resolved.kind, translate);
+  const bestOfLabel = resolved.bestOf === 1
+    ? (translate?.('bestOfOneSet') ?? '1 set')
+    : (translate?.('bestOfSets', { bestOf: resolved.bestOf, setsToWin: resolved.setsToWin }) ?? `Best of ${resolved.bestOf} sets, first to ${resolved.setsToWin}`);
 
   const targetLabel = `${resolved.pointsPerSet} ${statLabels.targetSummary}`;
   const tieLabel =
     resolved.kind === 'TENNIS'
-      ? `loạt phụ (tie-break) ${resolved.tiebreakPoints}`
+      ? (translate?.('tiebreakSummary', { points: resolved.tiebreakPoints }) ?? `Tie-break to ${resolved.tiebreakPoints}`)
       : resolved.hasCustomTiebreakTarget && resolved.maxPoints > resolved.pointsPerSet
-        ? `chạm ${resolved.maxPoints} tối đa`
+        ? (translate?.('maxScoreSummary', { points: resolved.maxPoints }) ?? `Cap at ${resolved.maxPoints}`)
         : null;
 
   return [presentation.sportLabel, bestOfLabel, targetLabel, tieLabel]

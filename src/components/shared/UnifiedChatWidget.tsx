@@ -66,6 +66,7 @@ import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import type { ChatMessage } from '@/types/community-social';
 import { getErrorMessage } from '@/utils/error';
+import { AssistantCardRenderer, type AssistantUiBlock } from './AiAssistantCards';
 import toast from 'react-hot-toast';
 
 type Selection =
@@ -74,7 +75,8 @@ type Selection =
   | { kind: 'ROOM'; room: InboxRoom };
 
 type DisplayMessage = ChatMessage & { mine: boolean };
-type AiMessage = { role: 'user' | 'assistant'; content: string };
+type AiToolEvent = { type: 'tool_start' | 'tool_result' | 'tool_error'; tool: string; label: string; round: number; status?: string; uiBlocks?: AssistantUiBlock[] };
+type AiMessage = { role: 'user' | 'assistant'; content: string; uiBlocks?: AssistantUiBlock[]; toolEvents?: AiToolEvent[] };
 type TypingEvent = { roomId: string; userId: string; isTyping: boolean };
 type PollOption = {
   id: string;
@@ -1269,7 +1271,7 @@ export default function UnifiedChatWidget() {
     const nextMessages: AiMessage[] = [
       ...aiMessages,
       { role: 'user', content: text },
-      { role: 'assistant', content: '' },
+      { role: 'assistant', content: '', uiBlocks: [], toolEvents: [] },
     ];
     setAiMessages(nextMessages);
     try {
@@ -1278,7 +1280,7 @@ export default function UnifiedChatWidget() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          messages: nextMessages.slice(0, -1),
+          messages: nextMessages.slice(0, -1).map(({ role, content }) => ({ role, content })),
           currentUrl: pathname,
           pageTitle: document.title,
           isMobile: window.matchMedia('(max-width: 640px)').matches,
@@ -1290,15 +1292,31 @@ export default function UnifiedChatWidget() {
       const decoder = new TextDecoder();
       let buffer = '';
       let answer = '';
+      const updateAssistant = (update: Partial<AiMessage>) => {
+        setAiMessages((current) => current.map((message, index) => index === current.length - 1 ? { ...message, ...update } : message));
+      };
       const append = (content: string) => {
         answer += content;
-        setAiMessages((current) =>
-          current.map((message, index) =>
-            index === current.length - 1
-              ? { ...message, content: answer }
-              : message,
-          ),
-        );
+        updateAssistant({ content: answer });
+      };
+      const processPayload = (payload: string) => {
+        if (payload === '[DONE]') return;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(payload);
+        } catch {
+          return;
+        }
+        if (typeof parsed !== 'object' || parsed === null) return;
+        if ('error' in parsed && typeof parsed.error === 'string') throw new Error(parsed.error);
+        if ('content' in parsed && typeof parsed.content === 'string') append(parsed.content);
+        if ('tool' in parsed && typeof parsed.tool === 'object' && parsed.tool !== null) {
+          const event = parsed.tool as AiToolEvent;
+          setAiMessages((current) => current.map((message, index) => index === current.length - 1 ? { ...message, toolEvents: [...(message.toolEvents || []), event] } : message));
+        }
+        if ('ui_blocks' in parsed && Array.isArray(parsed.ui_blocks)) {
+          updateAssistant({ uiBlocks: parsed.ui_blocks as AssistantUiBlock[] });
+        }
       };
       while (true) {
         const { value, done } = await reader.read();
@@ -1306,38 +1324,11 @@ export default function UnifiedChatWidget() {
         buffer += decoder.decode(value, { stream: true });
         const chunks = buffer.split(/\r?\n\r?\n/);
         buffer = chunks.pop() ?? '';
-        chunks.forEach((chunk) =>
-          chunk.split(/\r?\n/).forEach((line) => {
-            if (!line.startsWith('data: ')) return;
-            const payload = line.slice(6);
-            if (payload === '[DONE]') return;
-            let parsed: unknown;
-            try {
-              parsed = JSON.parse(payload);
-            } catch {
-              // Wait for a complete SSE payload.
-              return;
-            }
-            if (
-              typeof parsed === 'object' &&
-              parsed !== null &&
-              'error' in parsed &&
-              typeof parsed.error === 'string'
-            ) {
-              throw new Error(parsed.error);
-            }
-            if (
-              typeof parsed === 'object' &&
-              parsed !== null &&
-              'content' in parsed &&
-              typeof parsed.content === 'string'
-            ) {
-              append(parsed.content);
-            }
-          }),
-        );
+        chunks.forEach((chunk) => chunk.split(/\r?\n/).forEach((line) => {
+          if (line.startsWith('data: ')) processPayload(line.slice(6));
+        }));
       }
-      if (!answer)       toast.error(translate('chatAiNoReply'));
+      if (!answer) toast.error(translate('chatAiNoReply'));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, translate('connectAiFailed')));
       setAiMessages((current) => current.slice(0, -2));
@@ -1887,11 +1878,24 @@ export default function UnifiedChatWidget() {
                             {renderHighlightedText(message.content, searchQuery)}
                           </p>
                         ) : (
-                          <div className="prose prose-sm max-w-none text-slate-800 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {message.content || translate('thinkingReply')}
-                            </ReactMarkdown>
-                          </div>
+                          <>
+                            {message.toolEvents?.length ? (
+                              <div className="mb-2 space-y-1 rounded-lg bg-slate-50 px-2.5 py-2 text-[10px] text-slate-500">
+                                {message.toolEvents.filter((event) => event.type === 'tool_start').map((event, eventIndex) => (
+                                  <div key={`${event.tool}-${eventIndex}`} className="flex items-center gap-1.5">
+                                    {sending && eventIndex === message.toolEvents!.filter((item) => item.type === 'tool_start').length - 1 ? <Loader2 className="h-3 w-3 animate-spin text-blue-500" /> : <CheckSquare className="h-3 w-3 text-emerald-500" />}
+                                    <span>{event.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                            <div className="prose prose-sm max-w-none text-slate-800 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {message.content || translate('thinkingReply')}
+                              </ReactMarkdown>
+                            </div>
+                            <AssistantCardRenderer blocks={message.uiBlocks || []} />
+                          </>
                         )}
                       </div>
                     </div>

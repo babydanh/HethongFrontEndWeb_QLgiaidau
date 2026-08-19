@@ -1,5 +1,5 @@
 import { cn } from '@/utils/cn';
-import { REPORT_STATUS_LABELS } from '../constants';
+import { useTranslations } from 'next-intl';
 import type { ReportStatus } from '../types';
 
 const statusClasses: Record<ReportStatus, string> = {
@@ -12,9 +12,19 @@ const statusClasses: Record<ReportStatus, string> = {
 };
 
 export function ReportStatusBadge({ status }: { status: ReportStatus }) {
+  const translate = useTranslations('Reports');
+  const labels: Record<ReportStatus, string> = {
+    SUBMITTED: translate('statusSubmitted'),
+    TRIAGED: translate('statusTriaged'),
+    UNDER_REVIEW: translate('statusUnderReview'),
+    ESCALATED: translate('statusEscalated'),
+    RESOLVED: translate('statusResolved'),
+    REJECTED: translate('statusRejected'),
+  };
+
   return (
     <span className={cn('inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold', statusClasses[status])}>
-      {REPORT_STATUS_LABELS[status]}
+      {labels[status]}
     </span>
   );
 }

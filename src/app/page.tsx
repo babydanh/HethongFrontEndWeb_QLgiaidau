@@ -783,12 +783,13 @@ export default function HomePage() {
     return getWeight(a.status, a.winnerId) - getWeight(b.status, b.winnerId);
   });
 
-  // Pagination for live matches (Max 4 matches per page)
-  const totalLivePages = Math.ceil(liveMatches.length / 4);
-  const paginatedLiveMatches = liveMatches.slice((liveMatchPage - 1) * 4, liveMatchPage * 4);
+  // Pagination for live matches (Max 6 matches per page)
+  const LIVE_MATCHES_PER_PAGE = 6;
+  const totalLivePages = Math.ceil(liveMatches.length / LIVE_MATCHES_PER_PAGE);
+  const paginatedLiveMatches = liveMatches.slice((liveMatchPage - 1) * LIVE_MATCHES_PER_PAGE, liveMatchPage * LIVE_MATCHES_PER_PAGE);
 
-  // Group live matches by tournament name
-  const liveMatchesByTournament = liveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
+  // Group live matches by tournament name for the current page
+  const liveMatchesByTournament = paginatedLiveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { DateTimePicker, Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -242,6 +242,7 @@ export function RegistrationTab({
   const selectedParticipantFee = selectedParticipant
     ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.entryFee ?? tournament.entryFee ?? 0)
     : 0;
+  const locale = useLocale();
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
@@ -724,8 +725,9 @@ export function RegistrationTab({
                   const selDiv = divisions.find((d) => d.id === selectedDivisionId);
                   exportParticipantsExcel(
                     tournament.name,
-                    selDiv?.name || 'TatCa',
+                    selDiv?.name || translate('allDivisions'),
                     participants,
+                    locale,
                   );
                   toast.success('Đã xuất file Excel danh sách VĐV!');
                 }}
@@ -737,7 +739,7 @@ export function RegistrationTab({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={downloadParticipantsTemplateExcel}
+                onClick={() => downloadParticipantsTemplateExcel(locale)}
                 className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs"
               >
                 <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />

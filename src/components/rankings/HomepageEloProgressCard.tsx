@@ -130,7 +130,7 @@ export default function HomepageEloProgressCard({
       {categoryRanks.length > 1 && (
         <div className="space-y-2 mt-1">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-            CÁC HÌNH THỨC THI ĐẤU KHÁC
+            {eloTranslate('otherFormats')}
           </span>
           <div className="grid grid-cols-1 gap-2">
             {categoryRanks.slice(0, 3).map((rank) => (

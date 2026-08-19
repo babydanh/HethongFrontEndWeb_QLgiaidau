@@ -369,7 +369,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                 </div>
                 <Button
                   size="sm"
-                  onClick={() => exportTournamentResultsExcel(tournament.name, matches)}
+                  onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
                   disabled={matches.length === 0}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-sm"
                 >

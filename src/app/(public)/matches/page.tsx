@@ -797,7 +797,7 @@ export default function MatchesListPage() {
           {selectedStatus && (
             <button onClick={() => { setSelectedStatus(''); setPage(1); }}
               className="text-slate-400 font-bold text-xs hover:text-rose-500 transition-colors ml-1 cursor-pointer">
-              ✕ Bỏ lọc
+              ✕ {translate('clearStatusFilter')}
             </button>
           )}
         </div>

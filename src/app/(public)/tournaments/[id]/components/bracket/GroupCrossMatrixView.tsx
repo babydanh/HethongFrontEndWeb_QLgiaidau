@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import { calculateStandings } from './helpers';
@@ -19,13 +20,15 @@ interface Props {
 
 export function GroupCrossMatrixView({ 
   matches, 
-  groupName = 'Group A',
+  groupName,
   activeLeg = 1,
   legCount = 1,
   onLegChange,
   roundNavigation,
   throughRound = null,
 }: Props) {
+  const translate = useTranslations('TournamentDetail');
+  const displayGroupName = groupName ?? translate('defaultGroupName');
   const { standings } = calculateStandings(matches, {
     tiebreakerMode: 'split',
     throughRound: throughRound ?? undefined,
@@ -87,7 +90,7 @@ export function GroupCrossMatrixView({
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
       <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <div className="font-bold text-sm text-slate-800">
-          {groupName}
+          {displayGroupName}
         </div>
         {legCount > 1 && onLegChange && (
           <div className="flex items-center gap-2">
@@ -100,7 +103,7 @@ export function GroupCrossMatrixView({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
-              {activeLeg} / {legCount}
+              {translate('legProgress', { current: activeLeg, total: legCount })}
             </span>
             <button
               type="button"
@@ -119,15 +122,15 @@ export function GroupCrossMatrixView({
         <table className="w-full text-xs">
           <thead className="bg-slate-50/80 border-b border-slate-200 font-bold text-slate-600">
             <tr>
-              <th className="px-3 py-2.5 text-center w-10">No.</th>
-              <th className="px-4 py-2.5 text-left min-w-[180px]">Players</th>
+              <th className="px-3 py-2.5 text-center w-10">{translate('rankHeader')}</th>
+              <th className="px-4 py-2.5 text-left min-w-[180px]">{translate('participantsHeader')}</th>
               {standings.map((_, idx) => (
                 <th key={idx} className="px-3 py-2.5 text-center w-14 border-l border-slate-100">
                   {idx + 1}
                 </th>
               ))}
               <th className="px-3 py-2.5 text-center w-16 border-l border-slate-200 bg-slate-100/60 font-bold text-slate-700">
-                W / L
+                {translate('winLossHeader')}
               </th>
             </tr>
           </thead>

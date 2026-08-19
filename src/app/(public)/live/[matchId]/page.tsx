@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { startTransition, useEffect, useRef, useState, use } from 'react';
 import { BRAND } from '@/constants/brand';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
@@ -118,6 +118,8 @@ interface Props {
 }
 
 export default function LiveMatchPage({ params }: Props) {
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const translate = useTranslations('Common');
   const matchTranslate = useTranslations('Match');
   const router = useRouter();
@@ -572,7 +574,7 @@ export default function LiveMatchPage({ params }: Props) {
       return true;
     }
 
-    toast.error('Chỉ Ban tổ chức hoặc Trọng tài được phân công mới có quyền điều khiển trận này.');
+    toast.error(matchTranslate('permissionDenied'));
     return false;
   };
 
@@ -583,7 +585,7 @@ export default function LiveMatchPage({ params }: Props) {
 
     const trimmedReason = trimAndNormalizeSpaces(overrideReason);
     if (!trimmedReason) {
-      toast.error('Bật override thì bắt buộc phải nhập lý do để lưu audit.');
+      toast.error(matchTranslate('overrideReasonRequired'));
       return null;
     }
 
@@ -602,27 +604,27 @@ export default function LiveMatchPage({ params }: Props) {
     const label = `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} ${setIndex + 1}`;
 
     if (team1Score === 0 && team2Score === 0) {
-      return { ok: false, message: `${label} đang là 0-0. Hãy nhập điểm thực tế trước khi chốt.` };
+      return { ok: false, message: matchTranslate('scoreZeroWarning', { label }) };
     }
 
     if (team1Score === team2Score) {
-      return { ok: false, message: `${label} đang hòa ${team1Score}-${team2Score}. Hãy chỉnh lại tỉ số hoặc bật ngoại lệ.` };
+      return { ok: false, message: matchTranslate('scoreTiedWarning', { label, score: team1Score }) };
     }
 
     if (resolvedRules.kind === 'TENNIS') {
       if (maxScore < resolvedRules.pointsPerSet) {
-        return { ok: false, message: `${label} chưa đạt tối thiểu ${resolvedRules.pointsPerSet} game.` };
+        return { ok: false, message: matchTranslate('tennisMinimumGames', { label, points: resolvedRules.pointsPerSet }) };
       }
       if (maxScore > resolvedRules.maxPoints) {
-        return { ok: false, message: `${label} vượt quá ngưỡng tối đa ${resolvedRules.maxPoints} game.` };
+        return { ok: false, message: matchTranslate('tennisMaxGames', { label, points: resolvedRules.maxPoints }) };
       }
       if (maxScore === resolvedRules.pointsPerSet) {
         if (diff < 2 || minScore > resolvedRules.pointsPerSet - 2) {
-          return { ok: false, message: `${label} chưa đủ cách biệt để chốt.` };
+          return { ok: false, message: matchTranslate('notEnoughDifferenceToFinish', { label }) };
         }
       } else if (maxScore === resolvedRules.maxPoints) {
         if (minScore < resolvedRules.maxPoints - 1) {
-          return { ok: false, message: `${label} chưa đủ điều kiện để chốt ở ngưỡng tối đa.` };
+          return { ok: false, message: matchTranslate('tennisMaxThresholdNotEnough', { label }) };
         }
       }
 
@@ -631,21 +633,21 @@ export default function LiveMatchPage({ params }: Props) {
 
     if (!resolvedRules.winByTwo) {
       if (maxScore < resolvedRules.pointsPerSet) {
-        return { ok: false, message: `${label} chưa đạt mốc ${resolvedRules.pointsPerSet} điểm.` };
+        return { ok: false, message: matchTranslate('minimumScoreToFinish', { label, points: resolvedRules.pointsPerSet }) };
       }
       return { ok: true };
     }
 
     if (maxScore < resolvedRules.pointsPerSet) {
-      return { ok: false, message: `${label} chưa đạt tối thiểu ${resolvedRules.pointsPerSet} điểm.` };
+      return { ok: false, message: matchTranslate('minimumPointsToFinish', { label, points: resolvedRules.pointsPerSet }) };
     }
 
     if (maxScore < resolvedRules.maxPoints && diff < 2) {
-      return { ok: false, message: `${label} chưa đủ cách biệt 2 điểm để chốt.` };
+      return { ok: false, message: matchTranslate('deuceDifferenceRequired', { label }) };
     }
 
     if (maxScore > resolvedRules.maxPoints) {
-      return { ok: false, message: `${label} vượt quá ngưỡng tối đa ${resolvedRules.maxPoints} điểm.` };
+      return { ok: false, message: matchTranslate('maximumScoreExceeded', { label, points: resolvedRules.maxPoints }) };
     }
 
     return { ok: true };
@@ -726,7 +728,7 @@ export default function LiveMatchPage({ params }: Props) {
           if (!pendingScorePayloadRef.current) {
             applyServerSnapshot(response);
           }
-          toast.success('Đã đồng bộ điểm live.', { id: `score-sync-${matchId}` });
+          toast.success(matchTranslate('liveScoreSynced'), { id: `score-sync-${matchId}` });
         } catch (err: unknown) {
           console.error(err);
           // 409 (NOTE-7/D3): another device changed the score first — do not blind
@@ -736,12 +738,12 @@ export default function LiveMatchPage({ params }: Props) {
             // blind retry; refetch the server snapshot and let the user continue
             // from the freshest state.
             const fresh = await matchesApi.getMatchById(matchId);
-            toast('Điểm đã thay đổi từ thiết bị khác. Đã làm mới số liệu.', {
+            toast(matchTranslate('scoreChangedOnOtherDevice'), {
               icon: '⚠️',
               id: `score-sync-${matchId}`,
             });
           } else {
-            toast.error(getErrorMessage(err, 'Không thể đồng bộ điểm live.'), { id: `score-sync-${matchId}` });
+            toast.error(getErrorMessage(err, matchTranslate('liveScoreSyncFailed')), { id: `score-sync-${matchId}` });
           }
         } finally {
       scoreSyncInFlightRef.current = false;
@@ -853,7 +855,7 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     if (isPickleballSideOut && action === 'inc' && sideOutState.servingTeam !== team) {
-      toast.error('Trong mode side-out, chỉ đội đang giao bóng mới được cộng điểm.');
+      toast.error(matchTranslate('sideOutPermissionDenied'));
       return;
     }
     const appliedOverrideReason = resolveOverrideReason();
@@ -1395,7 +1397,7 @@ export default function LiveMatchPage({ params }: Props) {
                 </div>
               )}
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors max-w-[180px] truncate">
-                {match.tournament?.name || 'Giải đấu'}
+                {match.tournament?.name || matchTranslate('tournamentFallback')}
               </span>
             </Link>
 
@@ -1418,20 +1420,20 @@ export default function LiveMatchPage({ params }: Props) {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                 </span>
               )}
-              {match.status === 'ONGOING' ? 'Trực tiếp' : match.status === 'COMPLETED' ? 'Kết thúc' : 'Sắp diễn ra'}
+              {match.status === 'ONGOING' ? matchTranslate('statusLive') : match.status === 'COMPLETED' ? matchTranslate('statusFinished') : matchTranslate('statusUpcoming')}
             </span>
             <span className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-blue-500" />
-              <span>Vòng {match.roundNumber}</span>
+              <span>{matchTranslate('roundLabel', { round: match.roundNumber })}</span>
             </span>
 
             <span className="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
               <Eye className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-              <span>{formatCompact(viewerCount)} đang xem</span>
+              <span>{formatCompact(viewerCount)} {matchTranslate('watchingLabel')}</span>
             </span>
             <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full flex items-center gap-1">
               <Activity className="w-3.5 h-3.5 text-blue-500" />
-              <span>Môn: {scorePresentation.sportLabel}</span>
+              <span>{matchTranslate('sportPrefix', { sport: scorePresentation.sportLabel })}</span>
             </span>
             {(match.courtName || match.tournament?.venueName) && (
               <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1 max-w-[320px] truncate" title={
@@ -1454,7 +1456,7 @@ export default function LiveMatchPage({ params }: Props) {
               className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-lg transition-all"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>Chia sẻ</span>
+              <span>{matchTranslate('share')}</span>
             </Button>
             <ReportViolationButton
               targetType="MATCH"
@@ -1467,7 +1469,7 @@ export default function LiveMatchPage({ params }: Props) {
               className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 hover:border-blue-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-lg shadow-xs shrink-0"
             >
               <Trophy className="w-3.5 h-3.5 text-blue-500" />
-              <span>{match.tournament?.name || 'Quay lại giải đấu'}</span>
+              <span>{match.tournament?.name || matchTranslate('backToTournament')}</span>
             </Link>
           </div>
         </div>
@@ -1971,11 +1973,11 @@ export default function LiveMatchPage({ params }: Props) {
                           {matchTranslate('penaltiesAndCards')}
                         </h4>
                         <p className="mt-1 text-xs font-medium text-slate-400">
-                          Các quyết định đã được trọng tài/BTC ghi nhận theo luật môn.
+                          {matchTranslate('penaltiesDescription')}
                         </p>
                       </div>
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500">
-                        {penalties.length} mục
+                        {matchTranslate('penaltyCount', { count: penalties.length })}
                       </span>
                     </div>
 
@@ -2062,7 +2064,7 @@ export default function LiveMatchPage({ params }: Props) {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-400" /> {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : 'Chưa xếp giờ'}
+                  <Clock className="w-4 h-4 text-slate-400" /> {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(dateLocale, {hour: '2-digit', minute:'2-digit'}) : matchTranslate('noScheduledTime')}
                 </div>
                 {match.refereeName && (
                   <div className="flex items-center gap-1 text-xs font-medium text-amber-700">
@@ -2077,13 +2079,13 @@ export default function LiveMatchPage({ params }: Props) {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Khu điều khiển trọng tài
+                      {matchTranslate('refereeControlTitle')}
                     </p>
                     <h3 className="mt-2 text-xl font-bold text-slate-900">
-                      Mở bảng chấm điểm chuyên dụng
+                      {matchTranslate('openScoringPanelTitle')}
                     </h3>
                     <p className="mt-1 text-sm font-medium text-slate-500">
-                      Trang live giữ giao diện xem trận gọn hơn. Toàn bộ thao tác chấm điểm, lỗi và ngoại lệ được đưa vào modal riêng.
+                      {matchTranslate('scoringPanelDescription')}
                     </p>
                   </div>
                   <Button
@@ -2095,7 +2097,7 @@ export default function LiveMatchPage({ params }: Props) {
                   >
                     <span className="flex items-center gap-2">
                       <Shield className="h-4 w-4" />
-                      Tính điểm
+                      {matchTranslate('startScoring')}
                     </span>
                   </Button>
                 </div>
@@ -2104,9 +2106,9 @@ export default function LiveMatchPage({ params }: Props) {
 
             {scoreOverride?.reason ? (
               <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
-                Trận này đang dùng chế độ ngoại lệ của trọng tài/BTC: {scoreOverride.reason}
+                {matchTranslate('scoreOverrideNotice', { reason: scoreOverride.reason })}
                 {scoreOverride.decidedAt
-                  ? ` • ${new Date(scoreOverride.decidedAt).toLocaleString('vi-VN')}`
+                  ? ` • ${new Date(scoreOverride.decidedAt).toLocaleString(dateLocale)}`
                   : ''}
               </div>
             ) : null}

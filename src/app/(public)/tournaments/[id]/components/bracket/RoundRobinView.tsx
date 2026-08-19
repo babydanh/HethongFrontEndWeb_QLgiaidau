@@ -281,11 +281,11 @@ export function RoundRobinView({
                         (tiebreakerMode === 'playoff' ? (
                           <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                             <AlertTriangle className="w-2.5 h-2.5" />
-                            Trận phụ
+                            {translate('playoffTieLabel')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                            Đồng hạng
+                            {translate('tiedLabel')}
                           </span>
                         ))}
                     </td>
@@ -298,7 +298,7 @@ export function RoundRobinView({
  
         {ties.length > 0 && tiebreakerMode === 'playoff' && tournamentId && stageId && (
           <div className="mt-2 text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-semibold">Bằng điểm:</span>
+            <span className="font-semibold">{translate('pointsTiedLabel')}:</span>
             {ties.map((group, gi) => (
               <div key={gi} className="inline-flex items-center gap-1.5">
                 {group.map((row) => (
@@ -317,7 +317,7 @@ export function RoundRobinView({
                         toast.success(translate('playoffCreated'), { id: t });
                         setTimeout(() => window.location.reload(), 1500);
                       } catch (err) { toast.error(getErrorMessage(err), { id: t }); }
-                    }} className="text-blue-500 hover:text-blue-700 hover:underline cursor-pointer">+ Play-off</button>
+                    }} className="text-blue-500 hover:text-blue-700 hover:underline cursor-pointer">+ {translate('createPlayoff')}</button>
                     <button onClick={async () => {
                       if (!confirm(translate('earlyFinishConfirm'))) return;
                       const t = toast.loading(translate('endingStage'));
@@ -326,7 +326,7 @@ export function RoundRobinView({
                         toast.success(translate('stageFinished'), { id: t });
                         setTimeout(() => window.location.reload(), 1500);
                       } catch (err) { toast.error(getErrorMessage(err), { id: t }); }
-                    }} className="text-slate-300 hover:text-slate-500 cursor-pointer">(chot)</button>
+                    }} className="text-slate-300 hover:text-slate-500 cursor-pointer">({translate('skipShort')})</button>
                   </>
                 )}
               </div>
@@ -346,7 +346,7 @@ export function RoundRobinView({
                 setTimeout(() => window.location.reload(), 1500);
               } catch (err) { toast.error(getErrorMessage(err), { id: t }); }
             }} className="text-[10px] text-slate-400 hover:text-slate-600 underline underline-offset-2 cursor-pointer">
-              Kết thúc stage (hủy các trận còn lại)
+              {translate('finishStageAndCancelRemaining')}
             </button>
           </div>
         )}
@@ -356,14 +356,14 @@ export function RoundRobinView({
       {/* Match schedule is paged by round so multi-leg groups stay readable. */}
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-slate-400" /> Lịch trận đấu
+<Clock className="w-4 h-4 text-slate-400" /> {translate('matchSchedule')}
           <span className="text-[10px] text-slate-400 font-semibold normal-case">
-            ({visibleMatches.length} trận)
+            ({translate('matchCount', { count: visibleMatches.length })})
           </span>
         </h5>
 
         {rounds.length > 1 && (
-          <div className="mb-3 flex flex-wrap gap-2 items-center" aria-label="Chọn lượt vòng bảng">
+          <div className="mb-3 flex flex-wrap gap-2 items-center" aria-label={translate('selectGroupRound')}>
             <button
               type="button"
               onClick={() => {
@@ -376,7 +376,7 @@ export function RoundRobinView({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
-              Vòng {activeRound} / {rounds[rounds.length - 1]}
+              {translate('roundProgress', { current: activeRound ?? '-', total: rounds[rounds.length - 1] ?? '-' })}
             </span>
             <button
               type="button"
@@ -423,28 +423,28 @@ export function RoundRobinView({
                       <div className="mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <span className="text-[8px] text-slate-400">#{m.matchOrder}</span>
-                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Lượt {m.roundNumber}</span>
+                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">{translate('legLabel', { number: m.roundNumber })}</span>
                         </span>
-                        {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> TRỰC TIẾP</span>}
+                        {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> {translate('liveLabel')}</span>}
                       </div>
                       <div className="space-y-2.5">
                         <div className="flex min-h-[28px] items-center justify-between">
-                          <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant1?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant1?.teamName ?? 'Chờ xác định'}</span>
+                          <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant1?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant1?.teamName ?? translate('pendingParticipant')}</span>
                           <span className={'font-bold text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p1SetsWon : '-'}</span>
                         </div>
                         <div className="flex min-h-[28px] items-center justify-between">
-                          <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant2?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant2?.teamName ?? 'Chờ xác định'}</span>
+                          <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant2?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant2?.teamName ?? translate('pendingParticipant')}</span>
                           <span className={'font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p2SetsWon : '-'}</span>
                         </div>
                       </div>
                       <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-1 flex-col justify-end gap-1.5">
                         <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                           <Clock className="w-2 h-2 flex-shrink-0" />
-                          <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : 'Chưa xếp giờ'}</span>
+                          <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : translate('unscheduledTime')}</span>
                         </div>
                         <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                           <Info className="w-2 h-2 flex-shrink-0" />
-                          <span className="truncate">{m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : 'Chưa xếp sân'}</span>
+                          <span className="truncate">{m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : translate('unscheduledCourt')}</span>
                         </div>
                         {onScheduleMatch && !done && m.participant1 && m.participant2 && (
                           <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">{translate("scheduleVenueTime")}</button>

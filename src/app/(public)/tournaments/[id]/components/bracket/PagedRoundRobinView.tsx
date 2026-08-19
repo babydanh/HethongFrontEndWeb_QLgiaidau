@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { TableProperties } from 'lucide-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
@@ -33,6 +34,7 @@ export function PagedRoundRobinView({
   roundConfig,
   tiebreakerMode,
 }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const [subView, setSubView] = useState<'matrix' | 'table'>('matrix');
   const [activeLeg, setActiveLeg] = useState(1);
   // Shared round state — drives both cross table and match list
@@ -101,7 +103,7 @@ export function PagedRoundRobinView({
           onClick={() => setSubView('matrix')}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer"
         >
-          <TableProperties className="h-4 w-4 text-sky-600" /> Bảng chéo
+          <TableProperties className="h-4 w-4 text-sky-600" /> {translate('crossTable')}
         </button>
       )}
       {exclude !== 'table' && (
@@ -110,7 +112,7 @@ export function PagedRoundRobinView({
           onClick={() => setSubView('table')}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer"
         >
-          <TableProperties className="h-4 w-4 text-emerald-600" /> Bảng xếp hạng
+          <TableProperties className="h-4 w-4 text-emerald-600" /> {translate('standingsTable')}
         </button>
       )}
     </div>
@@ -126,7 +128,7 @@ export function PagedRoundRobinView({
   const canPrevRound = currentRound != null && legRoundsForNav.indexOf(currentRound) > 0;
   const canNextRound = currentRound != null && legRoundsForNav.indexOf(currentRound) < legRoundsForNav.length - 1;
   const roundLabel = currentRound != null
-    ? `Lượt ${legRoundsForNav.indexOf(currentRound) + 1} / ${legRoundsForNav.length}`
+    ? translate('legProgress', { current: legRoundsForNav.indexOf(currentRound) + 1, total: legRoundsForNav.length })
     : '';
 
   const roundNavigation = legRoundsForNav.length > 1 ? (
@@ -142,7 +144,7 @@ export function PagedRoundRobinView({
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      <span className="text-xs font-semibold text-slate-600 min-w-24 text-center">{`Vòng ${currentRound ?? '-'} · ${roundLabel}`}</span>
+      <span className="text-xs font-semibold text-slate-600 min-w-24 text-center">{translate('roundAndLeg', { round: currentRound ?? '-', progress: roundLabel })}</span>
       <button
         type="button"
         onClick={() => {
@@ -162,14 +164,14 @@ export function PagedRoundRobinView({
       <div className="flex flex-col gap-4 animate-in fade-in duration-200">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs font-semibold text-slate-500">
-            Tổng hợp kết quả {legCount > 1 ? `${legCount} lượt thi đấu` : 'thi đấu'}
+            {legCount > 1 ? translate('resultsAcrossLegs', { count: legCount }) : translate('resultsSummary')}
           </p>
           {viewButtons('matrix')}
         </div>
         {/* Cross matrix — navigated per round, shows cumulative scores */}
         <GroupCrossMatrixView
           matches={cumulativeMatches}
-          groupName={legCount > 1 ? `Bảng chéo - Lượt ${currentLeg}` : 'Bảng chéo'}
+          groupName={legCount > 1 ? translate('crossTableLeg', { number: currentLeg }) : translate('crossTable')}
           activeLeg={currentLeg}
           legCount={legCount}
           onLegChange={changeLeg}
@@ -198,7 +200,7 @@ export function PagedRoundRobinView({
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-200">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-slate-500">Tổng hợp kết quả {legCount} lượt thi đấu</p>
+        <p className="text-xs font-semibold text-slate-500">{translate('resultsAcrossLegs', { count: legCount })}</p>
         {viewButtons('table')}
       </div>
       <RoundRobinView

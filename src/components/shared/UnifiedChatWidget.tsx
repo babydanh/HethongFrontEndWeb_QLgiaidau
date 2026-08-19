@@ -177,7 +177,11 @@ function getRoomAvatar(room: InboxRoom, currentUserId?: string): string | null {
   return other?.avatarUrl || null;
 }
 
-function formatDateSeparator(dateStr: string, labels: { today: string; yesterday: string }): string {
+function formatDateSeparator(
+  dateStr: string,
+  locale: string,
+  labels: { today: string; yesterday: string },
+): string {
   const d = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date();
@@ -186,7 +190,7 @@ function formatDateSeparator(dateStr: string, labels: { today: string; yesterday
   if (d.toDateString() === today.toDateString()) return labels.today;
   if (d.toDateString() === yesterday.toDateString()) return labels.yesterday;
 
-  return d.toLocaleDateString('vi-VN', {
+  return d.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -216,6 +220,14 @@ export default function UnifiedChatWidget() {
   const locale = useLocale();
   const quickPrompts = quickPromptKeys.map((key) => translate(key));
   const roomLabels = { club: translate('club'), conversation: translate('conversation') };
+  const getPresetLabel = (name: string) => {
+    if (name === 'Cây hài') return translate('tagSuggestionFunny');
+    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
+    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
+    if (name === 'Đang lên form') return translate('tagSuggestionRising');
+    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
+    return name;
+  };
   const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id;
   const [open, setOpen] = useState(false);
@@ -314,6 +326,24 @@ export default function UnifiedChatWidget() {
         .catch(() => {});
     }
   }, [selectedRoom?.id, selectedRoom?.type, selectedRoom?.communityId]);
+
+  useEffect(() => {
+    const handleTagsUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ communityId?: string; userId?: string; tags?: string[] }>).detail;
+      if (!detail?.userId || selectedRoom?.type !== 'CLUB') return;
+      if (detail.communityId && detail.communityId !== selectedRoom.communityId) return;
+      setClubMembersMap((current) => ({
+        ...current,
+        [detail.userId as string]: {
+          ...current[detail.userId as string],
+          tags: Array.isArray(detail.tags) ? detail.tags : [],
+        },
+      }));
+    };
+
+    window.addEventListener('sporto:member-tags-updated', handleTagsUpdated);
+    return () => window.removeEventListener('sporto:member-tags-updated', handleTagsUpdated);
+  }, [selectedRoom?.type, selectedRoom?.communityId]);
 
   const otherParticipant = useMemo(() => {
     if (!selectedRoom || selectedRoom.type === 'CLUB') return null;
@@ -2086,7 +2116,7 @@ export default function UnifiedChatWidget() {
                           {isNewDay && (
                             <div className="flex items-center justify-center my-3">
                               <span className="rounded-full bg-slate-200/80 px-3 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider shadow-2xs">
-                                {formatDateSeparator(message.createdAt, { today: translate('today'), yesterday: translate('yesterday') })}
+                                {formatDateSeparator(message.createdAt, locale, { today: translate('today'), yesterday: translate('yesterday') })}
                               </span>
                             </div>
                           )}
@@ -2139,17 +2169,17 @@ export default function UnifiedChatWidget() {
                                         {/* Show owner/moderator role when available */}
                                         {memberRole === 'OWNER' && (
                                           <span className="rounded-md bg-amber-100 border border-amber-200/80 px-1.5 py-0.2 text-[9px] font-bold text-amber-900 shadow-2xs">
-                                            {translate('chatOwner')}
+                                            {translate('communityOwner')}
                                           </span>
                                         )}
                                         {memberRole === 'MODERATOR' && (
                                           <span className="rounded-md bg-blue-100 border border-blue-200/80 px-1.5 py-0.2 text-[9px] font-bold text-blue-900 shadow-2xs">
-                                            {translate('chatModerator')}
+                                            {translate('communityModerator')}
                                           </span>
                                         )}
 
                                         {/* Show member title tag when available */}
-                                        {memberTags.slice(0, 1).map((tag) => {
+                                        {memberTags.map((tag) => {
                                           const preset = clubTagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
                                           return (
                                             <span
@@ -2169,7 +2199,7 @@ export default function UnifiedChatWidget() {
                                                     }
                                               }
                                             >
-                                              {tag}
+                                              {getPresetLabel(tag)}
                                             </span>
                                           );
                                         })}

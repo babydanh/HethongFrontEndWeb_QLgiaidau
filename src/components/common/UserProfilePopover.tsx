@@ -61,6 +61,14 @@ export default function UserProfilePopover({
 }: UserProfilePopoverProps) {
   const translate = useTranslations('Common');
   const locale = useLocale();
+  const getPresetLabel = (name: string) => {
+    if (name === 'Cây hài') return translate('tagSuggestionFunny');
+    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
+    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
+    if (name === 'Đang lên form') return translate('tagSuggestionRising');
+    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
+    return name;
+  };
   const router = useRouter();
   const { user: currentUser } = useAuthStore();
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -231,14 +239,13 @@ export default function UserProfilePopover({
   const canManageTags = Boolean(communityId && (isOwner || isModerator));
 
   // Community Role
-  const communityRoleLabel =
-    profileData.role === "OWNER"
+  const communityRoleLabel = communityId
+    ? profileData.role === "OWNER"
       ? translate('communityOwner')
       : profileData.role === "MODERATOR"
         ? translate('communityModerator')
-        : profileData.role === "MEMBER"
-          ? translate('communityMember')
-          : null;
+        : translate('communityMember')
+    : null;
 
   // System Role helper
   const getSystemRoleBadge = (role?: string) => {
@@ -304,7 +311,7 @@ export default function UserProfilePopover({
       toast.success(translate('tagsUpdatedSuccess'));
       window.dispatchEvent(
         new CustomEvent('sporto:member-tags-updated', {
-          detail: { userId: profileId, tags: selectedTags },
+          detail: { communityId, userId: profileId, tags: selectedTags },
         }),
       );
     } catch (err: unknown) {
@@ -475,72 +482,55 @@ export default function UserProfilePopover({
           </div>
         )}
 
-        {/* Club Member Tags & Management */}
+        {/* Compact club tags and tag management */}
         {communityId && (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wider text-slate-600">
-                <Tag className="h-3.5 w-3.5 text-blue-600" />
-                <span>{translate('clubTitles')}</span>
-                {(profileData.tags ?? []).length > 0 && (
-                  <span className="ml-1 text-[9px] text-slate-400 font-normal">
-                    ({profileData.tags?.length})
+          <div className="mt-3">
+            <div className="flex items-center flex-wrap gap-1.5">
+              {(profileData.tags ?? []).map((tag) => {
+                const preset = tagPresets.find(
+                  (p) => p.name.toLowerCase() === tag.toLowerCase(),
+                );
+                return (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold border shadow-2xs"
+                    style={
+                      preset
+                        ? {
+                            backgroundColor: preset.color,
+                            borderColor: `${preset.color}99`,
+                            color: '#0f172a',
+                          }
+                        : {
+                            backgroundColor: '#f1f5f9',
+                            borderColor: '#cbd5e1',
+                            color: '#1e293b',
+                          }
+                    }
+                  >
+                    <Tag className="h-3 w-3 opacity-60" strokeWidth={1.8} />
+                    {getPresetLabel(tag)}
                   </span>
-                )}
-              </div>
+                );
+              })}
 
               {canManageTags && !isEditingTags && (
                 <button
                   type="button"
                   onClick={handleStartEditTags}
-                  className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200/80 hover:bg-blue-100 transition-colors"
+                  aria-label={translate('assignTags')}
+                  title={translate('assignTags')}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-dashed border-blue-300 bg-blue-50 text-blue-700 transition hover:bg-blue-100 hover:border-blue-400"
                 >
-                  <Plus className="h-3 w-3" />
-                  <span>{(profileData.tags ?? []).length > 0 ? translate('editTags') : translate('assignTags')}</span>
+                  <Tag className="h-3 w-3" strokeWidth={1.8} />
+                  <Plus className="-ml-1 h-2.5 w-2.5" strokeWidth={2.5} />
                 </button>
               )}
             </div>
 
-            {/* View Mode */}
-            {!isEditingTags ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {(profileData.tags ?? []).length > 0 ? (
-                  profileData.tags?.map((tag) => {
-                    const preset = tagPresets.find(
-                      (p) => p.name.toLowerCase() === tag.toLowerCase(),
-                    );
-                    return (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border shadow-2xs transition-all"
-                        style={
-                          preset
-                            ? {
-                                backgroundColor: preset.color,
-                                borderColor: `${preset.color}99`,
-                                color: "#0f172a",
-                              }
-                            : {
-                                backgroundColor: "#f1f5f9",
-                                borderColor: "#cbd5e1",
-                                color: "#1e293b",
-                              }
-                        }
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-900/40 shrink-0" />
-                        {tag}
-                      </span>
-                    );
-                  })
-                ) : (
-                  <p className="text-[11px] text-slate-400 italic">
-                    {translate('noClubTitles')}
-                  </p>
-                )}
-              </div>
-            ) : (
+            {!isEditingTags ? null : (
               /* Inline Edit Mode */
-              <div className="mt-2 space-y-2 animate-in fade-in duration-150">
+              <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 space-y-2 animate-in fade-in duration-150">
                 <p className="text-[10px] font-semibold text-slate-500">
                   {translate('chooseTagToAssign')}
                 </p>
@@ -566,7 +556,7 @@ export default function UserProfilePopover({
                         }}
                       >
                         {isSelected && <Check className="h-3 w-3 text-slate-900 shrink-0" />}
-                        <span>{preset.name}</span>
+                        <span>{getPresetLabel(preset.name)}</span>
                       </button>
                     );
                   })}

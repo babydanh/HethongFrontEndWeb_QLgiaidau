@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { Loader2, MessageCircle, Send, X, Users, Sparkles } from 'lucide-react';
 import { chatApi } from '@/features/chat/api';
+import { communitiesApi } from '@/features/communities/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import type { ChatMessage } from '@/types/community-social';
@@ -44,7 +45,70 @@ export default function ClubChatLauncher({
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [clubMembersMap, setClubMembersMap] = useState<Record<string, { role?: string; tags?: string[] }>>({});
+  const [clubTagPresets, setClubTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const getPresetLabel = (name: string) => {
+    if (name === 'Cây hài') return translate('tagSuggestionFunny');
+    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
+    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
+    if (name === 'Đang lên form') return translate('tagSuggestionRising');
+    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
+    return name;
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+
+    communitiesApi.getTagPresets(communityId)
+      .then((res) => {
+        if (active && res.data) setClubTagPresets(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(() => {});
+
+    communitiesApi.getMembers(communityId, { limit: 100 })
+      .then((res) => {
+        if (!active) return;
+        const raw = res.data;
+        const list = Array.isArray(raw)
+          ? raw
+          : Array.isArray((raw as { data?: unknown })?.data)
+            ? (raw as { data: Array<{ user?: { id?: string }; member?: { role?: string; tags?: string[] } }> }).data
+            : [];
+        const map: Record<string, { role?: string; tags?: string[] }> = {};
+        list.forEach((item) => {
+          const userId = item.user?.id;
+          if (userId && item.member) {
+            map[userId] = {
+              role: item.member.role,
+              tags: item.member.tags ?? [],
+            };
+          }
+        });
+        setClubMembersMap(map);
+      })
+      .catch(() => {});
+
+    const handleTagsUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ communityId?: string; userId?: string; tags?: string[] }>).detail;
+      if (!detail?.userId || (detail.communityId && detail.communityId !== communityId)) return;
+      setClubMembersMap((current) => ({
+        ...current,
+        [detail.userId as string]: {
+          ...current[detail.userId as string],
+          tags: Array.isArray(detail.tags) ? detail.tags : [],
+        },
+      }));
+    };
+
+    window.addEventListener('sporto:member-tags-updated', handleTagsUpdated);
+    return () => {
+      active = false;
+      window.removeEventListener('sporto:member-tags-updated', handleTagsUpdated);
+    };
+  }, [communityId, open, translate]);
 
   useEffect(() => {
     if (!open) return;
@@ -200,11 +264,47 @@ export default function ClubChatLauncher({
                     key={message.id}
                     className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                   >
-                    {!isMe && message.senderName && (
-                      <span className="text-[11px] font-semibold text-slate-500 mb-1 px-1">
-                        {message.senderName}
-                      </span>
-                    )}
+                    {!isMe && message.senderName && (() => {
+                      const memberMeta = clubMembersMap[message.senderId];
+                      const memberTags = memberMeta?.tags ?? [];
+                      return (
+                        <div className="mb-1 flex flex-wrap items-center gap-1 px-1">
+                          <span className="text-[11px] font-semibold text-slate-500">
+                            {message.senderName}
+                          </span>
+                          {memberMeta?.role === 'OWNER' && (
+                            <span className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">
+                              {translate('communityOwner')}
+                            </span>
+                          )}
+                          {memberMeta?.role === 'MODERATOR' && (
+                            <span className="rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700">
+                              {translate('communityModerator')}
+                            </span>
+                          )}
+                          {memberTags.map((tag) => {
+                            const preset = clubTagPresets.find((item) => item.name.toLowerCase() === tag.toLowerCase());
+                            return (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold"
+                                style={preset ? {
+                                  backgroundColor: preset.color,
+                                  borderColor: `${preset.color}99`,
+                                  color: '#0f172a',
+                                } : {
+                                  backgroundColor: '#f1f5f9',
+                                  borderColor: '#cbd5e1',
+                                  color: '#1e293b',
+                                }}
+                              >
+                                {getPresetLabel(tag)}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                     <div
                       className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm shadow-sm leading-relaxed ${
                         isMe

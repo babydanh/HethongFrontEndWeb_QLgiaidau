@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag } from 'lucide-react';
@@ -54,6 +55,8 @@ export default function MembersTab({
 }) {
   const router = useRouter();
   const translate = useTranslations('Common');
+  const translateMatch = useTranslations('Match');
+  const locale = useLocale();
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -62,6 +65,16 @@ export default function MembersTab({
   const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const [searchQuery, setSearchQuery] = useState('');
   const PAGE_SIZE = 50;
+  const formatMemberDate = (date: string) =>
+    new Date(date).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
+  const getPresetLabel = (name: string) => {
+    if (name === 'Cây hài') return translate('tagSuggestionFunny');
+    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
+    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
+    if (name === 'Đang lên form') return translate('tagSuggestionRising');
+    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
+    return name;
+  };
   
   // Menu dropdown state
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
@@ -247,7 +260,7 @@ export default function MembersTab({
           className="px-2 py-0.5 rounded-lg border text-[10px] font-semibold"
           style={preset ? { backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66`, color: preset.color } : undefined}
         >
-          {tag}
+          {getPresetLabel(tag)}
         </span>
       );
     });
@@ -278,6 +291,11 @@ export default function MembersTab({
     try {
       setIsSavingTags(true);
       await communitiesApi.updateMemberTags(communityId, tagAssignTarget.user.id, tags);
+      window.dispatchEvent(
+        new CustomEvent('sporto:member-tags-updated', {
+          detail: { communityId, userId: tagAssignTarget.user.id, tags },
+        }),
+      );
       toast.success(translate('tagUpdated'));
       setTagAssignTarget(null);
       fetchMembers();
@@ -405,18 +423,18 @@ export default function MembersTab({
                             {isUserTarget && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">{translate('currentUserBadge')}</span>}
                           </p>
                           {renderMemberPills(item)}
-                          <p className="text-[10.5px] text-slate-400">{translate('memberSince', { date: new Date(item.member.joinedAt).toLocaleDateString('vi-VN') })}</p>
+                          <p className="text-[10.5px] text-slate-400">{translate('memberSince', { date: formatMemberDate(item.member.joinedAt) })}</p>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                         {isOwnerRole ? (
                           <span className="px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
-                            <Crown className="w-3.5 h-3.5" /> Owner
+                            <Crown className="w-3.5 h-3.5" /> {translateMatch('communityRoleOwner')}
                           </span>
                         ) : (
                           <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
-                            <ShieldCheck className="w-3.5 h-3.5" /> Mod
+                            <ShieldCheck className="w-3.5 h-3.5" /> {translateMatch('communityRoleModerator')}
                           </span>
                         )}
 
@@ -520,7 +538,7 @@ export default function MembersTab({
                             {isUserTarget && <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-normal">{translate('currentUserBadge')}</span>}
                           </p>
                           {renderMemberPills(item)}
-                          <p className="text-[10px] text-slate-400">{translate('memberSince', { date: new Date(item.member.joinedAt).toLocaleDateString('vi-VN') })}</p>
+                          <p className="text-[10px] text-slate-400">{translate('memberSince', { date: formatMemberDate(item.member.joinedAt) })}</p>
                         </div>
                       </div>
 

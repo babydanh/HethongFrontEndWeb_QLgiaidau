@@ -493,7 +493,8 @@
     "waitingForOpponent": "Chờ đối thủ",
     "memberFallback": "Thành viên",
     "courtPrefix": "Sân: {court}",
-    "detailsAction": "Chi tiết"
+    "detailsAction": "Chi tiết",
+    "communityRoleModerator": "Quản trị viên CLB"
   },
   "OrganizerCreateStep1": {
     "nameMin": "Tên Giải đấu phải có ít nhất 5 ký tự",

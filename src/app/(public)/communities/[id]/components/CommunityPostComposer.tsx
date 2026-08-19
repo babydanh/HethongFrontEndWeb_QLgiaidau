@@ -123,9 +123,9 @@ export default function CommunityPostComposer({
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {item.member.role === "OWNER"
-                          ? translate('communityRoleOwner')
+? translate('communityRoleOwner')
                           : item.member.role === "MODERATOR"
-                            ? translate('communityRoleAdmin')
+                            ? translate('communityRoleModerator')
                             : translate('member')}
                       </div>
                     </div>

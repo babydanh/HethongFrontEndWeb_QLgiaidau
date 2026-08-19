@@ -57,6 +57,15 @@ export default function CommunityFeed({
     null,
   );
   const [isTagSaving, setIsTagSaving] = useState(false);
+  const [tagPresets, setTagPresets] = useState<Array<{ name: string; color: string }>>([]);
+
+  useEffect(() => {
+    if (!communityId || !canManageTags) return;
+    communitiesApi
+      .getTagPresets(communityId)
+      .then((response) => setTagPresets(response.data ?? []))
+      .catch(() => setTagPresets([]));
+  }, [communityId, canManageTags]);
 
   // Poll state
   const [isPollOpen, setIsPollOpen] = useState(false);
@@ -270,6 +279,11 @@ export default function CommunityFeed({
         tagTarget.user.id,
         tags,
       );
+      window.dispatchEvent(
+        new CustomEvent('sporto:member-tags-updated', {
+          detail: { communityId, userId: tagTarget.user.id, tags },
+        }),
+      );
       setTagTarget(null);
       toast.success(translate("tagUpdated"));
     } catch (error: unknown) {
@@ -379,6 +393,7 @@ export default function CommunityFeed({
         }}
         memberName={tagTarget?.user?.fullName}
         currentTags={tagTarget?.member?.tags ?? []}
+        presets={tagPresets}
         isSaving={isTagSaving}
         onSave={(tags) => void saveTags(tags)}
       />

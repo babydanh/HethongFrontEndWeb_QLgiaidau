@@ -493,7 +493,8 @@
     "waitingForOpponent": "Waiting for opponent",
     "memberFallback": "Member",
     "courtPrefix": "Court: {court}",
-    "detailsAction": "Details"
+    "detailsAction": "Details",
+    "communityRoleModerator": "Community Moderator"
   },
   "OrganizerCreateStep1": {
     "nameMin": "Tournament name must be at least 5 characters.",

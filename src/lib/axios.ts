@@ -177,12 +177,18 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor — gắn CSRF token cho state-changing requests
+// Request interceptor — gắn CSRF token và x-app-key cho requests
 api.interceptors.request.use(
   (config) => {
+    config.headers = config.headers ?? {};
+
+    const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY;
+    if (appApiKey && !config.headers['x-app-key']) {
+      config.headers['x-app-key'] = appApiKey;
+    }
+
     const anonymousClientId = getAnonymousClientId();
     if (anonymousClientId) {
-      config.headers = config.headers ?? {};
       config.headers['x-client-id'] = anonymousClientId;
     }
 

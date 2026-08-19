@@ -33,6 +33,7 @@ import {
   downloadParticipantsTemplateExcel,
   parseParticipantsExcel,
 } from '@/utils/exportTournament';
+import SmartFormImportModal from './SmartFormImportModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
   getParticipantStatusClassName,
@@ -127,6 +128,7 @@ interface RegistrationTabProps {
   handleAutoSeed: () => Promise<void>;
   handleSwapSeeds: (participantId1: string, participantId2: string) => Promise<void>;
   handleReorderSeeds?: (reorderedSeeds: { participantId: string; seed: number }[]) => Promise<void>;
+  refetchDivisionData?: () => Promise<void>;
 }
 
 // ─── SortableSeedItem (Declared outside to avoid recreation & re-mounting on each parent render) ───
@@ -225,7 +227,9 @@ export function RegistrationTab({
   handleAutoSeed,
   handleSwapSeeds,
   handleReorderSeeds,
+  refetchDivisionData,
 }: RegistrationTabProps) {
+  const [isSmartImportOpen, setIsSmartImportOpen] = React.useState(false);
   const [selectedParticipant, setSelectedParticipant] = React.useState<TournamentParticipant | null>(null);
   const registrationFormFields = React.useMemo(
     () => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)).fields,
@@ -234,6 +238,9 @@ export function RegistrationTab({
   const selectedDivisionName = selectedParticipant
     ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.name || 'Chưa phân nội dung')
     : '';
+  const selectedParticipantFee = selectedParticipant
+    ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.entryFee ?? tournament.entryFee ?? 0)
+    : 0;
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
@@ -735,6 +742,15 @@ export function RegistrationTab({
                 <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
                 Mẫu Excel
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setIsSmartImportOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Nhập Excel (Google Form)
+              </Button>
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
                 <p className="text-base font-bold text-amber-800 leading-none">{participantSummary.pending}</p>
@@ -1195,9 +1211,9 @@ export function RegistrationTab({
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-blue-600" /> Suất đặc cách
+              <UserPlus className="w-4 h-4 text-blue-600" /> {registrationTranslate('wildcardTitle')}
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu. Bỏ qua mọi quy tắc giới hạn ELO.</p>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">{registrationTranslate('wildcardDescription')}</p>
           </div>
 
           {/* Division Selector */}
@@ -1207,13 +1223,20 @@ export function RegistrationTab({
               <div className="grid grid-cols-1 gap-2">
                 {divisions.map((div) => {
                   const isActive = div.id === selectedDivisionId;
+                  const genderLabel = div.genderRestriction === 'FEMALE'
+                    ? displayTranslate('femaleGender')
+                    : div.genderRestriction === 'MIXED'
+                      ? displayTranslate('mixedGender')
+                      : displayTranslate('maleGender');
                   const matchLabel = div.matchType === 'SINGLES'
-                    ? (div.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
+                    ? displayTranslate('singlesFormat', { gender: genderLabel })
                     : div.matchType === 'DOUBLES'
-                      ? (div.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : div.genderRestriction === 'MIXED' ? 'Đôi Nam Nữ' : 'Đôi Nam')
-                      : 'Đôi Nam Nữ';
-                  const bracketLabel = div.bracketType === 'DOUBLE_ELIMINATION' ? 'Loại kép'
-                    : div.bracketType === 'ROUND_ROBIN' ? 'Vòng tròn' : 'Loại trực tiếp';
+                      ? div.genderRestriction === 'MIXED'
+                        ? displayTranslate('mixedDoublesFormat')
+                        : displayTranslate('doublesFormat', { gender: genderLabel })
+                      : displayTranslate('mixedDoublesFormat');
+                  const bracketLabel = div.bracketType === 'DOUBLE_ELIMINATION' ? displayTranslate('bracketDoubleElimination')
+                    : div.bracketType === 'ROUND_ROBIN' ? displayTranslate('bracketRoundRobin') : displayTranslate('bracketSingleElimination');
                   const count = div._count?.participants ?? 0;
                   return (
                     <button
@@ -1231,7 +1254,7 @@ export function RegistrationTab({
                     >
                       <span className="block text-sm font-bold">{div.name}</span>
                       <span className="block text-[10px] font-semibold text-slate-500 mt-0.5">
-                        {matchLabel} • {bracketLabel} • {count} hồ sơ
+                        {matchLabel} • {bracketLabel} • {registrationTranslate('profilesCount', { count })}
                       </span>
                     </button>
                   );
@@ -1300,7 +1323,7 @@ export function RegistrationTab({
             return (
               <div className="border-t border-slate-100 pt-4">
                 <p className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">
-                  Đã gán đặc cách ({wildcards.length})
+                  {registrationTranslate('assignedWildcards', { count: wildcards.length })}
                 </p>
                 <div className="space-y-2">
                   {wildcards.map((p) => {
@@ -1311,11 +1334,11 @@ export function RegistrationTab({
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
                             <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 shrink-0">
-                              Đặc cách
+                              {registrationTranslate('wildcardBadge')}
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {p.members?.map(m => m.fullName).filter(Boolean).join(', ') || 'Chưa có tên'}
+                            {p.members?.map(m => m.fullName).filter(Boolean).join(', ') || registrationTranslate('noName')}
                             {divName ? ` • ${divName}` : ''}
                           </p>
                         </div>
@@ -1344,61 +1367,75 @@ export function RegistrationTab({
           <Modal open={true} onOpenChange={(open) => { if (!open) setSelectedParticipant(null); }}>
             <ModalContent className="max-h-[90vh] max-w-2xl overflow-y-auto bg-white p-0">
               <div className="border-b border-slate-200 px-5 py-4">
-                <ModalHeader><ModalTitle className="text-lg font-bold">Chi tiết hồ sơ đăng ký</ModalTitle></ModalHeader>
-                <p className="mt-1 text-xs text-slate-500">Thông tin được gửi từ tài khoản và form đăng ký của người chơi.</p>
+                <ModalHeader><ModalTitle className="text-lg font-bold">{registrationTranslate('profileDetailsTitle')}</ModalTitle></ModalHeader>
+                <p className="mt-1 text-xs text-slate-500">{registrationTranslate('profileSubmittedFrom')}</p>
               </div>
               <div className="space-y-5 p-5">
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-bold text-slate-900">{selectedParticipant.teamName}</h3>
-                      <p className="mt-1 text-xs text-slate-500">{selectedDivisionName} · Đăng ký {formatDate(selectedParticipant.registeredAt)}</p>
+                      <p className="mt-1 text-xs text-slate-500">{selectedDivisionName} · {registrationTranslate('registeredLabel')} {formatDate(selectedParticipant.registeredAt)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-bold">
                       <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">{getParticipantStatusLabel(selectedParticipant.teamStatus, participantStatusLabels)}</span>
                       <span className={`rounded-full border px-2.5 py-1 ${selectedParticipant.isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
-                        {selectedParticipant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                        {selectedParticipant.isPaid ? registrationTranslate('paidStatusDetail') : registrationTranslate('unpaidStatusDetail')}
                       </span>
                     </div>
                   </div>
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Người đăng ký & thành viên</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationTranslate('registeredMembers')}</h3>
                   <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                     {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
                       <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                        <div><p className="text-sm font-bold text-slate-800">{member.fullName || 'Chưa cập nhật họ tên'}</p><p className="mt-0.5 text-xs text-slate-500">{member.email || 'Email được ẩn/chưa cập nhật'}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}{member.gender ? ` · ${member.gender}` : ''}{member.role ? ` · ${member.role}` : ''}</p></div>
+                        <div><p className="text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p><p className="mt-0.5 text-xs text-slate-500">{member.email || registrationTranslate('hiddenEmail')}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}{member.gender ? ` · ${member.gender}` : ''}{member.role ? ` · ${member.role}` : ''}</p></div>
                         <span className="text-xs font-semibold text-slate-500">ELO {member.elo?.eloPoints ?? '—'}</span>
                       </div>
-                    )) : <p className="px-4 py-4 text-sm text-slate-500">Chưa có thành viên trong hồ sơ.</p>}
+                    )) : <p className="px-4 py-4 text-sm text-slate-500">{registrationTranslate('noMembers')}</p>}
                   </div>
                   {selectedParticipant.registeredBy && (
-                    <p className="mt-2 text-xs text-slate-500">Người tạo hồ sơ: <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || 'Chưa cập nhật'}</span> · {selectedParticipant.registeredBy.email || 'Email được ẩn/chưa cập nhật'}{selectedParticipant.registeredBy.phoneNumber ? ` · ${selectedParticipant.registeredBy.phoneNumber}` : ''}{selectedParticipant.registeredBy.gender ? ` · ${selectedParticipant.registeredBy.gender}` : ''}</p>
+                    <p className="mt-2 text-xs text-slate-500">{registrationTranslate('createdBy')}: <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</span> · {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}{selectedParticipant.registeredBy.phoneNumber ? ` · ${selectedParticipant.registeredBy.phoneNumber}` : ''}{selectedParticipant.registeredBy.gender ? ` · ${selectedParticipant.registeredBy.gender}` : ''}</p>
                   )}
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Câu trả lời form đăng ký</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationTranslate('formAnswers')}</h3>
                   {registrationFormFields.length > 0 || (selectedParticipant.customResponses && Object.keys(selectedParticipant.customResponses).length > 0) ? (
                     <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                       {registrationFormFields.map((field) => {
                         const value = selectedParticipant.customResponses?.[field.id];
                         const hasValue = value !== undefined && value !== null && value !== '';
-                        const textValue = hasValue ? (typeof value === 'string' ? value : JSON.stringify(value)) : 'Chưa trả lời';
-                        return <div key={field.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>{hasValue && typeof textValue === 'string' && /^https?:\/\//i.test(textValue) ? <a href={textValue} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">Mở tệp / liên kết</a> : <span className={`whitespace-pre-wrap break-words text-sm ${hasValue ? 'text-slate-800' : 'text-slate-400'}`}>{textValue}</span>}</div>;
+                        const textValue = hasValue ? (typeof value === 'string' ? value : JSON.stringify(value)) : registrationTranslate('unanswered');
+                        return <div key={field.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>{hasValue && typeof textValue === 'string' && /^https?:\/\//i.test(textValue) ? <a href={textValue} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">{registrationTranslate('openFileLink')}</a> : <span className={`whitespace-pre-wrap break-words text-sm ${hasValue ? 'text-slate-800' : 'text-slate-400'}`}>{textValue}</span>}</div>;
                       })}
                       {Object.entries(selectedParticipant.customResponses ?? {}).filter(([fieldId]) => !registrationFormFields.some((field) => field.id === fieldId)).map(([fieldId, value]) => <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</span></div>)}
                     </div>
-                  ) : <p className="mt-2 rounded-xl border border-dashed border-slate-200 px-4 py-4 text-sm text-slate-500">Hồ sơ không có câu trả lời form tùy chỉnh.</p>}
+                  ) : <p className="mt-2 rounded-xl border border-dashed border-slate-200 px-4 py-4 text-sm text-slate-500">{registrationTranslate('noCustomAnswers')}</p>}
                 </section>
 
                 <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-800">Thanh toán</h3>
-                  <p className="mt-1 text-sm text-blue-900">{selectedParticipant.isPaid ? 'Khoản đăng ký đã được hệ thống ghi nhận là đã thanh toán.' : 'Chưa ghi nhận thanh toán. Hãy kiểm tra giao dịch trước khi chốt danh sách.'}</p>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-800">{registrationTranslate('payment')}</h3>
+                  {Number(selectedParticipantFee) > 0 ? (
+                    <div className="mt-2 space-y-2 text-sm text-blue-950">
+                      <p><span className="font-semibold">{registrationTranslate('feeDue')}</span> {Number(selectedParticipantFee).toLocaleString('vi-VN')}₫</p>
+                      <p><span className="font-semibold">{registrationTranslate('paymentStatus')}</span> {selectedParticipant.isPaid ? registrationTranslate('paidStatusDetail') : registrationTranslate('unpaidStatusDetail')}</p>
+                      {selectedParticipant.payment ? (
+                        <div className="rounded-lg border border-blue-100 bg-white/70 p-3 text-xs text-slate-700">
+                          <p><span className="font-semibold">{registrationTranslate('transactionAmount')}</span> {Number(selectedParticipant.payment.amount).toLocaleString('vi-VN')} {selectedParticipant.payment.currency === 'VND' || !selectedParticipant.payment.currency ? '₫' : selectedParticipant.payment.currency}</p>
+                          {selectedParticipant.payment.status && <p><span className="font-semibold">{registrationTranslate('statusCode')}</span> {selectedParticipant.payment.status}</p>}
+                          {(selectedParticipant.payment.transactionReference || selectedParticipant.payment.providerTransactionId || selectedParticipant.payment.providerOrderCode) && <p><span className="font-semibold">{registrationTranslate('transactionCode')}</span> {selectedParticipant.payment.transactionReference || selectedParticipant.payment.providerTransactionId || selectedParticipant.payment.providerOrderCode}</p>}
+                          {selectedParticipant.payment.receiptNumber && <p><span className="font-semibold">{registrationTranslate('receiptNumber')}</span> {selectedParticipant.payment.receiptNumber}</p>}
+                          {selectedParticipant.payment.paidAt && <p><span className="font-semibold">{registrationTranslate('paymentTime')}</span> {formatDate(selectedParticipant.payment.paidAt)}</p>}
+                        </div>
+                      ) : <p className="text-xs text-blue-800">{registrationTranslate('noLinkedPayment')}</p>}
+                    </div>
+                  ) : <p className="mt-1 text-sm text-blue-900">{registrationTranslate('freeCompetition')}</p>}
                 </section>
               </div>
-              <div className="flex justify-end border-t border-slate-200 px-5 py-3"><Button type="button" variant="outline" onClick={() => setSelectedParticipant(null)}>Đóng</Button></div>
+              <div className="flex justify-end border-t border-slate-200 px-5 py-3"><Button type="button" variant="outline" onClick={() => setSelectedParticipant(null)}>{registrationTranslate('close')}</Button></div>
             </ModalContent>
           </Modal>
         )}

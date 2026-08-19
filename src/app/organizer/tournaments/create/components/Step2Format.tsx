@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +18,7 @@ import { buildSportRulesPayload } from '@/features/tournaments/sport-rules/paylo
 import { categoriesApi, type Category } from '@/features/categories/api';
 import type { SportRuleKind } from '@/types/tournament';
 
-const step2Schema = z.object({
+const createStep2Schema = (translate: ReturnType<typeof useTranslations>) => z.object({
   format: z.enum(['SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION', 'ROUND_ROBIN', 'GROUP_STAGE_KNOCKOUT']),
   maxParticipants: z.string(),
   setsToWin: z.number().min(1).max(5),
@@ -28,27 +30,48 @@ const step2Schema = z.object({
     }
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed >= 1;
-  }, 'Điểm tie-break phải lớn hơn hoặc bằng 1'),
+  }, translate('tiebreakMin')),
 });
 
-type Step2FormInput = z.infer<typeof step2Schema>;
+type Step2FormInput = z.infer<ReturnType<typeof createStep2Schema>>;
 
 export default function Step2Format() {
+  const translate = useTranslations('OrganizerCreateStep2');
   const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const resolvedRules = resolveSportRuleView(formData.sportRules);
   const selectedCategory = categories.find((category) => category.id === formData.categoryId);
   const availableSportRuleKinds = getAllowedSportRuleKinds(selectedCategory);
   const presentation = getSportRulePresentation(resolvedRules.kind);
-  const setUnitLabel = presentation.setUnitLabel;
-  const winByTwoLabel = presentation.winByTwoLabel;
+  const optionPrefix = presentation.kind === 'FOOTBALL'
+    ? 'matchOption'
+    : presentation.kind === 'PICKLEBALL_SIDE_OUT'
+      ? 'gameOption'
+      : 'setOption';
+  const localizedSetOptions = presentation.setOptions.map((option) => ({
+    ...option,
+    label: translate(`${optionPrefix}${option.value === 1 ? 'One' : option.value === 2 ? 'Two' : option.value === 3 ? 'Three' : 'Four'}`),
+  }));
+  const presentationCopy = (() => {
+    const copyByKind = {
+      BADMINTON: { sportLabel: 'sportBadminton', scoringLabel: 'scoringBadminton', setUnitLabel: 'setUnitBadminton', winByTwoLabel: 'winByTwoBadminton', presetSummary: 'presetBadminton', maxScorePlaceholder: 'maxScorePlaceholderBadminton', tiebreakLabel: 'tiebreakBadminton' },
+      TABLE_TENNIS: { sportLabel: 'sportTableTennis', scoringLabel: 'scoringTableTennis', setUnitLabel: 'setUnitTableTennis', winByTwoLabel: 'winByTwoTableTennis', presetSummary: 'presetTableTennis', maxScorePlaceholder: 'maxScorePlaceholderTableTennis', tiebreakLabel: 'tiebreakTableTennis' },
+      PICKLEBALL_RALLY: { sportLabel: 'sportPickleball', scoringLabel: 'scoringPickleballRally', setUnitLabel: 'setUnitPickleballRally', winByTwoLabel: 'winByTwoPickleballRally', presetSummary: 'presetPickleballRally', maxScorePlaceholder: 'maxScorePlaceholderPickleballRally', tiebreakLabel: 'tiebreakPickleballRally' },
+      PICKLEBALL_SIDE_OUT: { sportLabel: 'sportPickleball', scoringLabel: 'scoringPickleballSideOut', setUnitLabel: 'setUnitPickleballSideOut', winByTwoLabel: 'winByTwoPickleballSideOut', presetSummary: 'presetPickleballSideOut', maxScorePlaceholder: 'maxScorePlaceholderPickleballSideOut', tiebreakLabel: 'tiebreakPickleballSideOut' },
+      TENNIS: { sportLabel: 'sportTennis', scoringLabel: 'scoringTennis', setUnitLabel: 'setUnitTennis', winByTwoLabel: 'winByTwoTennis', presetSummary: 'presetTennis', maxScorePlaceholder: 'maxScorePlaceholderTennis', tiebreakLabel: 'tiebreakTennis' },
+      FOOTBALL: { sportLabel: 'sportFootball', scoringLabel: 'scoringFootball', setUnitLabel: 'setUnitFootball', winByTwoLabel: 'winByTwoFootball', presetSummary: 'presetFootball', maxScorePlaceholder: 'maxScorePlaceholderFootball', tiebreakLabel: 'tiebreakFootball' },
+    }[presentation.kind];
+    return Object.fromEntries(Object.entries(copyByKind).map(([key, messageKey]) => [key, translate(messageKey)]));
+  })();
+  const setUnitLabel = presentationCopy.setUnitLabel;
+  const winByTwoLabel = presentationCopy.winByTwoLabel;
   const isPickleballVariant =
     availableSportRuleKinds.includes('PICKLEBALL_RALLY') || availableSportRuleKinds.includes('PICKLEBALL_SIDE_OUT');
   const isTennisVariant = resolvedRules.kind === 'TENNIS';
   const supportsTiebreakInput = isTennisVariant || resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<Step2FormInput>({
-    resolver: zodResolver(step2Schema),
+    resolver: zodResolver(createStep2Schema(translate)),
     defaultValues: {
       format: formData.format,
       maxParticipants: formData.maxParticipants ? String(formData.maxParticipants) : '',
@@ -127,24 +150,24 @@ export default function Step2Format() {
   };
 
   const formatOptions = [
-    { id: 'SINGLE_ELIMINATION', label: 'Loại Trực Tiếp', icon: Trophy, desc: 'Đội thua sẽ bị loại khỏi giải đấu ngay lập tức.' },
-    { id: 'DOUBLE_ELIMINATION', label: 'Nhánh Thắng / Nhánh Thua', icon: LayoutGrid, desc: 'Đội thua một trận sẽ rớt xuống nhánh thua.' },
-    { id: 'ROUND_ROBIN', label: 'Vòng Tròn Tính Điểm', icon: RotateCw, desc: 'Tất cả các đội đều gặp nhau một lần.' },
-    { id: 'GROUP_STAGE_KNOCKOUT', label: 'Vòng Bảng + Loại Trực Tiếp', icon: LayoutGrid, desc: 'Chia bảng đấu vòng tròn, sau đó các đội nhất bảng vào vòng loại trực tiếp.' },
+    { id: 'SINGLE_ELIMINATION', labelKey: 'singleElimination', icon: Trophy, descKey: 'singleEliminationDescription' },
+    { id: 'DOUBLE_ELIMINATION', labelKey: 'doubleElimination', icon: LayoutGrid, descKey: 'doubleEliminationDescription' },
+    { id: 'ROUND_ROBIN', labelKey: 'roundRobin', icon: RotateCw, descKey: 'roundRobinDescription' },
+    { id: 'GROUP_STAGE_KNOCKOUT', labelKey: 'groupStageKnockout', icon: LayoutGrid, descKey: 'groupStageKnockoutDescription' },
   ];
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Thể thức thi đấu</h2>
-        <p className="text-sm text-slate-500">Quy định cách thức các đội đối đầu và tính điểm.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('title')}</h2>
+        <p className="text-sm text-slate-500">{translate('subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         
         {/* Format Selection */}
         <div className="flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-700">Hình thức tổ chức</label>
+          <label className="text-sm font-semibold text-slate-700">{translate('formatSelection')}</label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {formatOptions.map((opt) => {
               const isSelected = selectedFormat === opt.id;
@@ -160,8 +183,8 @@ export default function Step2Format() {
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <h3 className={`font-bold mb-1 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>{opt.label}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{opt.desc}</p>
+                  <h3 className={`font-bold mb-1 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>{translate(opt.labelKey)}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">{translate(opt.descKey)}</p>
                 </div>
               );
             })}
@@ -170,8 +193,8 @@ export default function Step2Format() {
         </div>
 
         <Input
-          label="Số đội tham gia tối đa"
-          placeholder="Để trống nếu không giới hạn"
+          label={translate('maxParticipants')}
+          placeholder={translate('maxParticipantsPlaceholder')}
           type="number"
           {...register('maxParticipants')}
           error={errors.maxParticipants?.message}
@@ -181,27 +204,25 @@ export default function Step2Format() {
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-xs text-amber-900 leading-relaxed font-medium">
-              <strong className="font-bold text-amber-950">⚠️ Giới hạn số lượng đội:</strong> Với thể thức <strong>Vòng Tròn Tính Điểm</strong>, số đội tối đa trong 1 bảng là <strong>15 đội/bảng</strong> để đảm bảo lịch thi đấu khả thi.
+              <strong className="font-bold text-amber-950">⚠️ {translate('roundRobinLimitTitle')}:</strong> {translate('roundRobinLimitDescription')}
               <br />
-              Nếu giải đấu có <strong>{watch('maxParticipants')} đội</strong>, bạn nên chọn thể thức <strong>Vòng Bảng + Loại Trực Tiếp (Group Stage + Knockout)</strong> để chia nhánh đấu hợp lý.
+              {translate('roundRobinAlternativeDescription', { count: watch('maxParticipants') })}
             </div>
           </div>
         )}
 
         <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700 leading-relaxed font-medium">
-          <strong>💡 Mẹo:</strong> Số lượng đội tham gia tối đa này có thể được linh hoạt tùy chỉnh hoặc sửa đổi thêm trong mục <strong>Cài đặt nâng cao</strong> sau khi tạo giải đấu thành công.
+          <strong>💡 {translate('tip')}:</strong> {translate('maxTeamsTip')}
         </div>
 
         {isPickleballVariant && (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-emerald-900">Chọn mode tính điểm Pickleball</p>
-            <p className="mt-1 text-xs font-semibold text-emerald-700">
-              `Rally` dễ vận hành và nhập tỷ số. `Side-out` chuẩn sâu hơn, chỉ bên giao bóng mới ghi điểm.
-            </p>
+            <p className="text-sm font-bold text-emerald-900">{translate('pickleballMode')}</p>
+            <p className="mt-1 text-xs font-semibold text-emerald-700">{translate('pickleballDescription')}</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {([
-                { kind: 'PICKLEBALL_RALLY', title: 'Rally Scoring', description: 'Mỗi pha bóng đều có điểm, phù hợp giải phổ thông và dễ live score.' },
-                { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out Scoring', description: 'Chỉ đội giao mới lên điểm, đúng kiểu pickleball truyền thống hơn.' },
+                { kind: 'PICKLEBALL_RALLY', title: translate('pickleballRallyTitle'), description: translate('pickleballRallyDescription') },
+                { kind: 'PICKLEBALL_SIDE_OUT', title: translate('pickleballSideOutTitle'), description: translate('pickleballSideOutDescription') },
               ] as const)
                 .filter((option) => availableSportRuleKinds.includes(option.kind))
                 .map((option) => {
@@ -228,16 +249,16 @@ export default function Step2Format() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 border border-slate-100 rounded-lg">
           <div className="md:col-span-2 mb-2 border-b border-slate-200 pb-2">
-            <h4 className="font-bold text-slate-900">Quy định tính điểm</h4>
+            <h4 className="font-bold text-slate-900">{translate('scoringRules')}</h4>
             <p className="mt-1 text-xs font-semibold text-slate-500">
-              {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
+              {presentationCopy.sportLabel}: {presentationCopy.scoringLabel}. {presentationCopy.presetSummary}
             </p>
           </div>
           
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-slate-700">Số Set chạm (chạm là thắng)</label>
+            <label className="text-sm font-semibold text-slate-700">{translate('setToWin')}</label>
             <select {...register('setsToWin', { valueAsNumber: true })} className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {presentation.setOptions.map((option) => (
+              {localizedSetOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
@@ -247,7 +268,7 @@ export default function Step2Format() {
             <label className="text-sm font-semibold text-slate-700">{setUnitLabel}</label>
             <Input
               type="number"
-              placeholder={presentation.maxScorePlaceholder}
+                placeholder={presentationCopy.maxScorePlaceholder}
               {...register('pointsPerSet', { valueAsNumber: true })}
             />
           </div>
@@ -262,9 +283,9 @@ export default function Step2Format() {
           {supportsTiebreakInput && (
             <div className="md:col-span-2">
               <Input
-                label={presentation.tiebreakLabel}
+                label={presentationCopy.tiebreakLabel}
                 type="number"
-                placeholder={resolvedRules.kind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
+                placeholder={translate(resolvedRules.kind === 'TENNIS' ? 'tiebreakExampleTennis' : 'tiebreakExampleOther')}
                 {...register('tiebreakPoints')}
                 error={errors.tiebreakPoints?.message}
               />
@@ -274,10 +295,10 @@ export default function Step2Format() {
 
         <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
           <Button type="button" variant="outline" onClick={prevStep} className="border-slate-200 text-slate-600">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại
+            <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
           </Button>
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            Tiếp tục <ChevronRight className="w-4 h-4 ml-1" />
+            {translate('continue')} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,10 +21,10 @@ import { normalizeMatchFormatForCategory } from '@/features/tournaments/match-fo
 
 
 
-const step1Schema = z.object({
-  name: z.string().min(5, 'Tên Giải đấu phải có ít nhất 5 ký tự').max(150, 'Tên Giải đấu quá dài'),
-  description: z.string().min(10, 'Mô tả phải có ít nhất 10 ký tự').max(1000, 'Mô tả tối đa 1000 ký tự'),
-  categoryId: z.string().min(1, 'Vui lòng chọn bộ môn thi đấu'),
+const createStep1Schema = (translate: ReturnType<typeof useTranslations>) => z.object({
+  name: z.string().min(5, translate('nameMin')).max(150, translate('nameMax')),
+  description: z.string().min(10, translate('descriptionMin')).max(1000, translate('descriptionMax')),
+  categoryId: z.string().min(1, translate('categoryRequired')),
   tournamentType: z.enum(['CLUB', 'PUBLIC']).optional(),
   visibility: z.enum(['PUBLIC', 'PRIVATE']),
   isRanked: z.boolean(),
@@ -32,49 +33,48 @@ const step1Schema = z.object({
     if (val === '') return true;
     const num = Number(val);
     return !isNaN(num) && num >= 2;
-  }, 'Số đội tối đa phải là số lớn hơn hoặc bằng 2'),
+  }, translate('maxParticipantsMin')),
   minElo: z.string().optional().refine((val) => {
     if (!val || val === '') return true;
     const num = Number(val);
     return !isNaN(num) && num >= 0;
-  }, 'Điểm ELO tối thiểu phải là số lớn hơn hoặc bằng 0'),
+  }, translate('minEloMin')),
   maxElo: z.string().optional().refine((val) => {
     if (!val || val === '') return true;
     const num = Number(val);
     return !isNaN(num) && num >= 0;
-  }, 'Điểm ELO tối đa phải là số lớn hơn hoặc bằng 0'),
+  }, translate('maxEloMin')),
   maxCombinedElo: z.string().optional().refine((val) => {
     if (!val || val === '') return true;
     const num = Number(val);
     return !isNaN(num) && num >= 0;
-  }, 'Tổng ELO tối đa phải là số lớn hơn hoặc bằng 0'),
+  }, translate('maxCombinedEloMin')),
   maxTeammateGap: z.string().optional().refine((val) => {
     if (!val || val === '') return true;
     const num = Number(val);
     return !isNaN(num) && num >= 0;
-  }, 'Chênh lệch ELO tối đa phải là số lớn hơn hoặc bằng 0'),
+  }, translate('maxTeammateGapMin')),
 }).superRefine((data, ctx) => {
-  if (data.minElo && data.maxElo) {
-    if (Number(data.minElo) > Number(data.maxElo)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Điểm ELO tối thiểu không được lớn hơn ELO tối đa',
-        path: ['minElo'],
-      });
-    }
+  if (data.minElo && data.maxElo && Number(data.minElo) > Number(data.maxElo)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: translate('minEloNotGreater'),
+      path: ['minElo'],
+    });
   }
 });
 
-type Step1Values = z.infer<typeof step1Schema>;
+type Step1Values = z.infer<ReturnType<typeof createStep1Schema>>;
 
 export default function Step1Info() {
+  const translate = useTranslations('OrganizerCreateStep1');
   const { formData, updateFormData, nextStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [clubCommunity, setClubCommunity] = useState<Community | null>(null);
 
   const { register, handleSubmit, setValue, setError, setFocus, control, formState: { errors } } = useForm<Step1Values>({
-    resolver: zodResolver(step1Schema),
+    resolver: zodResolver(createStep1Schema(translate)),
     defaultValues: {
       name: formData.name,
       description: formData.description,
@@ -214,14 +214,14 @@ export default function Step1Info() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Tạo Giải đấu mới</h2>
-        <p className="text-sm text-slate-500">Cấu hình nhanh các thông số cơ bản cho Giải đấu của bạn.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('title')}</h2>
+        <p className="text-sm text-slate-500">{translate('subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <Input
-          label="Tên Giải đấu"
-          placeholder="Ví dụ: Hanoi Open Spring 2026"
+          label={translate('tournamentName')}
+          placeholder={translate('namePlaceholder')}
           {...register('name')}
           error={errors.name?.message}
         />
@@ -230,11 +230,11 @@ export default function Step1Info() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-slate-700">
-                Bộ môn thi đấu <span className="text-rose-500">*</span>
+                {translate('sport')} <span className="text-rose-500">*</span>
               </label>
               {isClubLocked && clubCategory && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
-                  <Lock className="w-3 h-3" /> Cố định theo CLB
+                  <Lock className="w-3 h-3" /> {translate('lockedByClub')}
                 </span>
               )}
             </div>
@@ -245,14 +245,14 @@ export default function Step1Info() {
               }`}
               disabled={isLoading || isClubLocked}
             >
-              <option value="">{isLoading ? 'Đang tải...' : '-- Chọn bộ môn --'}</option>
+              <option value="">{isLoading ? translate('loading') : translate('chooseSport')}</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
             {isClubLocked && clubCategory && (
               <p className="text-xs text-slate-500 font-medium">
-                🔒 Giải đấu của CLB được tự động khóa theo bộ môn của câu lạc bộ ({clubCategory.name}).
+                🔒 {translate('clubSportLocked', { name: clubCategory.name })}
               </p>
             )}
             {errors.categoryId && !isClubLocked && <p className="text-xs font-semibold text-rose-500">{errors.categoryId.message}</p>}
@@ -260,21 +260,21 @@ export default function Step1Info() {
 
           <div className="flex flex-col">
             <Input
-              label="Số đội tham gia tối đa"
-              placeholder="Ví dụ: 16"
+              label={translate('maxParticipants')}
+              placeholder={translate('maxParticipantsPlaceholder')}
               type="number"
               {...register('maxParticipants')}
               error={errors.maxParticipants?.message}
             />
             <p className="text-[11px] text-slate-400 mt-1 font-semibold pl-1">
-              💡 Lưu ý: Số đội tham gia có thể chỉnh sửa cấu hình chi tiết ở các bước thiết lập vòng đấu sau.
+              💡 {translate('maxParticipantsHint')}
             </p>
           </div>
         </div>
 
         {formData.communityId && (
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-            <label className="text-sm font-semibold text-slate-900">Đối tượng tham gia <span className="text-rose-500">*</span></label>
+            <label className="text-sm font-semibold text-slate-900">{translate('participants')} <span className="text-rose-500">*</span></label>
             <div className="flex flex-col sm:flex-row gap-4 mt-1">
               <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
                 <div className="flex items-center gap-2">
@@ -286,10 +286,10 @@ export default function Step1Info() {
                     onChange={() => setValue('tournamentType', 'CLUB')}
                     className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
                   />
-                  <span className="text-sm font-bold text-slate-800">Giải nội bộ CLB</span>
+                  <span className="text-sm font-bold text-slate-800">{translate('clubTournament')}</span>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                  Chỉ thành viên của câu lạc bộ này đủ điều kiện gửi đăng ký. Hoàn toàn miễn phí xuất bản giải đấu.
+                  {translate('clubTournamentDescription')}
                 </span>
               </label>
 
@@ -303,10 +303,10 @@ export default function Step1Info() {
                     onChange={() => setValue('tournamentType', 'PUBLIC')}
                     className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
                   />
-                  <span className="text-sm font-bold text-slate-800">Giải đấu mở rộng</span>
+                  <span className="text-sm font-bold text-slate-800">{translate('publicTournament')}</span>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                  Người dùng ngoài câu lạc bộ có thể gửi đăng ký theo cách tiếp nhận bạn chọn bên dưới. Phí xuất bản áp dụng theo loại giải.
+                  {translate('publicTournamentDescription')}
                 </span>
               </label>
             </div>
@@ -315,7 +315,7 @@ export default function Step1Info() {
 
         {/* Ranked or Unranked Option */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Cách tính thành tích <span className="text-rose-500">*</span></label>
+          <label className="text-sm font-semibold text-slate-900">{translate('performanceType')} <span className="text-rose-500">*</span></label>
           <div className="flex gap-6 mt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -325,7 +325,7 @@ export default function Step1Info() {
                 onChange={() => setValue('isRanked', true)} 
                 className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
               />
-              <span className="text-sm font-semibold text-slate-800">Xếp hạng hệ thống (Ranked)</span>
+              <span className="text-sm font-semibold text-slate-800">{translate('rankedOption')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -335,52 +335,52 @@ export default function Step1Info() {
                 onChange={() => setValue('isRanked', false)} 
                 className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
               />
-              <span className="text-sm font-semibold text-slate-800">Giải phong trào (Unranked)</span>
+              <span className="text-sm font-semibold text-slate-800">{translate('unrankedOption')}</span>
             </label>
           </div>
           
           <div className="mt-1 text-xs leading-relaxed text-slate-500 border-t border-slate-200/60 pt-3">
             {watchTournamentType === 'CLUB' ? (
               <p className="text-slate-600 font-medium bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
-                💡 <strong>Giải đấu Nội bộ CLB:</strong> Miễn phí xuất bản hoàn toàn (0đ). Phí sàn lệ phí tham gia là <strong>{fees.pctClub}%</strong>. Điểm xếp hạng chỉ được tính nội bộ trong câu lạc bộ của bạn, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin duyệt.
+                💡 {translate('clubRankedNote', { fee: fees.pctClub })}
               </p>
             ) : watchIsRanked ? (
               <p className="text-slate-600 font-medium bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
-                💡 <strong>Giải đấu Xếp hạng:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicRanked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicRanked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Điểm ELO của người chơi sẽ được tính toán trên bảng xếp hạng chung. Giải đấu cần sự phê duyệt của Admin trước khi hoạt động công khai.
+                💡 {translate('publicRankedNote', { fee: (fees.feePublicRanked / 1000).toString(), percent: fees.pctPublicRanked })}
               </p>
             ) : (
               <p className="text-slate-600 font-medium bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
-                💡 <strong>Giải phong trào:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicUnranked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicUnranked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Không tính điểm ELO, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin kiểm duyệt.
+                💡 {translate('publicUnrankedNote', { fee: (fees.feePublicUnranked / 1000).toString(), percent: fees.pctPublicUnranked })}
               </p>
             )}
           </div>
         </div>
 
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-rose-500">*</span></label>
-          <p className="text-xs text-slate-500">Chỉ quyết định cộng đồng có tìm thấy giải hay không, độc lập với cách duyệt đăng ký.</p>
+          <label className="text-sm font-semibold text-slate-900">{translate('visibility')} <span className="text-rose-500">*</span></label>
+          <p className="text-xs text-slate-500">{translate('visibilityDescription')}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
             <label className={`flex flex-col p-4 border rounded-lg bg-white cursor-pointer transition-all ${watchVisibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
               <div className="flex items-center gap-2">
                 <input type="radio" value="PUBLIC" {...register('visibility')} checked={watchVisibility === 'PUBLIC'} onChange={() => setValue('visibility', 'PUBLIC')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                <span className="text-sm font-bold text-slate-800">Công khai</span>
+                <span className="text-sm font-bold text-slate-800">{translate('publicVisibility')}</span>
               </div>
               <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
                 {watchTournamentType === 'CLUB'
-                  ? 'Xuất hiện trên trang câu lạc bộ của bạn, thành viên và khách ghé thăm đều có thể theo dõi sơ đồ đấu.'
-                  : 'Xuất hiện trên trang chủ, khám phá và có thể được cộng đồng theo dõi.'}
+                  ? translate('publicClubVisibilityDescription')
+                  : translate('publicGlobalVisibilityDescription')}
               </span>
             </label>
 
             <label className={`flex flex-col p-4 border rounded-lg bg-white cursor-pointer transition-all ${watchVisibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
               <div className="flex items-center gap-2">
                 <input type="radio" value="PRIVATE" {...register('visibility')} checked={watchVisibility === 'PRIVATE'} onChange={() => setValue('visibility', 'PRIVATE')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                <span className="text-sm font-bold text-slate-800">Không niêm yết</span>
+                <span className="text-sm font-bold text-slate-800">{translate('privateVisibility')}</span>
               </div>
               <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
                 {watchTournamentType === 'CLUB'
-                  ? 'Không xuất hiện trên trang CLB; chỉ người có link hoặc mã mời mới có thể truy cập.'
-                  : 'Không xuất hiện công khai; người có link hoặc mã mời vẫn có thể truy cập.'}
+                  ? translate('privateClubVisibilityDescription')
+                  : translate('privateGlobalVisibilityDescription')}
               </span>
             </label>
           </div>
@@ -388,7 +388,7 @@ export default function Step1Info() {
 
         {/* Registration Mode Option */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-rose-500">*</span></label>
+          <label className="text-sm font-semibold text-slate-900">{translate('registrationMode')} <span className="text-rose-500">*</span></label>
           <div className="flex flex-col md:flex-row gap-4 mt-1">
             <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
               <div className="flex items-center gap-2">
@@ -400,10 +400,10 @@ export default function Step1Info() {
                   onChange={() => setValue('registrationMode', 'OPEN')}
                   className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
                 />
-                <span className="text-sm font-bold text-slate-800">Tự do</span>
+                <span className="text-sm font-bold text-slate-800">{translate('openRegistration')}</span>
               </div>
               <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.
+                {translate('openRegistrationDescription')}
               </span>
             </label>
 
@@ -417,10 +417,10 @@ export default function Step1Info() {
                   onChange={() => setValue('registrationMode', 'APPROVAL')}
                   className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
                 />
-                <span className="text-sm font-bold text-slate-800">Xét duyệt</span>
+                <span className="text-sm font-bold text-slate-800">{translate('approvalRegistration')}</span>
               </div>
               <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                Đăng ký của VĐV sẽ ở trạng thái chờ duyệt (PENDING). Người tổ chức duyệt thủ công.
+                {translate('approvalRegistrationDescription')}
               </span>
             </label>
 
@@ -434,10 +434,10 @@ export default function Step1Info() {
                   onChange={() => setValue('registrationMode', 'INVITE_ONLY')}
                   className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
                 />
-                <span className="text-sm font-bold text-slate-800">Chỉ nhận mã mời</span>
+                <span className="text-sm font-bold text-slate-800">{translate('inviteOnlyRegistration')}</span>
               </div>
               <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                Chỉ những VĐV có mã mời/link mời mới đăng ký tham gia được.
+                {translate('inviteOnlyRegistrationDescription')}
               </span>
             </label>
           </div>
@@ -463,9 +463,9 @@ export default function Step1Info() {
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
               <div>
-                <h4 className="text-sm font-bold text-slate-800">Giới hạn trình độ ELO (Tùy chọn)</h4>
+                <h4 className="text-sm font-bold text-slate-800">{translate('eloLimits')}</h4>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Bật tùy chọn này để thiết lập khoảng ELO cho phép của các vận động viên đăng ký giải đấu này.
+                  {translate('eloLimitsDescription')}
                 </p>
               </div>
             </label>
@@ -474,15 +474,15 @@ export default function Step1Info() {
               <div className="space-y-4 pt-2 border-t border-slate-200/80 animate-in fade-in duration-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="ELO tối thiểu (Min ELO)"
-                    placeholder="Ví dụ: 800"
+                    label={translate('minElo')}
+                    placeholder={translate('numberPlaceholder', { value: 800 })}
                     type="number"
                     {...register('minElo')}
                     error={errors.minElo?.message}
                   />
                   <Input
-                    label="ELO tối đa (Max ELO)"
-                    placeholder="Ví dụ: 1500"
+                    label={translate('maxElo')}
+                    placeholder={translate('numberPlaceholder', { value: 1500 })}
                     type="number"
                     {...register('maxElo')}
                     error={errors.maxElo?.message}
@@ -491,15 +491,15 @@ export default function Step1Info() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200/60 pt-3">
                   <Input
-                    label="Tổng ELO cặp đôi tối đa"
-                    placeholder="Ví dụ: 2800"
+                    label={translate('combinedElo')}
+                    placeholder={translate('numberPlaceholder', { value: 2800 })}
                     type="number"
                     {...register('maxCombinedElo')}
                     error={errors.maxCombinedElo?.message}
                   />
                   <Input
-                    label="Chênh lệch ELO tối đa giữa đồng đội"
-                    placeholder="Ví dụ: 300"
+                    label={translate('teammateGap')}
+                    placeholder={translate('numberPlaceholder', { value: 300 })}
                     type="number"
                     {...register('maxTeammateGap')}
                     error={errors.maxTeammateGap?.message}
@@ -512,13 +512,13 @@ export default function Step1Info() {
 
         {/* Bracket Type Selection */}
         <div className="flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu</label>
+          <label className="text-sm font-semibold text-slate-700">{translate('bracketFormat')}</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { id: 'SINGLE_ELIMINATION' as const, label: 'Loại Trực Tiếp', icon: Trophy, desc: 'Đội thua sẽ bị loại ngay lập tức.' },
-              { id: 'DOUBLE_ELIMINATION' as const, label: 'Nhánh Thắng / Nhánh Thua', icon: LayoutGrid, desc: 'Đội thua một trận rớt xuống nhánh thua.' },
-              { id: 'ROUND_ROBIN' as const, label: 'Vòng Tròn Tính Điểm', icon: RotateCw, desc: 'Các đội trong bảng gặp nhau ít nhất một lượt.' },
-              { id: 'GROUP_STAGE_KNOCKOUT' as const, label: 'Vòng Bảng + Loại Trực Tiếp', icon: Shield, desc: 'Chia bảng đấu vòng tròn, sau đó chọn đội vào vòng loại trực tiếp.' },
+              { id: 'SINGLE_ELIMINATION' as const, labelKey: 'singleElimination', icon: Trophy, descKey: 'singleEliminationDescription' },
+              { id: 'DOUBLE_ELIMINATION' as const, labelKey: 'doubleElimination', icon: LayoutGrid, descKey: 'doubleEliminationDescription' },
+              { id: 'ROUND_ROBIN' as const, labelKey: 'roundRobin', icon: RotateCw, descKey: 'roundRobinDescription' },
+              { id: 'GROUP_STAGE_KNOCKOUT' as const, labelKey: 'groupStageKnockout', icon: Shield, descKey: 'groupStageKnockoutDescription' },
             ].map((opt) => {
               const isSelected = selectedFormat === opt.id;
               const Icon = opt.icon;
@@ -533,8 +533,8 @@ export default function Step1Info() {
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <h3 className={`font-bold mb-1 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>{opt.label}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{opt.desc}</p>
+                  <h3 className={`font-bold mb-1 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>{translate(opt.labelKey)}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">{translate(opt.descKey)}</p>
                 </div>
               );
             })}
@@ -544,9 +544,9 @@ export default function Step1Info() {
 
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-slate-700">Mô tả Giải đấu</label>
+          <label className="text-sm font-semibold text-slate-700">{translate('description')}</label>
           <Textarea
-            placeholder="Giới thiệu sơ lược về giải đấu..."
+            placeholder={translate('descriptionPlaceholder')}
             className="h-24 resize-none"
             {...register('description')}
           />
@@ -555,7 +555,7 @@ export default function Step1Info() {
 
         <div className="flex justify-end mt-4 pt-6 border-t border-slate-100">
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5">
-            Tiếp tục <ChevronRight className="w-4 h-4 ml-1" />
+            {translate('continue')} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </form>

@@ -45,7 +45,7 @@ const DAYS_OF_WEEK: { value: number; key: string }[] = [
 ];
 
 export default function ClubTournamentsPage({ params }: { params: Promise<{ id: string }> }) {
-  const translate = useTranslations('Common');
+  const translate = useTranslations('Match');
   type CommunityTournamentMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   const resolvedParams = use(params);
   const id = resolvedParams.id;
@@ -127,7 +127,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
   const handleCreateLiteTournament = async () => {
     if (!liteName.trim()) {
-      toast.error('Vui lòng nhập tên giải đấu nhanh');
+      toast.error(translate('communityTournamentNameRequired'));
       return;
     }
 
@@ -155,7 +155,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         recurringAdvanceDays: liteIsRecurring ? liteRecurringAdvanceDays : undefined,
       });
 
-      toast.success('Tạo giải đấu nhanh thành công!');
+      toast.success(translate('communityTournamentQuickCreated'));
       setIsLiteModalOpen(false);
 
       // Reset form
@@ -182,7 +182,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
   const handleCreateClubTournament = async () => {
     if (!newTourneyName.trim()) {
-      toast.error('Vui lòng nhập tên giải đấu');
+      toast.error(translate('communityTournamentNameRequired'));
       return;
     }
 
@@ -199,7 +199,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
       const parentId = parentRes.data?.id;
       if (!parentId) {
-        throw new Error('Không thể tạo Giải đấu mẹ. Vui lòng thử lại.');
+        throw new Error(translate('communityTournamentParentCreateFailed'));
       }
       createdParentId = parentId;
 
@@ -226,7 +226,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
       const res = await tournamentsApi.createTournament(data);
       createdTournamentId = res?.data?.id ?? null;
-      toast.success('Tạo giải đấu nội bộ thành công!');
+      toast.success(translate('communityTournamentCreated'));
       setIsCreateModalOpen(false);
 
       // Reset form
@@ -266,19 +266,19 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const getStatusBadge = (status: Tournament['status']) => {
     switch (status) {
       case 'DRAFT':
-        return <Badge className="bg-slate-100 text-slate-700">Nháp (Ẩn)</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700">{translate('communityTournamentDraftHidden')}</Badge>;
       case 'REGISTRATION_OPEN':
         return <Badge className="bg-blue-50 text-blue-700 border-blue-200">{translate("communityOpenRegistrationBadge")}</Badge>;
       case 'REGISTRATION_CLOSED':
-        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đóng Đăng Ký</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">{translate('statusRegistrationClosed')}</Badge>;
       case 'UPCOMING':
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Sắp Khởi Tranh</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">{translate('statusUpcoming')}</Badge>;
       case 'IN_PROGRESS':
-        return <Badge className="bg-rose-50 text-rose-700 border-slate-200 animate-pulse">Đang Đấu</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-slate-200 animate-pulse">{translate('statusInProgress')}</Badge>;
       case 'COMPLETED':
-        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">Đã Kết Thúc</Badge>;
+        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">{translate('statusCompleted')}</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-rose-50 text-rose-700 border-slate-200">Đã Hủy</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-slate-200">{translate('statusCancelled')}</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -289,7 +289,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <LoadingSpinner className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-500 font-medium">Đang tải giải đấu câu lạc bộ...</p>
+          <p className="text-slate-500 font-medium">{translate('loading')}</p>
         </div>
       </div>
     );
@@ -299,8 +299,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-center">
         <div className="max-w-md bg-white p-8 rounded-lg border border-slate-200 shadow-sm">
-          <h2 className="text-xl font-bold text-slate-900">Không tìm thấy câu lạc bộ</h2>
-          <p className="text-slate-500 mt-2">Đường dẫn không hợp lệ hoặc câu lạc bộ không tồn tại.</p>
+          <h2 className="text-xl font-bold text-slate-900">{translate('communityNotFoundTitle')}</h2>
+          <p className="text-slate-500 mt-2">{translate('communityNotFoundDescription')}</p>
         </div>
       </div>
     );
@@ -312,15 +312,15 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
         {/* Back Link */}
         <Link href={`/communities/${community.id}`} className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold mb-6">
-          <ChevronLeft className="w-4 h-4" /> Quay lại Câu lạc bộ
+          <ChevronLeft className="w-4 h-4" /> {translate('backToCommunity')}
         </Link>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Quản lý Giải đấu CLB</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{translate('communityTournamentManageTitle')}</h1>
             <p className="text-slate-500 mt-1 font-medium flex items-center gap-1">
-              Câu lạc bộ: <span className="text-slate-800 font-bold">{community.name}</span>
+              {translate('communityTournamentClubLabel')} <span className="text-slate-800 font-bold">{community.name}</span>
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -328,13 +328,13 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
               onClick={() => router.push(`/communities/${community.id}/create-lite`)}
               className="font-bold flex items-center gap-2 shadow-sm"
             >
-              <Plus className="w-4 h-4" /> Tạo giải nhanh (Lite)
+              <Plus className="w-4 h-4" /> {translate('communityTournamentQuickButton')}
             </Button>
             <Button
               onClick={handleOpenAdvancedTournamentCreate}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2 shadow-sm"
             >
-              <Plus className="w-4 h-4" /> Tạo giải đấu chuyên nghiệp
+              <Plus className="w-4 h-4" /> {translate('communityTournamentAdvancedButton')}
             </Button>
           </div>
         </div>
@@ -343,9 +343,9 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         <div className="bg-slate-50 text-emerald-950 p-4 rounded-lg border border-slate-200 flex items-start gap-3 text-xs leading-relaxed font-semibold mb-8">
           <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-emerald-950 text-sm">Chính sách Giải đấu Nội bộ (Club tournaments)</p>
+            <p className="font-bold text-emerald-950 text-sm">{translate('communityTournamentPolicyTitle')}</p>
             <p className="mt-1 text-emerald-700">
-              Giải đấu nội bộ là hoàn toàn miễn phí cho mọi thành viên trong CLB. Hệ thống sẽ không thu bất kỳ khoản phí sàn hay lệ phí dịch vụ nào.
+              {translate('communityTournamentPolicyDescription')}
             </p>
           </div>
         </div>
@@ -356,15 +356,15 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
               <Trophy className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">CLB chưa có giải đấu nào</h3>
+            <h3 className="text-lg font-bold text-slate-900">{translate('communityTournamentEmptyTitle')}</h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm mx-auto">
-              Hãy tạo giải đấu nội bộ đầu tiên để tăng tính gắn kết giữa các thành viên trong câu lạc bộ!
+              {translate('communityTournamentEmptyDescription')}
             </p>
             <Button
               onClick={handleOpenAdvancedTournamentCreate}
               className="bg-emerald-600 hover:bg-emerald-700 text-white mt-6"
             >
-              Tạo giải đấu nội bộ
+              {translate('communityTournamentCreateInternal')}
             </Button>
           </div>
         ) : (
@@ -382,20 +382,20 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           const logo = getSportLogo(t.category?.name);
                           return logo ? <img src={logo} alt="" className="w-2.5 h-2.5 object-contain" /> : null;
                         })()}
-                        {t.category?.name || 'Bộ môn'}
+                        {t.category?.name || translate('communityTournamentSportFallback')}
                       </span>
                       {isLiteTournament(t) ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                          Giải Nhanh (Lite)
+                          {translate('communityTournamentLiteLabel')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                          Giải Nâng Cao
+                          {translate('communityTournamentAdvancedLabel')}
                         </span>
                       )}
                       {Boolean((t.tournamentConfig as Record<string, any>)?.recurring?.enabled || (t.tournamentConfig as Record<string, any>)?.recurring?.frequency) && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                          <RotateCw className="w-2.5 h-2.5" /> Định kỳ
+                          <RotateCw className="w-2.5 h-2.5" /> {translate('communityTournamentRecurringBadge')}
                         </span>
                       )}
                     </div>
@@ -406,11 +406,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-500 text-xs font-semibold pt-1">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-450" />
-                      {t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : 'Chưa xếp'}
+                      {t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : translate('communityTournamentScheduledFallback')}
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5 text-slate-450" />
-                      {t.matchType === 'SINGLES' ? 'Đơn (Singles)' : 'Đôi (Doubles)'} ({t.maxParticipants || 16} đội)
+                      {t.matchType === 'SINGLES' ? translate('communityTournamentSinglesFormat') : translate('communityTournamentDoublesFormat')} {translate('communityTournamentTeamCount', { count: t.maxParticipants || 16 })}
                     </span>
                   </div>
                 </div>
@@ -419,19 +419,19 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   {isLiteTournament(t) ? (
                     <Link href={`/organizer/tournaments/${t.id}/manage`} className="flex-1">
                       <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
-                        <Settings className="w-3.5 h-3.5" /> Quản lý giải nhanh
+                        <Settings className="w-3.5 h-3.5" /> {translate('communityTournamentQuickManage')}
                       </Button>
                     </Link>
                   ) : (
                     <Link href={`/organizer/tournaments/${t.id}/manage`} className="flex-1">
                       <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
-                        <Settings className="w-3.5 h-3.5" /> Thiết lập & Quản lý
+                        <Settings className="w-3.5 h-3.5" /> {translate('communityTournamentAdvancedManage')}
                       </Button>
                     </Link>
                   )}
                   <Link href={`/tournaments/${t.id}`} target="_blank" className="flex-1">
                     <Button variant="outline" className="w-full text-xs font-bold flex items-center justify-center gap-1">
-                      <Eye className="w-3.5 h-3.5" /> Xem trang giải
+                      <Eye className="w-3.5 h-3.5" /> {translate('communityTournamentViewPage')}
                     </Button>
                   </Link>
                 </div>
@@ -445,13 +445,13 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             <ModalContent className="bg-white rounded-xl p-6 max-h-[90vh] overflow-y-auto w-full max-w-lg shadow-xl">
               <ModalHeader>
                 <ModalTitle className="text-xl font-bold text-slate-900">
-                  Tạo Giải Đấu Nội Bộ CLB (Miễn phí)
+                  {translate('communityTournamentCreateInternalTitle')}
                 </ModalTitle>
               </ModalHeader>
               <div className="space-y-4 mt-4">
                 <Input
-                  label="Tên giải đấu nội bộ"
-                  placeholder="Ví dụ: Giải Quần Vợt Nội Bộ CLB Mùa Hè 2026"
+                  label={translate('communityTournamentNameLabel')}
+                  placeholder={translate('communityTournamentNamePlaceholder')}
                   value={newTourneyName}
                   onChange={(e) => setNewTourneyName(e.target.value)}
                 />
@@ -462,10 +462,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   return (
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-slate-700">Chọn môn thể thao *</label>
+                        <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentSelectSport')}</label>
                         {isClubLocked && clubCategory && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            <Lock className="w-3 h-3" /> Cố định theo CLB: {clubCategory.name}
+                            <Lock className="w-3 h-3" /> {translate('communityTournamentLockedByClub', { name: clubCategory.name })}
                           </span>
                         )}
                       </div>
@@ -481,7 +481,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                       </select>
                       {isClubLocked && clubCategory && (
                         <p className="text-xs text-slate-500 font-medium">
-                          🔒 Giải đấu nội bộ được tự động khóa theo bộ môn của CLB ({clubCategory.name}).
+                          🔒 {translate('communityTournamentLockedDescription', { name: clubCategory.name })}
                         </p>
                       )}
                     </div>
@@ -490,20 +490,20 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Nội dung thi đấu</label>
+                    <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentContentLabel')}</label>
                     <select
                       value={newTourneyMatchType}
                       onChange={(e) => setNewTourneyMatchType(e.target.value as CommunityTournamentMatchType)}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="SINGLES">Đơn (Singles)</option>
-                      <option value="DOUBLES">Đôi (Doubles)</option>
-                      <option value="MIXED_DOUBLES">Đôi nam nữ (Mixed)</option>
+                      <option value="SINGLES">{translate('communityTournamentSinglesFormat')}</option>
+                      <option value="DOUBLES">{translate('communityTournamentDoublesFormat')}</option>
+                      <option value="MIXED_DOUBLES">{translate('communityTournamentMixedFormat')}</option>
                     </select>
                   </div>
 
                   <Input
-                    label="Số đội tham gia tối đa"
+                    label={translate('communityTournamentMaxTeamsLabel')}
                     type="number"
                     value={newTourneyMaxParticipants}
                     onChange={(e) => setNewTourneyMaxParticipants(Number(e.target.value))}
@@ -517,14 +517,14 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     disabled={isSubmitting}
                     className="border-slate-200 text-slate-650 font-medium hover:bg-slate-50"
                   >
-                    Hủy bỏ
+                    {translate('communityTournamentCancel')}
                   </Button>
                   <Button
                     onClick={handleCreateClubTournament}
                     disabled={isSubmitting}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5"
                   >
-                    {isSubmitting ? 'Đang tạo...' : 'Tạo giải đấu'}
+                    {isSubmitting ? translate('communityTournamentCreating') : translate('communityTournamentCreateAction')}
                   </Button>
                 </div>
               </div>
@@ -537,13 +537,13 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             <ModalContent className="bg-white rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
               <ModalHeader>
                 <ModalTitle className="text-xl font-bold text-slate-900">
-                  Tạo Nhanh Giải Đấu (Lite Mode)
+                  {translate('communityTournamentCreateLiteTitle')}
                 </ModalTitle>
               </ModalHeader>
               <div className="space-y-4 mt-4">
                 <Input
-                  label="Tên giải đấu nhanh"
-                  placeholder="Ví dụ: Giải Giao Hữu Cầu Lông Cuối Tuần"
+                  label={translate('communityTournamentQuickNameLabel')}
+                  placeholder={translate('communityTournamentQuickNamePlaceholder')}
                   value={liteName}
                   onChange={(e) => setLiteName(e.target.value)}
                 />
@@ -555,10 +555,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     return (
                       <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between">
-                          <label className="text-sm font-semibold text-slate-700">Môn thể thao *</label>
+                          <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentSportLabel')}</label>
                           {isClubLocked && clubCategory && (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                              <Lock className="w-3 h-3" /> Cố định theo CLB
+                              <Lock className="w-3 h-3" /> {translate('communityTournamentLockedByClubShort')}
                             </span>
                           )}
                         </div>
@@ -576,7 +576,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         </select>
                         {isClubLocked && clubCategory && (
                           <p className="text-xs text-slate-500 font-medium">
-                            🔒 Khóa theo bộ môn của CLB ({clubCategory.name}).
+                            🔒 {translate('communityTournamentLockedSportDescription', { name: clubCategory.name })}
                           </p>
                         )}
                       </div>
@@ -584,15 +584,15 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   })()}
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-750 text-slate-700">Hình thức</label>
+                    <label className="text-sm font-semibold text-slate-750 text-slate-700">{translate('communityTournamentFormatLabel')}</label>
                     <select
                       value={liteFormat}
                       onChange={(e) => setLiteFormat(e.target.value as 'singles' | 'doubles')}
                       disabled={liteSport === 'football'}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="singles">Đơn (Singles)</option>
-                      <option value="doubles">Đôi (Doubles)</option>
+                      <option value="singles">{translate('communityTournamentSinglesFormat')}</option>
+                      <option value="doubles">{translate('communityTournamentDoublesFormat')}</option>
                     </select>
                   </div>
                 </div>
@@ -600,47 +600,47 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 {liteSport === 'football' && (
                   <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-3">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-semibold text-slate-700">Đội hình</label>
+                      <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentTeamLineupLabel')}</label>
                       <select value={liteTeamSize} onChange={(e) => setLiteTeamSize(Number(e.target.value) as 5 | 7 | 11)} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700">
-                        <option value={5}>Sân 5</option>
-                        <option value={7}>Sân 7</option>
-                        <option value={11}>Sân 11</option>
+                        <option value={5}>{translate('communityTournamentField5')}</option>
+                        <option value={7}>{translate('communityTournamentField7')}</option>
+                        <option value={11}>{translate('communityTournamentField11')}</option>
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-semibold text-slate-700">Giới tính</label>
+                      <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentGenderLabel')}</label>
                       <select value={liteGenderRestriction} onChange={(e) => setLiteGenderRestriction(e.target.value as 'MALE' | 'FEMALE' | '')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700">
-                        <option value="">Không ràng buộc</option>
-                        <option value="MALE">Nam</option>
-                        <option value="FEMALE">Nữ</option>
+                        <option value="">{translate('communityTournamentNoRestriction')}</option>
+                        <option value="MALE">{translate('communityTournamentMale')}</option>
+                        <option value="FEMALE">{translate('communityTournamentFemale')}</option>
                       </select>
                     </div>
-                    <Input label="Dự bị tối đa" type="number" min={0} max={20} value={liteMaxReserve} onChange={(e) => setLiteMaxReserve(Math.max(0, Math.min(20, Number(e.target.value) || 0)))} />
+                    <Input label={translate('communityTournamentReserveLabel')} type="number" min={0} max={20} value={liteMaxReserve} onChange={(e) => setLiteMaxReserve(Math.max(0, Math.min(20, Number(e.target.value) || 0)))} />
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Thể thức đấu</label>
+                    <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentBracketLabel')}</label>
                     <select
                       value={liteBracketType}
                       onChange={(e) => setLiteBracketType(e.target.value as 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout')}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="single_elimination">Loại trực tiếp (Single Elim)</option>
-                      <option value="double_elimination">Nhánh thắng/thua (Double Elim)</option>
-                      <option value="round_robin">Vòng tròn tính điểm (Round Robin)</option>
-                      <option value="group_stage_knockout">Vòng bảng + loại trực tiếp</option>
+                      <option value="single_elimination">{translate('bracketSingleElimination')}</option>
+                      <option value="double_elimination">{translate('bracketDoubleElimination')}</option>
+                      <option value="round_robin">{translate('bracketRoundRobin')}</option>
+                      <option value="group_stage_knockout">{translate('bracketGroupStageKnockout')}</option>
                     </select>
                     {liteBracketType === 'group_stage_knockout' && (
                       <p className="text-xs text-amber-600 mt-1 font-medium">
-                        Cần tối thiểu 4 đội. Hệ thống tự động chia đều.
+                        {translate('communityTournamentGroupStageHint')}
                       </p>
                     )}
                   </div>
 
                   <Input
-                    label="Số đội tối đa"
+                    label={translate('communityTournamentMaxTeamsLiteLabel')}
                     type="number"
                     value={liteMaxTeams}
                     onChange={(e) => setLiteMaxTeams(Number(e.target.value))}
@@ -650,7 +650,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4 text-slate-500" /> Ngày bắt đầu
+                      <Calendar className="w-4 h-4 text-slate-500" /> {translate('communityTournamentStartDate')}
                     </label>
                     <input
                       type="date"
@@ -662,7 +662,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-slate-500" /> Giờ thi đấu
+                      <Clock className="w-4 h-4 text-slate-500" /> {translate('communityTournamentStartTime')}
                     </label>
                     <input
                       type="time"
@@ -705,7 +705,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     <div className="pt-2.5 border-t border-slate-200/80 space-y-3 animate-in fade-in duration-200">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs font-semibold text-slate-700">Tần suất</label>
+                          <label className="text-xs font-semibold text-slate-700">{translate('communityTournamentFrequency')}</label>
                           <select
                             value={liteRecurringFrequency}
                             onChange={(e) => setLiteRecurringFrequency(e.target.value as typeof liteRecurringFrequency)}
@@ -720,7 +720,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                         <div className="flex flex-col gap-1">
                           <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-slate-500" /> Giờ thi đấu
+                            <Clock className="w-3.5 h-3.5 text-slate-500" /> {translate('communityTournamentRecurringTime')}
                           </label>
                           <input
                             type="time"
@@ -791,14 +791,14 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         {liteRecurringFrequency === 'DAILY'
                           ? translate('frequencyDailyShort')
                           : liteRecurringFrequency === 'MONTHLY'
-                          ? `ngày ${liteStartDate ? new Date(liteStartDate).getDate() : 15} hàng tháng`
-                          : `các ngày ${liteRecurringDaysOfWeek
+                          ? translate('communityTournamentMonthlySchedule', { day: liteStartDate ? new Date(liteStartDate).getDate() : 15 })
+                              : translate('communityTournamentWeeklySchedule', { days: liteRecurringDaysOfWeek
                               .map((d) => { const day = DAYS_OF_WEEK.find((item) => item.value === d); return day ? translate(day.key) : null; })
                               .filter(Boolean)
-                              .join(', ')} hằng ${liteRecurringFrequency === 'BIWEEKLY' ? translate('frequencyBiweeklyShort') : translate('frequencyWeeklyShort')}`}.
+                              .join(', '), frequency: liteRecurringFrequency === 'BIWEEKLY' ? translate('frequencyBiweeklyShort') : translate('frequencyWeeklyShort') })}.
                         <br />
                         <span className="text-emerald-700 text-[11px] mt-1 inline-block">
-                          📢 {translate('memberNotificationDescription')} để tham gia.
+                          📢 {translate('memberNotificationDescription')}
                         </span>
                       </div>
                     </div>
@@ -812,14 +812,14 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     disabled={isSubmitting}
                     className="border-slate-200 text-slate-650 font-medium hover:bg-slate-50"
                   >
-                    Hủy bỏ
+                    {translate('communityTournamentCancel')}
                   </Button>
                   <Button
                     onClick={handleCreateLiteTournament}
                     disabled={isSubmitting}
                     className="font-bold px-5"
                   >
-                    {isSubmitting ? 'Đang tạo...' : 'Tạo giải nhanh'}
+                    {isSubmitting ? translate('communityTournamentCreating') : translate('communityTournamentCreateQuickAction')}
                   </Button>
                 </div>
               </div>

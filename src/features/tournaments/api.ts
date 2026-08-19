@@ -447,6 +447,30 @@ export const tournamentsApi = {
       `/tournaments/${id}/generate-bracket`,
       { divisionId, seedingType, allowReset }
     ),
+  importParticipants: (
+    id: string,
+    data: {
+      divisionId?: string;
+      participants: Array<{
+        teamName: string;
+        player1Name: string;
+        player1Email?: string;
+        player1Phone?: string;
+        player2Name?: string;
+        player2Email?: string;
+        player2Phone?: string;
+        elo?: number;
+        isPaid?: boolean;
+        autoApprove?: boolean;
+        customResponses?: Record<string, any>;
+      }>;
+      sendInvitationEmail?: boolean;
+    }
+  ) =>
+    api.post<ApiResponse<{ message: string; importedCount: number; emailsSent: number }>>(
+      `/tournaments/${id}/import-participants`,
+      data
+    ),
   regenerateInviteCode: (id: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/regenerate-invite`),
   publishTournament: (id: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/publish`),
   updateTournamentSeeds: (id: string, seeds: { participantId: string; seed: number }[]) => api.patch<ApiResponse<{ success: boolean }>>(`/tournaments/${id}/seeds`, { seeds }),

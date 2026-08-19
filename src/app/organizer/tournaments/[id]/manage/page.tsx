@@ -321,6 +321,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           handleAutoSeed={s.handleAutoSeed}
           handleSwapSeeds={s.handleSwapSeeds}
           handleReorderSeeds={s.handleReorderSeeds}
+          refetchDivisionData={s.refetchDivisionData}
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success('Đã sao chép link!'); }} />}
         {s.activeTab === 'registration' && <RegistrationFormBuilder tournament={s.tournament} divisions={s.divisions} />}
 

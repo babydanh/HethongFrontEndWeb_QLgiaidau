@@ -271,6 +271,18 @@ export interface TournamentParticipant {
   tournamentDivisionId?: string | null;
   registeredAt: string;
   customResponses?: Record<string, unknown> | null;
+  payment?: {
+    id: string;
+    amount: string;
+    status: string;
+    paymentGateway?: string | null;
+    transactionReference?: string | null;
+    providerTransactionId?: string | null;
+    providerOrderCode?: string | null;
+    paidAt?: string | null;
+    receiptNumber?: string | null;
+    currency?: string | null;
+  } | null;
   partnerInviteExpiresAt?: string | null;
   teamInviteToken?: string | null;
   teamStatus?:

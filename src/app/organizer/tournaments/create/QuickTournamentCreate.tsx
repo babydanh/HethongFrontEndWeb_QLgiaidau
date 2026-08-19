@@ -113,11 +113,11 @@ const quickSchema = z.object({
   maxTeams: z.number().int().min(2).max(128),
   registrationStart: z.string().optional(),
   registrationEnd: z.string().optional(),
-  startDate: z.string().optional(),
+  startDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu giải.'),
   endDate: z.string().optional(),
-  venueName: z.string().trim().optional(),
-  locationAddress: z.string().trim().optional(),
-  province: z.string().trim().optional(),
+  venueName: z.string().trim().min(1, 'Vui lòng nhập tên sân / nhà thi đấu.'),
+  locationAddress: z.string().trim().min(1, 'Vui lòng nhập địa chỉ chi tiết của sân.'),
+  province: z.string().trim().min(1, 'Vui lòng chọn Tỉnh / Thành phố.'),
   ward: z.string().trim().optional(),
   district: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
@@ -158,26 +158,8 @@ const quickSchema = z.object({
   if (registrationEnd && !Number.isNaN(registrationEnd.getTime()) && registrationEnd <= now) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải ở tương lai để giải không tự chốt danh sách.' });
   }
-
-  // Location is optional for Quick Create, but a partially filled venue is
-  // never useful in the public tournament page. Keep the fast path empty,
-  // while requiring the pair of venue name + detailed address when either is
-  // entered. Administrative area selectors must also be a complete pair.
-  const hasVenueName = Boolean(data.venueName);
-  const hasLocationAddress = Boolean(data.locationAddress);
-  if (hasVenueName !== hasLocationAddress) {
-    if (!hasVenueName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['venueName'], message: 'Nhập tên sân/nhà thi đấu khi đã nhập địa chỉ.' });
-    }
-    if (!hasLocationAddress) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['locationAddress'], message: 'Nhập địa chỉ chi tiết của sân/nhà thi đấu.' });
-    }
-  }
   if (data.ward && !data.province) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['province'], message: 'Chọn tỉnh/thành trước khi chọn phường/xã.' });
-  }
-  if (data.province && !data.ward) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['ward'], message: 'Chọn phường/xã tương ứng hoặc xóa tỉnh/thành nếu chưa muốn nhập khu vực.' });
   }
 });
 
@@ -864,7 +846,12 @@ export default function QuickTournamentCreate() {
         </div>
 
         {/* Form Container with 2-Column Responsive Layout */}
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form
+          onSubmit={handleSubmit(onSubmit, (fieldErrors) => {
+            const firstError = Object.values(fieldErrors)[0]?.message;
+            toast.error(firstError || 'Vui lòng điền đầy đủ các thông tin bắt buộc (*).');
+          })}
+        >
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
             
             {/* ─── CỘT TRÁI (7 CỘT): THÔNG TIN CƠ BẢN, LỊCH TRÌNH, ĐỊA ĐIỂM, MÔ TẢ ─── */}
@@ -999,7 +986,7 @@ export default function QuickTournamentCreate() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Tên sân / Nhà thi đấu
+                      Tên sân / Nhà thi đấu <span className="text-rose-500">*</span>
                     </label>
                     <input
                       {...register('venueName')}
@@ -1011,7 +998,7 @@ export default function QuickTournamentCreate() {
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Địa chỉ chi tiết
+                      Địa chỉ chi tiết <span className="text-rose-500">*</span>
                     </label>
                     <input
                       {...register('locationAddress')}
@@ -1034,7 +1021,7 @@ export default function QuickTournamentCreate() {
                 {/* Dropdowns Tỉnh/Thành ➔ Phường/Xã */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                    Khu vực hành chính
+                    Khu vực hành chính <span className="text-rose-500">*</span>
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -1047,7 +1034,7 @@ export default function QuickTournamentCreate() {
                         })}
                         className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500"
                       >
-                        <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                        <option value="">-- Chọn Tỉnh / Thành phố (*) --</option>
                         {provinces.map((item) => (
                           <option key={item.code} value={item.code}>
                             {item.fullName || item.name}
@@ -1075,7 +1062,7 @@ export default function QuickTournamentCreate() {
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
-                    Địa điểm là tùy chọn khi tạo nhanh. Nếu nhập tên sân hoặc địa chỉ, hãy điền đủ cả hai để người tham gia tìm đúng sân.
+                    Vui lòng nhập đầy đủ tên sân, địa chỉ và khu vực để VĐV nắm rõ thông tin thi đấu.
                   </p>
                 </div>
               </section>

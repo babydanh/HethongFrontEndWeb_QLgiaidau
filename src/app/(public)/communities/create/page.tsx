@@ -16,6 +16,7 @@ import { ChevronLeft, Plus, Trash2, UploadCloud, X, Loader2, Sparkles } from 'lu
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 
 type CreateCommunityFormValues = {
   name: string;
@@ -85,6 +86,7 @@ export default function CreateCommunityPage() {
   });
 
   const watchProvince = watch('provinceCode');
+  const watchWard = watch('wardCode');
   const watchLocationAddress = watch('locationAddress');
   const watchJoinMode = watch('joinMode');
   const watchCategoryIds = watch('categoryIds');
@@ -189,7 +191,8 @@ export default function CreateCommunityPage() {
       setIsSubmitting(true);
       const provinceName = provinces.find(p => p.code === data.provinceCode)?.name || '';
       const wardName = wards.find(w => w.code === data.wardCode)?.name || '';
-      const combinedAddress = [wardName, provinceName].filter(Boolean).join(', ');
+      const detailedAddress = data.locationAddress?.trim() || '';
+      const combinedAddress = [detailedAddress, wardName, provinceName].filter(Boolean).join(', ');
 
       const payload = {
         ...data,
@@ -307,27 +310,30 @@ export default function CreateCommunityPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     {translate('province')} <span className="text-rose-500">*</span>
                   </label>
-                  <select
-                    {...register('provinceCode')}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="">{translate('provincePlaceholder')}</option>
-                    {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                  </select>
-                  {errors.provinceCode && <p className="text-rose-500 text-sm mt-1">{errors.provinceCode.message}</p>}
+                  <SearchableRegionSelect
+                    value={watchProvince || ''}
+                    options={provinces}
+                    inputName="provinceCode"
+                    placeholder={translate('provincePlaceholder')}
+                    onChange={(value) => {
+                      setValue('provinceCode', value, { shouldValidate: true, shouldDirty: true });
+                      setValue('wardCode', '', { shouldValidate: true, shouldDirty: true });
+                    }}
+                    error={errors.provinceCode?.message}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     {translate('ward')}
                   </label>
-                  <select
-                    {...register('wardCode')}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                    disabled={!watchProvince}
-                  >
-                    <option value="">{translate('wardPlaceholder')}</option>
-                    {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
-                  </select>
+                  <SearchableRegionSelect
+                    value={watchWard || ''}
+                    options={wards}
+                    inputName="wardCode"
+                    placeholder={translate('wardPlaceholder')}
+                    disabled={!watchProvince || wards.length === 0}
+                    onChange={(value) => setValue('wardCode', value, { shouldValidate: true, shouldDirty: true })}
+                  />
                 </div>
               </div>
 

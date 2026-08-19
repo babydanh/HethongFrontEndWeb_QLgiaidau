@@ -8,6 +8,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, Trophy, Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
@@ -31,6 +32,7 @@ export function PagedSingleElimView({
   onSelectMatch,
   fallbackSportRuleKind,
 }: Props) {
+  const bracketTranslate = useTranslations('BracketView');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -120,10 +122,20 @@ export function PagedSingleElimView({
   const numVisible = visibleRounds.length;
   const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
 
+  const localizeRoundLabel = (label: string) => label
+    .replaceAll('Chung kết', bracketTranslate('singleFinal'))
+    .replaceAll('Bán kết', bracketTranslate('singleSemifinal'))
+    .replaceAll('Tứ kết', bracketTranslate('singleQuarterfinal'))
+    .replaceAll('Vòng 128', bracketTranslate('singleRound128'))
+    .replaceAll('Vòng 64', bracketTranslate('singleRound64'))
+    .replaceAll('Vòng 32', bracketTranslate('singleRound32'))
+    .replaceAll('Vòng 16', bracketTranslate('singleRound16'))
+    .replace(/Vòng (\d+)/g, (_, number) => bracketTranslate('singleRound', { number }));
+
   if (!rounds.length) {
     return (
       <div className="py-12 text-center text-slate-400 italic text-sm">
-        Chưa có dữ liệu trận đấu trong nhánh đấu.
+        {bracketTranslate('noMatches')}
       </div>
     );
   }
@@ -144,10 +156,10 @@ export function PagedSingleElimView({
           <Trophy className="w-4 h-4 text-blue-600 shrink-0" />
           <div>
             <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
-              Vòng {activeRoundIndex + 1} / {rounds.length}
+              {bracketTranslate('roundProgress', { current: activeRoundIndex + 1, total: rounds.length })}
             </span>
             <h4 className="text-sm sm:text-base font-bold text-slate-900">
-              {getRoundLabel(currentRound - 1, maxRound)}
+              {localizeRoundLabel(getRoundLabel(currentRound - 1, maxRound))}
             </h4>
           </div>
         </div>
@@ -160,14 +172,14 @@ export function PagedSingleElimView({
             className="flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-100 disabled:opacity-40 sm:px-3 sm:py-1.5"
           >
             <ChevronLeft className="h-4 w-4 shrink-0" />
-            <span className="sm:hidden">Trước</span><span className="hidden sm:inline">Vòng trước</span>
+            <span className="sm:hidden">{bracketTranslate('previousMobile')}</span><span className="hidden sm:inline">{bracketTranslate('previous')}</span>
           </button>
           <button
             onClick={() => setActiveRoundIndex(Math.min(activeRoundIndex + 1, rounds.length - 1))}
             disabled={activeRoundIndex === rounds.length - 1}
             className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-40 sm:px-3 sm:py-1.5"
           >
-            <span className="sm:hidden">Sau</span><span className="hidden sm:inline">Vòng tiếp</span>
+            <span className="sm:hidden">{bracketTranslate('nextMobile')}</span><span className="hidden sm:inline">{bracketTranslate('next')}</span>
             <ChevronRight className="h-4 w-4 shrink-0" />
           </button>
 
@@ -178,7 +190,7 @@ export function PagedSingleElimView({
             <button
               onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
-              title="Thu nhỏ"
+              title={bracketTranslate('zoomOut')}
             >
               -
             </button>
@@ -188,14 +200,14 @@ export function PagedSingleElimView({
             <button
               onClick={() => setZoom((z) => Math.min(z + 0.1, 1.4))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
-              title="Phóng to"
+              title={bracketTranslate('zoomIn')}
             >
               +
             </button>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-500 hover:text-slate-900"
-              title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+              title={isFullscreen ? bracketTranslate('exitFullscreen') : bracketTranslate('fullscreen')}
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>
@@ -245,7 +257,7 @@ export function PagedSingleElimView({
                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      {getRoundLabel(r - 1, maxRound)}
+                      {localizeRoundLabel(getRoundLabel(r - 1, maxRound))}
                     </button>
                   </div>
                 );

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -11,7 +12,6 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { Tournament } from '@/types/tournament';
-import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
@@ -36,17 +36,17 @@ const getDefaultBanner = (_categoryName?: string | null) => {
   return BRAND.assets.defaultTournamentLogo;
 };
 
-const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {
+const getFormatLabel = (matchType: string, genderRestriction?: string | null, translate?: (key: string) => string) => {
   const mt = matchType || '';
   const gr = genderRestriction || '';
   if (mt === 'SINGLES') {
-    return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+    return gr === 'FEMALE' ? (translate?.('formatSinglesWomen') ?? 'Women’s singles') : (translate?.('formatSinglesMen') ?? 'Men’s singles');
   }
   if (mt === 'DOUBLES') {
-    return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+    return gr === 'FEMALE' ? (translate?.('formatDoublesWomen') ?? 'Women’s doubles') : (translate?.('formatDoublesMen') ?? 'Men’s doubles');
   }
   if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-    return 'Đôi Nam Nữ';
+    return translate?.('formatMixedDoubles') ?? 'Mixed doubles';
   }
   return mt;
 };
@@ -65,6 +65,8 @@ const getDivisionIcon = (matchType?: string, genderRestriction?: string | null) 
 
 export default function MyTournamentsPage() {
   const router = useRouter();
+  const translate = useTranslations('OrganizerTournaments');
+  const locale = useLocale();
   const [parents, setParents] = useState<ParentWithDivisions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -131,7 +133,7 @@ export default function MyTournamentsPage() {
 
       setParents(parentsWithDivisions);
     } catch (err) {
-      toast.error('Không thể tải danh sách giải đấu của bạn');
+      toast.error(translate('loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +147,7 @@ export default function MyTournamentsPage() {
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
     e.preventDefault();
-    if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các nội dung thi đấu bên trong (nếu có) cũng sẽ bị xoá và không thể khôi phục.')) return;
+    if (!confirm(translate('deleteConfirm'))) return;
     try {
       let res;
       if (isStandalone) {
@@ -157,25 +159,36 @@ export default function MyTournamentsPage() {
       // Check if delete is pending review
       const resData = res?.data as unknown as { pendingDelete?: boolean; message?: string } | undefined;
       if (resData?.pendingDelete) {
-        toast.success(resData.message || 'Yêu cầu xóa giải đấu của bạn đã được gửi tới Quản trị viên để xét duyệt.');
+        toast.success(resData.message || translate('pendingDeleteSuccess'));
         fetchTournaments();
       } else {
         setParents(parents.filter(p => p.id !== id));
-        toast.success('Đã xoá giải đấu thành công');
+        toast.success(translate('deleteSuccess'));
       }
     } catch (err) {
       const msg = getErrorMessage(err);
       // Hiện rõ lý do từ backend (vd: chưa hoàn tiền, đang chờ hoàn tiền)
-      toast.error(msg || 'Có lỗi xảy ra khi xoá giải đấu');
+      toast.error(msg || translate('deleteError'));
     }
   };
 
   const getStatusBadge = (status: string) => {
     if (status === 'PENDING_DELETE') {
-      return <Badge className="bg-rose-50 text-rose-700 border-slate-200">Chờ Xóa</Badge>;
+      return <Badge className="bg-rose-50 text-rose-700 border-slate-200">{translate('statusPendingDelete')}</Badge>;
     }
 
-    return <Badge className={getTournamentStatusClassName(status)}>{getTournamentStatusLabel(status)}</Badge>;
+    return <Badge className={getTournamentStatusClassName(status)}>{getTournamentStatusLabel(status, {
+      DRAFT: translate('statusDraft'),
+      PENDING_APPROVAL: translate('statusPendingApproval'),
+      PENDING_DELETE: translate('statusPendingDelete'),
+      UPCOMING: translate('statusUpcoming'),
+      REGISTRATION_OPEN: translate('statusRegistrationOpen'),
+      REGISTRATION_CLOSED: translate('statusRegistrationClosed'),
+      IN_PROGRESS: translate('statusInProgress'),
+      ONGOING: translate('statusInProgress'),
+      COMPLETED: translate('statusCompleted'),
+      CANCELLED: translate('statusCancelled'),
+    })}</Badge>;
   };
 
   if (isLoading) {
@@ -183,7 +196,7 @@ export default function MyTournamentsPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <LoadingSpinner className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-500 font-medium">Đang tải giải đấu của bạn...</p>
+          <p className="text-slate-500 font-medium">{translate('loading')}</p>
         </div>
       </div>
     );
@@ -196,12 +209,12 @@ export default function MyTournamentsPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-xl md:text-3xl font-bold text-slate-900">Giải Đấu Của Tôi</h1>
-            <p className="text-slate-500 mt-1 text-xs md:text-sm font-medium">Quản lý các Giải đấu đã tạo</p>
+            <h1 className="text-xl md:text-3xl font-bold text-slate-900">{translate('title')}</h1>
+            <p className="text-slate-500 mt-1 text-xs md:text-sm font-medium">{translate('subtitle')}</p>
           </div>
           <Link href="/organizer/tournaments/create">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5 px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm shadow-md shadow-blue-500/20 h-auto">
-              <Plus className="w-4 h-4 md:w-5 md:h-5" /> Tạo giải đấu mới
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5 px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm shadow-md shadow-blue-500/20 h-auto">
+              <Plus className="w-4 h-4 md:w-5 md:h-5" /> {translate('create')}
             </Button>
           </Link>
         </div>
@@ -211,12 +224,12 @@ export default function MyTournamentsPage() {
             <div className="w-16 h-16 md:w-24 md:h-24 flex items-center justify-center mb-4">
               <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
             </div>
-            <h3 className="text-lg md:text-xl font-bold text-slate-900">Chưa có giải đấu nào</h3>
+            <h3 className="text-lg md:text-xl font-bold text-slate-900">{translate('emptyTitle')}</h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm">
-              Bạn chưa tạo bất kỳ Giải đấu nào. Hãy tạo Giải đấu đầu tiên của bạn để kết nối những người đam mê thể thao!
+              {translate('emptyDescription')}
             </p>
             <Link href="/organizer/tournaments/create" className="mt-6">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">Tạo giải đấu đầu tiên</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">{translate('createFirst')}</Button>
             </Link>
           </div>
         ) : (
@@ -253,19 +266,19 @@ export default function MyTournamentsPage() {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit ${
                         firstDivision?.tournamentType === 'CLUB' ? 'bg-amber-600/90' : 'bg-blue-600/90'
                       }`}>
-                        {firstDivision?.tournamentType === 'CLUB' ? 'Nội bộ CLB' : 'Mở rộng'}
+                        {firstDivision?.tournamentType === 'CLUB' ? translate('scopeClub') : translate('scopeOpen')}
                       </span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit ${
                         firstDivision?.isRanked ? 'bg-amber-500/90' : 'bg-slate-600/90'
                       }`}>
-                        {firstDivision?.isRanked ? 'Tính ELO' : 'Không tính ELO'}
+                        {firstDivision?.isRanked ? translate('ranked') : translate('unranked')}
                       </span>
                       {divisions.some(div => {
                         const cfg = div.tournamentConfig as Record<string, any> | undefined;
                         return Boolean(cfg?.recurring?.enabled || cfg?.recurring?.frequency);
                       }) && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit bg-purple-600/95 flex items-center gap-1">
-                          <RotateCw className="w-2.5 h-2.5" /> Định kỳ
+                          <RotateCw className="w-2.5 h-2.5" /> {translate('recurring')}
                         </span>
                       )}
                     </div>
@@ -288,7 +301,7 @@ export default function MyTournamentsPage() {
                         size="icon"
                         variant="destructive"
                         onClick={(e) => handleDeleteParent(parent.id, parent.isStandalone || false, e)}
-                        title="Xoá giải đấu"
+                        title={translate('deleteTitle')}
                         className="w-6 h-6 rounded-full shadow-sm"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -321,7 +334,7 @@ export default function MyTournamentsPage() {
                         {divisions.slice(0, 3).map((div: Tournament) => {
                           const displayDivName = (div.name && div.name.toLowerCase() !== parent.name.toLowerCase())
                             ? div.name
-                            : getFormatLabel(div.matchType || '', div.genderRestriction);
+                            : getFormatLabel(div.matchType || '', div.genderRestriction, translate);
 
                           return (
                             <button
@@ -332,12 +345,12 @@ export default function MyTournamentsPage() {
                               {div.tournamentConfig?.bracketType && (
                                 <span className="text-slate-400 mr-0.5">
                                   {div.tournamentConfig.bracketType === 'SINGLE_ELIMINATION'
-                                    ? 'Loại trực tiếp'
+                                    ? translate('bracketSingle')
                                     : div.tournamentConfig.bracketType === 'DOUBLE_ELIMINATION'
-                                    ? 'Nhánh thắng/thua'
+                                    ? translate('bracketDouble')
                                     : div.tournamentConfig.bracketType === 'ROUND_ROBIN'
-                                    ? 'Vòng tròn'
-                                    : 'Vòng bảng'}
+                                    ? translate('bracketRoundRobin')
+                                    : translate('bracketGroup')}
                                 </span>
                               )}
                               <span>{displayDivName}</span>
@@ -355,11 +368,11 @@ export default function MyTournamentsPage() {
                     <div className="grid grid-cols-2 gap-2 md:gap-3 pt-2.5 md:pt-3 border-t border-slate-100 text-slate-500 text-[11px] md:text-xs font-medium">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="truncate">{firstDivision?.startDate ? formatDate(firstDivision.startDate) : 'Chưa xếp lịch'}</span>
+                        <span className="truncate">{firstDivision?.startDate ? new Intl.DateTimeFormat(locale).format(new Date(firstDivision.startDate)) : translate('notScheduled')}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="truncate">{totalParticipants} VĐV</span>
+                        <span className="truncate">{translate('participantCount', { count: totalParticipants })}</span>
                       </div>
                     </div>
                   </div>
@@ -370,18 +383,18 @@ export default function MyTournamentsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <Link href={manageHref}>
                           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 font-bold shadow-sm text-[11px] md:text-sm h-9 md:h-10 active:scale-95 transition-transform px-0">
-                            <Settings className="w-3.5 h-3.5" /> Quản lý
+                            <Settings className="w-3.5 h-3.5" /> {translate('manage')}
                           </Button>
                         </Link>
                         <Link href={opsHref}>
                           <Button variant="outline" className="w-full border-slate-200 bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1 font-bold text-[11px] md:text-sm h-9 md:h-10 active:scale-95 transition-transform px-0">
-                            <Eye className="w-3.5 h-3.5" /> Vận hành
+                            <Eye className="w-3.5 h-3.5" /> {translate('operations')}
                           </Button>
                         </Link>
                       </div>
                     ) : (
                       <Button disabled className="w-full bg-slate-300 text-white font-bold h-9 md:h-10 text-sm">
-                        Chưa có vòng đấu
+                        {translate('noRounds')}
                       </Button>
                     )}
                   </div>

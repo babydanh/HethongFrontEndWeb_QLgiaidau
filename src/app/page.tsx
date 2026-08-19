@@ -201,6 +201,39 @@ function translateStageName(name: string | null | undefined, translate?: (key: s
   return key ? (translate?.(key) ?? key) : name;
 }
 
+function translateRoundLabel(label: string, translate: (key: string, values?: Record<string, string | number>) => string): string {
+  const translateToken = (token: string): string => {
+    const normalized = token.trim();
+    const staticMap: Record<string, string> = {
+      'Chung kết tổng': 'phaseGrandFinal',
+      'Chung kết': 'roundFinal',
+      'Bán kết': 'roundSemifinal',
+      'Tứ kết': 'roundQuarterfinal',
+      'Nhánh thua': 'phaseLosers',
+      'Nhánh thắng': 'phaseWinners',
+      'Playoff': 'phasePlayoff',
+    };
+    const staticKey = staticMap[normalized];
+    if (staticKey) return translate(staticKey);
+
+    const ofRoundMatch = normalized.match(/^Vòng\s+(16|32|64)$/i);
+    if (ofRoundMatch) return translate(`roundOf${ofRoundMatch[1]}`);
+
+    const roundMatch = normalized.match(/^Vòng\s+(\d+)$/i);
+    if (roundMatch) return translate('roundNumber', { number: Number(roundMatch[1]) });
+
+    const legMatch = normalized.match(/^Lượt\s+(\d+)$/i);
+    if (legMatch) return translate('roundLeg', { number: Number(legMatch[1]) });
+
+    return token;
+  };
+
+  return label
+    .split(' • ')
+    .map((phase) => phase.split(' - ').map(translateToken).join(' - '))
+    .join(' • ');
+}
+
 /** Đếm ngược — chỉ hiện ngày (dùng cho trang chủ / danh sách) */
 function RegistrationCountdown({ targetDate }: { targetDate: string }) {
   const translate = useTranslations('Home');
@@ -739,7 +772,7 @@ export default function HomePage() {
         ...prev,
         [matchId]: Math.max(0, (prev[matchId] ?? 1) - 1),
       }));
-      toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
+      toast.error(translate('cheerError'));
     }
   };
 
@@ -850,12 +883,12 @@ export default function HomePage() {
     const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
     const isLive = (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') && !isCompleted;
     const isScheduled = match.status === 'SCHEDULED';
-    const roundLabel = getMatchRoundLabel({
+    const roundLabel = translateRoundLabel(getMatchRoundLabel({
       match,
       matches: contextMatches,
       tournamentFormat: contextTournament?.format ?? rankedTournament?.format,
       bracketSize: contextTournament?.maxParticipants ?? rankedTournament?.maxParticipants ?? null,
-    });
+    }), translate);
 
     return (
       <motion.div
@@ -911,7 +944,7 @@ export default function HomePage() {
             <div className="flex flex-col items-center justify-center shrink-0 min-w-[65px]">
               {isScheduled ? (
                 <span className="text-[10.5px] font-bold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100/70">
-                  {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
+                  {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS'}
                 </span>
               ) : (
                 <div className={`flex items-center justify-center px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold leading-none tracking-wider shadow-2xs ${

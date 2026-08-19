@@ -22,6 +22,7 @@ type MatchType = 'ALL' | 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 export default function RankingsTab({ communityId, categories, onGoToTournaments }: RankingsTabProps) {
   const translate = useTranslations('Common');
   const eloTranslate = useTranslations('EloDisplay');
+  const rankTranslate = useTranslations('CommunityRankings');
   const matchTypeLabels = {
     SINGLES: translate('matchTypeSingles'),
     DOUBLES: translate('matchTypeDoubles'),
@@ -226,7 +227,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
         {isLoading ? (
           <div className="flex justify-center rounded-lg border border-slate-200 bg-white py-20"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
         ) : filteredTeams.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-white p-14 text-center"><Award className="mx-auto mb-3 h-12 w-12 text-slate-300" /><p className="font-bold text-slate-800">Chưa có đội xếp hạng</p><p className="mt-1 text-xs text-slate-500">Đội sẽ xuất hiện sau khi hoàn thành trận bóng đá xếp hạng.</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-14 text-center"><Award className="mx-auto mb-3 h-12 w-12 text-slate-300" /><p className="font-bold text-slate-800">{rankTranslate('noRankedTeams')}</p><p className="mt-1 text-xs text-slate-500">{rankTranslate('teamsAppearAfterRankedFootballMatch')}</p></div>
         ) : (
           <div className="space-y-2">
             {filteredTeams.map((team, index) => (
@@ -235,8 +236,8 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-xs font-black text-slate-500">
                   {team.logoUrl ? <img src={team.logoUrl} alt="" className="h-full w-full object-cover" /> : team.teamName.slice(0, 2).toUpperCase()}
                 </div>
-                <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-slate-800">{team.teamName}</p><p className="text-[11px] text-slate-500">{team.matchesWon}/{team.matchesPlayed} thắng · streak {team.winStreak}</p></div>
-                <div className="text-right"><p className="text-sm font-black text-blue-600">{team.eloPoints} ELO</p><p className="text-[10px] text-slate-400">Cao nhất {team.peakElo ?? team.eloPoints}</p></div>
+                <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-slate-800">{team.teamName}</p><p className="text-[11px] text-slate-500">{rankTranslate('teamRecord', { wins: team.matchesWon, played: team.matchesPlayed, streak: team.winStreak })}</p></div>
+                <div className="text-right"><p className="text-sm font-black text-blue-600">{team.eloPoints} ELO</p><p className="text-[10px] text-slate-400">{rankTranslate('teamPeak', { elo: team.peakElo ?? team.eloPoints })}</p></div>
               </div>
             ))}
           </div>
@@ -252,11 +253,11 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-500" /> Bảng xếp hạng ELO
+            <Trophy className="w-5 h-5 text-amber-500" /> {rankTranslate('title')}
           </h3>
           <p className="text-xs text-slate-450 mt-0.5">
-            Top 20 thành viên xuất sắc nhất •{' '}
-            {activeCategory?.name || ''} {getEloMatchTypeLabel(selectedMatchType, matchTypeLabels)}
+            {rankTranslate('topMembers')} •{' '}
+            {activeCategory?.name || ''} {selectedMatchType === 'ALL' ? rankTranslate('allFormats') : getEloMatchTypeLabel(selectedMatchType, matchTypeLabels)}
           </p>
         </div>
       </div>
@@ -267,7 +268,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tìm thành viên..."
+            placeholder={rankTranslate('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
@@ -279,20 +280,20 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-700 hover:bg-slate-50 transition-all cursor-pointer shrink-0"
         >
           <SlidersHorizontal className="h-4 w-4 text-blue-600" />
-          <span>Bộ lọc</span>
+          <span>{rankTranslate('filters')}</span>
         </button>
       </div>
 
       {isFilterOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-0 sm:items-center sm:p-4" onMouseDown={() => setIsFilterOpen(false)}>
           <div className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="mb-5 flex items-center justify-between"><div><h4 className="text-base font-black text-slate-900">Bộ lọc xếp hạng</h4><p className="mt-0.5 text-xs text-slate-500">Chọn môn, giới tính và thể thức</p></div><button type="button" onClick={() => setIsFilterOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng bộ lọc"><X className="h-4 w-4" /></button></div>
+            <div className="mb-5 flex items-center justify-between"><div><h4 className="text-base font-black text-slate-900">{rankTranslate('filterTitle')}</h4><p className="mt-0.5 text-xs text-slate-500">{rankTranslate('filterDescription')}</p></div><button type="button" onClick={() => setIsFilterOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label={rankTranslate('closeFilters')}><X className="h-4 w-4" /></button></div>
             <div className="space-y-4">
-              {categories.length > 1 && <div><p className="mb-2 text-xs font-bold text-slate-500">Môn thể thao</p><div className="flex flex-wrap gap-2">{categories.map((cat) => <button key={cat.id} type="button" onClick={() => setSelectedCategoryId(cat.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedCategoryId === cat.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{cat.name}</button>)}</div></div>}
-              <div><p className="mb-2 text-xs font-bold text-slate-500">Thể thức</p><div className="flex flex-wrap gap-2">{matchTypes.map((mt) => <button key={mt} type="button" onClick={() => { setSelectedMatchType(mt); if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE'); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedMatchType === mt ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{getEloMatchTypeLabel(mt, matchTypeLabels)}</button>)}</div></div>
-              {selectedMatchType !== 'ALL' && selectedMatchType !== 'MIXED_DOUBLES' && <div><p className="mb-2 text-xs font-bold text-slate-500">Giới tính</p><div className="flex gap-2">{(['MALE', 'FEMALE'] as const).map((gender) => <button key={gender} type="button" onClick={() => setSelectedGender(gender)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${selectedGender === gender ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{gender === 'MALE' ? 'Nam' : 'Nữ'}</button>)}</div></div>}
+              {categories.length > 1 && <div><p className="mb-2 text-xs font-bold text-slate-500">{rankTranslate('sport')}</p><div className="flex flex-wrap gap-2">{categories.map((cat) => <button key={cat.id} type="button" onClick={() => setSelectedCategoryId(cat.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedCategoryId === cat.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{cat.name}</button>)}</div></div>}
+              <div><p className="mb-2 text-xs font-bold text-slate-500">{rankTranslate('format')}</p><div className="flex flex-wrap gap-2">{matchTypes.map((mt) => <button key={mt} type="button" onClick={() => { setSelectedMatchType(mt); if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE'); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedMatchType === mt ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{mt === 'ALL' ? rankTranslate('allFormats') : getEloMatchTypeLabel(mt, matchTypeLabels)}</button>)}</div></div>
+              {selectedMatchType !== 'ALL' && selectedMatchType !== 'MIXED_DOUBLES' && <div><p className="mb-2 text-xs font-bold text-slate-500">{rankTranslate('gender')}</p><div className="flex gap-2">{(['MALE', 'FEMALE'] as const).map((gender) => <button key={gender} type="button" onClick={() => setSelectedGender(gender)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${selectedGender === gender ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{gender === 'MALE' ? rankTranslate('male') : rankTranslate('female')}</button>)}</div></div>}
             </div>
-            <button type="button" onClick={() => setIsFilterOpen(false)} className="mt-6 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-black text-white hover:bg-blue-700">Áp dụng bộ lọc</button>
+            <button type="button" onClick={() => setIsFilterOpen(false)} className="mt-6 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-black text-white hover:bg-blue-700">{rankTranslate('applyFilters')}</button>
           </div>
         </div>
       )}
@@ -302,11 +303,11 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs">
             {rankings.findIndex((rank) => rank.id === myRanking.id) >= 0
               ? `#${rankings.findIndex((rank) => rank.id === myRanking.id) + 1}`
-              : 'Ngoài top 20'}
+              : rankTranslate('outsideTop20')}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black text-blue-900">Xếp hạng của bạn</p>
-            <p className="text-sm font-bold text-slate-800 truncate">{myRanking.user?.fullName || 'Bạn'}</p>
+            <p className="text-xs font-black text-blue-900">{rankTranslate('yourRanking')}</p>
+            <p className="text-sm font-bold text-slate-800 truncate">{myRanking.user?.fullName || rankTranslate('you')}</p>
           </div>
           <span className="text-sm font-black text-blue-700">{myRanking.eloPoints} ELO</span>
         </div>
@@ -315,19 +316,19 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center bg-white rounded-lg border border-slate-200/80 shadow-sm">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-          <p className="text-sm text-slate-450 font-bold animate-pulse">Đang tải dữ liệu xếp hạng...</p>
+          <p className="text-sm text-slate-450 font-bold animate-pulse">{rankTranslate('loading')}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200/80 overflow-hidden">
           <div className="p-16 text-center">
             <Award className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-800 font-bold text-lg">
-              {searchQuery ? 'Không tìm thấy thành viên' : 'Chưa có trận đấu xếp hạng'}
+              {searchQuery ? rankTranslate('noMemberFound') : rankTranslate('noRankedMatches')}
             </p>
             <p className="text-slate-450 mt-2 max-w-sm mx-auto text-xs leading-relaxed font-semibold">
               {searchQuery
-                ? 'Thử tìm kiếm với tên khác.'
-                : 'Thành viên sẽ xuất hiện tại đây sau khi tham gia thi đấu.'}
+                ? rankTranslate('tryDifferentSearch')
+                : rankTranslate('membersAppearAfterParticipating')}
             </p>
             {!searchQuery && onGoToTournaments && (
               <button

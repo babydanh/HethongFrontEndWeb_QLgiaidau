@@ -7,14 +7,29 @@ interface RegionApiResponse {
   data?: Region[];
 }
 
+const normalizeRegionLabel = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('vi-VN');
+
+export const sortRegions = (regions: Region[]) =>
+  [...regions].sort((a, b) => {
+    const byLabel = normalizeRegionLabel(a.fullName || a.name).localeCompare(
+      normalizeRegionLabel(b.fullName || b.name),
+      'vi-VN',
+    );
+    return byLabel || a.code.localeCompare(b.code, 'en');
+  });
+
 const unwrapList = (res: unknown): Region[] => {
   if (Array.isArray(res)) {
-    return res as Region[];
+    return sortRegions(res as Region[]);
   }
   if (res && typeof res === 'object' && 'data' in res) {
     const data = (res as RegionApiResponse).data;
     if (Array.isArray(data)) {
-      return data;
+      return sortRegions(data);
     }
   }
   return [];

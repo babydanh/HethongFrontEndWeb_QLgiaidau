@@ -8,6 +8,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, ShieldCheck, Flame, Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
@@ -37,6 +38,7 @@ export function PagedDoubleElimView({
   onSelectMatch,
   fallbackSportRuleKind,
 }: Props) {
+  const translate = useTranslations('BracketView');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -111,35 +113,35 @@ export function PagedDoubleElimView({
 
   const getUbLabel = (r: number) => {
     const rIndex = ubRounds.indexOf(r);
-    if (rIndex < 0) return `Vòng ${r} Nhánh thắng`;
-    if (gfMatches.length > 0 && rIndex === ubRounds.length - 1) return 'Chung kết Tổng';
+    if (rIndex < 0) return translate('upperRound', { number: r });
+    if (gfMatches.length > 0 && rIndex === ubRounds.length - 1) return translate('grandFinal');
 
     const ubOnlyRounds = gfMatches.length > 0 ? ubRounds.length - 1 : ubRounds.length;
     const fromUbEnd = ubOnlyRounds - 1 - rIndex;
 
-    if (fromUbEnd === 0) return 'Chung kết Nhánh thắng';
-    if (fromUbEnd === 1) return 'Bán kết Nhánh thắng';
-    if (fromUbEnd === 2) return 'Tứ kết Nhánh thắng';
-    if (fromUbEnd === 3) return 'Vòng 16 Nhánh thắng';
-    if (fromUbEnd === 4) return 'Vòng 32 Nhánh thắng';
-    if (fromUbEnd === 5) return 'Vòng 64 Nhánh thắng';
-    if (fromUbEnd === 6) return 'Vòng 128 Nhánh thắng';
-    return `Vòng ${r} Nhánh thắng`;
+    if (fromUbEnd === 0) return translate('upperFinal');
+    if (fromUbEnd === 1) return translate('upperSemifinal');
+    if (fromUbEnd === 2) return translate('upperQuarterfinal');
+    if (fromUbEnd === 3) return translate('upperRound16');
+    if (fromUbEnd === 4) return translate('upperRound32');
+    if (fromUbEnd === 5) return translate('upperRound64');
+    if (fromUbEnd === 6) return translate('upperRound128');
+    return translate('upperRound', { number: r });
   };
 
   const getLbLabel = (r: number) => {
     const rIndex = lbRounds.indexOf(r);
-    if (rIndex < 0) return `Vòng ${r} Nhánh thua`;
+    if (rIndex < 0) return translate('lowerRound', { number: r });
     const fromLbEnd = lbRounds.length - 1 - rIndex;
 
-    if (fromLbEnd === 0) return 'Chung kết Nhánh thua';
-    if (fromLbEnd === 1) return 'Bán kết Nhánh thua';
-    if (fromLbEnd === 2) return 'Tứ kết Nhánh thua';
-    if (fromLbEnd === 3) return 'Vòng 16 Nhánh thua';
-    if (fromLbEnd === 4) return 'Vòng 32 Nhánh thua';
-    if (fromLbEnd === 5) return 'Vòng 64 Nhánh thua';
-    if (fromLbEnd === 6) return 'Vòng 128 Nhánh thua';
-    return `Vòng ${r} Nhánh thua`;
+    if (fromLbEnd === 0) return translate('lowerFinal');
+    if (fromLbEnd === 1) return translate('lowerSemifinal');
+    if (fromLbEnd === 2) return translate('lowerQuarterfinal');
+    if (fromLbEnd === 3) return translate('lowerRound16');
+    if (fromLbEnd === 4) return translate('lowerRound32');
+    if (fromLbEnd === 5) return translate('lowerRound64');
+    if (fromLbEnd === 6) return translate('lowerRound128');
+    return translate('lowerRound', { number: r });
   };
 
   const getRoundTitle = (r: number) =>
@@ -222,7 +224,7 @@ export function PagedDoubleElimView({
           }`}
         >
           <ShieldCheck className="w-4 h-4 text-blue-600" />
-          <span>Nhánh Thắng</span>
+          <span>{translate('upperTab')}</span>
           <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-100/60 text-blue-700 font-semibold">
             {combinedUpperMatches.length}
           </span>
@@ -241,7 +243,7 @@ export function PagedDoubleElimView({
             }`}
           >
             <Flame className="w-4 h-4 text-rose-600" />
-            <span>Nhánh Thua</span>
+            <span>{translate('lowerTab')}</span>
             <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-100/60 text-rose-700 font-semibold">
               {lowerMatches.length}
             </span>
@@ -253,7 +255,7 @@ export function PagedDoubleElimView({
       <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div>
           <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
-            Vòng {activeRoundIndex + 1} / {activeBranchRounds.length}
+            {translate('roundProgress', { current: activeRoundIndex + 1, total: activeBranchRounds.length })}
           </span>
           <h4 className="text-sm sm:text-base font-bold text-slate-900">
             {getRoundTitle(currentRound)}
@@ -267,14 +269,14 @@ export function PagedDoubleElimView({
             className="flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-100 disabled:opacity-40 sm:px-3 sm:py-1.5"
           >
             <ChevronLeft className="h-4 w-4 shrink-0" />
-            <span className="sm:hidden">Trước</span><span className="hidden sm:inline">Vòng trước</span>
+            <span className="sm:hidden">{translate('previousMobile')}</span><span className="hidden sm:inline">{translate('previous')}</span>
           </button>
           <button
             onClick={() => setActiveRoundIndex(Math.min(activeRoundIndex + 1, activeBranchRounds.length - 1))}
             disabled={activeRoundIndex === activeBranchRounds.length - 1}
             className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-40 sm:px-3 sm:py-1.5"
           >
-            <span className="sm:hidden">Sau</span><span className="hidden sm:inline">Vòng tiếp</span>
+            <span className="sm:hidden">{translate('nextMobile')}</span><span className="hidden sm:inline">{translate('next')}</span>
             <ChevronRight className="h-4 w-4 shrink-0" />
           </button>
 
@@ -285,7 +287,7 @@ export function PagedDoubleElimView({
             <button
               onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
-              title="Thu nhỏ"
+              title={translate('zoomOut')}
             >
               -
             </button>
@@ -295,14 +297,14 @@ export function PagedDoubleElimView({
             <button
               onClick={() => setZoom((z) => Math.min(z + 0.1, 1.4))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
-              title="Phóng to"
+              title={translate('zoomIn')}
             >
               +
             </button>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-500 hover:text-slate-900"
-              title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+              title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>

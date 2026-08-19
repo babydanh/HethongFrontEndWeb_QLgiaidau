@@ -30,6 +30,8 @@ import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
 import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
+import { DateTimePicker } from '@/components/ui/Input';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
@@ -263,85 +265,6 @@ const quickDefaults = () => {
   };
 };
 
-interface CustomDateTimePickerProps {
-  label: React.ReactNode;
-  value?: string;
-  onChange: (val: string) => void;
-  error?: string;
-  isPrimary?: boolean;
-  max?: string;
-}
-
-function CustomDateTimePicker({
-  label,
-  value,
-  onChange,
-  error,
-  isPrimary = false,
-  max,
-}: CustomDateTimePickerProps) {
-  const hiddenRef = useRef<HTMLInputElement>(null);
-
-  const triggerPicker = () => {
-    if (hiddenRef.current) {
-      try {
-        hiddenRef.current.showPicker();
-      } catch {
-        hiddenRef.current.focus();
-      }
-    }
-  };
-
-  const displayText = formatDateTimeDisplay(value);
-
-  return (
-    <fieldset
-      onClick={triggerPicker}
-      className={`relative cursor-pointer rounded-xl border p-3.5 shadow-2xs transition ${
-        isPrimary
-          ? 'border-blue-200 bg-blue-50/40 hover:border-blue-300'
-          : 'border-slate-200 bg-white hover:border-slate-300'
-      }`}
-    >
-      <legend className={`px-1.5 text-xs font-semibold ${isPrimary ? 'text-blue-900' : 'text-slate-700'}`}>
-        {label}
-      </legend>
-      <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-        <span className={`font-medium ${displayText ? 'text-slate-800' : 'font-normal text-slate-400'}`}>
-          {displayText || 'dd/mm/yyyy --:--'}
-        </span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-4 w-4 shrink-0 text-slate-400"
-        >
-          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-          <line x1="16" x2="16" y1="2" y2="6" />
-          <line x1="8" x2="8" y1="2" y2="6" />
-          <line x1="3" x2="21" y1="10" y2="10" />
-        </svg>
-        <input
-          ref={hiddenRef}
-          type="datetime-local"
-          value={value || ''}
-          max={max}
-          onChange={(e) => onChange(e.target.value)}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 pointer-events-none"
-          tabIndex={-1}
-        />
-      </div>
-      {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
-    </fieldset>
-  );
-}
-
 export default function QuickTournamentCreate() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -373,6 +296,7 @@ export default function QuickTournamentCreate() {
   const visibility = useWatch({ control, name: 'visibility' });
   const registrationMode = useWatch({ control, name: 'registrationMode' });
   const province = useWatch({ control, name: 'province' });
+  const ward = useWatch({ control, name: 'ward' });
   const registrationStart = useWatch({ control, name: 'registrationStart' });
   const registrationEnd = useWatch({ control, name: 'registrationEnd' });
   const startDate = useWatch({ control, name: 'startDate' });
@@ -938,24 +862,23 @@ export default function QuickTournamentCreate() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <CustomDateTimePicker
+                  <DateTimePicker
                     label="Mở đăng ký"
                     value={registrationStart}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
-                  <CustomDateTimePicker
+                  <DateTimePicker
                     label="Ngày bắt đầu giải"
                     value={startDate}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
-                    isPrimary
                   />
 
                   <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                     <div className="grid gap-4 sm:grid-cols-2">
-                  <CustomDateTimePicker
+                  <DateTimePicker
                         label="Đóng đăng ký"
                         value={registrationEnd}
                         onChange={handleRegistrationEndChange}
@@ -963,7 +886,7 @@ export default function QuickTournamentCreate() {
                         max={startDate || undefined}
                       />
 
-                      <CustomDateTimePicker
+                      <DateTimePicker
                         label="Kết thúc dự kiến"
                         value={endDate}
                         onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
@@ -1024,41 +947,30 @@ export default function QuickTournamentCreate() {
                     Khu vực hành chính <span className="text-rose-500">*</span>
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <select
-                        {...register('province', {
-                          onChange: () => {
-                            setWards([]);
-                            setValue('ward', '');
-                          },
-                        })}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500"
-                      >
-                        <option value="">-- Chọn Tỉnh / Thành phố (*) --</option>
-                        {provinces.map((item) => (
-                          <option key={item.code} value={item.code}>
-                            {item.fullName || item.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.province && <span className="mt-1 block text-xs text-rose-600">{errors.province.message}</span>}
+                    <div>
+                      <SearchableRegionSelect
+                        value={province || ''}
+                        options={provinces}
+                        inputName="province"
+                        placeholder="Gõ để tìm Tỉnh / Thành phố (*)"
+                        onChange={(value) => {
+                          setWards([]);
+                          setValue('province', value, { shouldValidate: true, shouldDirty: true });
+                          setValue('ward', '', { shouldValidate: true, shouldDirty: true });
+                        }}
+                        error={errors.province?.message}
+                      />
                     </div>
                     <div>
-                      <select
-                        {...register('ward')}
+                      <SearchableRegionSelect
+                        value={ward || ''}
+                        options={wards}
+                        inputName="ward"
                         disabled={!province || wards.length === 0}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
-                      >
-                        <option value="">
-                          {!province ? '-- Chọn Tỉnh/Thành trước --' : wards.length === 0 ? '-- Đang tải danh sách... --' : '-- Chọn Phường / Xã --'}
-                        </option>
-                        {wards.map((item) => (
-                          <option key={item.code} value={item.code}>
-                            {item.fullName || item.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.ward && <span className="mt-1 block text-xs text-rose-600">{errors.ward.message}</span>}
+                        placeholder={!province ? 'Chọn Tỉnh/Thành trước' : wards.length === 0 ? 'Đang tải danh sách...' : 'Gõ để tìm Phường / Xã'}
+                        onChange={(value) => setValue('ward', value, { shouldValidate: true, shouldDirty: true })}
+                        error={errors.ward?.message}
+                      />
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-slate-500">

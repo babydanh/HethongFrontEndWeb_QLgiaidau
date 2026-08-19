@@ -13,6 +13,7 @@ import type { SportRulesEnvelope } from '@/types/tournament';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
 import ShareModal from '@/components/common/ShareModal';
 import { BRAND } from '@/constants/brand';
+import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 
 interface EnrichedTournament {
   id: string;
@@ -873,47 +874,37 @@ export default function MatchesListPage() {
               {/* Tỉnh / Thành phố */}
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("provinceCity")}</label>
-                <div className="relative">
-                  <select
-                    value={selectedProvince}
-                    onChange={(event) => {
-                      setSelectedProvince(event.target.value);
+                  <SearchableRegionSelect
+                    value={provinces.find((province) => province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '') === selectedProvince)?.code || ''}
+                    options={provinces}
+                    placeholder={translate("allAreas")}
+                    inputName="matches-province"
+                    className="text-xs"
+                    onChange={(code) => {
+                      const selected = provinces.find((province) => province.code === code);
+                      setSelectedProvince(selected ? selected.name.replace(/^(Thành phố|Tỉnh)\s+/i, '') : '');
                       setSelectedWard('');
                       setPage(1);
                     }}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">{translate("allAreas")}</option>
-                    {provinces.map((province) => (
-                      <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
-                        {province.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
+                  />
               </div>
 
               {/* Phường / Xã */}
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("wardCommune")}</label>
-                <div className="relative">
-                  <select
-                    value={selectedWard}
-                    onChange={(event) => {
-                      setSelectedWard(event.target.value);
+                  <SearchableRegionSelect
+                    value={wards.find((ward) => ward.name === selectedWard)?.code || ''}
+                    options={wards}
+                    placeholder={translate("allWards")}
+                    inputName="matches-ward"
+                    className="text-xs"
+                    disabled={!selectedProvince || wards.length === 0}
+                    onChange={(code) => {
+                      const selected = wards.find((ward) => ward.code === code);
+                      setSelectedWard(selected?.name || '');
                       setPage(1);
                     }}
-                    disabled={!selectedProvince}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                  >
-                    <option value="">{translate("allWards")}</option>
-                    {wards.map((ward) => (
-                      <option key={ward.code} value={ward.name}>{ward.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
+                  />
               </div>
 
               {/* Từ ngày */}

@@ -1287,7 +1287,24 @@ export default function UnifiedChatWidget() {
           searchParams: window.location.search,
         }),
       });
-      if (!response.ok || !response.body) throw new Error('AI unavailable');
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => '');
+        let serverMessage = '';
+        try {
+          const parsedBody = JSON.parse(errorBody) as { message?: string | string[]; error?: string };
+          serverMessage = Array.isArray(parsedBody.message) ? parsedBody.message.join(', ') : parsedBody.message || parsedBody.error || '';
+        } catch {
+          serverMessage = errorBody.trim();
+        }
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          serverMessage = retryAfter
+            ? `Hệ thống AI đang giới hạn lượt hỏi. Vui lòng thử lại sau khoảng ${retryAfter} giây.`
+            : 'Hệ thống AI đang giới hạn lượt hỏi. Vui lòng thử lại sau một chút.';
+        }
+        throw new Error(serverMessage || `AI unavailable (${response.status})`);
+      }
+      if (!response.body) throw new Error('AI không trả về luồng dữ liệu.');
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -1330,8 +1347,15 @@ export default function UnifiedChatWidget() {
       }
       if (!answer) toast.error(translate('chatAiNoReply'));
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, translate('connectAiFailed')));
-      setAiMessages((current) => current.slice(0, -2));
+      const errorMessage = getErrorMessage(error, translate('connectAiFailed'));
+      toast.error(errorMessage);
+      setAiMessages((current) => current.map((message, index) => {
+        if (index !== current.length - 1) return message;
+        return {
+          ...message,
+          content: `${translate('connectAiFailed')}\n\n${errorMessage}`,
+        };
+      }));
       setDraft(text);
     } finally {
       setSending(false);

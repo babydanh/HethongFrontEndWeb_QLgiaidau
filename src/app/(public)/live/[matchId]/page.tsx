@@ -156,6 +156,7 @@ export default function LiveMatchPage({ params }: Props) {
   const scoreSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingScorePayloadRef = useRef<ScoreUpdatePayload | null>(null);
   const scoreSyncInFlightRef = useRef(false);
+  const liveMutationInFlightRef = useRef(false);
 
   useEffect(() => {
     optimisticScoresRef.current = scores;
@@ -739,6 +740,7 @@ export default function LiveMatchPage({ params }: Props) {
             // blind retry; refetch the server snapshot and let the user continue
             // from the freshest state.
             const fresh = await matchesApi.getMatchById(matchId);
+            applyServerSnapshot(fresh);
             toast(matchTranslate('scoreChangedOnOtherDevice'), {
               icon: '⚠️',
               id: `score-sync-${matchId}`,
@@ -748,11 +750,31 @@ export default function LiveMatchPage({ params }: Props) {
           }
         } finally {
       scoreSyncInFlightRef.current = false;
-      setIsSubmitting(false);
+      if (!liveMutationInFlightRef.current) setIsSubmitting(false);
       if (pendingScorePayloadRef.current) {
         void flushScoreSync();
       }
     }
+  };
+
+  const flushPendingScoreSync = async () => {
+    if (scoreSyncTimerRef.current) {
+      clearTimeout(scoreSyncTimerRef.current);
+      scoreSyncTimerRef.current = null;
+    }
+    if (pendingScorePayloadRef.current && !scoreSyncInFlightRef.current) {
+      await flushScoreSync();
+    }
+    while (scoreSyncInFlightRef.current || pendingScorePayloadRef.current) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 20));
+    }
+  };
+
+  const beginLiveMutation = () => {
+    if (liveMutationInFlightRef.current) return false;
+    liveMutationInFlightRef.current = true;
+    setIsSubmitting(true);
+    return true;
   };
 
   const enqueueScoreSync = (payload: ScoreUpdatePayload) => {
@@ -938,10 +960,10 @@ export default function LiveMatchPage({ params }: Props) {
     if (!ensureCanControlLiveMatch()) {
       return;
     }
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (!beginLiveMutation()) return;
 
     try {
+      await flushPendingScoreSync();
       // If moving to ONGOING and scores is empty, initialize the first set
       let scoreUpdatePayload = undefined;
       if (newStatus === 'ONGOING' && scores.length === 0) {
@@ -980,6 +1002,7 @@ export default function LiveMatchPage({ params }: Props) {
       console.error(err);
       toast.error(getErrorMessage(err, matchTranslate('statusUpdateFallback')));
     } finally {
+      liveMutationInFlightRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -993,15 +1016,14 @@ export default function LiveMatchPage({ params }: Props) {
     if (overrideEnabled && !appliedOverrideReason) {
       return;
     }
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (!beginLiveMutation()) return;
 
     try {
+      await flushPendingScoreSync();
       const newScores = [...scores];
       const activeIdx = newScores.findIndex((s) => !s.isFinished);
       if (activeIdx === -1) {
         toast.error(matchTranslate('setNotFound'));
-        setIsSubmitting(false);
         return;
       }
 
@@ -1010,7 +1032,6 @@ export default function LiveMatchPage({ params }: Props) {
         const finishValidation = validateSetCanFinish(setObj, activeIdx);
         if (!finishValidation.ok) {
           toast.error(finishValidation.message ?? matchTranslate('setFinishFallback'));
-          setIsSubmitting(false);
           return;
         }
       } else {
@@ -1079,6 +1100,7 @@ export default function LiveMatchPage({ params }: Props) {
         toast.error(getErrorMessage(err, matchTranslate('setFinishErrorFallback')));
       }
     } finally {
+      liveMutationInFlightRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -1097,17 +1119,16 @@ export default function LiveMatchPage({ params }: Props) {
     if (!isLiteMatch && !isFootball && !appliedOverrideReason) {
       return;
     }
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (!beginLiveMutation()) return;
 
     try {
+      await flushPendingScoreSync();
       // Mark current set as finished if it isn't
       const newScores = scores.map((s) => (!s.isFinished ? { ...s, isFinished: true } : s));
 
       const winnerId = winnerTeam === 1 ? match.participant1Id : match.participant2Id;
       if (!winnerId) {
         toast.error(matchTranslate('winnerNotFound'));
-        setIsSubmitting(false);
         return;
       }
 
@@ -1120,21 +1141,20 @@ export default function LiveMatchPage({ params }: Props) {
           && shootoutGoals.p1Goals !== shootoutGoals.p2Goals;
         if (isRegulationDraw && !shootoutIsValid) {
           toast.error(matchTranslate('shootoutMustDiffer'));
-          setIsSubmitting(false);
           return;
         }
         if (isRegulationDraw) {
           const shootoutWinner = shootoutGoals.p1Goals > shootoutGoals.p2Goals ? match.participant1Id : match.participant2Id;
           if (shootoutWinner !== winnerId) {
             toast.error(matchTranslate('shootoutWinnerMismatch'));
-            setIsSubmitting(false);
+
             return;
           }
         } else {
           const scoreWinner = footballScore.team1Goals > footballScore.team2Goals ? match.participant1Id : match.participant2Id;
           if (scoreWinner !== winnerId) {
             toast.error(matchTranslate('footballWinnerMismatch'));
-            setIsSubmitting(false);
+
             return;
           }
         }
@@ -1157,7 +1177,7 @@ export default function LiveMatchPage({ params }: Props) {
         setFootballScore(completedFootball);
         applyServerSnapshot(completedMatch);
         toast.success(matchTranslate('matchCompletedWinner', { winner: winnerTeam === 1 ? team1Name : team2Name }));
-        setIsSubmitting(false);
+
         return;
       }
 
@@ -1187,14 +1207,14 @@ export default function LiveMatchPage({ params }: Props) {
         : undefined;
       if (isFootballDraw && (!Number.isInteger(shootoutGoals.p1Goals) || !Number.isInteger(shootoutGoals.p2Goals) || shootoutGoals.p1Goals < 0 || shootoutGoals.p2Goals < 0 || shootoutGoals.p1Goals === shootoutGoals.p2Goals)) {
         toast.error(matchTranslate('shootoutScoreInvalid'));
-        setIsSubmitting(false);
+
         return;
       }
       if (isFootballDraw) {
         const shootoutWinner = shootoutGoals.p1Goals > shootoutGoals.p2Goals ? match.participant1Id : match.participant2Id;
         if (shootoutWinner !== winnerId) {
           toast.error(matchTranslate('shootoutWinnerMismatch'));
-          setIsSubmitting(false);
+  
           return;
         }
       }
@@ -1221,7 +1241,8 @@ export default function LiveMatchPage({ params }: Props) {
       } else {
         toast.error(getErrorMessage(err, matchTranslate('matchCompleteErrorFallback')));
       }
-    } finally {
+        } finally {
+      liveMutationInFlightRef.current = false;
       setIsSubmitting(false);
     }
   };

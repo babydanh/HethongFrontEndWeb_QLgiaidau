@@ -32,9 +32,9 @@ export type EloDisplayLabels = {
 };
 
 const MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
-  SINGLES: 'Đơn',
-  DOUBLES: 'Đôi',
-  MIXED_DOUBLES: 'Đôi nam nữ',
+  SINGLES: 'Singles',
+  DOUBLES: 'Doubles',
+  MIXED_DOUBLES: 'Mixed doubles',
 };
 
 /** Human-readable label for a match type. */
@@ -42,12 +42,12 @@ export const getEloMatchTypeLabel = (matchType?: string | null, labels?: EloMatc
   if (matchType === 'SINGLES' || matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES') {
     return labels?.[matchType] ?? MATCH_TYPE_LABELS[matchType];
   }
-  return labels?.categoryFallback ?? 'Tổng quan';
+  return labels?.categoryFallback ?? 'Overview';
 };
 
 /** Display name combining category and match type. */
 export const getRankDisplayName = (rank: PlayerRanking): string => {
-  const categoryName = rank.categoryName || 'Môn thi đấu';
+  const categoryName = rank.categoryName || 'Sport';
   const matchTypeLabel = getEloMatchTypeLabel(rank.matchType);
   return `${categoryName} • ${matchTypeLabel}`;
 };
@@ -58,8 +58,8 @@ export const getRankDisplayName = (rank: PlayerRanking): string => {
 
 /** Human-readable tier name from a rank record. */
 export const getRankTierName = (rank: PlayerRanking | null | undefined): string => {
-  if (!rank || rank.matchesPlayed <= 0) return 'Chưa xếp hạng';
-  return rank.tier?.name || rank.tierName || 'Đã xếp hạng';
+  if (!rank || rank.matchesPlayed <= 0) return 'Unranked';
+  return rank.tier?.name || rank.tierName || 'Ranked';
 };
 
 /** Win rate as a rounded percentage. */
@@ -142,7 +142,7 @@ export const getEloProgressInfo = (eloPoints: number, categoryName?: string | nu
       percent: sportProgress.percent,
       currentIdx: sportProgress.currentIndex,
       nextIdx: sportProgress.nextIndex,
-      label: nextName ? (labels?.progressToNext ?? 'Còn {remaining} ELO tới {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName) : (labels?.progressPeak ?? '🏆 Đã đạt đỉnh'),
+      label: nextName ? (labels?.progressToNext ?? '{remaining} ELO to {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName) : (labels?.progressPeak ?? '🏆 Peak reached'),
     };
   }
   const clamped = Math.max(0, eloPoints);
@@ -163,16 +163,16 @@ export const getEloProgressInfo = (eloPoints: number, categoryName?: string | nu
 
   let label: string;
   if (nextIdx === null) {
-    label = '🏆 Đã đạt đỉnh — S';
+    label = '🏆 Peak reached — S';
   } else {
     const currentMin = TIER_THRESHOLDS[currentIdx].minElo;
     const nextMin = TIER_THRESHOLDS[nextIdx].minElo;
     const remaining = nextMin - clamped;
     const nextName = TIER_THRESHOLDS[nextIdx].name;
     if (remaining <= 0) {
-      label = (labels?.progressToNext ?? 'Còn {remaining} ELO tới {nextName}').replace('{remaining}', String(nextMin - currentMin)).replace('{nextName}', nextName);
+      label = (labels?.progressToNext ?? '{remaining} ELO to {nextName}').replace('{remaining}', String(nextMin - currentMin)).replace('{nextName}', nextName);
     } else {
-      label = (labels?.progressToNext ?? 'Còn {remaining} ELO tới {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName);
+      label = (labels?.progressToNext ?? '{remaining} ELO to {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName);
     }
   }
 
@@ -205,7 +205,7 @@ export const getShieldStatus = (rank: PlayerRanking | null | undefined, labels?:
   if (mp <= 0) {
     return {
       state: 'onboarding',
-      copy: labels?.onboardingShield ?? 'Đánh 1 trận xếp hạng để mở khóa ELO và khiên rank.',
+      copy: labels?.onboardingShield ?? 'Play 1 ranked match to unlock ELO and your rank shield.',
       themeClass: 'text-slate-400',
     };
   }
@@ -213,14 +213,14 @@ export const getShieldStatus = (rank: PlayerRanking | null | undefined, labels?:
   if (shieldActive === true) {
     return {
       state: 'active',
-      copy: labels?.shieldActive ?? 'Khiên còn nguyên — đỡ 1 lần rớt khỏi mốc rank hiện tại.',
+      copy: labels?.shieldActive ?? 'Shield intact — protects you once from dropping below your current rank tier.',
       themeClass: 'text-blue-600',
     };
   }
 
   return {
     state: 'broken',
-    copy: labels?.shieldBroken ?? 'Khiên đã vỡ — cần lên rank hoặc rớt rank để hồi lại khiên.',
+    copy: labels?.shieldBroken ?? 'Shield broken — gain or lose a rank to restore it.',
     themeClass: 'text-blue-600',
   };
 };
@@ -244,6 +244,6 @@ export const getShieldIconName = (state: ShieldStatus['state']): string => {
  * Get the "no rank yet" onboarding copy.
  */
 export const getOnboardingCopy = (labels?: EloDisplayLabels): string => {
-  return labels?.onboardingCopy ?? 'Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO.';
+  return labels?.onboardingCopy ?? 'Play 1 ranked match to start your ELO journey.';
 };
 

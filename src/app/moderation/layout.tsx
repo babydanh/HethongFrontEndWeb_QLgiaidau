@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { RouteGuard } from '@/components/shared/RouteGuard';
@@ -23,13 +24,13 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { name: 'Tổng quan điều phối', path: '/moderation', icon: LayoutDashboard },
-  { name: 'Duyệt sao uy tín', path: '/moderation/verification', icon: ShieldCheck },
-  { name: 'Duyệt cộng đồng', path: '/moderation/communities', icon: Building },
-  { name: 'Duyệt đổi thông tin', path: '/moderation/change-requests', icon: UserCog },
-  { name: 'Báo cáo vi phạm', path: '/moderation/reports', icon: ShieldAlert },
-  { name: 'Duyệt giải đấu', path: '/moderation/tournaments', icon: Trophy },
-];
+  { key: 'menuOverview', path: '/moderation', icon: LayoutDashboard },
+  { key: 'menuVerification', path: '/moderation/verification', icon: ShieldCheck },
+  { key: 'menuCommunities', path: '/moderation/communities', icon: Building },
+  { key: 'menuChangeRequests', path: '/moderation/change-requests', icon: UserCog },
+  { key: 'menuReports', path: '/moderation/reports', icon: ShieldAlert },
+  { key: 'menuTournaments', path: '/moderation/tournaments', icon: Trophy },
+] as const;
 
 export default function ModerationLayout({
   children,
@@ -37,6 +38,7 @@ export default function ModerationLayout({
   children: React.ReactNode;
 }) {
   const { user, logout } = useAuthStore();
+  const layoutTranslate = useTranslations('ModerationLayout');
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -69,7 +71,7 @@ export default function ModerationLayout({
                   className="h-8 w-auto object-contain"
                 />
                 <span className="border-l border-slate-300 pl-2 text-sm font-bold text-slate-800">
-                  Điều phối
+                  {layoutTranslate('brandLabel')}
                 </span>
               </Link>
               <button
@@ -102,7 +104,7 @@ export default function ModerationLayout({
                         active ? 'text-white' : 'text-slate-500 group-hover:text-slate-950',
                       )}
                     />
-                    {item.name}
+                    {layoutTranslate(item.key)}
                   </Link>
                 );
               })}
@@ -116,7 +118,7 @@ export default function ModerationLayout({
                 className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
               >
                 <LayoutDashboard className="h-5 w-5" />
-                Sang khu admin
+                {layoutTranslate('adminArea')}
               </Link>
             ) : null}
             <Link
@@ -124,14 +126,14 @@ export default function ModerationLayout({
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900"
             >
               <ArrowLeft className="h-5 w-5" />
-              Quay lại trang chủ
+              {layoutTranslate('backHome')}
             </Link>
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50 hover:text-rose-700"
             >
               <LogOut className="h-5 w-5" />
-              Đăng xuất
+              {layoutTranslate('logout')}
             </button>
           </div>
         </aside>
@@ -147,10 +149,13 @@ export default function ModerationLayout({
               </button>
               <div>
                 <h1 className="text-lg font-bold text-slate-900">
-                  {menuItems.find((item) => item.path === pathname)?.name || 'Điều phối kiểm duyệt'}
+                  {(() => {
+                    const activeItem = menuItems.find((item) => item.path === pathname);
+                    return activeItem ? layoutTranslate(activeItem.key) : layoutTranslate('defaultTitle');
+                  })()}
                 </h1>
                 <p className="text-[11px] text-slate-500">
-                  Khu xử lý duyệt và xác minh an toàn cho người điều phối
+                  {layoutTranslate('description')}
                 </p>
               </div>
             </div>
@@ -159,7 +164,7 @@ export default function ModerationLayout({
               <div className="hidden text-right sm:block">
                 <p className="text-xs font-bold text-slate-800">{user?.fullName}</p>
                 <p className="text-[10px] uppercase tracking-[0.12em] text-blue-600">
-                  {user?.roles?.includes('ADMIN') ? 'Admin đang ở khu điều phối' : 'Người điều phối'}
+                  {user?.roles?.includes('ADMIN') ? layoutTranslate('adminInModeration') : layoutTranslate('moderator')}
                 </p>
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-1000 text-sm font-bold uppercase text-white">

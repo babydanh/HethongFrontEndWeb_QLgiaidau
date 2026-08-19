@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -34,25 +35,26 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { user, logout } = useAuthStore();
+  const layoutTranslate = useTranslations('AdminLayout');
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isModeratorOnly =
     Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
 
   const allMenuItems = [
-    { name: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
-    { name: 'Quản lý sao uy tín', path: '/admin/verification', icon: ShieldCheck },
-    { name: 'Người dùng & phân quyền', path: '/admin/moderation', icon: Users },
-    { name: 'Báo cáo vi phạm', path: '/admin/reports', icon: ShieldAlert },
-    { name: 'Quản lý giải đấu', path: '/admin/tournaments', icon: Trophy },
-    { name: 'Quản lý bộ môn', path: '/admin/categories', icon: Layers },
-    { name: 'Quản lý cộng đồng', path: '/admin/communities', icon: Building },
-    { name: 'Quản lý rút tiền', path: '/admin/payouts', icon: CreditCard },
-    { name: 'Giao dịch hệ thống', path: '/admin/transactions', icon: HandCoins },
-    { name: 'Hỗ trợ người dùng', path: '/admin/support', icon: MessagesSquare },
-    { name: 'Quản lý đổi thông tin', path: '/admin/change-requests', icon: ShieldAlert },
-    { name: 'Cấu hình hệ thống', path: '/admin/configs', icon: Settings },
-  ];
+    { labelKey: 'overview', path: '/admin', icon: LayoutDashboard },
+    { labelKey: 'verification', path: '/admin/verification', icon: ShieldCheck },
+    { labelKey: 'moderation', path: '/admin/moderation', icon: Users },
+    { labelKey: 'reports', path: '/admin/reports', icon: ShieldAlert },
+    { labelKey: 'tournaments', path: '/admin/tournaments', icon: Trophy },
+    { labelKey: 'categories', path: '/admin/categories', icon: Layers },
+    { labelKey: 'communities', path: '/admin/communities', icon: Building },
+    { labelKey: 'payouts', path: '/admin/payouts', icon: CreditCard },
+    { labelKey: 'transactions', path: '/admin/transactions', icon: HandCoins },
+    { labelKey: 'support', path: '/admin/support', icon: MessagesSquare },
+    { labelKey: 'changeRequests', path: '/admin/change-requests', icon: ShieldAlert },
+    { labelKey: 'configs', path: '/admin/configs', icon: Settings },
+  ] as const;
   const menuItems = isModeratorOnly
     ? allMenuItems.filter((item) =>
         ['/admin', '/admin/verification', '/admin/reports', '/admin/tournaments', '/admin/support', '/admin/change-requests'].includes(item.path),
@@ -113,7 +115,7 @@ export default function AdminLayout({
                   )}
                 >
                   <Icon className={cn("w-5 h-5", active ? "text-white" : "text-slate-500 group-hover:text-slate-950")} />
-                  {item.name}
+                  {layoutTranslate(item.labelKey)}
                 </Link>
               );
             })}
@@ -127,7 +129,7 @@ export default function AdminLayout({
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200"
           >
             <ArrowLeft className="w-5 h-5" />
-            Quay lại trang chủ
+            {layoutTranslate('backHome')}
           </Link>
           <Button
             onClick={handleLogout}
@@ -135,7 +137,7 @@ export default function AdminLayout({
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700"
           >
             <LogOut className="w-5 h-5" />
-            Đăng xuất
+            {layoutTranslate('logout')}
           </Button>
         </div>
       </aside>
@@ -152,7 +154,10 @@ export default function AdminLayout({
               <Menu className="w-6 h-6" />
             </button>
             <h1 className="text-lg font-bold text-slate-900">
-              {menuItems.find(m => m.path === pathname)?.name || 'Quản trị hệ thống'}
+              {(() => {
+                const activeItem = menuItems.find((item) => item.path === pathname);
+                return activeItem ? layoutTranslate(activeItem.labelKey) : layoutTranslate('defaultTitle');
+              })()}
             </h1>
           </div>
 

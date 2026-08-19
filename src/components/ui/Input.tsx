@@ -136,12 +136,18 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             disabled={disabled}
             placeholder="dd/mm/yyyy HH:mm"
             onChange={(event) => {
-              setDraft(event.target.value);
-              const parsed = parseManualValue(event.target.value);
-              onChange(parsed ?? '');
+              const nextDraft = event.target.value;
+              setDraft(nextDraft);
+              const parsed = parseManualValue(nextDraft);
+              // Keep the last valid form value while the user edits a segment.
+              // Only commit a complete valid value, or an explicit full clear.
+              if (parsed) onChange(parsed);
+              else if (nextDraft.trim() === '') onChange('');
             }}
             onBlur={() => {
-              if (draft && !parseManualValue(draft)) setDraft(value ? formatDateTime(value) : draft);
+              if (draft && !parseManualValue(draft)) {
+                setDraft(value ? formatDateTime(value) : '');
+              }
             }}
             className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed"
           />

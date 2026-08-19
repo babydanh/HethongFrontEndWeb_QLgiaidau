@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 export default function LiveScorePage() {
     const translate = useTranslations("Common");
+    const liveTranslate = useTranslations("LivePage");
     return (
         <div className="w-full px-margin-mobile md:px-margin-desktop max-w-container-max-width mx-auto py-8">
             <style dangerouslySetInnerHTML={{__html: `
@@ -24,15 +25,15 @@ export default function LiveScorePage() {
                     <h1 className="font-headline-lg text-headline-lg md:font-display md:text-display text-on-surface">{translate('livePageTitle')}</h1>
                     <span className="bg-error text-on-error font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
                         <span className="w-2 h-2 bg-on-error rounded-full pulse-dot"></span>
-                        3 trận
+                            {liveTranslate('matchCount', { count: 3 })}
                     </span>
                 </div>
                 <div className="relative">
                     <select className="appearance-none bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md rounded-lg pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer">
-                        <option>Tất cả giải đấu</option>
-                        <option>Hanoi Open 2026</option>
-                        <option>Saigon Masters</option>
-                        <option>Da Nang Challenger</option>
+                        <option>{liveTranslate('allTournaments')}</option>
+                        <option>{liveTranslate('tournamentHanoi')}</option>
+                        <option>{liveTranslate('tournamentSaigon')}</option>
+                        <option>{liveTranslate('tournamentDaNang')}</option>
                     </select>
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
                 </div>
@@ -46,11 +47,11 @@ export default function LiveScorePage() {
                     <div className="flex justify-between items-center border-b border-surface-variant pb-4">
                         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
                             <span className="material-symbols-outlined text-[16px]">emoji_events</span>
-                            <span className="font-medium">Hanoi Open 2026 • Bán kết</span>
+                            <span className="font-medium">{liveTranslate('tournamentHanoi')} • {liveTranslate('semifinal')}</span>
                         </div>
                         <span className="text-error font-label-sm text-label-sm flex items-center gap-1 bg-error-container px-2 py-1 rounded-full">
                             <span className="w-1.5 h-1.5 bg-error rounded-full pulse-dot"></span>
-                            Đang diễn ra
+                            {liveTranslate('live')}
                         </span>
                     </div>
                     <div className="flex justify-between items-center px-4">
@@ -58,8 +59,8 @@ export default function LiveScorePage() {
                             <div className="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border-2 border-primary relative">
                                 <Image src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop" alt="Team A" fill className="object-cover" />
                             </div>
-                            <span className="font-headline-md text-headline-md text-center">Nguyễn V. A.</span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">Hà Nội</span>
+                            <span className="font-headline-md text-headline-md text-center">{liveTranslate('playerA')}</span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">{liveTranslate('hanoi')}</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 px-8">
                             <div className="flex items-baseline gap-4 font-display text-display font-bold">
@@ -77,14 +78,14 @@ export default function LiveScorePage() {
                             <div className="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden relative">
                                 <Image src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=300&auto=format&fit=crop" alt="Team B" fill className="object-cover" />
                             </div>
-                            <span className="font-headline-md text-headline-md text-center">Trần T. B.</span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">TP.HCM</span>
+                            <span className="font-headline-md text-headline-md text-center">{liveTranslate('playerB')}</span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">{liveTranslate('hoChiMinhCity')}</span>
                         </div>
                     </div>
                     <div className="flex justify-between items-center border-t border-surface-variant pt-4">
                         <div className="flex items-center gap-4 font-body-sm text-body-sm text-on-surface-variant">
-                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">location_on</span>Sân 1</span>
-                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">sports</span>Trọng tài: Lê C.</span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">location_on</span>{liveTranslate('court', { number: 1 })}</span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">sports</span>{liveTranslate('referee', { name: liveTranslate('refereeC') })}</span>
                         </div>
                         <div className="flex gap-3">
                             <button className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
@@ -101,11 +102,11 @@ export default function LiveScorePage() {
                     <div className="flex justify-between items-center border-b border-surface-variant pb-4">
                         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
                             <span className="material-symbols-outlined text-[16px]">emoji_events</span>
-                            <span className="font-medium">Saigon Masters • Tứ kết</span>
+                            <span className="font-medium">{liveTranslate('tournamentSaigon')} • {liveTranslate('quarterfinal')}</span>
                         </div>
                         <span className="text-error font-label-sm text-label-sm flex items-center gap-1 bg-error-container px-2 py-1 rounded-full">
                             <span className="w-1.5 h-1.5 bg-error rounded-full pulse-dot"></span>
-                            Đang diễn ra
+                            {liveTranslate('live')}
                         </span>
                     </div>
                     <div className="flex justify-between items-center px-4">
@@ -113,8 +114,8 @@ export default function LiveScorePage() {
                             <div className="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden relative">
                                 <Image src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=300&auto=format&fit=crop" alt="Team C" fill className="object-cover" />
                             </div>
-                            <span className="font-headline-md text-headline-md text-center">Phạm D.</span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">Đà Nẵng</span>
+                            <span className="font-headline-md text-headline-md text-center">{liveTranslate('playerC')}</span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">{liveTranslate('daNang')}</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 px-8">
                             <div className="flex items-baseline gap-4 font-display text-display font-bold">
@@ -130,30 +131,30 @@ export default function LiveScorePage() {
                             <div className="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border-2 border-primary relative">
                                 <Image src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=300&auto=format&fit=crop" alt="Team D" fill className="object-cover" />
                             </div>
-                            <span className="font-headline-md text-headline-md text-center">Lý E.</span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">Cần Thơ</span>
+                            <span className="font-headline-md text-headline-md text-center">{liveTranslate('playerD')}</span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">{liveTranslate('canTho')}</span>
                         </div>
                     </div>
                     <div className="flex justify-between items-center border-t border-surface-variant pt-4">
                         <div className="flex items-center gap-4 font-body-sm text-body-sm text-on-surface-variant">
-                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">location_on</span>Sân 3</span>
-                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">sports</span>Trọng tài: Hoàng F.</span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">location_on</span>{liveTranslate('court', { number: 3 })}</span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">sports</span>{liveTranslate('referee', { name: liveTranslate('refereeF') })}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Recently Finished Section */}
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-6">Vừa kết thúc</h2>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-6">{liveTranslate('recentlyFinished')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-12 opacity-80">
                 <div className="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm p-6 flex flex-col gap-6 grayscale-[20%]">
                     <div className="flex justify-between items-center border-b border-surface-variant pb-4">
                         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
                             <span className="material-symbols-outlined text-[16px]">emoji_events</span>
-                            <span className="font-medium">Hanoi Open 2026 • Tứ kết</span>
+                            <span className="font-medium">{liveTranslate('tournamentHanoi')} • {liveTranslate('quarterfinal')}</span>
                         </div>
                         <span className="text-on-surface-variant font-label-sm text-label-sm bg-surface-container px-2 py-1 rounded-full">
-                            Kết thúc
+                            {liveTranslate('finished')}
                         </span>
                     </div>
                     <div className="flex justify-between items-center px-4">
@@ -161,7 +162,7 @@ export default function LiveScorePage() {
                             <div className="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden ring-4 ring-green-500/20 border-2 border-green-600 relative">
                                 <Image src="https://images.unsplash.com/photo-1544723795-3cj383439e6k?q=80&w=300&auto=format&fit=crop" alt="Winner" fill className="object-cover" />
                             </div>
-                            <span className="font-headline-md text-headline-md text-center text-green-700 dark:text-green-400">Bùi H. <span className="material-symbols-outlined text-[16px] align-middle">check_circle</span></span>
+                            <span className="font-headline-md text-headline-md text-center text-green-700 dark:text-green-400">{liveTranslate('playerWinner')} <span className="material-symbols-outlined text-[16px] align-middle">check_circle</span></span>
                         </div>
                         <div className="flex flex-col items-center gap-2 px-8">
                             <div className="flex items-baseline gap-4 font-display text-display font-bold">
@@ -178,15 +179,15 @@ export default function LiveScorePage() {
                             <div className="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden relative">
                                 <Image src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?q=80&w=300&auto=format&fit=crop" alt="Loser" fill className="object-cover" />
                             </div>
-                            <span className="font-headline-md text-headline-md text-center">Đinh K.</span>
+                            <span className="font-headline-md text-headline-md text-center">{liveTranslate('playerLoser')}</span>
                         </div>
                     </div>
                     <div className="flex justify-between items-center border-t border-surface-variant pt-4">
                         <div className="font-body-sm text-body-sm text-on-surface-variant">
-                            Kết thúc lúc 14:30
+                            {liveTranslate('finishedAt', { time: '14:30' })}
                         </div>
                         <button className="text-primary hover:text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold transition-colors">
-                            Xem chi tiết
+                            {liveTranslate('viewDetails')}
                         </button>
                     </div>
                 </div>

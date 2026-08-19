@@ -803,8 +803,10 @@ export function useManageState(id: string) {
 
   const resetDivisionEditor = () => {
     setEditingDivision(null);
-    setNewDivisionMatchType(normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory));
-    setNewDivisionName('');
+    const defaultFormat = normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory);
+    const defaultOption = availableMatchFormatOptions.find((item) => item.value === defaultFormat);
+    setNewDivisionMatchType(defaultFormat);
+    setNewDivisionName(defaultOption?.shortLabel ?? 'Đôi Nam');
     setNewDivisionBracketType(divisions[0]?.bracketType ?? 'SINGLE_ELIMINATION');
     setNewDivisionEloEnabled(eloEnabled);
     setNewDivisionMinElo(eloEnabled ? eloMin : null);

@@ -176,8 +176,8 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                     <span className="font-semibold text-slate-700">Lấy từ Hồ sơ</span>
                   </div>
                   <div className="flex justify-between py-0.5 border-b border-slate-200/60">
-                    <span>Email & Số ĐT:</span>
-                    <span className="font-semibold text-slate-700">Tài khoản & Hồ sơ</span>
+                    <span>Email tài khoản:</span>
+                    <span className="font-semibold text-slate-700">Tự động gắn theo nick</span>
                   </div>
                   <div className="flex justify-between py-0.5">
                     <span>Partner / Tên đội:</span>

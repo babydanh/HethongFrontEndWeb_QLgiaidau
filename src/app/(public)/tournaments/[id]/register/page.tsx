@@ -741,6 +741,33 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     divisionGender !== 'MIXED' &&
     userGender !== divisionGender;
 
+  useEffect(() => {
+    if (!user || registrationFields.length === 0) return;
+
+    setCustomResponses((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const field of registrationFields) {
+        if (next[field.id] !== undefined && next[field.id] !== '') continue;
+
+        const labelLower = field.label.toLowerCase();
+        const isEmailField = field.type === 'EMAIL' || labelLower.includes('email') || labelLower.includes('gmail');
+        const isPhoneField = field.type === 'PHONE' || labelLower.includes('điện thoại') || labelLower.includes('sđt') || labelLower.includes('phone');
+
+        if (isEmailField && user.email) {
+          next[field.id] = user.email;
+          changed = true;
+        } else if (isPhoneField && user.phoneNumber) {
+          next[field.id] = user.phoneNumber;
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [user, registrationFields]);
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 md:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">

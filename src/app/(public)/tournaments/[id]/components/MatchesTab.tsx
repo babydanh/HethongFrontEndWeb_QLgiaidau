@@ -25,6 +25,7 @@ type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const matchTranslate = useTranslations('Match');
   const displayTranslate = useTranslations('TournamentDisplay');
   const { openUserProfile } = useUserProfileModalStore();
   const effectiveTournamentId = tournamentId ?? tournament.id;
@@ -160,6 +161,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // Extract unique rounds from current matches
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
 
+  const localizeMatchRoundLabel = (label: string) => label
+    .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
+    .replaceAll('Chung kết', matchTranslate('roundFinal'))
+    .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
+    .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
+    .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
+    .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
+    .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
+    .replaceAll('Lượt', matchTranslate('leg'))
+    .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
+
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
     if (!rawName) return translate('stageDefault');
@@ -265,19 +277,19 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       case 'COMPLETED':
         return (
           <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
-            Kết Thúc
+            {matchTranslate('statusFinished')}
           </span>
         );
       case 'ONGOING':
         return (
           <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-500 text-white animate-pulse">
-            🔴 Trực Tiếp
+            {matchTranslate('statusLive')}
           </span>
         );
       default:
         return (
           <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-blue-50 text-blue-600 border border-blue-200">
-            Chờ Đấu
+            {matchTranslate('statusScheduled')}
           </span>
         );
     }
@@ -292,7 +304,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     if (!participant) {
       return (
         <span className={isOpponentBye ? 'text-blue-600 font-bold text-sm' : 'text-slate-400 font-bold italic'}>
-          {isOpponentBye ? 'Vào thẳng / Đi tiếp' : 'Chờ đối thủ'}
+          {isOpponentBye ? matchTranslate('directAdvance') : matchTranslate('waitingForOpponent')}
         </span>
       );
     }
@@ -311,7 +323,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                   openUserProfile(
                     {
                       id: m.userId,
-                      fullName: m.fullName || 'Thành viên',
+                      fullName: m.fullName || matchTranslate('memberFallback'),
                       avatarUrl: (m as { avatarUrl?: string | null }).avatarUrl || null,
                     },
                     rect,
@@ -320,7 +332,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 }}
                 className="hover:text-blue-600 hover:underline transition-colors cursor-pointer text-left font-bold"
               >
-                {m.fullName || 'Thành viên'}
+                {m.fullName || matchTranslate('memberFallback')}
               </button>
               {idx < participant.members!.length - 1 && <span className="text-slate-350 mx-1">/</span>}
             </span>
@@ -342,7 +354,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       {/* Division Info Header */}
       <div className="flex items-center gap-2 text-xs text-slate-500 font-bold pb-3 border-b border-slate-200/60">
         <Info className="w-4 h-4 text-slate-400" />
-        <span>Phân hạng: <strong className="text-slate-700">{tournament.name}</strong></span>
+        <span>{matchTranslate('divisionLabel')}: <strong className="text-slate-700">{tournament.name}</strong></span>
         {displayMatchLabel !== displayTranslate('unknownFormat') && (
           <span className="text-slate-400">• {displayMatchLabel}</span>
         )}
@@ -354,7 +366,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         <div className="relative w-full">
           <input
             type="text"
-            placeholder="Tìm kiếm theo tên người chơi hoặc tên đội..."
+            placeholder={matchTranslate('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-12 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9"
@@ -365,16 +377,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               onClick={() => setSearchQuery('')}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 hover:text-slate-650 cursor-pointer"
             >
-              XÓA
+              {matchTranslate('clearSearch')}
             </button>
           )}
         </div>
 
         {/* Row 1: Status Filters */}
         <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Trạng thái:</span>
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">{matchTranslate('status')}:</span>
           {(['ALL', 'ONGOING', 'SCHEDULED', 'COMPLETED'] as const).map((filter) => {
-            const label = filter === 'ALL' ? 'Tất cả' : filter === 'ONGOING' ? 'Trực tiếp' : filter === 'SCHEDULED' ? 'Chưa đấu' : 'Đã xong';
+            const label = filter === 'ALL' ? matchTranslate('allStatuses') : filter === 'ONGOING' ? matchTranslate('ongoingStatus') : filter === 'SCHEDULED' ? matchTranslate('scheduledStatus') : matchTranslate('completedStatus');
             const count = filter === 'ALL' ? counts.all : filter === 'ONGOING' ? counts.ongoing : filter === 'SCHEDULED' ? counts.scheduled : counts.completed;
             const isActive = statusFilter === filter;
             return (
@@ -400,7 +412,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               <>
                 {/* Winners Row */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">Nhánh thắng:</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('winnersLabel')}:</span>
                   <button
                     onClick={() => setSelectedRoundKey('ALL')}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
@@ -409,7 +421,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                     }`}
                   >
-                    Tất cả
+                    {matchTranslate('allRounds')}
                   </button>
                   {roundOptions
                     .filter((ro) => ro.branch !== 'LOSERS')
@@ -425,7 +437,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                               : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                           }`}
                         >
-                          {roundOption.label}
+                          {localizeMatchRoundLabel(roundOption.label)}
                           <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
                             ({roundOption.count})
                           </span>
@@ -437,7 +449,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 {/* Losers Row */}
                 {roundOptions.some((ro) => ro.branch === 'LOSERS') && (
                   <div className="flex flex-wrap items-center gap-2 border-t border-slate-50 pt-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">Nhánh thua:</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('losersLabel')}:</span>
                     {roundOptions
                       .filter((ro) => ro.branch === 'LOSERS')
                       .map((roundOption) => {
@@ -452,7 +464,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                 : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                             }`}
                           >
-                            {roundOption.label}
+                            {localizeMatchRoundLabel(roundOption.label)}
                             <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
                               ({roundOption.count})
                             </span>
@@ -465,7 +477,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             ) : (
               /* Single Row for non Double Elimination */
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">Vòng đấu:</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('roundsLabel')}:</span>
                 <button
                   onClick={() => setSelectedRoundKey('ALL')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
@@ -474,7 +486,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                   }`}
                 >
-                  Tất cả vòng
+                  {matchTranslate('allRounds')}
                 </button>
                 {roundOptions.map((roundOption) => {
                   const isActive = selectedRoundKey === roundOption.key;
@@ -488,7 +500,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                       }`}
                     >
-                      {roundOption.label}
+                      {localizeMatchRoundLabel(roundOption.label)}
                       <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
                         ({roundOption.count})
                       </span>
@@ -510,7 +522,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
             const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
             const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
-            const roundLabel = getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize });
+            const roundLabel = localizeMatchRoundLabel(getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize }));
             
             const resolvedRules = resolveMatchSportRules({
               matchConfig: match.matchConfig,
@@ -658,7 +670,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       <div className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                         <span className="truncate max-w-[200px]" title={match.courtName || match.tournament?.venueName || ''}>
-                          Sân: {match.courtName || match.tournament?.venueName}
+                          {matchTranslate('courtPrefix', { court: match.courtName || match.tournament?.venueName || '' })}
                         </span>
                       </div>
                     )}
@@ -669,7 +681,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 flex items-center gap-1 shadow-sm active:scale-95 transition-all"
                   >
                     <Play className="w-3 h-3 text-blue-600 fill-blue-600/10" />
-                    <span>Chi tiết</span>
+                    <span>{matchTranslate('detailsAction')}</span>
                   </Link>
                 </div>
               </div>

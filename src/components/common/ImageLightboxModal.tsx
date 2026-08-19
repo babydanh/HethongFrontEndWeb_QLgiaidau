@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   X,
   ChevronLeft,
@@ -25,6 +26,7 @@ export default function ImageLightboxModal({
   isOpen,
   onClose,
 }: ImageLightboxModalProps) {
+  const translate = useTranslations('ImageLightbox');
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [prevInitialIndex, setPrevInitialIndex] = useState(initialIndex);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
@@ -240,8 +242,8 @@ export default function ImageLightboxModal({
         <button
           type="button"
           onClick={handleZoomOut}
-          aria-label="Thu nhỏ"
-          title="Thu nhỏ (-)"
+          aria-label={translate('zoomOut')}
+          title={translate('zoomOutTitle')}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
           <ZoomOut className="h-5 w-5 text-white" />
@@ -250,7 +252,7 @@ export default function ImageLightboxModal({
         <button
           type="button"
           onClick={() => (scale !== 1 ? resetTransform() : setScale(2))}
-          title="Tỷ lệ phóng to (bấm để chuyển 100% / 200%)"
+          title={translate('zoomToggleTitle')}
           className="px-2.5 py-1 rounded-md hover:bg-white/10 text-xs font-mono font-bold tracking-wider text-white min-w-[56px] text-center transition"
         >
           {Math.round(scale * 100)}%
@@ -259,8 +261,8 @@ export default function ImageLightboxModal({
         <button
           type="button"
           onClick={handleZoomIn}
-          aria-label="Phóng to"
-          title="Phóng to (+)"
+          aria-label={translate('zoomIn')}
+          title={translate('zoomInTitle')}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
           <ZoomIn className="h-5 w-5 text-white" />
@@ -271,8 +273,8 @@ export default function ImageLightboxModal({
         <button
           type="button"
           onClick={handleRotate}
-          aria-label="Xoay ảnh"
-          title="Xoay ảnh 90°"
+          aria-label={translate('rotate')}
+          title={translate('rotateTitle')}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
           <RotateCw className="h-4.5 w-4.5 text-white" />
@@ -281,8 +283,8 @@ export default function ImageLightboxModal({
         <button
           type="button"
           onClick={resetTransform}
-          aria-label="Mặc định"
-          title="Đặt lại kích thước gốc (phím 0)"
+          aria-label={translate('reset')}
+          title={translate('resetTitle')}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
           <RefreshCw className="h-4 w-4 text-white" />
@@ -293,8 +295,8 @@ export default function ImageLightboxModal({
       <button
         type="button"
         onClick={onClose}
-        aria-label="Đóng xem ảnh"
-        title="Đóng (Esc)"
+        aria-label={translate('close')}
+        title={translate('closeTitle')}
         className="absolute right-5 top-4 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-slate-900/90 text-white backdrop-blur-md border border-white/15 hover:bg-white/20 active:scale-95 transition shadow-lg"
       >
         <X className="h-6 w-6" />
@@ -308,8 +310,8 @@ export default function ImageLightboxModal({
             e.stopPropagation();
             handlePrev();
           }}
-          aria-label="Ảnh trước"
-          title="Ảnh trước (←)"
+          aria-label={translate('previous')}
+          title={translate('previousTitle')}
           className="absolute left-4 top-1/2 z-[10000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/90 text-white backdrop-blur-md border border-white/15 transition hover:bg-white/25 active:scale-95 sm:left-8 shadow-xl"
         >
           <ChevronLeft className="h-7 w-7" />
@@ -324,8 +326,8 @@ export default function ImageLightboxModal({
             e.stopPropagation();
             handleNext();
           }}
-          aria-label="Ảnh kế tiếp"
-          title="Ảnh kế tiếp (→)"
+          aria-label={translate('next')}
+          title={translate('nextTitle')}
           className="absolute right-4 top-1/2 z-[10000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/90 text-white backdrop-blur-md border border-white/15 transition hover:bg-white/25 active:scale-95 sm:right-8 shadow-xl"
         >
           <ChevronRight className="h-7 w-7" />
@@ -358,7 +360,7 @@ export default function ImageLightboxModal({
         >
           <img
             src={currentUrl}
-            alt={`Ảnh ${currentIndex + 1}`}
+            alt={translate('imageAlt', { index: currentIndex + 1 })}
             className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain shadow-2xl pointer-events-none select-none"
             draggable={false}
           />
@@ -368,9 +370,7 @@ export default function ImageLightboxModal({
       {/* Bottom Floating Hint & Counter */}
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center gap-1.5 pointer-events-none">
         <div className="rounded-full bg-slate-900/90 px-4 py-1.5 text-xs font-medium text-white/90 backdrop-blur-md border border-white/15 shadow-xl">
-          {scale > 1
-            ? "Lăn chuột để cuộn lên/xuống • Giữ chuột để kéo di chuyển"
-            : "Lăn chuột hoặc bấm nút + để phóng to • Click đúp để mở rộng"}
+          {scale > 1 ? translate('panHint') : translate('zoomHint')}
         </div>
         {images.length > 1 && (
           <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold tracking-widest text-white/90 backdrop-blur-md">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ToolConstructable } from '@editorjs/editorjs';
 import { uploadApi } from '@/features/upload/api';
 
@@ -186,6 +187,7 @@ interface EditorJSAPI {
 }
 
 export default function RichTextEditor({ value, onChange, placeholder, error, label, disabled }: RichTextEditorProps) {
+  const translate = useTranslations('RichTextEditor');
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -223,13 +225,13 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
         holder: containerRef.current,
         data: initialData,
         readOnly: disabled,
-        placeholder: placeholder || 'Nhấn Tab để bắt đầu viết...',
+        placeholder: placeholder || translate('editorPlaceholder'),
         tools: {
           header: {
             class: Header.default as unknown as ToolConstructable,
             inlineToolbar: ['link', 'bold', 'italic'],
             config: {
-              placeholder: 'Nhập tiêu đề...',
+              placeholder: translate('headingPlaceholder'),
               levels: [1, 2, 3, 4],
               defaultLevel: 2
             }
@@ -257,7 +259,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
                     console.error('Upload error', err);
                     return {
                       success: 0,
-                      message: 'Lỗi tải ảnh lên Cloudinary'
+                        message: translate('uploadError')
                     };
                   });
                 },
@@ -273,45 +275,44 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
             }
           }
         },
-        // Vietnamese Translations
-        i18n: {
+            i18n: {
           messages: {
             ui: {
               "blockTunes": {
                 "toggler": {
-                  "Click to tune": "Nhấp để thiết lập",
-                  "or drag to move": "hoặc kéo để di chuyển"
+                  "Click to tune": translate('clickToTune'),
+                  "or drag to move": translate('orDragToMove')
                 }
               },
               "inlineToolbar": {
                 "converter": {
-                  "Convert to": "Chuyển đổi thành"
+                  "Convert to": translate('convertTo')
                 }
               },
               "toolbar": {
                 "toolbox": {
-                  "Add": "Thêm khối"
+                  "Add": translate('addBlock')
                 }
               }
             },
             toolNames: {
-              "Text": "Văn bản",
-              "Heading": "Tiêu đề",
-              "List": "Danh sách",
-              "Image": "Hình ảnh",
-              "Link": "Liên kết",
-              "Bold": "In đậm",
-              "Italic": "In nghiêng"
+              "Text": translate('text'),
+              "Heading": translate('heading'),
+              "List": translate('list'),
+              "Image": translate('image'),
+              "Link": translate('link'),
+              "Bold": translate('bold'),
+              "Italic": translate('italic')
             },
             tools: {
               "link": {
-                "Add a link": "Thêm liên kết"
+                "Add a link": translate('addLink')
               },
               "image": {
-                "Select an Image": "Chọn một hình ảnh từ thiết bị",
-                "Select file": "Chọn tệp",
-                "File": "Tệp",
-                "Caption": "Chú thích ảnh"
+                "Select an Image": translate('selectImage'),
+                "Select file": translate('selectFile'),
+                "File": translate('file'),
+                "Caption": translate('caption')
               }
             }
           }
@@ -331,14 +332,14 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
         editorInstance.destroy();
       }
     };
-  }, [isMounted, disabled]);
+  }, [isMounted, disabled, placeholder, translate]);
 
   if (!isMounted) {
     return (
       <div className="flex flex-col gap-1.5">
         {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
         <div className="h-28 w-full bg-slate-100 rounded-lg animate-pulse border border-slate-200 flex items-center justify-center text-xs text-slate-400">
-          Đang tải trình soạn thảo văn bản...
+          {translate('loading')}
         </div>
       </div>
     );

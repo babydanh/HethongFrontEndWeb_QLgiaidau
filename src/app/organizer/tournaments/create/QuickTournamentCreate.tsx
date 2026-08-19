@@ -426,6 +426,18 @@ export default function QuickTournamentCreate() {
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
+  useEffect(() => {
+    if (!isFormatModalOpen && !isDescriptionEditorOpen && !isAiModalOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (isFormatModalOpen) setIsFormatModalOpen(false);
+      if (isDescriptionEditorOpen) setIsDescriptionEditorOpen(false);
+      if (isAiModalOpen) setIsAiModalOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isAiModalOpen, isDescriptionEditorOpen, isFormatModalOpen]);
+
   const draftKey = `sporto:tournament-quick-draft:${communityId || 'public'}`;
 
   useEffect(() => {

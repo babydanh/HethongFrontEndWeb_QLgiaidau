@@ -17,6 +17,7 @@ interface Props {
 
 export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Props) {
   const translate = useTranslations('Common');
+  const matchTranslate = useTranslations('Match');
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -94,6 +95,17 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
     return null; // Hide the widget entirely if there are no live matches
   }
 
+  const localizeMatchRoundLabel = (label: string) => label
+    .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
+    .replaceAll('Chung kết', matchTranslate('roundFinal'))
+    .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
+    .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
+    .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
+    .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
+    .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
+    .replaceAll('Lượt', matchTranslate('leg'))
+    .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
+
   return (
     <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg p-5 md:p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
@@ -130,12 +142,12 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
             format?: TournamentFormatForRoundLabel;
             maxParticipants?: number | null;
           } | null | undefined;
-          const roundLabel = getMatchRoundLabel({
+          const roundLabel = localizeMatchRoundLabel(getMatchRoundLabel({
             match,
             matches,
             tournamentFormat: tournamentInfo?.format,
             bracketSize: tournamentInfo?.maxParticipants ?? null,
-          });
+          }));
           return (
             <div
               key={match.id}

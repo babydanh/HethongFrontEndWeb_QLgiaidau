@@ -169,15 +169,15 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                 <h3 className="mt-2 text-base font-bold text-slate-900">{tournament.name}</h3>
 
                 {/* Các trường mặc định có sẵn từ hệ thống */}
-                <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 space-y-2 text-[11px] text-slate-500">
+                <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 space-y-1.5 text-[11px] text-slate-500">
                   <p className="font-bold text-slate-700 text-xs">Thông tin mặc định (Hệ thống tự lấy):</p>
                   <div className="flex justify-between py-0.5 border-b border-slate-200/60">
                     <span>Họ và tên VĐV:</span>
-                    <span className="font-semibold text-slate-700">Lấy từ Profile</span>
+                    <span className="font-semibold text-slate-700">Lấy từ Hồ sơ</span>
                   </div>
                   <div className="flex justify-between py-0.5 border-b border-slate-200/60">
                     <span>Email & Số ĐT:</span>
-                    <span className="font-semibold text-slate-700">Lấy từ Profile</span>
+                    <span className="font-semibold text-slate-700">Tài khoản & Hồ sơ</span>
                   </div>
                   <div className="flex justify-between py-0.5">
                     <span>Partner / Tên đội:</span>

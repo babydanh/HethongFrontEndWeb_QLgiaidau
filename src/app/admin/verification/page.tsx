@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Button } from '@/components/ui/Button';
@@ -28,6 +29,8 @@ interface TicketData {
 }
 
 export default function VerificationPage() {
+  const translate = useTranslations('AdminVerification');
+  const locale = useLocale();
   const { user } = useAuthStore();
   const isModeratorOnly =
     Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
@@ -49,7 +52,7 @@ export default function VerificationPage() {
       setTickets(response.data || []);
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Không thể lấy danh sách đơn xác minh');
+      toast.error(translate('loadError'));
     } finally {
       setLoading(false);
     }
@@ -64,28 +67,28 @@ export default function VerificationPage() {
     setProcessing(true);
     try {
       await api.patch(`/admin/verification-tickets/${id}/approve`);
-      toast.success('Đã phê duyệt tài khoản thành công!');
+      toast.success(translate('approveSuccess'));
       fetchTickets();
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Lỗi khi phê duyệt yêu cầu');
+      toast.error(translate('approveError'));
     } finally {
       setProcessing(false);
     }
   };
 
   const handleRevoke = async (id: string) => {
-    if (!window.confirm('Thu hồi sao uy tín của người dùng này?')) return;
+    if (!window.confirm(translate('revokeConfirm'))) return;
     setProcessing(true);
     try {
       await api.patch(`/admin/verification-tickets/${id}/reject`, {
         rejectReason: 'Thu hồi bởi Admin',
       });
-      toast.success('Đã thu hồi sao uy tín');
+      toast.success(translate('revokeSuccess'));
       fetchTickets();
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Lỗi khi thu hồi');
+      toast.error(translate('revokeError'));
     } finally {
       setProcessing(false);
     }
@@ -93,7 +96,7 @@ export default function VerificationPage() {
 
   const handleRejectSubmit = async () => {
     if (!selectedTicket || !rejectReason.trim()) {
-      toast.error('Vui lòng nhập lý do từ chối');
+      toast.error(translate('rejectReasonRequired'));
       return;
     }
     setProcessing(true);
@@ -101,14 +104,14 @@ export default function VerificationPage() {
       await api.patch(`/admin/verification-tickets/${selectedTicket.ticket.id}/reject`, {
         rejectReason: rejectReason.trim(),
       });
-      toast.success('Đã từ chối yêu cầu xác minh');
+      toast.success(translate('rejectSuccess'));
       setShowRejectModal(false);
       setRejectReason('');
       setSelectedTicket(null);
       fetchTickets();
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Lỗi khi từ chối yêu cầu');
+      toast.error(translate('rejectError'));
     } finally {
       setProcessing(false);
     }
@@ -142,11 +145,9 @@ export default function VerificationPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Quản lý &quot;Sao Uy Tín&quot;</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{translate('title')}</h2>
           <p className="text-slate-500 text-sm">
-            {isModeratorOnly
-              ? 'Xem xét, cấp và thu hồi chứng nhận tài khoản uy tín.'
-              : 'Cấp và thu hồi chứng nhận sao uy tín cho người dùng.'}
+            {isModeratorOnly ? translate('moderatorDescription') : translate('adminDescription')}
           </p>
         </div>
       </div>
@@ -156,7 +157,7 @@ export default function VerificationPage() {
         <div className="flex items-center gap-2 min-w-[140px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
-            type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+            type="text" placeholder={translate('fromDate')} value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
@@ -164,21 +165,21 @@ export default function VerificationPage() {
         <div className="flex items-center gap-2 min-w-[140px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
-            type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+            type="text" placeholder={translate('toDate')} value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
         </div>
         <div className="flex items-center gap-2 min-w-[180px]">
-          <span className="text-xs text-gray-400 font-semibold">Trạng thái:</span>
+          <span className="text-xs text-gray-400 font-semibold">{translate('statusLabel')}</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
           >
-            <option value="PENDING">Chờ duyệt</option>
-            <option value="APPROVED">Đã cấp</option>
-            <option value="REJECTED">Đã từ chối</option>
+            <option value="PENDING">{translate('statusPending')}</option>
+            <option value="APPROVED">{translate('statusApproved')}</option>
+            <option value="REJECTED">{translate('statusRejected')}</option>
           </select>
         </div>
       </div>
@@ -190,8 +191,8 @@ export default function VerificationPage() {
       ) : filteredTickets.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-2">
           <ShieldAlert className="w-12 h-12 mx-auto text-slate-400" />
-          <p className="text-base font-medium text-slate-800">Không có đơn xác minh nào</p>
-          <p className="text-xs text-slate-500">Thử thay đổi bộ lọc trạng thái hoặc ngày.</p>
+          <p className="text-base font-medium text-slate-800">{translate('emptyTitle')}</p>
+          <p className="text-xs text-slate-500">{translate('emptyHint')}</p>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
@@ -199,12 +200,12 @@ export default function VerificationPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Người gửi</th>
-                  <th className="p-4">Số điện thoại</th>
-                  <th className="p-4">Ngày gửi</th>
-                  <th className="p-4">Trạng thái</th>
-                  <th className="p-4">Tài liệu</th>
-                  <th className="p-4 pr-6 text-right">Thao tác</th>
+                  <th className="p-4 pl-6">{translate('sender')}</th>
+                  <th className="p-4">{translate('phone')}</th>
+                  <th className="p-4">{translate('submittedDate')}</th>
+                  <th className="p-4">{translate('status')}</th>
+                  <th className="p-4">{translate('documents')}</th>
+                  <th className="p-4 pr-6 text-right">{translate('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
@@ -237,7 +238,7 @@ export default function VerificationPage() {
                     <td className="p-4">
                       <span className="flex items-center gap-1.5 text-slate-500 text-xs">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {new Date(item.ticket.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(item.ticket.createdAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                       </span>
                     </td>
                     <td className="p-4">
@@ -248,7 +249,7 @@ export default function VerificationPage() {
                           ? 'bg-amber-50 text-amber-600 border-amber-200'
                           : 'bg-gray-50 text-gray-500 border-gray-200'
                       }`}>
-                        {item.ticket.status === 'APPROVED' ? 'Đã cấp' : item.ticket.status === 'PENDING' ? 'Chờ' : 'Từ chối'}
+                        {item.ticket.status === 'APPROVED' ? translate('statusShortApproved') : item.ticket.status === 'PENDING' ? translate('statusShortPending') : translate('statusShortRejected')}
                       </span>
                     </td>
                     <td className="p-4">
@@ -269,16 +270,16 @@ export default function VerificationPage() {
                           <>
                             <Button onClick={() => handleApprove(item.ticket.id)} disabled={processing}
                               variant="success" size="sm"
-                            ><Check className="w-3.5 h-3.5" /> Duyệt</Button>
+                            ><Check className="w-3.5 h-3.5" /> {translate('approve')}</Button>
                             <Button onClick={() => { setSelectedTicket(item); setShowRejectModal(true); }} disabled={processing}
                               variant="destructive" size="sm"
-                            ><X className="w-3.5 h-3.5" /> Từ chối</Button>
+                            ><X className="w-3.5 h-3.5" /> {translate('reject')}</Button>
                           </>
                         )}
                         {item.ticket.status === 'APPROVED' && (
                           <Button onClick={() => handleRevoke(item.ticket.id)} disabled={processing}
                             variant="warning" size="sm"
-                          ><RotateCcw className="w-3.5 h-3.5" /> Thu hồi</Button>
+                          ><RotateCcw className="w-3.5 h-3.5" /> {translate('revoke')}</Button>
                         )}
                       </div>
                     </td>
@@ -295,27 +296,27 @@ export default function VerificationPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xl">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Từ Chối Yêu Cầu Xác Minh</h3>
+              <h3 className="text-lg font-bold text-slate-900">{translate('rejectModalTitle')}</h3>
               <button onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
                 className="text-slate-400 hover:text-slate-600 transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <p className="text-xs text-slate-500 mb-1">Người gửi</p>
+                <p className="text-xs text-slate-500 mb-1">{translate('senderLabel')}</p>
                 <p className="text-sm font-semibold text-slate-800">{selectedTicket.user.fullName}</p>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs text-slate-500">Lý do từ chối</label>
+                <label className="text-xs text-slate-500">{translate('rejectReasonLabel')}</label>
                 <textarea rows={4} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Nhập lý do chi tiết..."
+                  placeholder={translate('rejectReasonPlaceholder')}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none resize-none" />
               </div>
             </div>
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
               <Button variant="outline" onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
-                className="text-xs">Hủy</Button>
+                className="text-xs">{translate('cancel')}</Button>
               <Button onClick={handleRejectSubmit} disabled={processing || !rejectReason.trim()}
-                variant="destructive" className="text-xs">Gửi từ chối</Button>
+                variant="destructive" className="text-xs">{translate('submitRejection')}</Button>
             </div>
           </div>
         </div>

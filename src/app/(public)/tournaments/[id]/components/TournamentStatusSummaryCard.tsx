@@ -50,7 +50,7 @@ function ParticipantAvatars({ participant, playerLabel }: { participant: Match['
     return (
       <div className="flex items-center -space-x-3 shrink-0">
         {members.slice(0, 2).map((m, idx) => {
-          const fallbackInitials = encodeURIComponent(m.fullName || `VĐV ${idx + 1}`);
+          const fallbackInitials = encodeURIComponent(m.fullName || `Player ${idx + 1}`);
           return (
             <img
               key={m.userId || idx}
@@ -89,8 +89,8 @@ function ParticipantAvatars({ participant, playerLabel }: { participant: Match['
   );
 }
 
-function getParticipantDisplayName(participant: Match['participant1']) {
-  if (!participant) return 'Chờ đối thủ';
+function getParticipantDisplayName(participant: Match['participant1'], waitingLabel: string) {
+  if (!participant) return waitingLabel;
   const members = participant.members && Array.isArray(participant.members) ? participant.members : [];
   if (members.length >= 2) {
     const name1 = members[0]?.fullName?.trim() || '';
@@ -100,7 +100,7 @@ function getParticipantDisplayName(participant: Match['participant1']) {
   if (members.length === 1 && members[0]?.fullName) {
     return members[0].fullName;
   }
-  return participant.teamName || 'Chờ đối thủ';
+  return participant.teamName || waitingLabel;
 }
 
 export default function TournamentStatusSummaryCard({
@@ -192,7 +192,7 @@ export default function TournamentStatusSummaryCard({
     <section className="mt-4 overflow-hidden rounded-xl border border-slate-250/80 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <h2 className="text-sm font-bold text-slate-900">
-          {completed ? 'Kết quả giải đấu' : inProgress ? 'Đang diễn ra' : 'Sắp diễn ra'}
+          {completed ? translate('summary.resultsTitle') : inProgress ? translate('summary.inProgressTitle') : translate('summary.upcomingTitle')}
         </h2>
         <span className={`h-2.5 w-2.5 rounded-full ${completed ? 'bg-slate-300' : inProgress ? 'bg-rose-500 animate-pulse' : 'bg-sky-400'}`} />
       </div>
@@ -203,8 +203,8 @@ export default function TournamentStatusSummaryCard({
             <div key={`${award.rank}-${award.participant?.participantId ?? 'unknown'}`} className="flex items-center gap-3 rounded-md bg-amber-50 px-3 py-2.5">
               <Trophy className={`h-4 w-4 shrink-0 ${award.rank === 1 ? 'text-amber-500' : 'text-slate-500'}`} />
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Hạng {award.rank}</p>
-                <p className="truncate text-sm font-bold text-slate-800">{award.participant?.teamName ?? 'Đang xác nhận'}</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{translate('summary.rank', { rank: award.rank })}</p>
+                <p className="truncate text-sm font-bold text-slate-800">{award.participant?.teamName ?? translate('summary.confirming')}</p>
               </div>
             </div>
           )) : (
@@ -231,17 +231,17 @@ export default function TournamentStatusSummaryCard({
                   <span className={`px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
                     inProgress ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse' : 'bg-blue-50 text-blue-600 border border-blue-200'
                   }`}>
-                    {inProgress ? '🔴 Trực tiếp' : 'Sắp đấu'}
+                    {inProgress ? `🔴 ${translate('summary.liveMatch')}` : translate('summary.upcomingMatch')}
                   </span>
                   <div className="text-slate-600 font-bold truncate max-w-[190px] text-right">
                     <span>{translate('matchNumber', { number: match.matchOrder ?? 1 })}</span>
                     {match.stage?.type ? (
-                      <span className="text-slate-400 font-semibold"> • {match.stage.type === 'ROUND_ROBIN' ? 'Vòng bảng' : 'Vòng loại'}</span>
+                      <span className="text-slate-400 font-semibold"> • {match.stage.type === 'ROUND_ROBIN' ? translate('summary.groupStage') : translate('summary.knockoutStage')}</span>
                     ) : match.roundNumber ? (
-                      <span className="text-slate-400 font-semibold"> • Vòng {match.roundNumber}</span>
+                      <span className="text-slate-400 font-semibold"> • {translate('summary.round', { round: match.roundNumber })}</span>
                     ) : null}
                     {(match.courtName || match.tournament?.venueName) && (
-                      <span className="text-slate-500 font-bold"> (Sân {match.courtName || match.tournament?.venueName})</span>
+                      <span className="text-slate-500 font-bold"> ({translate('summary.court', { court: match.courtName || match.tournament?.venueName || '' })})</span>
                     )}
                   </div>
                 </div>
@@ -252,7 +252,7 @@ export default function TournamentStatusSummaryCard({
                   <div className="flex flex-col items-center min-w-0 flex-1 text-center">
                     <ParticipantAvatars participant={match.participant1} playerLabel={translate('player')} />
                     <span className="mt-1.5 text-xs font-bold text-slate-800 line-clamp-2 leading-tight">
-                      {getParticipantDisplayName(match.participant1)}
+                      {getParticipantDisplayName(match.participant1, translate('summary.waitingOpponent'))}
                     </span>
                   </div>
 
@@ -271,7 +271,7 @@ export default function TournamentStatusSummaryCard({
                   <div className="flex flex-col items-center min-w-0 flex-1 text-center">
                     <ParticipantAvatars participant={match.participant2} playerLabel={translate('player')} />
                     <span className="mt-1.5 text-xs font-bold text-slate-800 line-clamp-2 leading-tight">
-                      {getParticipantDisplayName(match.participant2)}
+                      {getParticipantDisplayName(match.participant2, translate('summary.waitingOpponent'))}
                     </span>
                   </div>
                 </div>

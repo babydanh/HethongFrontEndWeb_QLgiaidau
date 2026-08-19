@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
-import { Tournament, BracketMatch } from '@/features/tournaments/api';
+import { Tournament, Division, BracketMatch, divisionsApi } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
 import { buildRoundFilterOptions, getMatchRoundLabel } from '@/utils/match-round-label';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import { getDivisionMatchLabel } from '@/utils/tournament-display';
 
 interface Props {
   tournament: Tournament;
@@ -24,8 +25,41 @@ type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const displayTranslate = useTranslations('TournamentDisplay');
   const { openUserProfile } = useUserProfileModalStore();
   const effectiveTournamentId = tournamentId ?? tournament.id;
+  const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!divisionId) {
+      void Promise.resolve().then(() => {
+        if (!cancelled) setDisplayDivision(null);
+      });
+      return () => { cancelled = true; };
+    }
+    void divisionsApi.getDivisions(effectiveTournamentId)
+      .then((response) => {
+        if (!cancelled) setDisplayDivision(response.data?.find((division) => division.id === divisionId) ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setDisplayDivision(null);
+      });
+    return () => { cancelled = true; };
+  }, [divisionId, effectiveTournamentId]);
+
+  const displayMatchLabel = getDivisionMatchLabel(
+    divisionId ? displayDivision?.matchType : tournament.matchType,
+    divisionId ? displayDivision?.genderRestriction : tournament.genderRestriction,
+    {
+      maleGender: displayTranslate('maleGender'),
+      femaleGender: displayTranslate('femaleGender'),
+      mixedGender: displayTranslate('mixedGender'),
+      singlesFormat: displayTranslate('singlesFormat'),
+      doublesFormat: displayTranslate('doublesFormat'),
+      mixedDoublesFormat: displayTranslate('mixedDoublesFormat'),
+    },
+  );
   
   // Pagination Hook
   const { data: matches, setData: setMatches, fetchNextPage, hasMore, isLoading, resetAndFetch } = useCursorPagination<BracketMatch>(
@@ -309,8 +343,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       <div className="flex items-center gap-2 text-xs text-slate-500 font-bold pb-3 border-b border-slate-200/60">
         <Info className="w-4 h-4 text-slate-400" />
         <span>Phân hạng: <strong className="text-slate-700">{tournament.name}</strong></span>
-        {tournament.genderRestriction && (
-          <span className="text-slate-400">• {tournament.genderRestriction}</span>
+        {displayMatchLabel !== displayTranslate('unknownFormat') && (
+          <span className="text-slate-400">• {displayMatchLabel}</span>
         )}
       </div>
 

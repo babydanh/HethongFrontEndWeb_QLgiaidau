@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Division, Tournament, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
@@ -80,6 +80,18 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const translate = useTranslations('TournamentDetail');
   const registrationTranslate = useTranslations('RegistrationMode');
 const commonTranslate = useTranslations('Common');
+  const locale = useLocale();
+  const statusLabels = {
+    DRAFT: translate('status.draft'),
+    PENDING_APPROVAL: translate('status.pendingApproval'),
+    PENDING_DELETE: translate('status.pendingDelete'),
+    UPCOMING: translate('status.upcoming'),
+    REGISTRATION_OPEN: translate('status.registrationOpen'),
+    REGISTRATION_CLOSED: translate('status.registrationClosed'),
+    IN_PROGRESS: translate('status.inProgress'),
+    COMPLETED: translate('status.completed'),
+    CANCELLED: translate('status.cancelled'),
+  };
   const [tournament, setTournament] = useState<Tournament | null>(initialTournament);
   const [isInitialLoading, setIsInitialLoading] = useState(!initialTournament);
   const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
@@ -167,7 +179,7 @@ const commonTranslate = useTranslations('Common');
             if (status && status !== 429 && status < 500) throw error;
           }
         }
-        if (!response) throw lastError ?? new Error('Không thể tải dữ liệu giải đấu');
+        if (!response) throw lastError ?? new Error('Unable to load tournament data');
         if (!isMounted) {
           return;
         }
@@ -401,9 +413,9 @@ const commonTranslate = useTranslations('Common');
 
   const tabs: { id: TournamentDetailTab; label: string }[] = [
     { id: 'overview', label: translate('overview') },
-    { id: 'teams', label: 'Đội tham gia' },
-    { id: 'bracket', label: 'Bảng đấu' },
-    { id: 'matches', label: 'Lịch thi đấu' },
+    { id: 'teams', label: translate('tabs.teams') },
+    { id: 'bracket', label: translate('tabs.bracket') },
+    { id: 'matches', label: translate('tabs.matches') },
   ];
 
   return (
@@ -434,11 +446,11 @@ const commonTranslate = useTranslations('Common');
             <Link
               href={`/tournaments/${activeTournament.id}`}
               className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
-              title="Xem chi tiết giải đấu"
+              title={translate('viewTournamentDetails')}
             >
               <img
                 src={activeTournament.logoUrl || BRAND.assets.defaultTournamentLogo}
-                alt="Logo giải đấu"
+                alt={activeTournament.name}
                 className="w-full h-full object-contain rounded-full p-2"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = BRAND.assets.defaultTournamentLogo;
@@ -448,16 +460,16 @@ const commonTranslate = useTranslations('Common');
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md border shadow-sm ${getTournamentStatusClassName(activeTournament.status)}`}>
-                  {getTournamentStatusLabel(activeTournament.status).toUpperCase()}
+                  {getTournamentStatusLabel(activeTournament.status, statusLabels).toUpperCase()}
                 </span>
                 <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-sm flex items-center gap-1">
                   <Trophy className="w-3 h-3 text-blue-500" />
                   {(() => {
                     const fmt = (activeTournament.format ?? '').replace('.', '_').replace(' ', '_').toUpperCase();
-                    if (fmt === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
-                    if (fmt === 'DOUBLE_ELIMINATION') return 'NHÁNH THẮNG/THUA';
-                    if (fmt === 'ROUND_ROBIN') return 'VÒNG TRÒN';
-                    if (fmt === 'GROUP_STAGE_KNOCKOUT') return 'VÒNG BẢNG + LOẠI TRỰC TIẾP';
+                    if (fmt === 'SINGLE_ELIMINATION') return translate('format.singleElimination');
+                    if (fmt === 'DOUBLE_ELIMINATION') return translate('format.doubleElimination');
+                    if (fmt === 'ROUND_ROBIN') return translate('format.roundRobin');
+                    if (fmt === 'GROUP_STAGE_KNOCKOUT') return translate('format.groupStageKnockout');
                     return fmt;
                   })()}
                 </span>
@@ -466,7 +478,7 @@ const commonTranslate = useTranslations('Common');
                     ? 'bg-amber-50 text-amber-700 border-amber-300'
                     : 'bg-emerald-50 text-emerald-700 border-emerald-300'
                 }`}>
-                  {activeTournament.isRanked ? '⭐ GIẢI XẾP HẠNG' : '🎾 GIẢI PHONG TRÀO'}
+                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : `🎾 ${translate('casualBadge')}`}
                 </span>
               </div>
 
@@ -478,12 +490,12 @@ const commonTranslate = useTranslations('Common');
                       {formatDate(activeTournament.startDate)}
                       {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
                     </>
-                  ) : '{translate("dateNotSet")}'}
+                  ) : translate('dateNotSet')}
                 </span>
                 <span className="flex min-w-0 max-w-full items-start gap-1.5 md:max-w-[min(100%,760px)]">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                   <span className="break-words whitespace-normal leading-6" title={formatVenueSummary(activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city)}>
-                    {formatVenueSummary(activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city) || 'Chưa cập nhật địa điểm'}
+                    {formatVenueSummary(activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city) || translate('venueNotUpdated')}
                   </span>
                 </span>
               </div>
@@ -533,7 +545,7 @@ const commonTranslate = useTranslations('Common');
                     if (activeTournament.inviteCode) {
                       router.push(`/lite/tournaments/join/${activeTournament.inviteCode}`);
                     } else {
-                      toast.error('Giải đấu chưa có đường dẫn tham gia.');
+                      toast.error(translate('joinLinkUnavailable'));
                     }
                     return;
                   }
@@ -553,7 +565,7 @@ const commonTranslate = useTranslations('Common');
             {isOwner && !isTournamentDraft(activeTournament.status) && (
               <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-center w-full md:w-auto shadow-sm flex items-center justify-center h-10">
                 <p className="text-xs text-slate-600 font-bold whitespace-nowrap">
-                  Bạn là chủ sở hữu
+                  {translate('ownerLabel')}
                 </p>
               </div>
             )}
@@ -589,8 +601,8 @@ const commonTranslate = useTranslations('Common');
               {divisionsList.length > 0 && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">
                   <div className="space-y-0.5">
-                    <h3 className="font-bold text-slate-900 text-sm">Nội dung thi đấu</h3>
-                    <p className="text-[11px] text-slate-400 font-bold">Chọn phân hạng hoặc nội dung thi đấu để xem chi tiết</p>
+                    <h3 className="font-bold text-slate-900 text-sm">{translate('competitionContentTitle')}</h3>
+                    <p className="text-[11px] text-slate-400 font-bold">{translate('competitionContentDescription')}</p>
                   </div>
                   <select
                     value={selectedDivisionId}
@@ -641,7 +653,7 @@ const commonTranslate = useTranslations('Common');
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">{translate("entryFee")}</span>
                 <div className="text-2xl font-bold text-blue-600">
                   {selectedDivision?.entryFee && selectedDivision.entryFee > 0
-                    ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ`
+                    ? `${Number(selectedDivision.entryFee).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} VND`
                     : translate('free')}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">{translate("feeAtRegistration")}</p>
@@ -654,12 +666,12 @@ const commonTranslate = useTranslations('Common');
                   return (
                     <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-lg p-2.5">
                       <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block mb-0.5">
-                        Yêu cầu {isDoublesDiv ? 'ELO Đôi' : 'ELO Đơn'}
+                        {isDoublesDiv ? translate('eloRequirementDoubles') : translate('eloRequirementSingles')}
                       </span>
                       <span className="text-xs font-bold text-blue-700">
                         {activeDiv.minElo !== null ? activeDiv.minElo : '0'}
                         {' - '}
-                        {activeDiv.maxElo !== null ? activeDiv.maxElo : 'Không giới hạn'}
+                        {activeDiv.maxElo !== null ? activeDiv.maxElo : translate('unlimited')}
                       </span>
                     </div>
                   );
@@ -671,7 +683,7 @@ const commonTranslate = useTranslations('Common');
 
               {/* Organizer Info */}
               <div className="border-t border-slate-100 pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ban tổ chức</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">{translate('organizerLabel')}</span>
                 <div className="flex items-center gap-3">
                   {activeTournament.organizer?.avatarUrl ? (
                     <img
@@ -686,14 +698,14 @@ const commonTranslate = useTranslations('Common');
                   )}
                   <div>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-slate-900 font-bold text-sm">{activeTournament.organizer?.fullName || 'Ban Tổ Chức'}</p>
+                      <p className="text-slate-900 font-bold text-sm">{activeTournament.organizer?.fullName || translate('organizerDefault')}</p>
                       {activeTournament.organizer?.isTrusted ? (
-                        <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title="Ban tổ chức uy tín">
-                          👑 Uy Tín
+                        <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title={translate('organizerTrusted')}>
+                          👑 {translate('organizerTrusted')}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title="BTC Mới">
-                          🔰 Mới Tạo
+                        <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title={translate('organizerNew')}>
+                          🔰 {translate('organizerNew')}
                         </span>
                       )}
                     </div>
@@ -721,7 +733,7 @@ const commonTranslate = useTranslations('Common');
                             <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
                             {hasElo && (
                               <span className="text-[9px] text-blue-600 font-bold">
-                                ELO {isDivDoubles ? 'Đôi' : 'Đơn'}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
+                                {isDivDoubles ? translate('eloRequirementDoubles') : translate('eloRequirementSingles')}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
                               </span>
                             )}
                           </div>
@@ -743,7 +755,7 @@ const commonTranslate = useTranslations('Common');
                 maxParticipants > 0 && (
                   <div className="border-t border-slate-100 pt-4">
                     <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-                      <span className="text-slate-500 uppercase tracking-wider">Số lượng hồ sơ</span>
+                      <span className="text-slate-500 uppercase tracking-wider">{translate('participantsCount')}</span>
                       <span className="text-slate-800">{participantCount} / {maxParticipants}</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -754,7 +766,7 @@ const commonTranslate = useTranslations('Common');
                         style={{ width: `${percentageFilled}%` }}
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1">Đã điền đầy {percentageFilled}% tổng số slots trống</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{translate('slotsFilled', { percentage: percentageFilled })}</p>
                   </div>
                 )
               )}
@@ -869,12 +881,12 @@ const commonTranslate = useTranslations('Common');
                           className="block w-full"
                         >
                           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-sm cursor-pointer text-sm">
-                            Tham gia giải nhanh
+                            {translate('liteJoin')}
                           </Button>
                         </Link>
                       ) : (
                         <Button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
-                          Chưa có đường dẫn tham gia
+                          {translate('joinLinkUnavailable')}
                         </Button>
                       )
                     ) : isRegistrationButtonDisabled ? (
@@ -896,8 +908,8 @@ const commonTranslate = useTranslations('Common');
 
               {isOwner && !isTournamentDraft(activeTournament.status) && (
                 <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 mt-1 text-center">
-                  <p className="text-xs text-slate-800 font-bold">
-                    Bạn là quản trị viên giải đấu
+                    <p className="text-xs text-slate-800 font-bold">
+                    {translate('ownerAdminLabel')}
                   </p>
                   <Link
                     href={isClubLiteTournament(activeTournament)
@@ -907,8 +919,8 @@ const commonTranslate = useTranslations('Common');
                     className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline"
                   >
                     {isClubLiteTournament(activeTournament)
-                      ? 'Quản lý giải nhanh'
-                      : 'Quản lý sơ đồ & lịch thi đấu'
+                      ? translate('manageLite')
+                      : translate('manageBracketSchedule')
                     }
                   </Link>
                 </div>

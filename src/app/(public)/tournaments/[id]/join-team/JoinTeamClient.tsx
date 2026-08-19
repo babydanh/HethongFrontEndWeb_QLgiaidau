@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
 export default function JoinTeamClient({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  const translate = useTranslations('JoinTeam');
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,7 +47,7 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const fetchData = async () => {
       if (!id || !participantId || !teamInviteToken) {
-        toast.error('Thông tin lời mời tham gia đội không hợp lệ hoặc thiếu tham số.');
+        toast.error(translate('invalidInvite'));
         router.push('/tournaments');
         return;
       }
@@ -77,12 +79,12 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
               setDivision(null);
             }
           } else {
-            toast.error('Đội thi đấu không tồn tại hoặc đã bị hủy.');
+            toast.error(translate('teamMissing'));
             router.push(buildTournamentDetailHref(id, divisionId));
           }
         }
       } catch (err) {
-        toast.error('Không thể tải thông tin lời mời.');
+        toast.error(translate('invitationLoadError'));
         router.push(buildTournamentDetailHref(id, divisionId));
       } finally {
         setIsLoading(false);
@@ -94,7 +96,7 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
 
   const handleJoin = async () => {
     if (!isAuthenticated || !user) {
-      toast.error('Vui lòng đăng nhập để chấp nhận lời mời tham gia đội.');
+      toast.error(translate('loginRequired'));
       const params = new URLSearchParams({
         pid: participantId,
         token: teamInviteToken,
@@ -113,11 +115,11 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
       const restriction = tournament.genderRestriction.toUpperCase();
 
       if (restriction === 'MALE' && userGender !== 'MALE') {
-        toast.error('Giải đấu này chỉ dành cho Nam. Giới tính của bạn không phù hợp.');
+        toast.error(translate('maleOnly'));
         return;
       }
       if (restriction === 'FEMALE' && userGender !== 'FEMALE') {
-        toast.error('Giải đấu này chỉ dành cho Nữ. Giới tính của bạn không phù hợp.');
+        toast.error(translate('femaleOnly'));
         return;
       }
     }
@@ -129,7 +131,7 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
         teamInviteToken,
       });
 
-      toast.success('Gia nhập đội thi đấu thành công! Đội trưởng sẽ tiến hành hoàn tất thủ tục.');
+      toast.success(translate('joinSuccess'));
 
       const effectiveDivisionId = divisionId || participant?.tournamentDivisionId || '';
 
@@ -152,7 +154,7 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
-        <p className="text-slate-500 font-medium text-sm">Đang tải thông tin đội bóng...</p>
+        <p className="text-slate-500 font-medium text-sm">{translate('loadingTeamInfo')}</p>
       </div>
     );
   }
@@ -167,14 +169,14 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
     tournament.status !== 'DRAFT';
 
   if (isLocked || isExpired || isNotOpen) {
-    let title = 'Đăng ký đã đóng';
-    let message = 'Giải đấu hiện không nhận đăng ký mới.';
+    let title = translate('registrationClosed');
+    let message = translate('registrationClosedMessage');
     if (isLocked) {
-      title = 'Đăng ký đã khóa';
-      message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+      title = translate('registrationLocked');
+      message = translate('registrationLockedMessage');
     } else if (isExpired) {
-      title = 'Đăng ký hết hạn';
-      message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+      title = translate('registrationExpired');
+      message = translate('registrationExpiredMessage');
     }
 
     return (
@@ -193,7 +195,7 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
             onClick={() => router.push(buildTournamentDetailHref(tournament.id, divisionId || participant.tournamentDivisionId || ''))}
             className="w-full border-slate-200 hover:bg-slate-50 text-slate-650 text-xs font-bold"
           >
-            Quay lại trang giải đấu
+            {translate('backToTournament')}
           </Button>
         </div>
       </div>
@@ -210,7 +212,7 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
           onClick={() => router.push(buildTournamentDetailHref(tournament.id, divisionId || participant.tournamentDivisionId || ''))}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
+          <ArrowLeft className="w-4 h-4" /> {translate('backToTournamentShort')}
         </button>
 
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
@@ -223,18 +225,18 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
                   <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
                 ) : null;
               })()}
-              {tournament.category?.name || 'Cầu Lông'}
+              {tournament.category?.name || translate('defaultSport')}
             </span>
             <h1 className="text-xl md:text-2xl font-bold mt-2 mb-3 text-white">{tournament.name}</h1>
 
             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-350 font-semibold">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-blue-400" />
-                <span>Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa xếp lịch'}</span>
+                <span>{translate('openingLabel')} {tournament.startDate ? formatDate(tournament.startDate) : translate('notScheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-rose-400" />
-                <span className="truncate">{tournament.locationAddress || 'Chưa cập nhật'}</span>
+                <span className="truncate">{tournament.locationAddress || translate('locationNotUpdated')}</span>
               </div>
             </div>
           </div>
@@ -245,9 +247,9 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-105 text-blue-600 mb-1">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900">Lời mời tham gia đấu đôi</h2>
+              <h2 className="text-lg font-bold text-slate-900">{translate('inviteTitle')}</h2>
               <p className="text-slate-500 text-xs leading-relaxed">
-                Bạn được mời gia nhập đội <strong className="text-slate-800">{participant.teamName}</strong> tham gia giải đấu này.
+                {translate('inviteDescription', { teamName: participant.teamName || translate('userFallback') })}
               </p>
             </div>
 
@@ -259,8 +261,8 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
                     {leader.fullName?.substring(0, 2) || 'LD'}
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Trưởng nhóm (Leader)</p>
-                    <p className="text-sm font-bold text-slate-800">{leader.fullName || 'Người dùng'}</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{translate('teamLeader')}</p>
+                    <p className="text-sm font-bold text-slate-800">{leader.fullName || translate('userFallback')}</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
@@ -275,13 +277,15 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
                 <div className="flex items-start gap-2.5 bg-slate-50 text-slate-700 text-xs font-semibold p-3.5 rounded-lg border border-slate-200/50">
                   <AlertTriangle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-amber-900">Yêu cầu giới tính</p>
+                    <p className="font-bold text-amber-900">{translate('genderRequirementTitle')}</p>
                     <p className="mt-0.5 leading-relaxed text-slate-600 font-medium">
-                      Giải đấu yêu cầu ràng buộc giới tính: {
-                        tournament.genderRestriction === 'MALE' ? 'Chỉ Nam' :
-                        tournament.genderRestriction === 'FEMALE' ? 'Chỉ Nữ' :
-                        'Đôi Nam Nữ (1 Nam + 1 Nữ)'
-                      }. Hệ thống sẽ đối chiếu giới tính hồ sơ của bạn.
+                      {translate('genderRequirementDescription', {
+                        restriction: tournament.genderRestriction === 'MALE'
+                          ? translate('genderRestrictionMale')
+                          : tournament.genderRestriction === 'FEMALE'
+                            ? translate('genderRestrictionFemale')
+                            : translate('genderRestrictionMixed'),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -291,10 +295,9 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
                 <div className="flex items-start gap-2.5 bg-blue-50 text-blue-800 text-xs font-semibold p-3.5 rounded-lg border border-blue-200/50">
                   <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-blue-950">Lệ phí giải đấu</p>
+                    <p className="font-bold text-blue-950">{translate('entryFeeTitle')}</p>
                     <p className="mt-0.5 leading-relaxed text-slate-650 font-medium">
-                      Lệ phí tham gia: <strong className="text-slate-900">{formatCurrency(Number(tournament.entryFee))} / Đội</strong>.
-                      Nếu chưa thanh toán, bạn hoặc trưởng nhóm sẽ cần đóng phí để xác nhận hoàn tất vị trí.
+                      {translate('entryFeeDescription', { amount: formatCurrency(Number(tournament.entryFee)) })}
                     </p>
                   </div>
                 </div>
@@ -304,13 +307,13 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
             {/* Actions */}
             {isTeamFull ? (
               <div className="text-center py-4 bg-slate-50 border border-dashed rounded-lg text-slate-400 font-bold text-sm">
-                Đội này đã đủ thành viên. Bạn không thể gia nhập.
+                {translate('teamFull')}
               </div>
             ) : (
               <div className="space-y-3">
                 {!isAuthenticated && (
                   <p className="text-xs text-blue-600 font-semibold text-center">
-                    Bạn cần đăng nhập tài khoản để xác nhận chấp nhận lời mời.
+                    {translate('loginToAccept')}
                   </p>
                 )}
                 <Button
@@ -320,12 +323,12 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...
+                      <Loader2 className="w-4 h-4 animate-spin" /> {translate('processing')}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
-                      {!isAuthenticated ? 'Đăng nhập & Chấp nhận lời mời' : 'Đồng ý gia nhập đội'}
+                      {!isAuthenticated ? translate('loginAccept') : translate('acceptJoin')}
                     </>
                   )}
                 </Button>

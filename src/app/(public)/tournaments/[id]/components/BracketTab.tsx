@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
-import { tournamentsApi } from '@/features/tournaments/api';
+import type { Tournament, Division, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
 import { LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -10,6 +10,7 @@ import type { OnScheduleMatch, OnSelectBracketMatch, BracketTabProps } from './b
 import { UPPER_SET, LOWER_SET } from './bracket';
 import { SingleElimView, DoubleElimView, RoundRobinView } from './bracket';
 import { PagedSingleElimView, PagedDoubleElimView, PagedRoundRobinView } from './bracket';
+import { getDivisionMatchLabel } from '@/utils/tournament-display';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HELPERS
@@ -21,6 +22,8 @@ interface Props extends BracketTabProps {
   knockoutOnly?: boolean;
 }
 
+type TranslationFn = (key: string, values?: Record<string, string | number>) => string;
+
 function isKnockoutStage(stage: BracketStage): boolean {
   return stage.type === 'SINGLE_ELIMINATION' || stage.type === 'DOUBLE_ELIMINATION';
 }
@@ -28,7 +31,7 @@ function isKnockoutStage(stage: BracketStage): boolean {
 /**
  * Determine the type‑specific label for a stage.
  */
-function stageTypeLabel(type: string, translate: any): string {
+function stageTypeLabel(type: string, translate: TranslationFn): string {
   switch (type) {
     case 'SINGLE_ELIMINATION':
       return translate('stageSingleElimination');
@@ -44,7 +47,7 @@ function stageTypeLabel(type: string, translate: any): string {
   }
 }
 
-function stageNameLabel(name: string, translate: any): string {
+function stageNameLabel(name: string, translate: TranslationFn): string {
   const upperName = (name ?? '').toUpperCase();
   if (upperName.includes('DOUBLE ELIMINATION STAGE') || upperName.includes('DOUBLE_ELIMINATION')) {
     return translate('stageDoubleEliminationLong');
@@ -99,7 +102,7 @@ function GroupView({
   fallbackSportRuleKind?: BracketTabProps['fallbackSportRuleKind'];
   roundConfig?: BracketStage['roundConfig'];
   viewMode?: 'paged' | 'full';
-  translate: any;
+  translate: TranslationFn;
 }) {
   const { matches } = group;
 
@@ -212,6 +215,7 @@ export default function BracketTab({
   knockoutOnly = false,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const displayTranslate = useTranslations('TournamentDisplay');
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const effectiveSportRuleKind =
     fallbackSportRuleKind ?? getSportRuleKind(tournament.sportRules);
@@ -221,6 +225,44 @@ export default function BracketTab({
   const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
   const [result, setResult] = useState<TournamentResult | null>(null);
   const [resultError, setResultError] = useState(false);
+  const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
+
+  // Organizer bracket pages pass the parent tournament together with a
+  // divisionId. Never render the parent's genderRestriction in that case:
+  // another division (for example Đơn nữ) can otherwise leak into Đơn nam.
+  useEffect(() => {
+    let cancelled = false;
+    if (!divisionId) {
+      void Promise.resolve().then(() => {
+        if (!cancelled) setDisplayDivision(null);
+      });
+      return () => { cancelled = true; };
+    }
+
+    void divisionsApi.getDivisions(effectiveTournamentId)
+      .then((response) => {
+        if (cancelled) return;
+        setDisplayDivision(response.data?.find((division) => division.id === divisionId) ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setDisplayDivision(null);
+      });
+
+    return () => { cancelled = true; };
+  }, [divisionId, effectiveTournamentId]);
+
+  const displayMatchLabel = getDivisionMatchLabel(
+    divisionId ? displayDivision?.matchType : tournament.matchType,
+    divisionId ? displayDivision?.genderRestriction : tournament.genderRestriction,
+    {
+      maleGender: displayTranslate('maleGender'),
+      femaleGender: displayTranslate('femaleGender'),
+      mixedGender: displayTranslate('mixedGender'),
+      singlesFormat: displayTranslate('singlesFormat'),
+      doublesFormat: displayTranslate('doublesFormat'),
+      mixedDoublesFormat: displayTranslate('mixedDoublesFormat'),
+    },
+  );
 
   useEffect(() => {
     const fetchBracket = async () => {
@@ -304,10 +346,8 @@ export default function BracketTab({
             {translate("rankingLabel")}:{' '}
             <strong className="text-slate-600">{tournament.name}</strong>
           </span>
-          {tournament.genderRestriction && (
-            <span className="text-slate-300">
-              • {tournament.genderRestriction}
-            </span>
+          {displayMatchLabel !== displayTranslate('unknownFormat') && (
+            <span className="text-slate-300">• {displayMatchLabel}</span>
           )}
         </div>
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-lg">
@@ -356,10 +396,8 @@ export default function BracketTab({
             {translate("rankingLabel")}:{' '}
             <strong className="text-slate-700">{tournament.name}</strong>
           </span>
-          {tournament.genderRestriction && (
-            <span className="text-slate-300">
-              • {tournament.genderRestriction}
-            </span>
+          {displayMatchLabel !== displayTranslate('unknownFormat') && (
+            <span className="text-slate-300">• {displayMatchLabel}</span>
           )}
         </div>
 

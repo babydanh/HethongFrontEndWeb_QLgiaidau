@@ -785,11 +785,28 @@ export function BracketTab({
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('numberOfGroups')}</label>
-                        <input type="number" min={2} max={32} value={numGroups} onChange={(e) => setNumGroups?.(Math.max(2, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                        <input
+                          type="number"
+                          min={2}
+                          max={32}
+                          value={numGroups}
+                          onChange={(e) => {
+                            const nextGroups = Math.min(32, Math.max(2, Number(e.target.value) || 2));
+                            setNumGroups?.(nextGroups);
+                            const targetCount = participantCount > 0
+                              ? participantCount
+                              : (isLimitEnabled ? maxParticipants : 0);
+                            if (targetCount > 0) {
+                              setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
+                            }
+                          }}
+                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                        />
+                        <p className="text-[9px] text-slate-400 font-semibold">Số đội/bảng tự chia đều theo danh sách hoặc giới hạn nội dung.</p>
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsPerGroup')}</label>
-                        <input type="number" min={2} max={32} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.max(2, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                        <input type="number" min={2} max={128} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.min(128, Math.max(2, Number(e.target.value))))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsAdvancing')}</label>
@@ -801,6 +818,12 @@ export function BracketTab({
                       </div>
                     </div>
                   </div>
+
+                  {participantCount > numGroups * teamsPerGroup && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                      Cấu hình hiện chứa {numGroups * teamsPerGroup} đội, trong khi có {participantCount} đội hợp lệ. Khi lưu, hệ thống sẽ tự tăng số đội mỗi bảng để đủ chỗ; giới hạn tối đa của nội dung (ví dụ 64) chỉ là giới hạn đăng ký, không phải số đội đã xếp vào bảng.
+                    </div>
+                  )}
 
                   <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">{translate('knockout')}</p>

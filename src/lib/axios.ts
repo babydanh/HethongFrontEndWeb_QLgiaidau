@@ -135,7 +135,6 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'axios' {
   export interface AxiosInstance {
     request<T = unknown, R = T, D = unknown>(config: AxiosRequestConfig<D>): Promise<R>;
@@ -335,7 +334,6 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 429) {
-      const method = originalRequest?.method?.toUpperCase();
       const retryCount = managedRequest[RATE_LIMIT_RETRY_KEY] ?? 0;
       const snapshotKey = originalRequest ? getRequestKey(originalRequest) : '';
       const snapshot = snapshotKey ? publicGetSnapshots.get(snapshotKey) : undefined;

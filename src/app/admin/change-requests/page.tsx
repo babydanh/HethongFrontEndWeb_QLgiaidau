@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { usersApi } from '@/features/users/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +11,8 @@ import type { UserChangeRequest } from '@/types/user';
 import { getErrorMessage } from '@/utils/error';
 
 export default function AdminChangeRequestsPage() {
+  const translate = useTranslations('AdminChangeRequests');
+  const locale = useLocale();
   const { user } = useAuthStore();
   const isModeratorOnly =
     Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
@@ -30,7 +33,7 @@ export default function AdminChangeRequestsPage() {
       setRequests(res || []);
     } catch (error) {
       console.error(error);
-      toast.error('Không thể tải danh sách yêu cầu thay đổi');
+      toast.error(translate('loadError'));
     } finally {
       setLoading(false);
     }
@@ -75,17 +78,17 @@ export default function AdminChangeRequestsPage() {
     try {
       if (actionType === 'APPROVE') {
         await usersApi.approveChangeRequest(selectedRequest.id, { adminNote: adminNote.trim() || undefined });
-        toast.success('Đã phê duyệt yêu cầu thành công');
+        toast.success(translate('approveSuccess'));
       } else {
         await usersApi.rejectChangeRequest(selectedRequest.id, { adminNote: adminNote.trim() || undefined });
-        toast.success('Đã từ chối yêu cầu thành công');
+        toast.success(translate('rejectSuccess'));
       }
       setIsNoteModalOpen(false);
       setSelectedRequest(null);
       setLoading(true);
       fetchRequests();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi xử lý yêu cầu'));
+      toast.error(getErrorMessage(error, translate('actionError')));
     } finally {
       setProcessing(false);
     }
@@ -96,11 +99,9 @@ export default function AdminChangeRequestsPage() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Duyệt thay đổi thông tin</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{translate('title')}</h2>
           <p className="text-slate-500 text-sm">
-            {isModeratorOnly
-              ? 'Người điều phối xác minh các yêu cầu thay đổi giới tính hoặc email nhạy cảm của người chơi.'
-              : 'Xem xét và phê duyệt các yêu cầu thay đổi giới tính hoặc email nhạy cảm của người chơi.'}
+            {isModeratorOnly ? translate('moderatorDescription') : translate('adminDescription')}
           </p>
         </div>
         <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200 self-start">
@@ -112,7 +113,7 @@ export default function AdminChangeRequestsPage() {
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            Đang chờ
+            {translate('pendingFilter')}
           </button>
           <button
             onClick={() => handleFilterChange('APPROVED')}
@@ -122,7 +123,7 @@ export default function AdminChangeRequestsPage() {
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            Đã duyệt
+            {translate('approvedFilter')}
           </button>
           <button
             onClick={() => handleFilterChange('REJECTED')}
@@ -132,7 +133,7 @@ export default function AdminChangeRequestsPage() {
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            Đã từ chối
+            {translate('rejectedFilter')}
           </button>
         </div>
       </div>
@@ -141,13 +142,13 @@ export default function AdminChangeRequestsPage() {
       <div className="flex gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2 min-w-[140px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+          <input type="text" placeholder={translate('fromDate')} value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
         <div className="flex items-center gap-2 min-w-[140px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+          <input type="text" placeholder={translate('toDate')} value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
@@ -160,8 +161,8 @@ export default function AdminChangeRequestsPage() {
       ) : filteredRequests.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-2">
           <ClipboardList className="w-12 h-12 mx-auto text-slate-400" />
-          <p className="text-base font-medium text-slate-800">Không có yêu cầu nào được tìm thấy</p>
-          <p className="text-xs text-slate-500">Các yêu cầu thay đổi thông tin của người chơi hiện đang trống.</p>
+          <p className="text-base font-medium text-slate-800">{translate('emptyTitle')}</p>
+          <p className="text-xs text-slate-500">{translate('emptyHint')}</p>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
@@ -169,15 +170,15 @@ export default function AdminChangeRequestsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Người chơi</th>
-                  <th className="p-4">Loại yêu cầu</th>
-                  <th className="p-4">Giá trị cũ</th>
-                  <th className="p-4">Giá trị mới</th>
-                  <th className="p-4">Ngày gửi</th>
+                  <th className="p-4 pl-6">{translate('player')}</th>
+                  <th className="p-4">{translate('requestType')}</th>
+                  <th className="p-4">{translate('oldValue')}</th>
+                  <th className="p-4">{translate('newValue')}</th>
+                  <th className="p-4">{translate('submittedDate')}</th>
                   {filterStatus !== 'PENDING' && (
-                    <th className="p-4">{isModeratorOnly ? 'Ghi chú xử lý' : 'Ghi chú admin'}</th>
+                    <th className="p-4">{isModeratorOnly ? translate('processingNote') : translate('adminNote')}</th>
                   )}
-                  {filterStatus === 'PENDING' && <th className="p-4 pr-6 text-right">Thao tác</th>}
+                  {filterStatus === 'PENDING' && <th className="p-4 pr-6 text-right">{translate('actions')}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
@@ -193,7 +194,7 @@ export default function AdminChangeRequestsPage() {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-800">{req.user?.profile?.fullName || 'Người chơi'}</p>
+                          <p className="font-semibold text-slate-800">{req.user?.profile?.fullName || translate('playerFallback')}</p>
                           <p className="text-xs text-slate-500 flex items-center gap-1">
                             <Mail className="w-3 h-3 text-slate-400" />
                             {req.user?.email}
@@ -207,7 +208,7 @@ export default function AdminChangeRequestsPage() {
                           ? 'bg-purple-50 text-purple-700 border border-purple-200' 
                           : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}>
-                        {req.requestType === 'GENDER' ? 'Giới tính' : 'Email'}
+                        {req.requestType === 'GENDER' ? translate('gender') : translate('email')}
                       </span>
                     </td>
                     <td className="p-4 font-medium text-slate-700">{req.oldValue}</td>
@@ -215,12 +216,12 @@ export default function AdminChangeRequestsPage() {
                     <td className="p-4">
                       <span className="flex items-center gap-1.5 text-slate-500 text-xs">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {new Date(req.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(req.createdAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                       </span>
                     </td>
                     {filterStatus !== 'PENDING' && (
                       <td className="p-4">
-                        <span className="text-xs text-slate-500 italic">{req.adminNote || 'Không có ghi chú'}</span>
+                        <span className="text-xs text-slate-500 italic">{req.adminNote || translate('noNote')}</span>
                       </td>
                     )}
                     {filterStatus === 'PENDING' && (
@@ -233,7 +234,7 @@ export default function AdminChangeRequestsPage() {
                             className="text-xs"
                           >
                             <Check className="w-3.5 h-3.5" />
-                            Duyệt
+                            {translate('approve')}
                           </Button>
                           <Button
                             onClick={() => handleOpenActionModal(req, 'REJECT')}
@@ -242,7 +243,7 @@ export default function AdminChangeRequestsPage() {
                             className="text-xs"
                           >
                             <X className="w-3.5 h-3.5" />
-                            Từ chối
+                            {translate('reject')}
                           </Button>
                         </div>
                       </td>
@@ -261,7 +262,7 @@ export default function AdminChangeRequestsPage() {
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">
-                {actionType === 'APPROVE' ? 'Duyệt yêu cầu thay đổi' : 'Từ chối yêu cầu thay đổi'}
+                {actionType === 'APPROVE' ? translate('approveModalTitle') : translate('rejectModalTitle')}
               </h3>
               <button 
                 onClick={() => {
@@ -276,22 +277,22 @@ export default function AdminChangeRequestsPage() {
             
             <div className="p-6 space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-1">
-                <p><strong>Người gửi:</strong> {selectedRequest.user?.profile?.fullName || 'Người chơi'} ({selectedRequest.user?.email})</p>
-                <p><strong>Loại:</strong> {selectedRequest.requestType === 'GENDER' ? 'Thay đổi giới tính' : 'Thay đổi Email'}</p>
-                <p><strong>Giá trị cũ:</strong> {selectedRequest.oldValue}</p>
-                <p><strong>Giá trị mới:</strong> {selectedRequest.newValue}</p>
+                <p><strong>{translate('senderLabel')}</strong> {selectedRequest.user?.profile?.fullName || translate('playerFallback')} ({selectedRequest.user?.email})</p>
+                <p><strong>{translate('typeLabel')}</strong> {selectedRequest.requestType === 'GENDER' ? translate('genderChange') : translate('emailChange')}</p>
+                <p><strong>{translate('oldValue')}:</strong> {selectedRequest.oldValue}</p>
+                <p><strong>{translate('newValue')}:</strong> {selectedRequest.newValue}</p>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">
-                  {isModeratorOnly ? 'Ghi chú xử lý (Tùy chọn)' : 'Ghi chú của admin (Tùy chọn)'}
+                  {isModeratorOnly ? translate('optionalProcessingNote') : translate('optionalAdminNote')}
                 </label>
                 <textarea
                   rows={3}
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder={
-                    isModeratorOnly ? 'Nhập phản hồi xử lý...' : 'Nhập phản hồi của admin...'
+                    isModeratorOnly ? translate('processingPlaceholder') : translate('adminPlaceholder')
                   }
                   className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                 />
@@ -306,7 +307,7 @@ export default function AdminChangeRequestsPage() {
                 }}
                 className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold active:scale-95 transition-all"
               >
-                Hủy
+                {translate('cancel')}
               </button>
               <button
                 onClick={handleExecuteAction}
@@ -316,7 +317,7 @@ export default function AdminChangeRequestsPage() {
                 }`}
               >
                 {processing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1 inline" /> : null}
-                {actionType === 'APPROVE' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
+                {actionType === 'APPROVE' ? translate('confirmApprove') : translate('confirmReject')}
               </button>
             </div>
           </div>

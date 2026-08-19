@@ -258,7 +258,8 @@ export default function UserProfilePopover({
 
   const sysRoleBadge = getSystemRoleBadge(profileData.systemRole);
   const primaryRank = profileData.highlightRank;
-  const canMessage = profileData.allowStrangerMessages !== false || Boolean(communityId && profileData.role);
+  const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
+  const canMessage = !isSelf && (profileData.allowStrangerMessages !== false || Boolean(communityId && profileData.role));
   const profileRanks = (profileData.ranks ?? []).filter((rank) => rank.matchesPlayed > 0).slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
@@ -306,8 +307,10 @@ export default function UserProfilePopover({
           detail: { userId: profileId, tags: selectedTags },
         }),
       );
-    } catch {
-      toast.error(translate('tagsUpdateFailed'));
+    } catch (err: unknown) {
+      const errorData = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
+      const msg = Array.isArray(errorData?.message) ? errorData.message[0] : errorData?.message;
+      toast.error(msg || translate('tagsUpdateFailed'));
     } finally {
       setIsSavingTags(false);
     }
@@ -624,29 +627,35 @@ export default function UserProfilePopover({
 
         {/* Quick Action Buttons */}
         <div className="mt-3.5 flex gap-2 pt-2.5 border-t border-slate-100">
-          <button
-            type="button"
-            disabled={isOpeningChat || !canMessage}
-            onClick={async () => {
-              if (!profileData.id || isOpeningChat) return;
-              setIsOpeningChat(true);
-              try {
-                window.dispatchEvent(
-                  new CustomEvent('sporto:open-direct-chat', {
-                    detail: { userId: profileData.id },
-                  }),
-                );
-                onClose();
-              } catch {
-                setIsOpeningChat(false);
-              }
-            }}
-            title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : translate('strangerMessagesShort')}
-          </button>
+          {!isSelf && (
+            <button
+              type="button"
+              disabled={isOpeningChat || !canMessage}
+              onClick={async () => {
+                if (!profileData.id || isOpeningChat) return;
+                if (!canMessage) {
+                  toast.error(translate('strangerMessagesDisabled') || 'Người dùng này hiện không nhận tin nhắn từ người lạ.');
+                  return;
+                }
+                setIsOpeningChat(true);
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent('sporto:open-direct-chat', {
+                      detail: { userId: profileData.id },
+                    }),
+                  );
+                  onClose();
+                } catch {
+                  setIsOpeningChat(false);
+                }
+              }}
+              title={!canMessage ? translate('strangerMessagesDisabled') || 'Người dùng không nhận tin nhắn từ người lạ' : undefined}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : (translate('strangerMessagesShort') || 'Không nhận tin')}
+            </button>
+          )}
 
           <button
             type="button"
@@ -656,7 +665,7 @@ export default function UserProfilePopover({
                 router.push(`/users/${profileData.id}`);
               }
             }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
+            className={`${isSelf ? 'w-full' : 'inline-flex'} items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80`}
           >
             <User className="h-3.5 w-3.5" />
             {translate('profile')}

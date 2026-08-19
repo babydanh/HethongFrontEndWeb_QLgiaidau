@@ -467,12 +467,16 @@ export default function UnifiedChatWidget() {
     const handleOpenDirectChat = async (e: Event) => {
       const targetUserId = (e as CustomEvent<{ userId?: string }>).detail?.userId;
       if (!targetUserId) return;
-      setOpen(true);
-      setIsMobileRoomOpen(true);
       if (!isAuthenticated) {
-        toast.error(translate('loginToMessage'));
+        toast.error(translate('loginToMessage') || 'Vui lòng đăng nhập để nhắn tin.');
         return;
       }
+      if (user?.id && targetUserId === user.id) {
+        toast.error('Bạn không thể tự nhắn tin cho chính mình.');
+        return;
+      }
+      setOpen(true);
+      setIsMobileRoomOpen(true);
       const requestId = ++directChatRequestRef.current;
       try {
         setLoading(true);
@@ -486,8 +490,14 @@ export default function UnifiedChatWidget() {
         } as InboxRoom;
         setSelection({ kind: 'ROOM', room });
         setRooms((prev) => dedupeRooms([room, ...prev], user?.id));
-      } catch (err) {
-        toast.error(getErrorMessage(err, translate('openConversationFailed')));
+      } catch (err: unknown) {
+        const errorData = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
+        const rawMsg = Array.isArray(errorData?.message) ? errorData.message[0] : errorData?.message;
+        let finalMsg = rawMsg;
+        if (rawMsg === 'Direct room must have exactly 2 members') {
+          finalMsg = 'Cuộc trò chuyện trực tiếp cần có đúng 2 thành viên.';
+        }
+        toast.error(finalMsg || getErrorMessage(err, translate('openConversationFailed')));
       } finally {
         if (requestId === directChatRequestRef.current) setLoading(false);
       }

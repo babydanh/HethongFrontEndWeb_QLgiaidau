@@ -699,14 +699,28 @@ export function useManageState(id: string) {
 
   const handleSaveGskConfig = async () => {
     if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
+    const selected = divisions.find((division) => division.id === selectedDivisionId);
     const eligibleParticipants = participants.filter((participant) => participant.teamStatus === 'COMPLETE' && participant.isPaid).length;
     if (numGroups < 2) { toast.error('Vòng bảng + loại trực tiếp phải có ít nhất 2 bảng'); return; }
     if (teamsPerGroup < 2) { toast.error('Mỗi bảng phải có ít nhất 2 đội'); return; }
-    if (eligibleParticipants > 0 && numGroups * teamsPerGroup < eligibleParticipants) {
-      toast.error(`Cấu hình chỉ chứa ${numGroups * teamsPerGroup} đội, nhưng đang có ${eligibleParticipants} đội hợp lệ`);
+    // The division's registration limit (for example 64) is separate from
+    // the current group layout. If the organizer already has more eligible
+    // teams than the layout can hold, expand each group to the smallest valid
+    // capacity instead of rejecting a configuration that can be repaired
+    // deterministically. The corrected value is persisted with the division.
+    const requiredTeamsPerGroup = eligibleParticipants > 0
+      ? Math.ceil(eligibleParticipants / numGroups)
+      : teamsPerGroup;
+    const effectiveTeamsPerGroup = Math.max(teamsPerGroup, requiredTeamsPerGroup);
+    if (effectiveTeamsPerGroup > 128) {
+      toast.error('Mỗi bảng không thể vượt quá 128 đội. Hãy tăng số bảng hoặc giảm số đội hợp lệ.');
       return;
     }
-    const smallestGroupSize = eligibleParticipants > 0 ? Math.floor(eligibleParticipants / numGroups) : teamsPerGroup;
+    if (effectiveTeamsPerGroup !== teamsPerGroup) {
+      setTeamsPerGroup(effectiveTeamsPerGroup);
+      toast(`Đã tăng số đội mỗi bảng lên ${effectiveTeamsPerGroup} để đủ chỗ cho ${eligibleParticipants} đội hợp lệ.`, { id: 'gsk-capacity-adjusted' });
+    }
+    const smallestGroupSize = eligibleParticipants > 0 ? Math.floor(eligibleParticipants / numGroups) : effectiveTeamsPerGroup;
     if (teamsAdvancing < 1 || teamsAdvancing >= smallestGroupSize) {
       toast.error(`Số đội đi tiếp mỗi bảng phải từ 1 đến ${Math.max(1, smallestGroupSize - 1)}`);
       return;
@@ -717,7 +731,6 @@ export function useManageState(id: string) {
     }
     setIsSavingGskConfig(true);
     try {
-      const selected = divisions.find((division) => division.id === selectedDivisionId);
       await tournamentsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
         bracketType: 'GROUP_STAGE_KNOCKOUT',
         isConfigOverride: true,
@@ -731,7 +744,7 @@ export function useManageState(id: string) {
             tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
             tiebreakerMode,
           }),
-          groupsConfig: { numGroups, teamsPerGroup, roundsToPlay: gskRoundsToPlay },
+          groupsConfig: { numGroups, teamsPerGroup: effectiveTeamsPerGroup, roundsToPlay: gskRoundsToPlay },
           advancementConfig: {
             teamsAdvancing,
             allowWildcardThird: false,

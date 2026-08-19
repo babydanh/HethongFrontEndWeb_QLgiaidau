@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign } from 'lucide-react';
@@ -22,6 +23,7 @@ const DEFAULT_ENTRY_FEE_POLICY: SystemConfig = {
 };
 
 export default function ConfigsPage() {
+  const translate = useTranslations('AdminConfigs');
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConfig, setSelectedConfig] = useState<SystemConfig | null>(null);
@@ -53,7 +55,7 @@ export default function ConfigsPage() {
       }
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Lỗi khi tải danh sách cấu hình');
+      toast.error(translate('loadError'));
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ export default function ConfigsPage() {
 
   const handleUpdate = async () => {
     if (!selectedConfig || !editValue.trim()) {
-      toast.error('Giá trị cấu hình không được để trống');
+      toast.error(translate('emptyValue'));
       return;
     }
     setProcessing(true);
@@ -83,12 +85,12 @@ export default function ConfigsPage() {
         value: editValue.trim(),
         description: editDesc.trim(),
       });
-      toast.success('Cập nhật cấu hình hệ thống thành công!');
+      toast.success(translate('updateSuccess'));
       setShowEditModal(false);
       fetchConfigs();
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Lỗi khi cập nhật cấu hình');
+      toast.error(translate('updateError'));
     } finally {
       setProcessing(false);
     }
@@ -105,13 +107,13 @@ export default function ConfigsPage() {
       });
       toast.success(
         nextValue === 'true'
-          ? 'Đã cho phép ban tổ chức đặt lệ phí đăng ký'
-          : 'Đã khóa việc đặt lệ phí đăng ký mới',
+          ? translate('entryFeesEnabled')
+          : translate('entryFeesDisabled'),
       );
       await fetchConfigs();
     } catch (error: unknown) {
       console.error(error);
-      toast.error('Không thể cập nhật chính sách lệ phí');
+      toast.error(translate('entryFeesUpdateError'));
     } finally {
       setProcessing(false);
     }
@@ -124,15 +126,16 @@ export default function ConfigsPage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Settings className="w-6 h-6 text-blue-600" />
-            Cấu Hình Hệ Thống Toàn Cục
+                        {translate('title')}
+
           </h2>
-          <p className="text-slate-500 text-sm">Thiết lập các biến hệ thống liên quan tới ELO, phí dịch vụ nền tảng, v.v.</p>
+          <p className="text-slate-500 text-sm">{translate('description')}</p>
         </div>
         <button
           onClick={fetchConfigs}
           className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 p-2 rounded-lg transition-all"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4" aria-label={translate('refresh')} />
         </button>
       </div>
 
@@ -143,12 +146,12 @@ export default function ConfigsPage() {
                 <BadgeDollarSign className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Chính sách lệ phí đăng ký</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">{translate('entryFeePolicyTitle')}</p>
                 <h3 className="mt-1 text-lg font-bold text-slate-900">
-                  Cho phép ban tổ chức gắn lệ phí vào giải đấu
+                  {translate('entryFeePolicyHeading')}
                 </h3>
                 <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
-                  Khi tắt, giải mới và nội dung thi đấu mới chỉ được để 0đ. Các giải đã có lệ phí vẫn tiếp tục thu và đối soát bình thường.
+                  {translate('entryFeePolicyDescription')}
                 </p>
               </div>
             </div>
@@ -164,7 +167,7 @@ export default function ConfigsPage() {
                   : 'bg-slate-200 text-slate-700'
               }`}
             >
-              <span>{entryFeePolicy.value.toLowerCase() === 'true' ? 'Đang bật' : 'Đang tắt'}</span>
+              <span>{entryFeePolicy.value.toLowerCase() === 'true' ? translate('enabled') : translate('disabled')}</span>
               <span
                 className={`h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
                   entryFeePolicy.value.toLowerCase() === 'true' ? 'translate-x-1' : '-translate-x-1'
@@ -181,8 +184,8 @@ export default function ConfigsPage() {
         </div>
       ) : configs.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 shadow-sm">
-          <p className="text-base font-medium text-slate-800">Chưa có cấu hình hệ thống nào</p>
-          <p className="text-xs text-slate-500 mt-1">Admin có thể thêm mới cấu hình bằng API hoặc các DDL script.</p>
+          <p className="text-base font-medium text-slate-800">{translate('emptyTitle')}</p>
+          <p className="text-xs text-slate-500 mt-1">{translate('emptyDescription')}</p>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
@@ -190,10 +193,10 @@ export default function ConfigsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="p-4 pl-6 w-1/4">Tên cấu hình (Key)</th>
-                  <th className="p-4 w-1/4">Giá trị</th>
-                  <th className="p-4 w-2/5">Mô tả</th>
-                  <th className="p-4 pr-6 text-right w-12">Thao tác</th>
+                  <th className="p-4 pl-6 w-1/4">{translate('tableKey')}</th>
+                  <th className="p-4 w-1/4">{translate('tableValue')}</th>
+                  <th className="p-4 w-2/5">{translate('tableDescription')}</th>
+                  <th className="p-4 pr-6 text-right w-12">{translate('tableActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
@@ -201,7 +204,7 @@ export default function ConfigsPage() {
                   <tr key={config.key} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6 font-mono text-blue-600 font-semibold">{config.key}</td>
                     <td className="p-4 font-semibold text-slate-800">{config.value}</td>
-                    <td className="p-4 text-xs text-slate-500 leading-relaxed">{config.description || 'Chưa có mô tả'}</td>
+                    <td className="p-4 text-xs text-slate-500 leading-relaxed">{config.description || translate('noDescription')}</td>
                     <td className="p-4 pr-6 text-right">
                       <button
                         onClick={() => handleEdit(config)}
@@ -223,7 +226,7 @@ export default function ConfigsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Cập Nhật Biến Hệ Thống</h3>
+              <h3 className="text-lg font-bold text-slate-900">{translate('modalTitle')}</h3>
               <button 
                 onClick={() => setShowEditModal(false)}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -233,28 +236,28 @@ export default function ConfigsPage() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <p className="text-xs text-slate-500 mb-1">Tên biến (Key)</p>
+                <p className="text-xs text-slate-500 mb-1">{translate('modalKeyLabel')}</p>
                 <p className="text-sm font-mono font-semibold text-blue-600">{selectedConfig.key}</p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-slate-500">Giá trị mới (Value)</label>
+                    <label className="text-xs text-slate-500">{translate('newValueLabel')}</label>
                 <input
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  placeholder="Nhập giá trị cấu hình..."
+                  placeholder={translate('valuePlaceholder')}
                   className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-slate-500">Mô tả cấu hình</label>
+                    <label className="text-xs text-slate-500">{translate('descriptionLabel')}</label>
                 <textarea
                   rows={3}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  placeholder="Nhập mô tả cho biến này..."
+                  placeholder={translate('descriptionPlaceholder')}
                   className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                 />
               </div>
@@ -264,7 +267,8 @@ export default function ConfigsPage() {
                 onClick={() => setShowEditModal(false)}
                 className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
               >
-                Hủy
+                                {translate('cancel')}
+
               </button>
               <button
                 onClick={handleUpdate}
@@ -272,7 +276,8 @@ export default function ConfigsPage() {
                 className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
-                Lưu cấu hình
+                                {translate('save')}
+
               </button>
             </div>
           </div>

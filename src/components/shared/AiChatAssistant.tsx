@@ -68,52 +68,54 @@ function mergeStreamContent(previous: string, incoming: string): string {
 
 const QUICK_PROMPT_KEYS = ['manageTournament', 'registerDoubles', 'eloCalculation'] as const;
 
-const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard cá nhân',
-  '/organizer/tournaments/create': 'Tạo giải đấu',
-  '/organizer/tournaments/': 'Quản lý giải đấu',
-  '/tournaments/': 'Chi tiết giải đấu',
-  '/profile': 'Hồ sơ cá nhân',
-  '/profile/edit': 'Chỉnh sửa hồ sơ',
-  '/notifications': 'Thông báo',
-  '/payments': 'Lịch sử thanh toán',
-  '/matches': 'Danh sách trận đấu',
-  '/leaderboard': 'Bảng xếp hạng',
-  '/communities': 'Cộng đồng / CLB',
-  '/communities/create': 'Tạo cộng đồng',
-  '/admin': 'Admin Dashboard',
-  '/admin/tournaments': 'Admin - Quản lý giải',
-  '/admin/communities': 'Admin - Quản lý CLB',
-  '/admin/verification': 'Admin - Xác minh',
-  '/admin/disputes': 'Admin - Khiếu nại',
-  '/admin/reports': 'Admin - Báo cáo',
-  '/admin/transactions': 'Admin - Giao dịch',
-  '/admin/payouts': 'Admin - Payout',
-  '/admin/configs': 'Admin - Cấu hình',
-  '/admin/support': 'Admin - Hỗ trợ',
-  '/admin/moderation': 'Admin - Kiểm duyệt',
-  '/moderation': 'Kiểm duyệt',
-  '/series': 'Chuỗi giải đấu',
-  '/live/': 'Trận đấu trực tiếp',
-  '/chat': 'Tin nhắn',
-  '/download': 'Tải ứng dụng',
-  '/terms': 'Điều khoản dịch vụ',
-  '/privacy': 'Chính sách bảo mật',
-  '/login': 'Đăng nhập',
-  '/register': 'Đăng ký',
-  '/forgot-password': 'Quên mật khẩu',
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  '/dashboard': 'dashboard',
+  '/organizer/tournaments/create': 'createTournament',
+  '/organizer/tournaments/': 'manageTournament',
+  '/tournaments/': 'tournamentDetail',
+  '/profile/edit': 'editProfile',
+  '/profile': 'profile',
+  '/notifications': 'notifications',
+  '/payments': 'payments',
+  '/matches': 'matches',
+  '/leaderboard': 'leaderboard',
+  '/communities/create': 'createCommunity',
+  '/communities': 'communities',
+  '/admin/tournaments': 'adminTournaments',
+  '/admin/communities': 'adminCommunities',
+  '/admin/verification': 'adminVerification',
+  '/admin/disputes': 'adminDisputes',
+  '/admin/reports': 'adminReports',
+  '/admin/transactions': 'adminTransactions',
+  '/admin/payouts': 'adminPayouts',
+  '/admin/configs': 'adminConfigs',
+  '/admin/support': 'adminSupport',
+  '/admin/moderation': 'adminModeration',
+  '/admin': 'adminDashboard',
+  '/moderation': 'moderation',
+  '/series': 'series',
+  '/live/': 'live',
+  '/chat': 'chat',
+  '/download': 'download',
+  '/terms': 'terms',
+  '/privacy': 'privacy',
+  '/login': 'login',
+  '/register': 'register',
+  '/forgot-password': 'forgotPassword',
 };
 
-function getPageTitle(pathname: string): string {
-  for (const [prefix, title] of Object.entries(PAGE_TITLES)) {
-    if (pathname.startsWith(prefix)) return title;
+function getPageTitle(pathname: string, translate: (key: string) => string): string {
+  for (const [prefix, key] of Object.entries(PAGE_TITLE_KEYS)) {
+    if (pathname.startsWith(prefix)) return translate(`pageTitles.${key}`);
   }
   // Patterns with dynamic segments: /tournaments/[id], /organizer/tournaments/[id]/manage, etc.
-  if (pathname.startsWith('/tournaments/') && pathname.split('/').length === 3) return 'Chi tiết giải đấu';
-  if (pathname.includes('/manage')) return 'Quản lý giải đấu';
-  if (pathname.includes('/ops')) return 'Vận hành giải đấu';
-  if (pathname.startsWith('/users/')) return 'Hồ sơ người dùng';
-  return 'Trang chủ';
+  if (pathname.startsWith('/tournaments/') && pathname.split('/').length === 3) {
+    return translate('pageTitles.tournamentDetail');
+  }
+  if (pathname.includes('/manage')) return translate('pageTitles.manageTournament');
+  if (pathname.includes('/ops')) return translate('pageTitles.operations');
+  if (pathname.startsWith('/users/')) return translate('pageTitles.userProfile');
+  return translate('pageTitles.home');
 }
 
 export default function AiChatAssistant() {
@@ -332,7 +334,7 @@ export default function AiChatAssistant() {
         body: JSON.stringify({
           messages: updatedMessages,
           currentUrl: pathname,
-          pageTitle: getPageTitle(pathname),
+          pageTitle: getPageTitle(pathname, translate),
           isMobile: typeof navigator !== 'undefined' && /Mobile|Android|iPhone/.test(navigator.userAgent),
           searchParams: getSearchParamsString(),
         }),

@@ -1589,7 +1589,7 @@ export default function LiveMatchPage({ params }: Props) {
                               type="button"
                               onClick={(e) => handlePlayerClick(e, p1)}
                               className="group relative w-20 h-20 rounded-full border-2 border-blue-600 bg-blue-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-100"
-                              title={`Xem thông tin ${p1.fullName}`}
+                              title={matchTranslate('viewUserTitle', { name: p1.fullName })}
                             >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {p1.avatarUrl ? (
@@ -1608,14 +1608,14 @@ export default function LiveMatchPage({ params }: Props) {
                         // ĐÔI - 2 VĐV
                         const p1 = {
                           userId: members[0]?.userId || (part1?.registeredBy?.fullName === rawNames[0] ? part1.registeredBy.id : '') || '',
-                          fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                          fullName: members[0]?.fullName || rawNames[0] || matchTranslate('unknownTeam'),
                           avatarUrl: members[0]?.avatarUrl || null,
                           initial: ((members[0]?.fullName || rawNames[0] || '1').charAt(0) || '1').toUpperCase(),
                         };
 
                         const p2 = {
                           userId: members[1]?.userId || (part1?.registeredBy?.fullName === rawNames[1] ? part1.registeredBy.id : '') || '',
-                          fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                          fullName: members[1]?.fullName || rawNames[1] || matchTranslate('unknownTeam'),
                           avatarUrl: members[1]?.avatarUrl || null,
                           initial: ((members[1]?.fullName || rawNames[1] || '2').charAt(0) || '2').toUpperCase(),
                         };
@@ -1626,7 +1626,7 @@ export default function LiveMatchPage({ params }: Props) {
                               type="button"
                               onClick={(e) => handlePlayerClick(e, p1)}
                               className="group relative w-16 h-16 rounded-full border-2 border-blue-600 bg-blue-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-100"
-                              title={`Xem thông tin ${p1.fullName}`}
+                              title={matchTranslate('viewUserTitle', { name: p1.fullName })}
                             >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {p1.avatarUrl ? (
@@ -1646,7 +1646,7 @@ export default function LiveMatchPage({ params }: Props) {
                               type="button"
                               onClick={(e) => handlePlayerClick(e, p2)}
                               className="group relative w-16 h-16 rounded-full border-2 border-blue-500 bg-blue-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-100"
-                              title={`Xem thông tin ${p2.fullName}`}
+                              title={matchTranslate('viewUserTitle', { name: p2.fullName })}
                             >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {p2.avatarUrl ? (
@@ -1684,7 +1684,7 @@ export default function LiveMatchPage({ params }: Props) {
                             type="button"
                             onClick={(e) => handlePlayerClick(e, p1)}
                             className="text-xl font-black text-slate-900 text-center leading-snug hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                            title={`Xem thông tin ${p1.fullName}`}
+                            title={matchTranslate('viewUserTitle', { name: p1.fullName })}
                           >
                             {p1.fullName}
                           </button>
@@ -1693,12 +1693,12 @@ export default function LiveMatchPage({ params }: Props) {
 
                       const p1 = {
                         userId: members[0]?.userId || (part1?.registeredBy?.fullName === rawNames[0] ? part1.registeredBy.id : '') || '',
-                        fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                        fullName: members[0]?.fullName || rawNames[0] || matchTranslate('unknownTeam'),
                         avatarUrl: members[0]?.avatarUrl || null,
                       };
                       const p2 = {
                         userId: members[1]?.userId || (part1?.registeredBy?.fullName === rawNames[1] ? part1.registeredBy.id : '') || '',
-                        fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                        fullName: members[1]?.fullName || rawNames[1] || matchTranslate('unknownTeam'),
                         avatarUrl: members[1]?.avatarUrl || null,
                       };
 
@@ -1708,7 +1708,7 @@ export default function LiveMatchPage({ params }: Props) {
                             type="button"
                             onClick={(e) => handlePlayerClick(e, p1)}
                             className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                            title={`Xem thông tin ${p1.fullName}`}
+                            title={matchTranslate('viewUserTitle', { name: p1.fullName })}
                           >
                             {p1.fullName}
                           </button>
@@ -1717,7 +1717,7 @@ export default function LiveMatchPage({ params }: Props) {
                             type="button"
                             onClick={(e) => handlePlayerClick(e, p2)}
                             className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                            title={`Xem thông tin ${p2.fullName}`}
+                            title={matchTranslate('viewUserTitle', { name: p2.fullName })}
                           >
                             {p2.fullName}
                           </button>
@@ -1781,7 +1781,7 @@ export default function LiveMatchPage({ params }: Props) {
                               type="button"
                               onClick={(e) => handlePlayerClick(e, p2)}
                               className="group relative w-20 h-20 rounded-full border-2 border-rose-600 bg-rose-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-100"
-                              title={`Xem thông tin ${p2.fullName}`}
+                              title={matchTranslate('viewUserTitle', { name: p2.fullName })}
                             >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {p2.avatarUrl ? (
@@ -1800,14 +1800,14 @@ export default function LiveMatchPage({ params }: Props) {
                         // ĐÔI - 2 VĐV
                         const p1 = {
                           userId: members[0]?.userId || (part2?.registeredBy?.fullName === rawNames[0] ? part2.registeredBy.id : '') || '',
-                          fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                          fullName: members[0]?.fullName || rawNames[0] || matchTranslate('unknownTeam'),
                           avatarUrl: members[0]?.avatarUrl || null,
                           initial: ((members[0]?.fullName || rawNames[0] || '1').charAt(0) || '1').toUpperCase(),
                         };
 
                         const p2 = {
                           userId: members[1]?.userId || (part2?.registeredBy?.fullName === rawNames[1] ? part2.registeredBy.id : '') || '',
-                          fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                          fullName: members[1]?.fullName || rawNames[1] || matchTranslate('unknownTeam'),
                           avatarUrl: members[1]?.avatarUrl || null,
                           initial: ((members[1]?.fullName || rawNames[1] || '2').charAt(0) || '2').toUpperCase(),
                         };
@@ -1818,7 +1818,7 @@ export default function LiveMatchPage({ params }: Props) {
                               type="button"
                               onClick={(e) => handlePlayerClick(e, p1)}
                               className="group relative w-16 h-16 rounded-full border-2 border-rose-600 bg-rose-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-100"
-                              title={`Xem thông tin ${p1.fullName}`}
+                              title={matchTranslate('viewUserTitle', { name: p1.fullName })}
                             >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {p1.avatarUrl ? (
@@ -1838,7 +1838,7 @@ export default function LiveMatchPage({ params }: Props) {
                               type="button"
                               onClick={(e) => handlePlayerClick(e, p2)}
                               className="group relative w-16 h-16 rounded-full border-2 border-rose-500 bg-rose-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-100"
-                              title={`Xem thông tin ${p2.fullName}`}
+                              title={matchTranslate('viewUserTitle', { name: p2.fullName })}
                             >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {p2.avatarUrl ? (
@@ -1876,7 +1876,7 @@ export default function LiveMatchPage({ params }: Props) {
                             type="button"
                             onClick={(e) => handlePlayerClick(e, p2)}
                             className="text-xl font-black text-slate-900 text-center leading-snug hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                            title={`Xem thông tin ${p2.fullName}`}
+                            title={matchTranslate('viewUserTitle', { name: p2.fullName })}
                           >
                             {p2.fullName}
                           </button>
@@ -1885,12 +1885,12 @@ export default function LiveMatchPage({ params }: Props) {
 
                       const p1 = {
                         userId: members[0]?.userId || (part2?.registeredBy?.fullName === rawNames[0] ? part2.registeredBy.id : '') || '',
-                        fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                        fullName: members[0]?.fullName || rawNames[0] || matchTranslate('unknownTeam'),
                         avatarUrl: members[0]?.avatarUrl || null,
                       };
                       const p2 = {
                         userId: members[1]?.userId || (part2?.registeredBy?.fullName === rawNames[1] ? part2.registeredBy.id : '') || '',
-                        fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                        fullName: members[1]?.fullName || rawNames[1] || matchTranslate('unknownTeam'),
                         avatarUrl: members[1]?.avatarUrl || null,
                       };
 
@@ -1900,7 +1900,7 @@ export default function LiveMatchPage({ params }: Props) {
                             type="button"
                             onClick={(e) => handlePlayerClick(e, p1)}
                             className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                            title={`Xem thông tin ${p1.fullName}`}
+                            title={matchTranslate('viewUserTitle', { name: p1.fullName })}
                           >
                             {p1.fullName}
                           </button>
@@ -1909,7 +1909,7 @@ export default function LiveMatchPage({ params }: Props) {
                             type="button"
                             onClick={(e) => handlePlayerClick(e, p2)}
                             className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                            title={`Xem thông tin ${p2.fullName}`}
+                            title={matchTranslate('viewUserTitle', { name: p2.fullName })}
                           >
                             {p2.fullName}
                           </button>
@@ -1964,7 +1964,7 @@ export default function LiveMatchPage({ params }: Props) {
                 })()}
 
                 {penalties.length > 0 ? (
-                  <section className="mt-8 border-t border-slate-100 pt-6" aria-label="Phạt và thẻ trong trận">
+                  <section className="mt-8 border-t border-slate-100 pt-6" aria-label={matchTranslate('penaltiesAriaLabel')}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <h4 className="text-sm font-black uppercase tracking-[0.16em] text-slate-500">
@@ -2155,7 +2155,7 @@ export default function LiveMatchPage({ params }: Props) {
               {/* Comments list */}
               <div ref={commentsBoxRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                 {comments.map((comment) => {
-                  const authorName = comment.user?.fullName || 'Người dùng';
+                  const authorName = comment.user?.fullName || matchTranslate('userLabel');
                   const avatarUrl = comment.user?.avatarUrl || null;
                   return (
                     <div key={comment.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -2167,7 +2167,7 @@ export default function LiveMatchPage({ params }: Props) {
                           }
                         }}
                         className={`w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-white shrink-0 uppercase overflow-hidden shadow-xs transition-transform ${comment.user?.id ? 'cursor-pointer hover:scale-105 hover:ring-2 hover:ring-blue-300' : ''}`}
-                        title={comment.user?.id ? `Xem thông tin ${authorName}` : authorName}
+                        title={comment.user?.id ? matchTranslate('viewUserTitle', { name: authorName }) : authorName}
                       >
                         {avatarUrl ? (
                           <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -2185,7 +2185,7 @@ export default function LiveMatchPage({ params }: Props) {
                               }
                             }}
                             className={`text-xs font-bold text-slate-800 truncate text-left ${comment.user?.id ? 'hover:text-blue-600 hover:underline cursor-pointer' : ''}`}
-                            title={comment.user?.id ? `Xem thông tin ${authorName}` : authorName}
+                            title={comment.user?.id ? matchTranslate('viewUserTitle', { name: authorName }) : authorName}
                           >
                             {authorName}
                           </button>

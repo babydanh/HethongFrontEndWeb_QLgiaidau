@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input, DateTimePicker } from '@/components/ui/Input';
@@ -13,6 +14,7 @@ import { BRAND } from '@/constants/brand';
 
 export default function CreateSeriesPage() {
   const router = useRouter();
+  const translate = useTranslations('SeriesCreate');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
@@ -30,7 +32,7 @@ export default function CreateSeriesPage() {
   const [wildcardCount, setWildcardCount] = useState(16);
   const [exclusionRule, setExclusionRule] = useState(true);
   const [exclusionScope, setExclusionScope] = useState<ExclusionScope>('CATEGORY');
-  const [rulesDescription, setRulesDescription] = useState('Tính điểm PSR tích lũy. Top 2 nhận vé thẳng, Top 16 PSR nhận vé vớt chặng.');
+  const [rulesDescription, setRulesDescription] = useState(translate('defaultRulesDescription'));
 
   // Ranks points configuration
   const [pointsByRank, setPointsByRank] = useState<Array<{ rank: number; points: number }>>([
@@ -57,7 +59,7 @@ export default function CreateSeriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
-      toast.error('Vui lòng nhập tên chuỗi giải đấu');
+      toast.error(translate('nameRequiredError'));
       return;
     }
 
@@ -92,10 +94,10 @@ export default function CreateSeriesPage() {
       };
 
       const res = await seriesApi.createSeries(payload);
-      toast.success('Tạo chuỗi giải đấu thành công!');
+      toast.success(translate('createSuccess'));
       router.push(`/organizer/series/${res.id}/manage`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Đã có lỗi xảy ra khi tạo chuỗi giải đấu';
+      const msg = err instanceof Error ? err.message : translate('createError');
       toast.error(msg);
     } finally {
       setIsSubmitting(false);
@@ -110,7 +112,7 @@ export default function CreateSeriesPage() {
           href="/organizer/series"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại danh sách chuỗi giải
+          <ArrowLeft className="w-4 h-4" /> {translate('backToList')}
         </Link>
 
         {/* Header Title */}
@@ -122,20 +124,20 @@ export default function CreateSeriesPage() {
             <img src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} className="w-9 h-9 object-contain" />
           </Link>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Thiết Lập Chuỗi Giải Đấu Mới</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Khởi tạo hệ thống giải đấu vòng loại tích lũy và điều lệ suất vé đặc cách</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{translate('pageTitle')}</h1>
+            <p className="text-xs text-slate-500 mt-0.5">{translate('pageDescription')}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-8">
           {/* Section 1: General Info */}
           <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-6">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Thông Tin Chung</h2>
+            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">{translate('generalInfo')}</h2>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-700">Tên chuỗi giải đấu *</label>
+              <label className="text-xs font-bold text-slate-700">{translate('nameLabel')}</label>
               <Input
-                placeholder="Ví dụ: Pickleball Tour Hà Nội 2026"
+                placeholder={translate('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -143,10 +145,10 @@ export default function CreateSeriesPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-700">Mô tả chuỗi giải</label>
+              <label className="text-xs font-bold text-slate-700">{translate('descriptionLabel')}</label>
               <textarea
                 rows={3}
-                placeholder="Mô tả tóm tắt về chuỗi đấu, quy mô và nhà tài trợ..."
+                placeholder={translate('descriptionPlaceholder')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
@@ -156,7 +158,7 @@ export default function CreateSeriesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <DateTimePicker
-                  label="Ngày bắt đầu"
+                  label={translate('startDateLabel')}
                   value={startDate}
                   onChange={setStartDate}
                 />
@@ -164,17 +166,17 @@ export default function CreateSeriesPage() {
 
               <div className="flex flex-col gap-1.5">
                 <DateTimePicker
-                  label="Ngày kết thúc"
+                  label={translate('endDateLabel')}
                   value={endDate}
                   onChange={setEndDate}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Tổng giải thưởng (VNĐ)</label>
+                <label className="text-xs font-bold text-slate-700">{translate('prizeLabel')}</label>
                 <Input
                   type="number"
-                  placeholder="Ví dụ: 100000000"
+                  placeholder={translate('prizePlaceholder')}
                   value={totalPrize}
                   onChange={(e) => setTotalPrize(e.target.value)}
                 />
@@ -183,18 +185,18 @@ export default function CreateSeriesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Link ảnh Banner bìa</label>
+                <label className="text-xs font-bold text-slate-700">{translate('bannerLabel')}</label>
                 <Input
-                  placeholder="Link url ảnh bìa (banner)"
+                  placeholder={translate('bannerPlaceholder')}
                   value={bannerUrl}
                   onChange={(e) => setBannerUrl(e.target.value)}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Link ảnh Logo nhỏ</label>
+                <label className="text-xs font-bold text-slate-700">{translate('logoLabel')}</label>
                 <Input
-                  placeholder="Link url logo chuỗi giải"
+                  placeholder={translate('logoPlaceholder')}
                   value={logoUrl}
                   onChange={(e) => setLogoUrl(e.target.value)}
                 />
@@ -202,25 +204,25 @@ export default function CreateSeriesPage() {
             </div>
 
             <div className="flex flex-col gap-1.5 w-64">
-              <label className="text-xs font-bold text-slate-700">Chế độ hiển thị</label>
+              <label className="text-xs font-bold text-slate-700">{translate('visibilityLabel')}</label>
               <select
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
               >
-                <option value="PUBLIC">Công khai</option>
-                <option value="PRIVATE">Riêng tư</option>
+                <option value="PUBLIC">{translate('publicOption')}</option>
+                <option value="PRIVATE">{translate('privateOption')}</option>
               </select>
             </div>
           </div>
 
           {/* Section 2: PSR Calculation Rules */}
           <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-6">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Quy Tắc Tích Lũy Điểm PSR</h2>
+            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">{translate('rulesTitle')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Ngưỡng vé thẳng (Hạng đạt được)</label>
+                <label className="text-xs font-bold text-slate-700">{translate('directEntryThresholdLabel')}</label>
                 <div className="flex items-center gap-3">
                   <Input
                     type="number"
@@ -229,12 +231,12 @@ export default function CreateSeriesPage() {
                     onChange={(e) => setDirectEntryThreshold(Number(e.target.value))}
                     className="w-24"
                   />
-                  <span className="text-xs text-slate-400 font-medium">Lọt vào top này sẽ được đặc cách Vé Thẳng đi tiếp chặng.</span>
+                  <span className="text-xs text-slate-400 font-medium">{translate('directEntryHint')}</span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Số suất vé vớt tích lũy PSR</label>
+                <label className="text-xs font-bold text-slate-700">{translate('wildcardCountLabel')}</label>
                 <div className="flex items-center gap-3">
                   <Input
                     type="number"
@@ -243,14 +245,14 @@ export default function CreateSeriesPage() {
                     onChange={(e) => setWildcardCount(Number(e.target.value))}
                     className="w-24"
                   />
-                  <span className="text-xs text-slate-400 font-medium">Số lượng VĐV tích lũy điểm cao nhất chặng nhận vé vớt.</span>
+                  <span className="text-xs text-slate-400 font-medium">{translate('wildcardCountHint')}</span>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 pt-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Luật khóa đăng ký (Exclusion Rule)</label>
+                <label className="text-xs font-bold text-slate-700">{translate('exclusionRuleLabel')}</label>
                 <div className="flex items-center gap-3 mt-2">
                   <input
                     type="checkbox"
@@ -260,31 +262,31 @@ export default function CreateSeriesPage() {
                     className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
                   />
                   <label htmlFor="exRule" className="text-xs text-slate-600 font-bold cursor-pointer">
-                    Khóa VĐV đã đoạt vé thẳng không cho đấu tiếp chặng này.
+                    {translate('exclusionRuleHint')}
                   </label>
                 </div>
               </div>
 
               {exclusionRule && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-700">Phạm vi khóa (Exclusion Scope)</label>
+                  <label className="text-xs font-bold text-slate-700">{translate('exclusionScopeLabel')}</label>
                   <select
                     value={exclusionScope}
                     onChange={(e) => setExclusionScope(e.target.value as ExclusionScope)}
                     className="w-full max-w-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
                   >
-                    <option value="CATEGORY">Chỉ khóa trong nội dung đó</option>
-                    <option value="ALL">Khóa toàn bộ chặng đấu</option>
+                    <option value="CATEGORY">{translate('categoryOption')}</option>
+                    <option value="ALL">{translate('allOption')}</option>
                   </select>
                 </div>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-4">
-              <label className="text-xs font-bold text-slate-700">Mô tả tóm tắt điều lệ chặng</label>
+              <label className="text-xs font-bold text-slate-700">{translate('rulesDescriptionLabel')}</label>
               <textarea
                 rows={2}
-                placeholder="Điều lệ chặng..."
+                placeholder={translate('rulesDescriptionPlaceholder')}
                 value={rulesDescription}
                 onChange={(e) => setRulesDescription(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
@@ -295,8 +297,8 @@ export default function CreateSeriesPage() {
             <div className="flex flex-col gap-4 border-t border-slate-100 pt-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Cấu hình phân phối điểm theo thứ hạng</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Xác định số điểm PSR tương ứng khi VĐV đạt thứ hạng</p>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{translate('pointsConfigTitle')}</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{translate('pointsConfigHint')}</p>
                 </div>
                 <Button
                   type="button"
@@ -304,7 +306,7 @@ export default function CreateSeriesPage() {
                   onClick={handleAddRank}
                   className="text-xs border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 py-1 px-3"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Thêm thứ hạng
+                  <Plus className="w-3.5 h-3.5" /> {translate('addRank')}
                 </Button>
               </div>
 
@@ -312,7 +314,7 @@ export default function CreateSeriesPage() {
                 {pointsByRank.map((item, index) => (
                   <div key={`${item.rank}-${index}`} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 justify-between">
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="font-bold text-slate-400">Hạng:</span>
+                      <span className="font-bold text-slate-400">{translate('rankLabel')}</span>
                       <input
                         type="number"
                         min={1}
@@ -348,7 +350,7 @@ export default function CreateSeriesPage() {
           <div className="flex justify-end gap-3">
             <Link href="/organizer/series">
               <Button type="button" variant="outline" className="px-6 border-slate-200 hover:bg-slate-100 text-slate-700">
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
             </Link>
             <Button
@@ -356,7 +358,7 @@ export default function CreateSeriesPage() {
               className="px-6 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
               isLoading={isSubmitting}
             >
-              <Save className="w-4 h-4" /> Tạo chuỗi giải đấu
+              <Save className="w-4 h-4" /> {translate('submit')}
             </Button>
           </div>
         </form>

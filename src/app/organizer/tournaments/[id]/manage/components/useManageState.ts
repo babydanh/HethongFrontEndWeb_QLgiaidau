@@ -1478,6 +1478,8 @@ export function useManageState(id: string) {
     return () => { if (manageDraftTimerRef.current) clearTimeout(manageDraftTimerRef.current); };
   }, [tournament, manageDraftKey, name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress, provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate, visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType, eloEnabled]);
 
+  const currentDivisionIdRef = useRef<string>('');
+
   useEffect(() => {
     if (!tournament) {
       return;
@@ -1486,72 +1488,38 @@ export function useManageState(id: string) {
     const selectedCategory = tournament.category || categories.find((category) => category.id === categoryId || category.slug === categoryId) || null;
     const fallbackKind = inferSportRuleKindFromCategory(selectedCategory);
     const resolvedRules = resolveSportRuleView(tournament.sportRules, fallbackKind);
-    // Lite creation stores the free-scoring policy in tournamentConfig. Older
-    // Lite records may have sportRules without an explicit mode, so keep the
-    // management UI on Lite instead of silently switching them to Strict.
     const tournamentConfig = tournament.tournamentConfig as Record<string, unknown> | undefined;
     const resolvedWithTournamentMode =
       tournamentConfig?.mode === 'LITE' || tournamentConfig?.scoringMode === 'FREE'
         ? { ...resolvedRules, mode: 'LITE' as const }
         : resolvedRules;
 
-    void Promise.resolve().then(() => {
-      const normalizedKind = normalizeSportRuleKindForCategory(resolvedWithTournamentMode.kind, selectedCategory);
-      const effectiveRules = normalizedKind === resolvedWithTournamentMode.kind
-        ? resolvedWithTournamentMode
-        : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
+    const normalizedKind = normalizeSportRuleKindForCategory(resolvedWithTournamentMode.kind, selectedCategory);
+    const effectiveRules = normalizedKind === resolvedWithTournamentMode.kind
+      ? resolvedWithTournamentMode
+      : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
 
-      applyResolvedRuleState(effectiveRules);
-      if (normalizedKind !== resolvedWithTournamentMode.kind) {
-        setTournament((current) => current ? {
-          ...current,
-          sportRules: buildSportRulesPayload({
-            kind: normalizedKind,
-            setsToWin: effectiveRules.setsToWin,
-            pointsPerSet: effectiveRules.pointsPerSet,
-            winByTwo: effectiveRules.winByTwo,
-            maxPoints: effectiveRules.maxPoints,
-            tiebreakPoints: effectiveRules.hasCustomTiebreakTarget ? effectiveRules.tiebreakPoints : null,
-            tiebreakerMode: effectiveRules.tiebreakerMode,
-            roundsToPlay: effectiveRules.roundsToPlay,
-            mode: isLiteMode ? 'LITE' : 'STRICT',
-          }),
-        } : current);
-      }
-      const normalizedMatchType = normalizeMatchFormatForCategory(
-        matchType as 'MALE_SINGLES' | 'FEMALE_SINGLES' | 'MALE_DOUBLES' | 'FEMALE_DOUBLES' | 'MIXED_DOUBLES',
-        selectedCategory,
-      );
-      if (normalizedMatchType !== matchType) {
-        setMatchType(normalizedMatchType);
-      }
-
-      const normalizedNewDivisionMatchType = normalizeMatchFormatForCategory(
-        newDivisionMatchType as 'MALE_SINGLES' | 'FEMALE_SINGLES' | 'MALE_DOUBLES' | 'FEMALE_DOUBLES' | 'MIXED_DOUBLES',
-        selectedCategory,
-      );
-      if (normalizedNewDivisionMatchType !== newDivisionMatchType) {
-        setNewDivisionMatchType(normalizedNewDivisionMatchType);
-      }
-    });
-  }, [applyResolvedRuleState, categories, categoryId, matchType, newDivisionMatchType, tournament]);
+    applyResolvedRuleState(effectiveRules);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tournament?.id, categoryId]);
 
   useEffect(() => {
     if (!selectedDivisionId) {
+      currentDivisionIdRef.current = '';
       return;
     }
 
-    const selected = divisions.find((d) => d.id === selectedDivisionId);
-    if (selected) {
-      void Promise.resolve().then(() => {
+    if (currentDivisionIdRef.current !== selectedDivisionId) {
+      currentDivisionIdRef.current = selectedDivisionId;
+      const selected = divisions.find((d) => d.id === selectedDivisionId);
+      if (selected) {
         applyDivisionFormValues(selected);
-      });
+      }
     }
 
-    void Promise.resolve().then(() => {
-      void refetchDivisionData();
-    });
-  }, [refetchDivisionData, selectedDivisionId, divisions, applyDivisionFormValues]);
+    void refetchDivisionData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDivisionId]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {

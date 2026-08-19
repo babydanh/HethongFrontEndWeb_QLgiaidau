@@ -254,9 +254,10 @@ export default function SmartAiTournamentModal({
 
       // 4. Batch import participants from Excel if available
       if (excelResult && excelResult.rows.length > 0) {
-        const hasPlayer2Column = Boolean(excelResult.detectedMapping.player2NameCol);
+        const player2Column = excelResult.detectedMapping.player2NameCol;
+        const hasPlayer2Data = Boolean(player2Column && excelResult.rows.some((row) => String(row[player2Column] ?? '').trim().length > 0));
         const primaryIsDoubles = !primaryFormat.formatKey.includes('SINGLES');
-        if (primaryIsDoubles !== hasPlayer2Column) {
+        if (primaryIsDoubles !== hasPlayer2Data) {
           throw new Error(primaryIsDoubles
             ? 'Nội dung đang chọn là nội dung đôi nhưng file Excel chưa có cột VĐV 2. Hãy chọn đúng nội dung hoặc bổ sung cột VĐV 2.'
             : 'Nội dung đang chọn là nội dung đơn nhưng file Excel có cột VĐV 2. Hãy chọn nội dung đôi hoặc bỏ cột VĐV 2.');

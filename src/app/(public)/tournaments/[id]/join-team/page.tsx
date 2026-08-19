@@ -43,8 +43,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
   if (tournament) {
     const title = teamName 
-      ? `Tham gia đội ${teamName} - ${tournament.name} | Sporto`
-      : `Mời tham gia đội - ${tournament.name} | Sporto`;
+      ? `Tham gia đội ${teamName} - ${tournament.name} | SportO`
+      : `Mời tham gia đội - ${tournament.name} | SportO`;
       
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 100);
     const description = teamName
@@ -64,7 +64,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         title,
         description,
         url: canonicalUrl,
-        siteName: 'Sporto',
+        siteName: 'SportO',
         images: [{ url: imageUrl }],
         type: 'website',
       },
@@ -77,8 +77,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     };
   }
 
-  const fallbackTitle = 'Mời tham gia đội thi đấu | Sporto';
-  const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại Sporto. Nhấn để xem chi tiết và xác nhận!';
+  const fallbackTitle = 'Mời tham gia đội thi đấu | SportO';
+  const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại SportO. Nhấn để xem chi tiết và xác nhận!';
   const fallbackImage = 'https://sporto.asia/sporto_v1.svg';
 
   return {
@@ -88,7 +88,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       title: fallbackTitle,
       description: fallbackDesc,
       url: `https://sporto.asia/tournaments/${id}/join-team`,
-      siteName: 'Sporto',
+      siteName: 'SportO',
       images: [{ url: fallbackImage }],
       type: 'website',
     },

@@ -12,9 +12,9 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   const tournament = await getTournament(resolvedParams.id);
 
   if (tournament) {
-    const title = `${tournament.name} | Sporto`;
+    const title = `${tournament.name} | SportO`;
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 160);
-    const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống Sporto. Đăng ký tham gia ngay!`;
+    const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống SportO. Đăng ký tham gia ngay!`;
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg';
 
     const canonicalUrl = `https://sporto.asia/tournaments/${resolvedParams.id}`;
@@ -42,8 +42,8 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   }
 
   return {
-    title: 'Chi tiết giải đấu | Sporto',
-    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống Sporto.',
+    title: 'Chi tiết giải đấu | SportO',
+    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống SportO.',
   };
 }
 

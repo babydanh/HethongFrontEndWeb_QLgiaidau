@@ -264,7 +264,10 @@ export default function UserProfilePopover({
   };
 
   const sysRoleBadge = getSystemRoleBadge(profileData.systemRole);
-  const primaryRank = profileData.highlightRank;
+  const primaryRank = profileData.highlightRank
+    ?? (profileData.ranks ?? []).find((rank) => rank.matchesPlayed > 0)
+    ?? profileData.ranks?.[0]
+    ?? null;
   const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
   const canMessage = !isSelf && (profileData.allowStrangerMessages !== false || Boolean(communityId && profileData.role));
   const profileRanks = (profileData.ranks ?? []).filter((rank) => rank.matchesPlayed > 0).slice(0, 3);
@@ -476,9 +479,11 @@ export default function UserProfilePopover({
           <div className="mt-2.5 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="font-semibold text-slate-700">{translate('eloStartingScore')}</span>
+              <span className="font-semibold text-slate-700">{translate('currentElo')}</span>
             </div>
-            <span className="font-extrabold text-blue-600">1,000 ELO</span>
+            <span className="font-extrabold text-blue-600">
+              {new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US').format(primaryRank?.eloPoints ?? 1000)} ELO
+            </span>
           </div>
         )}
 
@@ -655,7 +660,7 @@ export default function UserProfilePopover({
                 router.push(`/users/${profileData.id}`);
               }
             }}
-            className={`${isSelf ? 'w-full' : 'inline-flex'} items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80`}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
           >
             <User className="h-3.5 w-3.5" />
             {translate('profile')}

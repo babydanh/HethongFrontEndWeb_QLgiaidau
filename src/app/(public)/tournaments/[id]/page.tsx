@@ -55,7 +55,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     image: [tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg'],
     organizer: {
       '@type': 'Organization',
-      name: 'Sporto',
+      name: 'SportO',
       url: 'https://sporto.asia',
     },
   } : null;

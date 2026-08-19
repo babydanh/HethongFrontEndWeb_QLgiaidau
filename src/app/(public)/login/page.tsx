@@ -168,7 +168,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 p-10 pt-0">
-          <p className="text-slate-500 text-xs">© 2025 Sporto</p>
+          <p className="text-slate-500 text-xs">© 2025 SportO</p>
         </div>
       </div>
 

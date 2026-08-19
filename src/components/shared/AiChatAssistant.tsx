@@ -575,7 +575,7 @@ export default function AiChatAssistant() {
                     </div>
                     <div className={`max-w-[78%] ${mine ? 'text-right' : 'text-left'}`}>
                       <p className="mb-1 truncate text-[10px] font-semibold text-slate-500">
-                        {mine ? user?.fullName || translate('userFallback') : msg.senderName || `${translate('supportFallbackName')} Sporto`}
+                        {mine ? user?.fullName || translate('userFallback') : msg.senderName || `${translate('supportFallbackName')} SportO`}
                       </p>
                       <div
                         className={`px-3.5 py-2.5 rounded-lg text-[12.5px] leading-relaxed shadow-sm border whitespace-pre-wrap break-words ${

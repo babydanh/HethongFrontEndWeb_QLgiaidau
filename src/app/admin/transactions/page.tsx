@@ -548,7 +548,7 @@ export default function AdminTransactionsList() {
           <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between">
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">Sporto</p>
+                <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">SportO</p>
                 <h3 className="text-lg font-bold text-gray-900 mt-1">{translate('paymentReceipt')}</h3>
                 <p className="text-xs text-gray-500 mt-1">{translate('receiptNumber', { number: selectedReceipt.receiptNumber })}</p>
               </div>

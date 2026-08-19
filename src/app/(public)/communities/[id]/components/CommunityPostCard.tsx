@@ -642,6 +642,53 @@ export default function CommunityPostCard({
                   }
                 });
 
+                const openCommentAuthorProfile = async (
+                  event: React.MouseEvent<HTMLElement>,
+                  comment: CommunityComment,
+                  authorName: string,
+                  authorAvatar?: string | null,
+                ) => {
+                  event.stopPropagation();
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const authorId = comment.author?.id?.trim();
+
+                  if (authorId) {
+                    setPopoverUser({
+                      id: authorId,
+                      fullName: authorName,
+                      avatarUrl: authorAvatar,
+                      joinedAt: comment.createdAt,
+                    });
+                    setPopoverAnchorRect(rect);
+                    return;
+                  }
+
+                  setPopoverUser({ id: '', fullName: authorName, avatarUrl: authorAvatar });
+                  setPopoverAnchorRect(rect);
+
+                  try {
+                    const response = await communitiesApi.getMembers(post.communityId, {
+                      search: authorName,
+                      limit: 10,
+                    });
+                    const found = (response.data ?? []).find(
+                      (member) => member.user?.fullName?.trim().toLowerCase() === authorName.toLowerCase(),
+                    );
+                    if (found?.user?.id) {
+                      setPopoverUser({
+                        id: found.user.id,
+                        fullName: found.user.fullName,
+                        avatarUrl: found.user.avatarUrl,
+                        role: found.member.role,
+                        tags: found.member.tags,
+                        joinedAt: found.member.joinedAt,
+                      });
+                    }
+                  } catch {
+                    // Keep the lightweight author preview when member lookup is unavailable.
+                  }
+                };
+
                 const renderCommentItem = (comment: CommunityComment, isReply = false) => {
                   const authorName = comment.author?.fullName?.trim() || translate('member');
                   const authorAvatar = comment.author?.avatarUrl;
@@ -656,17 +703,7 @@ export default function CommunityPostCard({
                     >
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setPopoverUser({
-                            id: comment.author?.id || "",
-                            fullName: authorName,
-                            avatarUrl: authorAvatar,
-                            joinedAt: comment.createdAt,
-                          });
-                          setPopoverAnchorRect(rect);
-                        }}
+                        onClick={(e) => openCommentAuthorProfile(e, comment, authorName, authorAvatar)}
                         className="shrink-0 transition-transform hover:scale-105 cursor-pointer pt-0.5"
                       >
                         <CommunityAvatar
@@ -680,17 +717,7 @@ export default function CommunityPostCard({
                         <div className="inline-block rounded-2xl bg-slate-100/90 px-3.5 py-2 text-xs border border-slate-200/60 max-w-full">
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setPopoverUser({
-                                id: comment.author?.id || "",
-                                fullName: authorName,
-                                avatarUrl: authorAvatar,
-                                joinedAt: comment.createdAt,
-                              });
-                              setPopoverAnchorRect(rect);
-                            }}
+                            onClick={(e) => openCommentAuthorProfile(e, comment, authorName, authorAvatar)}
                             className="font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block text-left"
                           >
                             {authorName}

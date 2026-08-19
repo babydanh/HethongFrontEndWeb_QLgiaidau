@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
             title,
             description,
             url: canonical,
-            siteName: 'Sporto',
+            siteName: 'SportO',
             type: 'website',
             images: [{ url: imageUrl, alt: community.name }],
           },

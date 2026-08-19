@@ -2,7 +2,7 @@
  * Cấu hình chung cho toàn bộ app
  */
 export const APP_CONFIG = {
-  SITE_NAME: 'Sporto',
+  SITE_NAME: 'SportO',
   SITE_DESCRIPTION: 'Nền tảng quản lý giải đấu thể thao chuyên nghiệp',
   DEFAULT_PAGE_SIZE: 12,
   MAX_PAGE_SIZE: 50,

@@ -20,14 +20,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
       const tournament = payload.data?.tournament;
       if (tournament?.name) {
-        const title = `Tham gia ${tournament.name} | Sporto`;
-        const description = `Tham gia giải đấu Lite ${tournament.name} trên Sporto.`;
+        const title = `Tham gia ${tournament.name} | SportO`;
+        const description = `Tham gia giải đấu Lite ${tournament.name} trên SportO.`;
         const url = `${siteUrl}/lite/tournaments/join/${encodeURIComponent(inviteCode)}`;
         return {
           title,
           description,
           alternates: { canonical: url },
-          openGraph: { title, description, url, siteName: 'Sporto', type: 'website' },
+          openGraph: { title, description, url, siteName: 'SportO', type: 'website' },
           twitter: { card: 'summary', title, description },
         };
       }
@@ -37,8 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: 'Lời mời tham gia giải Lite | Sporto',
-    description: 'Mở lời mời để xem thông tin và tham gia giải đấu Lite trên Sporto.',
+    title: 'Lời mời tham gia giải Lite | SportO',
+    description: 'Mở lời mời để xem thông tin và tham gia giải đấu Lite trên SportO.',
   };
 }
 

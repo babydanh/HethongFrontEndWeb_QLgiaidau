@@ -1555,11 +1555,11 @@ export default function QuickTournamentCreate() {
                             <input
                               type="number"
                               min={2}
-                              max={256}
+                              max={128}
                               value={formatDraft.maxParticipants ?? maxTeams}
                               onChange={(event) => setFormatDraft((current) => ({
                                 ...current,
-                                maxParticipants: event.target.value === '' ? null : Math.max(2, Number(event.target.value)),
+                                maxParticipants: event.target.value === '' ? null : Math.min(128, Math.max(2, Number(event.target.value))),
                               }))}
                               className="w-32 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-900"
                             />

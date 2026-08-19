@@ -55,6 +55,7 @@ const normalizeRegistrationParticipant = (
 export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId, customResponses }: Props) {
   const router = useRouter();
   const registrationTranslate = useTranslations('RegistrationMode');
+  const doublesTranslate = useTranslations('DoublesRegistration');
   const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
   const isApprovalMode = registrationModeUi.mode === 'APPROVAL';
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -107,7 +108,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
-      setTimeLeft(`${hours > 0 ? `${hours} giờ ` : ''}${minutes} phút ${seconds.toString().padStart(2, '0')} giây`);
+      setTimeLeft(`${hours > 0 ? doublesTranslate('timeHours', { value: hours }) : ''}${doublesTranslate('timeMinutes', { value: minutes })}${doublesTranslate('timeSeconds', { value: seconds.toString().padStart(2, '0') })}`);
     };
 
     updateCountdown();
@@ -160,15 +161,15 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             if (isParticipantReadyForNextStep(part.teamStatus)) {
               setParticipant(part);
               setStep(3);
-              toast.success('Đồng đội của bạn đã tham gia đội thành công!', { id: 'partner-joined' });
+              toast.success(doublesTranslate('partnerJoined'), { id: 'partner-joined' });
               clearInterval(intervalId);
             } else if (part.teamStatus === 'EXPIRED' || part.teamStatus === 'REJECTED' || part.teamStatus === 'WITHDRAWN') {
               setParticipant(null);
               setStep(1);
               toast.error(
-                part.teamStatus === 'REJECTED' ? 'Đồng đội đã từ chối lời mời tham gia đội.' :
-                part.teamStatus === 'WITHDRAWN' ? 'Đội đã bị hủy.' :
-                'Lời mời đồng đội đã hết hạn.',
+                part.teamStatus === 'REJECTED' ? doublesTranslate('partnerRejected') :
+                part.teamStatus === 'WITHDRAWN' ? doublesTranslate('teamWithdrawn') :
+                doublesTranslate('inviteExpired'),
                 { id: 'partner-rejected' }
               );
               clearInterval(intervalId);
@@ -204,11 +205,11 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         setSearchedPartner(results[0]);
       } else {
         setSearchedPartner(null);
-        setPartnerSearchError('Không tìm thấy người dùng này trên hệ thống. Đồng đội của bạn phải tạo tài khoản trước.');
+        setPartnerSearchError(doublesTranslate('partnerSearchNotFound'));
       }
     } catch (err) {
       console.error(err);
-      setPartnerSearchError('Lỗi khi tìm kiếm người dùng.');
+      setPartnerSearchError(doublesTranslate('partnerSearchError'));
     } finally {
       setIsSearchingPartner(false);
     }
@@ -228,7 +229,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     }
 
     if (tournament?.isRanked && !rankingConsent) {
-      toast.error('Vui lòng đồng ý cho phép lưu và hiển thị kết quả, điểm ELO trên bảng xếp hạng.');
+      toast.error(doublesTranslate('rankingConsentRequired'));
       return;
     }
 
@@ -247,15 +248,15 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       if (res.data) {
         const part = normalizeRegistrationParticipant(res.data.participant, res.data.teamInviteLink);
         if (!part) {
-          toast.error('Không nhận được dữ liệu đăng ký hợp lệ.');
+          toast.error(doublesTranslate('validRegistrationData'));
           return;
         }
         setParticipant(part);
         toast.success(
           isApprovalMode && isParticipantReadyForNextStep(part.teamStatus)
-            ? 'Đã gửi yêu cầu tham gia. Vui lòng chờ BTC duyệt.'
+            ? doublesTranslate('approvalSubmitted')
             : partnerEmailOrPhone
-              ? 'Đăng ký ghép cặp thành công!'
+              ? doublesTranslate('doublesRegistered')
               : registrationTranslate('teamCreatedInviteNextStep'),
         );
         if (isParticipantReadyForNextStep(part.teamStatus)) {
@@ -273,23 +274,23 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
   const handleManualCheck = async () => {
     try {
-      toast.loading('Đang kiểm tra trạng thái...', { id: 'manual-check' });
+      toast.loading(doublesTranslate('manualCheckLoading'), { id: 'manual-check' });
       const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
       if (res.data && res.data.registered && res.data.participant) {
         const part = normalizeRegistrationParticipant(res.data.participant);
         if (!part) {
-          toast.error('Có lỗi xảy ra khi kiểm tra đăng ký.', { id: 'manual-check' });
+          toast.error(doublesTranslate('manualCheckError'), { id: 'manual-check' });
           return;
         }
         setParticipant(part);
         if (isParticipantReadyForNextStep(part.teamStatus)) {
           setStep(3);
-          toast.success('Đồng đội của bạn đã tham gia!', { id: 'manual-check' });
+          toast.success(doublesTranslate('partnerJoinedManual'), { id: 'manual-check' });
         } else {
-          toast.error('Vẫn chưa có đồng đội nào tham gia.', { id: 'manual-check' });
+          toast.error(doublesTranslate('noPartnerYet'), { id: 'manual-check' });
         }
       } else {
-        toast.error('Có lỗi xảy ra khi kiểm tra đăng ký.', { id: 'manual-check' });
+        toast.error(doublesTranslate('manualCheckError'), { id: 'manual-check' });
       }
     } catch (err) {
       toast.error(getErrorMessage(err), { id: 'manual-check' });
@@ -317,7 +318,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       setBankError('');
       setShowWithdrawModal(true);
     } else {
-      if (confirm('Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu?')) {
+      if (confirm(doublesTranslate('withdrawConfirm'))) {
         executeWithdraw();
       }
     }
@@ -342,7 +343,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   const handleConfirmWithdrawWithBank = (e: React.FormEvent) => {
     e.preventDefault();
     if (!bankName.trim() || !bankAccountNumber.trim() || !bankAccountName.trim()) {
-      setBankError('Vui lòng điền đầy đủ thông tin ngân hàng.');
+      setBankError(doublesTranslate('bankRequired'));
       return;
     }
     executeWithdraw({
@@ -388,7 +389,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-        <p className="text-sm font-semibold text-slate-500 animate-pulse">Đang tải thông tin đăng ký...</p>
+        <p className="text-sm font-semibold text-slate-500 animate-pulse">{doublesTranslate('loadingRegistration')}</p>
       </div>
     );
   }
@@ -399,18 +400,18 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       <div className="flex items-center justify-between max-w-md mx-auto bg-white border rounded-lg p-4 shadow-sm text-xs font-bold text-slate-500">
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>1</span>
-          <span className={step === 1 ? 'text-blue-600 font-bold' : ''}>Tạo Đội</span>
+          <span className={step === 1 ? 'text-blue-600 font-bold' : ''}>{doublesTranslate('stepCreateTeam')}</span>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300" />
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>2</span>
-          <span className={step === 2 ? 'text-blue-600 font-bold' : ''}>Mời Đồng Đội</span>
+          <span className={step === 2 ? 'text-blue-600 font-bold' : ''}>{doublesTranslate('stepInvitePartner')}</span>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300" />
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 3 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>3</span>
           <span className={step === 3 ? 'text-blue-600 font-bold' : ''}>
-            {isApprovalMode ? 'Chờ BTC duyệt' : 'Thanh Toán / Hoàn Tất'}
+            {isApprovalMode ? doublesTranslate('stepApprovalOrComplete') : doublesTranslate('stepPaymentOrComplete')}
           </span>
         </div>
       </div>
@@ -420,35 +421,33 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" /> Bước 1: Khởi tạo thông tin đội
+              <Users className="w-5 h-5 text-blue-600" /> {doublesTranslate('stepOneTitle')}
             </h3>
             <p className="text-slate-500 text-xs leading-relaxed">
-              Giải đấu này thuộc thể thức thi đấu{' '}
+              {doublesTranslate('formatDescriptionPrefix')}
               <strong>
                 {tournament.genderRestriction === 'MIXED'
-                  ? 'Đôi Nam Nữ (Mixed Doubles)'
+                  ? doublesTranslate('formatMixed')
                   : tournament.genderRestriction === 'FEMALE'
-                  ? 'Đôi Nữ (Female Doubles)'
-                  : 'Đôi Nam (Male Doubles)'}
+                  ? doublesTranslate('formatFemale')
+                  : doublesTranslate('formatMale')}
               </strong>
-              . Bạn là người đại diện đăng ký đội trưởng (Leader).
+              . {doublesTranslate('captainDescription')}
             </p>
           </div>
 
           <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-lg p-4 flex gap-3 text-xs leading-relaxed font-semibold">
             <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-950">Lưu ý thời hạn ghép đôi</p>
-              <p className="mt-1">
-                Đồng đội cần xác nhận và hoàn tất thanh toán trong tối đa <strong>1 giờ</strong> hoặc trước khi đóng đăng ký, tùy mốc nào đến trước. Hệ thống sẽ tự động giải phóng chỗ khi hết hạn.
-              </p>
+              <p className="font-bold text-amber-950">{doublesTranslate('pairingDeadlineTitle')}</p>
+<p className="mt-1">{doublesTranslate('pairingDeadlineText', { hours: 1 })}</p>
             </div>
           </div>
 
           <form onSubmit={handleCreateTeam} className="space-y-5">
             <Input
-              label="Tên đội thi đấu"
-              placeholder="Ví dụ: Song Hùng Hà Nội"
+              label={doublesTranslate('teamNameLabel')}
+              placeholder={doublesTranslate('teamNamePlaceholder')}
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               disabled={isSubmitting}
@@ -470,14 +469,14 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
               />
               <label htmlFor="inviteLater" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
-                Tôi muốn mời đồng đội sau (qua link mời / mã QR)
+                {doublesTranslate('inviteLater')}
               </label>
             </div>
 
             {/* Partner Search Form (only if not inviting later) */}
             {!inviteLater && (
               <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 space-y-4">
-                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">Thông tin đồng đội</span>
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">{doublesTranslate('partnerInfo')}</span>
                 
                 {searchedPartner ? (
                   // Display verified partner profile
@@ -502,18 +501,18 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                       onClick={() => setSearchedPartner(null)}
                       className="border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-bold text-xs h-9 flex items-center gap-1.5 px-3 rounded-lg"
                     >
-                      <UserMinus className="w-3.5 h-3.5" /> Hủy chọn
+                      <UserMinus className="w-3.5 h-3.5" /> {doublesTranslate('removeSelection')}
                     </Button>
                   </div>
                 ) : (
                   // Display search input
                   <div className="space-y-2.5">
-                    <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Email hoặc Số điện thoại đồng đội</label>
+                    <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">{doublesTranslate('partnerSearchLabel')}</label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <input
                           type="text"
-                          placeholder="Nhập email hoặc số điện thoại..."
+                          placeholder={doublesTranslate('partnerSearchPlaceholder')}
                           value={partnerQuery}
                           onChange={(e) => setPartnerQuery(e.target.value)}
                           className="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 h-11"
@@ -530,7 +529,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                         ) : (
                           <Search className="w-4 h-4" />
                         )}
-                        Tìm
+                        {doublesTranslate('search')}
                       </Button>
                     </div>
                     
@@ -554,8 +553,8 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   className="mt-1 h-4 w-4 accent-sky-600"
                 />
                 <span>
-                  Tôi đồng ý cho phép hệ thống lưu và hiển thị tên, kết quả trận đấu và điểm ELO trên bảng xếp hạng.
-                  <span className="mt-1 block text-xs text-slate-500">Giải không xếp hạng không cập nhật ELO.</span>
+                  {doublesTranslate('rankingConsent')}
+                  <span className="mt-1 block text-xs text-slate-500">{doublesTranslate('unrankedHint')}</span>
                 </span>
               </label>
             )}
@@ -563,13 +562,13 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             {/* Fee summary block */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5 text-xs">
               <div className="flex justify-between items-center font-semibold">
-                <span className="text-slate-500">Lệ phí cơ bản:</span>
-                <span className="text-slate-800 font-bold">{Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : 'Miễn phí'} / người</span>
+                <span className="text-slate-500">{doublesTranslate('baseFee')}</span>
+                <span className="text-slate-800 font-bold">{Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : doublesTranslate('free')} {doublesTranslate('perPerson')}</span>
               </div>
               <div className="flex justify-between items-center font-bold text-sm border-t border-slate-200 pt-2.5">
-                <span className="text-slate-700">Tổng lệ phí nộp (x2):</span>
+                <span className="text-slate-700">{doublesTranslate('totalFee')}</span>
                 <span className="text-blue-700 font-bold">
-                  {Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee) * 2) : 'Miễn phí'}
+                  {Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee) * 2) : doublesTranslate('free')}
                 </span>
               </div>
             </div>
@@ -581,12 +580,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý đăng ký...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {doublesTranslate('submitProcessing')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  {inviteLater ? 'Tạo đội & Lấy link mời' : 'Đăng ký & Ghép cặp'}
+                  {inviteLater ? doublesTranslate('createTeamInvite') : doublesTranslate('registerAndPair')}
                 </>
               )}
             </Button>
@@ -598,15 +597,15 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       {step === 2 && participant && (
         <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="space-y-1 text-center max-w-sm mx-auto">
-            <h3 className="text-lg font-bold text-slate-900">Bước 2: Mời đồng đội tham gia</h3>
+            <h3 className="text-lg font-bold text-slate-900">{doublesTranslate('stepTwoTitle')}</h3>
             <p className="text-slate-500 text-xs leading-relaxed">
-              Đội <strong className="text-slate-800">{participant.teamName}</strong> đã được khởi tạo. {partnerLink ? 'Hãy chia sẻ link hoặc mã QR dưới đây cho đồng đội của bạn.' : 'Đang chờ đồng đội của bạn xác nhận lời mời.'}
+              {partnerLink ? doublesTranslate('stepTwoWithLink', { teamName: participant.teamName }) : doublesTranslate('stepTwoWaiting', { teamName: participant.teamName })}
             </p>
           </div>
 
           {timeLeft && (
             <div className="bg-rose-50 border border-rose-100 rounded-lg p-4 text-center animate-in fade-in duration-300">
-              <span className="text-[10px] font-bold text-rose-650 block uppercase tracking-wider">Thời gian còn lại để hoàn tất đội:</span>
+              <span className="text-[10px] font-bold text-rose-650 block uppercase tracking-wider">{doublesTranslate('timeRemaining')}</span>
               <span className="text-lg font-bold text-rose-600 mt-1 block tracking-wider tabular-nums">{timeLeft}</span>
             </div>
           )}
@@ -618,12 +617,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 <div className="bg-white p-2 rounded-lg border shadow-sm">
                   <QRCodeSVG value={partnerLink} size={160} level="M" />
                 </div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3">Quét mã QR để tham gia đội</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3">{doublesTranslate('scanQr')}</p>
               </div>
 
               {/* Share link input copy */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Đường dẫn tham gia đội của bạn</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">{doublesTranslate('inviteLink')}</label>
                 <div className="flex items-start gap-2">
                   <Input
                     value={partnerLink}
@@ -636,7 +635,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                     className="border-slate-200 hover:bg-slate-50 text-slate-700 shrink-0 flex items-center gap-1.5 font-bold h-11"
                   >
                     {copied ? <Check className="w-4 h-4 text-blue-600" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Đã copy' : 'Sao chép'}
+                    {copied ? doublesTranslate('copied') : doublesTranslate('copy')}
                   </Button>
                   <Button
                     onClick={() => setIsShareModalOpen(true)}
@@ -644,7 +643,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                     className="border-blue-200 hover:bg-blue-50 text-blue-700 shrink-0 flex items-center gap-1.5 font-bold h-11"
                   >
                     <Share2 className="w-4 h-4" />
-                    Chia sẻ
+                    {doublesTranslate('share')}
                   </Button>
                 </div>
               </div>
@@ -652,9 +651,9 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           ) : (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 text-center animate-in fade-in duration-300">
               <CheckCircle className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-              <h4 className="text-sm font-bold text-blue-900">Đã gửi thông báo ghép đội</h4>
+              <h4 className="text-sm font-bold text-blue-900">{doublesTranslate('notificationSentTitle')}</h4>
               <p className="text-xs text-blue-700 mt-2 leading-relaxed max-w-sm mx-auto">
-                Chúng tôi đã gửi thông báo lời mời đến đồng đội của bạn qua tài khoản. Hãy nhắc họ mở ứng dụng hoặc truy cập web để xác nhận tham gia.
+                {doublesTranslate('notificationSentDescription')}
               </p>
             </div>
           )}
@@ -663,10 +662,10 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           <div className="flex flex-col items-center justify-center border border-dashed rounded-lg p-5 bg-blue-50/20 text-center space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-blue-700">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Đang chờ đồng đội nhấp link và đồng ý tham gia...</span>
+              <span>{doublesTranslate('waitingPartner')}</span>
             </div>
             <p className="text-[10px] text-slate-400 max-w-xs">
-              Màn hình này sẽ tự động chuyển tiếp khi đồng đội của bạn tham gia thành công.
+              {doublesTranslate('waitingPartnerHint')}
             </p>
             <div className="flex items-center gap-3 w-full max-w-xs pt-2">
               <Button
@@ -674,7 +673,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 onClick={handleManualCheck}
                 className="flex-1 text-slate-700 border-slate-200 hover:bg-slate-55 bg-white text-xs font-bold"
               >
-                Kiểm tra thủ công
+                {doublesTranslate('checkManually')}
               </Button>
               <Button
                 variant="outline"
@@ -682,7 +681,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                             disabled={isWithdrawing}
                 className="flex-1 text-rose-600 border-rose-100 hover:bg-rose-50 bg-white text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                <Trash2 className="w-3.5 h-3.5" /> {"Hủy & Rút lui"}
+                <Trash2 className="w-3.5 h-3.5" /> {doublesTranslate('withdrawAction')}
               </Button>
             </div>
           </div>
@@ -690,7 +689,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             isOpen={isShareModalOpen}
             onClose={() => setIsShareModalOpen(false)}
             shareUrl={partnerLink}
-            title={`Tham gia đội ${participant?.teamName || ''} - ${tournament.name}`}
+            title={`${doublesTranslate('share')} ${participant?.teamName || ''} - ${tournament.name}`}
           />
         </div>
       )}
@@ -704,36 +703,36 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </div>
             <h3 className="text-lg font-bold text-slate-900">
               {participant.teamStatus === 'COMPLETE'
-                ? 'Đăng ký thành công! / BTC đã duyệt'
-                : isApprovalMode ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký đội thành công!'}
+                ? doublesTranslate('stepThreeCompleteTitle')
+                : isApprovalMode ? doublesTranslate('stepThreeApprovalTitle') : doublesTranslate('stepThreeRegisteredTitle')}
             </h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
               {participant.teamStatus === 'COMPLETE'
-                ? 'Đội của bạn đã được xét duyệt thành công.'
+                ? doublesTranslate('stepThreeCompleteDescription')
                 : isApprovalMode
-                  ? 'Đội của bạn đã đủ thành viên và đang chờ BTC duyệt.'
-                  : 'Đội của bạn đã tập hợp đủ 2 thành viên thi đấu chính thức.'}
+                  ? doublesTranslate('stepThreeApprovalDescription')
+                  : doublesTranslate('stepThreeRegisteredDescription')}
             </p>
           </div>
 
           {/* Team Members List */}
           <div className="border border-slate-200 rounded-lg overflow-hidden divide-y">
             <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Thành viên đội: {participant.teamName}
+              {doublesTranslate('teamMembers', { teamName: participant.teamName })}
             </div>
             {participant.members?.map((m, idx: number) => (
               <div key={m.userId || idx} className="px-4 py-3 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
-                    {m.fullName?.substring(0, 2) || 'TV'}
+                    {m.fullName?.substring(0, 2) || doublesTranslate('memberFallback').slice(0, 2)}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900">{m.fullName || 'Thành viên'}</p>
-                    <p className="text-[10px] text-slate-400 font-semibold">{m.role === 'MAIN' ? 'Đội trưởng / Leader' : 'Thành viên / Partner'}</p>
+                    <p className="font-bold text-slate-900">{m.fullName || doublesTranslate('memberFallback')}</p>
+                    <p className="text-[10px] text-slate-400 font-semibold">{m.role === 'MAIN' ? doublesTranslate('leaderRole') : doublesTranslate('partnerRole')}</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold text-blue-650 bg-blue-50 px-2.5 py-0.5 rounded-full">
-                  {m.elo?.eloPoints || 1000} ELO Cá nhân
+                  {m.elo?.eloPoints || 1000} {doublesTranslate('personalElo')}
                 </span>
               </div>
             ))}
@@ -743,28 +742,28 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           {isApprovalMode && participant.teamStatus !== 'COMPLETE' ? (
             <div className="space-y-3">
               <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-center text-xs font-semibold text-blue-800">
-                BTC sẽ thông báo sau khi duyệt yêu cầu. Đội của bạn chưa cần thanh toán ở bước này.
+                {doublesTranslate('approvalHint')}
               </div>
               <Button
                 onClick={() => router.push(`/tournaments/${tournament.id}`)}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 text-sm"
               >
-                Xem trang giải đấu
+                {doublesTranslate('viewTournament')}
               </Button>
             </div>
           ) : Number(tournament.entryFee || 0) > 0 ? (
             <div className="space-y-4">
               <div className="bg-slate-50 border p-4 rounded-lg space-y-2">
                 <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-slate-500">Lệ phí giải đấu:</span>
-                  <span className="text-slate-900 font-bold">{formatCurrency(Number(tournament.entryFee))} / Đội</span>
+                  <span className="text-slate-500">{doublesTranslate('tournamentFee')}</span>
+                  <span className="text-slate-900 font-bold">{formatCurrency(Number(tournament.entryFee))} {doublesTranslate('perTeam')}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-500">
-                  <span>Trạng thái nộp phí:</span>
+                  <span>{doublesTranslate('paymentStatus')}</span>
                   {participant.isPaid ? (
-                    <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Đã đóng</span>
+                    <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{doublesTranslate('paid')}</span>
                   ) : (
-                    <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">Chờ thanh toán</span>
+                    <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">{doublesTranslate('awaitingPayment')}</span>
                   )}
                 </div>
               </div>
@@ -777,13 +776,13 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                             disabled={isWithdrawing}
                     className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5"
                   >
-                    <Trash2 className="w-4 h-4" /> Hủy & Rút lui
+                    <Trash2 className="w-4 h-4" /> {doublesTranslate('withdrawAction')}
                   </Button>
                   <Button
                     onClick={handlePayment}
                     className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/10"
                   >
-                    <CreditCard className="w-4 h-4" /> Tiến hành Thanh toán
+                    <CreditCard className="w-4 h-4" /> {doublesTranslate('paymentAction')}
                   </Button>
                 </div>
               )}
@@ -793,14 +792,14 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   onClick={() => router.push(`/tournaments/${tournament.id}`)}
                   className="w-full bg-slate-900 hover:bg-slate-855 text-white font-bold py-3 text-sm"
                 >
-                  Xem trang giải đấu
+                  {doublesTranslate('viewTournament')}
                 </Button>
               )}
             </div>
           ) : (
             <div className="space-y-4">
               <div className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold p-4 rounded-lg text-center">
-                Giải đấu này miễn phí lệ phí tham gia. Bạn đã hoàn tất toàn bộ quy trình đăng ký giải đấu!
+                {doublesTranslate('freeTournamentNotice')}
               </div>
 
               <div className="flex gap-3">
@@ -810,13 +809,13 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                             disabled={isWithdrawing}
                   className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5"
                 >
-                  <Trash2 className="w-4 h-4" /> {"Hủy & Rút lui"}
+                  <Trash2 className="w-4 h-4" /> {doublesTranslate('withdrawAction')}
                 </Button>
                 <Button
                   onClick={() => router.push(`/tournaments/${tournament.id}`)}
                   className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm"
                 >
-                  Truy cập trang giải đấu
+                  {doublesTranslate('visitTournament')}
                 </Button>
               </div>
             </div>
@@ -829,7 +828,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl animate-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Thông tin hoàn trả lệ phí đôi</h3>
+              <h3 className="text-base font-bold text-slate-900">{doublesTranslate('refundTitle')}</h3>
               <button 
                 onClick={() => setShowWithdrawModal(false)}
                 className="text-slate-400 hover:text-slate-650 p-1 rounded-lg hover:bg-slate-100 transition-all"
@@ -840,38 +839,38 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             <form onSubmit={handleConfirmWithdrawWithBank}>
               <div className="p-6 space-y-4.5">
                 <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-slate-650 leading-relaxed font-semibold">
-                  Đội của bạn đã đăng ký nội dung có phí. Ban tổ chức sẽ hoàn trả lệ phí qua số tài khoản ngân hàng của Đội trưởng (người nộp lệ phí) dưới đây.
+                  {doublesTranslate('refundDescription')}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Tên ngân hàng / Ví (Ví dụ: MB Bank, Vietcombank...)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">{doublesTranslate('bankNameLabel')}</label>
                   <Input
                     required
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    placeholder="Nhập tên ngân hàng..."
+                    placeholder={doublesTranslate('bankNamePlaceholder')}
                     className="font-bold text-slate-800"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Số tài khoản ngân hàng</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">{doublesTranslate('bankAccountNumberLabel')}</label>
                   <Input
                     required
                     value={bankAccountNumber}
                     onChange={(e) => setBankAccountNumber(e.target.value)}
-                    placeholder="Nhập số tài khoản..."
+                    placeholder={doublesTranslate('bankAccountNumberPlaceholder')}
                     className="font-bold text-slate-800 tracking-wider"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Họ và tên chủ tài khoản (Viết hoa không dấu)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">{doublesTranslate('bankAccountNameLabel')}</label>
                   <Input
                     required
                     value={bankAccountName}
                     onChange={(e) => setBankAccountName(e.target.value)}
-                    placeholder="Ví dụ: NGUYEN VAN A"
+                    placeholder={doublesTranslate('bankAccountNamePlaceholder')}
                     className="font-bold text-slate-800 uppercase"
                   />
                 </div>
@@ -887,7 +886,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   onClick={() => setShowWithdrawModal(false)}
                   className="px-4 py-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg"
                 >
-                  Hủy bỏ
+                  {doublesTranslate('cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -895,7 +894,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md shadow-rose-500/10"
                 >
                   {isWithdrawing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  Xác nhận rút & hoàn tiền
+                  {doublesTranslate('confirmWithdraw')}
                 </Button>
               </div>
             </form>

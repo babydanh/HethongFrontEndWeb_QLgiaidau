@@ -469,402 +469,419 @@ export function BracketTab({
 
       {/* 2 Cấp độ Cấu hình bên trong tab Bracket */}
       {selectedDivisionId && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Cấp độ 1: Cấu hình mặc định của hình thức */}
-          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
-            <div>
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-600" />
-                Cấu hình mặc định nội dung thi đấu
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
-              </p>
-            </div>
-
-            {/* Switch LITE vs STRICT */}
-            <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Chế độ ghi điểm</h4>
-                  <p className="text-xs text-slate-500 font-medium">Tự do ghi điểm hoặc áp dụng luật khắt khe</p>
+        <>
+          {/* Banner ngang chọn chế độ ghi điểm Lite / Strict */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-bold text-slate-900 text-base">Cấu hình luật & sơ đồ thi đấu</h3>
                 </div>
-                <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsLiteMode(true)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                      isLiteMode 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    ⚡ Tự do (Lite)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsLiteMode(false)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                      !isLiteMode 
-                        ? 'bg-slate-800 text-white shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    🛡️ Tiêu chuẩn (Strict)
-                  </button>
-                </div>
+                <p className="text-xs text-slate-500 font-semibold">
+                  {presentation.sportLabel}: {isLiteMode ? 'Chế độ tự do (Lite)' : presentation.scoringLabel}. {isLiteMode ? 'Trọng tài tự do ghi điểm linh hoạt.' : presentation.presetSummary}
+                </p>
               </div>
 
-              {isLiteMode && (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300 rounded-lg bg-blue-50/50 p-3 mt-2 border border-blue-100/50">
-                  <p className="text-xs text-blue-800 font-medium">
-                    ⚡ Ở chế độ tự do, trọng tài có thể tùy ý cộng điểm mà không bị giới hạn bởi {sportRuleKind === 'TENNIS' ? 'Luật Tennis (15-30-40, v.v)' : 'luật cách biệt 2 điểm hay điểm chạm'}. Giao diện điều khiển điểm số sẽ tối giản nhất để dễ thao tác.
+              {/* Segmented control Lite vs Strict */}
+              <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsLiteMode(true)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    isLiteMode
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span>⚡</span> Tự do (Lite)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsLiteMode(false)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    !isLiteMode
+                      ? 'bg-slate-800 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span>🛡️</span> Tiêu chuẩn (Strict)
+                </button>
+              </div>
+            </div>
+
+            {isLiteMode && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg bg-blue-50/70 p-3.5 border border-blue-100 text-xs text-blue-900 animate-in fade-in duration-200">
+                <div className="flex items-start sm:items-center gap-2">
+                  <span className="text-base leading-none">⚡</span>
+                  <p className="font-medium">
+                    Ở chế độ tự do, trọng tài có thể tùy ý cộng điểm mà không bị giới hạn bởi {sportRuleKind === 'TENNIS' ? 'luật Tennis' : 'luật cách biệt 2 điểm hay điểm chạm'}. Giao diện bảng điểm sẽ tối giản nhất để dễ điều phối.
                   </p>
                 </div>
-              )}
-            </div>
-
-
-            {!isLiteMode && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
-                {isPickleballVariant && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      {([
-                        { kind: 'PICKLEBALL_RALLY', title: 'Rally', description: 'Pha bóng nào thắng cũng có điểm.' },
-                        { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out', description: 'Chỉ đội giao bóng mới được cộng điểm.' },
-                      ] as const).map((option) => {
-                        const isActive = sportRuleKind === option.kind;
-                        return (
-                          <button
-                            key={option.kind}
-                            type="button"
-                            onClick={() => handleSportRuleKindChange(option.kind)}
-                            className={`rounded-lg border px-4 py-3 text-left transition-all cursor-pointer ${
-                              isActive
-                                ? 'border-emerald-500 bg-white ring-2 ring-emerald-200 shadow-xs'
-                                : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
-                            }`}
-                          >
-                            <p className="text-sm font-bold text-slate-900">{option.title}</p>
-                            <p className="mt-1 text-xs font-semibold text-slate-600">{option.description}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
-                  <div className="mt-3 grid gap-3">
-                    {presets.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => applyPreset(preset)}
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">{preset.label}</p>
-                            <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
-                          </div>
-                          <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                            {preset.setsToWin} chạm • {preset.pointsPerSet}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số Set chạm thắng</label>
-                  <select
-                    value={setsToWin}
-                    onChange={(e) => setSetsToWin(Number(e.target.value))}
-                    className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
-                  >
-                    {presentation.setOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 items-end pt-4 border-t border-slate-100">
-                  <Input
-                    label={setUnitLabel}
-                    type="number"
-                    value={pointsPerSet}
-                    onChange={(e) => setPointsPerSet(Number(e.target.value))}
-                    className="h-10 text-sm font-bold"
-                  />
-                  
-                  <div className="flex items-center gap-2 h-10 pb-2">
-                    <input
-                      type="checkbox"
-                      id="winByTwo_bracket"
-                      checked={winByTwo}
-                      onChange={(e) => setWinByTwo(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
-                    />
-                    <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                      {winByTwoLabel}
-                    </label>
-                  </div>
-                </div>
-
-                {winByTwo && (
-                  <Input
-                    label={maxScoreLabel}
-                    type="number"
-                    value={maxDeucePoints}
-                    onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
-                    placeholder={presentation.maxScorePlaceholder}
-                    className="h-10 text-sm font-bold"
-                  />
-                )}
-
-                {supportsTiebreakInput && (
-                  <Input
-                    label={presentation.tiebreakLabel}
-                    type="number"
-                    value={superTiebreakPoints}
-                    onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
-                    placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
-                    className="h-10 text-sm font-bold"
-                  />
-                )}
+                <Button
+                  onClick={handleSaveMatchConfig}
+                  disabled={isSavingConfig}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 h-8 rounded-lg shrink-0 cursor-pointer shadow-xs"
+                >
+                  {isSavingConfig ? 'Đang lưu...' : 'Lưu chế độ Lite'}
+                </Button>
               </div>
             )}
-
-            {!isLiteMode && (
-              <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
-                Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
-                {' • '}
-                {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
-                {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
-                {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
-              <Button
-                onClick={handleSaveMatchConfig}
-                disabled={isSavingConfig}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-md shadow-blue-500/10"
-              >
-                {isSavingConfig ? 'Đang lưu...' : 'Lưu cấu hình mặc định'}
-              </Button>
-            </div>
           </div>
 
-          {/* Cột 2: Cấu hình thể thức vòng đấu */}
-          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
-            {isRoundRobin && setTiebreakerMode && !isGroupStageKnockout ? (
-              <div className="space-y-4">
-                {renderSuggestionBox(getRRSuggestion(participantCount))}
+          {/* Nội dung cấu hình: 1 cột (nếu Lite) hoặc 2 cột (nếu Strict) */}
+          <div className={isLiteMode ? 'w-full' : 'grid grid-cols-1 lg:grid-cols-2 gap-6'}>
+            {/* Cột 1: Cấu hình luật tiêu chuẩn (Chỉ hiển thị khi !isLiteMode) */}
+            {!isLiteMode && (
+              <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div>
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                     <Settings className="w-5 h-5 text-blue-600" />
-                    Cấu hình Vòng Tròn (Round Robin)
+                    Cấu hình luật thi đấu tiêu chuẩn
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                    Thiết lập số lượt đấu, điểm số và cách xử lý khi các đội bằng điểm.
+                    {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
                   </p>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số vòng (roundsToPlay)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={roundsToPlay}
-                      onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
-                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                    />
-                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5">2 = lượt đi + lượt về, 3+ = thêm vòng</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thắng</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={rrWinPoints}
-                        onChange={(e) => setRrWinPoints?.(Math.max(0, Number(e.target.value)))}
-                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                      />
+
+                <div className="space-y-4">
+                  {isPickleballVariant && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
+                      <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
+                        {([
+                          { kind: 'PICKLEBALL_RALLY', title: 'Rally Scoring', description: 'Pha bóng nào thắng cũng có điểm.' },
+                          { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out Scoring', description: 'Chỉ đội giao bóng mới được cộng điểm.' },
+                        ] as const).map((option) => {
+                          const isActive = sportRuleKind === option.kind;
+                          return (
+                            <button
+                              key={option.kind}
+                              type="button"
+                              onClick={() => handleSportRuleKindChange(option.kind)}
+                              className={`rounded-lg border px-4 py-3 text-left transition-all cursor-pointer ${
+                                isActive
+                                  ? 'border-emerald-500 bg-white ring-2 ring-emerald-200 shadow-xs'
+                                  : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
+                              }`}
+                            >
+                              <p className="text-sm font-bold text-slate-900">{option.title}</p>
+                              <p className="mt-1 text-xs font-semibold text-slate-600">{option.description}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thua</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={rrLossPoints}
-                        onChange={(e) => setRrLossPoints?.(Math.max(0, Number(e.target.value)))}
-                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                      />
+                  )}
+
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
+                    <div className="mt-3 grid gap-3">
+                      {presets.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => applyPreset(preset)}
+                          className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50 cursor-pointer"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">{preset.label}</p>
+                              <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
+                            </div>
+                            <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 shrink-0">
+                              {preset.setsToWin} chạm • {preset.pointsPerSet}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
+
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiebreaker</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số Set chạm thắng</label>
                     <select
-                      value={rrTiebreaker}
-                      onChange={(e) => setRrTiebreaker?.(e.target.value)}
+                      value={setsToWin}
+                      onChange={(e) => setSetsToWin(Number(e.target.value))}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
                     >
-                      <option value="H2H_POINTS">Đối đầu (Head-to-Head)</option>
-                      <option value="SET_DIFF">Hiệu số set (Set Diff)</option>
-                      <option value="POINT_DIFF">Hiệu số điểm (Point Diff)</option>
+                      {presentation.setOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
                     </select>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xử lý hoà điểm</label>
-                    <select value={tiebreakerMode} onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold">
-                      <option value="split">Chia đôi (đồng hạng)</option>
-                      <option value="playoff">Đánh play-off (trận phụ)</option>
-                    </select>
+
+                  <div className="grid grid-cols-2 gap-4 items-end pt-4 border-t border-slate-100">
+                    <Input
+                      label={setUnitLabel}
+                      type="number"
+                      value={pointsPerSet}
+                      onChange={(e) => setPointsPerSet(Number(e.target.value))}
+                      className="h-10 text-sm font-bold"
+                    />
+                    
+                    <div className="flex items-center gap-2 h-10 pb-2">
+                      <input
+                        type="checkbox"
+                        id="winByTwo_bracket"
+                        checked={winByTwo}
+                        onChange={(e) => setWinByTwo(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
+                      />
+                      <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                        {winByTwoLabel}
+                      </label>
+                    </div>
                   </div>
-                  {handleSaveRoundRobinConfig && (
-                    <div className="flex justify-end pt-2">
-                      <Button
-                        onClick={handleSaveRoundRobinConfig}
-                        disabled={isSavingRoundRobinConfig}
-                        className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm"
+
+                  {winByTwo && (
+                    <Input
+                      label={maxScoreLabel}
+                      type="number"
+                      value={maxDeucePoints}
+                      onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
+                      placeholder={presentation.maxScorePlaceholder}
+                      className="h-10 text-sm font-bold"
+                    />
+                  )}
+
+                  {supportsTiebreakInput && (
+                    <Input
+                      label={presentation.tiebreakLabel}
+                      type="number"
+                      value={superTiebreakPoints}
+                      onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
+                      placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
+                      className="h-10 text-sm font-bold"
+                    />
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
+                  Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+                  {' • '}
+                  {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+                  {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
+                  {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    onClick={handleSaveMatchConfig}
+                    disabled={isSavingConfig}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-md shadow-blue-500/10 cursor-pointer"
+                  >
+                    {isSavingConfig ? 'Đang lưu...' : 'Lưu cấu hình mặc định'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Cột 2 (hoặc Full Width ở Lite): Cấu hình thể thức vòng đấu */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
+              {isRoundRobin && setTiebreakerMode && !isGroupStageKnockout ? (
+                <div className="space-y-4">
+                  {renderSuggestionBox(getRRSuggestion(participantCount))}
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-blue-600" />
+                      Cấu hình Vòng Tròn (Round Robin)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                      Thiết lập số lượt đấu, điểm số và cách xử lý khi các đội bằng điểm.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số vòng (roundsToPlay)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={roundsToPlay}
+                        onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5">2 = lượt đi + lượt về, 3+ = thêm vòng</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thắng</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={rrWinPoints}
+                          onChange={(e) => setRrWinPoints?.(Math.max(0, Number(e.target.value)))}
+                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thua</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={rrLossPoints}
+                          onChange={(e) => setRrLossPoints?.(Math.max(0, Number(e.target.value)))}
+                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiebreaker</label>
+                      <select
+                        value={rrTiebreaker}
+                        onChange={(e) => setRrTiebreaker?.(e.target.value)}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
                       >
-                        {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-                        Lưu cấu hình
+                        <option value="H2H_POINTS">Đối đầu (Head-to-Head)</option>
+                        <option value="SET_DIFF">Hiệu số set (Set Diff)</option>
+                        <option value="POINT_DIFF">Hiệu số điểm (Point Diff)</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xử lý hoà điểm</label>
+                      <select value={tiebreakerMode} onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold">
+                        <option value="split">Chia đôi (đồng hạng)</option>
+                        <option value="playoff">Đánh play-off (trận phụ)</option>
+                      </select>
+                    </div>
+                    {handleSaveRoundRobinConfig && (
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          onClick={handleSaveRoundRobinConfig}
+                          disabled={isSavingRoundRobinConfig}
+                          className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm"
+                        >
+                          {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                          Lưu cấu hình
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : isGroupStageKnockout ? (
+                <div className="space-y-4">
+                  {renderSuggestionBox(getGSKSuggestion(participantCount))}
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                      <LayoutGrid className="w-5 h-5 text-blue-600" />
+                      Cấu hình Vòng Bảng + Knockout
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                      {gsStages.length > 0
+                        ? `${numGroups} bảng, ${teamsPerGroup} đội/bảng, top ${teamsAdvancing} mỗi bảng vào knockout`
+                        : 'Thiết lập bảng đấu, số đội đi tiếp và thể thức loại trực tiếp.'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Vòng bảng</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số bảng</label>
+                        <input type="number" min={2} max={32} value={numGroups} onChange={(e) => setNumGroups?.(Math.max(2, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đội/bảng</label>
+                        <input type="number" min={2} max={32} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.max(2, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top vào knockout</label>
+                        <input type="number" min={1} max={16} value={teamsAdvancing} onChange={(e) => setTeamsAdvancing?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lượt đấu vòng bảng</label>
+                        <input type="number" min={1} max={20} value={gskRoundsToPlay} onChange={(e) => setGskRoundsToPlay?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">Knockout</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể thức playoff</label>
+                        <select value={gskPlayoffType ?? 'SINGLE_ELIMINATION'} onChange={(e) => setGskPlayoffType?.(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
+                          <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                          <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xếp hạt giống</label>
+                        <select value={gskSeedingType ?? 'SEEDED'} onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
+                          <option value="SEEDED">Theo seed/ELO</option>
+                          <option value="RANDOM">Ngẫu nhiên</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700">
+                      <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
+                        <p className="text-[10px] uppercase text-slate-400">Qua vòng bảng</p>
+                        <p>{gskAdvancingTotal} đội</p>
+                      </div>
+                      <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
+                        <p className="text-[10px] uppercase text-slate-400">Bắt đầu knockout</p>
+                        <p>{gskDisplayStartRoundLabel}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {handleSaveGskConfig && (
+                    <div className="flex justify-end pt-2">
+                      <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm">
+                        {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                        Lưu cấu hình thể thức
                       </Button>
                     </div>
                   )}
                 </div>
-              </div>
-            ) : isGroupStageKnockout ? (
-              <div className="space-y-4">
-                {renderSuggestionBox(getGSKSuggestion(participantCount))}
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <LayoutGrid className="w-5 h-5 text-blue-600" />
-                    Cấu hình Vòng Bảng + Knockout
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                    {gsStages.length > 0
-                      ? `${numGroups} bảng, ${teamsPerGroup} đội/bảng, top ${teamsAdvancing} mỗi bảng vào knockout`
-                      : 'Thiết lập bảng đấu, số đội đi tiếp và thể thức loại trực tiếp.'}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Vòng bảng</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số bảng</label>
-                      <input type="number" min={2} max={32} value={numGroups} onChange={(e) => setNumGroups?.(Math.max(2, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đội/bảng</label>
-                      <input type="number" min={2} max={32} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.max(2, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top mỗi bảng vào knockout</label>
-                      <input type="number" min={1} max={16} value={teamsAdvancing} onChange={(e) => setTeamsAdvancing?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lượt đấu vòng bảng</label>
-                      <input type="number" min={1} max={20} value={gskRoundsToPlay} onChange={(e) => setGskRoundsToPlay?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                    </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-blue-600" />
+                      Cấu hình theo vòng đấu
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">{presentation.roundConfigHint}</p>
                   </div>
-                </div>
 
-                <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">Knockout</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể thức playoff</label>
-                      <select value={gskPlayoffType ?? 'SINGLE_ELIMINATION'} onChange={(e) => setGskPlayoffType?.(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
-                        <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
-                        <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xếp hạt giống</label>
-                      <select value={gskSeedingType ?? 'SEEDED'} onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
-                        <option value="SEEDED">Theo seed/ELO</option>
-                        <option value="RANDOM">Ngẫu nhiên</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700">
-                    <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
-                      <p className="text-[10px] uppercase text-slate-400">Qua vòng bảng</p>
-                      <p>{gskAdvancingTotal} đội</p>
-                    </div>
-                    <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
-                      <p className="text-[10px] uppercase text-slate-400">Bắt đầu knockout</p>
-                      <p>{gskDisplayStartRoundLabel}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {handleSaveGskConfig && (
-                  <div className="flex justify-end pt-2">
-                    <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm">
-                      {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-                      Lưu cấu hình thể thức
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-blue-600" />
-                    Cấu hình theo vòng đấu
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">{presentation.roundConfigHint}</p>
-                </div>
-
-                {rounds.length > 0 ? (
-                  <div className="divide-y divide-slate-100 max-h-[340px] overflow-y-auto space-y-2.5">
-                    {rounds.map(({ stage, roundNumber, name, override }) => {
-                      return (
-                        <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
-                          <div className="space-y-0.5">
-                            <p className="text-sm font-bold text-slate-800">{name}</p>
-                            <p className="text-[11px] text-slate-500 font-semibold">
-                              {override ? (
-                                `${override.sets_to_win === 1 ? 'Thắng 1 set' : override.sets_to_win === 2 ? 'Thắng 2 set' : 'Thắng 3 set'}, ${override.points_per_set || 21} điểm/set, ${override.deuce_enabled ? 'có cách biệt 2 điểm' : 'không áp dụng cách biệt 2 điểm'}`
-                              ) : (
-                                'Kế thừa luật mặc định của hình thức'
-                              )}
-                            </p>
+                  {rounds.length > 0 ? (
+                    <div className="divide-y divide-slate-100 max-h-[340px] overflow-y-auto space-y-2.5">
+                      {rounds.map(({ stage, roundNumber, name, override }) => {
+                        return (
+                          <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
+                            <div className="space-y-0.5">
+                              <p className="text-sm font-bold text-slate-800">{name}</p>
+                              <p className="text-[11px] text-slate-500 font-semibold">
+                                {override ? (
+                                  `${override.sets_to_win === 1 ? 'Thắng 1 set' : override.sets_to_win === 2 ? 'Thắng 2 set' : 'Thắng 3 set'}, ${override.points_per_set || 21} điểm/set, ${override.deuce_enabled ? 'có cách biệt 2 điểm' : 'không áp dụng cách biệt 2 điểm'}`
+                                ) : (
+                                  'Kế thừa luật mặc định của hình thức'
+                                )}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
+                              className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8"
+                            >
+                              Cấu hình vòng
+                            </Button>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
-                            className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8"
-                          >
-                            Cấu hình vòng
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-lg border border-dashed text-center">
-                    <p className="text-xs font-semibold text-slate-455">Sơ đồ thi đấu chưa được khởi tạo.</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Khởi tạo sơ đồ ở bên dưới để thiết lập luật thi đấu chi tiết cho từng vòng.</p>
-                  </div>
-                )}
-              </div>
-            )}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-lg border border-dashed text-center">
+                      <p className="text-xs font-semibold text-slate-455">Sơ đồ thi đấu chưa được khởi tạo.</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Khởi tạo sơ đồ ở bên dưới để thiết lập luật thi đấu chi tiết cho từng vòng.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Cấp độ 2 (Dành cho GSK): Khối cấu hình chi tiết từng vòng đấu toàn diện */}

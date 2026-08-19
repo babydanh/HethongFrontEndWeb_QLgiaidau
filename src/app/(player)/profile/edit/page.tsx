@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuthStore, User as AuthUser } from '@/lib/zustand/authStore';
 import { useForm } from 'react-hook-form';
@@ -25,42 +25,44 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 // Zod Schemas matching backend constraints
-const profileSchema = z.object({
-  fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự').max(100, 'Họ tên tối đa 100 ký tự'),
-  phone: z.string().regex(/^[0-9]{10,11}$/, 'Số điện thoại không hợp lệ').optional().or(z.literal('')),
+const createProfileSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
+  fullName: z.string().min(2, translate('validationFullNameMin')).max(100, translate('validationFullNameMax')),
+  phone: z.string().regex(/^[0-9]{10,11}$/, translate('validationPhone')).optional().or(z.literal('')),
   dateOfBirth: z.string().optional().or(z.literal(''))
     .refine(val => {
       if (!val) return true;
       const date = new Date(val);
       const today = new Date();
       return date < today;
-    }, 'Ngày sinh không thể ở tương lai'),
+    }, translate('validationBirthFuture')),
   gender: z.string().optional().or(z.literal('')),
-  address: z.string().max(255, 'Địa chỉ tối đa 255 ký tự').optional().or(z.literal('')),
+  address: z.string().max(255, translate('validationAddressMax')).optional().or(z.literal('')),
   provinceCode: z.string().optional().or(z.literal('')),
-  bio: z.string().max(500, 'Giới thiệu tối đa 500 ký tự').optional(),
+  bio: z.string().max(500, translate('validationBioMax')).optional(),
   bankName: z.string().optional().or(z.literal('')),
   bankAccountNumber: z.string().optional().or(z.literal('')),
   bankAccountName: z.string().optional().or(z.literal('')),
 });
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormValues = z.infer<ReturnType<typeof createProfileSchema>>;
 
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
-  newPassword: z.string().min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự'),
-  confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+const createPasswordSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
+  currentPassword: z.string().min(1, translate('validationCurrentPassword')),
+  newPassword: z.string().min(8, translate('validationNewPassword')),
+  confirmPassword: z.string().min(1, translate('validationConfirmPassword')),
 }).refine(data => data.newPassword === data.confirmPassword, {
-  message: 'Mật khẩu xác nhận không khớp',
+  message: translate('validationPasswordMismatch'),
   path: ['confirmPassword'],
 });
 
-type PasswordFormValues = z.infer<typeof passwordSchema>;
+type PasswordFormValues = z.infer<ReturnType<typeof createPasswordSchema>>;
 
 export default function EditProfilePage() {
   const { user, setUser, logout } = useAuthStore();
   const router = useRouter();
-  const translate = useTranslations('Profile');
+    const translate = useTranslations('Profile');
+  const profileSchema = useMemo(() => createProfileSchema(translate), [translate]);
+  const passwordSchema = useMemo(() => createPasswordSchema(translate), [translate]);
   const [activeTab, setActiveTab] = useState<'profile' | 'refund' | 'security'>('profile');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
@@ -100,8 +102,8 @@ export default function EditProfilePage() {
       setUser(responseData as NonNullable<typeof user>);
       toast.success(
         blockStrangers
-          ? 'Đã bật chặn tin nhắn từ người lạ.'
-          : 'Đã cho phép người lạ nhắn tin cho bạn.',
+          ? translate('privacyBlocked')
+          : translate('privacyAllowed'),
       );
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -336,14 +338,14 @@ export default function EditProfilePage() {
   // Email Verification Flow
   const handleRequestEmailVerification = async () => {
     if (emailCooldown > 0) {
-      toast.error(`Vui lòng chờ ${emailCooldown}s trước khi yêu cầu gửi lại email xác minh.`);
+      toast.error(translate('emailCooldown', { seconds: emailCooldown }));
       return;
     }
     try {
       setIsRequestingEmailCode(true);
       await authApi.requestEmailVerification();
       setEmailCooldown(120);
-      toast.success('Mã kích hoạt có hiệu lực trong 15 phút đã được gửi tới email của bạn.');
+      toast.success(translate('emailSent'));
       setIsEmailModalOpen(true);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -354,13 +356,13 @@ export default function EditProfilePage() {
 
   const handleConfirmEmailVerification = async () => {
     if (!emailToken.trim()) {
-      toast.error('Vui lòng nhập mã kích hoạt');
+      toast.error(translate('enterActivationCode'));
       return;
     }
     try {
       setIsConfirmingEmailCode(true);
       await authApi.confirmEmailVerification(emailToken.trim());
-      toast.success('Xác minh Email thành công!');
+      toast.success(translate('emailVerified'));
       setIsEmailModalOpen(false);
       
       // Refresh profile data in store
@@ -377,7 +379,7 @@ export default function EditProfilePage() {
   const handleRequestPhoneVerification = async () => {
     const phoneToVerify = profileForm.getValues('phone')?.trim() || user?.phoneNumber;
     if (!phoneToVerify) {
-      toast.error('Vui lòng nhập số điện thoại trước khi xác minh');
+      toast.error(translate('phoneRequired'));
       return;
     }
     try {
@@ -385,8 +387,8 @@ export default function EditProfilePage() {
       await authApi.requestPhoneVerification(phoneToVerify);
       toast.success(
         process.env.NODE_ENV === 'production'
-          ? 'Mã OTP đã được gửi tới số điện thoại của bạn.'
-          : 'Mã OTP đã được gửi tới số điện thoại (Vui lòng kiểm tra Console logs của Backend)'
+          ? translate('phoneOtpSent')
+          : translate('phoneOtpSentDev')
       );
       setIsPhoneModalOpen(true);
     } catch (error) {
@@ -398,13 +400,13 @@ export default function EditProfilePage() {
 
   const handleConfirmPhoneVerification = async () => {
     if (!phoneOtp.trim()) {
-      toast.error('Vui lòng nhập mã OTP');
+      toast.error(translate('enterOtp'));
       return;
     }
     try {
       setIsConfirmingPhoneCode(true);
       await authApi.confirmPhoneVerification(phoneOtp.trim());
-      toast.success('Xác minh Số điện thoại thành công!');
+      toast.success(translate('phoneVerified'));
       setIsPhoneModalOpen(false);
       
       // Refresh profile data in store
@@ -446,8 +448,8 @@ export default function EditProfilePage() {
           <ArrowLeft className="w-5 h-5 text-slate-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Cài đặt tài khoản</h1>
-          <p className="text-sm text-slate-500 mt-1">Quản lý thông tin cá nhân và bảo mật của bạn</p>
+          <h1 className="text-2xl font-bold text-slate-900">{translate('settingsTitle')}</h1>
+          <p className="text-sm text-slate-500 mt-1">{translate('settingsDescription')}</p>
         </div>
       </div>
 
@@ -495,7 +497,7 @@ export default function EditProfilePage() {
                 }`}
               >
                 <User className="w-5 h-5" />
-                Thông tin cá nhân
+                {translate('personalInfoNav')}
               </button>
               <button
                 onClick={() => setActiveTab('refund')}
@@ -517,7 +519,7 @@ export default function EditProfilePage() {
                 }`}
               >
                 <Shield className="w-5 h-5" />
-                Bảo mật & Mật khẩu
+                {translate('securityNav')}
               </button>
             </div>
           </div>
@@ -555,39 +557,39 @@ export default function EditProfilePage() {
                   ) : (
                     <Camera className="w-3.5 h-3.5" />
                   )}
-                  {isUploadingCover ? 'Đang tải...' : 'Thay đổi ảnh bìa'}
+                  {isUploadingCover ? translate('uploading') : translate('changeCover')}
                 </label>
               </div>
 
               <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-slate-900">Thông tin cá nhân</h2>
+                <h2 className="text-lg font-bold text-slate-900">{translate('personalInfoTitle')}</h2>
               </div>
               <div className="p-6">
                 <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="flex flex-col gap-5">
                   <Input
-                    label="Họ và tên"
-                    placeholder="Nhập họ tên đầy đủ"
+                    label={translate('fullNameLabel')}
+                    placeholder={translate('fullNamePlaceholder')}
                     {...profileForm.register('fullName')}
                     error={profileForm.formState.errors.fullName?.message}
                   />
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <Input
-                      label="Số điện thoại"
+                      label={translate('phoneLabel')}
                       placeholder="0912345678"
                       {...profileForm.register('phone')}
                       error={profileForm.formState.errors.phone?.message}
                     />
                     <DatePicker
-                      label="Ngày sinh"
+                      label={translate('dateOfBirthLabel')}
                       value={profileForm.watch('dateOfBirth') || ''}
                       onChange={(val) => profileForm.setValue('dateOfBirth', val, { shouldValidate: true, shouldDirty: true })}
                       error={profileForm.formState.errors.dateOfBirth?.message}
                     />
                     
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-semibold text-slate-700">Giới tính</label>
+                      <label className="text-sm font-semibold text-slate-700">{translate('genderLabel')}</label>
                       <select
                         disabled={user?.isGenderLocked}
                         className={`w-full px-4 py-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all ${
@@ -595,14 +597,14 @@ export default function EditProfilePage() {
                         }`}
                         {...profileForm.register('gender')}
                       >
-                        <option value="">Chưa chọn</option>
-                        <option value="Nam">Nam</option>
-                        <option value="Nữ">Nữ</option>
-                        <option value="Khác">Khác</option>
+                        <option value="">{translate('notSelected')}</option>
+                        <option value="Nam">{translate('male')}</option>
+                        <option value="Nữ">{translate('female')}</option>
+                        <option value="Khác">{translate('other')}</option>
                       </select>
                       {user?.isGenderLocked ? (
                         <p className="text-xs font-semibold text-blue-600 mt-1 flex items-center justify-between">
-                          <span>Giới tính đã bị khóa sau khi giải đấu hoàn thành.</span>
+                          <span>{translate('genderLocked')}</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -611,7 +613,7 @@ export default function EditProfilePage() {
                             }}
                             className="text-amber-700 hover:text-amber-800 underline active:scale-95 transition-all outline-none font-bold"
                           >
-                            Gửi yêu cầu đổi
+                            {translate('requestGenderChange')}
                           </button>
                         </p>
                       ) : (
@@ -623,13 +625,13 @@ export default function EditProfilePage() {
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-slate-400" /> Khu vực tranh tài
+                        <MapPin className="w-4 h-4 text-slate-400" /> {translate('competitionRegionLabel')}
                       </label>
                       <select
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                         {...profileForm.register('provinceCode')}
                       >
-                        <option value="">Chưa chọn (Không tranh hạng Tier S)</option>
+                        <option value="">{translate('regionNotSelected')}</option>
                         {provinces.map(p => (
                           <option key={p.code} value={p.code}>{p.name}</option>
                         ))}
@@ -641,16 +643,16 @@ export default function EditProfilePage() {
                   </div>
 
                   <Input
-                    label="Địa chỉ chi tiết"
-                    placeholder="Nhập địa chỉ cụ thể của bạn"
+                    label={translate('addressLabel')}
+                    placeholder={translate('addressPlaceholder')}
                     {...profileForm.register('address')}
                     error={profileForm.formState.errors.address?.message}
                   />
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Giới thiệu bản thân</label>
+                    <label className="text-sm font-semibold text-slate-700">{translate('bioLabel')}</label>
                     <Textarea
-                      placeholder="Viết một chút về phong cách chơi của bạn..."
+                      placeholder={translate('bioPlaceholder')}
                       className="h-28 resize-none"
                       {...profileForm.register('bio')}
                     />
@@ -661,7 +663,7 @@ export default function EditProfilePage() {
 
                   <div className="flex justify-end pt-2 border-t border-slate-100 gap-3">
                     <Button type="submit" disabled={isSubmittingProfile} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm active:scale-[0.98] transition-all">
-                      <Save className="w-4 h-4 mr-2" /> Lưu thay đổi
+                      <Save className="w-4 h-4 mr-2" /> {translate('saveChanges')}
                     </Button>
                   </div>
                 </form>
@@ -670,7 +672,7 @@ export default function EditProfilePage() {
               {/* Account Verification Section */}
               <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-slate-900">Xác minh tài khoản</h2>
+                <h2 className="text-lg font-bold text-slate-900">{translate('accountVerificationTitle')}</h2>
               </div>
               <div className="p-6 flex flex-col gap-6">
                 
@@ -681,19 +683,19 @@ export default function EditProfilePage() {
                       <Mail className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-slate-900 text-sm">Địa chỉ Email</h4>
+                      <h4 className="font-semibold text-slate-900 text-sm">{translate('emailAddressLabel')}</h4>
                       <p className="text-xs text-slate-500 mt-0.5">{user?.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     {user?.isEmailVerified ? (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Đã xác minh
+                        <CheckCircle2 className="w-3.5 h-3.5" /> {translate('verified')}
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200">
-                          <AlertTriangle className="w-3.5 h-3.5" /> Chưa xác minh
+                          <AlertTriangle className="w-3.5 h-3.5" /> {translate('unverified')}
                         </span>
                         <Button 
                           onClick={handleRequestEmailVerification} 
@@ -703,7 +705,7 @@ export default function EditProfilePage() {
                           className="h-8 text-xs font-bold border-blue-200 text-blue-600 hover:bg-blue-50 active:scale-95 transition-all"
                         >
                           {isRequestingEmailCode ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-                          Xác minh
+                          {translate('confirmVerification')}
                         </Button>
                       </div>
                     )}
@@ -717,19 +719,19 @@ export default function EditProfilePage() {
                       <Phone className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-slate-900 text-sm">Số điện thoại</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{user?.phoneNumber || 'Chưa cập nhật số điện thoại'}</p>
+                      <h4 className="font-semibold text-slate-900 text-sm">{translate('phoneLabel')}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">{user?.phoneNumber || translate('phoneNotUpdated')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     {user?.isPhoneVerified ? (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Đã xác minh
+                        <CheckCircle2 className="w-3.5 h-3.5" /> {translate('verified')}
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200">
-                          <AlertTriangle className="w-3.5 h-3.5" /> Chưa xác minh
+                          <AlertTriangle className="w-3.5 h-3.5" /> {translate('unverified')}
                         </span>
                         <Button 
                           onClick={handleRequestPhoneVerification} 
@@ -739,7 +741,7 @@ export default function EditProfilePage() {
                           className="h-8 text-xs font-bold border-blue-200 text-blue-600 hover:bg-blue-50 active:scale-95 transition-all"
                         >
                           {isRequestingPhoneCode ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-                          Xác minh
+                          {translate('confirmVerification')}
                         </Button>
                       </div>
                     )}
@@ -754,27 +756,27 @@ export default function EditProfilePage() {
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-slate-900">Tài khoản nhận hoàn tiền</h2>
+                <h2 className="text-lg font-bold text-slate-900">{translate('refundAccountTitle')}</h2>
               </div>
               <div className="p-6">
                 <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                  Cấu hình thông tin tài khoản ngân hàng hoặc số điện thoại ví điện tử chính xác của bạn để Ban Tổ Chức (BTC) có thể gửi lại lệ phí giải đấu cho bạn trong trường hợp bạn xin rút khỏi giải đấu trước khi giải khởi tranh.
+                  {translate('refundDescription')}
                 </p>
                 <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="flex flex-col gap-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-semibold text-slate-700">Ngân hàng / Ví nhận tiền</label>
+                      <label className="text-sm font-semibold text-slate-700">{translate('bankReceiverLabel')}</label>
                       <select
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                         {...profileForm.register('bankName')}
                       >
-                        <option value="">Chưa chọn ngân hàng/ví</option>
-                        <optgroup label="Ví điện tử">
-                          <option value="Momo">Ví điện tử MoMo</option>
-                          <option value="ZaloPay">Ví điện tử ZaloPay</option>
-                          <option value="ShopeePay">Ví điện tử ShopeePay</option>
+                        <option value="">{translate('bankNotSelected')}</option>
+                        <optgroup label={translate('ewalletGroup')}>
+                          <option value="Momo">MoMo</option>
+                          <option value="ZaloPay">ZaloPay</option>
+                          <option value="ShopeePay">ShopeePay</option>
                         </optgroup>
-                        <optgroup label="Ngân hàng">
+                        <optgroup label={translate('bankGroup')}>
                           <option value="Vietcombank">Vietcombank</option>
                           <option value="Techcombank">Techcombank</option>
                           <option value="Vietinbank">Vietinbank</option>
@@ -794,16 +796,16 @@ export default function EditProfilePage() {
                     </div>
                     
                     <Input
-                      label={['Momo', 'ZaloPay', 'ShopeePay'].includes(profileForm.watch('bankName') || '') ? 'Số điện thoại ví' : 'Số tài khoản'}
-                      placeholder={['Momo', 'ZaloPay', 'ShopeePay'].includes(profileForm.watch('bankName') || '') ? 'Ví dụ: 0912345678' : 'Ví dụ: 0011001234567'}
+                      label={['Momo', 'ZaloPay', 'ShopeePay'].includes(profileForm.watch('bankName') || '') ? translate('walletPhoneLabel') : translate('accountNumberLabel')}
+                      placeholder={['Momo', 'ZaloPay', 'ShopeePay'].includes(profileForm.watch('bankName') || '') ? translate('walletPhonePlaceholder') : translate('accountNumberPlaceholder')}
                       {...profileForm.register('bankAccountNumber')}
                       error={profileForm.formState.errors.bankAccountNumber?.message}
                     />
                   </div>
 
                   <Input
-                    label="Tên chủ tài khoản / ví (Viết hoa không dấu)"
-                    placeholder="Ví dụ: NGUYEN VAN A"
+                    label={translate('accountNameLabel')}
+                    placeholder={translate('accountNamePlaceholder')}
                     {...profileForm.register('bankAccountName')}
                     onChange={(e) => {
                       const normalized = e.target.value
@@ -818,7 +820,7 @@ export default function EditProfilePage() {
 
                   <div className="flex justify-end pt-2 border-t border-slate-100 gap-3">
                     <Button type="submit" disabled={isSubmittingProfile} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm active:scale-[0.98] transition-all">
-                      <Save className="w-4 h-4 mr-2" /> Lưu cấu hình hoàn tiền
+                      <Save className="w-4 h-4 mr-2" /> {translate('saveRefundSettings')}
                     </Button>
                   </div>
                 </form>
@@ -832,29 +834,29 @@ export default function EditProfilePage() {
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                   <Lock className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-lg font-bold text-slate-900">Đổi mật khẩu</h2>
+                  <h2 className="text-lg font-bold text-slate-900">{translate('changePasswordTitle')}</h2>
                 </div>
                 <div className="p-6">
                   <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} className="flex flex-col gap-5">
                     <Input
-                      label="Mật khẩu hiện tại"
+                      label={translate('currentPasswordLabel')}
                       type="password"
-                      placeholder="Nhập mật khẩu cũ"
+                      placeholder={translate('currentPasswordPlaceholder')}
                       {...passwordForm.register('currentPassword')}
                       error={passwordForm.formState.errors.currentPassword?.message}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <Input
-                        label="Mật khẩu mới"
+                        label={translate('newPasswordLabel')}
                         type="password"
-                        placeholder="Nhập mật khẩu mới"
+                        placeholder={translate('newPasswordPlaceholder')}
                         {...passwordForm.register('newPassword')}
                         error={passwordForm.formState.errors.newPassword?.message}
                       />
                       <Input
-                        label="Xác nhận mật khẩu"
+                        label={translate('confirmPasswordLabel')}
                         type="password"
-                        placeholder="Nhập lại mật khẩu mới"
+                        placeholder={translate('confirmPasswordPlaceholder')}
                         {...passwordForm.register('confirmPassword')}
                         error={passwordForm.formState.errors.confirmPassword?.message}
                       />
@@ -862,7 +864,7 @@ export default function EditProfilePage() {
                     
                     <div className="flex justify-end pt-2">
                       <Button type="submit" variant="secondary" disabled={isSubmittingPassword} className="active:scale-[0.98] transition-all font-semibold">
-                        Đổi mật khẩu
+                        {translate('changePasswordAction')}
                       </Button>
                     </div>
                   </form>
@@ -873,14 +875,13 @@ export default function EditProfilePage() {
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-lg font-bold text-slate-900">Quyền riêng tư nhắn tin</h2>
+                  <h2 className="text-lg font-bold text-slate-900">{translate('messagingPrivacyTitle')}</h2>
                 </div>
                 <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Không nhận tin nhắn từ người lạ</h4>
+                    <h4 className="font-bold text-slate-900 text-sm">{translate('strangerMessagesTitle')}</h4>
                     <p className="text-xs text-slate-500 mt-1 max-w-[60ch] leading-relaxed">
-                      Bật để chỉ nhận tin nhắn riêng từ người cùng câu lạc bộ hoặc bạn bè.
-                      Mặc định tắt — ai cũng có thể nhắn tin cho bạn.
+                      {translate('strangerMessagesDescription')}
                     </p>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
@@ -893,7 +894,7 @@ export default function EditProfilePage() {
                     />
                     <span className="relative w-11 h-6 rounded-full bg-slate-200 peer-checked:bg-blue-600 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
                     <span className="text-xs font-semibold text-slate-600">
-                      {isSavingPrivacy ? 'Đang lưu...' : user?.allowStrangerMessages === false ? 'Đang bật' : 'Tắt'}
+                      {isSavingPrivacy ? translate('saving') : user?.allowStrangerMessages === false ? translate('enabled') : translate('disabled')}
                     </span>
                   </label>
                 </div>
@@ -905,8 +906,8 @@ export default function EditProfilePage() {
                   <div className="flex items-center gap-2">
                     <Bell className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h2 className="text-lg font-bold text-slate-900">Thông báo Câu lạc bộ</h2>
-                      <p className="text-xs text-slate-500">Tuỳ chỉnh cách bạn nhận thông báo và tin nhắn từ các câu lạc bộ đã tham gia.</p>
+                      <h2 className="text-lg font-bold text-slate-900">{translate('clubNotificationsTitle')}</h2>
+                      <p className="text-xs text-slate-500">{translate('clubNotificationsDescription')}</p>
                     </div>
                   </div>
                   {isLoadingClubPrefs && (
@@ -952,10 +953,10 @@ export default function EditProfilePage() {
                                 </div>
                                 <p className="text-xs text-slate-500 mt-0.5">
                                   {club.notificationPreference === 'ALL'
-                                    ? 'Nhận tất cả tin nhắn & thông báo'
+                                                                        ? translate('allNotificationsSummary')
                                     : club.notificationPreference === 'MENTIONS_ONLY'
-                                    ? 'Chỉ nhận thông báo khi được @nhắc tên'
-                                    : 'Đã tắt thông báo (Im lặng)'}
+                                    ? translate('mentionsOnlySummary')
+                                    : translate('mutedNotificationsSummary')}
                                 </p>
                               </div>
                             </div>
@@ -966,7 +967,7 @@ export default function EditProfilePage() {
                                 type="button"
                                 disabled={isUpdating}
                                 onClick={() => void handleUpdateClubPref(club.communityId, 'ALL')}
-                                title="Nhận tất cả thông báo"
+                                title={translate('allNotificationsTitle')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                                   club.notificationPreference === 'ALL'
                                     ? 'bg-white text-blue-700 shadow-xs'
@@ -974,14 +975,14 @@ export default function EditProfilePage() {
                                 }`}
                               >
                                 <Bell className="w-3.5 h-3.5" />
-                                <span>Tất cả</span>
+                                <span>{translate('allNotifications')}</span>
                               </button>
 
                               <button
                                 type="button"
                                 disabled={isUpdating}
                                 onClick={() => void handleUpdateClubPref(club.communityId, 'MENTIONS_ONLY')}
-                                title="Chỉ nhận thông báo khi được @tag"
+                                title={translate('mentionsOnlyTitle')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                                   club.notificationPreference === 'MENTIONS_ONLY'
                                     ? 'bg-white text-amber-700 shadow-xs'
@@ -989,14 +990,14 @@ export default function EditProfilePage() {
                                 }`}
                               >
                                 <AtSign className="w-3.5 h-3.5" />
-                                <span>Chỉ @tag</span>
+                                <span>{translate('mentionsOnly')}</span>
                               </button>
 
                               <button
                                 type="button"
                                 disabled={isUpdating}
                                 onClick={() => void handleUpdateClubPref(club.communityId, 'MUTED')}
-                                title="Tắt thông báo"
+                                title={translate('mutedNotificationsTitle')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                                   club.notificationPreference === 'MUTED'
                                     ? 'bg-white text-rose-700 shadow-xs'
@@ -1004,7 +1005,7 @@ export default function EditProfilePage() {
                                 }`}
                               >
                                 <BellOff className="w-3.5 h-3.5" />
-                                <span>Tắt</span>
+                                <span>{translate('mutedNotifications')}</span>
                               </button>
                             </div>
                           </div>
@@ -1019,13 +1020,13 @@ export default function EditProfilePage() {
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="px-6 py-5 border-b border-rose-100 bg-rose-50/30 flex items-center gap-2">
                   <ShieldAlert className="w-5 h-5 text-rose-600" />
-                  <h2 className="text-lg font-bold text-rose-900">Vùng nguy hiểm</h2>
+                  <h2 className="text-lg font-bold text-rose-900">{translate('dangerZoneTitle')}</h2>
                 </div>
                 <div className="p-6 flex flex-col gap-4">
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Xóa tài khoản cá nhân</h4>
+                    <h4 className="font-bold text-slate-900 text-sm">{translate('deleteAccountTitle')}</h4>
                     <p className="text-xs text-slate-500 mt-1 max-w-[60ch] leading-relaxed">
-                      Khi thực hiện xóa tài khoản, tất cả dữ liệu cá nhân, hồ sơ thi đấu, và các thông tin liên quan sẽ bị ẩn vĩnh viễn. Bạn không thể đăng nhập hoặc tham gia bất kỳ giải đấu nào sau hành động này.
+                      {translate('deleteAccountDescription')}
                     </p>
                   </div>
                   <div className="pt-2 flex justify-start">
@@ -1035,7 +1036,7 @@ export default function EditProfilePage() {
                       variant="destructive"
                       className="font-bold px-4 py-2.5 shadow-sm active:scale-[0.98] transition-all text-sm"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" /> Xóa tài khoản
+                      <Trash2 className="w-4 h-4 mr-2" /> {translate('deleteAccountAction')}
                     </Button>
                   </div>
                 </div>
@@ -1053,7 +1054,7 @@ export default function EditProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Yêu cầu thay đổi giới tính</h3>
+              <h3 className="text-base font-bold text-slate-900">{translate('genderRequestTitle')}</h3>
               <button 
                 onClick={() => setIsGenderModalOpen(false)}
                 className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 active:scale-95 transition-all"
@@ -1062,19 +1063,19 @@ export default function EditProfilePage() {
               </button>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              Vì bạn đã hoàn thành ít nhất một giải đấu, giới tính của bạn đã được khóa để đảm bảo công bằng. Vui lòng chọn giới tính mới. Yêu cầu sẽ được gửi tới Admin để phê duyệt thủ công.
+              {translate('genderRequestDescription')}
             </div>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Giới tính mong muốn</label>
+              <label className="text-sm font-semibold text-slate-700">{translate('requestedGenderLabel')}</label>
               <select
                 value={requestGender}
                 onChange={(e) => setRequestGender(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
               >
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-                <option value="Khác">Khác</option>
+                <option value="Nam">{translate('male')}</option>
+                <option value="Nữ">{translate('female')}</option>
+                <option value="Khác">{translate('other')}</option>
               </select>
             </div>
 
@@ -1084,7 +1085,7 @@ export default function EditProfilePage() {
                 onClick={() => setIsGenderModalOpen(false)}
                 className="border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-700 font-semibold"
               >
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
               <Button 
                 onClick={handleGenderRequestSubmit}
@@ -1092,7 +1093,7 @@ export default function EditProfilePage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold active:scale-95"
               >
                 {isSubmittingGenderRequest ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Gửi yêu cầu
+                {translate('submitRequest')}
               </Button>
             </div>
           </div>
@@ -1104,7 +1105,7 @@ export default function EditProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Xác thực địa chỉ Email</h3>
+              <h3 className="text-base font-bold text-slate-900">{translate('emailVerificationTitle')}</h3>
               <button 
                 onClick={() => setIsEmailModalOpen(false)}
                 className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 active:scale-95 transition-all"
@@ -1113,11 +1114,11 @@ export default function EditProfilePage() {
               </button>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              Mã kích hoạt xác thực đã được gửi tới địa chỉ email của bạn. Vui lòng kiểm tra hộp thư (hoặc mục Thư rác/Spam) và nhập vào ô dưới đây.
+              {translate('emailVerificationDescription')}
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-semibold flex items-center justify-between">
-              <span>⏱️ Mã xác thực hết hạn sau 15 phút</span>
+              <span>{translate('verificationExpiry')}</span>
               {emailCooldown > 0 && (
                 <span className="text-blue-600 font-bold bg-white px-2 py-0.5 rounded border border-blue-200">
                   {emailCooldown}s
@@ -1127,7 +1128,7 @@ export default function EditProfilePage() {
             
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold text-slate-700">Mã kích thực (Token)</label>
+                <label className="text-sm font-semibold text-slate-700">{translate('tokenLabel')}</label>
                 <button
                   type="button"
                   disabled={emailCooldown > 0 || isRequestingEmailCode}
@@ -1139,14 +1140,14 @@ export default function EditProfilePage() {
                   }`}
                 >
                   {isRequestingEmailCode
-                    ? 'Đang gửi...'
+                                        ? translate('sending')
                     : emailCooldown > 0
-                    ? `Gửi lại sau (${emailCooldown}s)`
-                    : 'Gửi lại mã mới'}
+                    ? translate('resendAfter', { seconds: emailCooldown })
+                    : translate('resendCode')}
                 </button>
               </div>
               <Input
-                placeholder="Nhập mã xác thực email"
+                placeholder={translate('emailTokenPlaceholder')}
                 value={emailToken}
                 onChange={(e) => setEmailToken(e.target.value)}
               />
@@ -1158,7 +1159,7 @@ export default function EditProfilePage() {
                 onClick={() => setIsEmailModalOpen(false)}
                 className="border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-700 font-semibold"
               >
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
               <Button 
                 onClick={handleConfirmEmailVerification}
@@ -1166,7 +1167,7 @@ export default function EditProfilePage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold active:scale-95"
               >
                 {isConfirmingEmailCode ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Xác thực
+                {translate('confirmVerification')}
               </Button>
             </div>
           </div>
@@ -1178,7 +1179,7 @@ export default function EditProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Xác thực số điện thoại</h3>
+              <h3 className="text-base font-bold text-slate-900">{translate('phoneVerificationTitle')}</h3>
               <button 
                 onClick={() => setIsPhoneModalOpen(false)}
                 className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 active:scale-95 transition-all"
@@ -1188,14 +1189,14 @@ export default function EditProfilePage() {
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
               {process.env.NODE_ENV === 'production'
-                ? 'Mã OTP 6 chữ số đã được gửi tới số điện thoại của bạn. Vui lòng nhập mã để xác minh.'
-                : 'Mã OTP 6 chữ số đã được gửi thử nghiệm và hiển thị trong Console log của hệ thống backend. Vui lòng nhập mã để xác minh số điện thoại.'}
+                                ? translate('phoneVerificationDescriptionProd')
+                : translate('phoneVerificationDescriptionDev')}
             </div>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Mã OTP (6 chữ số)</label>
+              <label className="text-sm font-semibold text-slate-700">{translate('otpLabel')}</label>
               <Input
-                placeholder="Nhập mã OTP 6 số"
+                placeholder={translate('otpPlaceholder')}
                 maxLength={6}
                 value={phoneOtp}
                 onChange={(e) => setPhoneOtp(e.target.value)}
@@ -1208,7 +1209,7 @@ export default function EditProfilePage() {
                 onClick={() => setIsPhoneModalOpen(false)}
                 className="border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-700 font-semibold"
               >
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
               <Button 
                 onClick={handleConfirmPhoneVerification}
@@ -1216,7 +1217,7 @@ export default function EditProfilePage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold active:scale-95"
               >
                 {isConfirmingPhoneCode ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Xác thực
+                {translate('confirmVerification')}
               </Button>
             </div>
           </div>
@@ -1229,18 +1230,18 @@ export default function EditProfilePage() {
           <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2 border-b border-rose-100 pb-3 text-rose-600">
               <AlertTriangle className="w-6 h-6" />
-              <h3 className="text-base font-bold">Xác nhận xóa tài khoản cá nhân</h3>
+              <h3 className="text-base font-bold">{translate('confirmDeleteTitle')}</h3>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              Hành động này <span className="font-bold text-rose-600">không thể hoàn tác</span>. Vui lòng nhập mật khẩu hiện tại của bạn để tiếp tục xóa tài khoản.
+              {translate('deleteAccountWarning', { irreversible: translate('irreversible') })}
             </div>
             
             <div className="flex flex-col gap-1.5 relative">
-              <label className="text-sm font-semibold text-slate-700">Mật khẩu xác nhận</label>
+              <label className="text-sm font-semibold text-slate-700">{translate('deletePasswordLabel')}</label>
               <div className="relative">
                 <Input
                   type={showDeletePassword ? 'text' : 'password'}
-                  placeholder="Nhập mật khẩu của bạn"
+                  placeholder={translate('deletePasswordPlaceholder')}
                   value={deletePassword}
                   onChange={(e) => setDeletePassword(e.target.value)}
                 />
@@ -1263,7 +1264,7 @@ export default function EditProfilePage() {
                 }}
                 className="border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-700 font-semibold"
               >
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
               <Button
                 onClick={handleDeleteAccountSubmit}
@@ -1272,7 +1273,7 @@ export default function EditProfilePage() {
                 className="font-bold active:scale-95"
               >
                 {isDeletingAccount ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Xác nhận xóa
+                {translate('confirmDelete')}
               </Button>
             </div>
           </div>

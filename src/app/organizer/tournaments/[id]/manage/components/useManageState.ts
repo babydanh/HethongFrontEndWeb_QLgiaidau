@@ -98,6 +98,8 @@ export function useManageState(id: string) {
   const [newDivisionEloEnabled, setNewDivisionEloEnabled] = useState(false);
   const [newDivisionMinElo, setNewDivisionMinElo] = useState<number | null>(null);
   const [newDivisionMaxElo, setNewDivisionMaxElo] = useState<number | null>(null);
+  const [newDivisionMaxParticipants, setNewDivisionMaxParticipants] = useState(16);
+  const [newDivisionLimitEnabled, setNewDivisionLimitEnabled] = useState(true);
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
   const [isDeletingDivision, setIsDeletingDivision] = useState(false);
@@ -781,6 +783,8 @@ export function useManageState(id: string) {
     setNewDivisionEloEnabled(division.minElo != null || division.maxElo != null);
     setNewDivisionMinElo(division.minElo ?? null);
     setNewDivisionMaxElo(division.maxElo ?? null);
+    setNewDivisionMaxParticipants(division.maxParticipants ?? 16);
+    setNewDivisionLimitEnabled(division.maxParticipants != null);
     setIsCreateDivisionModalOpen(true);
   };
 
@@ -792,6 +796,8 @@ export function useManageState(id: string) {
     setNewDivisionEloEnabled(eloEnabled);
     setNewDivisionMinElo(eloEnabled ? eloMin : null);
     setNewDivisionMaxElo(eloEnabled ? eloMax : null);
+    setNewDivisionMaxParticipants(16);
+    setNewDivisionLimitEnabled(true);
   };
 
   const handleCreateDivision = async () => {
@@ -838,6 +844,7 @@ export function useManageState(id: string) {
         }),
         minElo: newDivisionEloEnabled ? newDivisionMinElo : null,
         maxElo: newDivisionEloEnabled ? newDivisionMaxElo : null,
+        maxParticipants: newDivisionLimitEnabled ? newDivisionMaxParticipants : null,
       };
       const res = editingDivision
         ? await divisionsApi.updateDivision(editingDivision.id, divisionPayload)
@@ -1570,6 +1577,8 @@ export function useManageState(id: string) {
     isCreateDivisionModalOpen, setIsCreateDivisionModalOpen, editingDivision, openDivisionEditor, resetDivisionEditor,
     newDivisionMatchType, setNewDivisionMatchType, newDivisionName, setNewDivisionName, newDivisionBracketType, setNewDivisionBracketType,
     newDivisionEloEnabled, setNewDivisionEloEnabled, newDivisionMinElo, setNewDivisionMinElo, newDivisionMaxElo, setNewDivisionMaxElo,
+    newDivisionMaxParticipants, setNewDivisionMaxParticipants,
+    newDivisionLimitEnabled, setNewDivisionLimitEnabled,
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,

@@ -15,6 +15,7 @@ import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
 import { RegistrationTab } from './components/RegistrationTab';
+import { RegistrationFormBuilder } from './components/RegistrationFormBuilder';
 import { BracketTab } from './components/BracketTab';
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
@@ -197,6 +198,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         <span className={`block text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
                           {s.getFormatLabel(div.matchType, div.genderRestriction)} • <span className="underline">{bracketFormatLabel}</span>
                         </span>
+                        <span className={`block text-[10px] font-medium mt-1 ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                          Tối đa: {div.maxParticipants ?? 'Theo giải'}
+                          {' • '}
+                          {div.minElo != null || div.maxElo != null
+                            ? `ELO ${div.minElo ?? 0}–${div.maxElo ?? '∞'}`
+                            : 'ELO theo giải'}
+                        </span>
                       </span>
                     </button>
                     <button type="button" onClick={() => { s.requestDeleteDivision(div); }}
@@ -314,6 +322,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           handleSwapSeeds={s.handleSwapSeeds}
           handleReorderSeeds={s.handleReorderSeeds}
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success('Đã sao chép link!'); }} />}
+        {s.activeTab === 'registration' && <RegistrationFormBuilder tournament={s.tournament} divisions={s.divisions} />}
 
         {s.activeTab === 'bracket' && (
           <div ref={bracketSectionRef}>
@@ -637,6 +646,32 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     <option value="ROUND_ROBIN">Vòng tròn</option>
                     <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Loại trực tiếp</option>
                   </select></div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={s.newDivisionLimitEnabled}
+                      onChange={(e) => s.setNewDivisionLimitEnabled(e.target.checked)}
+                    />
+                    Giới hạn số đội đăng ký
+                  </label>
+                  {s.newDivisionLimitEnabled && (
+                    <>
+                      <label className="text-xs font-semibold text-slate-600">Số lượng tối đa
+                        <input
+                          type="number"
+                          min={2}
+                          max={128}
+                          value={s.newDivisionMaxParticipants}
+                          onChange={(e) => s.setNewDivisionMaxParticipants(Math.min(128, Math.max(2, Number(e.target.value) || 2)))}
+                          className="mt-1 w-full border rounded-lg p-2 text-sm"
+                          placeholder="16"
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-500">Giới hạn áp dụng riêng cho nội dung này, không thay đổi quy mô các nội dung khác.</p>
+                    </>
+                  )}
+                </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <input type="checkbox" checked={s.newDivisionEloEnabled} onChange={(e) => s.setNewDivisionEloEnabled(e.target.checked)} />

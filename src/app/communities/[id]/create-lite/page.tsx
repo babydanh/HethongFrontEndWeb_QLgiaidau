@@ -530,7 +530,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {(bracketType === 'round_robin' ? [4, 6, 8, 10, 12, 15] : [4, 8, 16, 32, 64]).map((num) => {
+                  {(bracketType === 'round_robin' ? [4, 6, 8, 10, 12, 15] : [4, 8, 16, 32, 64, 128]).map((num) => {
                     const isCurrent = maxTeams === num;
                     return (
                       <button

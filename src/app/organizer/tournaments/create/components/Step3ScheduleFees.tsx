@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,15 +17,15 @@ const getCurrentIsoMinute = () => {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 };
 
-const step3Schema = z.object({
-  startDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu thi đấu'),
-  endDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc thi đấu'),
-  registrationStartDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu đăng ký'),
-  registrationEndDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc đăng ký'),
+const createStep3Schema = (translate: ReturnType<typeof useTranslations>) => z.object({
+  startDate: z.string().min(1, translate('validationStartRequired')),
+  endDate: z.string().min(1, translate('validationEndRequired')),
+  registrationStartDate: z.string().min(1, translate('validationRegistrationStartRequired')),
+  registrationEndDate: z.string().min(1, translate('validationRegistrationEndRequired')),
   entryFee: z.string().refine((val) => {
     const num = Number(val);
     return !isNaN(num) && num >= 0;
-  }, 'Lệ phí phải là số không âm'),
+  }, translate('validationFeeNonNegative')),
 }).superRefine((data, ctx) => {
   const currentNow = new Date();
   currentNow.setMinutes(currentNow.getMinutes() - 2); // 2-minute buffer
@@ -34,7 +35,7 @@ const step3Schema = z.object({
     if (regStart < currentNow) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Thời gian mở đăng ký không được trước thời điểm hiện tại',
+        message: translate('validationRegistrationStartFuture'),
         path: ['registrationStartDate'],
       });
     }
@@ -46,7 +47,7 @@ const step3Schema = z.object({
     if (regStart >= regEnd) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Ngày bắt đầu đăng ký phải trước ngày kết thúc',
+        message: translate('validationRegistrationOrder'),
         path: ['registrationEndDate'],
       });
     }
@@ -58,7 +59,7 @@ const step3Schema = z.object({
     if (start >= end) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Ngày bắt đầu phải trước ngày kết thúc',
+        message: translate('validationCompetitionOrder'),
         path: ['endDate'],
       });
     }
@@ -70,23 +71,24 @@ const step3Schema = z.object({
     if (regEnd >= start) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Ngày kết thúc đăng ký phải trước ngày bắt đầu thi đấu',
+        message: translate('validationRegistrationBeforeCompetition'),
         path: ['registrationEndDate'],
       });
     }
   }
 });
 
-type Step3Values = z.infer<typeof step3Schema>;
+type Step3Values = z.infer<ReturnType<typeof createStep3Schema>>;
 
 export default function Step3ScheduleFees() {
+  const translate = useTranslations('OrganizerCreateStep3');
   const { formData, updateFormData, nextStep, prevStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
   const [allowEntryFees, setAllowEntryFees] = useState(true);
   const defaultRegistrationStart = formData.registrationStartDate || getCurrentIsoMinute();
 
   const { register, handleSubmit, control, setValue, setError, setFocus, formState: { errors } } = useForm<Step3Values>({
-    resolver: zodResolver(step3Schema),
+    resolver: zodResolver(createStep3Schema(translate)),
     defaultValues: {
       startDate: formData.startDate || undefined,
       endDate: formData.endDate || undefined,
@@ -135,8 +137,8 @@ export default function Step3ScheduleFees() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Lịch Thi Đấu & Lệ Phí</h2>
-        <p className="text-sm text-slate-500">Thiết lập thời gian thi đấu và lệ phí tham gia cho giải đấu.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('title')}</h2>
+        <p className="text-sm text-slate-500">{translate('subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -144,7 +146,7 @@ export default function Step3ScheduleFees() {
         <div className="bg-slate-50 border border-slate-100 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-600" />
-            <h4 className="font-bold text-slate-900">Thời Gian Đăng Ký</h4>
+            <h4 className="font-bold text-slate-900">{translate('registrationPeriod')}</h4>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -153,7 +155,7 @@ export default function Step3ScheduleFees() {
               control={control}
               render={({ field }) => (
                 <DateTimePicker
-                  label="Ngày bắt đầu đăng ký"
+                  label={translate('registrationStart')}
                   name={field.name}
                   value={field.value || ''}
                   min={getCurrentIsoMinute()}
@@ -167,7 +169,7 @@ export default function Step3ScheduleFees() {
               control={control}
               render={({ field }) => (
                 <DateTimePicker
-                  label="Ngày kết thúc đăng ký"
+                  label={translate('registrationEnd')}
                   name={field.name}
                   value={field.value || ''}
                   min={getCurrentIsoMinute()}
@@ -182,7 +184,7 @@ export default function Step3ScheduleFees() {
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-600" />
-            <h4 className="font-bold text-slate-900">Thời Gian Thi Đấu</h4>
+            <h4 className="font-bold text-slate-900">{translate('competitionPeriod')}</h4>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -191,7 +193,7 @@ export default function Step3ScheduleFees() {
               control={control}
               render={({ field }) => (
                 <DateTimePicker
-                  label="Ngày bắt đầu thi đấu"
+                  label={translate('competitionStart')}
                   name={field.name}
                   value={field.value || ''}
                   min={getCurrentIsoMinute()}
@@ -205,7 +207,7 @@ export default function Step3ScheduleFees() {
               control={control}
               render={({ field }) => (
                 <DateTimePicker
-                  label="Ngày kết thúc thi đấu"
+                  label={translate('competitionEnd')}
                   name={field.name}
                   value={field.value || ''}
                   min={getCurrentIsoMinute()}
@@ -220,29 +222,25 @@ export default function Step3ScheduleFees() {
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="w-5 h-5 text-blue-600" />
-            <h4 className="font-bold text-slate-900">Lệ Phí</h4>
+            <h4 className="font-bold text-slate-900">{translate('entryFee')}</h4>
           </div>
 
           {isClubTournament && (
             <div className="rounded-lg border border-emerald-200 bg-white px-4 py-3">
-              <p className="text-sm font-bold text-emerald-900">Miễn phí cho giải trong câu lạc bộ</p>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
-                Giải thuộc CLB không thu lệ phí qua nền tảng. Nếu CLB có khoản nội bộ riêng, hãy ghi trong mô tả hoặc thông báo CLB.
-              </p>
+              <p className="text-sm font-bold text-emerald-900">{translate('clubFreeTitle')}</p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">{translate('clubFreeDescription')}</p>
             </div>
           )}
 
           {!isClubTournament && !allowEntryFees && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-              <p className="text-sm font-bold text-amber-900">Hệ thống đang tắt lệ phí đăng ký</p>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-700">
-                Giải mới phải để miễn phí. Quản trị viên có thể bật lại chính sách này trong Cấu hình hệ thống.
-              </p>
+              <p className="text-sm font-bold text-amber-900">{translate('feesDisabledTitle')}</p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-700">{translate('feesDisabledDescription')}</p>
             </div>
           )}
           {!isClubTournament && allowEntryFees && (
             <Input
-              label="Lệ phí tham gia mỗi đội (VNĐ)"
+              label={translate('entryFeePerTeam')}
               type="number"
               placeholder="0"
               min="0"
@@ -254,10 +252,10 @@ export default function Step3ScheduleFees() {
 
         <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
           <Button type="button" variant="outline" onClick={prevStep} className="border-slate-200 text-slate-600">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại
+            <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
           </Button>
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            Tiếp tục <ChevronRight className="w-4 h-4 ml-1" />
+            {translate('continue')} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </form>

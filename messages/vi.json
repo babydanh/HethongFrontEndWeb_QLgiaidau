@@ -1420,7 +1420,8 @@
     "newElo": "ELO mới",
     "organizerModalDescription": "(Dùng để tạo chuỗi giải đấu hoặc giải đấu công khai tính Rank ELO. Nếu chỉ tổ chức giải nội bộ CLB thì bạn không cần đăng ký quyền này).",
     "contactPhoneLabel": "Số điện thoại liên hệ",
-    "evidenceLabel": "Ảnh minh chứng năng lực"
+    "evidenceLabel": "Ảnh minh chứng năng lực",
+    "phoneLabel": "Số điện thoại"
   },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
@@ -2284,7 +2285,8 @@
     "stageRound32": "Vòng 32",
     "courtNotAssigned": "Chưa xếp sân",
     "next": "Sau",
-    "shareMatchTitleWithTeams": "Trận đấu: {p1} vs {p2}"
+    "shareMatchTitleWithTeams": "Trận đấu: {p1} vs {p2}",
+    "registrationClosed": "Đã đóng đăng ký"
   },
   "TeamRegistration": {
     "registrationPermission": "Có quyền đăng ký",
@@ -2528,7 +2530,8 @@
     "onboardingShield": "Đánh 1 trận xếp hạng để mở khóa ELO và khiên rank.",
     "shieldActive": "Khiên còn nguyên — đỡ 1 lần rớt khỏi mốc rank hiện tại.",
     "shieldBroken": "Khiên đã vỡ — cần lên rank hoặc rớt rank để hồi lại khiên.",
-    "onboardingCopy": "Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO."
+    "onboardingCopy": "Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO.",
+    "unranked": "Chưa xếp hạng"
   },
   "AdminTournaments": {
     "countdownOpen": "Đang mở đăng ký",
@@ -3127,5 +3130,75 @@
     "typing": "{name} đang nhập",
     "replyPlaceholder": "Nhập câu trả lời cho người dùng...",
     "send": "Gửi"
+  },
+  "OrganizerTournamentStepper": {
+    "progressTitle": "Tiến trình giải đấu",
+    "draftTitle": "Giải đấu bản nháp",
+    "draftDescription": "Hãy hoàn thành các thông tin bắt buộc trước khi công bố giải đấu.",
+    "publishFeeNotice": "Cần thanh toán phí nền tảng {amount} để công bố giải đấu.",
+    "importantBeforePublish": "Lưu ý trước khi công bố",
+    "publishChecklistDescription": "Vui lòng hoàn thành tất cả mục bắt buộc bên dưới trước khi công bố.",
+    "checklist": {
+      "basicInfo": "Thông tin cơ bản của giải đấu",
+      "notFilled": "Chưa điền",
+      "division": "Nội dung thi đấu",
+      "missingDivision": "Chưa cấu hình nội dung",
+      "venue": "Địa điểm",
+      "validDates": "Lịch hợp lệ",
+      "invalidDates": "Ngày chưa hợp lệ hoặc chưa đủ",
+      "contact": "Thông tin liên hệ"
+    },
+    "publishedConstraints": {
+      "title": "Sau khi công bố",
+      "immutableLabel": "Cố định:",
+      "immutableText": "không thể thay đổi danh tính và thể thức cốt lõi của giải.",
+      "lockedLabel": "Đã khóa:",
+      "lockedText": "cấu hình đăng ký và sơ đồ được bảo vệ khi giải mở.",
+      "flexibleLabel": "Có thể điều chỉnh:",
+      "flexibleText": "một số thông tin vận hành vẫn có thể cập nhật.",
+      "dateNote": "Hãy kiểm tra kỹ tất cả ngày trước khi công bố."
+    },
+    "payAndPublish": "Thanh toán và công bố",
+    "publish": "Công bố giải đấu",
+    "pendingApprovalTitle": "Đang chờ duyệt",
+    "pendingApprovalDescription": "Giải đấu đã được gửi và đang chờ quản trị viên phê duyệt.",
+    "steps": {
+      "registration": {
+        "title": "Đăng ký",
+        "description": "Cấu hình và mở đăng ký người tham gia.",
+        "action": "Tiếp tục đến lịch thi đấu"
+      },
+      "schedule": {
+        "title": "Lịch thi đấu",
+        "description": "Hoàn tất lịch, địa điểm và sơ đồ.",
+        "action": "Mở giải đấu"
+      },
+      "inProgress": {
+        "title": "Đang diễn ra",
+        "description": "Điều hành trận đấu và cập nhật hoạt động giải.",
+        "action": "Hoàn tất giải đấu"
+      },
+      "completed": {
+        "title": "Đã hoàn tất",
+        "description": "Xem kết quả cuối cùng và xuất báo cáo."
+      }
+    },
+    "completedTitle": "Giải đấu đã hoàn tất",
+    "completedDescription": "Giải đấu đã kết thúc. Bạn có thể xuất kết quả cuối cùng.",
+    "noMatches": "Không có trận đấu để xuất",
+    "exportResults": "Xuất kết quả ({count} trận)",
+    "openingChecklistTitle": "Checklist khai mạc",
+    "mandatory": "Bắt buộc",
+    "flexible": "Linh hoạt",
+    "notPassed": "Chưa đạt",
+    "endModalTitle": "Hoàn tất giải đấu",
+    "endWarning": "Hãy bảo đảm tất cả trận đang diễn ra đã được xử lý trước khi hoàn tất giải đấu.",
+    "endChecks": {
+      "matchesComplete": "Trận đã hoàn tất: {completed}/{total}",
+      "noLiveMatches": "Trận đang diễn ra còn lại: {live}"
+    },
+    "noMatchesCanEnd": "Chưa có trận đấu nào. Bạn vẫn có thể hoàn tất giải đấu này.",
+    "cancel": "Hủy",
+    "endTournament": "Hoàn tất giải đấu"
   }
 }

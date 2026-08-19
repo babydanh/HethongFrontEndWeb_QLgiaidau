@@ -83,6 +83,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const s = useManageState(id);
+  const bracketSectionRef = useRef<HTMLDivElement | null>(null);
   const sportPresets = getSportRulePresets(s.sportRuleKind);
   const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
@@ -96,7 +97,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     </div>
   );
   const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
-  const bracketSectionRef = useRef<HTMLDivElement | null>(null);
   const sportPresentation = getSportRulePresentation(s.sportRuleKind);
   const supportsTiebreakInput = s.sportRuleKind === 'TENNIS' || s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
   const isPickleballSideOut = s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';

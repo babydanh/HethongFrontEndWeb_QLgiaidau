@@ -1480,7 +1480,8 @@
     "newElo": "New ELO",
     "organizerModalDescription": "Use this to create tournament series or public tournaments that count toward ELO. You do not need this role for internal club tournaments.",
     "contactPhoneLabel": "Contact phone number",
-    "evidenceLabel": "Proof of experience"
+    "evidenceLabel": "Proof of experience",
+    "phoneLabel": "Phone number"
   },
   "PlayerDashboard": {
     "statusOngoing": "In progress",
@@ -2284,7 +2285,8 @@
     "stageRound32": "Round of 32",
     "courtNotAssigned": "Court not assigned",
     "next": "Next",
-    "shareMatchTitleWithTeams": "Match: {p1} vs {p2}"
+    "shareMatchTitleWithTeams": "Match: {p1} vs {p2}",
+    "registrationClosed": "Registration closed"
   },
   "TeamRegistration": {
     "registrationPermission": "Can register",
@@ -2528,7 +2530,8 @@
     "onboardingShield": "Play one ranked match to unlock ELO and your rank shield.",
     "shieldActive": "Shield intact — protects against one demotion from the current rank.",
     "shieldBroken": "Shield broken — rank up or drop rank to restore it.",
-    "onboardingCopy": "Play one ranked match to start your ELO progress."
+    "onboardingCopy": "Play one ranked match to start your ELO progress.",
+    "unranked": "Unranked"
   },
   "AdminTournaments": {
     "countdownOpen": "Registration is open",
@@ -3127,5 +3130,75 @@
     "typing": "{name} is typing",
     "replyPlaceholder": "Type a reply to the user...",
     "send": "Send"
+  },
+  "OrganizerTournamentStepper": {
+    "progressTitle": "Tournament progress",
+    "draftTitle": "Draft tournament",
+    "draftDescription": "Complete the required information before publishing this tournament.",
+    "publishFeeNotice": "A platform fee of {amount} is required to publish this tournament.",
+    "importantBeforePublish": "Important before publishing",
+    "publishChecklistDescription": "Please complete all required items below before publishing.",
+    "checklist": {
+      "basicInfo": "Basic tournament information",
+      "notFilled": "Not completed",
+      "division": "Competition divisions",
+      "missingDivision": "No division configured",
+      "venue": "Venue",
+      "validDates": "Valid schedule",
+      "invalidDates": "Invalid or incomplete dates",
+      "contact": "Contact information"
+    },
+    "publishedConstraints": {
+      "title": "After publishing",
+      "immutableLabel": "Fixed:",
+      "immutableText": "tournament identity and core format cannot be changed.",
+      "lockedLabel": "Locked:",
+      "lockedText": "registration and bracket settings are protected once the tournament opens.",
+      "flexibleLabel": "Flexible:",
+      "flexibleText": "operational details may still be updated where supported.",
+      "dateNote": "Confirm all dates carefully before publishing."
+    },
+    "payAndPublish": "Pay and publish",
+    "publish": "Publish tournament",
+    "pendingApprovalTitle": "Pending approval",
+    "pendingApprovalDescription": "This tournament has been submitted and is waiting for administrator approval.",
+    "steps": {
+      "registration": {
+        "title": "Registration",
+        "description": "Configure and open participant registration.",
+        "action": "Continue to schedule"
+      },
+      "schedule": {
+        "title": "Schedule",
+        "description": "Finalize the schedule, venue, and bracket.",
+        "action": "Open tournament"
+      },
+      "inProgress": {
+        "title": "In progress",
+        "description": "Run matches and update tournament operations.",
+        "action": "Complete tournament"
+      },
+      "completed": {
+        "title": "Completed",
+        "description": "Review the final results and export the report."
+      }
+    },
+    "completedTitle": "Tournament completed",
+    "completedDescription": "The tournament is complete. Export the final results when ready.",
+    "noMatches": "No matches to export",
+    "exportResults": "Export results ({count} matches)",
+    "openingChecklistTitle": "Opening checklist",
+    "mandatory": "Required",
+    "flexible": "Optional",
+    "notPassed": "Not passed",
+    "endModalTitle": "Complete tournament",
+    "endWarning": "Make sure all live matches are resolved before completing the tournament.",
+    "endChecks": {
+      "matchesComplete": "Completed matches: {completed}/{total}",
+      "noLiveMatches": "Live matches remaining: {live}"
+    },
+    "noMatchesCanEnd": "There are no matches yet. You can still complete this tournament.",
+    "cancel": "Cancel",
+    "endTournament": "Complete tournament"
   }
 }

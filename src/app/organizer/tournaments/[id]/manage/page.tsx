@@ -312,6 +312,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           isAutoSeeding={s.isAutoSeeding}
           handleAutoSeed={s.handleAutoSeed}
           handleSwapSeeds={s.handleSwapSeeds}
+          handleReorderSeeds={s.handleReorderSeeds}
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success('Đã sao chép link!'); }} />}
 
         {s.activeTab === 'bracket' && (

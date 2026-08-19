@@ -205,6 +205,14 @@ export interface Tournament {
     awayGoalsRule?: boolean;
     penaltyShootout?: boolean;
     allowDraw?: boolean;
+    recurring?: {
+      enabled?: boolean;
+      frequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | string;
+      dayOfWeek?: number;
+      daysOfWeek?: number[];
+      time?: string;
+      [key: string]: unknown;
+    };
   } | null;
   /** Normalized by GET /tournaments/public for banner rendering. */
   hideFeaturedCardText?: boolean;

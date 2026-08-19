@@ -348,7 +348,7 @@ export default function TournamentsTab({
                         )}
 
                         {t.divisions.some(d => {
-                          const cfg = d.tournamentConfig as Record<string, any> | undefined;
+                          const cfg = d.tournamentConfig;
                           return Boolean(cfg?.recurring?.enabled || cfg?.recurring?.frequency);
                         }) && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">

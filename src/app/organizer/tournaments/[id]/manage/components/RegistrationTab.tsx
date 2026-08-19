@@ -54,12 +54,15 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   useSortable,
   SortableContext,
   verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -121,7 +124,49 @@ interface RegistrationTabProps {
   isAutoSeeding: boolean;
   handleAutoSeed: () => Promise<void>;
   handleSwapSeeds: (participantId1: string, participantId2: string) => Promise<void>;
+  handleReorderSeeds?: (reorderedSeeds: { participantId: string; seed: number }[]) => Promise<void>;
 }
+
+// ─── SortableSeedItem (Declared outside to avoid recreation & re-mounting on each parent render) ───
+const SortableSeedItem = React.memo(function SortableSeedItem({ p }: { p: TournamentParticipant }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors select-none ${
+        isDragging
+          ? 'border-blue-300 bg-blue-50/40 shadow-sm'
+          : 'border-slate-100 bg-slate-50/60 hover:bg-slate-50 hover:border-slate-200'
+      }`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors touch-none"
+          title="Kéo để sắp xếp"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shrink-0">
+          #{p.seed}
+        </span>
+        <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
+      </div>
+    </div>
+  );
+});
 
 export function RegistrationTab({
   tournament,
@@ -177,6 +222,7 @@ export function RegistrationTab({
   isAutoSeeding,
   handleAutoSeed,
   handleSwapSeeds,
+  handleReorderSeeds,
 }: RegistrationTabProps) {
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
@@ -199,6 +245,7 @@ export function RegistrationTab({
   const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
   const [editingSeed, setEditingSeed] = React.useState<string | null>(null);
   const [seedInputValue, setSeedInputValue] = React.useState('');
+  const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
   const [rosterActionId, setRosterActionId] = React.useState<string | null>(null);
   const [locallyLockedRosterIds, setLocallyLockedRosterIds] = React.useState<Set<string>>(new Set());
 
@@ -285,10 +332,19 @@ export function RegistrationTab({
   // ─── Kéo thả hạt giống ─────────────────────────────────────────────
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
 
+  const handleSeedDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
+
+  const handleSeedDragCancel = () => {
+    setActiveDragId(null);
+  };
+
   const handleSeedDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -300,48 +356,21 @@ export function RegistrationTab({
     const newIdx = seeded.findIndex((p) => p.id === over.id);
     if (oldIdx === -1 || newIdx === -1) return;
 
-    // Swap seeds between the dragged item and the target
-    const dragged = seeded[oldIdx];
-    const target = seeded[newIdx];
-    void handleSwapSeeds(dragged.id, target.id);
+    const reordered = arrayMove(seeded, oldIdx, newIdx).map((p, idx) => ({
+      participantId: p.id,
+      seed: idx + 1,
+    }));
+
+    if (handleReorderSeeds) {
+      void handleReorderSeeds(reordered);
+    } else {
+      const dragged = seeded[oldIdx];
+      const target = seeded[newIdx];
+      void handleSwapSeeds(dragged.id, target.id);
+    }
   };
 
   const canSeedMock = true;
-
-  // ─── SortableSeedItem ─────────────────────────────────────────────
-  function SortableSeedItem({ p }: { p: TournamentParticipant }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-      zIndex: isDragging ? 50 : 'auto' as const,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5"
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors touch-none"
-            title="Kéo để sắp xếp"
-          >
-            <GripVertical className="w-4 h-4" />
-          </button>
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shrink-0">
-            #{p.seed}
-          </span>
-          <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
@@ -1080,10 +1109,20 @@ export function RegistrationTab({
                   );
                 }
 
+                const activeDragParticipant = activeDragId
+                  ? participants.find((p) => p.id === activeDragId)
+                  : null;
+
                 return (
                   <>
                     {seeded.length > 0 && (
-                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSeedDragEnd}>
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleSeedDragStart}
+                        onDragEnd={handleSeedDragEnd}
+                        onDragCancel={handleSeedDragCancel}
+                      >
                         <SortableContext items={seeded.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                           <div className="space-y-1">
                             {seeded.map((p) => (
@@ -1091,6 +1130,21 @@ export function RegistrationTab({
                             ))}
                           </div>
                         </SortableContext>
+                        <DragOverlay>
+                          {activeDragParticipant ? (
+                            <div className="flex items-center justify-between rounded-lg border border-blue-400 bg-white px-3 py-2.5 shadow-xl ring-2 ring-blue-500/20 select-none">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="p-1 text-blue-600">
+                                  <GripVertical className="w-4 h-4" />
+                                </span>
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0 shadow-sm">
+                                  #{activeDragParticipant.seed}
+                                </span>
+                                <span className="text-sm font-bold text-slate-900 truncate">{activeDragParticipant.teamName}</span>
+                              </div>
+                            </div>
+                          ) : null}
+                        </DragOverlay>
                       </DndContext>
                     )}
                     {unseeded.length > 0 && (

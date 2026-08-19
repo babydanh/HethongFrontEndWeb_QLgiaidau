@@ -1085,6 +1085,17 @@ export function useManageState(id: string) {
     finally { setIsAutoSeeding(false); }
   };
 
+  const handleReorderSeeds = async (reorderedSeeds: { participantId: string; seed: number }[]) => {
+    try {
+      const seedMap = new Map(reorderedSeeds.map(s => [s.participantId, s.seed]));
+      setParticipants(prev => prev.map(p => seedMap.has(p.id) ? { ...p, seed: seedMap.get(p.id)! } : p));
+      await tournamentsApi.updateTournamentSeeds(id, reorderedSeeds);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      await refetchDivisionData();
+    }
+  };
+
   const handleSwapSeeds = async (participantId1: string, participantId2: string) => {
     try {
       const p1 = participants.find(p => p.id === participantId1);
@@ -1093,14 +1104,21 @@ export function useManageState(id: string) {
         toast.error('Không tìm thấy đội');
         return;
       }
+      const s1 = p2.seed ?? 0;
+      const s2 = p1.seed ?? 0;
+      setParticipants(prev => prev.map(p => {
+        if (p.id === participantId1) return { ...p, seed: s1 };
+        if (p.id === participantId2) return { ...p, seed: s2 };
+        return p;
+      }));
       await tournamentsApi.updateTournamentSeeds(id, [
-        { participantId: participantId1, seed: p2.seed ?? 0 },
-        { participantId: participantId2, seed: p1.seed ?? 0 },
+        { participantId: participantId1, seed: s1 },
+        { participantId: participantId2, seed: s2 },
       ]);
       toast.success('Đã hoán đổi hạt giống!');
-      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
+      await refetchDivisionData();
     }
   };
 
@@ -1612,7 +1630,7 @@ export function useManageState(id: string) {
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
     handleConfirmOpen,
     handleOpenEndModal, handleConfirmEnd,
-    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleApproveParticipant, handleRejectParticipant, handleKickParticipant,
+    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleReorderSeeds, handleApproveParticipant, handleRejectParticipant, handleKickParticipant,
     handleOpenRoundModal, handleSaveStageDetails,
     handleOpenScheduling, handleSaveSchedule,
     handleSaveRoundRobinConfig, handleAdvanceStandings, handleSaveGskConfig,

@@ -569,19 +569,23 @@ export function Header() {
                     {(canAccessAdmin || canAccessModeration) && (
                       <div className="border-b border-slate-100/60 pb-2 mb-2">
                         {canAccessAdmin && (
-                          <Link href="/admin">
-                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors hover:bg-blue-50/30">
-                              <LayoutDashboard className="h-4 w-4 text-slate-400" />
-                              {t('administration')}
-                            </div>
+                          <Link
+                            href="/admin"
+                            onClick={closeOverlays}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors hover:bg-blue-50/30"
+                          >
+                            <LayoutDashboard className="h-4 w-4 text-slate-400" />
+                            {t('administration')}
                           </Link>
                         )}
                         {canAccessModeration && (
-                          <Link href="/moderation">
-                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-amber-600 transition-colors hover:bg-amber-50/30">
-                              <Check className="h-4 w-4 text-slate-400" />
-                              {t('moderation')}
-                            </div>
+                          <Link
+                            href="/moderation"
+                            onClick={closeOverlays}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-amber-600 transition-colors hover:bg-amber-50/30"
+                          >
+                            <Check className="h-4 w-4 text-slate-400" />
+                            {t('moderation')}
                           </Link>
                         )}
                       </div>
@@ -590,25 +594,31 @@ export function Header() {
                     {/* Nhóm {t('personal')} */}
                     <div className="border-b border-slate-100/60 pb-2 mb-2">
                       <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t('personal')}</div>
-                      <Link href="/profile">
-                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
-                          <User className="h-4 w-4 text-slate-400" />
-                          {t('profile')}
-                        </div>
+                      <Link
+                        href="/profile"
+                        onClick={closeOverlays}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                      >
+                        <User className="h-4 w-4 text-slate-400" />
+                        {t('profile')}
                       </Link>
 
-                      <Link href="/dashboard">
-                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
-                          <Trophy className="h-4 w-4 text-slate-400" />
-                          {t('myTournaments')}
-                        </div>
+                      <Link
+                        href="/dashboard"
+                        onClick={closeOverlays}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                      >
+                        <Trophy className="h-4 w-4 text-slate-400" />
+                        {t('myTournaments')}
                       </Link>
 
-                      <Link href="/profile/edit">
-                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
-                          <Settings className="h-4 w-4 text-slate-400" />
-                          {t('accountSettings')}
-                        </div>
+                      <Link
+                        href="/profile/edit"
+                        onClick={closeOverlays}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                      >
+                        <Settings className="h-4 w-4 text-slate-400" />
+                        {t('accountSettings')}
                       </Link>
                     </div>
 

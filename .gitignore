@@ -54,3 +54,7 @@ secrets/
 *adminsdk*.json
 *service-account*.json
 *google-services*.json
+
+# SVN metadata
+.svn/
+*.svn*

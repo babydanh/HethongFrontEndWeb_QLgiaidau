@@ -635,7 +635,7 @@
     "tiebreakMin": "Tie-break points must be at least 1",
     "singleElimination": "Single elimination",
     "singleEliminationDescription": "The losing team is eliminated immediately.",
-    "doubleElimination": "Winners / Losers bracket",
+    "doubleElimination": "Winners/losers bracket",
     "doubleEliminationDescription": "A team that loses a match drops to the losers bracket.",
     "roundRobin": "Round robin",
     "roundRobinDescription": "All teams play each other at least once.",
@@ -683,7 +683,41 @@
     "divisionFemaleSingles": "Women singles",
     "divisionMaleDoubles": "Men doubles",
     "divisionFemaleDoubles": "Women doubles",
-    "divisionMixedDoubles": "Mixed doubles"
+    "divisionMixedDoubles": "Mixed doubles",
+    "multiTitle": "Choose competition formats",
+    "multiDescription": "You can choose one or more formats. Each format creates a separate competition bracket.",
+    "currentRules": "Current rules: {rules}",
+    "footballGenderTitle": "Team gender eligibility",
+    "footballGenderDescription": "Choose men, women, or no gender restriction.",
+    "male": "Men",
+    "female": "Women",
+    "maleTeam": "Men’s team",
+    "femaleTeam": "Women’s team",
+    "openGender": "No restriction",
+    "allGenders": "Open to all genders",
+    "selectBracketType": "Choose bracket type",
+    "selectionNone": "Please select at least one format.",
+    "selectionOne": "You selected {count} format. One competition bracket will be created.",
+    "selectionMany": "You selected {count} formats. Separate competition brackets will be created.",
+    "footballSectionTitle": "Football — Team setup and format",
+    "fieldLabel": "Starting lineup size (minimum)",
+    "fieldOption": "Field {size}",
+    "minimumPlayers": "The team needs at least {count} starting players.",
+    "maximumSubstitutes": "Maximum substitutes",
+    "peopleUnit": "{count} people",
+    "knockoutFormat": "Knockout format",
+    "homeAwayLegs": "Home and away legs (2 matches per pairing)",
+    "awayGoalsRule": "Away-goals rule",
+    "allowDraw": "Allow draws (group stage)",
+    "penaltyShootout": "Penalty shootout (knockout draw)",
+    "matchTypeRequired": "Please select at least one competition format.",
+    "singleMaleFormat": "Men’s singles",
+    "singleFemaleFormat": "Women’s singles",
+    "doubleMaleFormat": "Men’s doubles",
+    "doubleFemaleFormat": "Women’s doubles",
+    "mixedDoublesFormat": "Mixed doubles",
+    "singlesFormat": "Singles",
+    "doublesFormat": "Doubles"
   },
   "OrganizerCreateStep3": {
     "title": "Schedule & Entry Fee",
@@ -5969,5 +6003,125 @@
     "backHome": "Back to home",
     "logout": "Log out",
     "defaultTitle": "System administration"
+  },
+  "SeriesRules": {
+    "rankChampion": "Champion (1st place)",
+    "rankRunnerUp": "Runner-up (2nd place)",
+    "rankThirdFourth": "Joint 3rd–4th place",
+    "rankFifthEighth": "5th–8th place",
+    "rankNinthSixteenth": "9th–16th place",
+    "rankAtLeast": "{rank}th place+",
+    "pointsTitle": "PSR cumulative points table",
+    "pointsDescription": "Each player or team competing in a tournament within the series earns Player Series Rating (PSR) points based on their final ranking. These points are used to rank legs and award wildcard places.",
+    "rankHeader": "Final ranking",
+    "pointsHeader": "PSR points awarded",
+    "exclusionTitle": "Exclusion rule",
+    "exclusionIntro": "To make the competition more engaging and give every athlete in the community a fair opportunity to compete:",
+    "exclusionRuleOne": "Any player or team finishing {threshold} or higher (champion/runner-up) in any tournament immediately receives a direct place in the Finals.",
+    "exclusionRuleTwo": "After receiving a direct place, that player or team is locked out of registering for subsequent qualifying tournaments in the current leg.",
+    "exclusionScopeCategory": "the qualifying event only",
+    "exclusionScopeSeries": "all events in the series",
+    "exclusionScope": "Scope: locked out of {scope}.",
+    "wildcardTitle": "Wildcard qualification",
+    "wildcardIntro": "Players who compete consistently across multiple legs and accumulate a high PSR score, but have not yet earned a direct place (never winning or finishing runner-up), still have a strong opportunity:",
+    "wildcardRuleOne": "At the end of the leg, the organizer will review the PSR leaderboard.",
+    "wildcardRuleTwo": "The top {count} players or teams with the highest cumulative scores (excluding those who have already earned direct places) will receive wildcards to compete in the national Finals.",
+    "supportTitle": "Need help understanding the rules?",
+    "supportDescription": "If you have questions about scoring, seeding, or the leg exclusion rule, please contact the organizer through the series contact information."
+  },
+  "ModerationDashboard": {
+    "cards": {
+      "verification": {
+        "title": "Trust verification",
+        "description": "Review player profiles and process pending applications."
+      },
+      "communities": {
+        "title": "Community approval",
+        "description": "Approve or reject clubs submitted to the platform."
+      },
+      "changeRequests": {
+        "title": "Change requests",
+        "description": "Review requests to change sensitive email or gender information."
+      },
+      "reports": {
+        "title": "Violation reports",
+        "description": "Review reports, take action, and escalate cases beyond your authority."
+      },
+      "tournaments": {
+        "title": "Tournament approval",
+        "description": "Review new tournaments before they enter rankings and become public."
+      }
+    },
+    "banner": {
+      "title": "Action required",
+      "verification": "Trust verification",
+      "communities": "Communities",
+      "changeRequests": "Change requests",
+      "tournaments": "Tournaments"
+    },
+    "hero": {
+      "eyebrow": "Moderation hub",
+      "title": "Safe moderation operations",
+      "description": "This area is for moderators and administrators to handle approvals, verifications, reports, and sanctions. High-impact actions such as reverting results, permanent bans, and system configuration remain in the admin area."
+    },
+    "openAction": "Open workspace"
+  },
+  "SeriesSchedule": {
+    "status": {
+      "completed": "✅ Completed",
+      "registrationOpen": "🟢 Registration open",
+      "registrationClosed": "🔴 Registration closed",
+      "inProgress": "⚡ In progress",
+      "upcoming": "🟡 Upcoming"
+    },
+    "listTitle": "Legs",
+    "time": "Schedule",
+    "timeUnknown": "Schedule: To be determined",
+    "directEntry": "🎟️ Direct entry: Top {count}",
+    "wildcard": "🎟️ Wildcard: Top {count} PSR",
+    "eventTournament": "TOURNAMENT #{order}",
+    "pointMultiplier": "⚡ Points multiplier x{multiplier}",
+    "details": "Tournament details",
+    "emptyTitle": "No tournaments in this leg yet",
+    "emptyDescription": "Member tournaments will be updated soon. Please check back later."
+  },
+  "AssistantCards": {
+    "fallback": {
+      "notUpdated": "Not updated",
+      "unscheduled": "Not scheduled",
+      "unknown": "Unknown",
+      "invalidDate": "Invalid date"
+    },
+    "status": {
+      "registered": "Registered",
+      "upcoming": "Upcoming",
+      "registrationOpen": "Registration open",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "pending": "Pending",
+      "scheduled": "Scheduled"
+    },
+    "ranking": {
+      "matches": "Matches",
+      "wins": "Wins"
+    },
+    "community": {
+      "member": "Member",
+      "members": "members"
+    },
+    "registration": "Registration",
+    "match": "Match",
+    "invitation": "Club invitation",
+    "invitationStatus": "Status",
+    "expires": "Expires",
+    "state": {
+      "errorTitle": "Unable to load data",
+      "errorDescription": "You can try again later.",
+      "emptyTitle": "No data",
+      "emptyDescription": "There are no matching records yet."
+    }
   }
 }

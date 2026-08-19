@@ -635,11 +635,11 @@
     "tiebreakMin": "Điểm tie-break phải lớn hơn hoặc bằng 1",
     "singleElimination": "Loại trực tiếp",
     "singleEliminationDescription": "Đội thua sẽ bị loại khỏi giải đấu ngay lập tức.",
-    "doubleElimination": "Nhánh thắng / Nhánh thua",
+    "doubleElimination": "Nhánh thắng/thua",
     "doubleEliminationDescription": "Đội thua một trận sẽ rớt xuống nhánh thua.",
     "roundRobin": "Vòng tròn tính điểm",
     "roundRobinDescription": "Tất cả các đội đều gặp nhau ít nhất một lần.",
-    "groupStageKnockout": "Vòng bảng + Loại trực tiếp",
+    "groupStageKnockout": "Vòng bảng + loại trực tiếp",
     "groupStageKnockoutDescription": "Chia bảng đấu vòng tròn, sau đó chọn đội vào vòng loại trực tiếp.",
     "setOptionOne": "1 set",
     "setOptionTwo": "Thắng 2 set",
@@ -683,7 +683,41 @@
     "divisionFemaleSingles": "Đơn Nữ",
     "divisionMaleDoubles": "Đôi Nam",
     "divisionFemaleDoubles": "Đôi Nữ",
-    "divisionMixedDoubles": "Đôi Nam Nữ"
+    "divisionMixedDoubles": "Đôi Nam Nữ",
+    "multiTitle": "Chọn hình thức thi đấu",
+    "multiDescription": "Bạn có thể chọn một hoặc nhiều hình thức. Mỗi hình thức sẽ tạo một bảng thi đấu riêng.",
+    "currentRules": "Bộ luật hiện tại: {rules}",
+    "footballGenderTitle": "Đối tượng giới tính của đội",
+    "footballGenderDescription": "Chọn Nam, Nữ hoặc không ràng buộc giới tính.",
+    "male": "Nam",
+    "female": "Nữ",
+    "maleTeam": "Đội nam",
+    "femaleTeam": "Đội nữ",
+    "openGender": "Không ràng buộc",
+    "allGenders": "Mở rộng cho mọi giới tính",
+    "selectBracketType": "Chọn loại nhánh thi đấu",
+    "selectionNone": "Vui lòng chọn ít nhất một hình thức.",
+    "selectionOne": "Bạn chọn {count} hình thức. Sẽ tạo 1 bảng thi đấu.",
+    "selectionMany": "Bạn chọn {count} hình thức. Sẽ tạo {count} bảng thi đấu riêng biệt.",
+    "footballSectionTitle": "Bóng đá — Đội hình và thể thức",
+    "fieldLabel": "Chọn sân (đội hình chính thức tối thiểu)",
+    "fieldOption": "Sân {size}",
+    "minimumPlayers": "Đội cần tối thiểu {count} cầu thủ chính thức.",
+    "maximumSubstitutes": "Dự bị tối đa",
+    "peopleUnit": "{count} người",
+    "knockoutFormat": "Thể thức loại trực tiếp",
+    "homeAwayLegs": "Lượt đi – Lượt về (2 trận/cặp)",
+    "awayGoalsRule": "Luật bàn thắng sân khách",
+    "allowDraw": "Cho phép hòa (vòng bảng)",
+    "penaltyShootout": "Luân lưu phân định (hòa ở knockout)",
+    "matchTypeRequired": "Vui lòng chọn ít nhất một hình thức thi đấu.",
+    "singleMaleFormat": "Đơn nam",
+    "singleFemaleFormat": "Đơn nữ",
+    "doubleMaleFormat": "Đôi nam",
+    "doubleFemaleFormat": "Đôi nữ",
+    "mixedDoublesFormat": "Đôi nam nữ",
+    "singlesFormat": "Đơn",
+    "doublesFormat": "Đôi"
   },
   "OrganizerCreateStep3": {
     "title": "Lịch thi đấu & Lệ phí",
@@ -5969,5 +6003,125 @@
     "backHome": "Quay lại trang chủ",
     "logout": "Đăng xuất",
     "defaultTitle": "Quản trị hệ thống"
+  },
+  "SeriesRules": {
+    "rankChampion": "Quán quân (Hạng 1)",
+    "rankRunnerUp": "Á quân (Hạng 2)",
+    "rankThirdFourth": "Đồng hạng 3–4",
+    "rankFifthEighth": "Hạng 5–8",
+    "rankNinthSixteenth": "Hạng 9–16",
+    "rankAtLeast": "Hạng {rank}+",
+    "pointsTitle": "Bảng điểm tích lũy PSR",
+    "pointsDescription": "Mỗi VĐV hoặc đội thi đấu tại các giải đấu thành viên thuộc chuỗi giải đấu sẽ tích lũy điểm Player Series Rating (PSR) dựa trên thành tích xếp hạng chung cuộc tại giải đấu đó. Điểm này dùng để xếp hạng chặng và xét vé vớt.",
+    "rankHeader": "Thứ hạng đạt được",
+    "pointsHeader": "Điểm PSR nhận được",
+    "exclusionTitle": "Luật khóa suất",
+    "exclusionIntro": "Nhằm tăng tính hấp dẫn và trao cơ hội cọ xát bình đẳng cho toàn bộ cộng đồng VĐV:",
+    "exclusionRuleOne": "VĐV hoặc đội đạt {threshold} trở lên (vô địch/á quân) tại bất cứ giải đấu nào sẽ nhận ngay vé thẳng vào vòng chung kết.",
+    "exclusionRuleTwo": "Khi đã nhận vé thẳng, VĐV hoặc đội đó sẽ bị khóa khỏi việc đăng ký các giải đấu vòng loại tiếp theo trong chặng hiện tại.",
+    "exclusionScopeCategory": "nội dung thi đấu đạt vé",
+    "exclusionScopeSeries": "toàn bộ các nội dung thuộc chuỗi",
+    "exclusionScope": "Phạm vi áp dụng: khóa theo {scope}.",
+    "wildcardTitle": "Cơ chế vé vớt",
+    "wildcardIntro": "Những VĐV kiên trì thi đấu nhiều chặng và tích lũy được điểm số PSR cao nhưng chưa may mắn đoạt vé thẳng (chưa từng vô địch hay á quân) vẫn còn cơ hội lớn:",
+    "wildcardRuleOne": "Cuối chặng đấu, ban tổ chức sẽ lọc danh sách bảng xếp hạng PSR.",
+    "wildcardRuleTwo": "Top {count} VĐV hoặc đội có điểm tích lũy cao nhất (không tính các VĐV đã đoạt vé thẳng trước đó) sẽ nhận vé vớt để tham gia tranh tài tại vòng chung kết toàn quốc.",
+    "supportTitle": "Cần hỗ trợ về luật lệ?",
+    "supportDescription": "Nếu có bất kỳ thắc mắc nào về cách tính điểm, phân chia hạt giống hoặc luật khóa chặng, vui lòng liên hệ trực tiếp với ban tổ chức thông qua mục thông tin liên hệ của chuỗi giải."
+  },
+  "ModerationDashboard": {
+    "cards": {
+      "verification": {
+        "title": "Duyệt uy tín",
+        "description": "Xác minh hồ sơ người chơi và xử lý các đơn đang chờ."
+      },
+      "communities": {
+        "title": "Duyệt cộng đồng",
+        "description": "Phê duyệt hoặc từ chối các câu lạc bộ được gửi lên hệ thống."
+      },
+      "changeRequests": {
+        "title": "Yêu cầu thay đổi",
+        "description": "Kiểm tra yêu cầu thay đổi email hoặc thông tin giới tính nhạy cảm."
+      },
+      "reports": {
+        "title": "Báo cáo vi phạm",
+        "description": "Đọc báo cáo, xử lý và chuyển cấp các trường hợp vượt thẩm quyền."
+      },
+      "tournaments": {
+        "title": "Duyệt giải đấu",
+        "description": "Duyệt giải mới trước khi đưa vào bảng xếp hạng và công khai."
+      }
+    },
+    "banner": {
+      "title": "Có việc cần xử lý",
+      "verification": "Duyệt uy tín",
+      "communities": "Cộng đồng",
+      "changeRequests": "Yêu cầu thay đổi",
+      "tournaments": "Giải đấu"
+    },
+    "hero": {
+      "eyebrow": "Khu điều phối",
+      "title": "Điều phối kiểm duyệt an toàn",
+      "description": "Khu này dành cho người điều phối và quản trị viên xử lý các yêu cầu duyệt, xác minh, báo cáo và chế tài. Các hành động nặng như hoàn nguyên kết quả, khóa vĩnh viễn hoặc cấu hình hệ thống vẫn nằm ở khu quản trị."
+    },
+    "openAction": "Mở khu xử lý"
+  },
+  "SeriesSchedule": {
+    "status": {
+      "completed": "✅ Đã kết thúc",
+      "registrationOpen": "🟢 Đang mở đăng ký",
+      "registrationClosed": "🔴 Đã đóng đăng ký",
+      "inProgress": "⚡ Đang diễn ra",
+      "upcoming": "🟡 Sắp diễn ra"
+    },
+    "listTitle": "Danh sách chặng",
+    "time": "Thời gian",
+    "timeUnknown": "Thời gian: Chưa xác định",
+    "directEntry": "🎟️ Vé thẳng: Top {count}",
+    "wildcard": "🎟️ Vé vớt: Top {count} PSR",
+    "eventTournament": "GIẢI ĐẤU #{order}",
+    "pointMultiplier": "⚡ Hệ số điểm x{multiplier}",
+    "details": "Chi tiết giải",
+    "emptyTitle": "Chưa có giải đấu nào trong chặng này",
+    "emptyDescription": "Các giải đấu thành viên sẽ được cập nhật sớm. Vui lòng quay lại sau."
+  },
+  "AssistantCards": {
+    "fallback": {
+      "notUpdated": "Chưa cập nhật",
+      "unscheduled": "Chưa xếp lịch",
+      "unknown": "Chưa xác định",
+      "invalidDate": "Ngày không hợp lệ"
+    },
+    "status": {
+      "registered": "Đã đăng ký",
+      "upcoming": "Sắp diễn ra",
+      "registrationOpen": "Đang mở đăng ký",
+      "inProgress": "Đang thi đấu",
+      "completed": "Đã kết thúc",
+      "cancelled": "Đã hủy",
+      "paid": "Đã thanh toán",
+      "unpaid": "Chưa thanh toán",
+      "pending": "Đang chờ xử lý",
+      "scheduled": "Đã xếp lịch"
+    },
+    "ranking": {
+      "matches": "Trận",
+      "wins": "Thắng"
+    },
+    "community": {
+      "member": "Thành viên",
+      "members": "thành viên"
+    },
+    "registration": "Đăng ký",
+    "match": "Trận đấu",
+    "invitation": "Lời mời vào CLB",
+    "invitationStatus": "Trạng thái",
+    "expires": "Hết hạn",
+    "state": {
+      "errorTitle": "Không thể tải dữ liệu",
+      "errorDescription": "Bạn có thể thử lại sau.",
+      "emptyTitle": "Không có dữ liệu",
+      "emptyDescription": "Hiện chưa có bản ghi phù hợp."
+    }
   }
 }

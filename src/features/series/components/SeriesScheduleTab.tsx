@@ -3,12 +3,16 @@ import { SeriesLeg } from '@/types/series';
 import { Trophy, Calendar, MapPin, ChevronRight, Bookmark } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/utils/cn';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface SeriesScheduleTabProps {
   legs: SeriesLeg[];
 }
 
 export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) => {
+  const translate = useTranslations('SeriesSchedule');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const [selectedLegId, setSelectedLegId] = useState<string>('');
 
   useEffect(() => {
@@ -24,27 +28,27 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
   const getTournamentStatusBadge = (status: string) => {
     const configs: Record<string, { text: string; classes: string }> = {
       COMPLETED: {
-        text: '✅ Đã kết thúc',
+        text: translate('status.completed'),
         classes: 'bg-slate-100 text-slate-600 border-slate-200'
       },
       REGISTRATION_OPEN: {
-        text: '🟢 Đăng ký mở',
+        text: translate('status.registrationOpen'),
         classes: 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse'
       },
       REGISTRATION_CLOSED: {
-        text: '🔴 Đăng ký đóng',
+        text: translate('status.registrationClosed'),
         classes: 'bg-rose-50 text-rose-700 border-slate-200'
       },
       IN_PROGRESS: {
-        text: '⚡ Đang diễn ra',
+        text: translate('status.inProgress'),
         classes: 'bg-blue-50 text-blue-700 border-blue-200'
       },
       ONGOING: {
-        text: '⚡ Đang diễn ra',
+        text: translate('status.inProgress'),
         classes: 'bg-blue-50 text-blue-700 border-blue-200'
       },
       UPCOMING: {
-        text: '🟡 Sắp diễn ra',
+        text: translate('status.upcoming'),
         classes: 'bg-slate-50 text-slate-500 border-slate-200'
       }
     };
@@ -62,7 +66,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Leg Selector Sidebar (3 columns) */}
       <div className="lg:col-span-3 flex flex-col gap-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">Danh sách chặng</h3>
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">{translate('listTitle')}</h3>
         <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
           {legs.map((leg) => {
             const isActive = leg.id === selectedLegId;
@@ -96,16 +100,16 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                 <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
                   {selectedLeg.startDate && selectedLeg.endDate
-                    ? `Thời gian: ${new Date(selectedLeg.startDate).toLocaleDateString('vi-VN')} — ${new Date(selectedLeg.endDate).toLocaleDateString('vi-VN')}`
-                    : 'Thời gian: Chưa xác định'}
+                    ? `${translate('time')}: ${new Date(selectedLeg.startDate).toLocaleDateString(dateLocale)} — ${new Date(selectedLeg.endDate).toLocaleDateString(dateLocale)}`
+                    : translate('timeUnknown')}
                 </p>
               </div>
               <div className="flex gap-2">
                 <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold border border-blue-100 shadow-sm shrink-0">
-                  🎟️ Vé thẳng: Top {selectedLeg.directEntrySlots}
+                  {translate('directEntry', { count: selectedLeg.directEntrySlots })}
                 </span>
                 <span className="bg-slate-50 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 shadow-sm shrink-0">
-                  🎟️ Vé vớt: Top {selectedLeg.wildcardSlots} PSR
+                  {translate('wildcard', { count: selectedLeg.wildcardSlots })}
                 </span>
               </div>
             </div>
@@ -135,7 +139,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                           <div className="flex flex-col gap-1.5">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
-                                GIẢI #{event.order}
+                                {translate('eventTournament', { order: event.order })}
                               </span>
                               {event.region && (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md">
@@ -144,7 +148,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                               )}
                               {event.pointMultiplier > 1 && (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
-                                  ⚡ Hệ số x{event.pointMultiplier}
+                                  {translate('pointMultiplier', { multiplier: event.pointMultiplier })}
                                 </span>
                               )}
                             </div>
@@ -155,7 +159,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
                                 <span>
-                                  {t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '—'}
+                                  {t.startDate ? new Date(t.startDate).toLocaleDateString(dateLocale) : '—'}
                                 </span>
                               </div>
                             </div>
@@ -167,7 +171,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                               href={`/tournaments/${t.id}`}
                               className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 shrink-0"
                             >
-                              Chi tiết giải <ChevronRight className="w-3.5 h-3.5" />
+                              {translate('details')} <ChevronRight className="w-3.5 h-3.5" />
                             </Link>
                           </div>
                         </div>
@@ -178,9 +182,9 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
             ) : (
               <div className="text-center py-10 flex flex-col items-center justify-center">
                 <Bookmark className="w-10 h-10 text-slate-300 mb-3" />
-                <h4 className="text-sm font-bold text-slate-800">Chưa có giải đấu nào trong chặng này</h4>
+                <h4 className="text-sm font-bold text-slate-800">{translate('emptyTitle')}</h4>
                 <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
-                  Các giải đấu thành viên sẽ được cập nhật sớm. Vui lòng quay lại sau.
+                  {translate('emptyDescription')}
                 </p>
               </div>
             )}

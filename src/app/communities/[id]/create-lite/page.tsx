@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { tournamentsApi } from '@/features/tournaments/api';
@@ -44,17 +44,18 @@ const sportLabel: Record<LiteSport, string> = {
   football: 'liteSportFootball',
 };
 
-const formatDateTimeDisplay = (val?: string) => {
+const formatDateTimeDisplay = (val: string | undefined, locale: string) => {
   if (!val) return '';
   const d = new Date(val);
   if (isNaN(d.getTime())) return val;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const day = pad(d.getDate());
-  const month = pad(d.getMonth() + 1);
-  const year = d.getFullYear();
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
+  return new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
 };
 
 /* 4 Biểu tượng thể thức thi đấu chuyên nghiệp */
@@ -129,6 +130,7 @@ const BRACKET_OPTIONS = [
 export default function CreateLiteTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: communityId } = use(params);
   const router = useRouter();
+  const locale = useLocale();
   const translate = useTranslations('Match');
   const [community, setCommunity] = useState<Community | null>(null);
   const [sport, setSport] = useState<LiteSport>('badminton');
@@ -145,6 +147,17 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const getCategoryDisplayName = (category?: { slug?: string; name?: string } | null) => {
+    if (!category) return translate(sportLabel[sport]);
+    const value = `${category.slug || ''} ${category.name || ''}`.toLowerCase();
+    if (value.includes('badminton') || value.includes('cầu lông') || value.includes('cau long')) return translate('liteSportBadminton');
+    if (value.includes('tennis') || value.includes('quần vợt') || value.includes('quan vot')) return translate('liteSportTennis');
+    if (value.includes('pickleball')) return translate('liteSportPickleball');
+    if (value.includes('table_tennis') || value.includes('table-tennis') || value.includes('table tennis') || value.includes('bóng bàn') || value.includes('bong ban')) return translate('liteSportTableTennis');
+    if (value.includes('football') || value.includes('soccer') || value.includes('bóng đá') || value.includes('bong da')) return translate('liteSportFootball');
+    return category.name || translate(sportLabel[sport]);
+  };
 
   useEffect(() => {
     communitiesApi.getCommunityById(communityId).then((response) => {
@@ -220,7 +233,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   }
 
   const isFootball = sport === 'football';
-  const displayDateTimeText = formatDateTimeDisplay(startDateTime);
+  const displayDateTimeText = formatDateTimeDisplay(startDateTime, locale);
 
   return (
     <div className="min-h-screen bg-slate-50 py-7 px-4 md:px-8">
@@ -289,7 +302,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   </span>
                 </div>
                 <div className="h-10.5 flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-bold text-slate-800">
-                  {community?.categories?.[0]?.name || translate(sportLabel[sport])}
+                  {getCategoryDisplayName(community?.categories?.[0])}
                 </div>
               </div>
 

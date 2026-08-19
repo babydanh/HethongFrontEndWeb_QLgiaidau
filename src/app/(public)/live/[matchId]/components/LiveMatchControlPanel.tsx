@@ -64,7 +64,7 @@ export interface LiveMatchControlPanelProps {
   onSetServingTeam: (team: 1 | 2) => void;
   onSideOut: () => void;
   onAddPenalty: (team: 1 | 2 | null, kind: string, label: string, note?: string) => void;
-  // Bóng đá: luân lưu phân định khi hòa knockout
+  // BÃ³ng Ä‘Ã¡: luÃ¢n lÆ°u phÃ¢n Ä‘á»‹nh khi hÃ²a knockout
   isFootball?: boolean;
   shootoutGoals?: { p1Goals: number; p2Goals: number };
   onShootoutGoalsChange?: (goals: { p1Goals: number; p2Goals: number }) => void;
@@ -192,10 +192,10 @@ export function LiveMatchControlPanel({
       ) : null}
          {!isFootball && !isLiteMatch && scoreWarnings.length > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-          <span className="font-bold">⚠️ {translate("ruleWarning")}</span>
+          <span className="font-bold">âš ï¸ {translate("ruleWarning")}</span>
           <div className="mt-1 space-y-0.5">
             {scoreWarnings.map((warning) => (
-              <p key={warning.id}>• {warning.message}</p>
+              <p key={warning.id}>â€¢ {warning.message}</p>
             ))}
           </div>
         </div>
@@ -495,7 +495,7 @@ export function LiveMatchControlPanel({
               </span>
               {isFootball ? (
                 <span className="mt-2 block rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
-                  ⚽ {translate('footballShootoutDescription')}
+                  âš½ {translate('footballShootoutDescription')}
                 </span>
               ) : (
                 <>
@@ -542,7 +542,7 @@ export function LiveMatchControlPanel({
               {translate('cancelActionShort')}
             </Button>
             <Button
-              disabled={!isFootball && (!overrideEnabled || !overrideReason.trim())}
+              disabled={isSubmitting || (!isFootball && (!overrideEnabled || !overrideReason.trim()))}
               variant="warning"
               className="w-full font-bold disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
               onClick={() => {

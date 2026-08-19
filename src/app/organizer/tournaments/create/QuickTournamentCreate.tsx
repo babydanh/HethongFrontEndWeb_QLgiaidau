@@ -864,14 +864,14 @@ export default function QuickTournamentCreate() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
                     label="Mở đăng ký"
-                    value={registrationStart}
+                    value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
                   <DateTimePicker
                     label="Ngày bắt đầu giải"
-                    value={startDate}
+                    value={startDate || ''}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
                   />
@@ -880,7 +880,7 @@ export default function QuickTournamentCreate() {
                     <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
                         label="Đóng đăng ký"
-                        value={registrationEnd}
+                        value={registrationEnd || ''}
                         onChange={handleRegistrationEndChange}
                         error={errors.registrationEnd?.message}
                         max={startDate || undefined}
@@ -888,7 +888,7 @@ export default function QuickTournamentCreate() {
 
                       <DateTimePicker
                         label="Kết thúc dự kiến"
-                        value={endDate}
+                        value={endDate || ''}
                         onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
                         error={errors.endDate?.message}
                       />

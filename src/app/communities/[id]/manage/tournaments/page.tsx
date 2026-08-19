@@ -88,6 +88,17 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteRecurringAdvanceDays, setLiteRecurringAdvanceDays] = useState<number>(0);
   const [liteIsRanked, setLiteIsRanked] = useState(false);
 
+  const getCategoryDisplayName = (category?: { slug?: string; name?: string } | null) => {
+    if (!category) return translate('communityTournamentSportFallback');
+    const value = `${category.slug || ''} ${category.name || ''}`.toLowerCase();
+    if (value.includes('badminton') || value.includes('cầu lông') || value.includes('cau long')) return translate('liteSportBadminton');
+    if (value.includes('tennis') || value.includes('quần vợt') || value.includes('quan vot')) return translate('liteSportTennis');
+    if (value.includes('pickleball')) return translate('liteSportPickleball');
+    if (value.includes('table_tennis') || value.includes('table-tennis') || value.includes('table tennis') || value.includes('bóng bàn') || value.includes('bong ban')) return translate('liteSportTableTennis');
+    if (value.includes('football') || value.includes('soccer') || value.includes('bóng đá') || value.includes('bong da')) return translate('liteSportFootball');
+    return category.name || translate('communityTournamentSportFallback');
+  };
+
   const fetchData = async () => {
     try {
       const cRes = await communitiesApi.getCommunityById(id);
@@ -383,7 +394,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           const logo = getSportLogo(t.category?.name);
                           return logo ? <img src={logo} alt="" className="w-2.5 h-2.5 object-contain" /> : null;
                         })()}
-                        {t.category?.name || translate('communityTournamentSportFallback')}
+                        {getCategoryDisplayName(t.category)}
                       </span>
                       {isLiteTournament(t) ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
@@ -465,8 +476,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-semibold text-slate-700">{translate('communityTournamentSelectSport')}</label>
                         {isClubLocked && clubCategory && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            <Lock className="w-3 h-3" /> {translate('communityTournamentLockedByClub', { name: clubCategory.name })}
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            <Lock className="w-3 h-3" /> {translate('communityTournamentLockedByClub', { name: getCategoryDisplayName(clubCategory) })}
                           </span>
                         )}
                       </div>
@@ -477,12 +488,12 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                       >
                         {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          <option key={cat.id} value={cat.id}>{getCategoryDisplayName(cat)}</option>
                         ))}
                       </select>
                       {isClubLocked && clubCategory && (
                         <p className="text-xs text-slate-500 font-medium">
-                          🔒 {translate('communityTournamentLockedDescription', { name: clubCategory.name })}
+                          🔒 {translate('communityTournamentLockedDescription', { name: getCategoryDisplayName(clubCategory) })}
                         </p>
                       )}
                     </div>
@@ -571,13 +582,13 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         >
                           {categories.filter((category) => category.isActive !== false).map((category) => (
                             <option key={category.id} value={mapCategoryToLiteSport(category)}>
-                              {category.name}
+                              {getCategoryDisplayName(category)}
                             </option>
                           ))}
                         </select>
                         {isClubLocked && clubCategory && (
                           <p className="text-xs text-slate-500 font-medium">
-                            🔒 {translate('communityTournamentLockedSportDescription', { name: clubCategory.name })}
+                            🔒 {translate('communityTournamentLockedSportDescription', { name: getCategoryDisplayName(clubCategory) })}
                           </p>
                         )}
                       </div>

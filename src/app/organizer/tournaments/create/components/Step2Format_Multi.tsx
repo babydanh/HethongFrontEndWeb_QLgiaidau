@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCreateTournamentStore, type MatchFormat } from '@/lib/zustand/createTournamentStore';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
@@ -10,14 +11,15 @@ import { getSportRulePresentation } from '@/features/tournaments/sport-rules/pre
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { getAllowedMatchFormatOptions, normalizeMatchFormatForCategory } from '@/features/tournaments/match-format-options';
 
-const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'; label: string; }[] = [
-  { value: 'SINGLE_ELIMINATION', label: 'Loại trực tiếp (Single Elimination)' },
-  { value: 'DOUBLE_ELIMINATION', label: 'Nhánh thắng/thua (Double Elimination)' },
-  { value: 'ROUND_ROBIN', label: 'Vòng tròn tính điểm (Round Robin)' },
-  { value: 'GROUP_STAGE_KNOCKOUT', label: 'Vòng bảng + Loại trực tiếp (Group Stage)' },
+const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'; labelKey: 'singleElimination' | 'doubleElimination' | 'roundRobin' | 'groupStageKnockout'; }[] = [
+  { value: 'SINGLE_ELIMINATION', labelKey: 'singleElimination' },
+  { value: 'DOUBLE_ELIMINATION', labelKey: 'doubleElimination' },
+  { value: 'ROUND_ROBIN', labelKey: 'roundRobin' },
+  { value: 'GROUP_STAGE_KNOCKOUT', labelKey: 'groupStageKnockout' },
 ];
 
 export default function Step2FormatMulti() {
+  const translate = useTranslations('OrganizerCreateStep2');
   const { formData, updateFormData, nextStep, prevStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [step2Error, setStep2Error] = useState<string | null>(null);
@@ -146,7 +148,7 @@ export default function Step2FormatMulti() {
 
   const handleNext = () => {
     if (!isFootball && selected.length === 0) {
-      setStep2Error('Vui lòng chọn ít nhất một nội dung thi đấu.');
+      setStep2Error(translate('matchTypeRequired'));
       return;
     }
     const next: Record<string, unknown> = { format: bracketType };
@@ -171,13 +173,13 @@ export default function Step2FormatMulti() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Chọn Hình Thức Thi Đấu</h2>
-        <p className="text-sm text-slate-500">Bạn có thể chọn một hoặc nhiều hình thức. Mỗi hình thức sẽ tạo một bảng thi đấu riêng.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('multiTitle')}</h2>
+        <p className="text-sm text-slate-500">{translate('multiDescription')}</p>
       </div>
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
         <p className="text-sm font-bold text-blue-900">
-          Bộ luật hiện tại: {presentation.sportLabel}
+          {translate('currentRules', { rules: presentation.sportLabel })}
         </p>
         <p className="mt-1 text-xs font-semibold text-blue-700">
           {presentation.presetSummary}
@@ -214,13 +216,13 @@ export default function Step2FormatMulti() {
       </div>}
       {isFootball && (
         <div className={cn('rounded-lg border border-slate-200 bg-white p-4', step2Error && 'border-rose-500')}>
-          <p className="text-sm font-semibold text-slate-800">Đối tượng giới tính của đội</p>
-          <p className="mt-1 text-xs text-slate-500">Chọn Nam, Nữ hoặc không ràng buộc giới tính.</p>
+          <p className="text-sm font-semibold text-slate-800">{translate('footballGenderTitle')}</p>
+          <p className="mt-1 text-xs text-slate-500">{translate('footballGenderDescription')}</p>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
             {([
-              { value: 'MALE' as const, label: 'Nam', description: 'Đội nam' },
-              { value: 'FEMALE' as const, label: 'Nữ', description: 'Đội nữ' },
-              { value: null, label: 'Không ràng buộc', description: 'Mở rộng cho mọi giới tính' },
+              { value: 'MALE' as const, label: translate('male'), description: translate('maleTeam') },
+              { value: 'FEMALE' as const, label: translate('female'), description: translate('femaleTeam') },
+              { value: null, label: translate('openGender'), description: translate('allGenders') },
             ]).map((option) => (
               <button
                 key={option.value ?? 'OPEN'}
@@ -243,7 +245,7 @@ export default function Step2FormatMulti() {
       {step2Error && <p className="text-sm font-semibold text-rose-500">{step2Error}</p>}
 
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-3">
-        <label className="text-sm font-semibold text-slate-700">Chọn Loại nhánh thi đấu <span className="text-rose-500">*</span></label>
+        <label className="text-sm font-semibold text-slate-700">{translate('selectBracketType')} <span className="text-rose-500">*</span></label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {BRACKET_TYPE_OPTIONS.map((opt) => (
             <button
@@ -260,7 +262,7 @@ export default function Step2FormatMulti() {
                   : 'border-slate-300 bg-white hover:border-slate-400 text-slate-700'
               )}
             >
-              {opt.label}
+              {translate(opt.labelKey)}
             </button>
           ))}
         </div>
@@ -269,18 +271,18 @@ export default function Step2FormatMulti() {
       <div className="flex items-start gap-3 text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200">
         <Zap className="w-5 h-5 flex-shrink-0 mt-0.5" />
         <p className="text-sm font-medium">
-          {selected.length === 0 && 'Vui lòng chọn ít nhất một hình thức.'}
-          {selected.length === 1 && `Bạn chọn ${selected.length} hình thức. Sẽ tạo 1 bảng thi đấu.`}
-          {selected.length > 1 && `Bạn chọn ${selected.length} hình thức. Sẽ tạo ${selected.length} bảng thi đấu riêng biệt.`}
+          {selected.length === 0 && translate('selectionNone')}
+          {selected.length === 1 && translate('selectionOne', { count: selected.length })}
+          {selected.length > 1 && translate('selectionMany', { count: selected.length })}
         </p>
       </div>
 
       {isFootball && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 space-y-4">
-          <p className="text-sm font-bold text-emerald-900">⚽ Bóng đá — Đội hình & thể thức</p>
+          <p className="text-sm font-bold text-emerald-900">⚽ {translate('footballSectionTitle')}</p>
 
           <div>
-            <label className="text-sm font-semibold text-emerald-800">Chọn sân (đội hình chính thức tối thiểu)</label>
+            <label className="text-sm font-semibold text-emerald-800">{translate('fieldLabel')}</label>
             <div className="grid grid-cols-3 gap-3 mt-2">
               {([5, 7, 11] as const).map((size) => (
                 <button
@@ -294,38 +296,38 @@ export default function Step2FormatMulti() {
                       : 'border-emerald-200 bg-white/70 text-emerald-700 hover:border-emerald-300',
                   )}
                 >
-                  Sân {size}
+                  {translate('fieldOption', { size })}
                 </button>
               ))}
             </div>
             <p className="mt-1 text-xs font-semibold text-emerald-700">
-              Đội cần tối thiểu {teamSize} cầu thủ chính thức.
+              {translate('minimumPlayers', { count: teamSize })}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-semibold text-emerald-800">Dự bị tối đa</label>
+              <label className="text-sm font-semibold text-emerald-800">{translate('maximumSubstitutes')}</label>
               <select
                 value={maxReserve}
                 onChange={(e) => setFootballReserveLimit(Number(e.target.value))}
                 className="mt-1 w-full border border-emerald-300 rounded-lg px-3 py-2 bg-white text-emerald-900"
               >
                 {[0, 1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}>{n} người</option>
+                  <option key={n} value={n}>{translate('peopleUnit', { count: n })}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-emerald-800">Thể thức loại trực tiếp</label>
+              <label className="block text-sm font-semibold text-emerald-800">{translate('knockoutFormat')}</label>
               <label className="flex items-center gap-2 text-sm text-emerald-800">
                 <input type="checkbox" checked={twoLegged} onChange={(e) => { setTwoLegged(e.target.checked); updateFormData({ twoLegged: e.target.checked }); }} className="w-4 h-4" />
-                Lượt đi – Lượt về (2 trận/cặp)
+                {translate('homeAwayLegs')}
               </label>
               {twoLegged && (
                 <label className="flex items-center gap-2 text-sm text-emerald-800">
                   <input type="checkbox" checked={awayGoalsRule} onChange={(e) => { setAwayGoalsRule(e.target.checked); updateFormData({ awayGoalsRule: e.target.checked }); }} className="w-4 h-4" />
-                  Luật bàn thắng sân khách
+                  {translate('awayGoalsRule')}
                 </label>
               )}
             </div>
@@ -334,11 +336,11 @@ export default function Step2FormatMulti() {
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-emerald-800">
               <input type="checkbox" checked={allowDraw} onChange={(e) => { setAllowDraw(e.target.checked); updateFormData({ allowDraw: e.target.checked }); }} className="w-4 h-4" />
-              Cho phép hòa (vòng bảng)
+              {translate('allowDraw')}
             </label>
             <label className="flex items-center gap-2 text-sm text-emerald-800">
               <input type="checkbox" checked={penaltyShootout} onChange={(e) => { setPenaltyShootout(e.target.checked); updateFormData({ penaltyShootout: e.target.checked }); }} className="w-4 h-4" />
-              Luân lưu phân định (hòa ở knockout)
+              {translate('penaltyShootout')}
             </label>
           </div>
         </div>
@@ -346,7 +348,7 @@ export default function Step2FormatMulti() {
 
       <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
         <Button type="button" variant="outline" onClick={prevStep} className="border-slate-200 text-slate-600">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại
+          <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
         </Button>
         <Button
           type="button"
@@ -354,7 +356,7 @@ export default function Step2FormatMulti() {
           disabled={selected.length === 0}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300"
         >
-          Tiếp tục <ChevronRight className="w-4 h-4 ml-1" />
+          {translate('continue')} <ChevronRight className="w-4 h-4 ml-1" />
         </Button>
       </div>
     </div>

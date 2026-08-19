@@ -84,22 +84,45 @@ export default function CommunityPostCard({
   useEffect(() => {
     let mounted = true;
     if (post.communityId && post.author?.id) {
+      const authorId = post.author.id;
       communitiesApi.getMembers(post.communityId, { limit: 100 })
         .then((res) => {
           if (!mounted) return;
-          const members = (Array.isArray(res.data) ? res.data : (res.data as { data?: Array<{ user?: { id?: string }; member?: { role?: string; tags?: string[] } }> })?.data) ?? [];
-          const found = members.find((m) => m.user?.id === post.author.id || (m as unknown as { userId?: string }).userId === post.author.id);
-          if (found?.member) {
+          const raw = res.data;
+          const list = Array.isArray(raw)
+            ? raw
+            : Array.isArray((raw as any)?.data)
+            ? (raw as any).data
+            : [];
+          const found = list.find(
+            (m: any) => m.user?.id === authorId || m.member?.userId === authorId || m.userId === authorId,
+          );
+          if (found) {
+            const rawFound = found as any;
             setAuthorMemberInfo({
-              role: found.member.role,
-              tags: found.member.tags || [],
+              role: found.member?.role || rawFound.role,
+              tags: found.member?.tags || rawFound.tags || [],
             });
           }
         })
         .catch(() => {});
     }
+
+    const handleTagsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ userId: string; tags: string[] }>;
+      if (customEvent.detail && customEvent.detail.userId === post.author?.id) {
+        setAuthorMemberInfo((prev) => ({
+          role: prev?.role,
+          tags: customEvent.detail.tags,
+        }));
+      }
+    };
+
+    window.addEventListener('sporto:member-tags-updated', handleTagsUpdated);
+
     return () => {
       mounted = false;
+      window.removeEventListener('sporto:member-tags-updated', handleTagsUpdated);
     };
   }, [post.communityId, post.author?.id]);
 
@@ -358,10 +381,22 @@ export default function CommunityPostCard({
                 {authorName}
               </button>
 
+              {/* Author Community Role Badge */}
+              {authorMemberInfo?.role === "OWNER" && (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200 shadow-2xs">
+                  Chủ CLB
+                </span>
+              )}
+              {authorMemberInfo?.role === "MODERATOR" && (
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200 shadow-2xs">
+                  BQT
+                </span>
+              )}
+
               {/* Author Member Tags / Badges in Post Header */}
               {authorMemberInfo?.tags && authorMemberInfo.tags.length > 0 && (
                 <div className="flex items-center flex-wrap gap-1">
-                  {authorMemberInfo.tags.slice(0, 2).map((tag) => {
+                  {authorMemberInfo.tags.map((tag) => {
                     const preset = tagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
                     return (
                       <span
@@ -382,6 +417,7 @@ export default function CommunityPostCard({
                               }
                         }
                       >
+                        <span className="w-1 h-1 rounded-full bg-slate-900/40 shrink-0" />
                         {tag}
                       </span>
                     );

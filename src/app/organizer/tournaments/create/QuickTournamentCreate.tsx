@@ -371,6 +371,20 @@ export default function QuickTournamentCreate() {
     return () => window.clearTimeout(timer);
   }, [draftKey, formValues]);
 
+  const userTouchedScheduleRef = useRef<{ registrationEnd: boolean; endDate: boolean }>({
+    registrationEnd: false,
+    endDate: false,
+  });
+
+  const handleRegistrationStartChange = (val: string) => {
+    setValue('registrationStart', val, { shouldValidate: true });
+  };
+
+  const handleRegistrationEndChange = (val: string) => {
+    userTouchedScheduleRef.current.registrationEnd = true;
+    setValue('registrationEnd', val, { shouldValidate: true });
+  };
+
   useEffect(() => {
     if (!registrationStart || !startDate) {
       return;
@@ -386,7 +400,6 @@ export default function QuickTournamentCreate() {
     const regStart = new Date(registrationStart);
     let targetRegEnd = dayBeforeStart;
 
-    // Nếu ngày hôm trước vẫn sau hoặc cùng ngày với registrationStart nhưng muộn hơn start thì lùi lại
     if (!Number.isNaN(regStart.getTime()) && targetRegEnd.getTime() <= regStart.getTime()) {
       targetRegEnd = new Date(start.getTime() - 2 * 60 * 60 * 1000);
       if (targetRegEnd.getTime() <= regStart.getTime()) {
@@ -394,7 +407,6 @@ export default function QuickTournamentCreate() {
       }
     }
 
-    // Luôn đảm bảo thời gian đóng đăng ký trước giờ bắt đầu giải ít nhất 1 giờ
     if (targetRegEnd.getTime() >= start.getTime()) {
       targetRegEnd = new Date(start.getTime() - 60 * 60 * 1000);
     }
@@ -407,16 +419,13 @@ export default function QuickTournamentCreate() {
     const nextEndDate = formatDateTimeInput(estimatedEnd);
     const currentRegistrationEnd = getValues('registrationEnd');
     const currentEndDate = getValues('endDate');
-    const registrationEndIsAfterStart = currentRegistrationEnd
-      ? new Date(currentRegistrationEnd).getTime() >= start.getTime()
-      : false;
-    if (!currentRegistrationEnd || currentRegistrationEnd === autoScheduleRef.current.registrationEnd || registrationEndIsAfterStart) {
+
+    if (!currentRegistrationEnd && !userTouchedScheduleRef.current.registrationEnd) {
       setValue('registrationEnd', nextRegistrationEnd, { shouldValidate: true });
     }
-    if (!currentEndDate || currentEndDate === autoScheduleRef.current.endDate) {
+    if (!currentEndDate && !userTouchedScheduleRef.current.endDate) {
       setValue('endDate', nextEndDate, { shouldValidate: true });
     }
-    autoScheduleRef.current = { registrationEnd: nextRegistrationEnd, endDate: nextEndDate };
   }, [registrationStart, startDate, getValues, setValue]);
 
   const showDerivedSchedule = Boolean(registrationStart && startDate);
@@ -441,14 +450,6 @@ export default function QuickTournamentCreate() {
       setWards(loadedWards);
     },
   });
-
-  const handleRegistrationStartChange = (val: string) => {
-    setValue('registrationStart', val, { shouldValidate: true });
-  };
-
-  const handleRegistrationEndChange = (val: string) => {
-    setValue('registrationEnd', val, { shouldValidate: true });
-  };
 
   useEffect(() => {
     let active = true;

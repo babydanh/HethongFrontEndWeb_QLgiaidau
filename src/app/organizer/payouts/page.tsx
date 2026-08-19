@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,29 +29,31 @@ import {
   Wallet
 } from 'lucide-react';
 
-const payoutSchema = z.object({
-  tournamentId: z.string().min(1, 'Vui lòng chọn giải đấu để rút tiền'),
-  amountRequested: z.number().min(10000, 'Số tiền rút tối thiểu là 10,000đ'),
-  bankName: z.string().min(2, 'Vui lòng điền tên ngân hàng'),
-  bankAccountNumber: z.string().min(5, 'Vui lòng điền số tài khoản'),
-  bankAccountName: z.string().min(2, 'Vui lòng điền tên chủ tài khoản'),
+const createPayoutSchema = (translate: (key: string) => string) => z.object({
+  tournamentId: z.string().min(1, translate('selectTournament')),
+  amountRequested: z.number().min(10000, translate('minimumAmount')),
+  bankName: z.string().min(2, translate('bankNameRequired')),
+  bankAccountNumber: z.string().min(5, translate('bankAccountRequired')),
+  bankAccountName: z.string().min(2, translate('accountHolderRequired')),
 });
 
-type PayoutFormValues = z.infer<typeof payoutSchema>;
+type PayoutFormValues = z.infer<ReturnType<typeof createPayoutSchema>>;
 
-const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { bg: string; text: string; icon: typeof AlertCircle }> = {
-  PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ duyệt', icon: AlertCircle },
-  REQUESTED: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Đã gửi', icon: AlertCircle },
-  UNDER_REVIEW: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đang đối soát', icon: AlertCircle },
-  APPROVED: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đã duyệt hồ sơ', icon: CheckCircle2 },
-  PROCESSING: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đang chuyển tiền', icon: AlertCircle },
-  PAID: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Đã chuyển tiền', icon: CheckCircle2 },
-  REJECTED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', text: 'Bị từ chối', icon: XCircle },
-  FAILED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', text: 'Chuyển tiền lỗi', icon: XCircle },
-  CANCELLED: { bg: 'bg-slate-50 text-slate-600 border-slate-100', text: 'Đã hủy', icon: XCircle },
+const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { bg: string; key: string; icon: typeof AlertCircle }> = {
+  PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', key: 'pending', icon: AlertCircle },
+  REQUESTED: { bg: 'bg-amber-50 text-amber-600 border-amber-100', key: 'requested', icon: AlertCircle },
+  UNDER_REVIEW: { bg: 'bg-blue-50 text-blue-600 border-blue-100', key: 'underReview', icon: AlertCircle },
+  APPROVED: { bg: 'bg-blue-50 text-blue-600 border-blue-100', key: 'approved', icon: CheckCircle2 },
+  PROCESSING: { bg: 'bg-blue-50 text-blue-600 border-blue-100', key: 'processing', icon: AlertCircle },
+  PAID: { bg: 'bg-green-50 text-green-600 border-green-100', key: 'completed', icon: CheckCircle2 },
+  REJECTED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', key: 'rejected', icon: XCircle },
+  FAILED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', key: 'failed', icon: XCircle },
+  CANCELLED: { bg: 'bg-slate-50 text-slate-600 border-slate-100', key: 'cancelled', icon: XCircle },
 };
 
 export default function OrganizerPayoutsPage() {
+  const translate = useTranslations('OrganizerPayouts');
+  const payoutSchema = createPayoutSchema(translate);
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
 
@@ -82,7 +85,7 @@ export default function OrganizerPayoutsPage() {
     // Check if user is organizer or admin
     const isOrg = user?.roles.includes('ORGANIZER') || user?.roles.includes('ADMIN');
     if (!isOrg) {
-      toast.error('Bạn không có quyền truy cập trang của Ban tổ chức');
+      toast.error(translate('accessDenied'));
       router.push('/dashboard');
       return;
     }
@@ -128,7 +131,7 @@ export default function OrganizerPayoutsPage() {
       const res = await paymentsApi.requestPayout(cleanData);
       const newPayout = res?.data || res;
       
-      toast.success('Gửi yêu cầu rút tiền thành công!');
+      toast.success(translate('submitSuccess'));
       
       // Update local state
       setPayouts(prev => [newPayout, ...prev]);
@@ -147,7 +150,7 @@ export default function OrganizerPayoutsPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">Đang tải lịch sử rút tiền...</p>
+        <p className="text-slate-500 font-medium">{translate('loadingHistory')}</p>
       </div>
     );
   }
@@ -160,9 +163,9 @@ export default function OrganizerPayoutsPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <Landmark className="w-6 h-6 text-blue-600" /> Quản lý rút tiền giải đấu
+              <Landmark className="w-6 h-6 text-blue-600" /> {translate('pageTitle')}
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Ban tổ chức yêu cầu rút phí tham gia giải đấu về tài khoản ngân hàng</p>
+            <p className="text-slate-500 text-sm mt-1">{translate('pageDescription')}</p>
           </div>
           
           {!isOpenForm && tournaments.length > 0 && (
@@ -170,7 +173,7 @@ export default function OrganizerPayoutsPage() {
               onClick={() => setIsOpenForm(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 rounded-lg font-bold py-2.5 shadow-md shadow-blue-500/20"
             >
-              <PlusCircle className="w-4 h-4" /> Yêu cầu rút tiền
+              <PlusCircle className="w-4 h-4" /> {translate('requestWithdrawal')}
             </Button>
           )}
         </div>
@@ -179,17 +182,17 @@ export default function OrganizerPayoutsPage() {
         {isOpenForm && (
           <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-sm mb-8 animate-in slide-in-from-top-4 duration-300">
             <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-blue-600" /> Tạo yêu cầu rút tiền mới
+              <Building2 className="w-5 h-5 text-blue-600" /> {translate("newWithdrawalTitle")}
             </h2>
             
             <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-sm font-semibold text-slate-700">Giải đấu cần rút tiền <span className="text-rose-500">*</span></label>
+                <label className="text-sm font-semibold text-slate-700">{translate("tournamentLabel")} <span className="text-rose-500">*</span></label>
                 <select
                   {...register('tournamentId')}
                   className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">-- Chọn giải đấu của bạn --</option>
+                  <option value="">-- {translate('selectTournament')} --</option>
                   {tournaments.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -199,35 +202,35 @@ export default function OrganizerPayoutsPage() {
 
               {selectedTournamentId && (
                 <div className="md:col-span-2 bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
-                  Số tiền được rút sẽ được hệ thống kiểm tra lại theo số dư khả dụng, các khoản hoàn đang giữ và yêu cầu giải ngân chưa hoàn tất.
+                  {translate('balanceHint')}
                 </div>
               )}
 
               <Input
-                label="Số tiền muốn rút (VNĐ)"
+                label={translate("amountInputLabel")}
                 type="number"
-                placeholder="Ví dụ: 10000000"
+                placeholder={translate("amountPlaceholder")}
                 {...register('amountRequested', { valueAsNumber: true })}
                 error={errors.amountRequested?.message}
               />
 
               <Input
-                label="Tên ngân hàng"
-                placeholder="Ví dụ: Vietcombank, Techcombank..."
+                label={translate("bankNameLabel")}
+                placeholder={translate("bankNamePlaceholder")}
                 {...register('bankName')}
                 error={errors.bankName?.message}
               />
 
               <Input
-                label="Số tài khoản ngân hàng"
-                placeholder="Ví dụ: 0123456789"
+                label={translate("bankAccountNumberLabel")}
+                placeholder={translate("bankAccountPlaceholder")}
                 {...register('bankAccountNumber')}
                 error={errors.bankAccountNumber?.message}
               />
 
               <Input
-                label="Tên chủ tài khoản (Viết hoa không dấu)"
-                placeholder="Ví dụ: NGUYEN VAN A"
+                label={translate("accountHolderLabel")}
+                placeholder={translate("accountHolderPlaceholder")}
                 {...register('bankAccountName')}
                 error={errors.bankAccountName?.message}
               />
@@ -243,14 +246,14 @@ export default function OrganizerPayoutsPage() {
                   disabled={submitting}
                   className="border-slate-200 text-slate-600 rounded-lg"
                 >
-                  Hủy bỏ
+                  {translate('cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitting}
                   className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold px-6 py-2 shadow-md shadow-blue-500/10"
                 >
-                  {submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
+                  {submitting ? translate('submitting') : translate('submit')}
                 </Button>
               </div>
             </form>
@@ -260,27 +263,27 @@ export default function OrganizerPayoutsPage() {
         {/* Payout History */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-            <h2 className="font-bold text-slate-800">Lịch sử rút tiền</h2>
+            <h2 className="font-bold text-slate-800">{translate("historyTitle")}</h2>
             <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-              {payouts.length} Yêu cầu
+              {translate('requestCount', { count: payouts.length })}
             </span>
           </div>
 
           {payouts.length === 0 ? (
             <div className="py-16 text-center">
               <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-semibold">Chưa có yêu cầu rút tiền nào được tạo</p>
+              <p className="text-slate-500 font-semibold">{translate('empty')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                    <th className="py-4 px-6">Ngày gửi</th>
-                    <th className="py-4 px-6">Giải đấu</th>
-                    <th className="py-4 px-6">Số tiền rút</th>
-                    <th className="py-4 px-6">Tài khoản ngân hàng</th>
-                    <th className="py-4 px-6">Trạng thái</th>
+                    <th className="py-4 px-6">{translate("dateSubmitted")}</th>
+                    <th className="py-4 px-6">{translate("tournamentLabel")}</th>
+                    <th className="py-4 px-6">{translate("withdrawalAmount")}</th>
+                    <th className="py-4 px-6">{translate("bankAccount")}</th>
+                    <th className="py-4 px-6">{translate("status")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
@@ -295,7 +298,7 @@ export default function OrganizerPayoutsPage() {
                           {new Date(p.createdAt).toLocaleDateString('vi-VN')}
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-800 max-w-[200px] truncate">
-                          {p.tournament?.name || 'Giải đấu'}
+                          {p.tournament?.name || translate('unknownTournament')}
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-900">
                           {formatCurrency(Number(p.amountRequested))}
@@ -307,7 +310,7 @@ export default function OrganizerPayoutsPage() {
                         <td className="py-4 px-6">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusConfig.bg}`}>
                             <StatusIcon className="w-3 h-3" />
-                            {statusConfig.text}
+                            {translate(statusConfig.key)}
                           </span>
                         </td>
                       </tr>

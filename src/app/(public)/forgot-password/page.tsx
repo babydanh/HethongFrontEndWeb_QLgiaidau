@@ -8,7 +8,7 @@ import * as z from 'zod';
 import { api } from '@/lib/axios';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -53,12 +53,12 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 className="w-7 h-7" />
             </div>
             <p className="text-slate-700 font-semibold">{t('requestSent')}</p>
-            <p className="text-sm text-slate-500">Vui lòng kiểm tra hộp thư của bạn (cả mục Spam) để nhận hướng dẫn đặt lại mật khẩu.</p>
+            <p className="text-sm text-slate-500">{t('checkInbox')}</p>
             {process.env.NODE_ENV !== 'production' && (
-              <p className="text-xs text-slate-400 mt-2">(Môi trường demo: token được in ra console backend)</p>
+              <p className="text-xs text-slate-400 mt-2">{t('demoEnvironmentNote')}</p>
             )}
             <Link href="/login" className="inline-block mt-4 text-sm font-bold text-blue-600 hover:underline">
-              Quay lại đăng nhập
+              {t('backToLogin')}
             </Link>
           </div>
         ) : (

@@ -36,11 +36,11 @@ import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcomin
 import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
 import RegistrationCustomFields, { validateRegistrationResponses } from './components/RegistrationCustomFields';
 
-const registerSchema = z.object({
-  teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
+const createRegisterSchema = (messages: { teamNameMinLength: string; teamNameTooLong: string }) => z.object({
+  teamName: z.string().min(3, messages.teamNameMinLength).max(100, messages.teamNameTooLong),
 });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = z.infer<ReturnType<typeof createRegisterSchema>>;
 
 type NormalizableDivision = {
   id: string;
@@ -78,22 +78,24 @@ const normalizeGenderValue = (value?: string | null): 'MALE' | 'FEMALE' | 'MIXED
   return 'OTHER';
 };
 
-const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null) => {
+const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null, translate?: (key: string) => string) => {
+  const singlesLabel = translate?.('singlesLabel') ?? 'Đơn';
+  const doublesLabel = translate?.('doublesLabel') ?? 'Đôi';
   const genderLabel =
     genderRestriction === 'MALE' ? 'Nam' :
     genderRestriction === 'FEMALE' ? 'Nữ' :
     genderRestriction === 'MIXED' ? 'Nam Nữ' : '';
 
   if (matchType === 'SINGLES') {
-    return genderLabel ? `Đơn ${genderLabel}` : 'Đơn';
+    return genderLabel ? `${singlesLabel} ${genderLabel}` : '${singlesLabel}';
   }
   if (matchType === 'DOUBLES') {
-    return genderLabel ? `Đôi ${genderLabel}` : 'Đôi';
+    return genderLabel ? `${doublesLabel} ${genderLabel}` : '${doublesLabel}';
   }
   if (matchType === 'MIXED_DOUBLES') {
-    return 'Đôi Nam Nữ';
+    return translate?.('mixedDoublesLabel') ?? 'Đôi Nam Nữ';
   }
-  return 'Chưa rõ';
+  return translate?.('unknownLabel') ?? 'Chưa rõ';
 };
 
 const normalizeMatchType = (value?: string | null): Division['matchType'] | undefined => {
@@ -110,18 +112,18 @@ const normalizeMatchType = (value?: string | null): Division['matchType'] | unde
   return undefined;
 };
 
-const getDivisionBracketLabel = (bracketType?: string | null) => {
+const getDivisionBracketLabel = (bracketType?: string | null, translate?: (key: string) => string) => {
   if (bracketType === 'SINGLE_ELIMINATION') {
-    return 'Loại trực tiếp';
+    return translate?.('singleElimination') ?? 'Loại trực tiếp';
   }
   if (bracketType === 'DOUBLE_ELIMINATION') {
-    return 'Nhánh thắng/thua';
+    return translate?.('doubleElimination') ?? 'Nhánh thắng/thua';
   }
   if (bracketType === 'ROUND_ROBIN') {
-    return 'Vòng tròn';
+    return translate?.('roundRobin') ?? 'Vòng tròn';
   }
   if (bracketType === 'GROUP_STAGE_KNOCKOUT') {
-    return 'Vòng bảng + Loại trực tiếp';
+    return translate?.('groupStageKnockout') ?? 'Vòng bảng + Loại trực tiếp';
   }
   return 'Chưa rõ';
 };
@@ -146,6 +148,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const router = useRouter();
   const translate = useTranslations('Common');
   const tournamentTranslate = useTranslations('TournamentDetail');
+  const registrationTranslate = useTranslations('TournamentRegistration');
+  const registerValidationSchema = createRegisterSchema({ teamNameMinLength: registrationTranslate('teamNameMinLength'), teamNameTooLong: registrationTranslate('teamNameTooLong') });
   const searchParams = useSearchParams();
   const urlInvite = searchParams.get('invite') || '';
   const requestedDivisionId = searchParams.get('divisionId') || '';
@@ -171,7 +175,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
 
   const { register, handleSubmit } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerValidationSchema),
   });
 
   const normalizeDivision = (division: NormalizableDivision): Division => ({
@@ -251,7 +255,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           if (t.inviteCode) {
             router.replace(`/lite/tournaments/join/${t.inviteCode}`);
           } else {
-            toast.error('Giải đấu nhanh chưa có đường dẫn tham gia.');
+            toast.error(registrationTranslate('quickTournamentNoJoinLink'));
             router.push('/tournaments');
           }
           return;
@@ -289,7 +293,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       if (errorResponse.response?.status === 403 || errorResponse.response?.status === 400) {
         setNeedInviteValidation(true);
       } else {
-        toast.error('Không thể tải thông tin giải đấu. Có thể giải đấu không tồn tại.');
+        toast.error(registrationTranslate('tournamentLoadFailed'));
         router.push('/tournaments');
       }
     } finally {
@@ -393,7 +397,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     try {
       setIsWithdrawing(true);
       await tournamentsApi.withdraw(id, bankData, selectedDivisionId || undefined);
-      toast.success('Đã rút khỏi giải đấu thành công.');
+      toast.success(registrationTranslate('withdrawalSuccess'));
       setParticipant(null);
       setIsRegistered(false);
       setShowWithdrawModal(false);
@@ -423,7 +427,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     e.preventDefault();
     const cleanCode = trimAndNormalizeSpaces(inviteInput);
     if (!cleanCode) {
-      toast.error('Vui lòng nhập mã mời');
+      toast.error(registrationTranslate('inviteCodeRequired'));
       return;
     }
 
@@ -434,7 +438,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         setInviteCode(cleanCode);
         setTournament(res.data);
         setNeedInviteValidation(false);
-        toast.success('Xác nhận mã mời thành công!');
+        toast.success(registrationTranslate('inviteConfirmed'));
       }
     } catch (err) {
       toast.error(translate('invalidInvite'))
@@ -459,17 +463,17 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     }
 
     if (!selectedDivision) {
-      toast.error('Vui lòng chọn hình thức đăng ký thi đấu');
+      toast.error(registrationTranslate('registrationModeRequired'));
       return;
     }
 
     if (selectedDivisionData && eloCheck && !eloCheck.ok) {
-      toast.error(eloCheck.message || 'ELO của bạn không phù hợp với nội dung này.');
+      toast.error(eloCheck.message || registrationTranslate('eloMismatch'));
       return;
     }
 
     if (tournament?.isRanked && !rankingConsent) {
-      toast.error('Vui lòng đồng ý cho phép lưu và hiển thị kết quả, điểm ELO trên bảng xếp hạng.');
+      toast.error(registrationTranslate('eloConsentRequired'));
       return;
     }
 
@@ -711,7 +715,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
             onClick={() => router.push(buildTournamentDetailHref(tournament.id))}
             className="w-full border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold"
           >
-            Quay lại trang giải đấu
+            {registrationTranslate('backToTournament')}
           </Button>
         </div>
       </div>
@@ -785,10 +789,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>
                     Định dạng: <strong className="text-white">{
-                      tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp (Single)' :
-                      tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng thua (Double)' :
-                      tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' :
-                      tournament.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + Loại trực tiếp' : tournament.format
+                      tournament.format === 'SINGLE_ELIMINATION' ? registrationTranslate('singleElimination') :
+                      tournament.format === 'DOUBLE_ELIMINATION' ? registrationTranslate('doubleElimination') :
+                      tournament.format === 'ROUND_ROBIN' ? registrationTranslate('roundRobin') :
+                      tournament.format === 'GROUP_STAGE_KNOCKOUT' ? registrationTranslate('groupStageKnockout') : tournament.format
                     }</strong>
                   </span>
                 </div>
@@ -803,15 +807,15 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     Chọn nội dung thi đấu
                   </label>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Chọn đúng nội dung bạn muốn tham gia trước khi điền thông tin đăng ký.
+                    {registrationTranslate('selectCompetitionHelp')}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
                   {allDivisions.map((div) => {
                     const isActive = selectedDivisionId === div.id;
-                    const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction);
-                    const bracketLabel = getDivisionBracketLabel(div.bracketType);
+                    const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction, registrationTranslate);
+                    const bracketLabel = getDivisionBracketLabel(div.bracketType, registrationTranslate);
                     const participantCount = div._count?.participants ?? 0;
                     return (
                       <button
@@ -858,11 +862,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                 {selectedDivision && (
                   <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3.5 shadow-sm space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 font-semibold">Nội dung đang chọn:</span>
+                      <span className="text-slate-500 font-semibold">{registrationTranslate('selectedContent')}:</span>
                       <span className="font-bold text-slate-900">{selectedDivision.name}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 font-semibold">Lệ phí thi đấu:</span>
+                      <span className="text-slate-500 font-semibold">{registrationTranslate('matchFee')}:</span>
                       <span className="font-bold text-blue-600">
                         {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
                       </span>
@@ -871,7 +875,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     {/* ELO Check UI */}
                     {selectedDivision && eloLoading && (
                       <div className="pt-1 text-xs text-slate-400 flex items-center gap-2">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Đang kiểm tra ELO...
+                        <Loader2 className="w-3 h-3 animate-spin" /> {registrationTranslate('checkingElo')}
                       </div>
                     )}
                     {eloCheck && !eloCheck.ok && (
@@ -899,7 +903,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                 {isGenderMismatched ? (
                   <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-3 animate-in fade-in duration-200">
                     <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
-                    <p className="text-base font-bold text-rose-900">Giới tính không phù hợp</p>
+                    <p className="text-base font-bold text-rose-900">{registrationTranslate('genderMismatch')}</p>
                     <p className="text-xs text-slate-600 font-semibold leading-relaxed max-w-md mx-auto">
                       Nội dung thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
                       <strong>{divisionGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>. Giới tính trong hồ sơ của bạn hiện tại là{' '}
@@ -946,8 +950,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       </div>
                       <h3 className="text-lg font-bold text-slate-900">
                         {participant.teamStatus === 'COMPLETE'
-                          ? 'Đăng ký thành công! / BTC đã duyệt'
-                          : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL') ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký tham gia thành công!'}
+                          ? registrationTranslate('approvedRegistrationSuccess')
+                          : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL') ? registrationTranslate('approvalRequestSubmitted') : registrationTranslate('openRegistrationSuccess')}
                       </h3>
                       <p className="text-slate-500 text-xs max-w-sm mx-auto">
                         {participant.teamStatus === 'COMPLETE'
@@ -967,9 +971,9 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         <span className="text-slate-900 font-bold">{user?.fullName}</span>
                       </div>
                       <div className="px-4 py-3 flex justify-between text-sm">
-                        <span className="text-slate-500 font-medium">Trạng thái lệ phí:</span>
+                        <span className="text-slate-500 font-medium">{registrationTranslate('feeStatus')}:</span>
                         {participant.isPaid ? (
-                          <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 text-xs">Đã đóng</span>
+                          <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 text-xs">{registrationTranslate('closedStatus')}</span>
                         ) : (
                           <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 text-xs">{translate('pendingPayment')}</span>
                         )}
@@ -986,7 +990,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                               disabled={isWithdrawing}
                               className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
                             >
-                              <Trash2 className="w-4 h-4" /> Hủy & Rút
+                              <Trash2 className="w-4 h-4" /> {registrationTranslate('cancelAndWithdraw')}
                             </Button>
                             <Button
                               onClick={() => {
@@ -994,7 +998,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                               }}
                               className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/10 h-12"
                             >
-                              <CreditCard className="w-4 h-4" /> Thanh toán
+                              <CreditCard className="w-4 h-4" /> {registrationTranslate('paymentLabel')}
                             </Button>
                           </div>
                         )}
@@ -1013,7 +1017,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                               onClick={() => router.push(buildTournamentDetailHref(id))}
                               className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 text-sm h-11"
                             >
-                              Quay lại trang giải đấu
+                              {registrationTranslate('backToTournament')}
                             </Button>
                           </div>
                         )}
@@ -1066,7 +1070,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <span>
                             {translate('registrationConsent')} ELO trên bảng xếp hạng.
                             <span className="mt-1 block text-xs text-slate-500">
-                              Đây là điều kiện của nội dung giải có xếp hạng; giải không xếp hạng không cập nhật ELO.
+                              {registrationTranslate('rankedContentCondition')}
                             </span>
                           </span>
                         </label>
@@ -1074,7 +1078,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5">
                         <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
                         <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
-                        <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+                        <p className="text-xs text-slate-500 mt-1">{registrationTranslate('accountNameHint')}</p>
                         <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
                       </div>
 
@@ -1109,7 +1113,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                 </>
               ) : (
                 <div className="py-12 text-center text-slate-400">
-                  <p className="text-sm font-semibold">Vui lòng chọn nội dung thi đấu ở cột bên trái để tiếp tục</p>
+                  <p className="text-sm font-semibold">{registrationTranslate('selectContentToContinue')}</p>
                 </div>
               )}
             </div>

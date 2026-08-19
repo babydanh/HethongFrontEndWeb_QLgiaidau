@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Image as ImageIcon, Plus, Trash2, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi, Community } from '@/features/communities/api';
@@ -20,6 +21,7 @@ interface GalleryTabProps {
 }
 
 export default function GalleryTab({ communityId, community, isOwnerOrMod }: GalleryTabProps) {
+  const translate = useTranslations('Common');
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -74,11 +76,11 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
       setIsUploading(true);
       const uploadRes = await uploadApi.uploadImage(file);
       await communitiesApi.addGalleryItem(communityId, { imageUrl: uploadRes.url });
-      toast.success('Đã tải ảnh lên thành công!');
+      toast.success(translate('galleryUploadSuccess'));
       fetchGallery();
     } catch (error) {
       console.error('Upload error', error);
-      toast.error('Lỗi khi tải ảnh lên.');
+      toast.error(translate('galleryUploadFailed'));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -93,26 +95,26 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
   const performDelete = async (imageId: string) => {
     try {
       await communitiesApi.removeGalleryItem(communityId, imageId);
-      toast.success('Đã xoá ảnh!');
+      toast.success(translate('galleryDeleteSuccess'));
       fetchGallery();
     } catch (error) {
       console.error('Delete error', error);
-      toast.error('Lỗi khi xoá ảnh.');
+      toast.error(translate('galleryDeleteFailed'));
     }
   };
 
   const displayImages: Array<{ id: string; imageUrl: string; title: string; isSystem?: boolean }> = [
     ...(community?.logoUrl ? [{ id: 'sys-logo', imageUrl: community.logoUrl, title: 'Logo CLB', isSystem: true }] : []),
-    ...(community?.bannerUrl ? [{ id: 'sys-banner', imageUrl: community.bannerUrl, title: 'Ảnh bìa CLB', isSystem: true }] : []),
-    ...images.map(img => ({ id: img.id, imageUrl: img.imageUrl, title: 'Ảnh hoạt động', isSystem: false })),
+    ...(community?.bannerUrl ? [{ id: 'sys-banner', imageUrl: community.bannerUrl, title: translate('bannerImageTitle'), isSystem: true }] : []),
+    ...images.map(img => ({ id: img.id, imageUrl: img.imageUrl, title: translate('activityImageTitle'), isSystem: false })),
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">Thư viện ảnh ({displayImages.length})</h3>
-          <p className="text-xs text-slate-500 font-medium">Bao gồm Logo, Banner bìa và bộ sưu tập ảnh hoạt động của CLB.</p>
+          <h3 className="text-lg font-bold text-slate-900">{translate('galleryTitle', { count: displayImages.length })}</h3>
+          <p className="text-xs text-slate-500 font-medium">{translate('galleryDescription')}</p>
         </div>
         {isOwnerOrMod && (
           <>
@@ -130,12 +132,12 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
       </div>
 
       {isLoading ? (
-        <div className="p-12 text-center text-slate-500 font-medium">Đang tải dữ liệu thư viện ảnh...</div>
+        <div className="p-12 text-center text-slate-500 font-medium">{translate('galleryLoading')}</div>
       ) : displayImages.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-800 font-bold text-lg">Chưa có hình ảnh nào</p>
-          <p className="text-slate-500 text-xs font-medium mt-1">Câu lạc bộ chưa đăng tải hình ảnh hoạt động nào.</p>
+          <p className="text-slate-800 font-bold text-lg">{translate('noGalleryImages')}</p>
+          <p className="text-slate-500 text-xs font-medium mt-1">{translate('noGalleryImagesDescription')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -229,9 +231,9 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
             setDeleteImageId(null);
           }
         }}
-        title="Xoá ảnh"
-        description="Bạn có chắc chắn muốn xoá ảnh này?"
-        confirmLabel="Xoá ảnh"
+        title={translate('deleteImageTitle')}
+        description={translate('deleteImageDescription')}
+        confirmLabel={translate('deleteImageConfirm')}
         variant="danger"
         onConfirm={() => {
           if (deleteImageId) {

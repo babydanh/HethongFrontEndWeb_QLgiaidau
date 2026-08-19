@@ -246,13 +246,13 @@ export default function TournamentsTab({
               variant="outline"
               className="w-full sm:w-auto border-blue-600 text-blue-700 hover:bg-blue-50 font-semibold shadow-sm transition-all"
             >
-              Quản lý giải đấu CLB
+              {translate('communityTournamentManageTitle')}
             </Button>
             <Button 
               onClick={() => setIsChoiceModalOpen(true)}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
             >
-              + Tạo giải đấu cấp CLB
+              + {translate('communityTournamentCreateButton')}
             </Button>
           </div>
         )}
@@ -290,7 +290,7 @@ export default function TournamentsTab({
           <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-700 font-medium text-lg">{translate('noTournaments')}</p>
           <p className="text-slate-500 mt-1 max-w-sm mx-auto text-sm">
-            Hiện không tìm thấy giải đấu nào phù hợp với bộ lọc này.
+            {translate('communityTournamentFilterEmpty')}
           </p>
         </div>
       ) : (
@@ -312,11 +312,11 @@ export default function TournamentsTab({
                         {/* Lite vs Advanced Badge */}
                         {t.divisions.some(d => isLiteTournament(d)) ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                            Giải Nhanh (Lite)
+                            {translate('quickCreateLite')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                            Giải Nâng Cao
+                            {translate('communityTournamentAdvancedLabel')}
                           </span>
                         )}
 
@@ -351,7 +351,7 @@ export default function TournamentsTab({
                           <button
                             onClick={(e) => handleDeleteTournament(t.id, !!t.divisions[0].parentId, e)}
                             className="p-1 text-slate-455 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all active:scale-95 ml-1"
-                            title="Xóa giải đấu"
+                            title={translate('communityTournamentDeleteTitle')}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -387,7 +387,7 @@ export default function TournamentsTab({
                 {/* Note for Lite Tournaments */}
                 {t.divisions.some(d => isLiteTournament(d)) && (
                   <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium">
-                    <span><strong>Note: Giải đấu tạo nhanh (Lite)</strong> — Quản lý đơn giản, chia sẻ mã/link tham gia ngay lập tức</span>
+                    <span><strong>{translate('communityTournamentLiteNote')}</strong></span>
                   </div>
                 )}
 
@@ -395,13 +395,13 @@ export default function TournamentsTab({
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>
-                      {t.startDate ? formatDate(t.startDate) : 'Chưa cập nhật'} - {t.endDate ? formatDate(t.endDate) : 'Chưa cập nhật'}
+                      {t.startDate ? formatDate(t.startDate) : translate('dateNotSet')} - {t.endDate ? formatDate(t.endDate) : translate('dateNotSet')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="font-semibold text-slate-800">
-                      Lệ phí: {t.entryFee && t.entryFee > 0 ? `${t.entryFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                      Lệ phí: {t.entryFee && t.entryFee > 0 ? `${t.entryFee.toLocaleString('vi-VN')} ${translate('currencyVnd')}` : translate('free')}
                     </span>
                   </div>
                 </div>
@@ -409,7 +409,7 @@ export default function TournamentsTab({
 
               <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
                 <span className="text-xs font-bold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 transition-colors">
-                  Xem chi tiết giải đấu →
+                  {translate('viewDetails')} →
                 </span>
               </div>
             </div>

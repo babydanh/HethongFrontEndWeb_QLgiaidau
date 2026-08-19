@@ -509,17 +509,17 @@ export default function LiveMatchPage({ params }: Props) {
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-100 max-w-md">
           <img src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} className="w-20 h-20 object-contain mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || translate('liveMatchNotFound')}</h2>
-          <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
+          <p className="text-slate-500 text-sm mb-6">{matchTranslate('liveMatchMissing')}</p>
           <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-sm">
-            Quay lại giải đấu
+            {matchTranslate('backToTournament')}
           </Link>
         </div>
       </div>
     );
   }
 
-  const team1Name = match.participant1?.teamName || 'Chưa xác định';
-  const team2Name = match.participant2?.teamName || 'Chưa xác định';
+  const team1Name = match.participant1?.teamName || matchTranslate('unknownTeam');
+  const team2Name = match.participant2?.teamName || matchTranslate('unknownTeam');
   const hasAdminRole = user?.roles?.includes('ADMIN') ?? false;
   const hasOrganizerRole = user?.roles?.includes('ORGANIZER') ?? false;
 
@@ -543,9 +543,9 @@ export default function LiveMatchPage({ params }: Props) {
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
   const scoreGuidance = isLiteMatch
     ? {
-        targetSummary: 'Giải Lite: nhập điểm tự do theo diễn biến thực tế.',
+        targetSummary: matchTranslate('liteScoringSummary'),
         examples: [],
-        operatorHint: 'BTC có thể chốt set hoặc chốt đội thắng theo kết quả thực tế.',
+        operatorHint: matchTranslate('operatorHint'),
       }
     : getScoreEntryGuidance(resolvedRules.kind);
   const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
@@ -1321,10 +1321,10 @@ export default function LiveMatchPage({ params }: Props) {
       });
 
       setMatch(mergeMatchUpdate(res));
-      toast.success(`Đã ghi nhận hình phạt: ${label}.`);
+      toast.success(`${matchTranslate('penaltyRecorded', { label })}`);
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể lưu hình phạt cho trận này.'));
+      toast.error(getErrorMessage(err, matchTranslate('penaltySaveFailed')));
     } finally {
       setIsSubmitting(false);
     }
@@ -1535,8 +1535,8 @@ export default function LiveMatchPage({ params }: Props) {
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-500">
                       <AlertCircle className="w-7 h-7" />
                     </div>
-                    <h4 className="text-slate-400 font-bold text-base tracking-tight">Trận đấu bị Hủy</h4>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">Trận đấu này đã bị hủy bỏ bởi Ban tổ chức. Không có luồng trực tiếp hoặc phát lại.</p>
+                    <h4 className="text-slate-400 font-bold text-base tracking-tight">{matchTranslate('cancelledMatchTitle')}</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">{matchTranslate('cancelledByOrganizerDescription')}</p>
                   </>
                 ) : (
                   <>
@@ -1968,7 +1968,7 @@ export default function LiveMatchPage({ params }: Props) {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <h4 className="text-sm font-black uppercase tracking-[0.16em] text-slate-500">
-                          Phạt và thẻ
+                          {matchTranslate('penaltiesAndCards')}
                         </h4>
                         <p className="mt-1 text-xs font-medium text-slate-400">
                           Các quyết định đã được trọng tài/BTC ghi nhận theo luật môn.
@@ -2011,7 +2011,7 @@ export default function LiveMatchPage({ params }: Props) {
                           ? team1Name
                           : penalty.team === 2
                             ? team2Name
-                            : 'Trận đấu';
+                            : matchTranslate('matchLabel');
 
                         return (
                           <div key={penalty.id} className={`flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3 ${tone.box}`}>
@@ -2039,7 +2039,7 @@ export default function LiveMatchPage({ params }: Props) {
                     </div>
                     {penalties.length > 6 ? (
                       <p className="mt-3 text-center text-xs font-semibold text-slate-400">
-                        Đang hiển thị 6 quyết định mới nhất trong tổng số {penalties.length} mục.
+                        {matchTranslate('penaltiesVisibleSummary', { count: penalties.length })}
                       </p>
                     ) : null}
                   </section>
@@ -2140,7 +2140,7 @@ export default function LiveMatchPage({ params }: Props) {
               <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Thảo luận trận đấu</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{matchTranslate('discussionTitle')}</h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                   <button onClick={handleSpawnHeart} className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors px-2 py-1 rounded-lg">

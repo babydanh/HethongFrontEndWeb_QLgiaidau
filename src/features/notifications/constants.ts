@@ -44,6 +44,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   USER_BANNED: 'Tài khoản bị hạn chế',
   USER_UNBANNED: 'Tài khoản được khôi phục',
   MATCH_SCHEDULED: 'Lịch thi đấu',
+  MATCH_REMINDER: 'Nhắc lịch thi đấu',
   MATCH_COMPLETED: 'Kết quả trận',
   REFEREE_INVITED: 'Lời mời trọng tài',
   REFEREE_INVITE_REVOKED: 'Lời mời bị thu hồi',
@@ -317,6 +318,12 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     cardClassName: 'hover:border-blue-200 hover:bg-blue-50/50',
     unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
     dotClassName: 'bg-blue-500',
+  },
+  MATCH_REMINDER: {
+    badgeClassName: 'bg-amber-100 text-amber-800',
+    cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
+    unreadCardClassName: 'border-amber-200 bg-amber-50/70 shadow-sm',
+    dotClassName: 'bg-amber-500',
   },
   MATCH_COMPLETED: {
     badgeClassName: 'bg-blue-100 text-blue-800',

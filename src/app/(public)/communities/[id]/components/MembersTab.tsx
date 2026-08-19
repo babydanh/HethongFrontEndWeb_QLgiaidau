@@ -346,7 +346,7 @@ export default function MembersTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-            placeholder="Tìm thành viên..."
+            placeholder={translate('memberSearchPlaceholder')}
           />
         </div>
         {isOwnerOrMod && (
@@ -363,18 +363,18 @@ export default function MembersTab({
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-          <p className="text-slate-500 text-sm">Đang tải danh sách thành viên...</p>
+          <p className="text-slate-500 text-sm">{translate('loadingMembers')}</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 space-y-8">
-          {/* Section: Ban Quản Trị */}
+          {/* Section: Administrators */}
           <div>
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-blue-600" /> Ban Quản Trị
+              <ShieldCheck className="w-4 h-4 text-blue-600" /> {translate('adminSection')}
             </h4>
             
             {filteredAdmins.length === 0 ? (
-              <p className="text-slate-400 text-sm italic p-2">Không tìm thấy quản trị viên phù hợp.</p>
+              <p className="text-slate-400 text-sm italic p-2">{translate('noMatchingAdministrators')}</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredAdmins.map((item) => {
@@ -386,7 +386,7 @@ export default function MembersTab({
                       key={item.member?.id} 
                       role="link"
                       tabIndex={0}
-                      aria-label={`Xem hồ sơ ${item.user?.fullName}`}
+                      aria-label={translate('viewProfileAction')}
                       onClick={(event) => openProfile(item.user?.id, item, event)}
                       onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id, item)}
                       className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
@@ -402,10 +402,10 @@ export default function MembersTab({
                         <div>
                           <p className="font-semibold text-slate-800 text-sm flex items-center gap-1">
                             {item.user?.fullName}
-                            {isUserTarget && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">(Bạn)</span>}
+                            {isUserTarget && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">{translate('currentUserBadge')}</span>}
                           </p>
                           {renderMemberPills(item)}
-                          <p className="text-[10.5px] text-slate-400">Thành viên từ {new Date(item.member.joinedAt).toLocaleDateString('vi-VN')}</p>
+                          <p className="text-[10.5px] text-slate-400">{translate('memberSince', { date: new Date(item.member.joinedAt).toLocaleDateString('vi-VN') })}</p>
                         </div>
                       </div>
                       
@@ -439,7 +439,7 @@ export default function MembersTab({
                                   onClick={() => handleUpdateRole(item.user.id, 'MEMBER')}
                                   className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
                                 >
-                                  <ShieldAlert className="w-4 h-4 text-slate-500" /> Hạ cấp thành viên
+                                  <ShieldAlert className="w-4 h-4 text-slate-500" /> {translate('demoteMemberAction')}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -448,13 +448,13 @@ export default function MembersTab({
                                   }}
                                   className="w-full text-left px-4 py-2 text-xs text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors font-medium"
                                 >
-                                  <Crown className="w-4 h-4 text-blue-600" /> Chuyển chủ sở hữu
+                                  <Crown className="w-4 h-4 text-blue-600" /> {translate('transferOwnershipAction')}
                                 </button>
                                 <button
                                   onClick={() => setTagAssignTarget(item)}
                                   className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
                                 >
-                                  <Tag className="w-4 h-4 text-slate-500" /> Gán tag
+                                  <Tag className="w-4 h-4 text-slate-500" /> {translate('assignTagAction')}
                                 </button>
                                 <hr className="my-1 border-slate-100" />
                                 <button
@@ -481,15 +481,15 @@ export default function MembersTab({
             )}
           </div>
 
-          {/* Section: Thành viên thường */}
+          {/* Section: Regular members */}
           <div>
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2 flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-slate-500" /> Thành viên ({filteredMembers.length})
+              <Users className="w-4 h-4 text-slate-500" /> {translate('regularMembersSection')} ({filteredMembers.length})
             </h4>
             
             {filteredMembers.length === 0 ? (
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-8 text-center">
-                <p className="text-slate-400 text-sm">Chưa có thành viên nào khác hoặc không có kết quả phù hợp.</p>
+                <p className="text-slate-400 text-sm">{translate('noMatchingUsers')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -501,7 +501,7 @@ export default function MembersTab({
                       key={item.member?.id} 
                       role="link"
                       tabIndex={0}
-                      aria-label={`Xem hồ sơ ${item.user?.fullName}`}
+                      aria-label={translate('viewProfileAction')}
                       onClick={(event) => openProfile(item.user?.id, item, event)}
                       onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id, item)}
                       className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
@@ -517,10 +517,10 @@ export default function MembersTab({
                         <div>
                           <p className="font-semibold text-slate-800 text-xs flex items-center gap-1">
                             {item.user?.fullName}
-                            {isUserTarget && <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-normal">(Bạn)</span>}
+                            {isUserTarget && <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-normal">{translate('currentUserBadge')}</span>}
                           </p>
                           {renderMemberPills(item)}
-                          <p className="text-[10px] text-slate-400">Tham gia {new Date(item.member.joinedAt).toLocaleDateString('vi-VN')}</p>
+                          <p className="text-[10px] text-slate-400">{translate('memberSince', { date: new Date(item.member.joinedAt).toLocaleDateString('vi-VN') })}</p>
                         </div>
                       </div>
 
@@ -545,7 +545,7 @@ export default function MembersTab({
                                     onClick={() => handleUpdateRole(item.user.id, 'MODERATOR')}
                                     className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
                                   >
-                                    <ShieldCheck className="w-4 h-4 text-blue-600" /> Thăng chức Quản trị viên
+                                    <ShieldCheck className="w-4 h-4 text-blue-600" /> {translate('promotedToModerator')}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -554,7 +554,7 @@ export default function MembersTab({
                                     }}
                                     className="w-full text-left px-4 py-2 text-xs text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors font-medium"
                                   >
-                                    <Crown className="w-4 h-4 text-blue-600" /> Chuyển chủ sở hữu
+                                    <Crown className="w-4 h-4 text-blue-600" /> {translate('transferOwnershipAction')}
                                   </button>
                                   <hr className="my-1 border-slate-100" />
                                 </>
@@ -563,7 +563,7 @@ export default function MembersTab({
                                 onClick={() => setTagAssignTarget(item)}
                                 className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
                               >
-                                <Tag className="w-4 h-4 text-slate-500" /> Gán tag
+                                <Tag className="w-4 h-4 text-slate-500" /> {translate('assignTagAction')}
                               </button>
                               <button
                                 onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
@@ -597,7 +597,7 @@ export default function MembersTab({
                 className="w-full sm:w-auto border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-medium"
               >
                 {isLoadingMore && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Tải thêm
+                {translate('loadMoreMembers')}
               </Button>
             </div>
           )}
@@ -609,7 +609,7 @@ export default function MembersTab({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full border border-slate-200 shadow-xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 text-base">{translate('inviteMember')} mới</h3>
+              <h3 className="font-bold text-slate-900 text-base">{translate('inviteMember')}</h3>
               <button 
                 onClick={() => {
                   setIsInviteOpen(false);
@@ -629,7 +629,7 @@ export default function MembersTab({
                   type="text"
                   value={inviteSearch}
                   onChange={(e) => setInviteSearch(e.target.value)}
-                  placeholder="Nhập tên hoặc email người dùng..."
+                  placeholder={translate('userSearchPlaceholder')}
                   className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
                 />
               </div>
@@ -669,7 +669,7 @@ export default function MembersTab({
               ) : inviteSearch.trim().length >= 2 ? (
                 <p className="text-center text-slate-400 text-xs py-4">{translate('noUsersFound')}</p>
               ) : inviteSearch.trim().length > 0 ? (
-                <p className="text-center text-slate-400 text-xs py-4">Vui lòng gõ ít nhất 2 ký tự để tìm kiếm.</p>
+                <p className="text-center text-slate-400 text-xs py-4">{translate('minimumSearchCharacters')}</p>
               ) : null}
             </div>
           </div>
@@ -684,11 +684,8 @@ export default function MembersTab({
               <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center mx-auto shadow-sm">
                 <Crown className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Xác nhận chuyển chủ câu lạc bộ</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Bạn đang thực hiện chuyển quyền sở hữu câu lạc bộ sang cho <strong className="text-slate-800">&quot;{confirmTransferName}&quot;</strong>. 
-                Sau khi chuyển, vai trò của bạn sẽ bị hạ chức thành <strong className="text-slate-800">Quản trị viên (Mod)</strong> và không thể hoàn tác.
-              </p>
+              <h3 className="font-bold text-slate-900 text-base">{translate('confirmOwnershipTransferTitle')}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{translate('ownershipTransferWarning', { name: confirmTransferName })}</p>
             </div>
             
             <div className="flex gap-3 pt-2">
@@ -697,13 +694,13 @@ export default function MembersTab({
                 onClick={() => setConfirmTransferUserId(null)}
                 className="flex-1 text-xs py-2"
               >
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
               <Button
                 onClick={handleTransferOwnership}
                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-2"
               >
-                Xác nhận chuyển
+                {translate('confirm')}
               </Button>
             </div>
           </div>

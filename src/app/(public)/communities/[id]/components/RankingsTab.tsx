@@ -185,7 +185,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
               );
             }}
             className={`${sizeClass} rounded-full overflow-hidden bg-slate-100 border-2 border-white relative flex items-center justify-center cursor-pointer transition-transform hover:scale-110 z-10 ${index > 0 ? '-ml-2' : ''}`}
-            title={`Xem thông tin ${member.fullName}`}
+            title={translate('viewProfileAria', { name: member.fullName })}
           >
             {member.avatarUrl ? (
               <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
@@ -204,9 +204,9 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
         <Award className="w-16 h-16 text-slate-350 mx-auto mb-4" />
-        <p className="text-slate-700 font-bold text-lg">Chưa thiết lập bộ môn</p>
+        <p className="text-slate-700 font-bold text-lg">{translate('sportNotConfigured')}</p>
         <p className="text-slate-500 mt-1 max-w-sm mx-auto text-xs leading-relaxed">
-          Câu lạc bộ này hiện chưa đăng ký bất kỳ môn thể thao nào để tính điểm ELO.
+          {translate('clubNoEloSportDescription')}
         </p>
       </div>
     );
@@ -216,12 +216,12 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
     return (
       <div className="space-y-5">
         <div className="flex flex-col gap-1 border-b border-slate-100 pb-4">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900"><Trophy className="h-5 w-5 text-amber-500" /> Bảng xếp hạng đội bóng</h3>
-          <p className="text-xs text-slate-500">ELO được tính chung theo đội, chỉ hiển thị đội đã có trận xếp hạng.</p>
+          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900"><Trophy className="h-5 w-5 text-amber-500" /> {translate('teamRankingsTitle')}</h3>
+          <p className="text-xs text-slate-500">{translate('teamRankingsDescription')}</p>
         </div>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Tìm tên đội..." className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={translate('teamSearchPlaceholder')} className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         {isLoading ? (
           <div className="flex justify-center rounded-lg border border-slate-200 bg-white py-20"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
@@ -241,7 +241,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
             ))}
           </div>
         )}
-        <p className="text-center text-[10px] italic text-slate-400">Tự động cập nhật mỗi 30 giây</p>
+        <p className="text-center text-[10px] italic text-slate-400">{translate('autoRefreshNotice')}</p>
       </div>
     );
   }
@@ -336,7 +336,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
                 className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 <Trophy className="w-4 h-4" />
-                Xem giải đấu
+                {translate('viewTournamentAction')}
               </button>
             )}
           </div>
@@ -413,7 +413,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
       )}
 
       {/* Polling indicator */}
-      <p className="text-[10px] text-slate-400 text-center italic">Tự động cập nhật mỗi 30 giây</p>
+      <p className="text-[10px] text-slate-400 text-center italic">{translate('autoRefreshNotice')}</p>
     </div>
   );
 }

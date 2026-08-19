@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
 import type {
@@ -38,6 +39,7 @@ export default function CommunityPostList({
   onDeletePost,
   canManage = false,
 }: CommunityPostListProps) {
+  const translate = useTranslations('Common');
   return (
     <>
       {posts.map((post) => (
@@ -58,16 +60,16 @@ export default function CommunityPostList({
               )
               .catch((error: unknown) =>
                 toast.error(
-                  getErrorMessage(error, "Không thể cập nhật cảm xúc."),
+                  getErrorMessage(error, translate('reactionUpdateFailed')),
                 ),
               );
           }}
           onReport={() => {
             void communitiesApi
               .reportPost(communityId, post.id, { reason: "OTHER" })
-              .then(() => toast.success("Đã gửi báo cáo."))
+              .then(() => toast.success(translate('postReportSuccess')))
               .catch((error: unknown) =>
-                toast.error(getErrorMessage(error, "Không thể báo cáo.")),
+                toast.error(getErrorMessage(error, translate('postReportFailed'))),
               );
           }}
           onCommentUpdated={onCommentUpdated}

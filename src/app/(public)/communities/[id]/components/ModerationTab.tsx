@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Ban,
   Check,
@@ -34,6 +35,7 @@ export default function ModerationTab({
   communityId: string;
   isOwner: boolean;
 }) {
+  const translate = useTranslations('Common');
   const { openUserProfile } = useUserProfileModalStore();
   const [requests, setRequests] = useState<CommunityMemberRecord[]>([]);
   const [invitedMembers, setInvitedMembers] = useState<CommunityMemberRecord[]>([]);
@@ -87,7 +89,7 @@ export default function ModerationTab({
         setPendingPosts((pendingRes.data || []).map((post) => ({
           id: post.id,
           communityId: post.communityId,
-          author: post.author ?? { id: post.authorId, fullName: 'Thành viên CLB', avatarUrl: null },
+          author: post.author ?? { id: post.authorId, fullName: translate('clubMemberFallback'), avatarUrl: null },
           content: post.body || '',
           imageUrls: post.mediaUrls || [],
           status: post.status,
@@ -101,7 +103,7 @@ export default function ModerationTab({
       } catch (error) {
         console.error('Failed to fetch moderation data', error);
         if (active) {
-          toast.error(getErrorMessage(error, 'Không thể tải dữ liệu điều phối cộng đồng.'));
+          toast.error(getErrorMessage(error, translate('moderationLoadFailed')));
         }
       } finally {
         if (active) {
@@ -115,7 +117,7 @@ export default function ModerationTab({
     return () => {
       active = false;
     };
-  }, [communityId, refreshTrigger]);
+  }, [communityId, refreshTrigger, translate]);
 
   useEffect(() => {
     const searchUsers = async () => {
@@ -151,10 +153,10 @@ export default function ModerationTab({
   const handleReview = async (memberId: string, action: 'APPROVE' | 'REJECT') => {
     try {
       await communitiesApi.reviewJoinRequest(communityId, memberId, action);
-      toast.success(action === 'APPROVE' ? 'Đã duyệt thành viên.' : 'Đã từ chối đơn tham gia.');
+      toast.success(action === 'APPROVE' ? translate('memberApproved') : translate('memberRejected'));
       triggerRefresh();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể xử lý đơn tham gia.'));
+      toast.error(getErrorMessage(error, translate('moderationRequestFailed')));
     }
   };
 
@@ -162,12 +164,12 @@ export default function ModerationTab({
     try {
       setIsInviting((prev) => ({ ...prev, [targetUserId]: true }));
       await communitiesApi.inviteMember(communityId, { userId: targetUserId, role: inviteRole });
-      toast.success('Đã gửi lời mời tham gia.');
+      toast.success(translate('inviteSent'));
       setUserSearchQuery('');
       setSearchResults([]);
       triggerRefresh();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể gửi lời mời.'));
+      toast.error(getErrorMessage(error, translate('inviteFailed')));
     } finally {
       setIsInviting((prev) => ({ ...prev, [targetUserId]: false }));
     }
@@ -176,20 +178,20 @@ export default function ModerationTab({
   const handleCancelInvite = async (userId: string) => {
     try {
       await communitiesApi.removeMember(communityId, userId);
-      toast.success('Đã thu hồi lời mời.');
+      toast.success(translate('inviteRevoked'));
       triggerRefresh();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể thu hồi lời mời.'));
+      toast.error(getErrorMessage(error, translate('revokeInviteFailed')));
     }
   };
 
   const handleUnbanMember = async (userId: string) => {
     try {
       await communitiesApi.unbanMember(communityId, userId);
-      toast.success('Đã gỡ cấm thành viên.');
+      toast.success(translate('memberUnbanned'));
       triggerRefresh();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể gỡ cấm thành viên.'));
+      toast.error(getErrorMessage(error, translate('unbanFailed')));
     }
   };
 
@@ -197,9 +199,9 @@ export default function ModerationTab({
     try {
       await communitiesApi.moderatePost(communityId, postId, status);
       setPendingPosts((posts) => posts.filter((post) => post.id !== postId));
-      toast.success(status === 'PUBLISHED' ? 'Đã duyệt bài viết.' : 'Đã từ chối bài viết.');
+      toast.success(status === 'PUBLISHED' ? translate('postApproved') : translate('postRejected'));
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể xử lý bài viết.'));
+      toast.error(getErrorMessage(error, translate('postModerationFailed')));
     }
   };
 
@@ -306,14 +308,14 @@ export default function ModerationTab({
                       <button
                         onClick={() => handleReview(userId, 'APPROVE')}
                         className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 shadow-2xs"
-                        title="Duyệt tham gia"
+                        title={translate('approveAction')}
                       >
                         <Check className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleReview(userId, 'REJECT')}
                         className="rounded-lg border border-rose-200 bg-white p-2 text-rose-600 transition-colors hover:bg-rose-50 shadow-2xs"
-                        title="Từ chối"
+                        title={translate('rejectAction')}
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -396,7 +398,7 @@ export default function ModerationTab({
               value={userSearchQuery}
               onChange={(e) => setUserSearchQuery(e.target.value)}
               className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              placeholder="Nhập tên hoặc email..."
+              placeholder={translate('userSearchPlaceholder')}
               type="text"
             />
             {isSearchingUsers ? (
@@ -438,14 +440,14 @@ export default function ModerationTab({
                     disabled={isInviting[user.id]}
                     className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-60 shadow-2xs"
                   >
-                    {isInviting[user.id] ? 'Đang gửi...' : 'Mời'}
+                    {isInviting[user.id] ? translate('sending') : 'Mời'}
                   </button>
                 </div>
               ))}
             </div>
           ) : userSearchQuery.trim().length >= 2 && !isSearchingUsers ? (
             <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-xs text-slate-500">
-              Không tìm thấy người dùng phù hợp hoặc họ đã có trạng thái trong cộng đồng.
+              {translate('noMatchingUsers')}
             </div>
           ) : null}
         </section>
@@ -511,7 +513,7 @@ export default function ModerationTab({
                       type="button"
                       onClick={() => targetUserId && setCancelInviteUserId(targetUserId)}
                       className="rounded-lg border border-slate-200 bg-white p-2 text-slate-400 shadow-2xs transition-colors hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 shrink-0"
-                      title="Thu hồi lời mời"
+                      title={translate('revokeInviteAction')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -572,7 +574,7 @@ export default function ModerationTab({
                         <p className="truncate font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
                           {fullName}
                         </p>
-                        <p className="truncate text-[11px] font-medium text-rose-500">Đang bị cấm khỏi cộng đồng</p>
+                        <p className="truncate text-[11px] font-medium text-rose-500">{translate('bannedStatus')} khỏi cộng đồng</p>
                       </div>
                     </button>
 
@@ -599,9 +601,9 @@ export default function ModerationTab({
             setCancelInviteUserId(null);
           }
         }}
-        title="Thu hồi lời mời"
-        description="Bạn có chắc chắn muốn thu hồi lời mời này?"
-        confirmLabel="Thu hồi lời mời"
+        title={translate('revokeInviteAction')}
+        description={translate('revokeInviteConfirmDescription')}
+        confirmLabel={translate('revokeInviteAction')}
         variant="danger"
         onConfirm={() => {
           if (cancelInviteUserId) {
@@ -620,9 +622,9 @@ export default function ModerationTab({
             setUnbanUserId(null);
           }
         }}
-        title="Gỡ cấm thành viên"
-        description="Bạn có chắc chắn muốn gỡ cấm thành viên này?"
-        confirmLabel="Gỡ cấm"
+        title={translate('unbanMemberTitle')}
+        description={translate('unbanConfirmDescription')}
+        confirmLabel={translate('unbanAction')}
         variant="danger"
         onConfirm={() => {
           if (unbanUserId) {

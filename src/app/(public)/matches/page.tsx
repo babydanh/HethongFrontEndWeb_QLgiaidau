@@ -124,8 +124,8 @@ const getShortName = (fullName: string | null | undefined): string => {
   return fullName;
 };
 
-const getTeamShortName = (teamName: string | null | undefined): string => {
-  if (!teamName) return 'Chờ xác định';
+const getTeamShortName = (teamName: string | null | undefined, unknownLabel: string): string => {
+  if (!teamName) return unknownLabel;
   if (teamName.includes(' - ')) {
     return teamName.split(' - ').map(name => getShortName(name)).join(' - ');
   }
@@ -1228,7 +1228,7 @@ export default function MatchesListPage() {
                                   {renderTeamAvatars(match.participant1, 'bg-blue-50', 'text-blue-700')}
                                   <div className="min-w-0 flex-1">
                                     <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p1Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
-                                      {getTeamShortName(match.participant1?.teamName)}
+                                      {getTeamShortName(match.participant1?.teamName, translate('unknownTeam'))}
                                     </div>
 
                                     {/* Hiển thị ELO / Thành viên thông minh */}
@@ -1305,7 +1305,7 @@ export default function MatchesListPage() {
                                   {renderTeamAvatars(match.participant2, 'bg-blue-50', 'text-blue-700')}
                                   <div className="min-w-0 flex-1">
                                     <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
-                                      {getTeamShortName(match.participant2?.teamName)}
+                                      {getTeamShortName(match.participant2?.teamName, translate('unknownTeam'))}
                                     </div>
 
                                     {/* Hiển thị ELO / Thành viên thông minh */}
@@ -1431,8 +1431,8 @@ export default function MatchesListPage() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              const p1Name = getTeamShortName(match.participant1?.teamName);
-                              const p2Name = getTeamShortName(match.participant2?.teamName);
+                              const p1Name = getTeamShortName(match.participant1?.teamName, translate('unknownTeam'));
+                              const p2Name = getTeamShortName(match.participant2?.teamName, translate('unknownTeam'));
                               setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
                               setActiveShareTitle(translate("matchShareTitle", { p1: p1Name, p2: p2Name }));
                               setIsShareModalOpen(true);

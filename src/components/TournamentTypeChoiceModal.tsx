@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Modal,
   ModalContent,
@@ -20,16 +21,18 @@ export function TournamentTypeChoiceModal({
   onClose,
 }: TournamentTypeChoiceModalProps) {
   const router = useRouter();
+  const translate = useTranslations('Match');
+  const commonTranslate = useTranslations('Common');
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <ModalContent className="sm:max-w-md bg-white rounded-lg p-0">
         <ModalHeader className="p-6 pb-2">
           <ModalTitle className="text-xl font-semibold text-center">
-            Tạo giải đấu cấp CLB
+            {translate('communityTournamentCreateButton')}
           </ModalTitle>
           <p className="text-sm text-slate-500 text-center mt-1">
-            Chọn cách bạn muốn tạo giải đấu
+            {translate('tournamentTypeChoiceSubtitle')}
           </p>
         </ModalHeader>
 
@@ -44,10 +47,10 @@ export function TournamentTypeChoiceModal({
           >
             <div>
               <h3 className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                Giải Nhanh (Lite)
+                {translate('communityTournamentLiteLabel')}
               </h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                Tạo giải đấu nhanh chóng trong vài bước, phù hợp cho giải nội bộ
+                {translate('communityTournamentLiteDescription')}
               </p>
             </div>
           </button>
@@ -62,10 +65,10 @@ export function TournamentTypeChoiceModal({
           >
             <div>
               <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
-                Giải Nâng Cao (Full)
+                {translate('communityTournamentFullLabel')}
               </h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                Cấu hình đầy đủ với 4 bước: giải đấu, bảng, thể thức và đăng ký
+                {translate('communityTournamentFullDescription')}
               </p>
             </div>
           </button>
@@ -76,7 +79,7 @@ export function TournamentTypeChoiceModal({
             onClick={onClose}
             className="w-full py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all"
           >
-            Hủy
+            {commonTranslate('cancel')}
           </button>
         </div>
       </ModalContent>

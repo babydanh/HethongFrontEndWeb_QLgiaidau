@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Danh Sách Câu Lạc Bộ Thể Thao | Sporto',
-  description: 'Khám phá và gia nhập các câu lạc bộ Pickleball, Cầu lông, Quần vợt, Bóng bàn uy tín trên toàn quốc cùng Sporto.',
+export async function generateMetadata(): Promise<Metadata> {
+  const translate = await getTranslations('Common');
+  return {
+  title: translate('communitiesMetadataTitle'),
+  description: translate('communitiesMetadataDescription'),
   openGraph: {
-    title: 'Danh Sách Câu Lạc Bộ Thể Thao | Sporto',
-    description: 'Khám phá và gia nhập các câu lạc bộ Pickleball, Cầu lông, Quần vợt, Bóng bàn uy tín trên toàn quốc.',
+    title: translate('communitiesMetadataTitle'),
+    description: translate('communitiesMetadataDescription'),
     url: 'https://sporto.asia/communities',
     type: 'website',
   },
@@ -13,6 +16,7 @@ export const metadata: Metadata = {
     canonical: 'https://sporto.asia/communities',
   },
 };
+}
 
 export default function CommunitiesLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

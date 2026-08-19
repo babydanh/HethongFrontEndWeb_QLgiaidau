@@ -103,7 +103,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
       <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-slate-400 font-medium">
         <div className="flex items-center gap-4 flex-wrap">
           <span className="flex items-center gap-1">🟢 {translate('topTwoDirect')}</span>
-          <span className="flex items-center gap-1">🔵 Top 16 PSR = Vé Vớt (Wildcard)</span>
+          <span className="flex items-center gap-1">🔵 Top 16 PSR = {translate('ticketWaitlist')}</span>
         </div>
         <div>
           <span>🔒 {translate('lockedExplanation')}</span>

@@ -22,6 +22,7 @@ function targetHref(report: ViolationReport): string | null {
 
 export default function MyReportsPage() {
   const translate = useTranslations('Common');
+  const matchTranslate = useTranslations('Match');
   const [reports, setReports] = useState<ViolationReport[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -67,8 +68,8 @@ export default function MyReportsPage() {
         ) : reports.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
             <FileWarning className="mx-auto h-10 w-10 text-slate-400" />
-            <h2 className="mt-4 text-lg font-bold text-slate-900">Bạn chưa gửi báo cáo nào</h2>
-            <p className="mt-2 text-sm text-slate-500">Nút Báo cáo có tại hồ sơ thành viên, giải đấu, trận đấu và câu lạc bộ.</p>
+            <h2 className="mt-4 text-lg font-bold text-slate-900">{matchTranslate('noReportsTitle')}</h2>
+            <p className="mt-2 text-sm text-slate-500">{matchTranslate('reportsDescription')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -83,19 +84,19 @@ export default function MyReportsPage() {
                         <span className="text-xs font-semibold text-slate-500">{REPORT_TARGET_LABELS[report.targetType]}</span>
                         <span className="text-xs font-semibold text-slate-500">{REPORT_CATEGORY_LABELS[report.category]}</span>
                       </div>
-                      <h2 className="mt-3 font-bold text-slate-950">{report.target?.name ?? `Mã đối tượng ${report.targetId?.slice(0, 8) ?? 'N/A'}`}</h2>
+                      <h2 className="mt-3 font-bold text-slate-950">{report.target?.name ?? `${report.targetId?.slice(0, 8) ?? 'N/A'}`}</h2>
                       <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{report.reason}</p>
-                      <p className="mt-3 text-xs text-slate-400">Gửi lúc {new Date(report.createdAt).toLocaleString('vi-VN')}</p>
+                      <p className="mt-3 text-xs text-slate-400">{matchTranslate('sentAt', { date: new Date(report.createdAt).toLocaleString('vi-VN') })}</p>
                     </div>
                     {href ? (
                       <Link href={href} className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800">
-                        Xem đối tượng <ExternalLink className="h-4 w-4" />
+                        {matchTranslate('viewReportedTarget')} <ExternalLink className="h-4 w-4" />
                       </Link>
                     ) : null}
                   </div>
                   {report.resolutionNote ? (
                     <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                      <strong>Kết luận:</strong> {report.resolutionNote}
+                      <strong>{matchTranslate('resolutionLabel')}</strong> {report.resolutionNote}
                     </div>
                   ) : null}
                 </article>
@@ -106,11 +107,11 @@ export default function MyReportsPage() {
 
         {totalPages > 1 ? (
           <div className="flex items-center justify-center gap-3">
-            <Button variant="outline" size="icon" disabled={page === 1} onClick={() => setPage((value) => value - 1)} aria-label="Trang trước">
+            <Button variant="outline" size="icon" disabled={page === 1} onClick={() => setPage((value) => value - 1)} aria-label={matchTranslate('previousPage')}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-semibold text-slate-600">{translate('reportPageCount', { page, totalPages })}</span>
-            <Button variant="outline" size="icon" disabled={page === totalPages} onClick={() => setPage((value) => value + 1)} aria-label="Trang sau">
+            <Button variant="outline" size="icon" disabled={page === totalPages} onClick={() => setPage((value) => value + 1)} aria-label={matchTranslate('nextPage')}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

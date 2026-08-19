@@ -753,33 +753,33 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         >
           <ModalContent className="max-w-lg rounded-lg bg-white p-6">
             <ModalHeader>
-              <ModalTitle className="text-lg font-bold">Xếp lịch thi đấu</ModalTitle>
+              <ModalTitle className="text-lg font-bold">{translate('scheduleMatchTitle')}</ModalTitle>
             </ModalHeader>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-500">Sân</label>
+                <label className="text-xs font-bold text-slate-500">{translate('courtLabel')}</label>
                 <input
                   value={bracketManager.matchCourtName}
                   onChange={(e) => bracketManager.setMatchCourtName(e.target.value)}
-                  placeholder="Tên sân"
+                  placeholder={translate('courtNamePlaceholder')}
                   className="w-full rounded-lg border p-2 text-sm text-slate-800"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500">Giờ thi đấu</label>
+                <label className="text-xs font-bold text-slate-500">{translate('playingTime')}</label>
                 <DateTimePicker
                   value={bracketManager.matchScheduledAt}
                   onChange={bracketManager.setMatchScheduledAt}
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500">Camera / Livestream</label>
+                <label className="text-xs font-bold text-slate-500">{translate('livestreamLabel')}</label>
                 <select
                   value={bracketManager.matchCameraId || ''}
                   onChange={(e) => bracketManager.setMatchCameraId(e.target.value)}
                   className="w-full rounded-lg border p-2 text-sm bg-white text-slate-800"
                 >
-                  <option value="">-- Chưa gán camera --</option>
+                  <option value="">{translate('unassignedCamera')}</option>
                   {bracketManager.cameras?.map((cam: LivestreamCamera) => (
                     <option key={cam.id} value={cam.id}>
                       📷 {cam.name} ({cam.protocol}) - [{cam.status}]
@@ -793,7 +793,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   checked={bracketManager.isCustomMatchConfig}
                   onChange={(e) => bracketManager.setIsCustomMatchConfig(e.target.checked)}
                 />
-                Cấu hình riêng cho trận này
+                {translate('matchSpecificConfig')}
               </label>
               {bracketManager.isCustomMatchConfig && (
                 <div className="grid grid-cols-2 gap-4">
@@ -843,7 +843,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                       onChange={(e) => bracketManager.setMatchSuperTiebreakEnabled(e.target.checked)}
                     />
                     <label className="text-xs font-bold text-slate-500">
-                      {supportsTiebreakInput ? `Bật ${sportPresentation.tiebreakLabel.toLowerCase()} cho trận này` : 'Dùng super tie-break cho trận này'}
+                      {supportsTiebreakInput ? translate('enableTiebreakForMatch', { label: sportPresentation.tiebreakLabel.toLowerCase() }) : translate('superTiebreakForMatch')}
                     </label>
                   </div>
                   {bracketManager.matchSuperTiebreakEnabled && (
@@ -865,14 +865,14 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               )}
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => bracketManager.setSelectedMatch(null)}>
-                  Hủy
+                  {translate('cancel')}
                 </Button>
                 <Button
                   onClick={handleBracketSaveSchedule}
                   disabled={bracketManager.isScheduling}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-white"
                 >
-                  {bracketManager.isScheduling ? 'Đang lưu...' : 'Lưu'}
+                  {bracketManager.isScheduling ? translate('saving') : translate('save')}
                 </Button>
               </div>
             </div>

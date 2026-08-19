@@ -3,6 +3,7 @@
 import type { SportRuleKind } from '@/types/tournament';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Activity, AlertCircle, Check, Play, Trophy } from 'lucide-react';
 import { formatTennisPointDisplay } from '@/features/matches/live-score-state';
 import type {
@@ -117,6 +118,7 @@ export function LiveMatchControlPanel({
   onFootballMinuteChange,
   onFootballAddedMinuteChange,
 }: LiveMatchControlPanelProps) {
+  const translate = useTranslations('Common');
   const [confirmWinner, setConfirmWinner] = useState<1 | 2 | null>(null);
   const [activeTab, setActiveTab] = useState<'score' | 'penalty'>('score');
 
@@ -133,7 +135,7 @@ export function LiveMatchControlPanel({
       ? team1Name
       : sideOutState.servingTeam === 2
         ? team2Name
-        : 'Chưa xác định đội giao';
+        : translate('unknownTeam');
   const currentPointTeam1 = tennisPointState ? formatTennisPointDisplay(tennisPointState.team1Point) : String(currentSet.team1Score);
   const currentPointTeam2 = tennisPointState ? formatTennisPointDisplay(tennisPointState.team2Point) : String(currentSet.team2Score);
   const isBadminton = sportKind === 'BADMINTON';
@@ -150,7 +152,7 @@ export function LiveMatchControlPanel({
               activeTab === 'score' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            Tính điểm
+            {translate("scoreAction")}
           </button>
           <button
             type="button"
@@ -160,7 +162,7 @@ export function LiveMatchControlPanel({
               activeTab === 'penalty' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            Phạt / Lỗi
+            {translate("foulAction")}
           </button>
         </div>
       </div>
@@ -190,7 +192,7 @@ export function LiveMatchControlPanel({
       ) : null}
          {!isFootball && !isLiteMatch && scoreWarnings.length > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-          <span className="font-bold">⚠️ Cảnh báo bám luật:</span>
+          <span className="font-bold">⚠️ {translate("ruleWarning")}</span>
           <div className="mt-1 space-y-0.5">
             {scoreWarnings.map((warning) => (
               <p key={warning.id}>• {warning.message}</p>
@@ -207,13 +209,13 @@ export function LiveMatchControlPanel({
       {!isFootball ? <div className="rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Tiến trình set</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate("setProgressTitle")}</p>
             <p className="mt-1 text-sm font-bold text-slate-900">
-              Set hiện tại: {activeSetIndex + 1} · {currentSet.team1Score} - {currentSet.team2Score}
+              {translate('currentSetLabel', { set: activeSetIndex + 1, score1: currentSet.team1Score, score2: currentSet.team2Score })}
             </p>
           </div>
           <p className="text-xs font-semibold text-slate-500">
-            {scores.filter((set) => set.isFinished).length} set đã chốt
+            {scores.filter((set) => set.isFinished).length} {translate('setsCompleted', { count: scores.filter((set) => set.isFinished).length })}
           </p>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -239,7 +241,7 @@ export function LiveMatchControlPanel({
                         : 'bg-blue-100 text-blue-700',
                   )}
                 >
-                  {set.scoreOverride?.reason ? 'Ngoại lệ' : set.isFinished ? 'Đã chốt' : 'Đang đấu'}
+                   {set.scoreOverride?.reason ? translate('overrideStatus') : set.isFinished ? translate('setClosedStatus') : translate('setInProgressStatus')}
                 </span>
               </div>
               <p className="mt-1 text-base font-bold text-slate-950">
@@ -258,12 +260,12 @@ export function LiveMatchControlPanel({
       {!isFootball && !isLiteMatch ? <div className="rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate("refereeMode")}</p>
             <p className="mt-2 text-sm font-bold text-slate-900">
-              {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
+              {overrideEnabled ? translate('overrideEnabledLabel') : translate('defaultRulesLabel')}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Chỉ bật khi trọng tài/BTC cần chốt điểm khác luật mặc định và luôn phải ghi lý do.
+              {translate('overrideAuditNote')}
             </p>
           </div>
           <button
@@ -276,23 +278,23 @@ export function LiveMatchControlPanel({
                 : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100',
             )}
           >
-            {overrideEnabled ? 'Tắt ngoại lệ' : 'Bật ngoại lệ'}
+            {overrideEnabled ? translate('overrideToggleOn') : translate('overrideToggleOff')}
           </button>
         </div>
 
         {overrideEnabled ? (
           <div className="mt-4 space-y-2">
             <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
-              Lý do ngoại lệ bắt buộc
+              {translate('overrideReasonRequired')}
             </label>
             <textarea
               value={overrideReason}
               onChange={(event) => onOverrideReasonChange(event.target.value)}
               className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
-              placeholder="Ví dụ: trận chung kết áp dụng loạt phụ rút gọn theo thống nhất của trọng tài và BTC..."
+              placeholder="{translate('overrideReasonPlaceholder')}"
             />
             <p className="text-xs font-medium text-amber-700">
-              Hệ thống sẽ lưu người quyết định, thời điểm và lý do của trận.
+              {translate('overrideAuditNote')}
             </p>
           </div>
         ) : null}
@@ -304,7 +306,7 @@ export function LiveMatchControlPanel({
             <Activity className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Bảng điều khiển trận đấu</h3>
+            <h3 className="text-lg font-bold text-slate-900">{translate("matchControlTitle")}</h3>
             <p className="text-xs text-slate-500">Cập nhật điểm số và trạng thái trận đấu theo thời gian thực</p>
           </div>
         </div>
@@ -401,7 +403,7 @@ export function LiveMatchControlPanel({
             {isFootball ? (
               <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:px-4 md:-mx-5 md:px-5">
                 <p className="text-center text-xs font-semibold text-slate-500">
-                  Chốt trận sẽ lưu tỷ số, diễn biến và trạng thái hiện tại. Nếu hòa ở vòng loại trực tiếp, nhập luân lưu trong bước xác nhận.
+                  Chốt trận sẽ lưu tỷ số, diễn biến và trạng thái hiện tại. Nếu hòa ở vòng loại trực tiếp, nhập {translate('footballShootoutHint')}
                 </p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <button
@@ -466,7 +468,7 @@ export function LiveMatchControlPanel({
             <Trophy className="mb-2 h-12 w-12 text-blue-500" />
             <h4 className="mb-1 font-bold text-slate-800">Trận đấu đã hoàn thành</h4>
             <p className="text-xs text-slate-500">
-              Người chiến thắng:{' '}
+              {translate('winnerLabel')}{' '}
               <span className="font-bold text-blue-600">
                 {match.winnerId === match.participant1Id ? team1Name : team2Name}
               </span>
@@ -484,7 +486,7 @@ export function LiveMatchControlPanel({
               <AlertCircle className="h-6 w-6" />
             </div>
             <ModalTitle className="mt-3 text-lg font-bold text-slate-900 sm:mt-4">
-              {isFootball ? 'Xác nhận kết quả bóng đá' : 'Xác nhận chốt thắng ngoại lệ'}
+              {isFootball ? translate('footballResultAction') : translate('overrideWinnerAction')}
             </ModalTitle>
             <ModalDescription className="mt-2 text-sm font-semibold text-slate-500 leading-relaxed">
               Bạn có chắc chắn muốn chốt kết quả chiến thắng toàn trận cho đội:
@@ -537,7 +539,7 @@ export function LiveMatchControlPanel({
               className="w-full border-slate-200 text-slate-700 sm:w-auto"
               onClick={() => setConfirmWinner(null)}
             >
-              Hủy thao tác
+              {translate('cancelActionShort')}
             </Button>
             <Button
               disabled={!isFootball && (!overrideEnabled || !overrideReason.trim())}
@@ -550,7 +552,7 @@ export function LiveMatchControlPanel({
                 setConfirmWinner(null);
               }}
             >
-              {isFootball ? 'Chốt kết quả bóng đá' : 'Chốt thắng ngoại lệ'}
+              {isFootball ? translate('footballResultAction') : translate('overrideWinnerAction')}
             </Button>
           </ModalFooter>
         </ModalContent>

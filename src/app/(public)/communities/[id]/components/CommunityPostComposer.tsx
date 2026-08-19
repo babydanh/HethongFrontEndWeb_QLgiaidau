@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { FormEventHandler, KeyboardEventHandler, RefObject } from "react";
 import { ImagePlus, Loader2, Send, X } from "lucide-react";
 import type { UseFormRegisterReturn } from "react-hook-form";
@@ -73,12 +74,13 @@ export default function CommunityPostComposer({
   pollExpiresInDays,
   onChangePollExpiresInDays,
 }: CommunityPostComposerProps) {
+  const translate = useTranslations('Common');
   return (
     <form
       onSubmit={onSubmit}
       className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm"
     >
-      <div className="text-sm font-bold text-slate-800">Chia sẻ cùng câu lạc bộ</div>
+      <div className="text-sm font-bold text-slate-800">{translate('communityPostComposerHeading')}</div>
 
       <div className="relative">
         <textarea
@@ -88,7 +90,7 @@ export default function CommunityPostComposer({
             composerRef.current = element;
           }}
           onKeyDown={onComposerKeyDown}
-          placeholder="Bạn muốn chia sẻ điều gì với các thành viên? (Gõ @ để nhắc tên)"
+          placeholder="{translate('communityPostComposerPlaceholder')}"
           rows={3}
           className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden transition"
         />
@@ -121,10 +123,10 @@ export default function CommunityPostComposer({
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {item.member.role === "OWNER"
-                          ? "Chủ nhiệm"
+                          ? translate('communityRoleOwner')
                           : item.member.role === "MODERATOR"
-                            ? "Quản trị viên"
-                            : "Thành viên"}
+                            ? translate('communityRoleAdmin')
+                            : translate('member')}
                       </div>
                     </div>
                   </div>
@@ -143,24 +145,24 @@ export default function CommunityPostComposer({
         <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/30 p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-blue-100 pb-2">
             <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-              📊 Tạo cuộc thăm dò ý kiến
+              📊 {translate('communityCreatePoll')}
             </span>
             <button
               type="button"
               onClick={onTogglePoll}
               className="text-slate-400 hover:text-rose-600 text-xs font-bold cursor-pointer"
             >
-              Hủy bình chọn
+              {translate('communityPollCancel')}
             </button>
           </div>
 
           <div>
             <label className="text-[11px] font-bold text-slate-700 block mb-1">
-              Câu hỏi bình chọn *
+              {translate('communityPollQuestion')}
             </label>
             <input
               type="text"
-              placeholder="Nhập câu hỏi hoặc chủ đề..."
+              placeholder={translate('communityPollQuestionPlaceholder')}
               value={pollQuestion}
               onChange={(e) => onChangePollQuestion(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
@@ -169,14 +171,14 @@ export default function CommunityPostComposer({
 
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-700 block">
-              Các lựa chọn trả lời *
+              {translate('communityPollOptions')}
             </label>
             {pollOptions.map((opt, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-slate-400 w-4 text-center">{idx + 1}.</span>
                 <input
                   type="text"
-                  placeholder={`Lựa chọn ${idx + 1}`}
+                  placeholder={translate('communityPollOptionPlaceholder', { index: idx + 1 })}
                   value={opt}
                   onChange={(e) => onChangePollOption(idx, e.target.value)}
                   className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
@@ -199,7 +201,7 @@ export default function CommunityPostComposer({
                 onClick={onAddPollOptionField}
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer pt-1"
               >
-                + Thêm lựa chọn
+                + {translate('communityPollAddOption')}
               </button>
             )}
           </div>
@@ -213,7 +215,7 @@ export default function CommunityPostComposer({
                   onChange={onTogglePollAllowMultiple}
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span>Cho phép chọn nhiều câu trả lời</span>
+                <span>{translate('communityPollMultipleAnswers')}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -222,24 +224,24 @@ export default function CommunityPostComposer({
                   onChange={onTogglePollAllowAddOptions}
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span>Cho phép mọi người thêm lựa chọn mới</span>
+                <span>{translate('communityPollAllowNewOptions')}</span>
               </label>
             </div>
 
             {/* Poll Expiration Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-slate-500">Thời hạn:</span>
+              <span className="text-[11px] font-bold text-slate-500">{translate('communityPollExpiry')}</span>
               <select
                 value={pollExpiresInDays ?? ''}
                 onChange={(e) => onChangePollExpiresInDays(e.target.value ? Number(e.target.value) : null)}
                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
               >
-                <option value="">Không giới hạn</option>
-                <option value="1">1 ngày</option>
-                <option value="3">3 ngày</option>
-                <option value="7">7 ngày</option>
-                <option value="14">14 ngày</option>
-                <option value="30">30 ngày</option>
+                <option value="">{translate('communityPollNoExpiry')}</option>
+                <option value="1">{translate('communityPollDays', { count: 1 })}</option>
+                <option value="3">{translate('communityPollDays', { count: 3 })}</option>
+                <option value="7">{translate('communityPollDays', { count: 7 })}</option>
+                <option value="14">{translate('communityPollDays', { count: 14 })}</option>
+                <option value="30">{translate('communityPollDays', { count: 30 })}</option>
               </select>
             </div>
           </div>
@@ -252,7 +254,7 @@ export default function CommunityPostComposer({
             <div key={url} className="relative group">
               <Image
                 src={url}
-                alt={`Ảnh xem trước ${index + 1}`}
+                alt={translate('communityPreviewImageAlt', { index: index + 1 })}
                 width={96}
                 height={72}
                 unoptimized
@@ -261,7 +263,7 @@ export default function CommunityPostComposer({
               <button
                 type="button"
                 onClick={() => onRemoveImage(index)}
-                aria-label={`Xóa ảnh ${index + 1}`}
+                aria-label={translate('communityRemoveImageAria', { index: index + 1 })}
                 className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-600 p-1 text-white shadow-md hover:bg-rose-700 transition cursor-pointer"
               >
                 <X className="h-3 w-3" />
@@ -287,7 +289,7 @@ export default function CommunityPostComposer({
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700 transition cursor-pointer"
           >
             <ImagePlus className="h-4 w-4 text-blue-600" />
-            Đính kèm ảnh
+            {translate('communityAttachImage')}
           </button>
 
           <button
@@ -301,7 +303,7 @@ export default function CommunityPostComposer({
             )}
           >
             <span>📊</span>
-            Thăm dò ý kiến
+            {translate('communityCreatePoll')}
           </button>
 
           <button
@@ -319,7 +321,7 @@ export default function CommunityPostComposer({
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition cursor-pointer"
           >
             <span className="font-bold text-blue-600">@</span>
-            Nhắc thành viên
+            {translate('communityMentionMember')}
           </button>
         </div>
 
@@ -333,7 +335,7 @@ export default function CommunityPostComposer({
           ) : (
             <Send className="h-4 w-4" />
           )}
-          Đăng bài
+          {translate('communityPublishPost')}
         </button>
       </div>
     </form>

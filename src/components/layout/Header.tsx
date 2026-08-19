@@ -600,7 +600,7 @@ export function Header() {
                           <Link href="/admin">
                             <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors hover:bg-blue-50/30">
                               <LayoutDashboard className="h-4 w-4 text-slate-400" />
-                              Quản trị hệ thống
+                              {t('administration')}
                             </div>
                           </Link>
                         )}
@@ -608,7 +608,7 @@ export function Header() {
                           <Link href="/moderation">
                             <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-amber-600 transition-colors hover:bg-amber-50/30">
                               <Check className="h-4 w-4 text-slate-400" />
-                              Điều phối kiểm duyệt
+                              {t('moderation')}
                             </div>
                           </Link>
                         )}

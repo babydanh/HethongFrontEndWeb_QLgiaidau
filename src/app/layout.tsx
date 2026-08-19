@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND.name}`,
   },
   description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
-  keywords: [BRAND.name, "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt", "bóng đá"],
+  keywords: [BRAND.name, BRAND.tagline, "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt", "bóng bàn", "bóng đá"],
   authors: [{ name: `${BRAND.name} Team` }],
   creator: BRAND.name,
   publisher: BRAND.name,
@@ -33,25 +33,25 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: `${BRAND.name} - ${BRAND.tagline}`,
-    description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
+    description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
     siteName: BRAND.name,
     url: BRAND.domain,
     type: "website",
     locale: "vi_VN",
     images: [
       {
-        url: BRAND.assets.logoIcon,
-        width: 1200,
-        height: 630,
-        alt: `${BRAND.name} - Nền tảng Quản lý giải đấu`,
+        url: BRAND.assets.logo512,
+        width: 512,
+        height: 512,
+        alt: `${BRAND.name} - ${BRAND.tagline}`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${BRAND.name} - ${BRAND.tagline}`,
-    description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
-    images: [BRAND.assets.logoIcon],
+    description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
+    images: [BRAND.assets.logo512],
   },
   icons: {
     icon: [

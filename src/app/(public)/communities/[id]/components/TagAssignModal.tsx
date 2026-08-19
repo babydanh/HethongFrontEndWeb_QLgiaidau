@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, X, Tag } from "lucide-react";
 import {
   Modal,
@@ -48,6 +49,15 @@ export default function TagAssignModal({
   isSaving = false,
   onSave,
 }: TagAssignModalProps) {
+  const translate = useTranslations('Common');
+  const getPresetLabel = (name: string) => {
+    if (name === "Cây hài") return translate('tagSuggestionFunny');
+    if (name === "Kèo thơm") return translate('tagSuggestionGoodMatch');
+    if (name === "MVP tuần") return translate('tagSuggestionWeeklyMvp');
+    if (name === "Đang lên form") return translate('tagSuggestionRising');
+    if (name === "Kèo khó") return translate('tagSuggestionToughMatch');
+    return name;
+  };
   const availablePresets = presets?.length ? presets : TAG_PRESETS.map((name) => ({ name, color: '#E2E8F0' }));
   const [tags, setTags] = useState<string[]>(currentTags);
   const [input, setInput] = useState("");
@@ -70,21 +80,21 @@ export default function TagAssignModal({
     if (!value) return;
 
     if (tags.length >= MAX_TAGS) {
-      setError(`Tối đa ${MAX_TAGS} tag cho mỗi thành viên.`);
+      setError(translate('tagMaxCountError', { count: MAX_TAGS }));
       return;
     }
     if (value.length > MAX_TAG_LENGTH) {
-      setError(`Mỗi tag tối đa ${MAX_TAG_LENGTH} ký tự.`);
+      setError(translate('tagMaxLengthError', { count: MAX_TAG_LENGTH }));
       return;
     }
     if (!TAG_PATTERN.test(value)) {
       setError(
-        "Tag chỉ được chứa chữ cái, số, khoảng trắng, gạch dưới (_) và gạch ngang (-).",
+        translate('tagInvalidCharactersError'),
       );
       return;
     }
     if (tags.some((t) => t.toLowerCase() === value.toLowerCase())) {
-      setError("Tag này đã tồn tại.");
+      setError(translate('tagExistsError'));
       return;
     }
 
@@ -115,14 +125,11 @@ export default function TagAssignModal({
         <ModalHeader className="text-left">
           <ModalTitle className="flex items-center gap-2 text-base text-slate-900">
             <Tag className="h-4 w-4 text-slate-500" strokeWidth={1.5} />
-            Gán tag cho thành viên
+            {translate('assignTagModalTitle')}
           </ModalTitle>
           <ModalDescription>
-            {memberName ? `Đang gán tag cho "${memberName}". ` : ""}
-            Tag hiển thị cạnh tên trong danh sách thành viên (tối đa {
-              MAX_TAGS
-            }{" "}
-            tag).
+            {memberName ? translate('assigningTagTo', { name: memberName }) : ''}
+            {translate('tagDescription', { count: MAX_TAGS })}
           </ModalDescription>
         </ModalHeader>
 
@@ -139,7 +146,7 @@ export default function TagAssignModal({
                     type="button"
                     onClick={() => removeTag(tag)}
                     disabled={isSaving}
-                    aria-label={`Xoá tag ${tag}`}
+                    aria-label={translate('tagRemoveAria', { tag })}
                     className="text-slate-400 hover:text-rose-600 transition-colors"
                   >
                     <X className="h-3 w-3" strokeWidth={1.5} />
@@ -149,7 +156,7 @@ export default function TagAssignModal({
             </div>
           ) : (
             <p className="text-sm text-slate-400">
-              Chưa có tag nào. Thêm tag bên dưới để bắt đầu.
+              {translate('noTagsDescription')}
             </p>
           )}
 
@@ -166,8 +173,8 @@ export default function TagAssignModal({
               maxLength={MAX_TAG_LENGTH + 8}
               placeholder={
                 tags.length >= MAX_TAGS
-                  ? `Đã đạt tối đa ${MAX_TAGS} tag`
-                  : "Nhập tag mới..."
+                  ? translate('maxTagsReached', { count: MAX_TAGS })
+                  : translate('newTagPlaceholder')
               }
               className={cn(
                 "flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition-all",
@@ -183,14 +190,14 @@ export default function TagAssignModal({
               className="border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             >
               <Plus className="h-4 w-4 mr-1" strokeWidth={1.5} />
-              Thêm
+              {translate('addTagAction')}
             </Button>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {availablePresets.map((preset) => (
               <button
-                key={preset.name}
+                key={getPresetLabel(preset.name)}
                 type="button"
                 onClick={() => {
                   setInput(preset.name);
@@ -200,7 +207,7 @@ export default function TagAssignModal({
                 className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 disabled:opacity-50"
                 style={{ backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66` }}
               >
-                {preset.name}
+                {getPresetLabel(preset.name)}
               </button>
             ))}
           </div>
@@ -209,7 +216,7 @@ export default function TagAssignModal({
             <p className="text-xs text-rose-600">{error}</p>
           ) : (
             <p className="text-xs text-slate-400">
-              Đã dùng {tags.length}/{MAX_TAGS} tag.
+              {translate('tagsUsed', { used: tags.length, count: MAX_TAGS })}
             </p>
           )}
         </div>
@@ -221,14 +228,14 @@ export default function TagAssignModal({
             disabled={isSaving}
             className="text-xs"
           >
-            Hủy bỏ
+            {translate('cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
           >
-            {isSaving ? "Đang lưu..." : "Lưu tag"}
+            {isSaving ? translate('saving') : translate('saveTagAction')}
           </Button>
         </ModalFooter>
       </ModalContent>

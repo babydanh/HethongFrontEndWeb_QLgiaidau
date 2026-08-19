@@ -12,6 +12,7 @@ interface SeriesOverviewTabProps {
 
 export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, legs }) => {
   const translate = useTranslations('SeriesDetail');
+  const commonTranslate = useTranslations('Common');
   // Find the next upcoming tournament event in the ongoing/upcoming legs
   const allEvents = legs.flatMap(l => l.events || []);
   const upcomingEvent = allEvents
@@ -24,7 +25,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
 
   const formattedPrize = series.totalPrize
     ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(series.totalPrize)
-    : 'Thỏa thuận';
+    : translate('formatAgreement');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -68,18 +69,18 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-xs text-slate-400">{translate('legsPlayed')}</span>
-                <div className="text-lg font-bold text-white mt-0.5">{series._count?.legs || 0} chặng</div>
+                <div className="text-lg font-bold text-white mt-0.5">{translate('legCount', { count: series._count?.legs || 0 })}</div>
               </div>
               <div>
-                <span className="text-xs text-slate-400">Số giải thi đấu</span>
-                <div className="text-lg font-bold text-white mt-0.5">{series._count?.events || 0} giải</div>
+                <span className="text-xs text-slate-400">{translate('eventsLabel')}</span>
+                <div className="text-lg font-bold text-white mt-0.5">{translate('eventCount', { count: series._count?.events || 0 })}</div>
               </div>
             </div>
 
             <div className="h-px bg-slate-800"></div>
 
             <div>
-              <span className="text-xs text-slate-400">Nhà tổ chức</span>
+              <span className="text-xs text-slate-400">{commonTranslate('organizerLabel')}</span>
               <div className="text-sm font-semibold text-slate-200 mt-1 flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center text-[9px]">
                   {series.organizer?.avatarUrl ? (
@@ -99,7 +100,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
             <div>
               <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-                Giải đấu tiếp theo
+                {translate('nextTournament')}
               </span>
               <h3 className="text-base font-bold text-slate-900 mt-3 line-clamp-2 hover:text-blue-600 transition-colors">
                 <Link href={`/tournaments/${upcomingEvent.tournamentId}`}>
@@ -118,7 +119,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
               {upcomingEvent.region && (
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Khu vực {upcomingEvent.region}</span>
+                  <span>{translate('regionLabel', { region: upcomingEvent.region })}</span>
                 </div>
               )}
             </div>
@@ -127,7 +128,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
               href={`/tournaments/${upcomingEvent.tournamentId}`}
               className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-bold shadow-sm transition-all duration-200"
             >
-              Xem giải đấu này
+              {commonTranslate('viewTournamentAction')}
             </Link>
           </div>
         )}

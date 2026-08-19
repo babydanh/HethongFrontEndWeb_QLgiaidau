@@ -54,6 +54,7 @@ export const MatchCard = memo(function MatchCard({
   fallbackSportRuleKind?: SportRuleKind;
 }) {
   const translate = useTranslations('TournamentDetail');
+  const matchTranslate = useTranslations('Match');
   const done = match.status === 'COMPLETED';
   const live = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
   const p1Won = done && match.winnerId != null && match.winnerId === match.participant1?.id;
@@ -188,12 +189,12 @@ export const MatchCard = memo(function MatchCard({
                   }}
                   className="w-full text-center text-[9.5px] font-bold text-blue-600 border border-blue-300 bg-white hover:bg-blue-50 rounded py-0.5 transition-colors cursor-pointer"
                 >
-                  Xếp Sân & Giờ
+                  {translate('scheduleVenueTime')}
                 </button>
               </div>
             ) : (
               <div className="w-full text-center text-[9px] font-bold text-slate-400 bg-slate-100/60 rounded py-0.5 select-none">
-                Chờ đối thủ
+                {matchTranslate('unknownTeam')}
               </div>
             )
           ) : null}

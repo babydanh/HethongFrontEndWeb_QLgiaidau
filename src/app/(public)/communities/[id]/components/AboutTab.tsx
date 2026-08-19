@@ -60,7 +60,7 @@ export default function AboutTab({
                     <span className="col-span-2 text-slate-800">
                       {community.visibility === 'PUBLIC' ? translate('public') : community.visibility === 'PRIVATE' ? translate('private') : translate('restricted')}
                       {' · '}
-                      {community.joinMode === 'OPEN' ? 'Mở tự do' : community.joinMode === 'APPROVAL' ? 'Cần duyệt' : 'Chỉ mời'}
+                      {community.joinMode === 'OPEN' ? translate('openJoin') : community.joinMode === 'APPROVAL' ? translate('approval') : translate('inviteOnly')}
                     </span>
                   </div>
                   <div className="grid grid-cols-3">
@@ -79,7 +79,7 @@ export default function AboutTab({
                           </span>
                         ))
                       ) : (
-                        <span className="text-slate-400 italic">Chưa cập nhật</span>
+                        <span className="text-slate-400 italic">{translate('notUpdated')}</span>
                       )}
                     </span>
                   </div>
@@ -91,7 +91,7 @@ export default function AboutTab({
                           {Object.entries(community.socialLinks).map(([key, val]) => {
                             if (!val) return null;
                             const isUrl = val.startsWith('http://') || val.startsWith('https://');
-                            const label = key === 'phone' ? 'SĐT' : key === 'facebook' ? 'FB' : key.toUpperCase();
+                            const label = key === 'phone' ? translate('phoneLabel') : key === 'facebook' ? 'FB' : key.toUpperCase();
                             return (
                               <span key={key} className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                                 <span className="font-bold text-[10px] text-slate-500">{label}:</span>
@@ -107,7 +107,7 @@ export default function AboutTab({
                           })}
                         </div>
                       ) : (
-                        <span className="text-slate-400 italic">Chưa cập nhật</span>
+                        <span className="text-slate-400 italic">{translate('notUpdated')}</span>
                       )}
                     </span>
                   </div>
@@ -137,7 +137,7 @@ export default function AboutTab({
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2 border-b pb-2.5">
             <ImageIcon className="w-4.5 h-4.5 text-blue-600" />
-            Ảnh ({galleryImages.length})
+            {translate('galleryCount', { count: galleryImages.length })}
           </h3>
 
           {galleryImages.length === 0 ? (
@@ -219,7 +219,7 @@ export default function AboutTab({
 
           {/* Bottom Index indicator */}
           <div className="text-white/60 text-xs font-bold mt-4 uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full backdrop-blur-sm">
-            Hình ảnh {lightboxIndex + 1} / {visibleImages.length}
+            {translate('imagePosition', { current: lightboxIndex + 1, total: visibleImages.length })}
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import type { Community } from '@/types/community';
 import { stripHtmlAndNormalize } from '@/utils/string';
 import { BRAND } from '@/constants/brand';
@@ -8,6 +9,7 @@ interface CommunityPageProps {
 }
 
 export async function generateMetadata({ params }: CommunityPageProps): Promise<Metadata> {
+  const translate = await getTranslations('Common');
   const { id } = await params;
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
   const canonical = `/communities/${id}`;
@@ -19,10 +21,10 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
       const community = payload.data;
 
       if (community) {
-        const title = `${community.name} | ${BRAND.name}`;
         const cleanDesc = stripHtmlAndNormalize(community.description, 160);
-        const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên ${BRAND.name}.`;
         const imageUrl = community.bannerUrl || community.logoUrl || BRAND.assets.defaultCommunityLogo;
+        const title = translate('clubMetadataTitle', { name: community.name, brand: BRAND.name });
+        const description = cleanDesc || translate('clubMetadataDescription', { name: community.name, brand: BRAND.name });
 
 
         return {
@@ -51,8 +53,6 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
   }
 
   return {
-    title: 'Câu lạc bộ | Sporto',
-    description: 'Khám phá các câu lạc bộ thể thao trên Sporto.',
     alternates: { canonical },
   };
 }

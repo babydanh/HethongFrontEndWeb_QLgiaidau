@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -13,6 +14,9 @@ import toast from 'react-hot-toast';
 
 export default function OrganizerSeriesPage() {
   const { user } = useAuthStore();
+  const commonTranslate = useTranslations('Common');
+  const seriesTranslate = useTranslations('SeriesList');
+  const opsTranslate = useTranslations('OrganizerOps');
   const [seriesList, setSeriesList] = useState<TournamentSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,7 +31,7 @@ export default function OrganizerSeriesPage() {
           setSeriesList(res.data);
         }
       } catch (err: unknown) {
-        toast.error('Không thể tải danh sách chuỗi giải đấu của bạn');
+        toast.error(seriesTranslate('loadError'));
       } finally {
         setIsLoading(false);
       }
@@ -39,13 +43,13 @@ export default function OrganizerSeriesPage() {
   const getStatusBadge = (status: TournamentSeries['status']) => {
     switch (status) {
       case 'DRAFT':
-        return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Bản nháp</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700 border-slate-200">{commonTranslate('statusDraft')}</Badge>;
       case 'ACTIVE':
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Đang diễn ra</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">{seriesTranslate('active')}</Badge>;
       case 'COMPLETED':
-        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">Đã kết thúc</Badge>;
+        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">{seriesTranslate('completed')}</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Đã hủy</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200">{commonTranslate('statusCancelled')}</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -56,7 +60,7 @@ export default function OrganizerSeriesPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <LoadingSpinner className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-500 font-medium">Đang tải chuỗi giải đấu của bạn...</p>
+          <p className="text-slate-500 font-medium">{commonTranslate('loading')}</p>
         </div>
       </div>
     );
@@ -69,12 +73,12 @@ export default function OrganizerSeriesPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Chuỗi Giải Đấu Của Tôi</h1>
-            <p className="text-slate-500 mt-1 font-medium">Quản lý các hệ thống tour đấu tích lũy điểm PSR và phân phối suất vé thẳng</p>
+            <h1 className="text-3xl font-bold text-slate-900">{seriesTranslate('title')}</h1>
+            <p className="text-slate-500 mt-1 font-medium">{seriesTranslate('description')}</p>
           </div>
           <Link href="/organizer/series/create">
             <Button className="font-semibold flex items-center gap-2 px-5 py-2.5 shadow-md shadow-blue-500/20">
-              <Plus className="w-5 h-5" /> Tạo chuỗi giải mới
+              <Plus className="w-5 h-5" /> {seriesTranslate('createAction')}
             </Button>
           </Link>
         </div>
@@ -84,12 +88,10 @@ export default function OrganizerSeriesPage() {
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
               <Trophy className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">Chưa có chuỗi giải đấu nào</h3>
-            <p className="text-slate-500 mt-2 font-medium max-w-sm">
-              Bạn chưa tạo bất kỳ hệ thống chặng đấu nào. Hãy tạo chuỗi giải đấu đầu tiên của bạn để tích lũy xếp hạng PSR cho các vận động viên!
-            </p>
+            <h3 className="text-xl font-bold text-slate-900">{seriesTranslate('emptyTitle')}</h3>
+            <p className="text-slate-500 mt-2 font-medium max-w-sm">{seriesTranslate('emptyHint')}</p>
             <Link href="/organizer/series/create" className="mt-6">
-              <Button className="px-6">Tạo chuỗi giải đầu tiên</Button>
+              <Button className="px-6">{seriesTranslate('createFirstAction')}</Button>
             </Link>
           </div>
         ) : (
@@ -122,7 +124,7 @@ export default function OrganizerSeriesPage() {
                     {series.name}
                   </h3>
                   <p className="text-slate-500 text-sm mt-2 line-clamp-2 h-10 font-medium">
-                    {series.description || 'Không có mô tả nào.'}
+                    {series.description || seriesTranslate('noDescription')}
                   </p>
 
                   <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100 text-slate-500 text-xs font-semibold">
@@ -134,7 +136,7 @@ export default function OrganizerSeriesPage() {
                     </div>
                     <div className="flex items-center gap-1.5 font-bold text-blue-600">
                       <Layers className="w-4 h-4 text-blue-400" />
-                      <span>{series._count?.legs || 0} Chặng đấu</span>
+                      <span>{seriesTranslate('legCount', { count: series._count?.legs || 0 })}</span>
                     </div>
                   </div>
                 </div>
@@ -143,12 +145,12 @@ export default function OrganizerSeriesPage() {
                 <div className="bg-slate-50 border-t border-slate-100 p-4 flex gap-3">
                   <Link href={`/organizer/series/${series.id}/manage`} className="flex-1">
                     <Button variant="outline" className="w-full text-slate-700 border-slate-200 hover:bg-slate-100 flex items-center justify-center gap-1.5 font-bold">
-                      <Settings className="w-4 h-4" /> Cấu hình
+                      <Settings className="w-4 h-4" /> {commonTranslate('configurationOverview')}
                     </Button>
                   </Link>
                   <Link href={`/series/${series.slug}`} target="_blank" className="flex-1">
                     <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center justify-center gap-1.5 font-bold">
-                      <Eye className="w-4 h-4" /> Giao diện public
+                      <Eye className="w-4 h-4" /> {opsTranslate('viewTournamentPage')}
                     </Button>
                   </Link>
                 </div>

@@ -100,7 +100,7 @@ export default function CommunityFeed({
       toast.error(translate("mentionLimitReached")),
     onAmbiguousName: () =>
       toast.error(
-        "CLB có hai thành viên trùng tên. Không thể gắn cả hai trong cùng một bài.",
+        translate("ambiguousMentionName"),
       ),
   });
 

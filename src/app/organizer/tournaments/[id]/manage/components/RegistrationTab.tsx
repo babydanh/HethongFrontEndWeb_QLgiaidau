@@ -181,6 +181,7 @@ export function RegistrationTab({
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
+  const registrationTranslate = useTranslations('OrganizerRegistration');
   const participantStatusLabels = {
     participantComplete: displayTranslate('participantComplete'),
     participantPendingPartner: displayTranslate('participantPendingPartner'),
@@ -247,7 +248,7 @@ export function RegistrationTab({
     try {
       const { tournamentsApi } = await import('@/features/tournaments/api');
       await tournamentsApi.updateParticipantSeed(tournament.id, participantId, seed);
-      toast.success('Đã cập nhật seed!');
+      toast.success(registrationTranslate('seedUpdated'));
       setEditingSeed(null);
     } catch (err) {
       const { getErrorMessage } = await import('@/utils/error');
@@ -267,11 +268,11 @@ export function RegistrationTab({
           next.delete(participant.id);
           return next;
         });
-        toast.success('Đã mở khóa roster trước khi giải bắt đầu.');
+        toast.success(registrationTranslate('rosterUnlocked'));
       } else {
         await tournamentsApi.lockFootballRoster(tournament.id, participant.id);
         setLocallyLockedRosterIds((current) => new Set(current).add(participant.id));
-        toast.success('Đã khóa roster đội bóng.');
+        toast.success(registrationTranslate('rosterLocked'));
       }
     } catch (error) {
       const { getErrorMessage } = await import('@/utils/error');
@@ -350,26 +351,26 @@ export function RegistrationTab({
         
         {/* Publish Status Card */}
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-          <h3 className="font-bold text-slate-900 mb-4 text-lg">Trạng thái phát hành giải đấu</h3>
+          <h3 className="font-bold text-slate-900 mb-4 text-lg">{registrationTranslate('publicationStatus')}</h3>
           
           {isTournamentDraft(tournament.status) ? (
             <div className="space-y-4">
               <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-400">ℹ</span>
                 <p className="text-xs leading-relaxed font-medium">
-                  Giải đấu đang ở trạng thái <strong>Bản nháp</strong>. Giải đấu chỉ hiển thị đối với bạn. Hãy kiểm tra kỹ thông tin cấu hình, thời gian và địa điểm thi đấu trước khi công bố.
+                  {registrationTranslate('draftDescription', { status: registrationTranslate('draftStatus') })}
                 </p>
               </div>
               {publishFeeAmount > 0 && (
                 <div className="text-xs font-semibold text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  Khi bấm nút bên dưới, hệ thống sẽ chuyển sang bước thanh toán phí công bố giải đấu: {publishFeeAmount.toLocaleString('vi-VN')}đ.
+                  {registrationTranslate('publishFeeDescription', { amount: publishFeeAmount.toLocaleString('vi-VN') })}
                 </div>
               )}
               <Button
                 onClick={handlePublish}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full md:w-auto flex items-center justify-center gap-1.5"
               >
-                <CheckCircle className="w-4 h-4" /> {publishFeeAmount > 0 ? 'Thanh toán phí & công bố' : 'Công bố giải đấu'}
+                <CheckCircle className="w-4 h-4" /> {publishFeeAmount > 0 ? registrationTranslate('payAndPublish') : registrationTranslate('publishTournament')}
               </Button>
             </div>
           ) : isTournamentPendingApproval(tournament.status) ? (
@@ -386,7 +387,7 @@ export function RegistrationTab({
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-emerald-950 text-sm">Giải đấu đã được công bố!</p>
+                    <p className="font-bold text-emerald-950 text-sm">{registrationTranslate('publishedSuccess')}</p>
                     <p className="text-emerald-700 text-xs mt-1">Người chơi có thể đăng ký tài khoản và truy cập link để tham gia.</p>
                   </div>
                 </div>
@@ -619,7 +620,7 @@ export function RegistrationTab({
 
               {isTournamentDraft(tournament.status) && (
                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">
-                  ⚠️ Giải đang ở trạng thái <strong>Bản nháp</strong>. Mã/link mời này chỉ có hiệu lực sau khi bạn <strong>công bố</strong> giải.
+                  ⚠️ {registrationTranslate('draftInviteWarning', { status: registrationTranslate('draftStatus') })}
                 </div>
               )}
 
@@ -720,7 +721,7 @@ export function RegistrationTab({
               <p className="mt-2 text-lg font-bold text-amber-700">{participantSummary.rejected}</p>
             </div>
             <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">{registrationTranslate('unpaidStatusLabel')}</p>
               <p className="mt-2 text-lg font-bold text-rose-700">{participantSummary.unpaid}</p>
             </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
@@ -733,7 +734,7 @@ export function RegistrationTab({
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tìm theo tên đội hoặc thành viên"
+              placeholder={registrationTranslate('searchTeamMembers')}
               icon={<Search className="h-4 w-4" />}
             />
             <div className="flex flex-wrap gap-2">
@@ -741,7 +742,7 @@ export function RegistrationTab({
                 { value: 'ALL', label: 'Tất cả' },
                 { value: 'PENDING', label: 'Chờ duyệt' },
                 { value: 'COMPLETE', label: 'Đã duyệt' },
-                { value: 'UNPAID', label: 'Chưa thanh toán' },
+                { value: 'UNPAID', label: registrationTranslate('unpaidStatus') },
                 { value: 'REJECTED', label: 'Bị từ chối' },
               ].map((option) => (
                 <button
@@ -778,7 +779,7 @@ export function RegistrationTab({
                     <td colSpan={5} className="py-12">
                       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                         <Users className="h-8 w-8 text-slate-300" />
-                        <p className="mt-3 text-sm font-bold text-slate-700">Không có hồ sơ phù hợp</p>
+                        <p className="mt-3 text-sm font-bold text-slate-700">{registrationTranslate('noMatchingProfiles')}</p>
                         <p className="mt-1 text-xs font-medium text-slate-500">
                           Thử đổi bộ lọc hoặc từ khóa để rà lại toàn bộ danh sách đăng ký.
                         </p>
@@ -868,7 +869,7 @@ export function RegistrationTab({
                         </td>
                         <td className="py-4 pr-4">
                           <span className={`text-xs font-bold ${participant.isPaid ? 'text-blue-600' : 'text-rose-600'}`}>
-                            {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                            {participant.isPaid ? registrationTranslate('paidStatus') : registrationTranslate('unpaidStatus')}
                           </span>
                         </td>
                         <td className="py-4 text-right">
@@ -898,7 +899,7 @@ export function RegistrationTab({
                               onClick={() => {
                                 const confirmed = window.confirm(
                                   isMockParticipant
-                                    ? `Bạn có chắc muốn xoá dữ liệu mock của "${participant.teamName}" không?`
+                                    ? registrationTranslate('mockDeleteConfirm', { name: participant.teamName })
                                     : `Bạn có chắc muốn từ chối hồ sơ của "${participant.teamName}" không?`,
                                 );
                                 if (confirmed) {
@@ -911,7 +912,7 @@ export function RegistrationTab({
                                 : 'border-amber-200 text-amber-700 hover:bg-amber-50 font-bold'}
                             >
                               {isMockParticipant ? <Trash2 className="mr-2 h-4 w-4" /> : <UserX className="mr-2 h-4 w-4" />}
-                              {isMockParticipant ? 'Xóa mock' : 'Từ chối'}
+                              {isMockParticipant ? registrationTranslate('deleteMock') : registrationTranslate('rejectParticipant')}
                             </Button>
                           </div>
                         </td>
@@ -995,7 +996,7 @@ export function RegistrationTab({
             <Textarea
               value={mockNamesText}
               onChange={(e) => setMockNamesText(e.target.value)}
-              placeholder="Mỗi dòng là 1 tên VĐV.&#10;Đánh đôi: Cứ 2 dòng liên tiếp xếp 1 đội.&#10;Ví dụ:&#10;VĐV A&#10;VĐV B"
+              placeholder={registrationTranslate('bulkParticipantsPlaceholder')}
               className="h-32 text-xs resize-none font-semibold text-slate-700"
               disabled={!canSeedMock || isSeedingMock || isClearingMock}
             />
@@ -1137,7 +1138,7 @@ export function RegistrationTab({
           {/* Division Selector */}
           {divisions.length > 1 && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn nội dung thi đấu</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('contentSelectionLabel')}</label>
               <div className="grid grid-cols-1 gap-2">
                 {divisions.map((div) => {
                   const isActive = div.id === selectedDivisionId;
@@ -1182,8 +1183,8 @@ export function RegistrationTab({
               <>
                 {/* Player 1 Email */}
                 <Input
-                  label="Email hoặc SĐT người chơi"
-                  placeholder="partner@vndcsport.vn hoặc 09xxxx"
+                  label={registrationTranslate('playerEmailPhoneLabel')}
+                  placeholder={registrationTranslate('playerEmailPhonePlaceholder')}
                   value={wildcardEmailOrPhone}
                   onChange={(e) => setWildcardEmailOrPhone(e.target.value)}
                   className="bg-white text-xs h-10"
@@ -1193,8 +1194,8 @@ export function RegistrationTab({
                 {/* Partner Email (chỉ hiện khi đánh đôi) */}
                 {isDoubles && (
                   <Input
-                    label="Đồng đội (Email hoặc SĐT)"
-                    placeholder="Nhập email/số điện thoại đồng đội"
+                    label={registrationTranslate('teammateLabel')}
+                    placeholder={registrationTranslate('teammatePlaceholder')}
                     value={wildcardPartnerEmailOrPhone}
                     onChange={(e) => setWildcardPartnerEmailOrPhone(e.target.value)}
                     className="bg-white text-xs h-10"
@@ -1204,8 +1205,8 @@ export function RegistrationTab({
 
                 {/* Team Name */}
                 <Input
-                  label="Tên đội thi đấu đặc cách"
-                  placeholder="Ví dụ: Đội Khách Mời VIP"
+                  label={registrationTranslate('wildcardTeamNameLabel')}
+                  placeholder={registrationTranslate('wildcardTeamNamePlaceholder')}
                   value={wildcardTeamName}
                   onChange={(e) => setWildcardTeamName(e.target.value)}
                   className="bg-white text-xs h-10"
@@ -1218,9 +1219,9 @@ export function RegistrationTab({
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
                 >
                   {isAssigningWildcard ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang gán...</>
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {registrationTranslate('assigningWildcard')}</>
                   ) : (
-                    <><CheckCircle className="w-3.5 h-3.5" /> Gán suất đặc cách</>
+                    <><CheckCircle className="w-3.5 h-3.5" /> {registrationTranslate('assignWildcard')}</>
                   )}
                 </Button>
               </>
@@ -1256,12 +1257,12 @@ export function RegistrationTab({
                         <button
                           type="button"
                           onClick={() => {
-                            if (confirm(`Xoá suất đặc cách của "${p.teamName}"?`)) {
+                            if (confirm(registrationTranslate('wildcardRemoveConfirm', { name: p.teamName }))) {
                               // handleRemoveWildcard(p.id)
                             }
                           }}
                           className="ml-2 rounded-lg p-1.5 text-rose-500 hover:bg-rose-100 transition-colors"
-                          title="Xoá đặc cách"
+                          title={registrationTranslate('removeWildcard')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

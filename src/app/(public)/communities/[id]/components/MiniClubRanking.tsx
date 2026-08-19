@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Trophy, Loader2, ChevronRight } from 'lucide-react';
 import { Category } from '@/types/category';
@@ -21,6 +22,7 @@ export default function MiniClubRanking({
   className,
   maxItems = 3,
 }: MiniClubRankingProps) {
+  const translate = useTranslations('Common');
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -67,7 +69,7 @@ export default function MiniClubRanking({
       <div className={cn('bg-white rounded-lg border border-slate-200 shadow-sm p-4', className)}>
         <div className="flex items-center gap-2 mb-3">
           <Trophy className="w-4 h-4 text-slate-300" />
-          <span className="text-sm font-bold text-slate-500">Xếp hạng CLB</span>
+          <span className="text-sm font-bold text-slate-500">{translate('clubRankingTitle')}</span>
         </div>
         <div className="flex items-center justify-center gap-6 py-3">
           {[1, 2, 3].map((i) => (
@@ -80,7 +82,7 @@ export default function MiniClubRanking({
             </div>
           ))}
         </div>
-        <p className="text-center text-[11px] text-slate-400 mt-2">Chưa có dữ liệu — tham gia thi đấu để có ELO</p>
+        <p className="text-center text-[11px] text-slate-400 mt-2">{translate('noClubRankingData')}</p>
       </div>
     );
   }
@@ -93,13 +95,13 @@ export default function MiniClubRanking({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4 text-amber-500" />
-          <span className="text-sm font-bold text-slate-800">Xếp hạng CLB</span>
+          <span className="text-sm font-bold text-slate-800">{translate('clubRankingTitle')}</span>
         </div>
         <Link
           href={`/communities/${communityId}`}
           className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 transition-colors"
         >
-          Xem thêm
+          {translate('viewMore')}
           <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, MessageCircle, Send, X, Users, Sparkles } from 'lucide-react';
 import { chatApi } from '@/features/chat/api';
 import { socketClient } from '@/lib/socket';
@@ -20,6 +21,7 @@ export default function ClubChatLauncher({
   isOpen,
   onOpenChange,
 }: ClubChatLauncherProps) {
+  const translate = useTranslations('Common');
   const { user } = useAuthStore();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : internalOpen;
@@ -76,7 +78,7 @@ export default function ClubChatLauncher({
         }
       })
       .catch((error: unknown) => {
-        if (active) toast.error(getErrorMessage(error, 'Không thể mở chat CLB.'));
+        if (active) toast.error(getErrorMessage(error, translate('openClubChatFailed')));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -88,7 +90,7 @@ export default function ClubChatLauncher({
       if (roomRef.current) socket.emit('leaveChatRoom', roomRef.current);
       socket.off('chat:club:message', onMessage);
     };
-  }, [communityId, open]);
+  }, [communityId, open, translate]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -103,7 +105,7 @@ export default function ClubChatLauncher({
       setNextCursor(history.meta?.nextCursor ?? null);
       setHasMore(history.meta?.hasMore ?? false);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể tải thêm tin nhắn.'));
+      toast.error(getErrorMessage(error, translate('loadMoreMessagesFailed')));
     } finally {
       setLoadingOlder(false);
     }
@@ -123,7 +125,7 @@ export default function ClubChatLauncher({
       );
     } catch (error: unknown) {
       setDraft(content);
-      toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn.'));
+      toast.error(getErrorMessage(error, translate('clubChatSendFailed')));
     }
   };
 
@@ -133,7 +135,7 @@ export default function ClubChatLauncher({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Mở chat CLB"
+        aria-label={translate('clubChatOpenAria')}
         className="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/25 transition-all hover:scale-105 hover:shadow-2xl active:scale-95"
       >
         <MessageCircle className="h-6 w-6" />
@@ -149,7 +151,7 @@ export default function ClubChatLauncher({
                 <Users className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold leading-tight">Phòng Chat Chung CLB</p>
+                <p className="text-sm font-bold leading-tight">{translate('clubChatTitle')}</p>
                 <p className="text-[11px] text-blue-100 flex items-center gap-1 mt-0.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Giao lưu & hẹn lịch thi đấu
@@ -159,7 +161,7 @@ export default function ClubChatLauncher({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Đóng chat"
+              aria-label={translate('closeChatAria')}
               className="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition"
             >
               <X className="h-5 w-5" />
@@ -170,22 +172,22 @@ export default function ClubChatLauncher({
           <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-4">
             {hasMore && (
               <button type="button" onClick={() => void loadOlder()} disabled={loadingOlder} className="mx-auto mb-3 block text-xs font-semibold text-blue-700 disabled:opacity-50">
-                {loadingOlder ? 'Đang tải…' : 'Tải tin nhắn cũ hơn'}
+                {loadingOlder ? translate('loadingOlderMessages') : translate('loadOlderMessages')}
               </button>
             )}
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400 py-10">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                <span className="text-xs">Đang kết nối phòng chat...</span>
+                <span className="text-xs">{translate('connectingChatRoom')}</span>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
                 <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <p className="text-sm font-semibold text-slate-700">Chưa có tin nhắn nào</p>
+                <p className="text-sm font-semibold text-slate-700">{translate('noChatMessages')}</p>
                 <p className="text-xs text-slate-400 mt-1 max-w-[220px]">
-                  Hãy là người đầu tiên gửi tin nhắn chào mừng các thành viên trong CLB!
+                  {translate('firstClubMessage')}
                 </p>
               </div>
             ) : (
@@ -235,12 +237,12 @@ export default function ClubChatLauncher({
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Nhập tin nhắn..."
+              placeholder={translate('enterMessage')}
               className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50/50 px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               type="submit"
-              aria-label="Gửi tin nhắn"
+              aria-label={translate('sendMessageAria')}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-40 disabled:hover:bg-blue-600 disabled:shadow-none shrink-0"
               disabled={!draft.trim()}
             >

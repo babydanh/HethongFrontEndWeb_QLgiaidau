@@ -347,9 +347,9 @@ export default function CommunityDetailPage() {
         const error = e as any;
         console.error('Failed to join community', error);
         if (error?.response?.status === 403) {
-          toast.error('Câu lạc bộ này ở chế độ Chỉ Mời. Bạn không thể tự tham gia.');
+          toast.error(translate('inviteOnlyCommunity'));
         } else {
-          toast.error(getErrorMessage(error, 'Lỗi khi tham gia câu lạc bộ.'));
+          toast.error(getErrorMessage(error, translate('joinFailed')));
         }
       } finally {
         setIsJoinLoading(false);
@@ -358,14 +358,14 @@ export default function CommunityDetailPage() {
   };
 
   const getJoinButtonLabel = () => {
-    if (isJoinLoading) return 'Đang xử lý...';
-    if (isOwner) return 'Chủ sở hữu';
-    if (membership?.status === 'JOINED') return 'Đã tham gia';
-    if (membership?.status === 'PENDING') return 'Đang chờ duyệt';
-    if (membership?.status === 'INVITED') return 'Chấp nhận lời mời';
-    if (community?.visibility === 'PRIVATE') return 'Chỉ nhận lời mời';
-    if (community?.joinMode === 'INVITE_ONLY') return 'Chỉ nhận lời mời';
-    return community?.joinMode === 'APPROVAL' ? 'Xin tham gia' : 'Tham gia';
+    if (isJoinLoading) return translate('confirmProcessing');
+    if (isOwner) return translate('ownerRole');
+    if (membership?.status === 'JOINED') return translate('membershipJoined');
+    if (membership?.status === 'PENDING') return translate('membershipPendingStatus');
+    if (membership?.status === 'INVITED') return translate('acceptInviteAction');
+    if (community?.visibility === 'PRIVATE') return translate('inviteOnlyCommunity');
+    if (community?.joinMode === 'INVITE_ONLY') return translate('inviteOnlyCommunity');
+    return community?.joinMode === 'APPROVAL' ? translate('requestToJoin') : translate('joinAction');
   };
 
   const getJoinButtonStyles = () => {
@@ -395,10 +395,10 @@ export default function CommunityDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <Users className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Không tìm thấy câu lạc bộ</h2>
-        <p className="text-slate-500 mb-6">Câu lạc bộ này có thể đã bị xóa hoặc không tồn tại.</p>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">{translate("notFoundClubTitle")}</h2>
+        <p className="text-slate-500 mb-6">{translate('notFoundClubDescription')}</p>
         <Button onClick={() => router.push('/communities')} className="bg-blue-600 hover:bg-blue-700 text-white">
-          Quay lại danh sách
+          {translate('back')}
         </Button>
       </div>
     );
@@ -593,7 +593,7 @@ export default function CommunityDetailPage() {
                   : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
               }`}
              >
-               Cài đặt
+               {translate("settingsTab")}
              </button>
           )}
         </div>
@@ -655,9 +655,9 @@ export default function CommunityDetailPage() {
       <ConfirmModal
         open={isLeaveConfirmOpen}
         onOpenChange={setIsLeaveConfirmOpen}
-        title="Rời khỏi câu lạc bộ"
-        description="Bạn có chắc chắn muốn rời khỏi câu lạc bộ này?"
-        confirmLabel="Rời khỏi"
+        title={translate("leaveClubTitle")}
+        description={translate("leaveClubDescription")}
+        confirmLabel={translate("leaveClubConfirm")}
         variant="danger"
         isLoading={isJoinLoading}
         onConfirm={handleLeaveCommunity}

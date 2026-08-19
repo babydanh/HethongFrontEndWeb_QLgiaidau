@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight } from "lucide-react";
 import toast from "react-hot-toast";
@@ -38,6 +39,7 @@ export default function CommunityPostCard({
   onDelete,
   canManage = false,
 }: CommunityPostCardProps) {
+  const translate = useTranslations('Common');
   const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [overrideCommentCount, setOverrideCommentCount] = useState<number | null>(null);
@@ -60,7 +62,7 @@ export default function CommunityPostCard({
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [authorMemberInfo, setAuthorMemberInfo] = useState<{ role?: string; tags?: string[] } | null>(null);
 
-  const authorName = post.author?.fullName?.trim() || "Thành viên CLB";
+  const authorName = post.author?.fullName?.trim() || translate('clubMemberFallback');
   const authorAvatar = post.author?.avatarUrl;
 
   // Fetch tag presets and author member tags for the post header
@@ -251,7 +253,7 @@ export default function CommunityPostCard({
       const fetched = response.data ?? [];
       setComments(fetched);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Không thể tải bình luận."));
+      toast.error(getErrorMessage(error, translate('loadCommentsFailed')));
     } finally {
       setLoadingComments(false);
     }
@@ -271,7 +273,7 @@ export default function CommunityPostCard({
         ...response.data,
         author: response.data?.author?.fullName ? response.data.author : {
           id: currentUser?.id || "",
-          fullName: currentUser?.fullName || "Bạn",
+          fullName: currentUser?.fullName || translate('youFallback'),
           avatarUrl: currentUser?.avatarUrl || null,
         },
       };
@@ -284,14 +286,14 @@ export default function CommunityPostCard({
       setCommentText("");
       setReplyingTo(null);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Không thể gửi bình luận."));
+      toast.error(getErrorMessage(error, translate('sendCommentFailed')));
     } finally {
       setSubmittingComment(false);
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa bình luận này không?")) return;
+    if (!window.confirm(translate('deleteCommentConfirm'))) return;
     try {
       await communitiesApi.deleteComment(post.communityId, commentId);
       // Remove deleted comment and any direct replies to it
@@ -306,21 +308,21 @@ export default function CommunityPostCard({
         onCommentUpdated?.(post.id, next);
         return next;
       });
-      toast.success("Đã xóa bình luận.");
+      toast.success(translate('commentDeleted'));
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Không thể xóa bình luận lúc này."));
+      toast.error(getErrorMessage(error, translate('deleteCommentFailed')));
     }
   };
 
   const handleDeletePost = async () => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
+    if (!window.confirm(translate('deletePostConfirm'))) return;
     setIsDeleting(true);
     try {
       await communitiesApi.deletePost(post.communityId, post.id);
-      toast.success("Đã xóa bài viết.");
+      toast.success(translate('postDeleted'));
       onDelete?.(post.id);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Không thể xóa bài viết lúc này."));
+      toast.error(getErrorMessage(error, translate('deletePostFailed')));
     } finally {
       setIsDeleting(false);
     }
@@ -337,7 +339,7 @@ export default function CommunityPostCard({
           <div
             onClick={handleOpenAuthorProfile}
             className="cursor-pointer transition-transform hover:scale-105"
-            title="Xem hồ sơ"
+            title={translate("viewProfileAction")}
           >
             <CommunityAvatar
               src={authorAvatar}
@@ -388,7 +390,7 @@ export default function CommunityPostCard({
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {formatRelativeTime(post.createdAt)}
-              {post.status === "PENDING" ? " · Đang chờ duyệt" : ""}
+              {post.status === "PENDING" ? translate('pendingReviewSuffix') : ""}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -397,9 +399,9 @@ export default function CommunityPostCard({
                 type="button"
                 disabled={isDeleting}
                 onClick={handleDeletePost}
-                aria-label="Xóa bài viết"
+                aria-label={translate("deletePostAction")}
                 className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition disabled:opacity-50 cursor-pointer"
-                title={isAuthor ? "Xóa bài viết của bạn" : "Xóa bài viết (Quyền quản trị)"}
+                title={isAuthor ? translate("deleteOwnPostAction") : translate("deletePostAction")}
               >
                 {isDeleting ? (
                   <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
@@ -411,9 +413,9 @@ export default function CommunityPostCard({
             <button
               type="button"
               onClick={onReport}
-              aria-label="Báo cáo bài viết"
+              aria-label={translate("reportPostTitle")}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
-              title="Báo cáo bài viết"
+              title={translate("reportPostTitle")}
             >
               <Flag className="h-4 w-4" />
             </button>
@@ -423,7 +425,7 @@ export default function CommunityPostCard({
         {/* Pending status banner */}
         {post.status === "PENDING" && (
           <div className="mt-3 rounded-lg bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-700 border border-amber-200/60">
-            Bài viết đang chờ ban quản trị duyệt trước khi hiển thị công khai.
+            {translate('pendingPostReview')}
           </div>
         )}
 
@@ -455,13 +457,13 @@ export default function CommunityPostCard({
                     )}
                   </div>
                   <h4 className="mt-1 text-sm font-bold text-slate-900 line-clamp-1">
-                    {post.tournament?.name || "Giải đấu Câu lạc bộ"}
+                    {post.tournament?.name || translate('clubTournamentFallback')}
                   </h4>
                   {post.tournament?.startDate && (
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span>
-                        Bắt đầu: {new Date(post.tournament.startDate).toLocaleDateString("vi-VN")}
+                        {translate('tournamentStarts')} {new Date(post.tournament.startDate).toLocaleDateString("vi-VN")}
                       </span>
                     </div>
                   )}
@@ -471,7 +473,7 @@ export default function CommunityPostCard({
                 href={`/tournaments/${post.tournamentId}`}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 shrink-0"
               >
-                <span>Xem chi tiết giải</span>
+                <span>{translate('viewTournamentDetails')}</span>
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -503,7 +505,7 @@ export default function CommunityPostCard({
               >
                 <img
                   src={url}
-                  alt={`Ảnh bài viết ${idx + 1}`}
+                  alt={translate('postImageAlt', { index: idx + 1 })}
                   className={cn(
                     "w-full object-cover transition-transform duration-300 group-hover:scale-105",
                     post.imageUrls.length === 1 ? "max-h-[28rem] rounded-lg" : "aspect-video",
@@ -548,7 +550,7 @@ export default function CommunityPostCard({
             )}
           >
             <MessageCircle className="h-4 w-4" />
-            <span>{commentCount} bình luận</span>
+            <span>{translate('commentsCount', { count: commentCount })}</span>
           </button>
         </div>
 
@@ -558,7 +560,7 @@ export default function CommunityPostCard({
             {loadingComments ? (
               <div className="flex items-center justify-center py-3 text-slate-400">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span className="text-xs">Đang tải bình luận...</span>
+                <span className="text-xs">{translate('loadingComments')}</span>
               </div>
             ) : (
               (() => {
@@ -573,7 +575,7 @@ export default function CommunityPostCard({
                 });
 
                 const renderCommentItem = (comment: CommunityComment, isReply = false) => {
-                  const authorName = comment.author?.fullName?.trim() || "Thành viên";
+                  const authorName = comment.author?.fullName?.trim() || translate('member');
                   const authorAvatar = comment.author?.avatarUrl;
 
                   return (
@@ -643,7 +645,7 @@ export default function CommunityPostCard({
                               likedComments[comment.id] ? "text-rose-600 font-bold" : "hover:text-rose-600",
                             )}
                           >
-                            {likedComments[comment.id] ? "Đã thích" : "Thích"}
+                            {likedComments[comment.id] ? translate('likedAction') : translate('likeAction')}
                           </button>
                           <button
                             type="button"
@@ -656,7 +658,7 @@ export default function CommunityPostCard({
                             }}
                             className="hover:underline hover:text-blue-600 cursor-pointer"
                           >
-                            Trả lời
+                            {translate('replyAction')}
                           </button>
                           {comment.createdAt && (
                             <span className="text-slate-400 font-normal">
@@ -668,7 +670,7 @@ export default function CommunityPostCard({
                               type="button"
                               onClick={() => void handleDeleteComment(comment.id)}
                               className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
-                              title="Xóa bình luận"
+                              title={translate("deleteCommentTitle")}
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -705,7 +707,7 @@ export default function CommunityPostCard({
         {replyingTo && (
           <div className="mt-2.5 flex items-center justify-between rounded-lg bg-blue-50/80 px-3 py-1.5 text-xs text-blue-700">
             <span>
-              Đang trả lời <strong className="font-bold">{replyingTo.authorName}</strong>
+              {translate('replyingTo', { name: replyingTo.authorName })}
             </span>
             <button
               type="button"
@@ -715,7 +717,7 @@ export default function CommunityPostCard({
               }}
               className="text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer"
             >
-              ✕ Hủy
+              ✕ {translate('cancelAction')}
             </button>
           </div>
         )}
@@ -729,18 +731,18 @@ export default function CommunityPostCard({
                 const rect = e.currentTarget.getBoundingClientRect();
                 setPopoverUser({
                   id: currentUser.id,
-                  fullName: currentUser.fullName || "Bạn",
+                  fullName: currentUser.fullName || translate('youFallback'),
                   avatarUrl: currentUser.avatarUrl,
                 });
                 setPopoverAnchorRect(rect);
               }
             }}
             className="shrink-0 cursor-pointer transition-transform hover:scale-105"
-            title="Hồ sơ của bạn"
+            title={translate("yourProfileAria")}
           >
             <CommunityAvatar
               src={currentUser?.avatarUrl}
-              name={currentUser?.fullName || "Tôi"}
+              name={currentUser?.fullName || translate("youFallback")}
               size={32}
             />
           </div>
@@ -755,7 +757,7 @@ export default function CommunityPostCard({
                   void submitComment();
                 }
               }}
-              placeholder={replyingTo ? `Trả lời ${replyingTo.authorName}...` : "Viết bình luận..."}
+              placeholder={replyingTo ? translate('replyPlaceholder', { name: replyingTo.authorName }) : translate('commentPlaceholder')}
               className="w-full rounded-full border border-slate-200 bg-slate-100/80 px-4 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 pr-14"
             />
             <button
@@ -767,7 +769,7 @@ export default function CommunityPostCard({
               {submittingComment ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                "Gửi"
+                translate('submitAction')
               )}
             </button>
           </div>

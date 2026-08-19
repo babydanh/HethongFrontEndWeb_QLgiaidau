@@ -138,7 +138,7 @@ export default function LoginPage() {
             {t('vietnam')}
           </h1>
           <p className="mt-3 text-slate-300 text-sm leading-relaxed max-w-[320px]">
-            Tổ chức giải đấu, theo dõi xếp hạng ELO và kết nối cộng đồng vận động viên toàn quốc.
+            {t('loginMarketingDescription')}
           </p>
 
           <ul className="mt-5 space-y-2.5">
@@ -267,7 +267,7 @@ export default function LoginPage() {
             </form>
 
             <p className="mt-5 text-center text-sm text-slate-500">
-              Chưa có tài khoản?{' '}
+              {t('noAccountPrompt')}{' '}
               <Link href="/register" className="font-bold text-blue-600 hover:underline">
                 {t('createNewAccount')}
               </Link>

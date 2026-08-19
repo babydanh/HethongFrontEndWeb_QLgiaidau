@@ -191,6 +191,33 @@ export default function SmartFormImportModal({
       let hasFormatMismatch = false;
       let mismatchReason = '';
 
+      if (!isTargetDoubles && p2Name && splitDoublesIntoSingles) {
+        // Tách thành 2 dòng VĐV Đơn độc lập
+        if (p1Name) {
+          items.push({
+            rowIndex: idx * 2,
+            teamName: p1Name,
+            player1Name: p1Name,
+            player1Email: p1Email || undefined,
+            player1Phone: p1Phone || undefined,
+            elo,
+            hasFormatMismatch: false,
+          });
+        }
+        if (p2Name) {
+          items.push({
+            rowIndex: idx * 2 + 1,
+            teamName: p2Name,
+            player1Name: p2Name,
+            player1Email: p2Email || undefined,
+            player1Phone: p2Phone || undefined,
+            elo,
+            hasFormatMismatch: false,
+          });
+        }
+        return;
+      }
+
       if (!isTargetDoubles && p2Name && !splitDoublesIntoSingles) {
         hasFormatMismatch = true;
         mismatchReason = 'Bảng Đơn nhưng có VĐV 2 (Cặp đôi)';
@@ -392,7 +419,7 @@ export default function SmartFormImportModal({
                 <div className="space-y-1">
                   <p className="font-bold">Mẹo từ Sporto:</p>
                   <p className="text-blue-800 leading-relaxed font-medium">
-                    Trong Google Form của bạn, chỉ cần bấm <strong>"Xem câu trả lời trong Trang tính"</strong> $\rightarrow$ Chọn <strong>Tệp $\rightarrow$ Tải xuống $\rightarrow$ Microsoft Excel (.xlsx)</strong> rồi tải lên tại đây.
+                    Trong Google Form của bạn, chỉ cần bấm <strong>&quot;Xem câu trả lời trong Trang tính&quot;</strong> &rarr; Chọn <strong>Tệp &rarr; Tải xuống &rarr; Microsoft Excel (.xlsx)</strong> rồi tải lên tại đây.
                   </p>
                 </div>
               </div>
@@ -577,21 +604,29 @@ export default function SmartFormImportModal({
             <div className="space-y-5">
               {/* Warnings Banner if format mismatch */}
               {formatMismatchCount > 0 && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-2">
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-3">
                   <div className="flex items-center gap-2 font-bold text-amber-800">
                     <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
                     <span>
-                      Phát hiện {formatMismatchCount} dòng có thể có xung đột thể thức hoặc thông tin:
+                      Phát hiện {formatMismatchCount} dòng có xung đột thể thức hoặc thông tin:
                     </span>
                   </div>
                   <p className="text-amber-700 font-medium">
                     Nội dung đang chọn: <strong>{targetDivision?.name} ({targetDivision?.matchType})</strong>.
-                    {!isTargetDoubles && columnMapping.player2NameCol && (
-                      <span>
-                        {' '}File Form có chứa cột VĐV 2 (Cặp đôi). Bạn có thể tick tùy chọn bên dưới để tự động tách thành VĐV đơn.
-                      </span>
-                    )}
                   </p>
+                  {!isTargetDoubles && columnMapping.player2NameCol && (
+                    <div className="rounded-lg border border-amber-300 bg-white/80 p-3">
+                      <label className="flex items-center gap-2.5 cursor-pointer font-bold text-amber-900 select-none">
+                        <input
+                          type="checkbox"
+                          checked={splitDoublesIntoSingles}
+                          onChange={(e) => setSplitDoublesIntoSingles(e.target.checked)}
+                          className="rounded border-amber-400 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                        />
+                        <span>Tự động tách cặp đôi trong mỗi dòng thành 2 VĐV thi đấu Đơn độc lập</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               )}
 

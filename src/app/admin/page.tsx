@@ -19,6 +19,7 @@ import {
   FileWarning
 } from 'lucide-react';
 import { DatePicker } from '@/components/ui/Input';
+import { useLocale, useTranslations } from 'next-intl';
 import { 
   AreaChart, 
   Area, 
@@ -60,6 +61,8 @@ const getResponseItems = <T,>(response: ApiResponse<T[]> | undefined): T[] =>
   Array.isArray(response?.data) ? response.data : [];
 
 export default function AdminDashboard() {
+  const translate = useTranslations('AdminDashboard');
+  const locale = useLocale();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [chartData, setChartData] = useState<ChartRow[]>([]);
   
@@ -114,11 +117,11 @@ export default function AdminDashboard() {
         if (res.data) {
           setMetrics(res.data);
         } else {
-          setError('Không lấy được dữ liệu thống kê tổng hợp');
+          setError(translate('metricsError'));
         }
       } catch (err) {
         console.error('Fetch dashboard metrics error:', err);
-        setError('Đã xảy ra lỗi khi kết nối máy chủ');
+        setError(translate('serverError'));
       } finally {
         setLoading(false);
       }
@@ -160,7 +163,7 @@ export default function AdminDashboard() {
 
   const formatCurrency = (val: string | number) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND' }).format(num);
   };
 
   const formatShortPeriod = (periodStr: string) => {
@@ -169,16 +172,16 @@ export default function AdminDashboard() {
       if (isNaN(date.getTime())) return periodStr;
       
       if (groupBy === 'day') {
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+        return date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
       }
       if (groupBy === 'week') {
-        return `Tuần ${date.getDate()}/${date.getMonth() + 1}`;
+        return translate('weekOf', { day: date.getDate(), month: date.getMonth() + 1 });
       }
       if (groupBy === 'year') {
         return date.getFullYear().toString();
       }
       // Month
-      return date.toLocaleDateString('vi-VN', { month: 'short', year: '2-digit' });
+      return date.toLocaleDateString(locale, { month: 'short', year: '2-digit' });
     } catch {
       return periodStr;
     }
@@ -189,58 +192,58 @@ export default function AdminDashboard() {
     if (!metrics) return [];
     return [
       {
-        name: 'Người dùng',
+        name: translate('users'),
         value: metrics.totalUsers.value,
         change: metrics.totalUsers.change,
-        subText: 'Tổng số tài khoản đã đăng ký',
+        subText: translate('registeredAccounts'),
         icon: Users,
         color: 'from-blue-500 to-indigo-500 shadow-blue-500/10',
       },
       {
-        name: 'Cộng đồng (CLB)',
+        name: translate('communities'),
         value: metrics.totalCommunities.value,
         change: metrics.totalCommunities.change,
-        subText: 'Tổng số câu lạc bộ thể thao',
+        subText: translate('sportsClubs'),
         icon: Building,
         color: 'from-purple-500 to-indigo-500 shadow-purple-500/10',
       },
       {
-        name: 'Giải đấu',
+        name: translate('tournaments'),
         value: metrics.totalTournaments.value,
         change: metrics.totalTournaments.change,
-        subText: 'Giải đã và đang tổ chức',
+        subText: translate('organizedTournaments'),
         icon: Trophy,
         color: 'from-amber-500 to-orange-500 shadow-amber-500/10',
       },
       {
-        name: 'Tổng GMV Giao dịch',
+        name: translate('totalGmv'),
         value: formatCurrency(metrics.gmv.value),
         change: metrics.gmv.change,
-        subText: 'Tổng lệ phí thanh toán qua cổng',
+        subText: translate('gatewayFees'),
         icon: DollarSign,
         color: 'from-emerald-500 to-teal-500 shadow-emerald-500/10',
         isPercent: true,
       },
       {
-        name: 'Hoa hồng nền tảng (Net Revenue)',
+        name: translate('netRevenue'),
         value: formatCurrency(metrics.netRevenue.value),
         change: metrics.netRevenue.change,
-        subText: `Phần doanh thu thu về (Escrow phí)`,
+        subText: translate('escrowRevenue'),
         icon: Percent,
         color: 'from-rose-500 to-pink-500 shadow-rose-500/10',
         isPercent: true,
       },
       {
-        name: 'Escrow đang giữ',
+        name: translate('heldEscrow'),
         value: formatCurrency(metrics.heldEscrow.value),
         change: metrics.heldEscrow.change,
-        subText: 'Lệ phí đang khóa chờ giải ngân',
+        subText: translate('lockedFees'),
         icon: TrendingUp,
         color: 'from-sky-500 to-blue-500 shadow-sky-500/10',
         isPercent: true,
       },
     ];
-  }, [metrics]);
+  }, [metrics, translate]);
 
   if (loading) {
     return (
@@ -258,7 +261,7 @@ export default function AdminDashboard() {
           ))}
         </div>
         <div className="h-96 bg-white border border-slate-200 rounded-lg p-6 animate-pulse flex items-center justify-center">
-          <div className="text-slate-400">Đang tải biểu đồ thống kê...</div>
+          <div className="text-slate-400">{translate('loadingChart')}</div>
         </div>
       </div>
     );
@@ -272,7 +275,7 @@ export default function AdminDashboard() {
           onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition-all"
         >
-          Tải lại trang
+          {translate('reloadPage')}
         </button>
       </div>
     );
@@ -280,12 +283,12 @@ export default function AdminDashboard() {
 
   const getCompareText = () => {
     switch (groupBy) {
-      case 'day': return '24h qua';
-      case 'week': return '7 ngày qua';
-      case 'year': return 'năm qua';
+      case 'day': return translate('compareDay');
+      case 'week': return translate('compareWeek');
+      case 'year': return translate('compareYear');
       case 'month':
       default:
-        return '30 ngày qua';
+        return translate('compareMonth');
     }
   };
 
@@ -295,15 +298,15 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-slate-900">
-            Tổng Quan Hệ Thống & Tài Chính
+            {translate('title')}
           </h2>
           <p className="text-slate-500 text-sm">
-            Báo cáo chi tiết tài chính, doanh thu (GMV & Net Revenue) cùng các chỉ số vận hành
+            {translate('description')}
           </p>
         </div>
       </div>
 
-      {/* Banner thông báo — hiển thị đầu trang */}
+              {/* Banner thông báo — hiển thị đầu trang */}
       {(pendingCounts.communities + pendingCounts.verifications + pendingCounts.payouts + pendingCounts.reports + pendingCounts.changeRequests) > 0 ? (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-start gap-4">
@@ -315,37 +318,37 @@ export default function AdminDashboard() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-slate-1000 animate-pulse" />
-                <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
+                <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">{translate('pendingTitle')}</h3>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {pendingCounts.communities > 0 && (
                   <a href="/admin/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <Building className="w-3.5 h-3.5" />
-                    CLB ({pendingCounts.communities})
+                    {translate('communitiesShort')} ({pendingCounts.communities})
                   </a>
                 )}
                 {pendingCounts.verifications > 0 && (
                   <a href="/admin/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <ShieldAlert className="w-3.5 h-3.5" />
-                    Sao uy tín ({pendingCounts.verifications})
+                    {translate('verifications')} ({pendingCounts.verifications})
                   </a>
                 )}
                 {pendingCounts.payouts > 0 && (
                   <a href="/admin/payouts" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <CreditCard className="w-3.5 h-3.5" />
-                    Rút tiền ({pendingCounts.payouts})
+                    {translate('payouts')} ({pendingCounts.payouts})
                   </a>
                 )}
                 {pendingCounts.reports > 0 && (
                   <a href="/admin/reports" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <FileWarning className="w-3.5 h-3.5" />
-                    Báo cáo ({pendingCounts.reports})
+                    {translate('reports')} ({pendingCounts.reports})
                   </a>
                 )}
                 {pendingCounts.changeRequests > 0 && (
                   <a href="/admin/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <Users className="w-3.5 h-3.5" />
-                    Đổi TT ({pendingCounts.changeRequests})
+                    {translate('changeRequests')} ({pendingCounts.changeRequests})
                   </a>
                 )}
               </div>
@@ -407,10 +410,10 @@ export default function AdminDashboard() {
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              Phân Tích Doanh Thu
+              {translate('revenueAnalysis')}
             </h3>
             <p className="text-xs text-slate-500">
-              Đối chiếu chênh lệch giữa tổng giá trị giao dịch (GMV) và hoa hồng thực nhận của sàn (Net Revenue)
+              {translate('revenueAnalysisDescription')}
             </p>
           </div>
 
@@ -428,7 +431,7 @@ export default function AdminDashboard() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {interval === 'day' ? 'Ngày' : interval === 'week' ? 'Tuần' : interval === 'month' ? 'Tháng' : 'Năm'}
+                  {interval === 'day' ? translate('day') : interval === 'week' ? translate('week') : interval === 'month' ? translate('month') : translate('year')}
                 </button>
               ))}
             </div>
@@ -451,7 +454,7 @@ export default function AdminDashboard() {
                   onClick={() => { setStartDate(''); setEndDate(''); }}
                   className="text-[10px] text-rose-600 hover:text-rose-700 ml-1 font-bold underline"
                 >
-                  Xóa
+                  {translate('clear')}
                 </button>
               )}
             </div>
@@ -464,14 +467,14 @@ export default function AdminDashboard() {
             <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-lg flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-2 text-slate-600 text-xs">
                 <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <span>Đang đồng bộ dữ liệu...</span>
+                <span>{translate('syncing')}</span>
               </div>
             </div>
           )}
 
           {chartData.length === 0 ? (
             <div className="h-full flex items-center justify-center border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-sm">
-              Không có dữ liệu giao dịch trong khoảng thời gian đã chọn.
+              {translate('noChartData')}
             </div>
           ) : (
             <ResponsiveContainer
@@ -512,15 +515,15 @@ export default function AdminDashboard() {
                   itemStyle={{ fontSize: '12px' }}
                   formatter={(value: number | string | readonly (string | number)[] | undefined, name: string | number | undefined) => {
                     if (value === undefined || Array.isArray(value)) return [String(value || ''), String(name || '')];
-                    if (name === 'revenue') return [formatCurrency(value as string | number), 'Hoa hồng sàn (Net)'];
-                    if (name === 'gmv') return [formatCurrency(value as string | number), 'Tổng giao dịch (GMV)'];
+                    if (name === 'revenue') return [formatCurrency(value as string | number), translate('netRevenueShort')];
+                    if (name === 'gmv') return [formatCurrency(value as string | number), translate('gmvShort')];
                     return [value as string | number, String(name || '')];
                   }}
                   labelFormatter={(label) => {
                     try {
                       const date = new Date(label);
                       if (isNaN(date.getTime())) return label;
-                      return date.toLocaleDateString('vi-VN', { dateStyle: 'long' });
+                      return date.toLocaleDateString(locale, { dateStyle: 'long' });
                     } catch {
                       return label;
                     }
@@ -532,7 +535,7 @@ export default function AdminDashboard() {
                   iconType="circle"
                   iconSize={8}
                   wrapperStyle={{ fontSize: '11px', color: '#64748b' }}
-                  formatter={(value) => value === 'gmv' ? 'Tổng giá trị giao dịch (GMV)' : 'Doanh thu sàn (Net Revenue)'}
+                  formatter={(value) => value === 'gmv' ? translate('gmvLong') : translate('netRevenueLong')}
                 />
                 <Area 
                   type="monotone" 

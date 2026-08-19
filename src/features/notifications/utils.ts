@@ -18,6 +18,8 @@ export interface NotificationActionConfig {
   participantId?: string;
 }
 
+type NotificationTranslator = (key: any, values?: any) => string;
+
 const VIETNAMESE_DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
   month: '2-digit',
@@ -62,7 +64,11 @@ export const getUnreadNotificationsCount = (
   notifications: NotificationItem[],
 ): number => notifications.reduce((count, item) => count + (item.isRead ? 0 : 1), 0);
 
-export const formatNotificationTimestamp = (createdAt: string): string => {
+export const formatNotificationTimestamp = (
+  createdAt: string,
+  translate?: NotificationTranslator,
+  locale = 'vi',
+): string => {
   const createdTime = new Date(createdAt).getTime();
 
   if (Number.isNaN(createdTime)) {
@@ -72,23 +78,39 @@ export const formatNotificationTimestamp = (createdAt: string): string => {
   const diffInMinutes = Math.max(0, Math.floor((Date.now() - createdTime) / 60000));
 
   if (diffInMinutes < 1) {
-    return 'Vừa xong';
+    return translate ? translate('timeJustNow') : 'Vừa xong';
   }
 
   if (diffInMinutes < 60) {
-    return `${diffInMinutes} phút trước`;
+    return translate
+      ? translate('timeMinutesAgo', { count: diffInMinutes })
+      : `${diffInMinutes} phút trước`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
 
   if (diffInHours < 24) {
-    return `${diffInHours} giờ trước`;
+    return translate
+      ? translate('timeHoursAgo', { count: diffInHours })
+      : `${diffInHours} giờ trước`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
 
   if (diffInDays < 7) {
-    return `${diffInDays} ngày trước`;
+    return translate
+      ? translate('timeDaysAgo', { count: diffInDays })
+      : `${diffInDays} ngày trước`;
+  }
+
+  if (translate) {
+    return new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(createdTime));
   }
 
   return VIETNAMESE_DATE_FORMATTER.format(new Date(createdTime));
@@ -125,33 +147,36 @@ export const resolveNotificationTarget = (
   }
 };
 
-export const getNotificationTypeLabel = (type: string): string => {
+export const getNotificationTypeLabel = (
+  type: string,
+  translate?: NotificationTranslator,
+): string => {
   const trimmedType = type.trim();
   const explicitLabel = NOTIFICATION_TYPE_LABELS[trimmedType];
 
   if (explicitLabel) {
-    return explicitLabel;
+    return translate ? translate(`notificationType_${trimmedType}`) : explicitLabel;
   }
 
   const normalizedType = trimmedType.toLowerCase();
 
   if (normalizedType.includes('payment')) {
-    return 'Thanh toán';
+    return translate ? translate('notificationTypePayment') : 'Thanh toán';
   }
 
   if (normalizedType.includes('tournament')) {
-    return 'Giải đấu';
+    return translate ? translate('notificationTypeTournament') : 'Giải đấu';
   }
 
   if (normalizedType.includes('chat') || normalizedType.includes('message')) {
-    return 'Tin nhắn';
+    return translate ? translate('notificationTypeMessage') : 'Tin nhắn';
   }
 
   if (normalizedType.includes('system')) {
-    return 'Hệ thống';
+    return translate ? translate('notificationTypeSystem') : 'Hệ thống';
   }
 
-  return 'Thông báo';
+  return translate ? translate('notificationTypeDefault') : 'Thông báo';
 };
 
 export const getNotificationTypeMeta = (type: string): NotificationTypeMeta =>
@@ -216,8 +241,22 @@ export const getNotificationTone = (
   return 'neutral';
 };
 
-export const getNotificationSummary = (type: string): string => {
-  switch (getNotificationTone(type)) {
+export const getNotificationSummary = (
+  type: string,
+  translate?: NotificationTranslator,
+): string => {
+  const tone = getNotificationTone(type);
+  const keyByTone = {
+    danger: 'summaryNeedsAttention',
+    success: 'summaryUpdated',
+    warning: 'summaryPending',
+    accent: 'summaryActionAvailable',
+    info: 'summaryNewInformation',
+    neutral: 'summarySystem',
+  } as const;
+  if (translate) return translate(keyByTone[tone]);
+
+  switch (tone) {
     case 'danger':
       return 'Cần chú ý';
     case 'success':

@@ -18,6 +18,7 @@ import {
   Eye,
   Ban,
 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'PENDING' | 'REJECTED';
 type ReviewCommunityStatus = Exclude<StatusFilter, 'ALL'>;
@@ -26,6 +27,8 @@ type ReviewCommunity = Omit<Community, 'status'> & {
 };
 
 export default function AdminCommunitiesReview() {
+  const translate = useTranslations('AdminCommunities');
+  const locale = useLocale();
   const [communities, setCommunities] = useState<ReviewCommunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,11 +59,11 @@ export default function AdminCommunitiesReview() {
       setError(null);
     } catch (err: unknown) {
       console.error('Failed to fetch communities:', err);
-      setError(getErrorMessage(err, 'Không thể tải danh sách cộng đồng'));
+      setError(getErrorMessage(err, translate('loadError')));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [translate]);
 
   useEffect(() => {
     fetchAllCommunities();
@@ -70,10 +73,10 @@ export default function AdminCommunitiesReview() {
     try {
       setSubmitting(true);
       await communitiesApi.reviewCommunity(id, { status: 'APPROVED' });
-      toast.success('Đã duyệt cộng đồng thành công');
+      toast.success(translate('approveSuccess'));
       fetchAllCommunities();
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Duyệt cộng đồng thất bại'));
+      toast.error(getErrorMessage(err, translate('approveError')));
     } finally {
       setSubmitting(false);
     }
@@ -81,7 +84,7 @@ export default function AdminCommunitiesReview() {
 
   const handleReject = async (id: string, reason: string) => {
     if (!reason.trim()) {
-      setModalError('Vui lòng nhập lý do');
+      setModalError(translate('reasonRequired'));
       return;
     }
     try {
@@ -91,40 +94,40 @@ export default function AdminCommunitiesReview() {
         status: 'REJECTED',
         rejectedReason: reason,
       });
-      toast.success('Đã từ chối cộng đồng');
+      toast.success(translate('rejectSuccess'));
       setRejectingId(null);
       setRejectReason('');
       fetchAllCommunities();
     } catch (err: unknown) {
-      setModalError(getErrorMessage(err, 'Từ chối thất bại'));
+      setModalError(getErrorMessage(err, translate('rejectError')));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeactivate = async (id: string) => {
-    if (!window.confirm('Vô hiệu hoá cộng đồng này? Thành viên sẽ không thể truy cập.')) return;
+    if (!window.confirm(translate('deactivateConfirm'))) return;
     try {
       setSubmitting(true);
       await communitiesApi.reviewCommunity(id, { status: 'REJECTED', rejectedReason: 'Vô hiệu hoá bởi Admin' });
-      toast.success('Đã vô hiệu hoá cộng đồng');
+      toast.success(translate('deactivateSuccess'));
       fetchAllCommunities();
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Thao tác thất bại'));
+      toast.error(getErrorMessage(err, translate('actionError')));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleReactivate = async (id: string) => {
-    if (!window.confirm('Mở lại cộng đồng này?')) return;
+    if (!window.confirm(translate('reactivateConfirm'))) return;
     try {
       setSubmitting(true);
       await communitiesApi.reviewCommunity(id, { status: 'APPROVED', rejectedReason: '' });
-      toast.success('Đã mở lại cộng đồng');
+      toast.success(translate('reactivateSuccess'));
       fetchAllCommunities();
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Thao tác thất bại'));
+      toast.error(getErrorMessage(err, translate('actionError')));
     } finally {
       setSubmitting(false);
     }
@@ -179,8 +182,8 @@ export default function AdminCommunitiesReview() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Quản lý cộng đồng</h2>
-          <p className="text-xs text-gray-500">Xem, duyệt và quản lý tất cả câu lạc bộ trên hệ thống</p>
+          <h2 className="text-xl font-bold text-gray-900">{translate('title')}</h2>
+          <p className="text-xs text-gray-500">{translate('description')}</p>
         </div>
       </div>
 
@@ -193,10 +196,10 @@ export default function AdminCommunitiesReview() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Tổng số" value={stats.total} color="text-gray-800" />
-        <StatCard label="Hoạt động" value={stats.active} color="text-blue-600" />
-        <StatCard label="Chờ duyệt" value={stats.pending} color="text-amber-600" />
-        <StatCard label="Đã khoá" value={stats.rejected} color="text-rose-600" />
+        <StatCard label={translate('total')} value={stats.total} color="text-gray-800" />
+        <StatCard label={translate('active')} value={stats.active} color="text-blue-600" />
+        <StatCard label={translate('pending')} value={stats.pending} color="text-amber-600" />
+        <StatCard label={translate('rejected')} value={stats.rejected} color="text-rose-600" />
       </div>
 
       {/* Search + Filter */}
@@ -205,7 +208,7 @@ export default function AdminCommunitiesReview() {
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tìm kiếm cộng đồng..."
+            placeholder={translate('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -213,10 +216,10 @@ export default function AdminCommunitiesReview() {
         </div>
         <div className="flex flex-wrap gap-1.5">
           {([
-            { value: 'ALL', label: 'Tất cả', count: stats.total, color: 'text-gray-700' },
-            { value: 'ACTIVE', label: 'Hoạt động', count: stats.active, color: 'text-blue-600' },
-            { value: 'PENDING', label: 'Chờ duyệt', count: stats.pending, color: 'text-amber-600' },
-            { value: 'REJECTED', label: 'Đã khoá', count: stats.rejected, color: 'text-rose-600' },
+            { value: 'ALL', label: translate('all'), count: stats.total, color: 'text-gray-700' },
+            { value: 'ACTIVE', label: translate('active'), count: stats.active, color: 'text-blue-600' },
+            { value: 'PENDING', label: translate('pending'), count: stats.pending, color: 'text-amber-600' },
+            { value: 'REJECTED', label: translate('rejected'), count: stats.rejected, color: 'text-rose-600' },
           ] as const).map((opt) => (
             <button
               key={opt.value}
@@ -244,8 +247,8 @@ export default function AdminCommunitiesReview() {
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-14 text-center shadow-sm">
           <Building className="mx-auto h-12 w-12 text-gray-300" />
-          <p className="mt-4 text-base font-semibold text-gray-700">Không có cộng đồng nào</p>
-          <p className="mt-1 text-xs text-gray-400">Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm.</p>
+          <p className="mt-4 text-base font-semibold text-gray-700">{translate('emptyTitle')}</p>
+          <p className="mt-1 text-xs text-gray-400">{translate('emptyDescription')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -257,7 +260,7 @@ export default function AdminCommunitiesReview() {
               : isActive
                 ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                 : 'bg-gray-50 text-gray-500 border-gray-200';
-            const statusLabel = isPending ? 'Chờ duyệt' : isActive ? 'Hoạt động' : 'Đã khoá';
+            const statusLabel = isPending ? translate('pending') : isActive ? translate('active') : translate('rejected');
 
             return (
               <div
@@ -289,7 +292,7 @@ export default function AdminCommunitiesReview() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
-                            {(community as any)._count?.members || 0} TV
+                            {(community as any)._count?.members || 0} {translate('membersShort')}
                           </span>
                         </div>
                       </div>
@@ -309,7 +312,7 @@ export default function AdminCommunitiesReview() {
                       className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      Xem
+                      {translate('view')}
                     </button>
 
                     {/* Duyệt (nếu PENDING) */}
@@ -322,7 +325,7 @@ export default function AdminCommunitiesReview() {
                         className="text-xs active:scale-95"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        Duyệt
+                        {translate('approve')}
                       </Button>
                     )}
 
@@ -335,7 +338,7 @@ export default function AdminCommunitiesReview() {
                         className="text-xs active:scale-95"
                       >
                         <X className="w-3.5 h-3.5" />
-                        Từ chối
+                        {translate('reject')}
                       </Button>
                     ) : isActive ? (
                       <button
@@ -344,7 +347,7 @@ export default function AdminCommunitiesReview() {
                         className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-500 transition-all hover:bg-gray-100 active:scale-95"
                       >
                         <Ban className="w-3.5 h-3.5" />
-                        Vô hiệu
+                        {translate('deactivate')}
                       </button>
                     ) : (
                       <button
@@ -352,7 +355,7 @@ export default function AdminCommunitiesReview() {
                         onClick={() => handleReactivate(community.id)}
                         className="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-100 active:scale-95"
                       >
-                        Mở lại
+                        {translate('reactivate')}
                       </button>
                     )}
                   </div>
@@ -368,7 +371,7 @@ export default function AdminCommunitiesReview() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-              <h3 className="text-sm font-bold text-gray-800">Từ chối cộng đồng</h3>
+              <h3 className="text-sm font-bold text-gray-800">{translate('rejectTitle')}</h3>
               <button onClick={() => setRejectingId(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
                 <X className="w-4 h-4" />
               </button>
@@ -376,12 +379,12 @@ export default function AdminCommunitiesReview() {
 
             <div className="p-5 space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">Lý do từ chối</label>
+                <label className="text-xs font-bold text-gray-600">{translate('rejectReasonLabel')}</label>
                 <textarea
                   required
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Nhập lý do cụ thể..."
+                  placeholder={translate('rejectReasonPlaceholder')}
                   className="h-28 w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
@@ -394,7 +397,7 @@ export default function AdminCommunitiesReview() {
                 onClick={() => setRejectingId(null)}
                 className="text-xs"
               >
-                Hủy
+                {translate('cancel')}
               </Button>
               <Button
                 disabled={submitting}
@@ -403,7 +406,7 @@ export default function AdminCommunitiesReview() {
                 className="text-xs active:scale-95"
               >
                 {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                Xác nhận từ chối
+                {translate('confirmReject')}
               </Button>
             </div>
           </div>
@@ -431,29 +434,29 @@ export default function AdminCommunitiesReview() {
                 </div>
                 <div className="ml-4 pb-1">
                   <h3 className="text-lg font-bold text-gray-900">{selectedCommunity.name}</h3>
-                  <p className="text-xs text-gray-500">{selectedCommunity.locationAddress || 'Chưa cập nhật'}</p>
+                  <p className="text-xs text-gray-500">{selectedCommunity.locationAddress || translate('notUpdated')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 mb-4">
-                {selectedCommunity.status === 'ACTIVE' && <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-xs font-bold">Hoạt động</span>}
-                {selectedCommunity.status === 'PENDING' && <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Chờ duyệt</span>}
-                {selectedCommunity.status === 'REJECTED' && <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-full text-xs font-bold">Đã khoá</span>}
-                <span className="text-[10px] text-gray-400">{new Date(selectedCommunity.createdAt).toLocaleDateString('vi-VN')}</span>
+                {selectedCommunity.status === 'ACTIVE' && <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-xs font-bold">{translate('active')}</span>}
+                {selectedCommunity.status === 'PENDING' && <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">{translate('pending')}</span>}
+                {selectedCommunity.status === 'REJECTED' && <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-full text-xs font-bold">{translate('rejected')}</span>}
+                <span className="text-[10px] text-gray-400">{new Date(selectedCommunity.createdAt).toLocaleDateString(locale)}</span>
               </div>
               {selectedCommunity.description && (
                 <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100 mb-4">{selectedCommunity.description}</p>
               )}
               {selectedCommunity.status === 'REJECTED' && (selectedCommunity as any).rejectedReason && (
                 <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 mb-4">
-                  <p className="text-xs font-bold text-rose-600 mb-1">Lý do khoá</p>
+                  <p className="text-xs font-bold text-rose-600 mb-1">{translate('lockReason')}</p>
                   <p className="text-sm text-rose-800">{(selectedCommunity as any).rejectedReason}</p>
                 </div>
               )}
               <div className="flex gap-2 pt-3 border-t border-gray-100">
-                <Button variant="outline" size="sm" onClick={() => setSelectedCommunity(null)} className="text-xs flex-1">Đóng</Button>
-                <Button size="sm" onClick={() => window.open(`/communities/${selectedCommunity.id}`, '_blank')} className="text-xs flex-1 bg-blue-600 hover:bg-blue-700 text-white">Xem trang</Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedCommunity(null)} className="text-xs flex-1">{translate('close')}</Button>
+                <Button size="sm" onClick={() => window.open(`/communities/${selectedCommunity.id}`, '_blank')} className="text-xs flex-1 bg-blue-600 hover:bg-blue-700 text-white">{translate('viewPage')}</Button>
                 {selectedCommunity.status === 'REJECTED' && (
-                  <Button size="sm" onClick={() => { setSelectedCommunity(null); handleReactivate(selectedCommunity.id); }} className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Mở lại</Button>
+                  <Button size="sm" onClick={() => { setSelectedCommunity(null); handleReactivate(selectedCommunity.id); }} className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white">{translate('reactivate')}</Button>
                 )}
               </div>
             </div>

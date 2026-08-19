@@ -7,22 +7,25 @@ import { Button } from '@/components/ui/Button';
 import { AdminPayoutRequest, PayoutStatus } from '@/types/payment';
 import { getErrorMessage } from '@/utils/error';
 import { CreditCard, Landmark, Check, X, AlertCircle, ExternalLink, Calendar, Search } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 type ReviewAction = 'APPROVED' | 'REJECTED' | 'PAID';
 
 const PAYOUT_STATUS_LABELS: Record<PayoutStatus, string> = {
-  PENDING: 'Chờ duyệt',
-  REQUESTED: 'Mới gửi',
-  UNDER_REVIEW: 'Đang đối soát',
-  APPROVED: 'Đã duyệt hồ sơ',
-  PROCESSING: 'Đang chuyển tiền',
-  PAID: 'Đã chuyển tiền',
-  REJECTED: 'Đã từ chối',
-  FAILED: 'Chuyển tiền lỗi',
-  CANCELLED: 'Đã hủy',
+  PENDING: 'statusPending',
+  REQUESTED: 'statusRequested',
+  UNDER_REVIEW: 'statusUnderReview',
+  APPROVED: 'statusApproved',
+  PROCESSING: 'statusProcessing',
+  PAID: 'statusPaid',
+  REJECTED: 'statusRejected',
+  FAILED: 'statusFailed',
+  CANCELLED: 'statusCancelled',
 };
 
 export default function AdminPayoutsReview() {
+  const translate = useTranslations('AdminPayouts');
+  const locale = useLocale();
   const [payouts, setPayouts] = useState<AdminPayoutRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export default function AdminPayoutsReview() {
       })
       .catch((err) => {
         console.error('Failed to fetch payouts:', err);
-        setError('Không thể tải danh sách yêu cầu rút tiền');
+        setError(translate('loadError'));
       })
       .finally(() => {
         setLoading(false);
@@ -72,12 +75,12 @@ export default function AdminPayoutsReview() {
     if (!reviewingPayout || !reviewAction) return;
 
     if (reviewAction === 'PAID' && !proofUrl.trim()) {
-      setModalError('Vui lòng cung cấp link hình ảnh hóa đơn/bằng chứng chuyển khoản');
+      setModalError(translate('proofRequired'));
       return;
     }
 
     if (reviewAction === 'REJECTED' && !note.trim()) {
-      setModalError('Vui lòng nhập lý do từ chối yêu cầu rút tiền');
+      setModalError(translate('rejectReasonRequired'));
       return;
     }
 
@@ -89,19 +92,19 @@ export default function AdminPayoutsReview() {
           transactionProofUrl: proofUrl.trim(),
           note: note.trim() || undefined,
         });
-        toast.success('Đã xác nhận chuyển tiền thành công');
+        toast.success(translate('paidSuccess'));
       } else {
         await paymentsApi.reviewPayout(reviewingPayout.id, {
           status: reviewAction,
           note: note.trim() || undefined,
         });
-        toast.success(reviewAction === 'APPROVED' ? 'Đã duyệt hồ sơ giải ngân' : 'Đã từ chối yêu cầu');
+        toast.success(reviewAction === 'APPROVED' ? translate('approveSuccess') : translate('rejectSuccess'));
       }
       setReviewingPayout(null);
       fetchPayouts();
     } catch (err: unknown) {
       console.error('Review payout error:', err);
-      setModalError(getErrorMessage(err, 'Lỗi cập nhật. Vui lòng thử lại.'));
+      setModalError(getErrorMessage(err, translate('updateError')));
     } finally {
       setSubmitting(false);
     }
@@ -109,7 +112,7 @@ export default function AdminPayoutsReview() {
 
   const formatCurrency = (val: string | number) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND' }).format(num);
   };
 
   const parseDate = (str: string): Date | null => {
@@ -124,7 +127,7 @@ export default function AdminPayoutsReview() {
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   const filteredPayouts = payouts.filter(p => {
@@ -170,8 +173,8 @@ export default function AdminPayoutsReview() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-bold text-slate-900">Yêu Cầu Rút Tiền</h2>
-        <p className="text-xs text-slate-500">Xem và giải ngân lệ phí các giải đấu cho Ban tổ chức sau khi hoàn thành đối soát</p>
+        <h2 className="text-xl font-bold text-slate-900">{translate('title')}</h2>
+        <p className="text-xs text-slate-500">{translate('description')}</p>
       </div>
 
       {error && (
@@ -187,7 +190,7 @@ export default function AdminPayoutsReview() {
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Từ ngày (dd/mm/yyyy)"
+            placeholder={translate('fromDatePlaceholder')}
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
@@ -197,22 +200,22 @@ export default function AdminPayoutsReview() {
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Đến ngày (dd/mm/yyyy)"
+            placeholder={translate('toDatePlaceholder')}
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
         </div>
         <div className="flex items-center gap-2 min-w-[180px]">
-          <span className="text-xs text-gray-400 font-semibold">Trạng thái:</span>
+          <span className="text-xs text-gray-400 font-semibold">{translate('statusLabel')}:</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
           >
-            <option value="ALL">Tất cả</option>
+            <option value="ALL">{translate('all')}</option>
             {Object.entries(PAYOUT_STATUS_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>{translate(label)}</option>
             ))}
           </select>
         </div>
@@ -222,8 +225,8 @@ export default function AdminPayoutsReview() {
       {filteredPayouts.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-3 shadow-sm">
           <CreditCard className="w-12 h-12 text-slate-400 mx-auto" />
-          <p className="font-bold text-slate-800">Không có yêu cầu rút tiền nào</p>
-          <p className="text-xs text-slate-500">Mọi yêu cầu đối soát và rút tiền đã hoàn thành xong.</p>
+          <p className="font-bold text-slate-800">{translate('emptyTitle')}</p>
+          <p className="text-xs text-slate-500">{translate('emptyDescription')}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -236,10 +239,10 @@ export default function AdminPayoutsReview() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
                 <div className="space-y-1">
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    {request.tournament?.name || 'Giải Đấu'}
+                    {request.tournament?.name || translate('tournamentFallback')}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Người yêu cầu: <span className="font-semibold text-slate-700">{request.organizer?.fullName || request.organizer?.email || request.organizerId}</span>
+                    {translate('requester')}: <span className="font-semibold text-slate-700">{request.organizer?.fullName || request.organizer?.email || request.organizerId}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -252,7 +255,7 @@ export default function AdminPayoutsReview() {
                       ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                       : 'bg-rose-50 text-rose-600 border-slate-200'
                   }`}>
-                    {PAYOUT_STATUS_LABELS[request.status]}
+                    {translate(PAYOUT_STATUS_LABELS[request.status])}
                   </span>
                 </div>
               </div>
@@ -261,17 +264,17 @@ export default function AdminPayoutsReview() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Financial Summary */}
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
-                  <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Đối soát tài chính</p>
+                  <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{translate('financialReconciliation')}</p>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Tổng thu được:</span>
+                    <span>{translate('totalCollected')}:</span>
                     <span className="font-semibold text-slate-800">{formatCurrency(request.totalCollected)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Phí sàn (5%):</span>
+                    <span>{translate('platformFee')}:</span>
                     <span className="font-semibold text-rose-600">-{formatCurrency(request.platformFeeRetained)}</span>
                   </div>
                   <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
-                    <span className="font-bold text-slate-800">Thực nhận:</span>
+                    <span className="font-bold text-slate-800">{translate('netAmount')}:</span>
                     <span className="font-bold text-blue-600">{formatCurrency(request.amountRequested)}</span>
                   </div>
                 </div>
@@ -280,12 +283,12 @@ export default function AdminPayoutsReview() {
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
                     <Landmark className="w-3.5 h-3.5 text-blue-600" />
-                    Tài khoản thụ hưởng
+                    {translate('beneficiaryAccount')}
                   </p>
                   <div className="space-y-1 text-xs text-slate-700">
-                    <p><span className="text-slate-500">Ngân hàng:</span> <span className="font-semibold">{request.bankName}</span></p>
-                    <p><span className="text-slate-500">Số tài khoản:</span> <span className="font-semibold tracking-wider text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">{request.bankAccountNumber}</span></p>
-                    <p><span className="text-slate-500">Chủ tài khoản:</span> <span className="font-semibold uppercase">{request.bankAccountName}</span></p>
+                    <p><span className="text-slate-500">{translate('bank')}:</span> <span className="font-semibold">{request.bankName}</span></p>
+                    <p><span className="text-slate-500">{translate('accountNumber')}:</span> <span className="font-semibold tracking-wider text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">{request.bankAccountNumber}</span></p>
+                    <p><span className="text-slate-500">{translate('accountHolder')}:</span> <span className="font-semibold uppercase">{request.bankAccountName}</span></p>
                   </div>
                 </div>
 
@@ -299,7 +302,7 @@ export default function AdminPayoutsReview() {
                         className="flex-1 text-xs"
                       >
                         <Check className="w-4 h-4" />
-                        Duyệt hồ sơ
+                        {translate('reviewApplication')}
                       </Button>
                       <Button
                         onClick={() => handleOpenReview(request, 'REJECTED')}
@@ -307,13 +310,13 @@ export default function AdminPayoutsReview() {
                         className="flex-1 text-xs"
                       >
                         <X className="w-4 h-4" />
-                        Từ Chối
+                        {translate('rejectPayout')}
                       </Button>
                     </div>
                   ) : ['APPROVED', 'PROCESSING'].includes(request.status) ? (
                     <div className="space-y-3">
                       <p className="text-xs text-slate-500">
-                        Hồ sơ đã duyệt. Chỉ xác nhận sau khi tiền đã được chuyển thực tế.
+                        {translate('approvedNotice')}
                       </p>
                       <Button
                         onClick={() => handleOpenReview(request, 'PAID')}
@@ -321,14 +324,14 @@ export default function AdminPayoutsReview() {
                         className="w-full text-xs"
                       >
                         <Check className="w-4 h-4" />
-                        Xác nhận đã chuyển tiền
+                        {translate('confirmPaid')}
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-2 text-xs text-slate-500">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Xử lý lúc: {request.processedAt ? new Date(request.processedAt).toLocaleString('vi-VN') : new Date(request.updatedAt).toLocaleString('vi-VN')}</span>
+                        <span>{translate('processedAt')}: {request.processedAt ? new Date(request.processedAt).toLocaleString(locale) : new Date(request.updatedAt).toLocaleString(locale)}</span>
                       </div>
                       {request.transactionProofUrl && (
                         <a 
@@ -337,7 +340,7 @@ export default function AdminPayoutsReview() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 text-blue-600 hover:underline hover:text-blue-700 font-bold"
                         >
-                          Xem ảnh bill chuyển khoản
+                          {translate('viewProof')}
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
@@ -358,10 +361,10 @@ export default function AdminPayoutsReview() {
             <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <h3 className="text-base font-bold text-slate-900">
                 {reviewAction === 'APPROVED'
-                  ? 'Duyệt hồ sơ giải ngân'
+                  ? translate('approveModalTitle')
                   : reviewAction === 'PAID'
-                    ? 'Xác nhận đã chuyển tiền'
-                    : 'Từ chối giải ngân'}
+                    ? translate('paidModalTitle')
+                    : translate('rejectModalTitle')}
               </h3>
               <button 
                 onClick={() => setReviewingPayout(null)}
@@ -375,16 +378,16 @@ export default function AdminPayoutsReview() {
             <form onSubmit={handleReviewSubmit}>
               <div className="p-6 space-y-4">
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1 text-xs">
-                  <p><span className="text-slate-500">Người nhận:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankAccountName}</span></p>
-                  <p><span className="text-slate-500">Ngân hàng:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankName} - {reviewingPayout.bankAccountNumber}</span></p>
+                  <p><span className="text-slate-500">{translate('recipient')}:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankAccountName}</span></p>
+                  <p><span className="text-slate-500">{translate('bank')}:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankName} - {reviewingPayout.bankAccountNumber}</span></p>
                   <p className="pt-1 border-t border-slate-200 mt-1">
-                    <span className="text-slate-500">Số tiền chuyển:</span> <span className="font-bold text-blue-600">{formatCurrency(reviewingPayout.amountRequested)}</span>
+                    <span className="text-slate-500">{translate('transferAmount')}:</span> <span className="font-bold text-blue-600">{formatCurrency(reviewingPayout.amountRequested)}</span>
                   </p>
                 </div>
 
                 {reviewAction === 'PAID' ? (
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700">Link ảnh bill chuyển khoản (Bắt buộc)</label>
+                    <label className="text-xs font-bold text-slate-700">{translate('proofUrlLabel')}</label>
                     <input
                       required
                       type="url"
@@ -393,19 +396,19 @@ export default function AdminPayoutsReview() {
                       placeholder="https://example.com/payout-proof.png"
                       className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                     />
-                    <p className="text-[10px] text-slate-400">Nhập link hình ảnh biên lai để ban tổ chức đối chiếu kiểm tra.</p>
+                    <p className="text-[10px] text-slate-400">{translate('proofUrlHelp')}</p>
                   </div>
                 ) : null}
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-700">
-                    {reviewAction === 'REJECTED' ? 'Lý do từ chối (Bắt buộc)' : 'Ghi chú xử lý (Tùy chọn)'}
+                    {reviewAction === 'REJECTED' ? translate('rejectNoteLabel') : translate('processingNoteLabel')}
                   </label>
                   <textarea
                     required={reviewAction === 'REJECTED'}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder={reviewAction === 'REJECTED' ? 'Nhập lý do cụ thể từ chối yêu cầu...' : 'Nhập ghi chú đối soát nếu cần.'}
+                    placeholder={reviewAction === 'REJECTED' ? translate('rejectNotePlaceholder') : translate('processingNotePlaceholder')}
                     className="w-full h-24 bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
                   />
                 </div>
@@ -422,7 +425,7 @@ export default function AdminPayoutsReview() {
                   onClick={() => setReviewingPayout(null)}
                   className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-sm font-bold rounded-lg transition-all"
                 >
-                  Hủy bỏ
+                  {translate('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -433,7 +436,7 @@ export default function AdminPayoutsReview() {
                       : 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/10'
                   }`}
                 >
-                  {reviewAction === 'APPROVED' ? 'Duyệt hồ sơ' : reviewAction === 'PAID' ? 'Xác nhận đã chuyển' : 'Từ chối'}
+                  {reviewAction === 'APPROVED' ? translate('reviewApplication') : reviewAction === 'PAID' ? translate('confirmTransfer') : translate('rejectPayout')}
                 </button>
               </div>
             </form>

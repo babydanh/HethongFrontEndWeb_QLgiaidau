@@ -15,6 +15,7 @@ import { isTournamentCompleted,
 } from '@/utils/tournament-status';
 import type { Match } from '@/types/match';
 import { exportTournamentResultsExcel } from '@/utils/exportTournament';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface TournamentStepperProps {
   tournament: Tournament;
@@ -47,6 +48,8 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
   participants = [], divisions = [], matches = [],
   }: TournamentStepperProps) {
+  const translate = useTranslations('OrganizerTournamentStepper');
+  const locale = useLocale();
   const getStepIndex = () => {
     if (isTournamentDraft(tournament.status)) return -1;
     if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) return 1;
@@ -83,43 +86,43 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   const phase2MandatoryPass = phase2RegLocked && phase2PaidCheck && phase2BracketCheck && phase2HasMinTeams;
 
   const phase2Checks = [
-    { key: 'regLocked', label: 'Đã khóa đăng ký — Không còn VĐV mới nào có thể vào giải', mandatory: true, pass: phase2RegLocked },
-    { key: 'paid', label: 'Thanh toán phí tham gia — Tất cả VĐV đã thanh toán phí thi đấu', mandatory: true, pass: phase2PaidCheck },
-    { key: 'bracket', label: 'Sơ đồ thi đấu đã tạo — Các bảng/division đã được khởi tạo sơ đồ', mandatory: true, pass: phase2BracketCheck },
-    { key: 'minTeams', label: 'Có ít nhất 2 đội tham gia — Giải cần tối thiểu 2 đội', mandatory: true, pass: phase2HasMinTeams },
-    { key: 'schedule', label: 'Lịch thi đấu đã phân — Ngày khai mạc/kết thúc đã thiết lập', mandatory: false, pass: phase2HasSchedule },
-    { key: 'venue', label: 'Địa điểm đã set — Sân thi đấu đã được xác định', mandatory: false, pass: phase2HasVenue },
+    { key: 'regLocked', label: translate('checks.registrationLocked'), mandatory: true, pass: phase2RegLocked },
+    { key: 'paid', label: translate('checks.paid'), mandatory: true, pass: phase2PaidCheck },
+    { key: 'bracket', label: translate('checks.bracket'), mandatory: true, pass: phase2BracketCheck },
+    { key: 'minTeams', label: translate('checks.minimumTeams'), mandatory: true, pass: phase2HasMinTeams },
+    { key: 'schedule', label: translate('checks.schedule'), mandatory: false, pass: phase2HasSchedule },
+    { key: 'venue', label: translate('checks.venue'), mandatory: false, pass: phase2HasVenue },
   ];
 
   const steps = [
     {
-      title: 'Nhận Đăng ký',
+      title: translate('steps.registration.title'),
       icon: <Users className="w-4 h-4" />,
-      description: 'VĐV đăng ký tham gia',
-      actionText: 'Chốt đăng ký',
+      description: translate('steps.registration.description'),
+      actionText: translate('steps.registration.action'),
       onClick: () => onNextStep('UPCOMING'),
       canProgress: currentStep === 0,
     },
     {
-      title: 'Sơ đồ & Lịch đấu',
+      title: translate('steps.schedule.title'),
       icon: <GitMerge className="w-4 h-4" />,
-      description: 'Chốt sơ đồ nháp, phân lịch',
-      actionText: 'Khai mạc giải đấu',
+      description: translate('steps.schedule.description'),
+      actionText: translate('steps.schedule.action'),
       onClick: () => onOpenTournament?.(),
       canProgress: currentStep === 1,
     },
     {
-      title: 'Đang Thi đấu',
+      title: translate('steps.inProgress.title'),
       icon: <Play className="w-4 h-4" />,
-      description: 'Cập nhật điểm số, kết quả',
-      actionText: 'Kết thúc giải đấu',
+      description: translate('steps.inProgress.description'),
+      actionText: translate('steps.inProgress.action'),
       onClick: () => onNextStep('COMPLETED'),
       canProgress: currentStep === 2,
     },
     {
-      title: 'Kết thúc',
+      title: translate('steps.completed.title'),
       icon: <Trophy className="w-4 h-4" />,
-      description: 'Giải đấu hoàn thành',
+      description: translate('steps.completed.description'),
       actionText: null,
       onClick: () => {},
       canProgress: false,
@@ -129,26 +132,26 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 mb-8 shadow-sm">
       <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-        <FileText className="w-5 h-5 text-blue-600" /> Tiến trình giải đấu
+        <FileText className="w-5 h-5 text-blue-600" /> {translate('progressTitle')}
       </h3>
       
       {isTournamentDraft(tournament.status) && (
         <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-lg border border-dashed border-slate-300 mb-6">
-          <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được công bố</h4>
+          <h4 className="font-bold text-slate-700 mb-2">{translate('draftTitle')}</h4>
           <p className="text-sm text-slate-500 mb-3 max-w-md text-center">
-            Bạn cần công bố giải đấu để kích hoạt thanh tiến trình và bắt đầu nhận đăng ký.
+            {translate('draftDescription')}
           </p>
           {publishFeeAmount > 0 && (
             <p className="text-xs text-blue-700 font-semibold mb-3 text-center">
-              Bước tiếp theo sẽ chuyển sang thanh toán phí công bố: {publishFeeAmount.toLocaleString('vi-VN')}đ
+              {translate('publishFeeNotice', { amount: publishFeeAmount.toLocaleString(locale) })}
             </p>
           )}
           <div className="bg-slate-50 text-slate-700 text-[13px] px-4 py-3 rounded-lg mb-5 max-w-lg border border-slate-200">
             <span className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              Lưu ý quan trọng trước khi công bố:
+              {translate('importantBeforePublish')}
             </span>
-            <p className="mb-2 font-medium">Thông tin cơ bản phải được điền đầy đủ và chính xác. Vui lòng kiểm tra kỹ các trường sau trước khi công bố:</p>
+            <p className="mb-2 font-medium">{translate('publishChecklistDescription')}</p>
             {(() => {
                 // Tự động kiểm tra tiến trình đã điền thông tin của giải đấu theo luật backend mới
                 const hasDescription = tournament.description != null && tournament.description.trim() !== '';
@@ -179,12 +182,12 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                         {hasDescription ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasDescription ? 'text-slate-400 line-through' : 'text-slate-700'}>
-                        Thông tin cơ bản giải đấu
+                        {translate('checklist.basicInfo')}
                       </span>
                     </div>
                     {!hasDescription && (
                       <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        Chưa điền
+                        {translate('checklist.notFilled')}
                       </span>
                     )}
                   </div>
@@ -198,12 +201,12 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                         {hasDivisions ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasDivisions ? 'text-slate-400 line-through' : 'text-slate-700'}>
-                        Có ít nhất 1 bảng thi đấu (Đơn/Đôi Nam Nữ)
+                        {translate('checklist.division')}
                       </span>
                     </div>
                     {!hasDivisions && (
                       <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        Thiếu bảng
+                        {translate('checklist.missingDivision')}
                       </span>
                     )}
                   </div>
@@ -217,12 +220,12 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                         {hasVenue ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasVenue ? 'text-slate-400 line-through' : 'text-slate-700'}>
-                        Địa điểm / Sân thi đấu
+                        {translate('checklist.venue')}
                       </span>
                     </div>
                     {!hasVenue && (
                       <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        Chưa điền
+                        {translate('checklist.notFilled')}
                       </span>
                     )}
                   </div>
@@ -236,12 +239,12 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                         {hasValidDates ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasValidDates ? 'text-slate-400 line-through' : 'text-slate-700'}>
-                        Thời gian đăng ký & khai mạc hợp lệ
+                        {translate('checklist.validDates')}
                       </span>
                     </div>
                     {!hasValidDates && (
                       <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        Sai logic ngày
+                        {translate('checklist.invalidDates')}
                       </span>
                     )}
                   </div>
@@ -255,12 +258,12 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                         {hasContact ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasContact ? 'text-slate-400 line-through' : 'text-slate-700'}>
-                        Thông tin liên hệ BTC (Email / Số điện thoại)
+                        {translate('checklist.contact')}
                       </span>
                     </div>
                     {!hasContact && (
                       <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        Chưa điền
+                        {translate('checklist.notFilled')}
                       </span>
                     )}
                   </div>
@@ -270,14 +273,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
             
             {/* Ràng buộc & Khóa thông tin sau khi công bố */}
             <div className="mt-4 pt-3 border-t border-amber-200/60 space-y-1.5 text-[11px] text-amber-900 font-semibold">
-              <span className="block text-xs font-bold text-amber-950 uppercase tracking-wider">🔒 RÀNG BUỘC KHI ĐÃ CÔNG BỐ:</span>
+              <span className="block text-xs font-bold text-amber-950 uppercase tracking-wider">{translate('publishedConstraints.title')}</span>
               <ul className="list-disc pl-4 space-y-1 text-slate-650 font-medium">
-                <li><strong className="text-amber-900">Không thể sửa đổi:</strong> Thể loại môn thể thao, Phân hạng giải đấu, Lệ phí công bố, Lệ phí thi đấu, và Cấu hình phân chia hình thức (nếu đã mở).</li>
-                <li><strong className="text-amber-900">Bị khóa thêm/xóa:</strong> Không thể thêm mới hay xóa bớt các Bảng thi đấu hiện tại.</li>
-                <li><strong className="text-emerald-800">Vẫn có thể điều chỉnh linh hoạt:</strong> Lịch thi đấu cụ thể, Vận động viên đặc cách, địa điểm sân bãi và luật ghi điểm từng vòng.</li>
+                <li><strong className="text-amber-900">{translate('publishedConstraints.immutableLabel')}</strong> {translate('publishedConstraints.immutableText')}</li>
+                <li><strong className="text-amber-900">{translate('publishedConstraints.lockedLabel')}</strong> {translate('publishedConstraints.lockedText')}</li>
+                <li><strong className="text-emerald-800">{translate('publishedConstraints.flexibleLabel')}</strong> {translate('publishedConstraints.flexibleText')}</li>
               </ul>
             </div>
-            <p className="mt-3 text-[10px] italic text-amber-700 font-semibold">* Ngày khai mạc & bế mạc có thể linh động cập nhật sau.</p>
+            <p className="mt-3 text-[10px] italic text-amber-700 font-semibold">{translate('publishedConstraints.dateNote')}</p>
           </div>
           <Button
             onClick={onPublish}
@@ -286,7 +289,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
               !canPublish ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {publishFeeAmount > 0 ? 'Thanh toán phí & công bố giải đấu' : 'Công bố giải đấu'} <ChevronRight className="w-4 h-4 ml-1" />
+            {publishFeeAmount > 0 ? translate('payAndPublish') : translate('publish')} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       )}
@@ -295,8 +298,8 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <span className="mt-0.5 text-lg text-amber-600" aria-hidden="true">⏳</span>
           <div>
-            <h4 className="font-bold text-amber-900">Đang chờ Admin duyệt công khai</h4>
-            <p className="mt-1 text-sm leading-relaxed text-amber-800">Bạn có thể tiếp tục hoàn thiện cấu hình nâng cao. Các bước nhận đăng ký và thi đấu sẽ kích hoạt sau khi giải được duyệt.</p>
+            <h4 className="font-bold text-amber-900">{translate('pendingApprovalTitle')}</h4>
+            <p className="mt-1 text-sm leading-relaxed text-amber-800">{translate('pendingApprovalDescription')}</p>
           </div>
         </div>
       )}
@@ -355,13 +358,13 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         })}
       </div>
 
-            {/* Step 4 — Giải đấu hoàn thành: chỉ hiện nút Export */}
+            {/* Step 4 — Completed tournament: show only the export action */}
             {isTournamentCompleted(tournament.status) && (
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
                 <div>
-                  <p className="text-sm font-bold text-emerald-900">Giải đấu đã hoàn thành 🏆</p>
+                  <p className="text-sm font-bold text-emerald-900">{translate('completedTitle')}</p>
                   <p className="mt-0.5 text-xs font-medium text-emerald-700">
-                    Tải về bảng tổng kết kết quả toàn giải (Excel) để lưu trữ hoặc công bố.
+                    {translate('completedDescription')}
                   </p>
                 </div>
                 <Button
@@ -371,16 +374,16 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-sm"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  {matches.length === 0 ? 'Chưa có trận đấu' : `Export kết quả (${matches.length} trận)`}
+                  {matches.length === 0 ? translate('noMatches') : translate('exportResults', { count: matches.length })}
                 </Button>
               </div>
             )}
 
-            {/* Phase 2 — Khai mạc giải đấu (inline checklist, giống Phase 1) */}
+            {/* Phase 2 — Tournament opening (inline checklist) */}
       {currentStep === 1 && !isTournamentDraft(tournament.status) && isRegistrationClosed && (
         <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-4 mt-4 mb-2 text-xs">
           <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
-            <Play className="w-4 h-4 text-blue-600" /> Kiểm tra điều kiện trước khi Khai mạc giải đấu
+            <Play className="w-4 h-4 text-blue-600" /> {translate('openingChecklistTitle')}
           </h4>
           <div className="space-y-2.5">
             {phase2Checks.map((check) => (
@@ -402,14 +405,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                   </span>
                   <span className={`truncate ${check.pass ? 'text-slate-400 line-through' : check.mandatory ? 'text-slate-700' : 'text-slate-500'}`}>
                     {check.mandatory
-                      ? <><span className="text-rose-600 mr-1">[BẮT BUỘC]</span>{check.label}</>
-                      : <><span className="text-slate-400 mr-1">[LINH HOẠT]</span>{check.label}</>
+                      ? <>                        <span className="text-rose-600 mr-1">[{translate('mandatory')}]</span>{check.label}</>
+                      : <>                        <span className="text-slate-400 mr-1">[{translate('flexible')}]</span>{check.label}</>
                     }
                   </span>
                 </div>
                 {!check.pass && check.mandatory && (
                   <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0 ml-2">
-                    Chưa đạt
+                    {translate('notPassed')}
                   </span>
                 )}
               </div>
@@ -418,14 +421,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         </div>
       )}
 
-      {/* Phase 3 — Kết thúc giải đấu (Checklist Modal) */}
+      {/* Phase 3 — Tournament completion checklist modal */}
       {isEndModalOpen && (
         <Modal open={isEndModalOpen} onOpenChange={(open) => { if (!open) setIsEndModalOpen?.(false); }}>
           <ModalContent className="bg-white rounded-lg p-6 max-w-xl">
-            <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Kết thúc giải đấu</ModalTitle></ModalHeader>
+            <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">{translate('endModalTitle')}</ModalTitle></ModalHeader>
             <div className="space-y-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-semibold">
-                ⚠️ Sau khi kết thúc, giải đấu sẽ chuyển sang trạng thái hoàn tất. Các trận đấu chưa kết thúc sẽ không thể cập nhật điểm.
+                {translate('endWarning')}
               </div>
               {(() => {
                 const hasMatches = endChecklist && endChecklist.totalMatches > 0;
@@ -435,8 +438,8 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                 const live = endChecklist?.liveMatches ?? 0;
 
                 const checks = [
-                  { key: 'matchesComplete', label: `Tất cả trận đấu đã kết thúc (${completed}/${total})`, pass: !hasMatches || allDone },
-                  { key: 'noLiveMatches', label: `Không còn trận đấu LIVE (${live} trận đang thi đấu)`, pass: !hasMatches || !endChecklist?.hasLiveMatches },
+                  { key: 'matchesComplete', label: translate('endChecks.matchesComplete', { completed, total }), pass: !hasMatches || allDone },
+                  { key: 'noLiveMatches', label: translate('endChecks.noLiveMatches', { live }), pass: !hasMatches || !endChecklist?.hasLiveMatches },
                 ];
 
                 return (
@@ -462,14 +465,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                         </div>
                         {!check.pass && (
                           <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0 ml-2">
-                            Chưa đạt
+                            {translate('notPassed')}
                           </span>
                         )}
                       </div>
                     ))}
                     {!hasMatches && (
                       <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 font-semibold text-center">
-                        Giải đấu chưa có trận đấu nào. Bạn có thể kết thúc ngay.
+                        {translate('noMatchesCanEnd')}
                       </div>
                     )}
                   </div>
@@ -477,10 +480,10 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
               })()}
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={() => setIsEndModalOpen?.(false)} disabled={isEnding}>
-                  Hủy
+                  {translate('cancel')}
                 </Button>
                 <Button onClick={handleConfirmEnd} disabled={isEnding || !!endChecklist?.hasLiveMatches} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg">
-                  {isEnding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />} Kết thúc giải đấu
+                  {isEnding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />} {translate('endTournament')}
                 </Button>
               </div>
             </div>

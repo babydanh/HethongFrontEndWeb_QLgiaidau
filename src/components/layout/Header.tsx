@@ -36,13 +36,15 @@ import { usersApi } from '@/features/users/api';
 import { cn } from '@/utils/cn';
 import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
 export function Header() {
   const t = useTranslations('Navigation');
+  const notificationTranslate = useTranslations('Notifications');
+  const locale = useLocale();
   const { isAuthenticated, user, logout, setUser } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
@@ -425,11 +427,11 @@ export function Header() {
                                                 getNotificationTypeMeta(notification.type).badgeClassName,
                                               )}
                                             >
-                                              {getNotificationTypeLabel(notification.type)}
+                                              {getNotificationTypeLabel(notification.type, notificationTranslate)}
                                             </span>
                                             {!notification.isRead ? (
                                               <span className="text-[10px] font-medium text-slate-500">
-                                                {getNotificationSummary(notification.type)}
+                                                {getNotificationSummary(notification.type, notificationTranslate)}
                                               </span>
                                             ) : null}
                                           </div>
@@ -461,7 +463,7 @@ export function Header() {
                                         {notification.content}
                                       </p>
                                       <p className="mt-2.5 text-[11px] font-medium text-slate-400">
-                                        {formatNotificationTimestamp(notification.createdAt)}
+                                        {formatNotificationTimestamp(notification.createdAt, notificationTranslate, locale)}
                                       </p>
                                     </button>
 

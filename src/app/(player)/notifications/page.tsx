@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
   Bell,
@@ -61,6 +62,8 @@ const getNotificationSectionKey = (createdAt: string): NotificationSection['key'
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const translate = useTranslations('Notifications');
+  const locale = useLocale();
   const [filter, setFilter] = useState<NotificationFilter>('all');
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const {
@@ -84,9 +87,9 @@ export default function NotificationsPage() {
 
   const groupedNotifications = useMemo(() => {
     const sections: NotificationSection[] = [
-      { key: 'today', title: 'Hôm nay', items: [] },
-      { key: 'week', title: '7 ngày gần đây', items: [] },
-      { key: 'older', title: 'Cũ hơn', items: [] },
+      { key: 'today', title: translate('today'), items: [] },
+      { key: 'week', title: translate('lastSevenDays'), items: [] },
+      { key: 'older', title: translate('older'), items: [] },
     ];
 
     const sectionMap = new Map(sections.map((section) => [section.key, section]));
@@ -96,7 +99,7 @@ export default function NotificationsPage() {
     }
 
     return sections.filter((section) => section.items.length > 0);
-  }, [filteredNotifications]);
+  }, [filteredNotifications, translate]);
 
   const handleNotificationOpen = async (
     notificationId: string,
@@ -108,7 +111,7 @@ export default function NotificationsPage() {
         await markNotificationAsRead(notificationId);
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+      toast.error(getErrorMessage(error, translate('updateError')));
       return;
     }
 
@@ -139,14 +142,14 @@ export default function NotificationsPage() {
       await markNotificationAsRead(notificationId);
       toast.success(
         action === 'accept'
-          ? 'Đã chấp nhận lời mời tham gia cộng đồng.'
-          : 'Đã từ chối lời mời tham gia cộng đồng.',
+          ? translate('communityInviteAccepted')
+          : translate('communityInviteDeclined'),
       );
       await refreshNotifications();
     } catch (error) {
       if (isResolvedInviteError(error)) {
         await markNotificationAsRead(notificationId);
-        toast.success('Lời mời đã được hủy hoặc xử lý trước đó.');
+        toast.success(translate('inviteResolved'));
         await refreshNotifications();
         return;
       }
@@ -154,8 +157,8 @@ export default function NotificationsPage() {
         getErrorMessage(
           error,
           action === 'accept'
-            ? 'Không thể chấp nhận lời mời lúc này.'
-            : 'Không thể từ chối lời mời lúc này.',
+            ? translate('inviteAcceptError')
+            : translate('inviteDeclineError'),
         ),
       );
     } finally {
@@ -175,12 +178,12 @@ export default function NotificationsPage() {
       setPendingActionKey(actionKey);
       await tournamentsApi.respondToRefereeInvite(tournamentId, refereeId, action);
       await markNotificationAsRead(notificationId);
-      toast.success(action === 'ACCEPT' ? 'Đã nhận vai trò trọng tài.' : 'Đã từ chối lời mời trọng tài.');
+      toast.success(action === 'ACCEPT' ? translate('refereeInviteAccepted') : translate('refereeInviteDeclined'));
       await refreshNotifications();
     } catch (error) {
       if (isResolvedInviteError(error)) {
         await markNotificationAsRead(notificationId);
-        toast.success('Lời mời trọng tài đã được hủy hoặc xử lý trước đó.');
+        toast.success(translate('refereeInviteResolved'));
         await refreshNotifications();
         return;
       }
@@ -188,8 +191,8 @@ export default function NotificationsPage() {
         getErrorMessage(
           error,
           action === 'ACCEPT'
-            ? 'Không thể chấp nhận lời mời trọng tài lúc này.'
-            : 'Không thể từ chối lời mời trọng tài lúc này.',
+            ? translate('refereeAcceptError')
+            : translate('refereeDeclineError'),
         ),
       );
     } finally {
@@ -214,14 +217,14 @@ export default function NotificationsPage() {
       await markNotificationAsRead(notificationId);
       toast.success(
         action === 'accept'
-          ? 'Đã chấp nhận lời mời ghép đôi.'
-          : 'Đã từ chối lời mời ghép đôi.',
+          ? translate('partnerInviteAccepted')
+          : translate('partnerInviteDeclined'),
       );
       await refreshNotifications();
     } catch (error) {
       if (isResolvedInviteError(error)) {
         await markNotificationAsRead(notificationId);
-        toast.success('Lời mời ghép đôi đã được hủy hoặc xử lý trước đó.');
+        toast.success(translate('partnerInviteResolved'));
         await refreshNotifications();
         return;
       }
@@ -229,8 +232,8 @@ export default function NotificationsPage() {
         getErrorMessage(
           error,
           action === 'accept'
-            ? 'Không thể chấp nhận lời mời lúc này.'
-            : 'Không thể từ chối lời mời lúc này.',
+            ? translate('inviteAcceptError')
+            : translate('inviteDeclineError'),
         ),
       );
     } finally {
@@ -248,16 +251,16 @@ export default function NotificationsPage() {
       setPendingActionKey(actionKey);
       await footballTeamsApi.respondInvite(teamId, action);
       await markNotificationAsRead(notificationId);
-      toast.success(action === 'ACCEPTED' ? 'Đã tham gia đội bóng.' : 'Đã từ chối lời mời vào đội bóng.');
+      toast.success(action === 'ACCEPTED' ? translate('footballInviteAccepted') : translate('footballInviteDeclined'));
       await refreshNotifications();
     } catch (error) {
       if (isResolvedInviteError(error)) {
         await markNotificationAsRead(notificationId);
-        toast.success('Lời mời đội bóng đã được hủy hoặc xử lý trước đó.');
+        toast.success(translate('footballInviteResolved'));
         await refreshNotifications();
         return;
       }
-      toast.error(getErrorMessage(error, action === 'ACCEPTED' ? 'Không thể nhận lời mời đội bóng.' : 'Không thể từ chối lời mời đội bóng.'));
+      toast.error(getErrorMessage(error, action === 'ACCEPTED' ? translate('footballAcceptError') : translate('footballDeclineError')));
     } finally {
       setPendingActionKey(null);
     }
@@ -266,9 +269,9 @@ export default function NotificationsPage() {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllNotificationsAsRead();
-      toast.success('Đã đánh dấu tất cả là đã đọc.');
+      toast.success(translate('markAllSuccess'));
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+      toast.error(getErrorMessage(error, translate('updateError')));
     }
   };
 
@@ -280,14 +283,14 @@ export default function NotificationsPage() {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                 <Bell className="h-3.5 w-3.5" />
-                Trung tâm thông báo
+                {translate('centerLabel')}
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-950 md:text-3xl">
-                  Thông báo của bạn
+                  {translate('title')}
                 </h1>
                 <p className="mt-1 text-sm text-slate-500">
-                  Theo dõi cập nhật mới nhất từ giải đấu, thanh toán và hoạt động hệ thống.
+                  {translate('description')}
                 </p>
               </div>
             </div>
@@ -304,7 +307,7 @@ export default function NotificationsPage() {
                       : 'text-slate-500 hover:text-slate-700',
                   )}
                 >
-                  Tất cả
+                  {translate('all')}
                 </button>
                 <button
                   type="button"
@@ -316,7 +319,7 @@ export default function NotificationsPage() {
                       : 'text-slate-500 hover:text-slate-700',
                   )}
                 >
-                  Chưa đọc
+                  {translate('unread')}
                 </button>
               </div>
 
@@ -327,7 +330,7 @@ export default function NotificationsPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <CheckCheck className="h-4 w-4" />
-                Đánh dấu tất cả
+                {translate('markAll')}
               </button>
             </div>
           </div>
@@ -335,22 +338,22 @@ export default function NotificationsPage() {
           <div className="grid gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4 md:grid-cols-3">
             <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Tổng số
+                {translate('total')}
               </p>
               <p className="mt-2 text-2xl font-bold text-slate-950">{notifications.length}</p>
             </div>
             <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Chưa đọc
+                {translate('unread')}
               </p>
               <p className="mt-2 text-2xl font-bold text-blue-700">{unreadCount}</p>
             </div>
             <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Bộ lọc hiện tại
+                {translate('currentFilter')}
               </p>
               <p className="mt-2 text-lg font-semibold text-slate-900">
-                {filter === 'all' ? 'Tất cả thông báo' : 'Chỉ thông báo chưa đọc'}
+                {filter === 'all' ? translate('allNotifications') : translate('unreadOnly')}
               </p>
             </div>
           </div>
@@ -366,7 +369,7 @@ export default function NotificationsPage() {
                   }}
                   className="text-sm font-semibold text-amber-800 transition-colors hover:text-amber-950"
                 >
-                  Thử lại
+                  {translate('retry')}
                 </button>
               </div>
             ) : null}
@@ -430,15 +433,15 @@ export default function NotificationsPage() {
                                         getNotificationTypeMeta(notification.type).badgeClassName,
                                       )}
                                     >
-                                      {getNotificationTypeLabel(notification.type)}
+                                      {getNotificationTypeLabel(notification.type, translate)}
                                     </span>
                                     {!notification.isRead ? (
                                       <span className="rounded-full bg-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700">
-                                        {getNotificationSummary(notification.type)}
+                                        {getNotificationSummary(notification.type, translate)}
                                       </span>
                                     ) : null}
                                     <span className="text-xs font-medium text-slate-400">
-                                      {formatNotificationTimestamp(notification.createdAt)}
+                                      {formatNotificationTimestamp(notification.createdAt, translate, locale)}
                                     </span>
                                     <span
                                       className={cn(
@@ -448,7 +451,7 @@ export default function NotificationsPage() {
                                           : 'bg-blue-600 text-white',
                                       )}
                                     >
-                                      {notification.isRead ? 'Đã đọc' : 'Chưa đọc'}
+                                      {notification.isRead ? translate('read') : translate('unread')}
                                     </span>
                                   </div>
                                   <h2
@@ -513,7 +516,7 @@ export default function NotificationsPage() {
                                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <Check className="h-4 w-4" />
-                                        {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
+                                        {notificationAction.kind === 'referee-invite' ? translate('acceptRole') : translate('accept')}
                                       </button>
                                       <button
                                         type="button"
@@ -556,7 +559,7 @@ export default function NotificationsPage() {
                                         className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <X className="h-4 w-4" />
-                                        Từ chối
+                                        {translate('decline')}
                                       </button>
                                     </>
                                   ) : null}
@@ -567,13 +570,13 @@ export default function NotificationsPage() {
                                       onClick={() => {
                                         void markNotificationAsRead(notification.id).catch((error: unknown) => {
                                           toast.error(
-                                            getErrorMessage(error, 'Không thể cập nhật thông báo.'),
+                                            getErrorMessage(error, translate('updateError')),
                                           );
                                         });
                                       }}
                                       className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                                     >
-                                      Đánh dấu đã đọc
+                                      {translate('markRead')}
                                     </button>
                                   ) : null}
                                   <button
@@ -587,7 +590,7 @@ export default function NotificationsPage() {
                                     }
                                     className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                                   >
-                                    Mở
+                                    {translate('open')}
                                     <ChevronRight className="h-4 w-4" />
                                   </button>
                                 </div>
@@ -609,13 +612,13 @@ export default function NotificationsPage() {
                 )}
                 <h2 className="mt-4 text-xl font-semibold text-slate-900">
                   {filter === 'unread'
-                    ? 'Không còn thông báo chưa đọc'
-                    : 'Hộp thông báo đang trống'}
+                                        ? translate('noUnreadTitle')
+                    : translate('emptyTitle')}
                 </h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
                   {filter === 'unread'
-                    ? 'Mọi cập nhật gần đây của bạn đã được xử lý. Khi có thông báo mới, chúng sẽ xuất hiện ngay tại đây.'
-                    : 'Khi hệ thống gửi cập nhật về giải đấu, thanh toán hoặc tài khoản, bạn sẽ thấy chúng trong danh sách này.'}
+                                        ? translate('noUnreadDescription')
+                    : translate('emptyDescription')}
                 </p>
               </div>
             )}

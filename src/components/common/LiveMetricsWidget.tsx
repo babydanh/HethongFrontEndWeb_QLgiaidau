@@ -77,7 +77,7 @@ export default function LiveMetricsWidget() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 font-mono select-none">
+    <div className="fixed bottom-4 left-4 z-50 font-mono select-none">
       {isMinimized ? (
         <button
           onClick={() => setIsMinimized(false)}
@@ -88,7 +88,7 @@ export default function LiveMetricsWidget() {
           <Activity className="w-4 h-4" />
         </button>
       ) : (
-        <div className="w-56 rounded-lg border border-white/10 bg-zinc-950/90 p-3.5 text-xs text-zinc-300 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex flex-col gap-3">
+        <div className="w-60 rounded-lg border border-white/10 bg-zinc-950/90 p-3.5 text-xs text-zinc-300 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex flex-col gap-3">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/5 pb-2">
             <span className="flex items-center gap-1.5 font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
@@ -112,7 +112,7 @@ export default function LiveMetricsWidget() {
                 {translate('connections')}
               </span>
               <span className="font-semibold text-white text-right">
-                {metrics ? ` ` : '...'}
+                {metrics ? `${metrics.connections} user` : '...'}
               </span>
             </div>
 

@@ -1,0 +1,121 @@
+931: toast.success('Đã ghim tin nhắn lên đầu phòng chat.');
+933: toast.error(getErrorMessage(err, 'Không thể ghim tin nhắn.'));
+945: toast.success('Đã bỏ ghim tin nhắn.');
+947: toast.error(getErrorMessage(err, 'Không thể bỏ ghim tin nhắn.'));
+958: toast.success('Đã tải ảnh logo lên thành công!');
+960: toast.error(getErrorMessage(err, 'Không thể tải ảnh logo lên.'));
+993: toast.error(getErrorMessage(err, 'Không thể gửi bình chọn.'));
+1001: toast.error('Vui lòng nhập câu hỏi bình chọn.');
+1006: toast.error('Cần ít nhất 2 lựa chọn để tạo bình chọn.');
+1029: `📊 Bình chọn: ${q}`,
+1064: toast.success('Đã bỏ chặn người dùng.');
+1072: toast.error(getErrorMessage(err, 'Thao tác chặn thất bại.'));
+1101: ? 'Đã bật nhận tất cả thông báo CLB'
+1103: ? 'Chỉ nhận thông báo khi được nhắc tên (@tag)'
+1104: : 'Đã tắt thông báo CLB (Im lặng)',
+1158: (currentReply.mine ? 'Tôi' : 'Thành viên'),
+1173: senderName: message.senderName || (user?.fullName || 'Tôi'),
+1187: toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn.'));
+1318: if (!answer) toast.error('AI chưa trả lời, thử lại sau.');
+1362: <p className="text-sm font-bold text-slate-900">Tin nhắn</p>
+1366: aria-label="Đóng"
+1392: Trợ lý AI Sporto
+1396: Luôn sẵn sàng
+1420: Hỗ trợ Sporto
+1423: Admin trực tuyến
+1429: Phòng Chat & CLB
+1518: title={selection.kind === 'ROOM' ? 'Nhấn để đổi logo / cài đặt phòng chat' : undefined}
+1527: title="Quay lại danh sách tin nhắn"
+1559: 'Trợ lý AI Sporto 24/7'
+1562: Đang soạn tin nhắn...
+1565: <span className="text-rose-500 font-semibold">Đã chặn</span>
+1568: Kênh cộng đồng · CLB
+1573: Đang hoạt động
+1578: Không trực tuyến
+1598: title="Tìm kiếm tin nhắn"
+1614: aria-label="Tùy chọn đoạn chat"
+1625: Thông báo CLB
+1638: <span>Tất cả tin nhắn</span>
+1653: <span>Chỉ khi được @tag</span>
+1668: <span>Tắt thông báo (Im lặng)</span>
+1675: {/* Cài đặt phòng chat CLB */}
+1687: <span>Cài đặt phòng chat</span>
+1714: ? 'Bỏ chặn người này'
+1715: : 'Chặn tin nhắn'}
+1759: : '0 kết quả'}
+1767: title="Kết quả trước (Shift+Enter)"
+1775: title="Kết quả tiếp theo (Enter)"
+1788: title="Đóng tìm kiếm (Esc)"
+1814: {pinnedMessage.senderName || 'Thành viên'}:
+1823: title="Bỏ ghim tin nhắn"
+1871: Gợi ý câu hỏi nhanh
+1891: Chat trực tiếp với Ban Quản Trị
+1899: <span className="text-xs">Đang tải tin nhắn...</span>
+1949: Tải tin nhắn cũ hơn
+1965: Chưa có tin nhắn nào
+1968: Hãy gửi tin nhắn đầu tiên để bắt đầu trò chuyện!
+2075: {/* Hiển thị vai trò Quản trị / Chủ nhiệm nếu có */}
+2078: Chủ CLB
+2083: Quản trị
+2087: {/* Hiển thị Tag danh hiệu thành viên (nếu có) */}
+2140: title={`Thả ${emoji}`}
+2153: title="Trả lời"
+2164: title="Sao chép"
+2179: title="Ghim tin nhắn"
+2191: title="Thu hồi tin nhắn"
+2215: Tin nhắn đã được thu hồi
+2239: title="Nhấn để cuộn đến tin nhắn này"
+2270: alt="Hình đính kèm"
+2309: title="Nhấn để cuộn đến tin nhắn này"
+2342: alt="Hình đính kèm"
+2415: {(message.metadata.options || []).reduce((s: number, o: { voterIds?: string[] }) => s + (o.voterIds?.length || 0), 0)} lượt bình chọn
+2417: <span>{message.metadata.allowMultiple ? 'Được chọn nhiều' : 'Chọn 1'}</span>
+2449: {message.metadata.sportType || 'GIẢI ĐẤU'}
+2455: {message.metadata.title || message.messageText || 'Giải đấu Sporto'}
+2462: Quy mô: {message.metadata.registeredTeams || 0}/{message.metadata.totalTeams} Đội
+2469: <span>Khởi tranh: {new Date(message.metadata.startDate).toLocaleDateString('vi-VN')}</span>
+2477: <span>Xem chi tiết & Đăng ký</span>
+2523: title={`${msgReactions.length} cảm xúc: ${reactionSummary} (Nhấn để thả/bỏ cảm xúc)`}
+2563: Đã gửi
+2606: <span className="text-slate-500 shrink-0 font-medium">Đang trả lời</span>
+2608: {replyingTo.senderName || (replyingTo.mine ? 'Tôi' : 'Thành viên')}:
+2611: &ldquo;{replyingTo.messageText || (replyingTo.attachmentsUrls?.length ? '🖼️ Hình ảnh' : '')}&rdquo;
+2645: <span>Đang tải ảnh...</span>
+2656: <span className="text-xs font-bold text-slate-700">Biểu tượng cảm xúc</span>
+2752: ? 'Bạn đã chặn người này...'
+2754: ? 'Hỏi trợ lý Sporto...'
+2756: ? `Trả lời ${replyingTo.senderName || 'thành viên'}...`
+2807: Cài đặt phòng chat CLB
+2831: title="Bấm để tải ảnh logo CLB mới lên Cloudinary"
+2846: <span className="text-[9px] font-bold">Đổi logo</span>
+2852: <span className="text-[9px] font-medium">Đang tải...</span>
+2864: {uploadingClubAvatar ? 'Đang tải lên Cloudinary...' : 'Tải lên logo CLB từ máy'}
+2872: Xóa logo
+2880: Tên phòng chat
+2887: placeholder="Nhập tên phòng chat..."
+2893: <p className="font-semibold text-slate-800">Chỉ Ban Quản Trị nhắn tin</p>
+2895: Thành viên thường chỉ có thể xem tin nhắn
+2908: Chế độ làm chậm (Slow mode)
+2915: <option value={0}>Tắt (Nhắn tin bình thường)</option>
+2916: <option value={5}>5 giây</option>
+2917: <option value={15}>15 giây</option>
+2918: <option value={30}>30 giây</option>
+2919: <option value={60}>1 phút</option>
+2929: Hủy
+2976: toast.error(getErrorMessage(err, 'Không thể cập nhật cài đặt.'));
+2982: Lưu cài đặt
+2997: Tạo cuộc bình chọn
+3011: Câu hỏi bình chọn *
+3018: placeholder="Ví dụ: Chọn ngày đá giải CLB?"
+3024: Các lựa chọn bình chọn *
+3038: placeholder={`Lựa chọn ${idx + 1}...`}
+3060: <span>Thêm lựa chọn</span>
+3067: <p className="font-semibold text-slate-800">Cho phép chọn nhiều mục</p>
+3069: Thành viên có thể bỏ phiếu cho nhiều hơn 1 phương án
+3086: Hủy
+3094: {creatingPoll ? 'Đang tạo...' : 'Tạo bình chọn'}
+3114: alt="Xem ảnh"
+3124: title="Tải ảnh về"
+3132: title="Đóng"
+3162: Hành động này không thể hoàn tác. Các tin nhắn cũ của đoạn chat này sẽ không còn hiển thị với bạn.
+3171: Hủy

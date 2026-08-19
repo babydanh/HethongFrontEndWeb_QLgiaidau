@@ -442,10 +442,10 @@ export const tournamentsApi = {
     api.get<ApiResponse<TournamentResult>>(`/tournaments/${id}/results`, {
       params: divisionId ? { divisionId } : undefined,
     }),
-  generateBracket: (id: string, divisionId?: string, seedingType?: 'SEEDED' | 'RANDOM') =>
+  generateBracket: (id: string, divisionId?: string, seedingType?: 'SEEDED' | 'RANDOM', allowReset = true) =>
     api.post<ApiResponse<{ message: string; stageId: string; totalMatches: number }>>(
       `/tournaments/${id}/generate-bracket`,
-      { divisionId, seedingType }
+      { divisionId, seedingType, allowReset }
     ),
   regenerateInviteCode: (id: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/regenerate-invite`),
   publishTournament: (id: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/publish`),

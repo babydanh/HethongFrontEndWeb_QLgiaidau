@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { DateTimePicker, Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
+import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import {
   RefreshCw,
   Loader2,
@@ -46,6 +47,7 @@ import {
   isTournamentRegistrationClosed,
   isTournamentRegistrationOpen,
 } from '@/utils/tournament-status';
+import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
 import toast from 'react-hot-toast';
 import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
 import {
@@ -224,6 +226,11 @@ export function RegistrationTab({
   handleSwapSeeds,
   handleReorderSeeds,
 }: RegistrationTabProps) {
+  const [selectedParticipant, setSelectedParticipant] = React.useState<TournamentParticipant | null>(null);
+  const registrationFormFields = React.useMemo(
+    () => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)).fields,
+    [tournament.tournamentConfig?.registrationForm, divisions],
+  );
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
@@ -839,7 +846,9 @@ export function RegistrationTab({
                                   #{participant.seed}
                                 </span>
                               )}
-                              {participant.teamName}
+                              <button type="button" onClick={() => setSelectedParticipant(participant)} className="text-left hover:text-blue-700 hover:underline">
+                                {participant.teamName}
+                              </button>
                             </p>
                             {editingSeed === participant.id && (
                               <div className="flex items-center gap-1 ml-1">
@@ -911,7 +920,7 @@ export function RegistrationTab({
                                 className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold"
                                 title="Roster chỉ mở khóa được trước khi giải bắt đầu"
                               >
-                                {rosterActionId === participant.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
+                                {rosterActionId === participant.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? 'Mở khóa roster' : 'Khóa roster'}
                               </Button>
                             )}
@@ -920,7 +929,7 @@ export function RegistrationTab({
                               disabled={!canApprove || isBusy}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                             >
-                              {isBusy && canApprove ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                              {isBusy && canApprove ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                               Duyệt
                             </Button>
                             <Button
@@ -940,7 +949,6 @@ export function RegistrationTab({
                                 ? 'border-rose-200 text-rose-700 hover:bg-rose-50 font-bold'
                                 : 'border-amber-200 text-amber-700 hover:bg-amber-50 font-bold'}
                             >
-                              {isMockParticipant ? <Trash2 className="mr-2 h-4 w-4" /> : <UserX className="mr-2 h-4 w-4" />}
                               {isMockParticipant ? registrationTranslate('deleteMock') : registrationTranslate('rejectParticipant')}
                             </Button>
                           </div>
@@ -1328,6 +1336,65 @@ export function RegistrationTab({
             );
           })()}
         </div>
+
+        {selectedParticipant && (
+          <Modal open={true} onOpenChange={(open) => { if (!open) setSelectedParticipant(null); }}>
+            <ModalContent className="max-h-[90vh] max-w-2xl overflow-y-auto bg-white p-0">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <ModalHeader><ModalTitle className="text-lg font-bold">Chi tiết hồ sơ đăng ký</ModalTitle></ModalHeader>
+                <p className="mt-1 text-xs text-slate-500">Thông tin được gửi từ tài khoản và form đăng ký của người chơi.</p>
+              </div>
+              <div className="space-y-5 p-5">
+                <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{selectedParticipant.teamName}</h3>
+                      <p className="mt-1 text-xs text-slate-500">Đăng ký {formatDate(selectedParticipant.registeredAt)}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs font-bold">
+                      <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">{getParticipantStatusLabel(selectedParticipant.teamStatus, participantStatusLabels)}</span>
+                      <span className={`rounded-full border px-2.5 py-1 ${selectedParticipant.isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                        {selectedParticipant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Người đăng ký & thành viên</h3>
+                  <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                    {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
+                      <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                        <div><p className="text-sm font-bold text-slate-800">{member.fullName || 'Chưa cập nhật họ tên'}</p><p className="mt-0.5 text-xs text-slate-500">{member.email || 'Email được ẩn/chưa cập nhật'}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}{member.gender ? ` · ${member.gender}` : ''}{member.role ? ` · ${member.role}` : ''}</p></div>
+                        <span className="text-xs font-semibold text-slate-500">ELO {member.elo?.eloPoints ?? '—'}</span>
+                      </div>
+                    )) : <p className="px-4 py-4 text-sm text-slate-500">Chưa có thành viên trong hồ sơ.</p>}
+                  </div>
+                  {selectedParticipant.registeredBy && (
+                    <p className="mt-2 text-xs text-slate-500">Người tạo hồ sơ: <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || 'Chưa cập nhật'}</span> · {selectedParticipant.registeredBy.email || 'Email được ẩn/chưa cập nhật'}{selectedParticipant.registeredBy.phoneNumber ? ` · ${selectedParticipant.registeredBy.phoneNumber}` : ''}{selectedParticipant.registeredBy.gender ? ` · ${selectedParticipant.registeredBy.gender}` : ''}</p>
+                  )}
+                </section>
+
+                <section>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Câu trả lời form đăng ký</h3>
+                  {selectedParticipant.customResponses && Object.keys(selectedParticipant.customResponses).length > 0 ? (
+                    <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                      {Object.entries(selectedParticipant.customResponses).map(([fieldId, value]) => (
+                        <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{registrationFormFields.find((field) => field.id === fieldId)?.label || fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</span></div>
+                      ))}
+                    </div>
+                  ) : <p className="mt-2 rounded-xl border border-dashed border-slate-200 px-4 py-4 text-sm text-slate-500">Hồ sơ không có câu trả lời form tùy chỉnh.</p>}
+                </section>
+
+                <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-800">Thanh toán</h3>
+                  <p className="mt-1 text-sm text-blue-900">{selectedParticipant.isPaid ? 'Khoản đăng ký đã được hệ thống ghi nhận là đã thanh toán.' : 'Chưa ghi nhận thanh toán. Hãy kiểm tra giao dịch trước khi chốt danh sách.'}</p>
+                </section>
+              </div>
+              <div className="flex justify-end border-t border-slate-200 px-5 py-3"><Button type="button" variant="outline" onClick={() => setSelectedParticipant(null)}>Đóng</Button></div>
+            </ModalContent>
+          </Modal>
+        )}
 
       </div>
 

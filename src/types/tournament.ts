@@ -288,11 +288,17 @@ export interface TournamentParticipant {
     | 'EXPIRED';
   registeredBy: {
     id: string;
+    email?: string | null;
+    phoneNumber?: string | null;
+    gender?: string | null;
     fullName: string | null;
     avatarUrl: string | null;
   } | null;
   members: {
     userId: string;
+    email?: string | null;
+    phoneNumber?: string | null;
+    gender?: string | null;
     fullName: string | null;
     avatarUrl: string | null;
     role: string;

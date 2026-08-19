@@ -1567,24 +1567,17 @@ export default function UnifiedChatWidget() {
                       <span className="text-slate-500 font-normal">
                         Kênh cộng đồng · CLB
                       </span>
-                    ) : (() => {
-                      const otherParticipant = selectedRoom?.participants?.find((p) => p.id !== user?.id);
-                      const isOnline = otherParticipant?.id ? onlineUserIds.has(otherParticipant.id) : false;
-                      if (isOnline) {
-                        return (
-                          <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
-                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-xs" />
-                            Đang hoạt động
-                          </span>
-                        );
-                      }
-                      return (
-                        <span className="flex items-center gap-1.5 text-slate-400 font-normal">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
-                          Không trực tuyến
-                        </span>
-                      );
-                    })()}
+                    ) : selectedRoom?.participants?.some((p) => p.id !== user?.id && onlineUserIds.has(p.id)) ? (
+                      <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-xs" />
+                        Đang hoạt động
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-slate-400 font-normal">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
+                        Không trực tuyến
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

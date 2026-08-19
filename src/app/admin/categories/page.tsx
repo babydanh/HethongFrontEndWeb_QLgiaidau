@@ -26,6 +26,7 @@ import { getSportRulePresentation } from '@/features/tournaments/sport-rules/pre
 import { getSportRulePresets, getScoreEntryGuidance, SportRulePreset } from '@/features/tournaments/sport-rules/ui-guidance';
 import { SportRuleKind } from '@/types/tournament';
 import toast from 'react-hot-toast';
+import { useTranslations } from 'next-intl';
 
 
 
@@ -41,6 +42,7 @@ function mapCategoryToSportKind(category: Category): SportRuleKind {
 }
 
 export default function AdminCategoriesPage() {
+  const translate = useTranslations('AdminCategories');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,12 +96,15 @@ export default function AdminCategoriesPage() {
     try {
       await categoriesApi.updateCategory(catId, { isActive: newStatus });
       toast.success(
-        `Đã ${newStatus ? 'bật (hiển thị)' : 'ẩn (tắt)'} bộ môn "${category.name}"`
+        translate('statusToast', {
+          name: category.name,
+          status: translate(newStatus ? 'shown' : 'hidden'),
+        }),
       );
     } catch (error) {
       console.error('Failed to update category status via API:', error);
       setCategories((prev) => prev.map((item) => item.id === catId ? { ...item, isActive: category.isActive } : item));
-      toast.error('Không thể cập nhật trạng thái bộ môn. Vui lòng thử lại.');
+      toast.error(translate('statusUpdateError'));
     } finally {
       setUpdatingIds((prev) => ({ ...prev, [catId]: false }));
     }
@@ -153,28 +158,28 @@ export default function AdminCategoriesPage() {
         <div>
           <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider mb-2">
             <Shield className="w-4 h-4 text-blue-400" />
-            <span>Hệ Thống Quản Trị Admin</span>
+            <span>{translate('adminBadge')}</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-            Quản Lý Bộ Môn Thể Thao
+            {translate('title')}
           </h1>
           <p className="text-slate-400 text-xs md:text-sm mt-1 max-w-xl leading-relaxed">
-            Quản lý trạng thái hiển thị (Bật/Ẩn) và xem chi tiết thiết lập luật lệ preset của từng bộ môn thi đấu.
+            {translate('description')}
           </p>
         </div>
 
         {/* Stats Summary Badges */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="bg-slate-800/90 border border-slate-700/80 rounded-2xl px-4 py-3 text-center min-w-[90px]">
-            <span className="text-[11px] text-slate-400 block font-semibold uppercase tracking-wider">Tổng số</span>
+            <span className="text-[11px] text-slate-400 block font-semibold uppercase tracking-wider">{translate('totalCount')}</span>
             <span className="text-2xl font-black text-white">{categories.length}</span>
           </div>
           <div className="bg-emerald-950/60 border border-emerald-800/60 rounded-2xl px-4 py-3 text-center min-w-[90px]">
-            <span className="text-[11px] text-emerald-400 block font-semibold uppercase tracking-wider">Đang bật</span>
+            <span className="text-[11px] text-emerald-400 block font-semibold uppercase tracking-wider">{translate('activeCount')}</span>
             <span className="text-2xl font-black text-emerald-400">{activeCount}</span>
           </div>
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl px-4 py-3 text-center min-w-[90px]">
-            <span className="text-[11px] text-slate-400 block font-semibold uppercase tracking-wider">Đã ẩn</span>
+            <span className="text-[11px] text-slate-400 block font-semibold uppercase tracking-wider">{translate('inactiveCount')}</span>
             <span className="text-2xl font-black text-slate-300">{inactiveCount}</span>
           </div>
         </div>
@@ -187,7 +192,7 @@ export default function AdminCategoriesPage() {
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo tên bộ môn, slug..."
+            placeholder={translate('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-8 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all text-slate-800 placeholder-slate-400"
@@ -212,7 +217,7 @@ export default function AdminCategoriesPage() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Tất cả ({categories.length})
+            {translate('all')} ({categories.length})
           </button>
           <button
             onClick={() => setFilterStatus('ACTIVE')}
@@ -222,7 +227,7 @@ export default function AdminCategoriesPage() {
                 : 'text-slate-600 hover:text-emerald-700'
             }`}
           >
-            Đang Bật ({activeCount})
+            {translate('active')} ({activeCount})
           </button>
           <button
             onClick={() => setFilterStatus('INACTIVE')}
@@ -232,7 +237,7 @@ export default function AdminCategoriesPage() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Đã Ẩn ({inactiveCount})
+            {translate('inactive')} ({inactiveCount})
           </button>
         </div>
       </div>
@@ -241,13 +246,13 @@ export default function AdminCategoriesPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
-          <p className="text-slate-500 text-xs font-bold">Đang tải danh sách bộ môn thể thao...</p>
+          <p className="text-slate-500 text-xs font-bold">{translate('loading')}</p>
         </div>
       ) : filteredCategories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200/80 shadow-sm text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-3" />
-          <h3 className="text-sm font-bold text-slate-800">Không tìm thấy bộ môn nào</h3>
-          <p className="text-slate-400 text-xs mt-1">Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái.</p>
+          <h3 className="text-sm font-bold text-slate-800">{translate('noResults')}</h3>
+          <p className="text-slate-400 text-xs mt-1">{translate('adjustFilter')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -299,7 +304,7 @@ export default function AdminCategoriesPage() {
                         type="button"
                         onClick={() => handleToggleActive(cat)}
                         disabled={isUpdating}
-                        title={cat.isActive ? 'Bấm để Ẩn bộ môn' : 'Bấm để Bật bộ môn'}
+                        title={cat.isActive ? translate('hidden') : translate('active')}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 ${
                           cat.isActive ? 'bg-emerald-500' : 'bg-slate-300'
                         }`}
@@ -335,11 +340,11 @@ export default function AdminCategoriesPage() {
                   <div className="flex items-center gap-1.5 text-xs font-bold">
                     {cat.isActive ? (
                       <span className="flex items-center gap-1 text-emerald-600">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Hiển thị
+                        <CheckCircle2 className="w-3.5 h-3.5" /> {translate('shown')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-slate-400">
-                        <XCircle className="w-3.5 h-3.5" /> Đã ẩn
+                        <XCircle className="w-3.5 h-3.5" /> {translate('hidden')}
                       </span>
                     )}
                   </div>
@@ -349,7 +354,7 @@ export default function AdminCategoriesPage() {
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl transition-all shadow-sm cursor-pointer"
                   >
                     <Sliders className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Xem luật preset</span>
+                    <span>{translate('viewPresetRules')}</span>
                   </button>
                 </div>
               </div>
@@ -371,10 +376,10 @@ export default function AdminCategoriesPage() {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-lg text-white flex items-center gap-2">
-                    <span>Luật Lệ Preset: {selectedCategory.name}</span>
+                    <span>{translate('presetTitle', { name: selectedCategory.name })}</span>
                   </h3>
                   <span className="text-xs text-blue-300 font-medium">
-                    Cấu hình quy chuẩn cho môn {selectedPresentation.sportLabel}
+                    {translate('presetDescription', { sport: selectedPresentation.sportLabel })}
                   </span>
                 </div>
               </div>
@@ -394,7 +399,7 @@ export default function AdminCategoriesPage() {
               <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs text-blue-900">
                 <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-bold text-blue-950">Tổng quan thể thức mặc định:</p>
+                  <p className="font-bold text-blue-950">{translate('overview')}</p>
                   <p className="leading-relaxed text-blue-900/90">{selectedPresentation.presetSummary}</p>
                   <p className="text-[11px] text-blue-700 italic pt-0.5">{selectedPresentation.roundConfigHint}</p>
                 </div>
@@ -404,35 +409,35 @@ export default function AdminCategoriesPage() {
               <div className="space-y-3">
                 <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2">
                   <Activity className="w-4 h-4 text-blue-600" />
-                  <span>1. Thông Số Điểm Số Mặc Định</span>
+                  <span>{translate('scoringParams')}</span>
                 </h4>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl">
-                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">Mô hình tính điểm</span>
+                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">{translate('scoringModel')}</span>
                     <span className="font-extrabold text-slate-900">{selectedDefaultRules.scoringModel}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl">
-                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">Số set thắng (setsToWin)</span>
+                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">{translate('setsToWin')}</span>
                     <span className="font-extrabold text-slate-900">{selectedDefaultRules.setsToWin} set</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl">
-                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">Điểm/set (pointsPerSet)</span>
+                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">{translate('pointsPerSet')}</span>
                     <span className="font-extrabold text-slate-900">{selectedDefaultRules.pointsPerSet} {selectedPresentation.setUnitLabel.toLowerCase()}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl">
-                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">Thắng cách 2 điểm</span>
+                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">{translate('winByTwo')}</span>
                     <span className={`font-extrabold ${selectedDefaultRules.winByTwo ? 'text-emerald-600' : 'text-slate-700'}`}>
-                      {selectedDefaultRules.winByTwo ? 'Bắt buộc (True)' : 'Không (False)'}
+                      {selectedDefaultRules.winByTwo ? translate('required') : translate('notRequired')}
                     </span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl">
-                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">Điểm trần tối đa</span>
-                    <span className="font-extrabold text-slate-900">{selectedDefaultRules.maxPoints ?? 'Mở'}</span>
+                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">{translate('maxPoints')}</span>
+                    <span className="font-extrabold text-slate-900">{selectedDefaultRules.maxPoints ?? translate('open')}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl">
-                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">Điểm Tie-break</span>
-                    <span className="font-extrabold text-slate-900">{selectedDefaultRules.tiebreakPoints ? `${selectedDefaultRules.tiebreakPoints} điểm` : 'Không áp dụng'}</span>
+                    <span className="text-[11px] text-slate-400 font-semibold block mb-0.5">{translate('tiebreakPoints')}</span>
+                    <span className="font-extrabold text-slate-900">{selectedDefaultRules.tiebreakPoints ? `${selectedDefaultRules.tiebreakPoints} ${translate('pointsPerSetShort')}` : translate('notApplicable')}</span>
                   </div>
                 </div>
               </div>
@@ -442,7 +447,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-3 pt-2 border-t border-slate-200">
                   <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-blue-600" />
-                    <span>2. Danh Sách Biến Thể Luật Preset Theo Môn ({selectedPresets.length} Cấu Hình)</span>
+                    <span>{translate('presetVariants', { count: selectedPresets.length })}</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -460,14 +465,14 @@ export default function AdminCategoriesPage() {
                         <p className="text-[11px] text-slate-500 leading-relaxed">{preset.description}</p>
                         <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600 pt-1 border-t border-slate-100">
                           <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                            Điểm/set: {preset.pointsPerSet}
+                            {translate('pointsPerSetShort')} {preset.pointsPerSet}
                           </span>
                           <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                            Hơn 2: {preset.winByTwo ? 'Có' : 'Không'}
+                            {translate('moreThanTwo')} {preset.winByTwo ? translate('yes') : translate('no')}
                           </span>
                           {preset.maxPoints && (
                             <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                              Trần: {preset.maxPoints}
+                              {translate('cap')} {preset.maxPoints}
                             </span>
                           )}
                         </div>
@@ -482,21 +487,21 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-3 pt-2 border-t border-slate-200">
                   <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <Target className="w-4 h-4 text-blue-600" />
-                    <span>3. Hướng Dẫn Nhập Tỷ Số & Ví Dụ Cho Trọng Tài</span>
+                    <span>{translate('scoreGuidance')}</span>
                   </h4>
 
                   <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
                     <div className="flex items-start gap-2">
                       <Hash className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-slate-900 block text-xs mb-0.5">Quy tắc nhập tỷ số:</span>
+                        <span className="font-bold text-slate-900 block text-xs mb-0.5">{translate('scoreRules')}</span>
                         <p className="text-xs text-slate-600 leading-relaxed">{selectedGuidance.targetSummary}</p>
                       </div>
                     </div>
 
                     {selectedGuidance.examples && selectedGuidance.examples.length > 0 && (
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-xs font-bold text-slate-700">Ví dụ tỷ số hợp lệ:</span>
+                        <span className="text-xs font-bold text-slate-700">{translate('validExamples')}</span>
                         <div className="flex gap-1.5">
                           {selectedGuidance.examples.map((ex, i) => (
                             <span key={i} className="text-xs font-mono font-bold bg-white text-blue-700 border border-blue-200 px-2 py-0.5 rounded shadow-2xs">
@@ -508,7 +513,7 @@ export default function AdminCategoriesPage() {
                     )}
 
                     <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200/60">
-                      💡 {selectedGuidance.operatorHint}
+                      {translate('operatorHintPrefix')}{selectedGuidance.operatorHint}
                     </p>
                   </div>
                 </div>
@@ -522,7 +527,7 @@ export default function AdminCategoriesPage() {
                 onClick={() => setSelectedCategory(null)}
                 className="px-6 py-2.5 text-xs font-extrabold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
               >
-                Đóng
+                {translate('close')}
               </button>
             </div>
           </div>

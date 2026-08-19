@@ -4,8 +4,9 @@ import { useTranslations } from 'next-intl';
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Settings, ChevronDown, ChevronRight, Save, Trophy, LayoutGrid, Users, ArrowRight, Loader2 } from 'lucide-react';
+import { Settings, ChevronDown, ChevronRight, Save, Trophy, LayoutGrid, Users, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { RoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/RoundRobinView';
@@ -309,7 +310,10 @@ export function BracketTab({
   const gsStages = bracket?.stages ?? [];
   const gsHasPlayoffStage = gsStages.some(s => s.type === 'SINGLE_ELIMINATION' || s.type === 'DOUBLE_ELIMINATION');
   const [gsActiveTab, setGsActiveTab] = useState<'group' | 'playoff'>('group');
-  const canResetDraftBracket = Boolean(bracket?.stages?.length) && tournament.status === 'DRAFT';
+  const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
+  const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
+  const isTournamentCompleted = tournament.status === 'COMPLETED';
+  const canResetBracket = hasBracket && !isTournamentCompleted;
   const gskAdvancingTotal = Math.max(0, numGroups) * Math.max(0, teamsAdvancing);
   const gskStartRoundLabel =
     gskAdvancingTotal >= 32
@@ -1020,23 +1024,38 @@ export function BracketTab({
       {bracket && bracket.stages && bracket.stages.length > 0 && (
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h3 className="font-bold text-slate-900 text-base">Sơ đồ thi đấu</h3>
-            {canResetDraftBracket && (
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Sơ đồ thi đấu</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Sơ đồ hiện tại của bảng đấu. Bạn có thể bốc thăm hoặc tạo lại sơ đồ bất cứ lúc nào trước khi giải kết thúc.</p>
+            </div>
+            {canResetBracket && (
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  const confirmed = window.confirm('Sơ đồ nháp hiện tại sẽ được khởi tạo lại. Bạn muốn tiếp tục không?');
-                  if (confirmed) {
-                    handleGenerateBracket();
-                  }
-                }}
-                className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-bold"
+                onClick={() => setIsConfirmResetOpen(true)}
+                disabled={isGeneratingBracket}
+                className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                Tạo lại sơ đồ nháp
+                <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingBracket ? 'animate-spin' : ''}`} />
+                {isGeneratingBracket ? 'Đang tạo lại...' : 'Tạo lại sơ đồ thi đấu'}
               </Button>
             )}
           </div>
+
+          <ConfirmModal
+            open={isConfirmResetOpen}
+            onOpenChange={setIsConfirmResetOpen}
+            title="Tạo lại sơ đồ thi đấu?"
+            description="Toàn bộ sơ đồ, lịch thi đấu và các phân nhánh hiện tại của nội dung này sẽ được bốc thăm và khởi tạo lại theo danh sách VĐV và cấu hình mới nhất. Các dữ liệu lịch trận cũ sẽ được thiết lập lại. Bạn có chắc chắn muốn tiếp tục không?"
+            confirmLabel={isGeneratingBracket ? 'Đang xử lý...' : 'Xác nhận tạo lại'}
+            cancelLabel="Giữ sơ đồ hiện tại"
+            variant="danger"
+            isLoading={isGeneratingBracket}
+            onConfirm={() => {
+              setIsConfirmResetOpen(false);
+              handleGenerateBracket();
+            }}
+          />
 
           {/* Group Stage Knockout: show tabs */}
           {isGroupStageKnockout && (

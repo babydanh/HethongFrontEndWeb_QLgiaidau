@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 export default function SettingsTab({ community }: { community: Community }) {
   // General Form States
@@ -37,6 +38,15 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [provinceCode, setProvinceCode] = useState(community.provinceCode || '');
   const [wardCode, setWardCode] = useState(community.wardCode || '');
   const [locationAddress, setLocationAddress] = useState(community.locationAddress || '');
+
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: locationAddress,
+    provinces,
+    wards,
+    onSelectProvince: (pCode) => setProvinceCode(pCode),
+    onSelectWard: (wCode) => setWardCode(wCode),
+    onWardsLoaded: (loadedWards) => setWards(loadedWards),
+  });
 
   // Categories Selection
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -662,6 +672,15 @@ export default function SettingsTab({ community }: { community: Community }) {
                   onChange={(e) => setLocationAddress(e.target.value)}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                 />
+                {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                    <span>
+                      Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                      {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -19,10 +19,11 @@ import toast from 'react-hot-toast';
 import { 
   User, Lock, Save, Camera, ArrowLeft, Loader2, Shield, MapPin,
   Trash2, Mail, Phone, ShieldAlert, CheckCircle2, AlertTriangle, EyeOff, Eye, X, CreditCard, MessageCircle,
-  Bell, BellOff, AtSign, Users
+  Bell, BellOff, AtSign, Users, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 // Zod Schemas matching backend constraints
 const createProfileSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
@@ -182,6 +183,18 @@ export default function EditProfilePage() {
       bankAccountNumber: user?.bankAccountNumber || '',
       bankAccountName: user?.bankAccountName || '',
     },
+  });
+
+  const watchAddress = profileForm.watch('address');
+
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: watchAddress,
+    provinces,
+    wards: [],
+    onSelectProvince: (provCode) => {
+      profileForm.setValue('provinceCode', provCode, { shouldValidate: true, shouldDirty: true });
+    },
+    onSelectWard: () => {},
   });
 
   // Update default values when user loads
@@ -642,12 +655,22 @@ export default function EditProfilePage() {
                     </div>
                   </div>
 
-                  <Input
-                    label={translate('addressLabel')}
-                    placeholder={translate('addressPlaceholder')}
-                    {...profileForm.register('address')}
-                    error={profileForm.formState.errors.address?.message}
-                  />
+                  <div>
+                    <Input
+                      label={translate('addressLabel')}
+                      placeholder={translate('addressPlaceholder')}
+                      {...profileForm.register('address')}
+                      error={profileForm.formState.errors.address?.message}
+                    />
+                    {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
+                        <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                        <span>
+                          Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">{translate('bioLabel')}</label>

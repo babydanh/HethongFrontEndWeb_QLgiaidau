@@ -48,7 +48,7 @@ export function OfficialScoreModal({
 
             <div className="mt-3 grid flex-grow gap-2 sm:grid-cols-2 lg:mt-8 lg:block lg:space-y-4">
               <div className="rounded-lg border border-white/5 bg-white/[0.03] p-3 lg:p-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Đội hình thi đấu</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">{translate('lineupLabel')}</p>
                 <p className="text-sm font-bold text-white leading-snug">{team1Name}</p>
                 <div className="my-2 flex items-center gap-2">
                   <div className="h-px flex-1 bg-white/10" />
@@ -60,19 +60,19 @@ export function OfficialScoreModal({
 
               <div className="rounded-lg border border-white/5 bg-white/[0.03] p-3 lg:space-y-3.5 lg:p-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Môn thi đấu</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{translate('sportLabel')}</p>
                   <p className="mt-1 text-sm font-semibold text-slate-200">{scorePresentation.sportLabel}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Vòng hiện tại</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-200">Vòng {match.roundNumber}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{translate('currentRoundLabel')}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-200">{translate('roundValue', { round: match.roundNumber })}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Set hiện tại</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-200">Set {activeSetIndex !== undefined ? activeSetIndex + 1 : 1}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{translate('currentSetLabel')}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-200">{translate('setValue', { set: activeSetIndex !== undefined ? activeSetIndex + 1 : 1 })}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Trạng thái trận</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{translate('matchStatusLabel')}</p>
                   <div className="mt-1.5 inline-flex rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-bold text-blue-400 border border-blue-500/20">
                     {match.status === 'ONGOING'
                       ? translate('statusInProgress')
@@ -88,7 +88,7 @@ export function OfficialScoreModal({
 
             <div className="mt-3 hidden rounded-lg border border-white/5 bg-white/[0.02] p-4 text-[11px] leading-relaxed text-slate-400 lg:block">
               <span className="font-bold text-slate-300 block mb-1">{translate('refereeNote')}</span>
-              Mọi thay đổi điểm số sẽ cập nhật thời gian thực lên màn hình live công khai của khán giả.
+              {translate('refereeNoteDescription')}
             </div>
           </div>
 
@@ -97,7 +97,7 @@ export function OfficialScoreModal({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <ModalTitle className="text-base font-bold text-slate-900 sm:text-xl">
-                    Điều khiển điểm số
+                    {translate('scoringControlsTitle')}
                   </ModalTitle>
                   <div className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold uppercase text-blue-700">
                     {scorePresentation.sportLabel}

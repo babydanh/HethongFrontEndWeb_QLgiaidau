@@ -28,8 +28,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
   BADMINTON: [
     {
       id: 'badminton-quick',
-      label: 'Vòng đầu nhanh',
-      description: 'Đánh 1 set 21, phù hợp vòng loại hoặc giải đông VĐV.',
+      label: 'Quick opening round',
+      description: 'Play one 21-point set, suitable for qualifiers or large fields.',
       setsToWin: 1,
       pointsPerSet: 21,
       winByTwo: true,
@@ -38,8 +38,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'badminton-standard',
-      label: 'Chuẩn phong trào',
-      description: 'Thắng 2 set 21, chạm 30 thắng luôn.',
+      label: 'Community standard',
+      description: 'Win two 21-point sets; reaching 30 wins the set.',
       setsToWin: 2,
       pointsPerSet: 21,
       winByTwo: true,
@@ -48,8 +48,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'badminton-short',
-      label: 'Tiết kiệm thời gian',
-      description: 'Thắng 2 set 15, dùng khi cần rút ngắn thời lượng.',
+      label: 'Time-saving',
+      description: 'Win two 15-point sets when a shorter match is needed.',
       setsToWin: 2,
       pointsPerSet: 15,
       winByTwo: true,
@@ -60,8 +60,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
   TABLE_TENNIS: [
     {
       id: 'table-tennis-bo3',
-      label: 'BO3 chuẩn nhanh',
-      description: 'Thắng 2 set 11 điểm, hợp vòng bảng hoặc vòng đầu.',
+      label: 'Fast standard BO3',
+      description: 'Win two 11-point sets, suitable for group or opening rounds.',
       setsToWin: 2,
       pointsPerSet: 11,
       winByTwo: true,
@@ -70,8 +70,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'table-tennis-bo5',
-      label: 'BO5 loại trực tiếp',
-      description: 'Thắng 3 set 11 điểm, hợp bán kết hoặc chung kết.',
+      label: 'Knockout BO5',
+      description: 'Win three 11-point sets, suitable for semifinals or finals.',
       setsToWin: 3,
       pointsPerSet: 11,
       winByTwo: true,
@@ -80,8 +80,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'table-tennis-single',
-      label: '1 set chốt nhanh',
-      description: 'Một set 11 điểm để xoay vòng đấu thật nhanh.',
+      label: 'Single-set decider',
+      description: 'One 11-point set for very fast rotation.',
       setsToWin: 1,
       pointsPerSet: 11,
       winByTwo: true,
@@ -92,8 +92,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
   PICKLEBALL_RALLY: [
     {
       id: 'pickleball-rally-quick',
-      label: '1 game 11',
-      description: 'Một game 11 rally point, gọn cho vòng đầu.',
+      label: '11-point game',
+      description: 'One 11-point rally game for a concise opening round.',
       setsToWin: 1,
       pointsPerSet: 11,
       winByTwo: true,
@@ -102,8 +102,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'pickleball-rally-standard',
-      label: 'Chuẩn rally',
-      description: 'Thắng 2 game 11, dễ live score và dễ điều phối.',
+      label: 'Rally standard',
+      description: 'Win two 11-point games for simple live scoring and coordination.',
       setsToWin: 2,
       pointsPerSet: 11,
       winByTwo: true,
@@ -112,8 +112,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'pickleball-rally-extended',
-      label: 'Game 15',
-      description: 'Thắng 2 game 15 cho các trận sâu, ít biến động hơn.',
+      label: '15-point game',
+      description: 'Win two 15-point games for later rounds with less variance.',
       setsToWin: 2,
       pointsPerSet: 15,
       winByTwo: true,
@@ -124,8 +124,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
   PICKLEBALL_SIDE_OUT: [
     {
       id: 'pickleball-sideout-standard',
-      label: 'Chuẩn side-out',
-      description: '1 game 11, chỉ bên giao bóng mới ghi điểm.',
+      label: 'Side-out standard',
+      description: 'One 11-point game; only the serving side scores.',
       setsToWin: 1,
       pointsPerSet: 11,
       winByTwo: true,
@@ -134,8 +134,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'pickleball-sideout-15',
-      label: 'Game 15',
-      description: '1 game 15, hợp trận kéo dài hơn nhưng vẫn giữ side-out.',
+      label: '15-point game',
+      description: 'One 15-point game for longer matches while keeping side-out scoring.',
       setsToWin: 1,
       pointsPerSet: 15,
       winByTwo: true,
@@ -145,7 +145,7 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     {
       id: 'pickleball-sideout-finals',
       label: 'Best of 3',
-      description: 'Thắng 2 game 11, hợp bán kết/chung kết có thời lượng tốt hơn.',
+      description: 'Win two 11-point games for semifinals or finals with a longer format.',
       setsToWin: 2,
       pointsPerSet: 11,
       winByTwo: true,
@@ -157,7 +157,7 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     {
       id: 'tennis-pro-set',
       label: 'Pro set',
-      description: '1 set 8 game, hợp vòng bảng hoặc vòng tính thời gian chặt.',
+      description: 'One 8-game set, suitable for group rounds or tight schedules.',
       setsToWin: 1,
       pointsPerSet: 8,
       winByTwo: true,
@@ -166,8 +166,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     },
     {
       id: 'tennis-standard',
-      label: 'BO3 chuẩn',
-      description: 'Thắng 2 set, mỗi set 6 game, 6-6 tie-break 7.',
+      label: 'Standard BO3',
+      description: 'Win two sets; each set has six games with a 7-point tiebreak at 6-6.',
       setsToWin: 2,
       pointsPerSet: 6,
       winByTwo: true,
@@ -177,7 +177,7 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
     {
       id: 'tennis-short-set',
       label: 'Short set',
-      description: '1 set 4 game, hợp giải phong trào hoặc nhiều trận liên tiếp.',
+      description: 'One 4-game set, suitable for community events or consecutive matches.',
       setsToWin: 1,
       pointsPerSet: 4,
       winByTwo: true,
@@ -188,8 +188,8 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
   FOOTBALL: [
     {
       id: 'football-standard',
-      label: 'Chuẩn',
-      description: '2 hiệp, mỗi hiệp 20 phút',
+      label: 'Standard',
+      description: 'Two halves of 20 minutes each.',
       setsToWin: 1,
       pointsPerSet: 1,
       winByTwo: false,
@@ -201,34 +201,34 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
 
 const SCORE_ENTRY_GUIDANCE: Record<SportRuleKind, ScoreEntryGuidance> = {
   BADMINTON: {
-    targetSummary: 'Mặc định chạm 21, hòa 20-20 thì hơn 2, tối đa thường 30.',
+    targetSummary: 'The default target is 21; at 20-20, win by two, usually capped at 30.',
     examples: ['21-17', '22-20', '30-29'],
-    operatorHint: 'Nhập từng set đã chốt. Nếu chưa đánh tới set đó, để cả hai bên = 0.',
+    operatorHint: 'Enter each completed set. If a set has not been played, leave both sides at 0.',
   },
   TABLE_TENNIS: {
-    targetSummary: 'Mặc định chạm 11, hòa 10-10 thì hơn 2.',
+    targetSummary: 'The default target is 11; at 10-10, win by two.',
     examples: ['11-7', '12-10', '15-13'],
-    operatorHint: 'Bóng bàn thường dùng BO3 hoặc BO5, nên số set nhập phải khớp cấu hình trận.',
+    operatorHint: 'Table tennis commonly uses BO3 or BO5, so the entered set count must match the match configuration.',
   },
   PICKLEBALL_RALLY: {
-    targetSummary: 'Rally point: bên thắng pha bóng nào cũng có điểm.',
+    targetSummary: 'Rally point: the side that wins each rally receives a point.',
     examples: ['11-6', '15-13', '21-19'],
-    operatorHint: 'Dùng mode này nếu BTC cần nhập tỷ số nhanh và ít rủi ro hơn side-out.',
+    operatorHint: 'Use this mode when organizers need fast score entry with less risk than side-out.',
   },
   PICKLEBALL_SIDE_OUT: {
-    targetSummary: 'Side-out: chỉ bên giao bóng mới ghi điểm, thường chạm 11 hoặc 15 và vẫn cần hơn 2 nếu kéo dài.',
+    targetSummary: 'Side-out: only the serving side scores, usually to 11 or 15, still requiring a two-point lead when extended.',
     examples: ['11-8', '12-10', '15-13'],
-    operatorHint: 'Panel này chỉ chốt score game. Trạng thái quyền giao hiện tại được giữ từ bảng điểm trực tiếp.',
+    operatorHint: 'This panel records the game score only. The current service state remains in the live scoreboard.',
   },
   TENNIS: {
-    targetSummary: 'Tennis nhập theo game trong từng set, không nhập điểm 15/30/40 ở đây.',
+    targetSummary: 'For tennis, enter games within each set; do not enter 15/30/40 points here.',
     examples: ['6-4', '7-5', '7-6'],
-    operatorHint: 'Nếu set vào tie-break, dùng kết quả cuối set như 7-6 thay vì nhập điểm tie-break riêng.',
+    operatorHint: 'If a set reaches a tiebreak, enter the final set result such as 7-6 instead of separate tiebreak points.',
   },
   FOOTBALL: {
-    targetSummary: 'Nhập tỷ số bàn thắng.',
+    targetSummary: 'Enter the goal score.',
     examples: ['2-1', '0-0', '3-2'],
-    operatorHint: 'Cập nhật tỷ số sau mỗi bàn thắng hoặc khi hết trận.',
+    operatorHint: 'Update the score after each goal or when the match ends.',
   },
 };
 
@@ -265,13 +265,13 @@ export function getQuickScoreTemplates(
     return [
       {
         id: 'tennis-standard',
-        label: label('standard', 'Chuẩn'),
+        label: label('standard', 'Standard'),
         winnerScore: pointsPerSet,
         loserScore: Math.max(pointsPerSet - 2, 0),
       },
       {
         id: 'tennis-close',
-        label: label('close', 'Sát nút'),
+        label: label('close', 'Close game'),
         winnerScore: Math.min(pointsPerSet + 1, maxPoints),
         loserScore: Math.max(pointsPerSet - 1, 0),
       },
@@ -289,19 +289,19 @@ export function getQuickScoreTemplates(
   return [
     {
       id: `${kind.toLowerCase()}-standard`,
-      label: label('standard', 'Chuẩn'),
+      label: label('standard', 'Standard'),
       winnerScore: pointsPerSet,
       loserScore: Math.max(pointsPerSet - 4, 0),
     },
     {
       id: `${kind.toLowerCase()}-close`,
-      label: label('close', 'Sát nút'),
+      label: label('close', 'Close game'),
       winnerScore: pointsPerSet,
       loserScore: Math.max(pointsPerSet - 2, 0),
     },
     {
       id: `${kind.toLowerCase()}-extended`,
-      label: label('extended', 'Kéo dài'),
+      label: label('extended', 'Extended'),
       winnerScore: safeCap,
       loserScore: Math.max(safeCap - 1, 0),
     },

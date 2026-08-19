@@ -363,7 +363,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
           provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
           wardCode={s.wardCode} setWardCode={s.setWardCode}
-          provinces={s.provinces} wards={s.wards}
+          provinces={s.provinces} wards={s.wards} setWards={s.setWards}
           startDate={s.startDate} setStartDate={s.setStartDate}
           endDate={s.endDate} setEndDate={s.setEndDate}
           isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails} />}

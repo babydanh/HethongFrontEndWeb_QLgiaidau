@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input, DateTimePicker } from '@/components/ui/Input';
 import { Tournament, BracketStage } from '@/types/tournament';
 import { Region } from '@/features/regions/api';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 interface Venue {
   id: string;
@@ -28,6 +29,7 @@ interface ScheduleTabProps {
   setWardCode: (val: string) => void;
   provinces: Region[];
   wards: Region[];
+  setWards?: (wards: Region[]) => void;
   startDate: string;
   setStartDate: (val: string) => void;
   endDate: string;
@@ -51,6 +53,7 @@ export function ScheduleTab({
   setWardCode,
   provinces,
   wards,
+  setWards,
   startDate,
   setStartDate,
   endDate,
@@ -58,6 +61,17 @@ export function ScheduleTab({
   isSavingConfig,
   handleSaveScheduleDetails,
 }: ScheduleTabProps) {
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: customVenueAddress,
+    provinces,
+    wards,
+    onSelectProvince: (pCode) => setProvinceCode(pCode),
+    onSelectWard: (wCode) => setWardCode(wCode),
+    onWardsLoaded: (loadedWards) => {
+      if (setWards) setWards(loadedWards);
+    },
+  });
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Lịch thi đấu & Địa điểm</h2>
@@ -74,12 +88,23 @@ export function ScheduleTab({
           />
           {validationField === 'venue' && <p className="text-xs font-semibold text-rose-600">Vui lòng nhập tên sân và địa chỉ đầy đủ.</p>}
 
-          <Input
-            label="Địa chỉ chi tiết"
-            placeholder="Số 12, Đường hoa mai..."
-            value={customVenueAddress}
-            onChange={(e) => setCustomVenueAddress(e.target.value)}
-          />
+          <div>
+            <Input
+              label="Địa chỉ chi tiết"
+              placeholder="Số 12, Đường hoa mai..."
+              value={customVenueAddress}
+              onChange={(e) => setCustomVenueAddress(e.target.value)}
+            />
+            {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
+                <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                <span>
+                  Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                  {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                </span>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">

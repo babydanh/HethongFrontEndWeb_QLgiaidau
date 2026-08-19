@@ -157,29 +157,42 @@ export function ScoringPanel({
       : Math.min(resolvedRules.maxPoints, Math.max(0, value));
   const scoreWarnings = getScoreRuleWarnings(scoreDraft.sets, resolvedRules, translate);
   const isFootball = resolvedRules.kind === 'FOOTBALL';
-  // Bóng đá: cho phép hòa nếu đã nhập luân lưu (shootout) để phân định.
+  // Football draws can be decided by a shootout when one has been entered.
   const hasShootout = isFootball && scoreDraft.shootout?.winnerId != null;
   const canSubmitScore = hasEnteredScore && (!hasDrawnFinishedSet || hasShootout) && (overrideEnabled || scoreWarnings.length === 0);
   const activeSetSummary = activeSet
-    ? `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} hiện tại ${activeSet.team1Score} - ${activeSet.team2Score}${activeSet.isFinished ? ' (đã chốt)' : ' (đang mở)'}`
-    : 'Chưa có ${scorePresentation.sequenceLabel} đang mở';
+    ? scoringTranslate('currentSummary', {
+        label: scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1),
+        team1: activeSet.team1Score,
+        team2: activeSet.team2Score,
+        status: activeSet.isFinished
+          ? scoringTranslate('finalizedSuffix')
+          : scoringTranslate('openSuffix'),
+      })
+    : scoringTranslate('noOpenSequence', { label: scorePresentation.sequenceLabel });
 
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-        {scorePresentation.sportLabel} • {scorePresentation.summaryLabel} • Chạm đích: {resolvedRules.pointsPerSet}
-        {resolvedRules.kind === 'TENNIS' ? ` game, loạt phụ ${resolvedRules.tiebreakPoints}` : ''}
+        {scoringTranslate('scoreHeader', {
+          sport: scorePresentation.sportLabel,
+          summary: scorePresentation.summaryLabel,
+          points: resolvedRules.pointsPerSet,
+        })}
+        {resolvedRules.kind === 'TENNIS'
+          ? scoringTranslate('tiebreakSuffix', { points: resolvedRules.tiebreakPoints })
+          : ''}
       </div>
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
         {activeSetSummary}
         <div className="mt-1 text-xs font-medium text-emerald-700">
-          Modal này chỉ nên có 1 {scorePresentation.sequenceLabel} đang mở. Nếu có nhiều dòng 0-0 chưa chốt, backend tennis sẽ từ chối.
+          {scoringTranslate('oneOpenNotice', { label: scorePresentation.sequenceLabel })}
         </div>
       </div>
       <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
         {scoreGuidance.targetSummary}
         <div className="mt-1 text-xs font-semibold text-blue-700">
-          Ví dụ hợp lệ: {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
+                  {scoringTranslate('validExamplePrefix')} {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
         </div>
       </div>
 
@@ -187,12 +200,12 @@ export function ScoringPanel({
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{scoringTranslate('refereeModeTitle')}</p>
               <p className="mt-2 text-sm font-bold text-slate-900">
-                {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
+                {overrideEnabled ? scoringTranslate('overrideEnabled') : scoringTranslate('defaultRules')}
               </p>
               <p className="mt-1 text-xs font-medium text-slate-500">
-                Chỉ bật khi cần chốt tỷ số khác luật mặc định. Hệ thống vẫn lưu đầy đủ người quyết định và lý do.
+                {scoringTranslate('overrideDescription')}
               </p>
             </div>
             <button
@@ -211,14 +224,14 @@ export function ScoringPanel({
                   : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
               )}
             >
-              {overrideEnabled ? 'Tắt ngoại lệ' : 'Bật ngoại lệ'}
+              {overrideEnabled ? scoringTranslate('disableOverride') : scoringTranslate('enableOverride')}
             </button>
           </div>
 
           {overrideEnabled && !isLiteMode ? (
             <div className="mt-4 space-y-2">
               <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
-                Lý do ngoại lệ bắt buộc
+                {scoringTranslate('overrideReasonRequired')}
               </label>
               <textarea
                 value={overrideReason}
@@ -229,10 +242,10 @@ export function ScoringPanel({
                   }))
                 }
                 className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
-                placeholder="Ví dụ: trận tranh hạng ba thống nhất chơi loạt phụ rút gọn theo quyết định trọng tài và BTC..."
+                placeholder={scoringTranslate('overridePlaceholder')}
               />
               <p className="text-xs font-medium text-amber-700">
-                Hệ thống sẽ ghi lại người quyết định, thời điểm và lý do ngoại lệ của trận.
+                {scoringTranslate('overrideAuditNotice')}
               </p>
             </div>
           ) : null}
@@ -241,29 +254,29 @@ export function ScoringPanel({
 
       {isLiteMode && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
-          ⚡ Giải đang dùng luật Tự do (Lite Mode). Trọng tài được tùy ý ghi/chỉnh điểm số không bị giới hạn.
+          {scoringTranslate('liteNotice')}
         </div>
       )}
 
       {sideOutState ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
           {servingTeamLabel
-            ? `${servingTeamLabel} đang giữ quyền giao • lượt ${sideOutState.serverNumber}. Panel này sẽ lưu luôn trạng thái giao bóng hiện tại.`
-            : 'Chế độ mất quyền giao đang bật nhưng trận chưa chốt đội giao hiện tại ở bảng điểm trực tiếp.'}
+            ? scoringTranslate('servingNow', { team: servingTeamLabel, number: sideOutState.serverNumber })
+            : scoringTranslate('sideOutNotSelected')}
         </div>
       ) : null}
 
       {sideOutState ? (
         <div className="grid gap-3 rounded-lg border border-blue-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-500">Điều khiển giao bóng trong modal</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-500">{scoringTranslate('sideOutControlsTitle')}</p>
             <p className="mt-2 text-sm font-bold text-slate-900">
               {sideOutState.servingTeam == null
-                ? 'Chưa chọn đội giao hiện tại'
-                : `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`}
+                ? scoringTranslate('noServingTeam')
+                : scoringTranslate('serveTurn', { number: sideOutState.serverNumber })}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Dùng khi cần chốt lại trạng thái giao bóng cùng lúc với việc nhập tỷ số game pickleball.
+              {scoringTranslate('sideOutDescription')}
             </p>
           </div>
 
@@ -287,7 +300,7 @@ export function ScoringPanel({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
                 )}
               >
-                {match.participant1?.teamName || team1Fallback} giao
+                {match.participant1?.teamName || team1Fallback} {scoringTranslate('serve')}
               </button>
               <button
                 type="button"
@@ -307,7 +320,7 @@ export function ScoringPanel({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
                 )}
               >
-                {match.participant2?.teamName || team2Fallback} giao
+                {match.participant2?.teamName || team2Fallback} {scoringTranslate('serve')}
               </button>
             </div>
 
@@ -325,7 +338,7 @@ export function ScoringPanel({
                 disabled={sideOutState.servingTeam == null}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
-                Lượt giao 1
+                {scoringTranslate('serveTurn', { number: 1 })}
               </button>
               <button
                 type="button"
@@ -340,7 +353,7 @@ export function ScoringPanel({
                 disabled={sideOutState.servingTeam == null}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
-                Lượt giao 2
+                {scoringTranslate('serveTurn', { number: 2 })}
               </button>
             </div>
 
@@ -357,7 +370,7 @@ export function ScoringPanel({
               disabled={sideOutState.servingTeam == null}
               className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-amber-100 disabled:opacity-50"
             >
-              Mất quyền giao
+              {scoringTranslate('sideOutLoss')}
             </button>
           </div>
         </div>
@@ -365,7 +378,7 @@ export function ScoringPanel({
 
       {scoreWarnings.length > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          <p className="font-bold">Cảnh báo bám luật mặc định</p>
+          <p className="font-bold">{scoringTranslate('warningTitle')}</p>
           <div className="mt-2 space-y-1 text-xs font-semibold text-amber-800">
             {scoreWarnings.map((warning) => (
               <p key={warning.id}>- {warning.message}</p>
@@ -373,7 +386,7 @@ export function ScoringPanel({
           </div>
           {!overrideEnabled ? (
             <p className="mt-2 text-xs font-semibold text-amber-800">
-              Nếu biên bản trọng tài xác nhận đây là kết quả hợp lệ ngoài preset, hãy bật chế độ ngoại lệ rồi ghi rõ lý do.
+              {scoringTranslate('warningOverrideHint')}
             </p>
           ) : null}
         </div>
@@ -390,33 +403,33 @@ export function ScoringPanel({
                 {scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} {index + 1}
                 {!set.isFinished && index === activeSetIndex ? (
                   <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
-                    Đang diễn ra
+                    {scoringTranslate('inProgress')}
                   </span>
                 ) : null}
                 {set.scoreOverride?.reason ? (
                   <span className="ml-2 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">
-                    Ngoại lệ
+                    {scoringTranslate('override')}
                   </span>
                 ) : set.isFinished ? (
                   <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
-                    Đã chốt
+                    {scoringTranslate('finalized')}
                   </span>
                 ) : index === activeSetIndex ? (
                   <span className="ml-2 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                    Set hiện tại
+                    {scoringTranslate('currentSequence', { label: scorePresentation.sequenceLabel })}
                   </span>
                 ) : (
                   <span className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    Chưa mở
+                    {scoringTranslate('notStarted')}
                   </span>
                 )}
               </p>
               <p className="mt-1 text-xs font-medium text-slate-500">
-                Set đã chốt sẽ giữ lại. Set hiện tại mới được nhập điểm và chốt ở nút lưu.
+                {scoringTranslate('sequenceDescription', { label: scorePresentation.sequenceLabel })}
               </p>
               {set.scoreOverride?.reason ? (
                 <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
-                  Lý do ngoại lệ: {set.scoreOverride.reason}
+                  {scoringTranslate('overrideReasonPrefix')} {set.scoreOverride.reason}
                 </p>
               ) : null}
 
@@ -462,7 +475,7 @@ export function ScoringPanel({
                   }
                   className="w-fit rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100"
                 >
-                  Xóa nhanh {scorePresentation.sequenceLabel} này
+                  {scoringTranslate('clearQuickSequence', { label: scorePresentation.sequenceLabel })}
                 </button>
               </div>
             </div>
@@ -529,27 +542,32 @@ export function ScoringPanel({
 
       {!canSubmitScore ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-            {finishedSets.length === 0
+              {finishedSets.length === 0
               ? hasEnteredScore
-                ? `Set hiện tại đang ở mức ${activeSet.team1Score} - ${activeSet.team2Score}. Hãy chốt bằng một tỉ số không hòa trước khi lưu.`
-                : `Chưa có ${scorePresentation.sequenceLabel} nào được chốt. Hãy nhập điểm cho set hiện tại trước khi lưu.`
-              : `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} không được hòa. Hãy kiểm tra lại tỉ số đã nhập.`}
+                ? scoringTranslate('currentSetDraw', {
+                    team1: activeSet.team1Score,
+                    team2: activeSet.team2Score,
+                  })
+                : scoringTranslate('noFinalizedSequence', { label: scorePresentation.sequenceLabel })
+              : scoringTranslate('sequenceDraw', {
+                  label: scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1),
+                })}
         </div>
       ) : null}
       {overrideEnabled && !canSubmitWithOverride ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-          Đã bật ngoại lệ, cần nhập lý do để BTC và trọng tài tra cứu lại sau.
+          {scoringTranslate('overrideReasonNeeded')}
         </div>
       ) : null}
 
       {isFootball && hasDrawnFinishedSet && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
           <p className="text-sm font-bold text-amber-900">
-            ⚽ Trận hòa ở vòng loại trực tiếp — nhập luân lưu để phân định
+            {scoringTranslate('shootoutTitle')}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-amber-800">{match.participant1?.teamName || team1Fallback} (luân lưu)</label>
+              <label className="text-xs font-bold text-amber-800">{match.participant1?.teamName || team1Fallback} ({scoringTranslate('shootoutLabel')})</label>
               <input
                 type="number"
                 min={0}
@@ -567,7 +585,7 @@ export function ScoringPanel({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-amber-800">{match.participant2?.teamName || team2Fallback} (luân lưu)</label>
+              <label className="text-xs font-bold text-amber-800">{match.participant2?.teamName || team2Fallback} ({scoringTranslate('shootoutLabel')})</label>
               <input
                 type="number"
                 min={0}
@@ -603,7 +621,7 @@ export function ScoringPanel({
               }
               className="flex-1"
             >
-              {match.participant1?.teamName || team1Fallback} thắng luân lưu
+              {match.participant1?.teamName || team1Fallback} {scoringTranslate('winsShootout')}
             </Button>
             <Button
               type="button"
@@ -622,7 +640,7 @@ export function ScoringPanel({
               }
               className="flex-1"
             >
-              {match.participant2?.teamName || team2Fallback} thắng luân lưu
+              {match.participant2?.teamName || team2Fallback} {scoringTranslate('winsShootout')}
             </Button>
           </div>
         </div>
@@ -630,14 +648,14 @@ export function ScoringPanel({
 
       <ModalFooter className="gap-2">
         <Button variant="outline" className="border-slate-200 text-slate-700" onClick={onCancel}>
-          Hủy
+          {scoringTranslate('cancel')}
         </Button>
         <Button
           className="bg-blue-600 text-white hover:bg-blue-700"
           onClick={onSubmit}
           disabled={!canSubmitScore || !canSubmitWithOverride || isSubmitting}
         >
-          Lưu tỷ số
+          {scoringTranslate('saveScore')}
         </Button>
       </ModalFooter>
     </div>

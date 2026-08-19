@@ -42,7 +42,7 @@ export function TennisOfficialPanel({
             <p className="mt-2 text-sm font-semibold text-slate-700">{pointHint}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 shadow-sm">
-            Game hiện tại của set: {currentSet.team1Score} - {currentSet.team2Score}
+            {translate('currentGameScore', { score1: currentSet.team1Score, score2: currentSet.team2Score })}
           </div>
         </div>
       </div>
@@ -55,7 +55,7 @@ export function TennisOfficialPanel({
               <h4 className="mt-2 text-xl font-bold text-slate-900">{team1Name}</h4>
             </div>
             <div className="min-w-[92px] rounded-lg bg-white px-4 py-3 text-center shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Pha bóng</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{translate('rallyLabel')}</p>
               <p className="mt-1 text-4xl font-bold tabular-nums text-blue-700">{currentPointTeam1}</p>
             </div>
           </div>
@@ -68,7 +68,7 @@ export function TennisOfficialPanel({
             >
               <span className="block text-sm font-bold">{translate('teamWinsPoint', { number: 1 })}</span>
               <span className="mt-1 block text-xs font-semibold text-blue-100">
-                Tự tăng theo mốc tennis và tự chốt game khi đủ luật.
+                {translate('tennisAutoProgressHint')}
               </span>
             </button>
             <button
@@ -91,7 +91,7 @@ export function TennisOfficialPanel({
               <h4 className="mt-2 text-xl font-bold text-slate-900">{team2Name}</h4>
             </div>
             <div className="min-w-[92px] rounded-lg bg-white px-4 py-3 text-center shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Pha bóng</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{translate('rallyLabel')}</p>
               <p className="mt-1 text-4xl font-bold tabular-nums text-blue-700">{currentPointTeam2}</p>
             </div>
           </div>
@@ -104,7 +104,7 @@ export function TennisOfficialPanel({
             >
               <span className="block text-sm font-bold">{translate('teamWinsPoint', { number: 2 })}</span>
               <span className="mt-1 block text-xs font-semibold text-blue-100">
-                Tự tăng theo mốc tennis và tự chốt game khi đủ luật.
+                {translate('tennisAutoProgressHint')}
               </span>
             </button>
             <button

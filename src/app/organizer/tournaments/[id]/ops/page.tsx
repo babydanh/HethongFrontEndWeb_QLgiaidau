@@ -31,6 +31,8 @@ const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
 
 export default function OrganizerTournamentOpsPage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('OrganizerOps');
+  const matchTranslate = useTranslations('Match');
+  const tournamentDetailTranslate = useTranslations('TournamentDetail');
   const resolvedParams = use(params);
   const bracketManager = useManageState(resolvedParams.id);
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
@@ -59,7 +61,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   const bracketDivisions = bracketManager.divisions;
   const applyDivisionFormValues = bracketManager.applyDivisionFormValues;
   const setBracketSelectedDivisionId = bracketManager.setSelectedDivisionId;
-  const sportPresentation = getSportRulePresentation(bracketManager.sportRuleKind);
+  const sportPresentation = getSportRulePresentation(bracketManager.sportRuleKind, tournamentDetailTranslate);
   const supportsTiebreakInput =
     bracketManager.sportRuleKind === 'TENNIS' ||
     bracketManager.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
@@ -180,11 +182,21 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     }>();
 
     for (const match of matches) {
-      const label = getMatchRoundLabel({
+      const rawLabel = getMatchRoundLabel({
         match,
         matches,
         tournamentFormat: match.stage?.type,
       });
+      const label = rawLabel
+        .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
+        .replaceAll('Chung kết', matchTranslate('roundFinal'))
+        .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
+        .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
+        .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
+        .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
+        .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
+        .replaceAll('Lượt', matchTranslate('leg'))
+        .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
       const key = `${match.roundNumber}-${label}`;
       const current = grouped.get(key) ?? {
         label,
@@ -319,7 +331,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         matchConfig: bracketMatch?.matchConfig,
         tournament: { sportRules: tournament?.sportRules ?? null },
       });
-      const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+      const scorePresentation = getMatchScorePresentation(resolvedRules.kind, tournamentDetailTranslate);
 
       if (bracketMatch?.matchConfig?.setsToWin) {
         customConfigSummary.push(`BO${bracketMatch.matchConfig.setsToWin * 2 - 1}`);
@@ -328,17 +340,17 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         customConfigSummary.push(`${bracketMatch.matchConfig.pointsPerSet} ${scorePresentation.scoreUnit}/${scorePresentation.sequenceLabel}`);
       }
       if (bracketMatch?.matchConfig?.deuceEnabled === false) {
-        customConfigSummary.push('không yêu cầu cách 2');
+        customConfigSummary.push(translate('customConfigNoSecondLeg'));
       }
       if (bracketMatch?.matchConfig?.tiebreakAt) {
-        customConfigSummary.push(`ngưỡng chốt ${bracketMatch.matchConfig.tiebreakAt}`);
+        customConfigSummary.push(translate('customConfigTiebreakThreshold', { value: bracketMatch.matchConfig.tiebreakAt }));
       }
 
       const prerequisiteNames = (prerequisitesByMatchId.get(match.id) ?? [])
         .map((prerequisiteId) => matchMap.get(prerequisiteId))
         .filter((item): item is NonNullable<typeof item> => !!item)
         .filter((item) => item.status !== 'COMPLETED')
-        .map((item) => `Trận #${item.matchOrder} chưa xong`);
+        .map((item) => translate('incompleteMatch', { matchOrder: item.matchOrder }));
 
       nextInsights[match.id] = {
         hasCustomConfig: customConfigSummary.length > 0,
@@ -369,7 +381,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-center">
           <LoadingSpinner className="h-10 w-10 animate-spin text-blue-600" />
-          <p className="text-sm font-medium text-slate-500">Đang tải panel vận hành giải...</p>
+          <p className="text-sm font-medium text-slate-500">{translate('loadingOperationsPanel')}</p>
         </div>
       </div>
     );
@@ -432,11 +444,11 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">{tournament.name}</h1>
               <p className="mt-2.5 flex items-center gap-1.5 text-xs font-bold text-slate-455">
                 <Calendar className="h-4 w-4 text-slate-400" />
-                Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa thiết lập'}
+                {translate('openingDate', { date: tournament.startDate ? formatDate(tournament.startDate) : translate('notConfigured') })}
               </p>
             </div>
             <p className="max-w-3xl text-xs font-semibold leading-relaxed text-slate-455">
-              Theo dõi lịch đấu, tỉ số, trọng tài và các tình huống cần xử lý trong ngày thi đấu.
+              {translate('operationsDescription')}
             </p>
           </div>
 
@@ -447,7 +459,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/manage`; }}
             >
               <Settings className="mr-2 h-4 w-4 text-slate-400" />
-              Về cấu hình
+              {translate('backToConfiguration')}
             </Button>
             <Button
               variant="outline"
@@ -455,7 +467,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               onClick={() => window.open(buildPublicTournamentUrl('bracket'), '_blank')}
             >
               <Trophy className="mr-2 h-4 w-4 text-blue-500" />
-              Mở sơ đồ công khai
+              {translate('openPublicBracket')}
             </Button>
             <Button
               variant="outline"
@@ -463,7 +475,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               onClick={() => window.open(buildPublicTournamentUrl(), '_blank')}
             >
               <ExternalLink className="mr-2 h-4 w-4 text-slate-400" />
-              Xem trang giải
+              {translate('viewTournamentPage')}
             </Button>
           </div>
         </div>
@@ -472,8 +484,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       {/* Division Selector Section */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4 sm:p-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Nội dung thi đấu</p>
-          <p className="text-xs text-slate-400 mt-1 font-semibold">Chọn division để xem chi tiết hàng chờ vận hành, danh sách đấu thủ, lịch thi đấu và giải quyết xung đột theo ngữ cảnh.</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-450">{translate('divisionContent')}</p>
+          <p className="text-xs text-slate-400 mt-1 font-semibold">{translate('divisionSelectorHint')}</p>
         </div>
         {divisions.length > 0 ? (
           <div className="flex flex-wrap gap-2.5">
@@ -501,10 +513,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-            <p className="text-sm font-bold text-slate-700">Giải chưa có division để vận hành</p>
-            <p className="mt-1 text-xs font-medium text-slate-500">
-              Hãy quay về cấu hình để tạo hoặc kích hoạt các nội dung thi đấu trước.
-            </p>
+            <p className="text-sm font-bold text-slate-700">{translate('noDivision')}</p>
+            <p className="mt-1 text-xs font-medium text-slate-500">{translate('noDivisionHint')}</p>
           </div>
         )}
       </div>
@@ -512,10 +522,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       <div className="sticky top-16 z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur lg:top-20">
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {([
-            { id: 'OVERVIEW', label: 'Tổng quan', icon: BarChart3 },
-            { id: 'BRACKET', label: 'Sơ đồ', icon: Network },
-            { id: 'OPERATIONS', label: 'Điều hành', icon: Activity },
-            { id: 'CAMERA', label: 'Phát trực tiếp', icon: Video },
+            { id: 'OVERVIEW', label: translate('overviewTab'), icon: BarChart3 },
+            { id: 'BRACKET', label: translate('bracketTab'), icon: Network },
+            { id: 'OPERATIONS', label: translate('operationsTab'), icon: Activity },
+            { id: 'CAMERA', label: translate('livestreamTab'), icon: Video },
           ] as const).map((tab) => {
             const Icon = tab.icon;
             const isActive = activePageTab === tab.id;
@@ -542,10 +552,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       {activePageTab === 'BRACKET' ? (
       <div ref={bracketSectionRef} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
         <div className="mb-5 space-y-1">
-          <h2 className="text-xl font-bold text-slate-900">Sơ đồ thi đấu điều phối trực tiếp</h2>
-          <p className="text-sm font-medium text-slate-500">
-            Sơ đồ này bám theo division đang chọn ở panel vận hành. Mọi thay đổi cấu hình, khởi tạo bracket, luật theo vòng và lịch trận đều thao tác ngay tại đây.
-          </p>
+          <h2 className="text-xl font-bold text-slate-900">{translate('orchestrationBracketTitle')}</h2>
+          <p className="text-sm font-medium text-slate-500">{translate('orchestrationBracketDescription')}</p>
         </div>
 
         <BracketTab
@@ -627,54 +635,54 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_1fr]">
         {/* Division Health Card */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
-          <h3 className="text-lg font-bold text-slate-900">Tình trạng nội dung thi đấu hiện tại</h3>
+          <h3 className="text-lg font-bold text-slate-900">{translate('divisionHealthTitle')}</h3>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Chặng đấu</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-450">{translate('stageCount')}</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{divisionHealth.stageCount}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Số vòng đấu</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-455">{translate('roundCount')}</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{divisionHealth.roundCount}</p>
             </div>
             <div className="rounded-lg border border-blue-150 bg-blue-50/40 p-4 transition-all hover:bg-blue-50/70">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-650">Chưa xếp lịch</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-650">{translate('unscheduledCount')}</p>
               <p className="mt-2 text-2xl font-bold text-blue-700">{divisionHealth.unscheduledCount}</p>
             </div>
             <div className="rounded-lg border border-amber-150 bg-slate-50/40 p-4 transition-all hover:bg-slate-50/70">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-650">Cấu hình riêng</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-650">{translate('customConfigCount')}</p>
               <p className="mt-2 text-2xl font-bold text-amber-700">{divisionHealth.customConfigCount}</p>
             </div>
             <div className="rounded-lg border border-rose-150 bg-rose-50/40 p-4 transition-all hover:bg-rose-50/70">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-rose-650">Xung đột lịch</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-rose-650">{translate('conflictCount')}</p>
               <p className="mt-2 text-2xl font-bold text-rose-700">{divisionHealth.conflictCount}</p>
             </div>
           </div>
 
           <div className="border-t border-slate-100 pt-5">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-450 mb-3">Chi tiết xung đột ngày thi đấu</h4>
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-450 mb-3">{translate('conflictDetailsTitle')}</h4>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
-                <span>Trùng sân thi đấu:</span>
+                <span>{translate('conflictingCourts')}</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.court > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.court}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
-                <span>Trùng trọng tài điều phối:</span>
+                <span>{translate('conflictingReferees')}</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.referee > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.referee}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
-                <span>Trùng vận động viên/đội:</span>
+                <span>{translate('conflictingPlayers')}</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.participant > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.participant}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
-                <span>Sai thứ tự nhánh đấu:</span>
+                <span>{translate('dependencyConflict')}</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.dependency > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.dependency}
                 </span>
@@ -685,7 +693,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
 
         {/* Round Summary Card */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-          <h3 className="text-lg font-bold text-slate-900">Nhịp vận hành theo vòng</h3>
+          <h3 className="text-lg font-bold text-slate-900">{translate('roundOperationsTitle')}</h3>
           <div className="space-y-2.5 max-h-[360px] overflow-y-auto no-scrollbar">
             {roundSummary.map((round) => (
               <div key={`${round.order}-${round.label}`} className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
@@ -693,20 +701,20 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   <div>
                     <p className="text-sm font-bold text-slate-900">{round.label}</p>
                     <p className="text-[11px] font-semibold text-slate-450 mt-0.5">
-                      {round.total} trận đấu • {round.missingAssignments} trận thiếu phân sân/trọng tài
+                      {translate('roundSummary', { total: round.total, missing: round.missingAssignments })}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
-                    <span className="rounded-lg bg-slate-100 px-2 py-1 text-slate-700">Lịch {round.scheduled}</span>
-                    <span className="rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">Đang đấu {round.ongoing}</span>
-                    <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">Xong {round.completed}</span>
+                    <span className="rounded-lg bg-slate-100 px-2 py-1 text-slate-700">{translate('scheduledShort', { count: round.scheduled })}</span>
+                    <span className="rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">{translate('ongoingShort', { count: round.ongoing })}</span>
+                    <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">{translate('completedShort', { count: round.completed })}</span>
                   </div>
                 </div>
               </div>
             ))}
             {roundSummary.length === 0 && (
               <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                <p className="text-xs font-bold text-slate-500">Chưa có dữ liệu vòng thi đấu được khởi tạo.</p>
+                <p className="text-xs font-bold text-slate-500">{translate('noRoundData')}</p>
               </div>
             )}
           </div>
@@ -737,10 +745,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       {activePageTab === 'CAMERA' ? (
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex flex-col gap-1.5">
-            <h2 className="text-xl font-bold text-slate-900">Gán camera theo trận đấu</h2>
-            <p className="text-sm font-semibold text-slate-500">
-              BTC chọn camera theo từng trận. Trọng tài được phân công mới có thể bắt đầu hoặc dừng phát trực tiếp.
-            </p>
+            <h2 className="text-xl font-bold text-slate-900">{translate('cameraAssignmentTitle')}</h2>
+            <p className="text-sm font-semibold text-slate-500">{translate('cameraAssignmentDescription')}</p>
           </div>
           <LivestreamTab tournament={bracketManager.tournament ?? tournament} bracket={bracketManager.bracket} />
         </section>
@@ -798,7 +804,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               {bracketManager.isCustomMatchConfig && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-slate-500">Số {sportPresentation.setOptions[0]?.label.includes('game') ? 'game' : 'set'} cần thắng</label>
+                    <label className="text-xs text-slate-500">{translate('matchSetsToWinLabel', { unit: sportPresentation.setOptions[0]?.label.includes('game') ? translate('gameUnit') : translate('setUnit') })}</label>
                     <input
                       type="number"
                       value={bracketManager.matchSetsToWin}
@@ -859,7 +865,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   )}
                   <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
                     {sportPresentation.presetSummary}
-                    {isPickleballSideOut ? ' Nếu cần chấm pha đang diễn ra, nên dùng bảng điểm trực tiếp thay vì cấu hình tỉ số cuối game ở đây.' : ''}
+                    {isPickleballSideOut ? ` ${translate('pickleballLiveHint')}` : ''}
                   </div>
                 </div>
               )}

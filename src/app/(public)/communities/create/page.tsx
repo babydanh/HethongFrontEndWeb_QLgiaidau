@@ -12,9 +12,10 @@ import { regionsApi, Region } from '@/features/regions/api';
 import { uploadApi } from '@/features/upload/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { ChevronLeft, Plus, Trash2, UploadCloud, X, Loader2 } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, UploadCloud, X, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 type CreateCommunityFormValues = {
   name: string;
@@ -84,10 +85,26 @@ export default function CreateCommunityPage() {
   });
 
   const watchProvince = watch('provinceCode');
+  const watchLocationAddress = watch('locationAddress');
   const watchJoinMode = watch('joinMode');
   const watchCategoryIds = watch('categoryIds');
   const watchLogoUrl = watch('logoUrl');
   const watchBannerUrl = watch('bannerUrl');
+
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: watchLocationAddress,
+    provinces,
+    wards,
+    onSelectProvince: (provCode) => {
+      setValue('provinceCode', provCode, { shouldValidate: true, shouldDirty: true });
+    },
+    onSelectWard: (wardCode) => {
+      setValue('wardCode', wardCode, { shouldValidate: true, shouldDirty: true });
+    },
+    onWardsLoaded: (loadedWards) => {
+      setWards(loadedWards);
+    },
+  });
 
   useEffect(() => {
     // Load categories (filter active only)
@@ -265,6 +282,26 @@ export default function CreateCommunityPage() {
             <section className="space-y-6">
               <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step2')}</h2>
               
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Địa chỉ chi tiết / Sân sinh hoạt chính
+                </label>
+                <input 
+                  {...register('locationAddress')}
+                  placeholder="Ví dụ: Số 123 Đường Hoa Sứ, P. 7, Q. Phú Nhuận, TP.HCM..."
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+                {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                    <span>
+                      Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                      {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">

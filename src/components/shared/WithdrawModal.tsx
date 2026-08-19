@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { tournamentsApi } from '@/features/tournaments/api';
@@ -31,6 +32,7 @@ export function WithdrawModal({
   defaultBankAccountName = '',
   onWithdrawSuccess,
 }: WithdrawModalProps) {
+  const registrationTranslate = useTranslations('TournamentRegistration');
   const [bankName, setBankName] = useState(defaultBankName);
   const [bankAccountNumber, setBankAccountNumber] = useState(defaultBankAccountNumber);
   const [bankAccountName, setBankAccountName] = useState(defaultBankAccountName);
@@ -41,7 +43,7 @@ export function WithdrawModal({
     try {
       setIsWithdrawing(true);
       await tournamentsApi.withdraw(tournamentId, bankData, divisionId);
-      toast.success('Đã rút khỏi giải đấu thành công.');
+      toast.success(registrationTranslate('withdrawalSuccess'));
       onClose();
       onWithdrawSuccess?.();
     } catch (err) {
@@ -56,7 +58,7 @@ export function WithdrawModal({
 
     if (isPaid) {
       if (!bankName.trim() || !bankAccountNumber.trim() || !bankAccountName.trim()) {
-        setBankError('Vui lòng điền đầy đủ 3 trường thông tin ngân hàng.');
+        setBankError(registrationTranslate('bankFieldsRequired'));
         return;
       }
       executeWithdraw({
@@ -75,7 +77,7 @@ export function WithdrawModal({
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl animate-in zoom-in duration-200">
         <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <h3 className="text-base font-bold text-slate-900">Thông tin hoàn trả lệ phí</h3>
+          <h3 className="text-base font-bold text-slate-900">{registrationTranslate('refundModalTitle')}</h3>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-650 p-1 rounded-lg hover:bg-slate-100 transition-all"
@@ -88,38 +90,38 @@ export function WithdrawModal({
           <form onSubmit={handleConfirmWithdraw}>
             <div className="p-6 space-y-4.5">
               <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-slate-650 leading-relaxed font-medium">
-                Giải đấu có thu phí. Ban tổ chức sẽ đối soát và thực hiện hoàn trả lại lệ phí giải đấu qua số tài khoản ngân hàng bạn cung cấp dưới đây.
+                {registrationTranslate('paidRefundDescription')}
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Tên ngân hàng / Ví (Ví dụ: MB Bank, Vietcombank...)</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">{registrationTranslate('bankNameLabel')}</label>
                 <Input
                   required
                   value={bankName}
                   onChange={(e) => { setBankName(e.target.value); setBankError(''); }}
-                  placeholder="Nhập tên ngân hàng..."
+                  placeholder={registrationTranslate('bankNamePlaceholder')}
                   className="font-semibold text-slate-800"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Số tài khoản ngân hàng</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">{registrationTranslate('bankAccountNumberLabel')}</label>
                 <Input
                   required
                   value={bankAccountNumber}
                   onChange={(e) => { setBankAccountNumber(e.target.value); setBankError(''); }}
-                  placeholder="Nhập số tài khoản..."
+                  placeholder={registrationTranslate('bankAccountNumberPlaceholder')}
                   className="font-semibold text-slate-800 tracking-wider"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Họ và tên chủ tài khoản (Viết hoa không dấu)</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">{registrationTranslate('bankAccountHolderLabel')}</label>
                 <Input
                   required
                   value={bankAccountName}
                   onChange={(e) => { setBankAccountName(e.target.value); setBankError(''); }}
-                  placeholder="Ví dụ: NGUYEN VAN A"
+                  placeholder={registrationTranslate('bankAccountHolderPlaceholder')}
                   className="font-semibold text-slate-800 uppercase"
                 />
               </div>
@@ -135,7 +137,7 @@ export function WithdrawModal({
                 onClick={onClose}
                 className="px-4 py-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg"
               >
-                Hủy bỏ
+                {registrationTranslate('cancelAction')}
               </Button>
               <Button
                 type="submit"
@@ -143,14 +145,14 @@ export function WithdrawModal({
                 className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-md shadow-rose-500/10"
               >
                 {isWithdrawing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                Xác nhận rút & hoàn tiền
+                {registrationTranslate('confirmWithdrawRefund')}
               </Button>
             </div>
           </form>
         ) : (
           <div className="p-6">
             <div className="bg-slate-50/50 border border-slate-200 rounded-lg p-4 text-xs text-slate-650 leading-relaxed font-medium mb-4">
-              Bạn chưa thanh toán lệ phí, nên sẽ không có hoàn tiền. Xác nhận hủy đăng ký?
+              {registrationTranslate('unpaidWithdrawDescription')}
             </div>
             <div className="flex justify-end gap-3">
               <Button
@@ -159,7 +161,7 @@ export function WithdrawModal({
                 onClick={onClose}
                 className="px-4 py-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg"
               >
-                Hủy bỏ
+                {registrationTranslate('cancelAction')}
               </Button>
               <Button
                 onClick={() => executeWithdraw()}
@@ -167,7 +169,7 @@ export function WithdrawModal({
                 className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-md shadow-rose-500/10"
               >
                 {isWithdrawing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                Xác nhận rút lui
+                {registrationTranslate('confirmWithdraw')}
               </Button>
             </div>
           </div>

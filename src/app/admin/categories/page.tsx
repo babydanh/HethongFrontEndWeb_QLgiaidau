@@ -43,6 +43,7 @@ function mapCategoryToSportKind(category: Category): SportRuleKind {
 
 export default function AdminCategoriesPage() {
   const translate = useTranslations('AdminCategories');
+  const ruleTranslate = useTranslations('TournamentDetail');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,16 +141,16 @@ export default function AdminCategoriesPage() {
   }, [selectedKind]);
 
   const selectedPresentation = useMemo(() => {
-    return getSportRulePresentation(selectedKind);
-  }, [selectedKind]);
+    return getSportRulePresentation(selectedKind, ruleTranslate);
+  }, [selectedKind, ruleTranslate]);
 
   const selectedPresets = useMemo(() => {
-    return getSportRulePresets(selectedKind) || [];
-  }, [selectedKind]);
+    return getSportRulePresets(selectedKind, ruleTranslate) || [];
+  }, [selectedKind, ruleTranslate]);
 
   const selectedGuidance = useMemo(() => {
-    return getScoreEntryGuidance(selectedKind);
-  }, [selectedKind]);
+    return getScoreEntryGuidance(selectedKind, ruleTranslate);
+  }, [selectedKind, ruleTranslate]);
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto font-sans">
@@ -258,7 +259,7 @@ export default function AdminCategoriesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCategories.map((cat) => {
             const kind = mapCategoryToSportKind(cat);
-            const presentation = getSportRulePresentation(kind);
+            const presentation = getSportRulePresentation(kind, ruleTranslate);
             const isUpdating = updatingIds[cat.id] === true;
 
             return (

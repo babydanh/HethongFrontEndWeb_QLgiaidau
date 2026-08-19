@@ -122,6 +122,7 @@ export default function LiveMatchPage({ params }: Props) {
   const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const translate = useTranslations('Common');
   const matchTranslate = useTranslations('Match');
+  const tournamentDetailTranslate = useTranslations('TournamentDetail');
   const router = useRouter();
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
@@ -542,14 +543,14 @@ export default function LiveMatchPage({ params }: Props) {
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
   const resolvedRules = resolveMatchSportRules(match);
   const isLiteMatch = match?.tournament?.tournamentConfig?.mode === 'LITE';
-  const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+  const scorePresentation = getMatchScorePresentation(resolvedRules.kind, tournamentDetailTranslate);
   const scoreGuidance = isLiteMatch
     ? {
         targetSummary: matchTranslate('liteScoringSummary'),
         examples: [],
         operatorHint: matchTranslate('operatorHint'),
       }
-    : getScoreEntryGuidance(resolvedRules.kind);
+    : getScoreEntryGuidance(resolvedRules.kind, tournamentDetailTranslate);
   const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
   const sideOutState = readSideOutState(match);
   // Lite uses the generic counter; side-out/server rules belong to advanced presets.
@@ -558,7 +559,7 @@ export default function LiveMatchPage({ params }: Props) {
   const tennisPointState = isTennis ? optimisticTennisPointState ?? resolvedTennisPointState : null;
   const penalties = readPenaltyLog(match);
   const penaltySchema = getPenaltySchema(resolvedRules.kind);
-  const scoreWarnings = getScoreRuleWarnings(scores, resolvedRules);
+  const scoreWarnings = getScoreRuleWarnings(scores, resolvedRules, tournamentDetailTranslate);
   const scoreOverride =
     match.scoreDetails &&
     typeof match.scoreDetails === 'object' &&
@@ -907,7 +908,7 @@ export default function LiveMatchPage({ params }: Props) {
 
       // Không cho nút công vượt trần preset. Ngoại lệ phải được bật và có lý do trước đó.
       if (!isLiteMatch && !overrideEnabled && Math.max(newScores[activeIdx].team1Score, newScores[activeIdx].team2Score) > resolvedRules.maxPoints) {
-        toast.error(`Điểm set không được vượt ${resolvedRules.maxPoints}. Bật ngoại lệ nếu BTC/trọng tài đã xác nhận.`);
+        toast.error(matchTranslate('scoreMaximumError', { points: resolvedRules.maxPoints }));
         return;
       }
 
@@ -928,7 +929,7 @@ export default function LiveMatchPage({ params }: Props) {
       });
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể cập nhật điểm số của set đang diễn ra.'));
+      toast.error(getErrorMessage(err, matchTranslate('scoreUpdateFallback')));
     }
   };
 
@@ -972,12 +973,12 @@ export default function LiveMatchPage({ params }: Props) {
       });
       toast.success(
         newStatus === 'ONGOING'
-          ? `Đã bắt đầu trận ${team1Name} vs ${team2Name}. Bảng điểm live đang hoạt động.`
-          : `Đã chuyển trạng thái trận ${team1Name} vs ${team2Name} sang kết thúc.`,
+          ? matchTranslate('statusUpdateOngoing', { team1: team1Name, team2: team2Name })
+          : matchTranslate('statusUpdateCompleted', { team1: team1Name, team2: team2Name }),
       );
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái trận đấu.'));
+      toast.error(getErrorMessage(err, matchTranslate('statusUpdateFallback')));
     } finally {
       setIsSubmitting(false);
     }
@@ -999,7 +1000,7 @@ export default function LiveMatchPage({ params }: Props) {
       const newScores = [...scores];
       const activeIdx = newScores.findIndex((s) => !s.isFinished);
       if (activeIdx === -1) {
-        toast.error('Không tìm thấy set đấu đang diễn ra');
+        toast.error(matchTranslate('setNotFound'));
         setIsSubmitting(false);
         return;
       }
@@ -1008,7 +1009,7 @@ export default function LiveMatchPage({ params }: Props) {
       if (!appliedOverrideReason) {
         const finishValidation = validateSetCanFinish(setObj, activeIdx);
         if (!finishValidation.ok) {
-          toast.error(finishValidation.message ?? 'Không thể chốt set hiện tại.');
+          toast.error(finishValidation.message ?? matchTranslate('setFinishFallback'));
           setIsSubmitting(false);
           return;
         }
@@ -1053,18 +1054,29 @@ export default function LiveMatchPage({ params }: Props) {
           ? team1Name
           : setObj.team2Score > setObj.team1Score
             ? team2Name
-            : 'Không có đội';
+            : matchTranslate('noWinner');
+      const setWinnerSuffix = setWinnerName !== matchTranslate('noWinner')
+        ? matchTranslate('setWinnerSuffix', { winner: setWinnerName, sequence: scorePresentation.sequenceLabel })
+        : '';
       toast.success(
-        `Đã chốt ${scorePresentation.sequenceLabel} ${activeIdx + 1}: ${team1Name} ${setObj.team1Score} - ${setObj.team2Score} ${team2Name}. ${setWinnerName !== 'Không có đội' ? `${setWinnerName} thắng ${scorePresentation.sequenceLabel} này.` : ''}`,
+        matchTranslate('setCompletedSummary', {
+          sequence: scorePresentation.sequenceLabel,
+          set: activeIdx + 1,
+          team1: team1Name,
+          score1: setObj.team1Score,
+          score2: setObj.team2Score,
+          team2: team2Name,
+          suffix: setWinnerSuffix,
+        }),
       );
     } catch (err: unknown) {
       console.error(err);
       if (isConflict409(err)) {
         const fresh = await matchesApi.getMatchById(matchId);
         applyServerSnapshot(fresh);
-        toast('Set đã thay đổi từ thiết bị khác. Đã làm mới số liệu.');
+        toast(matchTranslate('setChangedOtherDevice'));
       } else {
-        toast.error(getErrorMessage(err, 'Không thể chốt set hiện tại.'));
+        toast.error(getErrorMessage(err, matchTranslate('setFinishErrorFallback')));
       }
     } finally {
       setIsSubmitting(false);
@@ -1078,7 +1090,7 @@ export default function LiveMatchPage({ params }: Props) {
     }
     const isFootball = resolvedRules.kind === 'FOOTBALL';
     if (!isLiteMatch && !isFootball && !overrideEnabled) {
-      toast.error('Chốt một đội thắng thẳng là nghiệp vụ ngoại lệ. Hãy bật ngoại lệ và nhập lý do trước.');
+      toast.error(matchTranslate('exceptionWinnerRequired'));
       return;
     }
     const appliedOverrideReason = isLiteMatch || isFootball ? null : resolveOverrideReason();
@@ -1094,7 +1106,7 @@ export default function LiveMatchPage({ params }: Props) {
 
       const winnerId = winnerTeam === 1 ? match.participant1Id : match.participant2Id;
       if (!winnerId) {
-        toast.error('Không tìm thấy ID người thắng cuộc');
+        toast.error(matchTranslate('winnerNotFound'));
         setIsSubmitting(false);
         return;
       }
@@ -1107,21 +1119,21 @@ export default function LiveMatchPage({ params }: Props) {
           && shootoutGoals.p2Goals >= 0
           && shootoutGoals.p1Goals !== shootoutGoals.p2Goals;
         if (isRegulationDraw && !shootoutIsValid) {
-          toast.error('Tráº­n hÃ²a pháº£i nháº­p tá»· sá»‘ luÃ¢n lÆ°u khÃ¡c nhau Ä‘á»ƒ phÃ¢n Ä‘á»‹nh.');
+          toast.error(matchTranslate('shootoutMustDiffer'));
           setIsSubmitting(false);
           return;
         }
         if (isRegulationDraw) {
           const shootoutWinner = shootoutGoals.p1Goals > shootoutGoals.p2Goals ? match.participant1Id : match.participant2Id;
           if (shootoutWinner !== winnerId) {
-            toast.error('Äá»™i tháº¯ng pháº£i cÃ³ tá»· sá»‘ luÃ¢n lÆ°u cao hÆ¡n.');
+            toast.error(matchTranslate('shootoutWinnerMismatch'));
             setIsSubmitting(false);
             return;
           }
         } else {
           const scoreWinner = footballScore.team1Goals > footballScore.team2Goals ? match.participant1Id : match.participant2Id;
           if (scoreWinner !== winnerId) {
-            toast.error('Äá»™i tháº¯ng pháº£i khá»›p vá»›i tá»· sá»‘ bÃ n tháº¯ng.');
+            toast.error(matchTranslate('footballWinnerMismatch'));
             setIsSubmitting(false);
             return;
           }
@@ -1144,7 +1156,7 @@ export default function LiveMatchPage({ params }: Props) {
         });
         setFootballScore(completedFootball);
         applyServerSnapshot(completedMatch);
-        toast.success(`ÄÃ£ hoÃ n táº¥t tráº­n Ä‘áº¥u. Äá»™i tháº¯ng: ${winnerTeam === 1 ? team1Name : team2Name}.`);
+        toast.success(matchTranslate('matchCompletedWinner', { winner: winnerTeam === 1 ? team1Name : team2Name }));
         setIsSubmitting(false);
         return;
       }
@@ -1174,14 +1186,14 @@ export default function LiveMatchPage({ params }: Props) {
           }
         : undefined;
       if (isFootballDraw && (!Number.isInteger(shootoutGoals.p1Goals) || !Number.isInteger(shootoutGoals.p2Goals) || shootoutGoals.p1Goals < 0 || shootoutGoals.p2Goals < 0 || shootoutGoals.p1Goals === shootoutGoals.p2Goals)) {
-        toast.error('Tỷ số luân lưu phải là số không âm và phải có đội thắng.');
+        toast.error(matchTranslate('shootoutScoreInvalid'));
         setIsSubmitting(false);
         return;
       }
       if (isFootballDraw) {
         const shootoutWinner = shootoutGoals.p1Goals > shootoutGoals.p2Goals ? match.participant1Id : match.participant2Id;
         if (shootoutWinner !== winnerId) {
-          toast.error('Đội thắng phải có tỷ số luân lưu cao hơn.');
+          toast.error(matchTranslate('shootoutWinnerMismatch'));
           setIsSubmitting(false);
           return;
         }
@@ -1198,16 +1210,16 @@ export default function LiveMatchPage({ params }: Props) {
 
       applyServerSnapshot(completedMatch);
       toast.success(
-        `Đã hoàn tất trận đấu. Đội thắng: ${winnerTeam === 1 ? team1Name : team2Name}.`,
+        matchTranslate('matchCompletedWinner', { winner: winnerTeam === 1 ? team1Name : team2Name }),
       );
     } catch (err: unknown) {
       console.error(err);
       if (isConflict409(err)) {
         const fresh = await matchesApi.getMatchById(matchId);
         applyServerSnapshot(fresh);
-        toast('Trận đã thay đổi từ thiết bị khác. Đã làm mới số liệu.');
+        toast(matchTranslate('matchChangedOtherDevice'));
       } else {
-        toast.error(getErrorMessage(err, 'Không thể hoàn tất trận đấu.'));
+        toast.error(getErrorMessage(err, matchTranslate('matchCompleteErrorFallback')));
       }
     } finally {
       setIsSubmitting(false);
@@ -1235,10 +1247,10 @@ export default function LiveMatchPage({ params }: Props) {
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
       setMatch(mergeMatchUpdate(res));
-      toast.success(`Đã chuyển quyền giao bóng cho ${team === 1 ? team1Name : team2Name}.`);
+      toast.success(matchTranslate('servingTeamChanged', { team: team === 1 ? team1Name : team2Name }));
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể cập nhật đội giao bóng.'));
+      toast.error(getErrorMessage(err, matchTranslate('servingTeamUpdateFailed')));
     } finally {
       setIsSubmitting(false);
     }
@@ -1250,7 +1262,7 @@ export default function LiveMatchPage({ params }: Props) {
     }
 
     if (sideOutState.servingTeam == null) {
-      toast.error('Hãy chọn đội giao bóng trước khi thao tác side-out.');
+      toast.error(matchTranslate('selectServingTeamFirst'));
       return;
     }
     const appliedOverrideReason = resolveOverrideReason();
@@ -1273,12 +1285,12 @@ export default function LiveMatchPage({ params }: Props) {
       setMatch(mergeMatchUpdate(res));
       toast.success(
         nextState.serverNumber === 2 && nextState.servingTeam === sideOutState.servingTeam
-          ? `Đội ${sideOutState.servingTeam === 1 ? team1Name : team2Name} chuyển sang lượt giao thứ 2.`
-          : `Side-out: quyền giao bóng chuyển sang ${nextState.servingTeam === 1 ? team1Name : team2Name}.`,
+          ? matchTranslate('secondServeTurn', { team: sideOutState.servingTeam === 1 ? team1Name : team2Name })
+          : matchTranslate('sideOutServingChanged', { team: nextState.servingTeam === 1 ? team1Name : team2Name }),
       );
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái giao bóng side-out.'));
+      toast.error(getErrorMessage(err, matchTranslate('sideOutUpdateFailed')));
     } finally {
       setIsSubmitting(false);
     }
@@ -1339,7 +1351,12 @@ export default function LiveMatchPage({ params }: Props) {
     ? formatTennisPointDisplay(tennisPointState.team2Point)
     : String(currentSet.team2Score);
   const currentDetailScoreLabel = isTennis
-    ? `Game của ${scorePresentation.sequenceLabel} ${activeSetIdx + 1}: ${currentSet.team1Score} - ${currentSet.team2Score}`
+    ? matchTranslate('currentGameScore', {
+        sequence: scorePresentation.sequenceLabel,
+        set: activeSetIdx + 1,
+        score1: currentSet.team1Score,
+        score2: currentSet.team2Score,
+      })
     : null;
 
   const handlePostComment = async (e: React.FormEvent) => {
@@ -1508,8 +1525,8 @@ export default function LiveMatchPage({ params }: Props) {
                       {playback.streamStatus === 'LIVE' ? 'LIVE' : playback.streamStatus}
                     </div>
                     <div className="absolute bottom-4 left-4 right-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-left backdrop-blur z-20">
-                      <p className="text-sm font-bold text-white">{playback.cameraName || 'Camera trận đấu'}</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-300">Người xem chỉ có quyền xem luồng phát và bảng điểm realtime.</p>
+                      <p className="text-sm font-bold text-white">{playback.cameraName || matchTranslate('cameraFallback')}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-300">{matchTranslate('cameraViewerNotice')}</p>
                     </div>
                   </>
                 ) : match.status === 'ONGOING' ? (
@@ -1521,16 +1538,16 @@ export default function LiveMatchPage({ params }: Props) {
                         <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-600 border-2 border-slate-950 flex items-center justify-center text-[7px] font-bold text-white">LIVE</span>
                       </span>
                     </div>
-                    <h4 className="text-white font-bold text-base tracking-tight">Camera Trực Tiếp Sân Đấu</h4>
-                    <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của Sporto đang hoạt động.</p>
+                    <h4 className="text-white font-bold text-base tracking-tight">{matchTranslate('liveCameraTitle')}</h4>
+                    <p className="text-xs text-slate-400 font-semibold leading-relaxed">{matchTranslate('liveCameraDescription')}</p>
                   </>
                 ) : match.status === 'COMPLETED' ? (
                   <>
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
                       <Play className="w-7 h-7 fill-current ml-0.5" />
                     </div>
-                    <h4 className="text-white font-bold text-base tracking-tight">Video Phát Lại (Replay)</h4>
-                    <p className="text-xs text-slate-455 font-medium leading-relaxed">Trận đấu đã kết thúc. Video ghi hình tự động và các set highlight sẽ khả dụng sau khi Ban tổ chức phê duyệt và tải lên.</p>
+                    <h4 className="text-white font-bold text-base tracking-tight">{matchTranslate('replayTitle')}</h4>
+                    <p className="text-xs text-slate-455 font-medium leading-relaxed">{matchTranslate('replayDescription')}</p>
                   </>
                 ) : match.status === 'CANCELLED' ? (
                   <>
@@ -1545,8 +1562,8 @@ export default function LiveMatchPage({ params }: Props) {
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400">
                       <Camera className="w-7 h-7" />
                     </div>
-                    <h4 className="text-slate-300 font-bold text-base tracking-tight">Trực Tiếp Sắp Khả Dụng</h4>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">Luồng phát sóng trực tiếp sẽ tự động bắt đầu khi trận đấu được trọng tài kích hoạt khởi tranh.</p>
+                    <h4 className="text-slate-300 font-bold text-base tracking-tight">{matchTranslate('upcomingStreamTitle')}</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">{matchTranslate('upcomingStreamDescription')}</p>
                   </>
                 )}
               </div>
@@ -2032,7 +2049,7 @@ export default function LiveMatchPage({ params }: Props) {
                                 <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-500">{penalty.note}</p>
                               ) : null}
                               <p className="mt-1 text-[11px] font-medium text-slate-400">
-                                {new Date(penalty.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(penalty.createdAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                           </div>
@@ -2192,7 +2209,7 @@ export default function LiveMatchPage({ params }: Props) {
                             {authorName}
                           </button>
                           <span className="text-[9px] text-slate-400 font-medium shrink-0">
-                            {new Date(comment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(comment.createdAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <p className="text-xs text-slate-650 mt-1 leading-relaxed break-words">{comment.commentText}</p>

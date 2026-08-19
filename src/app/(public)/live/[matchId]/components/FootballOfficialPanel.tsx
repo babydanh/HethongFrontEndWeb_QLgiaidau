@@ -111,7 +111,7 @@ export function FootballOfficialPanel({
     <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">Bóng đá · Scoring live</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">{translate('footballLiveKicker')}</p>
           <p className="mt-1 text-sm font-bold text-slate-900">{localizedPhaseLabel(score.phase)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
@@ -188,8 +188,8 @@ export function FootballOfficialPanel({
           <div key={type} className="rounded-lg border border-slate-200 bg-white p-2">
             <p className="flex items-center gap-1 text-[11px] font-bold text-slate-600"><Icon className="h-3.5 w-3.5" />{label}</p>
             <div className="mt-2 flex gap-1">
-              <button type="button" disabled={isSubmitting} onClick={() => onEvent(type, 1)} className="flex-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-bold hover:bg-slate-200 disabled:opacity-40">Đội 1</button>
-              <button type="button" disabled={isSubmitting} onClick={() => onEvent(type, 2)} className="flex-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-bold hover:bg-slate-200 disabled:opacity-40">Đội 2</button>
+              <button type="button" disabled={isSubmitting} onClick={() => onEvent(type, 1)} className="flex-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-bold hover:bg-slate-200 disabled:opacity-40">{translate('teamNumber', { number: 1 })}</button>
+              <button type="button" disabled={isSubmitting} onClick={() => onEvent(type, 2)} className="flex-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-bold hover:bg-slate-200 disabled:opacity-40">{translate('teamNumber', { number: 2 })}</button>
             </div>
           </div>
         ))}
@@ -209,7 +209,7 @@ export function FootballOfficialPanel({
         </div>
       ) : (
         <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-white p-3 text-xs font-semibold text-slate-500">
-          <CircleAlert className="h-4 w-4" /> Chưa có sự kiện trong trận.
+          <CircleAlert className="h-4 w-4" /> {translate('noMatchEvents')}
         </div>
       )}
     </div>

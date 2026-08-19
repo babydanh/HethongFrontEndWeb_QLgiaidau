@@ -5,6 +5,111 @@ import toast from 'react-hot-toast';
 let lastServerErrorToastAt = 0;
 const SERVER_ERROR_TOAST_COOLDOWN_MS = 10000;
 const ANONYMOUS_CLIENT_ID_KEY = 'sporto_anonymous_client_id_v1';
+const RATE_LIMIT_RETRY_KEY = '__rate_limit_retry_count';
+const MAX_RATE_LIMIT_RETRIES = 1;
+const SNAPSHOT_TTL_MS = 10 * 60 * 1000;
+
+type ManagedRequestConfig = AxiosRequestConfig & {
+  __sharedDedupeKey?: string;
+  __skipSharedDedupe?: boolean;
+  [RATE_LIMIT_RETRY_KEY]?: number;
+  extra?: Record<string, unknown>;
+};
+
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+  reject: (reason?: unknown) => void;
+};
+
+type Snapshot = { data: unknown; savedAt: number };
+
+const inFlightGetRequests = new Map<string, Deferred<unknown>>();
+const publicGetSnapshots = new Map<string, Snapshot>();
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
+class SharedGetRequestError extends Error {
+  constructor(readonly sharedPromise: Promise<unknown>) {
+    super('Request is already in flight');
+    this.name = 'SharedGetRequestError';
+  }
+}
+
+function getRequestMeta(config: AxiosRequestConfig | undefined): ManagedRequestConfig {
+  return (config ?? {}) as ManagedRequestConfig;
+}
+
+function stableParams(params: unknown): string {
+  if (!params || typeof params !== 'object') return String(params ?? '');
+  if (params instanceof URLSearchParams) return params.toString();
+  const entries = Object.entries(params as Record<string, unknown>)
+    .sort(([left], [right]) => left.localeCompare(right));
+  return JSON.stringify(entries);
+}
+
+function getRequestKey(config: AxiosRequestConfig): string {
+  const headers = config.headers as Record<string, unknown> | undefined;
+  const auth = headers?.Authorization ?? headers?.authorization ?? '';
+  const clientId = headers?.['x-client-id'] ?? '';
+  return [
+    config.baseURL ?? '',
+    config.url ?? '',
+    stableParams(config.params),
+    String(auth),
+    String(clientId),
+  ].join('|');
+}
+
+function isPublicSnapshotRequest(config: AxiosRequestConfig): boolean {
+  const meta = getRequestMeta(config);
+  if (meta.extra?.noCache === true) return false;
+  const path = (config.url ?? '').split('?')[0];
+  return path === '/tournaments/public' || path === '/communities' || path.startsWith('/rankings');
+}
+
+function isSharedGetEligible(config: AxiosRequestConfig): boolean {
+  if (config.method?.toUpperCase() !== 'GET') return false;
+  const meta = getRequestMeta(config);
+  if (meta.__skipSharedDedupe === true || meta.extra?.noDedupe === true || meta.extra?.noCache === true) {
+    return false;
+  }
+  const path = (config.url ?? '').split('?')[0];
+  // Realtime and match-detail calls must remain independent so navigating
+  // between live matches never waits for another screen's request.
+  return !path.startsWith('/live') &&
+    !path.startsWith('/chat') &&
+    !path.startsWith('/notifications') &&
+    !path.startsWith('/matches/');
+}
+
+function getHeaderValue(headers: unknown, name: string): string | null {
+  if (!headers || typeof headers !== 'object') return null;
+  const typedHeaders = headers as { get?: (headerName: string) => string | null } & Record<string, unknown>;
+  const fromGetter = typedHeaders.get?.(name);
+  if (fromGetter) return fromGetter;
+  const raw = typedHeaders[name] ?? typedHeaders[name.toLowerCase()];
+  return typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] ?? null : null;
+}
+
+function retryAfterMs(headers: unknown): number {
+  const raw = getHeaderValue(headers, 'retry-after');
+  if (!raw) return 1000 + Math.floor(Math.random() * 250);
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) {
+    return Math.min(10000, Math.max(0, seconds * 1000) + Math.floor(Math.random() * 250));
+  }
+  const dateMs = Date.parse(raw) - Date.now();
+  return Math.min(10000, Math.max(0, dateMs) + Math.floor(Math.random() * 250));
+}
 
 function getAnonymousClientId(): string | null {
   if (typeof window === 'undefined') return null;
@@ -81,6 +186,19 @@ api.interceptors.request.use(
       config.headers = config.headers ?? {};
       config.headers['x-client-id'] = anonymousClientId;
     }
+
+    const managedConfig = getRequestMeta(config);
+    if (isSharedGetEligible(config)) {
+      const key = getRequestKey(config);
+      const existing = inFlightGetRequests.get(key);
+      if (existing) {
+        return Promise.reject(new SharedGetRequestError(existing.promise));
+      }
+      const deferred = createDeferred<unknown>();
+      inFlightGetRequests.set(key, deferred);
+      managedConfig.__sharedDedupeKey = key;
+    }
+
     const method = config.method?.toUpperCase();
     if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
       const csrfToken = getCookie('csrf-token');
@@ -108,9 +226,44 @@ const processQueue = (error: unknown = null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const managedConfig = getRequestMeta(response.config);
+    const key = managedConfig.__sharedDedupeKey;
+    if (key) {
+      const deferred = inFlightGetRequests.get(key);
+      if (deferred) {
+        inFlightGetRequests.delete(key);
+        deferred.resolve(response.data);
+      }
+    }
+
+    if (isPublicSnapshotRequest(response.config)) {
+      const snapshotKey = getRequestKey(response.config);
+      publicGetSnapshots.set(snapshotKey, { data: response.data, savedAt: Date.now() });
+      if (publicGetSnapshots.size > 100) {
+        const oldest = [...publicGetSnapshots.entries()]
+          .sort(([, left], [, right]) => left.savedAt - right.savedAt)[0]?.[0];
+        if (oldest) publicGetSnapshots.delete(oldest);
+      }
+    }
+    return response.data;
+  },
   async (error) => {
+    if (error instanceof SharedGetRequestError) {
+      return error.sharedPromise;
+    }
+
     const originalRequest = error.config;
+    const managedRequest = getRequestMeta(originalRequest);
+    const sharedKey = managedRequest.__sharedDedupeKey;
+    const settleSharedRequest = (result: { data: unknown } | Error) => {
+      if (!sharedKey) return;
+      const deferred = inFlightGetRequests.get(sharedKey);
+      if (!deferred) return;
+      inFlightGetRequests.delete(sharedKey);
+      if (result instanceof Error) deferred.reject(result);
+      else deferred.resolve(result.data);
+    };
 
     // Skip refresh for auth-related routes
     const isAuthRoute = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].some(
@@ -181,13 +334,39 @@ api.interceptors.response.use(
       }
     }
 
-    // A rate-limited request must be handed back to its screen immediately.
-    // Retrying it globally multiplied one failed request into ten more calls,
-    // keeping public feeds loading and extending the server-side cooldown.
     if (error.response?.status === 429) {
+      const method = originalRequest?.method?.toUpperCase();
+      const retryCount = managedRequest[RATE_LIMIT_RETRY_KEY] ?? 0;
+      const snapshotKey = originalRequest ? getRequestKey(originalRequest) : '';
+      const snapshot = snapshotKey ? publicGetSnapshots.get(snapshotKey) : undefined;
+
+      if (isSharedGetEligible(originalRequest) && snapshot && Date.now() - snapshot.savedAt < SNAPSHOT_TTL_MS) {
+        settleSharedRequest({ data: snapshot.data });
+        return snapshot.data;
+      }
+
+      // Only idempotent GET requests get one controlled retry. The request
+      // stays out of the dedupe map while waiting, so navigation never blocks
+      // on another page's pending request.
+      if (isSharedGetEligible(originalRequest) && retryCount < MAX_RATE_LIMIT_RETRIES) {
+        await new Promise<void>((resolve) => setTimeout(resolve, retryAfterMs(error.response?.headers)));
+        const retryConfig = {
+          ...originalRequest,
+          __skipSharedDedupe: true,
+          [RATE_LIMIT_RETRY_KEY]: retryCount + 1,
+        } as ManagedRequestConfig;
+        try {
+          return await api.request(retryConfig);
+        } catch (retryError) {
+          error = retryError;
+        }
+      }
+
+      settleSharedRequest(error instanceof Error ? error : new Error('Rate limited request failed'));
       return Promise.reject(error);
     }
 
+    settleSharedRequest(error instanceof Error ? error : new Error('Request failed'));
     return Promise.reject(error);
   }
 );

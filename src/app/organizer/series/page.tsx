@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 
 export default function OrganizerSeriesPage() {
   const { user } = useAuthStore();
+  const locale = useLocale();
   const commonTranslate = useTranslations('Common');
   const seriesTranslate = useTranslations('SeriesList');
   const opsTranslate = useTranslations('OrganizerOps');
@@ -131,7 +132,7 @@ export default function OrganizerSeriesPage() {
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       <span>
-                        {series.startDate ? new Date(series.startDate).toLocaleDateString('vi-VN') : 'Chưa xếp lịch'}
+                        {series.startDate ? new Date(series.startDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') : seriesTranslate('notScheduled')}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 font-bold text-blue-600">

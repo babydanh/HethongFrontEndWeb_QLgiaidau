@@ -31,6 +31,7 @@ import { getErrorMessage } from '@/utils/error';
 import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 /* 4 Biểu tượng sơ đồ thể thức thi đấu chuyên nghiệp */
 const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -477,6 +478,23 @@ export default function QuickTournamentCreate() {
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
   const selectedCategory = useMemo(() => categories.find((category) => sportFromCategory(category) === sport), [categories, sport]);
+
+  const locationAddress = useWatch({ control, name: 'locationAddress' });
+
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: locationAddress,
+    provinces,
+    wards,
+    onSelectProvince: (provCode) => {
+      setValue('province', provCode, { shouldValidate: true, shouldDirty: true });
+    },
+    onSelectWard: (wardCode) => {
+      setValue('ward', wardCode, { shouldValidate: true, shouldDirty: true });
+    },
+    onWardsLoaded: (loadedWards) => {
+      setWards(loadedWards);
+    },
+  });
 
   const handleRegistrationStartChange = (val: string) => {
     setValue('registrationStart', val, { shouldValidate: true });
@@ -987,6 +1005,15 @@ export default function QuickTournamentCreate() {
                       placeholder="Số nhà, tên đường..."
                     />
                     {errors.locationAddress && <span className="mt-1 block text-xs text-rose-600">{errors.locationAddress.message}</span>}
+                    {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
+                        <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                        <span>
+                          Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                          {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -43,13 +43,7 @@ interface KickDraft {
   teamName: string;
 }
 
-const FILTER_OPTIONS: Array<{ value: ParticipantFilter; label: string }> = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'COMPLETE', label: 'Đủ điều kiện đấu' },
-  { value: 'UNPAID', label: 'Chưa thanh toán' },
-  { value: 'KICKED', label: 'Đã loại' },
-  { value: 'DISCIPLINED', label: 'Kỷ luật khác' },
-];
+const FILTER_OPTIONS: ParticipantFilter[] = ['ALL', 'COMPLETE', 'UNPAID', 'KICKED', 'DISCIPLINED'];
 
 export function OpsParticipants({
   participants,
@@ -57,6 +51,15 @@ export function OpsParticipants({
   onKickParticipant,
 }: OpsParticipantsProps) {
   const translate = useTranslations('TournamentDisplay');
+  const opsTranslate = useTranslations('OrganizerOps');
+  const filterLabels: Record<ParticipantFilter, string> = {
+    ALL: opsTranslate('filterAll'),
+    COMPLETE: opsTranslate('filterComplete'),
+    UNPAID: opsTranslate('filterUnpaid'),
+    KICKED: opsTranslate('filterKicked'),
+    DISCIPLINED: opsTranslate('filterDisciplined'),
+  };
+  const defaultKickReason = opsTranslate('defaultKickReason');
   const participantStatusLabels = {
     participantComplete: translate('participantComplete'),
     participantPendingPartner: translate('participantPendingPartner'),
@@ -73,7 +76,7 @@ export function OpsParticipants({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<ParticipantFilter>('ALL');
   const [kickDraft, setKickDraft] = useState<KickDraft | null>(null);
-  const [kickReason, setKickReason] = useState('Vi phạm điều lệ giải');
+  const [kickReason, setKickReason] = useState(defaultKickReason);
 
   const filteredParticipants = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -112,7 +115,7 @@ export function OpsParticipants({
 
     await onKickParticipant(kickDraft.id, kickReason);
     setKickDraft(null);
-    setKickReason('Vi phạm điều lệ giải');
+    setKickReason(defaultKickReason);
   };
 
   return (
@@ -120,16 +123,12 @@ export function OpsParticipants({
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Roster thi đấu & kỷ luật</h2>
-            <p className="text-sm font-medium text-slate-500">
-              Khối phụ trợ để rà roster đang thi đấu, các đội có rủi ro kỹ thuật và quyết định loại khỏi giải khi cần.
-            </p>
+            <h2 className="text-lg font-bold text-slate-900">{opsTranslate('rosterTitle')}</h2>
+            <p className="text-sm font-medium text-slate-500">{opsTranslate('rosterDescription')}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-right">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Boundary vận hành</p>
-            <p className="mt-1 text-xs font-semibold text-slate-600">
-              Panel này không xử lý duyệt đăng ký. Nghiệp vụ còn lại là theo dõi roster thực tế, thanh toán và xử lý loại đội khi giải đang chạy.
-            </p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{opsTranslate('boundaryTitle')}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-600">{opsTranslate('boundaryDescription')}</p>
           </div>
         </div>
 
@@ -137,23 +136,23 @@ export function OpsParticipants({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm theo tên đội hoặc thành viên"
+            placeholder={opsTranslate('searchPlaceholder')}
             icon={<Search className="h-4 w-4" />}
           />
           <div className="flex flex-wrap gap-2">
-            {FILTER_OPTIONS.map((option) => (
+            {FILTER_OPTIONS.map((value) => (
               <button
-                key={option.value}
+                key={value}
                 type="button"
-                onClick={() => setFilter(option.value)}
+                onClick={() => setFilter(value)}
                 className={cn(
                   'rounded-full border px-3 py-2 text-xs font-bold transition-colors',
-                  filter === option.value
+                  filter === value
                     ? 'border-blue-600 bg-blue-600 text-white'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
                 )}
               >
-                {option.label}
+                {filterLabels[value]}
               </button>
             ))}
           </div>
@@ -161,23 +160,23 @@ export function OpsParticipants({
 
         <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng roster</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{opsTranslate('summaryTotal')}</p>
             <p className="mt-2 text-lg font-bold text-slate-900">{summary.total}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đủ điều kiện đấu</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{opsTranslate('summaryActive')}</p>
             <p className="mt-2 text-lg font-bold text-emerald-700">{summary.active}</p>
           </div>
           <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">{opsTranslate('summaryUnpaid')}</p>
             <p className="mt-2 text-lg font-bold text-rose-700">{summary.unpaid}</p>
           </div>
           <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Kỷ luật khác</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">{opsTranslate('summaryDisciplined')}</p>
             <p className="mt-2 text-lg font-bold text-amber-700">{summary.disciplined}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đã loại</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{opsTranslate('summaryKicked')}</p>
             <p className="mt-2 text-lg font-bold text-amber-700">{summary.kicked}</p>
           </div>
         </div>
@@ -186,11 +185,11 @@ export function OpsParticipants({
           <table className="min-w-full divide-y divide-slate-100">
             <thead>
               <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                <th className="pb-3 pr-4">Đội/Cặp</th>
-                <th className="pb-3 pr-4">Thành viên</th>
-                <th className="pb-3 pr-4">Trạng thái</th>
-                <th className="pb-3 pr-4">Thanh toán</th>
-                <th className="pb-3 text-right">Hành động</th>
+                <th className="pb-3 pr-4">{opsTranslate('tableTeam')}</th>
+                <th className="pb-3 pr-4">{opsTranslate('tableMembers')}</th>
+                <th className="pb-3 pr-4">{opsTranslate('tableStatus')}</th>
+                <th className="pb-3 pr-4">{opsTranslate('tablePayment')}</th>
+                <th className="pb-3 text-right">{opsTranslate('tableActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -199,10 +198,8 @@ export function OpsParticipants({
                   <td colSpan={5} className="py-12">
                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                       <Users className="h-8 w-8 text-slate-300" />
-                      <p className="mt-3 text-sm font-bold text-slate-700">Không có hồ sơ phù hợp</p>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        Thử đổi bộ lọc hoặc từ khóa tìm kiếm để xem đầy đủ danh sách.
-                      </p>
+                      <p className="mt-3 text-sm font-bold text-slate-700">{opsTranslate('emptyTitle')}</p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">{opsTranslate('emptyHint')}</p>
                     </div>
                   </td>
                 </tr>
@@ -216,14 +213,14 @@ export function OpsParticipants({
                       <td className="py-4 pr-4">
                         <p className="text-sm font-bold text-slate-900">{participant.teamName}</p>
                         <p className="mt-1 text-xs font-medium text-slate-500">
-                          Đăng ký {formatDate(participant.registeredAt)} • Seed: {participant.seed ?? 'Chưa có'}
+                          {opsTranslate('registrationDateSeed', { date: formatDate(participant.registeredAt), seed: participant.seed ?? opsTranslate('noSeed') })}
                         </p>
                       </td>
                         <td className="py-4 pr-4">
                           <div className="flex flex-wrap gap-2">
                             {(participant.members || []).map((member) => (
                               <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
-                                {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
+                                {member.isMock ? opsTranslate('virtualPlayerShort') : (member.fullName || opsTranslate('unknownMemberShort'))}
                               </span>
                             ))}
                           </div>
@@ -235,7 +232,7 @@ export function OpsParticipants({
                       </td>
                       <td className="py-4 pr-4">
                         <span className={`text-xs font-bold ${participant.isPaid ? 'text-blue-600' : 'text-blue-600'}`}>
-                          {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                          {participant.isPaid ? opsTranslate('paid') : opsTranslate('unpaid')}
                         </span>
                       </td>
                       <td className="py-4 text-right">
@@ -251,17 +248,17 @@ export function OpsParticipants({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuLabel>Tác vụ vận hành</DropdownMenuLabel>
+                            <DropdownMenuLabel>{opsTranslate('operationsAction')}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               disabled={!canKick || isBusy}
                               onClick={() => {
                                 setKickDraft({ id: participant.id, teamName: participant.teamName });
-                                setKickReason('Vi phạm điều lệ giải');
+                                setKickReason(defaultKickReason);
                               }}
                             >
                               <ShieldAlert className="mr-2 h-4 w-4 text-rose-600" />
-                              Loại khỏi giải
+                              {opsTranslate('kickAction')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -285,21 +282,19 @@ export function OpsParticipants({
       >
         <ModalContent className="sm:max-w-xl">
           <ModalHeader>
-            <ModalTitle>Loại người chơi/đội khỏi giải</ModalTitle>
-            <ModalDescription>
-              Nghiệp vụ này phù hợp cho chấn thương, gian lận, vi phạm điều lệ hoặc quyết định kỹ thuật của BTC.
-            </ModalDescription>
+            <ModalTitle>{opsTranslate('kickModalTitle')}</ModalTitle>
+            <ModalDescription>{opsTranslate('kickModalDescription')}</ModalDescription>
           </ModalHeader>
 
           <div className="space-y-4">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Đối tượng bị xử lý</p>
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">{opsTranslate('targetLabel')}</p>
               <p className="mt-2 text-sm font-bold text-slate-900">{kickDraft?.teamName}</p>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="kick-reason" className="text-sm font-bold text-slate-700">
-                Lý do loại khỏi giải
+                {opsTranslate('kickReasonLabel')}
               </label>
               <textarea
                 id="kick-reason"
@@ -307,14 +302,14 @@ export function OpsParticipants({
                 onChange={(event) => setKickReason(event.target.value)}
                 rows={4}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                placeholder="Ví dụ: Đội vi phạm điều lệ kiểm tra nhân sự trước giờ thi đấu."
+                placeholder={opsTranslate('kickReasonPlaceholder')}
               />
             </div>
           </div>
 
           <ModalFooter className="gap-2">
             <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setKickDraft(null)}>
-              Hủy
+              {opsTranslate('cancelAction')}
             </Button>
             <Button
               className="bg-rose-600 text-white hover:bg-rose-700"
@@ -323,7 +318,7 @@ export function OpsParticipants({
               }}
               disabled={!kickReason.trim() || activeParticipantActionId === kickDraft?.id}
             >
-              Xác nhận loại khỏi giải
+              {opsTranslate('confirmKick')}
             </Button>
           </ModalFooter>
         </ModalContent>

@@ -827,7 +827,7 @@ export default function MatchesListPage() {
 
               {/* Nội dung */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nội dung</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate('contentLabel')}</label>
                 <div className="relative">
                   <select
                     value={selectedContent}
@@ -963,7 +963,7 @@ export default function MatchesListPage() {
                       }
                     }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
-                    title="Chọn ngày"
+                    title={translate('chooseDate')}
                   >
                     📅
                   </button>
@@ -1019,7 +1019,7 @@ export default function MatchesListPage() {
                       }
                     }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
-                    title="Chọn ngày"
+                    title={translate('chooseDate')}
                   >
                     📅
                   </button>
@@ -1251,7 +1251,7 @@ export default function MatchesListPage() {
                                             const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
                                             return memberEloList.slice(0, 2).map((m, i) => (
                                               <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
-                                                {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                                {getShortName(m.fullName) || (m.isMock ? translate('virtualPlayer') : 'N/A')}
                                               </span>
                                             ));
                                           })()}
@@ -1265,7 +1265,7 @@ export default function MatchesListPage() {
                                             : null;
                                           return pairElo !== null ? (
                                             <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
-                                              ELO Cặp: {pairElo}
+                                              {translate('pairElo', { elo: pairElo })}
                                             </span>
                                           ) : null;
                                         })()}
@@ -1328,7 +1328,7 @@ export default function MatchesListPage() {
                                             const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
                                             return memberEloList.slice(0, 2).map((m, i) => (
                                               <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
-                                                {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                                {getShortName(m.fullName) || (m.isMock ? translate('virtualPlayer') : 'N/A')}
                                               </span>
                                             ));
                                           })()}
@@ -1342,7 +1342,7 @@ export default function MatchesListPage() {
                                             : null;
                                           return pairElo !== null ? (
                                             <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
-                                              ELO Cặp: {pairElo}
+                                              {translate('pairElo', { elo: pairElo })}
                                             </span>
                                           ) : null;
                                         })()}
@@ -1459,17 +1459,17 @@ export default function MatchesListPage() {
                       disabled={groupPage === 1}
                       className="px-3 py-1 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
-                      Trước
+                      {translate('previousPage')}
                     </button>
                     <span className="text-xs font-bold text-slate-500 px-2">
-                      Trang {groupPage} / {totalGroupPages}
+                      {translate('pageOf', { page: groupPage, total: totalGroupPages })}
                     </span>
                     <button
                       onClick={() => setGroupPages(prev => ({ ...prev, [group.tournamentId]: Math.min(totalGroupPages, groupPage + 1) }))}
                       disabled={groupPage === totalGroupPages}
                       className="px-3 py-1 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
-                      Sau
+                      {translate('nextPage')}
                     </button>
                   </div>
                 )}
@@ -1487,13 +1487,13 @@ export default function MatchesListPage() {
             disabled={page === 1}
             className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
-            Trước
+            {translate('previousPage')}
           </button>
 
           <button
             className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
           >
-            Trang {page}
+            {translate('pageLabel', { page })}
           </button>
 
           {page < totalTournamentsPages && (
@@ -1501,7 +1501,7 @@ export default function MatchesListPage() {
               onClick={() => setPage(page + 1)}
               className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-350 hover:text-slate-900 cursor-pointer"
             >
-              Trang {page + 1}
+              {translate('pageLabel', { page: page + 1 })}
             </button>
           )}
 

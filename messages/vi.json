@@ -142,7 +142,9 @@
     "courtLabel": "Sân",
     "share": "Chia sẻ",
     "pageLabel": "Trang {page}",
-    "pageOf": "Trang {page} / {total}"
+    "pageOf": "Trang {page} / {total}",
+    "contentLabel": "Nội dung",
+    "chooseDate": "Chọn ngày"
   },
   "LocaleSwitcher": {
     "language": "Ngôn ngữ",

@@ -359,7 +359,7 @@ export default function TournamentsTab({
                         {isOwnerOrMod && (
                           <button
                             onClick={(e) => handleDeleteTournament(t.id, !!t.divisions[0].parentId, e)}
-                            className="p-1 text-slate-455 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all active:scale-95 ml-1"
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all active:scale-95 ml-1"
                             title={translate('communityTournamentDeleteTitle')}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -385,7 +385,7 @@ export default function TournamentsTab({
                     return (
                       <span 
                         key={div.id} 
-                        className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-650 text-[9px] border border-slate-200 font-bold"
+                        className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-600 text-[9px] border border-slate-200 font-bold"
                       >
                         {label}
                       </span>

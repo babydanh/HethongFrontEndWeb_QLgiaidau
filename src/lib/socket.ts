@@ -94,6 +94,9 @@ class SocketClient {
     if (!this.matchSocket) {
       this.matchSocket = io(`${SOCKET_URL}/live`, {
         autoConnect: false,
+        auth: (cb) => {
+          cb(this.getNotificationAuthPayload());
+        },
         withCredentials: true,
         transports: ['websocket', 'polling'],
         reconnectionAttempts: 5,
@@ -132,6 +135,10 @@ class SocketClient {
 
     if (this.chatSocket) {
       this.chatSocket.auth = this.getNotificationAuthPayload();
+    }
+
+    if (this.matchSocket) {
+      this.matchSocket.auth = this.getNotificationAuthPayload();
     }
 
     if (this.notificationSocket) {

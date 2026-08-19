@@ -1,11 +1,15 @@
 import { MetadataRoute } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { BRAND } from '@/constants/brand';
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+
   return {
-    name: `${BRAND.name} - ${BRAND.tagline}`,
+    name: `${BRAND.name} - ${t('tagline')}`,
     short_name: BRAND.name,
-    description: 'Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).',
+    description: t('description'),
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

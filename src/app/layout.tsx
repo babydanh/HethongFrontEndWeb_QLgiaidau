@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import LiveMetricsWidget from "@/components/common/LiveMetricsWidget";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { BRAND } from "@/constants/brand";
 
 const inter = Inter({
@@ -17,65 +17,80 @@ const inter = Inter({
 
 export const metadataBase = new URL(BRAND.domain);
 
-export const metadata: Metadata = {
-  metadataBase: new URL(BRAND.domain),
-  title: {
-    default: `${BRAND.name} - ${BRAND.tagline}`,
-    template: `%s | ${BRAND.name}`,
-  },
-  description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
-  keywords: [BRAND.name, BRAND.tagline, "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt", "bóng bàn", "bóng đá"],
-  authors: [{ name: `${BRAND.name} Team` }],
-  creator: BRAND.name,
-  publisher: BRAND.name,
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    title: `${BRAND.name} - ${BRAND.tagline}`,
-    description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
-    siteName: BRAND.name,
-    url: BRAND.domain,
-    type: "website",
-    locale: "vi_VN",
-    images: [
-      {
-        url: BRAND.assets.logo512,
-        width: 512,
-        height: 512,
-        alt: `${BRAND.name} - ${BRAND.tagline}`,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${BRAND.name} - ${BRAND.tagline}`,
-    description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
-    images: [BRAND.assets.logo512],
-  },
-  icons: {
-    icon: [
-      { url: BRAND.assets.favicon, sizes: 'any' },
-      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
-      { url: BRAND.assets.logo512, type: 'image/png', sizes: '512x512' },
-      { url: BRAND.assets.logoIcon, type: 'image/svg+xml' },
-    ],
-    shortcut: [
-      { url: BRAND.assets.favicon },
-      { url: '/icon.png', type: 'image/png' },
-    ],
-    apple: [
-      { url: BRAND.assets.appleTouchIcon, sizes: '180x180', type: 'image/png' },
-    ],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const tagline = t('tagline');
+  const description = t('description');
+  const keywords = t.raw('keywords') as string[];
+  const title = `${BRAND.name} - ${tagline}`;
+
+  return {
+    metadataBase: new URL(BRAND.domain),
+    title: {
+      default: title,
+      template: `%s | ${BRAND.name}`,
+    },
+    description,
+    keywords,
+    authors: [{ name: `${BRAND.name} Team` }],
+    creator: BRAND.name,
+    publisher: BRAND.name,
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      title,
+      description,
+      siteName: BRAND.name,
+      url: BRAND.domain,
+      type: 'website',
+      locale: locale === 'en' ? 'en_US' : 'vi_VN',
+      images: [
+        {
+          url: BRAND.assets.logo512,
+          width: 512,
+          height: 512,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [BRAND.assets.logo512],
+    },
+    icons: {
+      icon: [
+        { url: BRAND.assets.favicon, sizes: 'any' },
+        { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+        { url: BRAND.assets.logo512, type: 'image/png', sizes: '512x512' },
+        { url: BRAND.assets.logoIcon, type: 'image/svg+xml' },
+      ],
+      shortcut: [
+        { url: BRAND.assets.favicon },
+        { url: '/icon.png', type: 'image/png' },
+      ],
+      apple: [
+        { url: BRAND.assets.appleTouchIcon, sizes: '180x180', type: 'image/png' },
+      ],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
+  const locale = await getLocale();
+  const [messages, metadataT] = await Promise.all([
+    getMessages(),
+    getTranslations({ locale, namespace: 'Metadata' }),
+  ]);
+  const tagline = metadataT('tagline');
+  const description = metadataT('description');
 
   const structuredSchemas = [
     {
@@ -91,14 +106,14 @@ export default async function RootLayout({
         height: '512',
       },
       image: 'https://sporto.asia/sporto_1024.png',
-      description: `${BRAND.name} - ${BRAND.tagline}. Nền tảng tổ chức và tham gia giải đấu thể thao chuyên nghiệp.`,
+      description: `${BRAND.name} - ${tagline}. ${description}`,
       sameAs: [],
     },
     {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       name: BRAND.name,
-      alternateName: `${BRAND.name} - ${BRAND.tagline}`,
+      alternateName: `${BRAND.name} - ${tagline}`,
       url: BRAND.domain,
     },
   ];

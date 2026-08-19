@@ -2298,7 +2298,9 @@
     "partnerSearchConfirm": "Search for and confirm a teammate, or choose \"Invite teammate later\".",
     "copiedInviteLink": "Teammate invite link copied!",
     "teamCreatedInviteNextStep": "Team created successfully! Now send the teammate invite link.",
-    "withdrawSuccess": "Successfully withdrew from the tournament."
+    "withdrawSuccess": "Successfully withdrew from the tournament.",
+    "moreFilters": "More filters",
+    "recentlyFinished": "Recently finished"
   },
   "Terms": {
     "badge": "Legal & Terms",
@@ -2497,7 +2499,8 @@
     "organizer": "Organizer",
     "dashboard": "Dashboard",
     "legal": "Legal",
-    "allRightsReserved": "All rights reserved."
+    "allRightsReserved": "All rights reserved.",
+    "brandTagline": "Professional tournament management platform."
   },
   "Auth": {
     "forgotPassword": "Forgot password",
@@ -6228,5 +6231,20 @@
     "fallbackCategory": "Category",
     "fallbackLeg": "Leg",
     "loadError": "Unable to load standings."
+  },
+  "Metadata": {
+    "tagline": "Play together",
+    "description": "A professional platform to organize, manage, and join sports tournaments across pickleball, badminton, tennis, table tennis, and football.",
+    "keywords": [
+      "SportO",
+      "sports tournament management",
+      "pickleball tournaments",
+      "sports tournament organizer",
+      "ELO rankings",
+      "badminton",
+      "tennis",
+      "table tennis",
+      "football"
+    ]
   }
 }

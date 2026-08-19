@@ -171,6 +171,7 @@ export default function TournamentStatusSummaryCard({
     if (socket.connected) joinTournament();
 
     return () => {
+      socket.emit('leaveTournament', tournamentId);
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };

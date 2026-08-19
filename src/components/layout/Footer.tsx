@@ -19,7 +19,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm font-medium text-slate-600">
-              {BRAND.tagline} · {t('tagline')}
+              {t('brandTagline')} · {t('tagline')}
             </p>
           </div>
           <div>

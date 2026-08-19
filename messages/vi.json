@@ -2298,7 +2298,9 @@
     "partnerSearchConfirm": "Vui lòng tìm kiếm và xác nhận đồng đội hoặc chọn \"Mời đồng đội sau\"",
     "copiedInviteLink": "Đã sao chép link mời đồng đội!",
     "teamCreatedInviteNextStep": "Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.",
-    "withdrawSuccess": "Đã rút khỏi giải đấu thành công."
+    "withdrawSuccess": "Đã rút khỏi giải đấu thành công.",
+    "moreFilters": "Bộ lọc thêm",
+    "recentlyFinished": "Mới kết thúc"
   },
   "Terms": {
     "badge": "Pháp lý & Điều khoản",
@@ -2497,7 +2499,8 @@
     "organizer": "Ban tổ chức",
     "dashboard": "Bảng điều khiển",
     "legal": "Pháp lý",
-    "allRightsReserved": "Tất cả các quyền được bảo lưu."
+    "allRightsReserved": "Tất cả các quyền được bảo lưu.",
+    "brandTagline": "Nền tảng quản lý giải đấu chuyên nghiệp."
   },
   "Auth": {
     "forgotPassword": "Quên mật khẩu",
@@ -6228,5 +6231,20 @@
     "fallbackCategory": "Nội dung",
     "fallbackLeg": "Chặng",
     "loadError": "Lỗi tải bảng xếp hạng."
+  },
+  "Metadata": {
+    "tagline": "Chơi cùng nhau",
+    "description": "Nền tảng chuyên nghiệp để tổ chức, quản lý và tham gia các giải đấu thể thao pickleball, cầu lông, quần vợt, bóng bàn và bóng đá.",
+    "keywords": [
+      "SportO",
+      "quản lý giải đấu thể thao",
+      "giải đấu pickleball",
+      "tổ chức giải đấu thể thao",
+      "bảng xếp hạng ELO",
+      "cầu lông",
+      "quần vợt",
+      "bóng bàn",
+      "bóng đá"
+    ]
   }
 }

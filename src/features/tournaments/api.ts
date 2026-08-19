@@ -250,6 +250,7 @@ export const footballTeamsApi = {
 export interface RegisterTournamentResponse {
   participant: TournamentParticipant;
   entryFee: number;
+  paymentEligible: boolean;
   paymentUrl?: string;
   teamInviteLink?: string;
 }

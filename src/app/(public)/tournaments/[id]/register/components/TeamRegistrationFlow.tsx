@@ -132,8 +132,9 @@ export default function TeamRegistrationFlow({
         customResponses,
       });
       const createdParticipantId = res.data?.participant?.id;
-      if (createdParticipantId) router.push(`/payments/checkout?participantId=${createdParticipantId}&tournamentId=${tournamentId}&divisionId=${divisionId || ''}`);
-      else {
+      if (createdParticipantId && res.data?.paymentEligible === true) {
+        router.push(`/payments/checkout?participantId=${createdParticipantId}&tournamentId=${tournamentId}&divisionId=${divisionId || ''}`);
+      } else {
         const isDraft = selectedMemberIds.length < teamSize;
         toast.success(
           isDraft

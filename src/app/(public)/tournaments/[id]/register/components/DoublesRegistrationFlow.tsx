@@ -563,12 +563,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5 text-xs">
               <div className="flex justify-between items-center font-semibold">
                 <span className="text-slate-500">{doublesTranslate('baseFee')}</span>
-                <span className="text-slate-800 font-bold">{Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : doublesTranslate('free')} {doublesTranslate('perPerson')}</span>
+                <span className="text-slate-800 font-bold">{Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : doublesTranslate('free')} {doublesTranslate('perTeam')}</span>
               </div>
               <div className="flex justify-between items-center font-bold text-sm border-t border-slate-200 pt-2.5">
                 <span className="text-slate-700">{doublesTranslate('totalFee')}</span>
                 <span className="text-blue-700 font-bold">
-                  {Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee) * 2) : doublesTranslate('free')}
+                  {Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : doublesTranslate('free')}
                 </span>
               </div>
             </div>
@@ -768,7 +768,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 </div>
               </div>
 
-              {!participant.isPaid && (
+              {participant.teamStatus === 'COMPLETE' && !participant.isPaid && (
                 <div className="flex gap-3 pt-2">
                   <Button
                     variant="outline"

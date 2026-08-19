@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Search, ChevronDown, SlidersHorizontal, Bookmark, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
@@ -25,8 +25,19 @@ import {
 import { getRegistrationModeUi } from './registrationMode';
 
 export default function TournamentsListPage() {
+  const locale = useLocale();
   const translate = useTranslations("TournamentList");
   const registrationTranslate = useTranslations("RegistrationMode");
+  const moreFiltersLabel = translate.has("moreFilters")
+    ? translate("moreFilters")
+    : locale === "vi"
+      ? "Bộ lọc thêm"
+      : "More filters";
+  const recentlyFinishedLabel = translate.has("recentlyFinished")
+    ? translate("recentlyFinished")
+    : locale === "vi"
+      ? "Mới kết thúc"
+      : "Recently finished";
   const { user } = useAuthStore();
 
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
@@ -403,7 +414,7 @@ export default function TournamentsListPage() {
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            {translate("moreFilters")}
+            {moreFiltersLabel}
           </button>
         </div>
 
@@ -664,7 +675,7 @@ export default function TournamentsListPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">{translate("quickFilter")}</span>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs' : 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300'}`}>
-            {translate("recentlyFinished")}
+            {recentlyFinishedLabel}
           </button>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs' : 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200'}`}>
@@ -742,7 +753,7 @@ export default function TournamentsListPage() {
                       {getTournamentStatusLabel(tournament.status, { DRAFT: translate('statusDraftPlain'), PENDING_APPROVAL: translate('statusPendingApproval'), PENDING_DELETE: translate('statusPendingDelete'), UPCOMING: translate('upcoming'), REGISTRATION_OPEN: translate('registrationOpen'), REGISTRATION_CLOSED: translate('statusRegistrationClosed'), IN_PROGRESS: translate('inProgress'), ONGOING: translate('inProgress'), COMPLETED: translate('completed'), CANCELLED: translate('statusCancelled') })}
                       {isRecentlyCompletedTournament(tournament) && (
                         <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-bold text-white">
-                          {translate("recentlyFinished")}
+                          {recentlyFinishedLabel}
                         </span>
                       )}
                     </span>

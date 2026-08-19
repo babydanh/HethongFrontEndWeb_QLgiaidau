@@ -398,12 +398,15 @@ export default function QuickTournamentCreate() {
     dayBeforeStart.setHours(23, 59, 0, 0);
 
     const regStart = new Date(registrationStart);
+    const now = new Date();
     let targetRegEnd = dayBeforeStart;
 
-    if (!Number.isNaN(regStart.getTime()) && targetRegEnd.getTime() <= regStart.getTime()) {
+    // Nếu ngày hôm trước vẫn nhỏ hơn thời điểm mở đăng ký hoặc nhỏ hơn hiện tại
+    if (targetRegEnd.getTime() <= regStart.getTime() || targetRegEnd.getTime() <= now.getTime()) {
       targetRegEnd = new Date(start.getTime() - 2 * 60 * 60 * 1000);
-      if (targetRegEnd.getTime() <= regStart.getTime()) {
-        targetRegEnd = new Date((regStart.getTime() + start.getTime()) / 2);
+      if (targetRegEnd.getTime() <= regStart.getTime() || targetRegEnd.getTime() <= now.getTime()) {
+        const baseline = Math.max(regStart.getTime(), now.getTime());
+        targetRegEnd = new Date((baseline + start.getTime()) / 2);
       }
     }
 
@@ -420,10 +423,10 @@ export default function QuickTournamentCreate() {
     const currentRegistrationEnd = getValues('registrationEnd');
     const currentEndDate = getValues('endDate');
 
-    if (!currentRegistrationEnd && !userTouchedScheduleRef.current.registrationEnd) {
+    if (!currentRegistrationEnd || !userTouchedScheduleRef.current.registrationEnd) {
       setValue('registrationEnd', nextRegistrationEnd, { shouldValidate: true });
     }
-    if (!currentEndDate && !userTouchedScheduleRef.current.endDate) {
+    if (!currentEndDate || !userTouchedScheduleRef.current.endDate) {
       setValue('endDate', nextEndDate, { shouldValidate: true });
     }
   }, [registrationStart, startDate, getValues, setValue]);

@@ -1164,327 +1164,309 @@ export default function HomePage() {
           </section>
 
           {/* Section 2: Trận live (Match Feed style) */}
-          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
-              </span>
-            </div>
-            <div className="p-4 flex flex-col gap-4">
-
-            {isLoading ? (
-              <div className="space-y-4">
-                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
-                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+          {(isLoading || liveMatches.length > 0) && (
+            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
+                </span>
               </div>
-            ) : liveMatches.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400">
-                <div className="relative flex h-3.5 w-3.5 mb-2.5 justify-center items-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-350 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
-                </div>
-                <span className="text-xs font-medium text-slate-450">{translate('noLiveMatches')}</span>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <motion.div
-                  key={liveMatchPage}
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="space-y-4"
-                >
-                {Object.entries(liveMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
-                    const group = rawGroup as GroupMatchesData;
-                    const matchedTournament = tournaments.find(t => t.id === group.id);
-                    const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
-                    return (
-                      <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
-                        {/* Group Tournament Header */}
-                        <div className="flex items-center justify-between">
-                          <Link
-                            href={group.id ? `/tournaments/${group.id}` : '#'}
-                            className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                          >
-                            <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
-                              <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+              <div className="p-4 flex flex-col gap-4">
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <motion.div
+                      key={liveMatchPage}
+                      initial={{ opacity: 0, x: 12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="space-y-4"
+                    >
+                      {Object.entries(liveMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
+                        const group = rawGroup as GroupMatchesData;
+                        const matchedTournament = tournaments.find(t => t.id === group.id);
+                        const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
+                        return (
+                          <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
+                            {/* Group Tournament Header */}
+                            <div className="flex items-center justify-between">
+                              <Link
+                                href={group.id ? `/tournaments/${group.id}` : '#'}
+                                className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                              >
+                                <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                                  <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
+                                      {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                                    </span>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
+                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
+                                    </span>
+                                  </div>
+                                  <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                    {group.name}
+                                  </h3>
+                                </div>
+                              </Link>
                             </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
-                                  {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                </span>
-                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
-                                  <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
-                                </span>
-                              </div>
-                              <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
-                                {group.name}
-                              </h3>
+                            {/* Matches List Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {group.matches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                             </div>
-                          </Link>
-                        </div>
-                        {/* Matches List Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {group.matches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </motion.div>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
 
-                {/* Pagination Controls */}
-                {totalLivePages > 1 && (
-                  <div className="flex items-center justify-center gap-1.5 pt-1">
-                    <button
-                      onClick={() => setLiveMatchPage(p => Math.max(1, p - 1))}
-                      disabled={liveMatchPage === 1}
-                      className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
-                      {translate('previous')}
-                    </button>
-                    {Array.from({ length: totalLivePages }).map((_, idx) => {
-                      const pageNum = idx + 1;
-                      const isCurrent = pageNum === liveMatchPage;
-                      return (
+                    {/* Pagination Controls */}
+                    {totalLivePages > 1 && (
+                      <div className="flex items-center justify-center gap-1.5 pt-1">
                         <button
-                          key={pageNum}
-                          onClick={() => setLiveMatchPage(pageNum)}
-                          className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
-                            isCurrent
-                              ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                              : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                          }`}
-                        >
-                          {pageNum}
+                          onClick={() => setLiveMatchPage(p => Math.max(1, p - 1))}
+                          disabled={liveMatchPage === 1}
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
+                          {translate('previous')}
                         </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => setLiveMatchPage(p => Math.min(totalLivePages, p + 1))}
-                      disabled={liveMatchPage === totalLivePages}
-                      className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
-                      {translate('next')}
-                    </button>
+                        {Array.from({ length: totalLivePages }).map((_, idx) => {
+                          const pageNum = idx + 1;
+                          const isCurrent = pageNum === liveMatchPage;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setLiveMatchPage(pageNum)}
+                              className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
+                                isCurrent
+                                  ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => setLiveMatchPage(p => Math.min(totalLivePages, p + 1))}
+                          disabled={liveMatchPage === totalLivePages}
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
+                          {translate('next')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Section 2.2: Trận đấu vừa kết thúc */}
-          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentMatchResults')}</h2>
-            </div>
-            <div className="p-4 flex flex-col gap-4">
-
-            {isLoading ? (
-              <div className="space-y-4">
-                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+          {(isLoading || completedMatches.length > 0) && (
+            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentMatchResults')}</h2>
               </div>
-            ) : completedMatches.length === 0 ? (
-              <div className="py-10 text-center text-slate-500 font-medium text-xs">
-                {translate('noRecentMatches')}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(completedMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
-                  const group = rawGroup as GroupMatchesData;
-                  const tournamentId = group.id || tournamentName;
-                  const currentPage = tournamentPages[tournamentId] || 1;
-                  const totalPages = Math.ceil(group.matches.length / 4);
-                  const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
-                  const matchedTournament = tournaments.find(t => t.id === group.id);
-                  const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
+              <div className="p-4 flex flex-col gap-4">
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(completedMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
+                      const group = rawGroup as GroupMatchesData;
+                      const tournamentId = group.id || tournamentName;
+                      const currentPage = tournamentPages[tournamentId] || 1;
+                      const totalPages = Math.ceil(group.matches.length / 4);
+                      const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                      const matchedTournament = tournaments.find(t => t.id === group.id);
+                      const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
-                  return (
-                    <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
-                      {/* Group Tournament Header */}
-                      <div className="flex items-center justify-between">
-                        <Link
-                          href={group.id ? `/tournaments/${group.id}` : '#'}
-                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                        >
-                          <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
-                            <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
-                          </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
-                                  {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                </span>
-                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
-                                  <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
-                                </span>
+                      return (
+                        <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
+                          {/* Group Tournament Header */}
+                          <div className="flex items-center justify-between">
+                            <Link
+                              href={group.id ? `/tournaments/${group.id}` : '#'}
+                              className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                            >
+                              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                                <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                               </div>
-                              <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
-                                {group.name}
-                              </h3>
-                            </div>
-                        </Link>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
+                                    {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                                  </span>
+                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
+                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
+                                  </span>
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                  {group.name}
+                                </h3>
+                              </div>
+                            </Link>
 
-                        <div className="flex items-center gap-3 shrink-0">
-                          {/* Mini Pagination controls */}
-                          {totalPages > 1 && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                disabled={currentPage === 1}
-                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                              >
-                                <ChevronLeft className="w-3.5 h-3.5" />
-                              </button>
-                              <span className="text-[11px] font-semibold text-slate-400 px-1">
-                                {currentPage}/{totalPages}
-                              </span>
-                              <button
-                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                disabled={currentPage === totalPages}
-                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                              >
-                                <ChevronRight className="w-3.5 h-3.5" />
-                              </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              {/* Mini Pagination controls */}
+                              {totalPages > 1 && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                    disabled={currentPage === 1}
+                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="text-[11px] font-semibold text-slate-400 px-1">
+                                    {currentPage}/{totalPages}
+                                  </span>
+                                  <button
+                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                    disabled={currentPage === totalPages}
+                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
+                          {/* Matches List Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
+                          </div>
                         </div>
-                      </div>
-                      {/* Matches List Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Section 2.5: Trận đấu sắp diễn ra */}
-          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('upcomingSchedule')}</h2>
-            </div>
-            <div className="p-4 flex flex-col gap-4">
-
-            {isLoading ? (
-              <div className="space-y-4">
-                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+          {(isLoading || upcomingMatches.length > 0) && (
+            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('upcomingSchedule')}</h2>
               </div>
-            ) : upcomingMatches.length === 0 ? (
-              <div className="py-10 text-center text-slate-500 font-medium text-xs">
-                {translate('noUpcomingMatches')}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(upcomingMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
-                  const group = rawGroup as GroupMatchesData;
-                  const tournamentId = group.id || tournamentName;
-                  const currentPage = tournamentPages[tournamentId] || 1;
-                  const totalPages = Math.ceil(group.matches.length / 4);
-                  const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
-                  const matchedTournament = tournaments.find(t => t.id === group.id);
-                  const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
+              <div className="p-4 flex flex-col gap-4">
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(upcomingMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
+                      const group = rawGroup as GroupMatchesData;
+                      const tournamentId = group.id || tournamentName;
+                      const currentPage = tournamentPages[tournamentId] || 1;
+                      const totalPages = Math.ceil(group.matches.length / 4);
+                      const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                      const matchedTournament = tournaments.find(t => t.id === group.id);
+                      const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
-                  return (
-                    <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
-                      {/* Group Tournament Header */}
-                      <div className="flex items-center justify-between">
-                        <Link
-                          href={group.id ? `/tournaments/${group.id}` : '#'}
-                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                        >
-                          <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
-                            <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
-                          </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
-                                  {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                </span>
-                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
-                                  <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
-                                </span>
+                      return (
+                        <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
+                          {/* Group Tournament Header */}
+                          <div className="flex items-center justify-between">
+                            <Link
+                              href={group.id ? `/tournaments/${group.id}` : '#'}
+                              className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                            >
+                              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                                <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                               </div>
-                              <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
-                                {group.name}
-                              </h3>
-                            </div>
-                        </Link>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
+                                    {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                                  </span>
+                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
+                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
+                                  </span>
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                  {group.name}
+                                </h3>
+                              </div>
+                            </Link>
 
-                        <div className="flex items-center gap-3 shrink-0">
-                          {/* Mini Pagination controls */}
-                          {totalPages > 1 && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                disabled={currentPage === 1}
-                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                              >
-                                <ChevronLeft className="w-3.5 h-3.5" />
-                              </button>
-                              <span className="text-[11px] font-semibold text-slate-400 px-1">
-                                {currentPage}/{totalPages}
-                              </span>
-                              <button
-                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                disabled={currentPage === totalPages}
-                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-350 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                              >
-                                <ChevronRight className="w-3.5 h-3.5" />
-                              </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              {/* Mini Pagination controls */}
+                              {totalPages > 1 && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                    disabled={currentPage === 1}
+                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="text-[11px] font-semibold text-slate-400 px-1">
+                                    {currentPage}/{totalPages}
+                                  </span>
+                                  <button
+                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                    disabled={currentPage === totalPages}
+                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
+                          {/* Matches List Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
+                          </div>
                         </div>
-                      </div>
-                      {/* Matches List Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-            </div>
-          </section>
-
-
+            </section>
+          )}
 
           {/* Section 4: Giải vừa kết thúc */}
-          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentTournaments')}</h2>
-                <p className="text-[11px] font-medium text-slate-500 mt-0.5">{translate('last14Days')}</p>
+          {(isLoading || recentCompletedTournaments.length > 0) && (
+            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentTournaments')}</h2>
+                  <p className="text-[11px] font-medium text-slate-500 mt-0.5">{translate('last14Days')}</p>
+                </div>
+                <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                  {translate('explore')} <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
-              <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                {translate('explore')} <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-            <div className="p-4">
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
-                <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
+              <div className="p-4">
+                {isLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
+                    <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {recentCompletedTournaments.slice(0, 6).map((tournament) => (
+                      <HomepageTournamentCard key={tournament.id} tournament={tournament} />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : recentCompletedTournaments.length === 0 ? (
-              <div className="py-10 text-center text-slate-500 font-medium text-xs">
-                {translate('noRecentTournaments')}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recentCompletedTournaments.slice(0, 6).map((tournament) => (
-                  <HomepageTournamentCard key={tournament.id} tournament={tournament} />
-                ))}
-              </div>
-            )}
-            </div>
-          </section>
+            </section>
+          )}
 
         </div>
 

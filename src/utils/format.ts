@@ -115,7 +115,10 @@ export const parseDateInputToIso = (value: string): string | null => {
 /**
  * Định dạng thời gian tương đối (vd: Vừa xong, 5 phút trước, 2 giờ trước, 3 ngày trước, 17/08/2026)
  */
-export const formatRelativeTime = (dateString: string | Date | null | undefined): string => {
+export const formatRelativeTime = (
+  dateString: string | Date | null | undefined,
+  locale: string = 'vi',
+): string => {
   if (!dateString) return '';
   const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
   if (isNaN(date.getTime())) return '';
@@ -123,14 +126,15 @@ export const formatRelativeTime = (dateString: string | Date | null | undefined)
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'Vừa xong';
+  const isVietnamese = locale === 'vi' || locale.startsWith('vi-');
+  if (diffInSeconds < 60) return isVietnamese ? 'Vừa xong' : 'Just now';
   const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
+  if (diffInMinutes < 60) return isVietnamese ? `${diffInMinutes} phút trước` : `${diffInMinutes}m ago`;
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} giờ trước`;
+  if (diffInHours < 24) return isVietnamese ? `${diffInHours} giờ trước` : `${diffInHours}h ago`;
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return `${diffInDays} ngày trước`;
+  if (diffInDays < 7) return isVietnamese ? `${diffInDays} ngày trước` : `${diffInDays}d ago`;
 
-  return formatDate(date);
+  return new Intl.DateTimeFormat(isVietnamese ? 'vi-VN' : 'en-US').format(date);
 };
 

@@ -287,18 +287,18 @@ export default function CreateCommunityPage() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Địa chỉ chi tiết / Sân sinh hoạt chính
+                  {translate('locationAddressLabel')}
                 </label>
                 <input 
                   {...register('locationAddress')}
-                  placeholder="Ví dụ: Số 123 Đường Hoa Sứ, P. 7, Q. Phú Nhuận, TP.HCM..."
+                  placeholder={translate('locationAddressPlaceholder')}
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
                 {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
                   <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
                     <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                     <span>
-                      Đã tự nhận diện: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                      {translate('autoDetectedAddress')} <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
                       {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
                     </span>
                   </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { RallyScoreControls } from './RallyScoreControls';
 
 interface BadmintonOfficialPanelProps {
@@ -19,10 +20,12 @@ export function BadmintonOfficialPanel({
   isSubmitting,
   onUpdatePoints,
 }: BadmintonOfficialPanelProps) {
+  const translate = useTranslations('OrganizerScoring');
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-        Cầu lông dùng rally point. UI này hiện điểm trực tiếp theo set, còn cảnh báo/thẻ được ghi ở panel hình phạt phía dưới.
+        {translate('badmintonLiveDescription')}
       </div>
       <RallyScoreControls
         team1Name={team1Name}

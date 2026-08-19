@@ -141,12 +141,12 @@ export default function TagAssignModal({
                   key={tag}
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
                 >
-                  {tag}
+                  {getPresetLabel(tag)}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
                     disabled={isSaving}
-                    aria-label={translate('tagRemoveAria', { tag })}
+                    aria-label={translate('tagRemoveAria', { tag: getPresetLabel(tag) })}
                     className="text-slate-400 hover:text-rose-600 transition-colors"
                   >
                     <X className="h-3 w-3" strokeWidth={1.5} />

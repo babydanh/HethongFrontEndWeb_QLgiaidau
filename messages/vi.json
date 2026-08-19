@@ -1742,7 +1742,8 @@
     "organizerModalDescription": "(Dùng để tạo chuỗi giải đấu hoặc giải đấu công khai tính Rank ELO. Nếu chỉ tổ chức giải nội bộ CLB thì bạn không cần đăng ký quyền này).",
     "contactPhoneLabel": "Số điện thoại liên hệ",
     "evidenceLabel": "Ảnh minh chứng năng lực",
-    "phoneLabel": "Số điện thoại"
+    "phoneLabel": "Số điện thoại",
+    "addressAutoDetected": "Đã tự nhận diện:"
   },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
@@ -2308,7 +2309,18 @@
     "section3": "3. Quy chế tổ chức & tham gia giải đấu",
     "section4": "4. Giao dịch tài chính & Hoàn tiền",
     "section5": "5. Quyền sở hữu trí tuệ",
-    "section6": "6. Giới hạn trách nhiệm"
+    "section6": "6. Giới hạn trách nhiệm",
+    "intro": "Chào mừng bạn đến với Sporto (\"Nền tảng\"). Bằng việc đăng ký tài khoản, truy cập hoặc sử dụng bất kỳ tính năng nào của Sporto trên cả nền tảng web và ứng dụng di động, bạn đồng ý tuân thủ và chịu sự ràng buộc bởi các Điều khoản sử dụng này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, vui lòng ngừng sử dụng dịch vụ ngay lập tức.",
+    "accounts": "Để sử dụng một số dịch vụ của chúng tôi, bạn có thể được yêu cầu đăng ký tài khoản và cung cấp thông tin cá nhân chính xác, đầy đủ, bao gồm tên đầy đủ, số điện thoại và địa chỉ email. Bạn tự chịu trách nhiệm bảo mật thông tin đăng nhập của mình và mọi hoạt động diễn ra dưới tài khoản của bạn. Vui lòng thông báo ngay cho chúng tôi nếu phát hiện bất kỳ hành vi truy cập trái phép nào.",
+    "organizerRules": "Đối với Ban tổ chức (BTC): Bạn cam kết cung cấp thông tin trung thực về giải đấu, thể lệ, lệ phí và cơ cấu giải thưởng. BTC có trách nhiệm vận hành giải đấu công bằng, xử lý tranh chấp theo đúng quy định đã công bố và tuân thủ các quy tắc tài chính liên quan đến thu phí sàn, hoàn tiền.",
+    "athleteRules": "Đối với Vận động viên (VĐV) và Đội thi đấu: Bạn cam kết thi đấu với tinh thần thể thao cao thượng, không gian lận thông tin độ tuổi, giới tính hoặc điểm ELO trình độ. Mọi hành vi gian lận trình độ có thể dẫn đến việc bị truất quyền thi đấu và khóa tài khoản vĩnh viễn.",
+    "payments": "Mọi giao dịch đóng lệ phí tham gia giải đấu trực tuyến được xử lý qua cổng thanh toán liên kết của Sporto. Việc rút lui khỏi giải đấu và yêu cầu hoàn tiền phải tuân thủ chính sách hoàn trả cụ thể của từng giải đấu do BTC quy định. Sporto chỉ chịu trách nhiệm chuyển tiền hoàn lại khi yêu cầu đáp ứng đủ điều kiện quy định và được BTC phê duyệt hợp lệ.",
+    "intellectualProperty": "Tất cả nội dung, nhãn hiệu, logo, mã nguồn, thiết kế đồ họa và công nghệ liên quan thuộc sở hữu độc quyền của Sporto hoặc các đối tác cấp phép. Bạn không được sao chép, sửa đổi, phân phối hoặc sử dụng cho mục đích thương mại mà không có sự đồng ý trước bằng văn bản từ chúng tôi.",
+    "liability": "Sporto cung cấp nền tảng kết nối và quản lý kỹ thuật. Chúng tôi không chịu trách nhiệm đối với bất kỳ chấn thương thể chất, tổn thất tài sản cá nhân hay sự cố phát sinh ngoài ý muốn nào xảy ra trong quá trình diễn ra các giải đấu thực tế trên sân. BTC và người chơi tự chịu trách nhiệm đảm bảo các điều kiện an toàn sức khỏe và y tế cần thiết khi thi đấu.",
+    "warningTitle": "Lưu ý quan trọng đối với thành viên hệ thống:",
+    "warningBody": "Việc vi phạm nghiêm trọng các quy tắc ứng xử thể thao hoặc cố ý phá hoại dữ liệu giải đấu có thể dẫn đến việc khóa tài khoản quản trị hoặc VĐV tạm thời hoặc vĩnh viễn mà không được hoàn trả bất kỳ chi phí nào đã đóng.",
+    "allRightsReserved": "© 2026 Sporto. Bảo lưu mọi quyền.",
+    "backHome": "Quay lại trang chủ"
   },
   "Privacy": {
     "heading": "CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (PRIVACY POLICY)",
@@ -2318,7 +2330,22 @@
     "section3": "3. Mục đích sử dụng thông tin",
     "section4": "4. Chia sẻ & Bảo mật dữ liệu",
     "section5": "5. Quyền của người dùng & Xóa tài khoản",
-    "section6": "6. Liên hệ hỗ trợ"
+    "section6": "6. Liên hệ hỗ trợ",
+    "metadataTitle": "Chính Sách Bảo Mật | VNVar Giaidau",
+    "metadataDescription": "Chính sách bảo mật quyền riêng tư và dữ liệu bảng xếp hạng của nền tảng Quản Lý Giải Đấu VNVar.",
+    "intro": "Chào mừng bạn đến với nền tảng Quản Lý Giải Đấu (VNVar / sporto.asia). Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng khi sử dụng ứng dụng di động cũng như trang web của chúng tôi.",
+    "collectionIntro": "Khi bạn đăng ký tài khoản, tham gia thi đấu các giải thể thao (Pickleball, Cầu lông, Tennis, Bóng bàn) hoặc sử dụng các tính năng của ứng dụng:",
+    "collectionBasic": "Chúng tôi thu thập thông tin cơ bản như: Họ tên, Ảnh đại diện, Email, Số điện thoại và Thành tích thi đấu.",
+    "collectionLeaderboard": "Bảng xếp hạng toàn cầu (Global Leaderboard & ELO Rating): Với nội dung giải có xếp hạng, tên hiển thị, kết quả trận đấu và điểm ELO của bạn có thể được lưu trên máy chủ và hiển thị trên bảng xếp hạng để phục vụ xếp hạt giống và thi đấu.",
+    "collectionConsent": "Màn hình đăng ký giải có xếp hạng sẽ hiển thị một ô xác nhận riêng. Chỉ khi bạn tích đồng ý, dữ liệu kết quả và điểm ELO mới được đưa vào hệ thống xếp hạng. Giải không xếp hạng không cập nhật ELO.",
+    "purposeAuth": "Xác thực tài khoản người dùng và quản lý danh sách vận động viên tham gia giải đấu.",
+    "purposeElo": "Tính toán điểm ELO, bảng xếp hạng và tạo lịch thi đấu tự động.",
+    "purposeNotifications": "Gửi thông báo lịch thi đấu, kết quả trận đấu và các thông tin liên quan từ Ban tổ chức.",
+    "sharing": "Chúng tôi cam kết không bán, chia sẻ hoặc cho thuê thông tin cá nhân của bạn cho bất kỳ bên thứ ba nào vì mục đích thương mại. Dữ liệu của bạn được lưu trữ an toàn trên hệ thống máy chủ được bảo mật cao.",
+    "rights": "Bạn có quyền yêu cầu cập nhật, chỉnh sửa thông tin cá nhân hoặc yêu cầu xóa toàn bộ dữ liệu tài khoản bất kỳ lúc nào bằng cách liên hệ với chúng tôi qua email hỗ trợ hoặc sử dụng tính năng Xóa tài khoản trong ứng dụng.",
+    "contactIntro": "Nếu bạn có bất kỳ câu hỏi hoặc thắc mắc nào liên quan đến Chính sách bảo mật này, vui lòng liên hệ Ban quản trị qua:",
+    "emailLabel": "Email",
+    "websiteLabel": "Website"
   },
   "Leaderboard": {
     "singles": "Đơn",
@@ -2552,7 +2579,14 @@
     "invalidLink": "Liên kết không hợp lệ",
     "invalidLinkDescription": "Vui lòng sử dụng liên kết từ email đặt lại mật khẩu.",
     "loading": "Đang tải...",
-    "processing": "Đang xử lý..."
+    "processing": "Đang xử lý...",
+    "namePlaceholder": "Nguyễn Văn A",
+    "validationNameMin": "Tên phải có ít nhất 3 ký tự.",
+    "validationEmail": "Email không hợp lệ.",
+    "validationPasswordMin": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "createAccountWithEmail": "Tạo tài khoản bằng Email",
+    "registrationFailedExisting": "Đăng ký thất bại. Email có thể đã tồn tại.",
+    "registrationFailedUnknown": "Đăng ký thất bại. Lỗi không xác định."
   },
   "Errors": {
     "generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
@@ -2581,7 +2615,8 @@
     "title": "Tải Ứng Dụng Di Động",
     "versionDetails": "Chi tiết phiên bản App",
     "versionInfo": "Thông tin phiên bản {version} (Build {build})",
-    "versionLabel": "Phiên bản:"
+    "versionLabel": "Phiên bản:",
+    "close": "Đóng"
   },
   "Home": {
     "featuredTournaments": "Giải đấu nổi bật",
@@ -4675,7 +4710,10 @@
     "questionPlaceholder": "Câu hỏi {number}...",
     "addQuestion": "Thêm câu hỏi",
     "cancel": "Hủy bỏ",
-    "submit": "Tạo Câu Lạc Bộ"
+    "submit": "Tạo Câu Lạc Bộ",
+    "locationAddressLabel": "Địa chỉ chi tiết / Sân sinh hoạt chính",
+    "locationAddressPlaceholder": "Ví dụ: Số 123 Đường Hoa Sứ, P. 7, Q. Phú Nhuận, TP.HCM...",
+    "autoDetectedAddress": "Đã tự nhận diện:"
   },
   "OrganizerFinance": {
     "bankNameRequired": "Vui lòng nhập tên ngân hàng",
@@ -5166,7 +5204,9 @@
     "analyzeWithAi": "Phân tích với AI",
     "backToEdit": "Quay lại chỉnh sửa",
     "creating": "Đang tạo giải đấu...",
-    "createAndManage": "Tạo giải & Vào quản trị"
+    "createAndManage": "Tạo giải & Vào quản trị",
+    "doublesMissingPlayerTwo": "Nội dung đang chọn là nội dung đôi nhưng file Excel chưa có cột VĐV 2. Hãy chọn đúng nội dung hoặc bổ sung cột VĐV 2.",
+    "singlesHasPlayerTwo": "Nội dung đang chọn là nội dung đơn nhưng file Excel có cột VĐV 2. Hãy chọn nội dung đôi hoặc bỏ cột VĐV 2."
   },
   "OrganizerSeriesManage": {
     "loadError": "Không thể tải chi tiết chuỗi giải đấu",
@@ -5395,7 +5435,14 @@
     "shootoutLabel": "luân lưu",
     "winsShootout": "thắng luân lưu",
     "cancel": "Hủy",
-    "saveScore": "Lưu tỷ số"
+    "saveScore": "Lưu tỷ số",
+    "liveSideOutModeDescription": "Chế độ pickleball side-out bám theo đội giao bóng hiện tại. Chỉ đội giao bóng mới được cộng điểm.",
+    "servingStatusLabel": "Trạng thái giao bóng",
+    "servingCurrent": "{team} đang giao • lượt {number}",
+    "servingStatusHint": "Dùng “Mất quyền giao” để chuyển từ lượt giao 1 sang lượt giao 2, rồi mới sang đội còn lại.",
+    "servingTeamButton": "{team} giao",
+    "badmintonLiveDescription": "Cầu lông dùng rally point. Bảng này hiển thị điểm trực tiếp theo set; cảnh báo và thẻ được ghi ở panel hình phạt bên dưới.",
+    "tableTennisLiveDescription": "Bóng bàn cũng dùng rally point, với các nhịp deuce kéo dài ở cuối set. Bảng này giữ thao tác ghi điểm gọn; luật phạt được xử lý trong schema bên dưới."
   },
   "AdminVerification": {
     "loadError": "Không thể lấy danh sách đơn xác minh",
@@ -6167,5 +6214,19 @@
       "emptyTitle": "Không có dữ liệu",
       "emptyDescription": "Hiện chưa có bản ghi phù hợp."
     }
+  },
+  "SeriesStandings": {
+    "title": "Bảng xếp hạng PSR tích lũy",
+    "viewing": "Đang xem:",
+    "chooseLeg": "Chọn chặng",
+    "noLegs": "Chưa có chặng đấu",
+    "categoryLabel": "Nội dung thi đấu",
+    "loadingCategory": "Đang tải nội dung...",
+    "noCategories": "Chưa có nội dung",
+    "loadingStandings": "Đang tải bảng xếp hạng PSR...",
+    "errorTitle": "Đã xảy ra lỗi",
+    "fallbackCategory": "Nội dung",
+    "fallbackLeg": "Chặng",
+    "loadError": "Lỗi tải bảng xếp hạng."
   }
 }

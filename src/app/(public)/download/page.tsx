@@ -64,7 +64,7 @@ export default function DownloadPage() {
             {t("title")}
           </h1>
           <p className="text-slate-600 text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
-            Quản lý giải đấu chuyên nghiệp, cập nhật tỷ số trực tiếp và theo dõi xếp hạng ELO tiện lợi ngay trên điện thoại của bạn.
+            {t("description")}
           </p>
 
           <div className="flex items-center justify-center gap-6 mt-6 text-xs text-slate-500 font-semibold">
@@ -127,7 +127,7 @@ export default function DownloadPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">App Store</h3>
               <p className="text-xs text-slate-500 mb-8 leading-relaxed">
-                Trải nghiệm ứng dụng mượt mà dành riêng cho iPhone &amp; iPad trên App Store.
+                {t("appStoreDescription")}
               </p>
             </div>
             
@@ -193,7 +193,7 @@ export default function DownloadPage() {
                 onClick={() => setShowVersionModal(false)}
                 className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors"
               >
-                Đóng
+                {t("close")}
               </button>
             </div>
           </div>

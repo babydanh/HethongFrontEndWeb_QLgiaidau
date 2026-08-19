@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -20,11 +21,13 @@ export function RallyScoreControls({
   isSubmitting,
   onUpdatePoints,
 }: RallyScoreControlsProps) {
+  const translate = useTranslations('OrganizerScoring');
+
   return (
     <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 md:gap-6">
       <div className="flex min-w-0 max-w-full flex-col items-center rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-5">
         <span className="mb-2 max-w-full truncate text-xs font-bold uppercase tracking-wider text-slate-400">
-          Đội 1: {team1Name}
+          {translate('team1')}: {team1Name}
         </span>
         <div className="mt-1 flex items-center gap-3 sm:gap-6">
           <button
@@ -49,7 +52,7 @@ export function RallyScoreControls({
 
       <div className="flex min-w-0 max-w-full flex-col items-center rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-5">
         <span className="mb-2 max-w-full truncate text-xs font-bold uppercase tracking-wider text-slate-400">
-          Đội 2: {team2Name}
+          {translate('team2')}: {team2Name}
         </span>
         <div className="mt-1 flex items-center gap-3 sm:gap-6">
           <button

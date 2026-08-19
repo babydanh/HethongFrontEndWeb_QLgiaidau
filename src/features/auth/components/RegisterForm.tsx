@@ -8,23 +8,33 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Mail, Lock, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { authApi } from "@/features/auth/api";
 import { getBaseUrl } from "@/lib/axios";
 
-const registerSchema = z.object({
-  name: z.string().min(3, { message: "Tên phải có ít nhất 3 ký tự." }),
-  email: z.string().email({ message: "Email không hợp lệ." }),
-  password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." }),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp.",
-    path: ["confirmPassword"],
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export const RegisterForm = () => {
+  const translate = useTranslations('Auth');
+  const registerSchema = React.useMemo(
+    () => z.object({
+      name: z.string().min(3, { message: translate('validationNameMin') }),
+      email: z.string().email({ message: translate('validationEmail') }),
+      password: z.string().min(6, { message: translate('validationPasswordMin') }),
+      confirmPassword: z.string(),
+    }).refine((data) => data.password === data.confirmPassword, {
+      message: translate('passwordMismatch'),
+      path: ['confirmPassword'],
+    }),
+    [translate],
+  );
+
   const {
     register,
     handleSubmit,
@@ -44,15 +54,15 @@ export const RegisterForm = () => {
         fullName: registerData.name, // Mapping 'name' to 'fullName'
       });
       
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      toast.success(translate('registerSuccess'));
       // Ideally toggle to login tab or redirect
       router.push("/auth/login");
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'isAxiosError' in error) {
         const axiosError = error as { response?: { data?: { message?: string } } };
-        toast.error(axiosError.response?.data?.message || "Đăng ký thất bại. Email có thể đã tồn tại.");
+        toast.error(axiosError.response?.data?.message || translate('registrationFailedExisting'));
       } else {
-        toast.error("Đăng ký thất bại. Lỗi không xác định.");
+        toast.error(translate('registrationFailedUnknown'));
       }
     }
   };
@@ -64,11 +74,11 @@ export const RegisterForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium leading-none">Họ và tên</label>
+        <label htmlFor="name" className="text-sm font-medium leading-none">{translate('fullName')}</label>
         <Input
           id="name"
           type="text"
-          placeholder="Nguyễn Văn A"
+          placeholder={translate('namePlaceholder')}
           icon={<UserIcon className="h-5 w-5 text-muted-foreground" />}
           {...register("name")}
         />
@@ -86,7 +96,7 @@ export const RegisterForm = () => {
         {errors.email && <p className="text-sm text-danger">{errors.email.message}</p>}
       </div>
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium leading-none">Mật khẩu</label>
+        <label htmlFor="password" className="text-sm font-medium leading-none">{translate('password')}</label>
         <Input
           id="password"
           type="password"
@@ -98,7 +108,7 @@ export const RegisterForm = () => {
         )}
       </div>
        <div className="space-y-2">
-        <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">Xác nhận mật khẩu</label>
+        <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">{translate('confirmPassword')}</label>
         <Input
           id="confirmPassword"
           type="password"
@@ -110,7 +120,7 @@ export const RegisterForm = () => {
         )}
       </div>
       <Button type="submit" className="w-full" isLoading={isSubmitting}>
-        Tạo tài khoản bằng Email
+        {translate('createAccountWithEmail')}
       </Button>
 
       <div className="relative my-4">
@@ -118,7 +128,7 @@ export const RegisterForm = () => {
           <div className="w-full border-t border-muted"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-background text-muted-foreground">Hoặc</span>
+          <span className="px-2 bg-background text-muted-foreground">{translate('or')}</span>
         </div>
       </div>
 
@@ -130,7 +140,7 @@ export const RegisterForm = () => {
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           <path d="M1 1h22v22H1z" fill="none" />
         </svg>
-        Tiếp tục với Google
+        {translate('continueWithGoogle')}
       </Button>
     </form>
   );

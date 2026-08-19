@@ -243,8 +243,8 @@ export default function SmartAiTournamentModal({
         const primaryIsDoubles = !primaryFormat.formatKey.includes('SINGLES');
         if (primaryIsDoubles !== hasPlayer2Data) {
           throw new Error(primaryIsDoubles
-            ? 'Nội dung đang chọn là nội dung đôi nhưng file Excel chưa có cột VĐV 2. Hãy chọn đúng nội dung hoặc bổ sung cột VĐV 2.'
-            : 'Nội dung đang chọn là nội dung đơn nhưng file Excel có cột VĐV 2. Hãy chọn nội dung đôi hoặc bỏ cột VĐV 2.');
+            ? translate('doublesMissingPlayerTwo')
+            : translate('singlesHasPlayerTwo'));
         }
         const p1Col = excelResult.detectedMapping.player1NameCol || excelResult.headers[0];
         const names = excelResult.rows

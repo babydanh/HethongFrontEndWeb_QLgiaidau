@@ -385,12 +385,12 @@ export default function CommunityPostCard({
               {/* Author Community Role Badge */}
               {authorMemberInfo?.role === "OWNER" && (
                 <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200 shadow-2xs">
-                  Chủ CLB
+                  {translate('communityOwner')}
                 </span>
               )}
               {authorMemberInfo?.role === "MODERATOR" && (
                 <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200 shadow-2xs">
-                  BQT
+                  {translate('communityModerator')}
                 </span>
               )}
 
@@ -427,7 +427,7 @@ export default function CommunityPostCard({
               )}
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              {formatRelativeTime(post.createdAt)}
+              {formatRelativeTime(post.createdAt, locale)}
               {post.status === "PENDING" ? translate('pendingReviewSuffix') : ""}
             </p>
           </div>
@@ -718,7 +718,7 @@ export default function CommunityPostCard({
                           </button>
                           {comment.createdAt && (
                             <span className="text-slate-400 font-normal">
-                              {formatRelativeTime(comment.createdAt)}
+                              {formatRelativeTime(comment.createdAt, locale)}
                             </span>
                           )}
                           {(currentUser?.id === comment.author?.id || canManage) && (

@@ -192,10 +192,10 @@ export function LiveMatchControlPanel({
       ) : null}
          {!isFootball && !isLiteMatch && scoreWarnings.length > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-          <span className="font-bold">âš ï¸ {translate("ruleWarning")}</span>
+          <span className="font-bold">⚠️ {translate("ruleWarning")}</span>
           <div className="mt-1 space-y-0.5">
             {scoreWarnings.map((warning) => (
-              <p key={warning.id}>â€¢ {warning.message}</p>
+              <p key={warning.id}>• {warning.message}</p>
             ))}
           </div>
         </div>
@@ -495,7 +495,7 @@ export function LiveMatchControlPanel({
               </span>
               {isFootball ? (
                 <span className="mt-2 block rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
-                  âš½ {translate('footballShootoutDescription')}
+                  ⚽ {translate('footballShootoutDescription')}
                 </span>
               ) : (
                 <>

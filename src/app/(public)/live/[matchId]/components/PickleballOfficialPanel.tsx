@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/utils/cn';
 
 interface PickleballOfficialPanelProps {
@@ -23,19 +24,23 @@ export function PickleballOfficialPanel({
   onSetServingTeam,
   onSideOut,
 }: PickleballOfficialPanelProps) {
+  const translate = useTranslations('OrganizerScoring');
+
   return (
     <div className="space-y-3">
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800">
-        Chế độ pickleball side-out đang bám theo đội giao bóng hiện tại. Chỉ đội giao bóng mới được cộng điểm.
+        {translate('liveSideOutModeDescription')}
       </div>
       <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Trạng thái giao bóng</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate('servingStatusLabel')}</p>
           <p className="mt-2 text-sm font-bold text-slate-900">
-            {servingTeam == null ? 'Chưa chọn đội giao' : `${servingTeamName} đang giao • lượt ${serverNumber}`}
+            {servingTeam == null
+              ? translate('noServingTeam')
+              : translate('servingCurrent', { team: servingTeamName, number: serverNumber })}
           </p>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Dùng `Mất quyền giao` để chuyển từ lượt giao 1 sang lượt giao 2, rồi mới sang đội còn lại.
+            {translate('servingStatusHint')}
           </p>
         </div>
         <div className="flex flex-col gap-2">
@@ -51,7 +56,7 @@ export function PickleballOfficialPanel({
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
               )}
             >
-              {team1Name} giao
+              {translate('servingTeamButton', { team: team1Name })}
             </button>
             <button
               type="button"
@@ -64,7 +69,7 @@ export function PickleballOfficialPanel({
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
               )}
             >
-              {team2Name} giao
+              {translate('servingTeamButton', { team: team2Name })}
             </button>
           </div>
           <button
@@ -73,7 +78,7 @@ export function PickleballOfficialPanel({
             disabled={isSubmitting || servingTeam == null}
             className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-amber-100 disabled:opacity-50"
           >
-            Mất quyền giao
+            {translate('sideOutLoss')}
           </button>
         </div>
       </div>

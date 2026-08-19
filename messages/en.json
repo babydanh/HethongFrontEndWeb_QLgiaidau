@@ -1803,7 +1803,8 @@
     "organizerModalDescription": "Use this to create tournament series or public tournaments that count toward ELO. You do not need this role for internal club tournaments.",
     "contactPhoneLabel": "Contact phone number",
     "evidenceLabel": "Proof of experience",
-    "phoneLabel": "Phone number"
+    "phoneLabel": "Phone number",
+    "addressAutoDetected": "Detected automatically:"
   },
   "PlayerDashboard": {
     "statusOngoing": "In progress",
@@ -2308,7 +2309,18 @@
     "section3": "3. Tournament Organization & Participation Rules",
     "section4": "4. Financial Transactions & Refunds",
     "section5": "5. Intellectual Property Rights",
-    "section6": "6. Limitation of Liability"
+    "section6": "6. Limitation of Liability",
+    "intro": "Welcome to Sporto (the \"Platform\"). By registering an account, accessing, or using any Sporto feature on the web or mobile application, you agree to comply with and be bound by these Terms of Use. If you do not agree with any part of these terms, please stop using the service immediately.",
+    "accounts": "To use some of our services, you may be required to register an account and provide accurate and complete personal information, including your full name, phone number, and email address. You are responsible for protecting your login information and all activity conducted through your account. Please notify us immediately if you discover any unauthorized access.",
+    "organizerRules": "For organizers: You agree to provide truthful information about tournaments, rules, fees, and prize structures. Organizers are responsible for operating tournaments fairly, resolving disputes according to the published rules, and complying with applicable financial rules for platform fees and refunds.",
+    "athleteRules": "For athletes and teams: You agree to compete in a sportsmanlike manner and not falsify age, gender, or ELO skill information. Any skill-rating fraud may result in disqualification and permanent account suspension.",
+    "payments": "All online tournament entry-fee transactions are processed through Sporto’s linked payment gateway. Withdrawal from a tournament and refund requests must follow the specific refund policy established by the organizer. Sporto is responsible for transferring a refund only when the request meets the stated conditions and has been properly approved by the organizer.",
+    "intellectualProperty": "All content, trademarks, logos, source code, graphic designs, and related technology belong exclusively to Sporto or its licensing partners. You may not copy, modify, distribute, or use them for commercial purposes without our prior written consent.",
+    "liability": "Sporto provides a technical connection and management platform. We are not responsible for physical injuries, personal property loss, or unforeseen incidents occurring during real-world tournaments at the venue. Organizers and players are responsible for ensuring the health, safety, and medical conditions necessary for competition.",
+    "warningTitle": "Important notice for system members:",
+    "warningBody": "Serious violations of sports conduct rules or intentional damage to tournament data may result in temporary or permanent suspension of an organizer or athlete account, without reimbursement of any fees already paid.",
+    "allRightsReserved": "© 2026 Sporto. All rights reserved.",
+    "backHome": "Back to home"
   },
   "Privacy": {
     "heading": "PRIVACY POLICY & RIGHT TO PRIVACY",
@@ -2318,7 +2330,22 @@
     "section3": "3. Purpose of Data Use",
     "section4": "4. Data Sharing & Security",
     "section5": "5. User Rights & Account Deletion",
-    "section6": "6. Support Contact"
+    "section6": "6. Support Contact",
+    "metadataTitle": "Privacy Policy | VNVar Giaidau",
+    "metadataDescription": "Privacy policy covering personal data and leaderboard information for the VNVar Tournament Management platform.",
+    "intro": "Welcome to the Tournament Management platform (VNVar / sporto.asia). We are committed to protecting user privacy and personal information when you use our mobile application and website.",
+    "collectionIntro": "When you register an account, participate in sports tournaments (Pickleball, Badminton, Tennis, or Table Tennis), or use the application features:",
+    "collectionBasic": "We collect basic information such as your name, avatar, email address, phone number, and tournament achievements.",
+    "collectionLeaderboard": "Global Leaderboard & ELO Rating: For ranked tournament content, your display name, match results, and ELO rating may be stored on our servers and shown on leaderboards for seeding and competition purposes.",
+    "collectionConsent": "The registration screen for ranked tournaments includes a separate confirmation checkbox. Only after you consent will your results and ELO rating be included in the ranking system. Unranked tournaments do not update ELO.",
+    "purposeAuth": "Authenticate user accounts and manage the list of athletes participating in tournaments.",
+    "purposeElo": "Calculate ELO ratings, maintain leaderboards, and automatically create match schedules.",
+    "purposeNotifications": "Send schedule notifications, match results, and related information from tournament organizers.",
+    "sharing": "We do not sell, share, or rent your personal information to any third party for commercial purposes. Your data is stored securely on highly protected servers.",
+    "rights": "You may request to update or correct your personal information or request deletion of all account data at any time by contacting us through the support email or using the Delete Account feature in the application.",
+    "contactIntro": "If you have any questions or concerns about this Privacy Policy, please contact the administrators through:",
+    "emailLabel": "Email",
+    "websiteLabel": "Website"
   },
   "Leaderboard": {
     "singles": "Singles",
@@ -2552,7 +2579,14 @@
     "invalidLink": "Invalid link",
     "invalidLinkDescription": "Please use the password reset link from your email.",
     "loading": "Loading...",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "namePlaceholder": "e.g. Alex Morgan",
+    "validationNameMin": "Full name must be at least 3 characters.",
+    "validationEmail": "Invalid email address.",
+    "validationPasswordMin": "Password must be at least 6 characters.",
+    "createAccountWithEmail": "Create account with email",
+    "registrationFailedExisting": "Registration failed. This email may already be registered.",
+    "registrationFailedUnknown": "Registration failed. An unknown error occurred."
   },
   "Errors": {
     "generic": "Something went wrong. Please try again.",
@@ -2581,7 +2615,8 @@
     "title": "Download Mobile App",
     "versionDetails": "App version details",
     "versionInfo": "App version {version} (Build {build})",
-    "versionLabel": "Version:"
+    "versionLabel": "Version:",
+    "close": "Close"
   },
   "Home": {
     "featuredTournaments": "Featured Tournaments",
@@ -4675,7 +4710,10 @@
     "questionPlaceholder": "Question {number}...",
     "addQuestion": "Add question",
     "cancel": "Cancel",
-    "submit": "Create club"
+    "submit": "Create club",
+    "locationAddressLabel": "Detailed address / Main venue",
+    "locationAddressPlaceholder": "Example: 123 Hoa Su Street, Ward 7, Phu Nhuan District, Ho Chi Minh City...",
+    "autoDetectedAddress": "Detected automatically:"
   },
   "OrganizerFinance": {
     "bankNameRequired": "Please enter the bank name",
@@ -5166,7 +5204,9 @@
     "analyzeWithAi": "Analyze with AI",
     "backToEdit": "Back to edit",
     "creating": "Creating tournament...",
-    "createAndManage": "Create & Manage Tournament"
+    "createAndManage": "Create & Manage Tournament",
+    "doublesMissingPlayerTwo": "The selected division is doubles, but the Excel file has no Player 2 column. Choose the correct division or add a Player 2 column.",
+    "singlesHasPlayerTwo": "The selected division is singles, but the Excel file has a Player 2 column. Choose a doubles division or remove the Player 2 column."
   },
   "OrganizerSeriesManage": {
     "loadError": "Unable to load series details",
@@ -5395,7 +5435,14 @@
     "shootoutLabel": "shootout",
     "winsShootout": "wins the shootout",
     "cancel": "Cancel",
-    "saveScore": "Save score"
+    "saveScore": "Save score",
+    "liveSideOutModeDescription": "Pickleball side-out mode follows the current serving team. Only the serving team can score.",
+    "servingStatusLabel": "Serving status",
+    "servingCurrent": "{team} currently serves • turn {number}",
+    "servingStatusHint": "Use “Side-out” to move from serving turn 1 to serving turn 2, then to the other team.",
+    "servingTeamButton": "{team} serves",
+    "badmintonLiveDescription": "Badminton uses rally-point scoring. This panel shows live set points; warnings and cards are recorded in the penalty panel below.",
+    "tableTennisLiveDescription": "Table tennis also uses rally-point scoring, with longer deuce sequences near the end of a game. This panel keeps point entry concise; penalty rules are handled in the schema below."
   },
   "AdminVerification": {
     "loadError": "Unable to load verification requests.",
@@ -6167,5 +6214,19 @@
       "emptyTitle": "No data",
       "emptyDescription": "There are no matching records yet."
     }
+  },
+  "SeriesStandings": {
+    "title": "Cumulative PSR standings",
+    "viewing": "Viewing:",
+    "chooseLeg": "Choose leg",
+    "noLegs": "No legs available",
+    "categoryLabel": "Competition category",
+    "loadingCategory": "Loading categories...",
+    "noCategories": "No categories available",
+    "loadingStandings": "Loading PSR standings...",
+    "errorTitle": "Something went wrong",
+    "fallbackCategory": "Category",
+    "fallbackLeg": "Leg",
+    "loadError": "Unable to load standings."
   }
 }

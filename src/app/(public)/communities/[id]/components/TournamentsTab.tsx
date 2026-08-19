@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Trophy, Calendar, DollarSign, Loader2, Trash2, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -34,6 +34,7 @@ export default function TournamentsTab({
 }) {
   const router = useRouter();
   const translate = useTranslations('Common');
+  const locale = useLocale();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'UPCOMING' | 'ONGOING' | 'COMPLETED'>('ALL');
@@ -352,7 +353,7 @@ export default function TournamentsTab({
                           return Boolean(cfg?.recurring?.enabled || cfg?.recurring?.frequency);
                         }) && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                            <RotateCw className="w-2.5 h-2.5" /> Định kỳ
+                            <RotateCw className="w-2.5 h-2.5" /> {translate('recurring')}
                           </span>
                         )}
 
@@ -410,7 +411,7 @@ export default function TournamentsTab({
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="font-semibold text-slate-800">
-                      Lệ phí: {t.entryFee && t.entryFee > 0 ? `${t.entryFee.toLocaleString('vi-VN')} ${translate('currencyVnd')}` : translate('free')}
+                      {translate('entryFeeLabel')}: {t.entryFee && t.entryFee > 0 ? `${t.entryFee.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} ${translate('currencyVnd')}` : translate('free')}
                     </span>
                   </div>
                 </div>

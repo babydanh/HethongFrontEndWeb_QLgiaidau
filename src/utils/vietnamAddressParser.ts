@@ -195,10 +195,32 @@ export function useAutoAddressParser({
   const lastProcessedAddressRef = useRef<string>('');
   const lastMatchedProvinceCodeRef = useRef<string>('');
 
+  // Callers commonly provide inline callbacks. Keep the latest callbacks in
+  // refs so they do not retrigger the parser effect on every render.
+  const onSelectProvinceRef = useRef(onSelectProvince);
+  const onSelectWardRef = useRef(onSelectWard);
+  const onWardsLoadedRef = useRef(onWardsLoaded);
+
+  useEffect(() => {
+    onSelectProvinceRef.current = onSelectProvince;
+    onSelectWardRef.current = onSelectWard;
+    onWardsLoadedRef.current = onWardsLoaded;
+  }, [onSelectProvince, onSelectWard, onWardsLoaded]);
+
   useEffect(() => {
     if (!enabled || !addressValue || addressValue.trim().length < 3) {
-      setDetectedState({ province: null, ward: null, isMatched: false });
-      return;
+      // Returning the previous object is important here. The create page and
+      // several settings forms pass inline callbacks; without this guard an
+      // empty address would produce a new state object every render forever.
+      const resetTimer = window.setTimeout(() => {
+        setDetectedState((previous) => {
+          if (!previous.province && !previous.ward && !previous.isMatched) return previous;
+          return { province: null, ward: null, isMatched: false };
+        });
+        lastProcessedAddressRef.current = '';
+        lastMatchedProvinceCodeRef.current = '';
+      }, 0);
+      return () => window.clearTimeout(resetTimer);
     }
 
     const trimmed = addressValue.trim();
@@ -218,13 +240,13 @@ export function useAutoAddressParser({
 
         if (lastMatchedProvinceCodeRef.current !== detectedProv.code) {
           lastMatchedProvinceCodeRef.current = detectedProv.code;
-          onSelectProvince(detectedProv.code, detectedProv.fullName || detectedProv.name);
+          onSelectProvinceRef.current(detectedProv.code, detectedProv.fullName || detectedProv.name);
 
           // Tải wards nếu chưa có hoặc khác tỉnh
           try {
             const fetchedWards = await regionsApi.getWardsByProvince(detectedProv.code);
-            if (onWardsLoaded) {
-              onWardsLoaded(fetchedWards);
+            if (onWardsLoadedRef.current) {
+              onWardsLoadedRef.current(fetchedWards);
             }
             // Nhận diện Ward ngay sau khi tải xong
             const detectedW = detectWardFromAddress(trimmed, fetchedWards);
@@ -233,7 +255,7 @@ export function useAutoAddressParser({
                 ...prev,
                 ward: detectedW,
               }));
-              onSelectWard(detectedW.code, detectedW.fullName || detectedW.name);
+              onSelectWardRef.current(detectedW.code, detectedW.fullName || detectedW.name);
             }
           } catch {
             // bỏ qua nếu lỗi mạng
@@ -251,13 +273,13 @@ export function useAutoAddressParser({
             ward: detectedW,
             isMatched: true,
           }));
-          onSelectWard(detectedW.code, detectedW.fullName || detectedW.name);
+          onSelectWardRef.current(detectedW.code, detectedW.fullName || detectedW.name);
         }
       }
     }, 280);
 
     return () => clearTimeout(timer);
-  }, [addressValue, provinces, wards, enabled, onSelectProvince, onSelectWard, onWardsLoaded]);
+  }, [addressValue, provinces, wards, enabled]);
 
   return detectedState;
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { SeriesLeg, SeriesStanding } from '@/types/series';
 import { Category } from '@/types/category';
 import { UserProfile } from '@/types/user';
@@ -13,6 +14,7 @@ interface SeriesStandingsTabProps {
 }
 
 export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId, legs }) => {
+  const translate = useTranslations('SeriesStandings');
   const [categories, setCategories] = useState<Category[]>([]);
   const [standings, setStandings] = useState<SeriesStanding[]>([]);
   
@@ -101,7 +103,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
         }
       } catch (err: unknown) {
         if (active) {
-          setError(err instanceof Error ? err.message : 'Lỗi tải bảng xếp hạng.');
+          setError(err instanceof Error ? err.message : translate('loadError'));
         }
       } finally {
         if (active) {
@@ -115,10 +117,10 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
     return () => {
       active = false;
     };
-  }, [seriesId, selectedLegId, selectedCategoryId]);
+  }, [seriesId, selectedLegId, selectedCategoryId, translate]);
 
-  const selectedCategoryName = categories.find(c => c.id === selectedCategoryId)?.name || 'Nội dung';
-  const selectedLegName = legs.find(l => l.id === selectedLegId)?.name || 'Chặng';
+  const selectedCategoryName = categories.find(c => c.id === selectedCategoryId)?.name || translate('fallbackCategory');
+  const selectedLegName = legs.find(l => l.id === selectedLegId)?.name || translate('fallbackLeg');
 
   return (
     <div className="flex flex-col gap-6">
@@ -130,9 +132,9 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
             <Trophy className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800">Bảng Xếp Hạng PSR Tích Lũy</h3>
+<h3 className="text-sm font-bold text-slate-800">{translate('title')}</h3>
             <p className="text-xs text-slate-400 mt-0.5 animate-fade-in">
-              Đang xem: <strong className="text-slate-600 font-semibold">{selectedLegName}</strong> — <strong className="text-slate-600 font-semibold">{selectedCategoryName}</strong>
+              {translate('viewing')} <strong className="text-slate-600 font-semibold">{selectedLegName}</strong> — <strong className="text-slate-600 font-semibold">{selectedCategoryName}</strong>
             </p>
           </div>
         </div>
@@ -141,14 +143,14 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* Leg Select */}
           <div className="flex flex-col gap-1 w-full sm:w-56">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-1">Chọn chặng</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-1">{translate('chooseLeg')}</span>
             <select
               value={selectedLegId}
               onChange={(e) => setSelectedLegId(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer"
             >
               {legs.length === 0 ? (
-                <option value="">Chưa có chặng đấu</option>
+                <option value="">{translate('noLegs')}</option>
               ) : (
                 legs.map((leg) => (
                   <option key={leg.id} value={leg.id}>
@@ -161,7 +163,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
 
           {/* Category Select */}
           <div className="flex flex-col gap-1 w-full sm:w-56">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-1">Nội dung thi đấu</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-1">{translate('categoryLabel')}</span>
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
@@ -169,9 +171,9 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
               disabled={isLoadingCategories}
             >
               {isLoadingCategories ? (
-                <option>Đang tải nội dung...</option>
+                <option>{translate('loadingCategory')}</option>
               ) : categories.length === 0 ? (
-                <option value="">Chưa có nội dung</option>
+                <option value="">{translate('noCategories')}</option>
               ) : (
                 categories.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -188,11 +190,11 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
       {isLoadingStandings ? (
         <div className="bg-white border border-slate-200 rounded-lg p-12 flex flex-col items-center justify-center min-h-[300px] shadow-sm">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Đang tải bảng xếp hạng PSR...</p>
+          <p className="text-sm text-slate-500 font-medium">{translate('loadingStandings')}</p>
         </div>
       ) : error ? (
         <div className="bg-white border border-rose-100 rounded-lg p-12 text-center text-rose-500 shadow-sm">
-          <h4 className="font-bold mb-1">Đã xảy ra lỗi</h4>
+          <h4 className="font-bold mb-1">{translate('errorTitle')}</h4>
           <p className="text-sm max-w-xs mx-auto leading-relaxed">{error}</p>
         </div>
       ) : (

@@ -1382,8 +1382,9 @@ export function RegistrationTab({
                 <p className="mt-1 text-xs text-slate-500">{registrationTranslate('profileSubmittedFrom')}</p>
               </div>
               <div className="space-y-5 p-5">
+                {/* Thông tin hồ sơ & VĐV (Tối ưu tránh lặp tên) */}
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 pb-3">
                     <div>
                       <div className="flex items-center gap-2">
                         {selectedIsPair && <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">{registrationTranslate('pairBadge')}</span>}
@@ -1392,26 +1393,47 @@ export function RegistrationTab({
                       <p className="mt-1 text-xs text-slate-500">{selectedDivisionName || registrationTranslate('unassignedDivision')} · {formatDate(selectedParticipant.registeredAt)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-bold">
-                      <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">{getParticipantStatusLabel(selectedParticipant.teamStatus, participantStatusLabels)}</span>
+                      <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-700">{getParticipantStatusLabel(selectedParticipant.teamStatus, participantStatusLabels)}</span>
                       <span className={`rounded-full border px-2.5 py-1 ${selectedParticipant.isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
                         {selectedParticipant.isPaid ? registrationTranslate('paidStatusDetail') : registrationTranslate('unpaidStatusDetail')}
                       </span>
                     </div>
                   </div>
-                </section>
 
-                <section>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{selectedIsPair ? registrationTranslate('pairMembersHeading') : registrationTranslate('athleteHeading')}</h3>
-                  <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                    {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
-                      <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
-                        <div className="min-w-0"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>{member.role === 'MAIN' && <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">Leader</span>}</div><p className="mt-0.5 truncate text-xs text-slate-500">{member.email || registrationTranslate('hiddenEmail')}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}</p></div>
-                        <span className="text-xs font-semibold text-slate-500">ELO {member.elo?.eloPoints ?? '—'}</span>
-                      </div>
-                    )) : <p className="px-4 py-4 text-sm text-slate-500">{registrationTranslate('noMembers')}</p>}
+                  {/* Danh sách thành viên (Đơn: hiển thị 1 VĐV gọn, Đôi/Đội: hiển thị đầy đủ Leader & Partner) */}
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      {selectedIsPair ? registrationTranslate('pairMembersHeading') : 'Thành viên thi đấu'}
+                    </p>
+                    <div className="divide-y divide-slate-200/60 rounded-lg border border-slate-200 bg-white">
+                      {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
+                        <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>
+                              {selectedIsPair && member.role === 'MAIN' && (
+                                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">Trưởng nhóm</span>
+                              )}
+                              {selectedIsPair && member.role !== 'MAIN' && (
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">Partner</span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 truncate text-xs text-slate-500">{member.email || registrationTranslate('hiddenEmail')}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}</p>
+                          </div>
+                          <span className="rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 border border-slate-200/60">
+                            ELO {member.elo?.eloPoints ?? '—'}
+                          </span>
+                        </div>
+                      )) : (
+                        <p className="px-4 py-3 text-xs text-slate-500">{registrationTranslate('noMembers')}</p>
+                      )}
+                    </div>
                   </div>
+
                   {selectedParticipant.registeredBy && selectedParticipant.registeredBy.id !== selectedLeader?.userId && (
-                    <p className="mt-2 text-xs text-slate-500">{registrationTranslate('enteredBy')} <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</span> · {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}</p>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {registrationTranslate('enteredBy')} <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</span> · {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}
+                    </p>
                   )}
                 </section>
 

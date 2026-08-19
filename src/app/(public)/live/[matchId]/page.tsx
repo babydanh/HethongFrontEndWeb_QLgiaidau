@@ -122,6 +122,7 @@ export default function LiveMatchPage({ params }: Props) {
   const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const translate = useTranslations('Common');
   const matchTranslate = useTranslations('Match');
+  const livePenaltyTranslate = useTranslations('LivePenalty');
   const tournamentDetailTranslate = useTranslations('TournamentDetail');
   const router = useRouter();
   const resolvedParams = use(params);
@@ -2052,16 +2053,22 @@ export default function LiveMatchPage({ params }: Props) {
                           : penalty.team === 2
                             ? team2Name
                             : matchTranslate('matchLabel');
+                        const localizedPenaltyLabel = action
+                          ? livePenaltyTranslate(`schema.items.${action.kind}.label`)
+                          : penalty.label;
+                        const localizedCardLabel = action?.cardLabel
+                          ? livePenaltyTranslate(`schema.items.${action.kind}.cardLabel`)
+                          : undefined;
 
                         return (
                           <div key={penalty.id} className={`flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3 ${tone.box}`}>
                             <span className={`mt-1 h-3 w-3 shrink-0 rounded-sm ${tone.mark}`} aria-hidden="true" />
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className={`truncate text-sm font-bold ${tone.label}`}>{penalty.label}</p>
-                                {action?.cardLabel ? (
+                                <p className={`truncate text-sm font-bold ${tone.label}`}>{localizedPenaltyLabel}</p>
+                                {localizedCardLabel ? (
                                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tone.badge}`}>
-                                    {action.cardLabel}
+                                    {localizedCardLabel}
                                   </span>
                                 ) : null}
                               </div>

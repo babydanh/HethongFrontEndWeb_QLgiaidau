@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { MatchPenaltyRecord } from '@/types/match';
 import { cn } from '@/utils/cn';
 import { getPenaltySchema } from '@/features/matches/penalty-schema';
@@ -27,6 +27,8 @@ export function PenaltyPanel({
   onAddPenalty,
 }: PenaltyPanelProps) {
   const translate = useTranslations('LivePenalty');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const schema = useMemo(() => getPenaltySchema(sportKind), [sportKind]);
   const schemaKey = sportKind === 'TENNIS'
     ? 'TENNIS'
@@ -195,10 +197,11 @@ export function PenaltyPanel({
               return;
             }
 
+            const localizedSelectedPenalty = localizedPenaltyKinds.find((item) => item.kind === selectedPenalty.kind);
             onAddPenalty(
               resolvePenaltyTeam(),
               selectedPenalty.kind,
-              selectedPenalty.label,
+              localizedSelectedPenalty?.label ?? selectedPenalty.label,
               penaltyNote.trim() || undefined,
             );
             setPenaltyNote('');
@@ -228,7 +231,7 @@ export function PenaltyPanel({
                   {localizedPenaltyKinds.find((penalty) => penalty.kind === item.kind)?.label ?? item.label}
                   {item.team === 1 ? ` • ${team1Name}` : item.team === 2 ? ` • ${team2Name}` : translate('allMatch')}
                 </div>
-                <div className="text-[11px] text-slate-500">{new Date(item.createdAt).toLocaleString('vi-VN')}</div>
+                <div className="text-[11px] text-slate-500">{new Date(item.createdAt).toLocaleString(dateLocale)}</div>
               </div>
               {item.note ? <p className="mt-1 text-xs text-slate-600">{item.note}</p> : null}
             </div>

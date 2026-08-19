@@ -187,7 +187,7 @@ export function BracketTab({
   bracketType,
 }: BracketTabProps) {
   const translate = useTranslations('TournamentDetail');
-  const presentation = getSportRulePresentation(sportRuleKind);
+  const presentation = getSportRulePresentation(sportRuleKind, translate);
   const setUnitLabel = presentation.setUnitLabel;
   const winByTwoLabel = presentation.winByTwoLabel;
   const maxScoreLabel = presentation.maxScoreLabel;
@@ -197,7 +197,7 @@ export function BracketTab({
     selectedCategory?.name?.toLowerCase().includes('pickleball') ||
     selectedCategory?.categoryConfig?.ruleKind?.includes('PICKLEBALL');
   const supportsTiebreakInput = sportRuleKind === 'TENNIS' || sportRuleKind === 'PICKLEBALL_SIDE_OUT';
-  const presets = getSportRulePresets(sportRuleKind);
+  const presets = getSportRulePresets(sportRuleKind, translate);
 
   const handleSportRuleKindChange = (nextKind: SportRuleKind) => {
     const nextRules = resolveSportRuleView(buildDefaultSportRules(nextKind), nextKind);
@@ -697,7 +697,7 @@ export function BracketTab({
                   </div>
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số vòng (roundsToPlay)</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số lượt đấu (Lượt đi / Lượt về)</label>
                       <input
                         type="number"
                         min={1}
@@ -706,7 +706,7 @@ export function BracketTab({
                         onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
                         className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
                       />
-                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5">2 = lượt đi + lượt về, 3+ = thêm vòng</p>
+                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5">1 = Đấu 1 lượt | 2 = Lượt đi + lượt về | 3+ = Thêm các lượt lặp lại</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1.5">

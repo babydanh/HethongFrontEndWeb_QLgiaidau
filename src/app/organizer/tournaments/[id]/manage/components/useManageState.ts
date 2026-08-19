@@ -802,6 +802,10 @@ export function useManageState(id: string) {
 
   const handleCreateDivision = async () => {
     if (!tournament?.id) { toast.error('Không tìm thấy giải đấu'); return; }
+    if (!editingDivision && divisions.length >= 20) {
+      toast.error('Mỗi giải đấu chỉ được tạo tối đa 20 nội dung thi đấu.');
+      return;
+    }
     setIsCreatingDivision(true);
     try {
       const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {

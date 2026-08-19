@@ -205,20 +205,30 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     participants={s.participants} divisions={s.divisions} matches={s.matches} />
 
         {/* Divisions Selector */}
-        <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nội dung thi đấu</p>
-              <p className="text-xs text-slate-400">Chọn nội dung để xem cấu hình riêng</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">Nội dung thi đấu</p>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  {s.divisions.length}/20
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Chọn nội dung để xem và cấu hình chi tiết</p>
             </div>
-            <Button size="sm" onClick={() => { s.resetDivisionEditor(); s.setIsCreateDivisionModalOpen(true); }}
-              disabled={isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
-              className="font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
-              <Plus className="w-3.5 h-3.5" /> Thêm nội dung
+            <Button
+              size="sm"
+              onClick={() => { s.resetDivisionEditor(); s.setIsCreateDivisionModalOpen(true); }}
+              disabled={s.divisions.length >= 20 || isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
+              className="font-bold text-xs flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap disabled:opacity-50"
+              title={s.divisions.length >= 20 ? 'Đã đạt giới hạn tối đa 20 nội dung' : 'Thêm nội dung thi đấu'}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {s.divisions.length >= 20 ? 'Đạt tối đa (20/20)' : 'Thêm nội dung'}
             </Button>
           </div>
           {s.divisions.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
               {s.divisions.map(div => {
                 const isActive = div.id === s.selectedDivisionId;
                 const bracketFormatLabel = s.getBracketLabel(div.bracketType);
@@ -228,54 +238,46 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 return (
                   <div
                     key={div.id}
-                    className={`group relative flex items-stretch justify-between rounded-xl border transition-all duration-150 ${
+                    className={`group relative flex items-stretch justify-between rounded-lg border transition-all duration-150 ${
                       isActive
-                        ? 'border-blue-600 bg-gradient-to-br from-blue-600 to-indigo-650 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500/30'
-                        : 'border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:shadow-xs hover:bg-slate-50/50'
+                        ? 'border-blue-600 bg-blue-50/40 text-slate-900 shadow-xs ring-1 ring-blue-600/30'
+                        : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50/60'
                     }`}
                   >
                     <button 
                       type="button" 
                       onClick={() => { s.setSelectedDivisionId(div.id); s.applyDivisionFormValues(div); }}
-                      className="flex items-start gap-2.5 p-3 text-left cursor-pointer flex-1 min-w-0"
+                      className="flex items-start gap-2.5 p-2.5 text-left cursor-pointer flex-1 min-w-0"
                       title="Nhấn để xem chi tiết & thiết lập cấu hình riêng"
                     >
                       {/* Icon Avatar */}
                       <div
-                        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${
-                          isActive
-                            ? 'bg-white/15 text-white border-white/20 backdrop-blur-xs'
-                            : genderMeta.iconBoxClass
-                        }`}
+                        className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 border mt-0.5 ${genderMeta.iconBoxClass}`}
                       >
-                        <IconComponent className="h-4 w-4" />
+                        <IconComponent className="h-3.5 w-3.5" />
                       </div>
 
                       {/* Content */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 justify-between">
-                          <span className="block truncate text-xs font-bold tracking-tight">
+                          <span className={`block truncate text-xs font-bold tracking-tight ${isActive ? 'text-blue-900' : 'text-slate-900'}`}>
                             {div.name}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-1 mt-1 flex-wrap">
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${
-                              isActive
-                                ? 'bg-white/20 text-white border-white/30'
-                                : genderMeta.badgeClass
-                            }`}
+                            className={`text-[9px] font-bold px-1.5 py-0.2 rounded border shrink-0 ${genderMeta.badgeClass}`}
                           >
                             {genderMeta.badgeText}
                           </span>
-                          <span className={`text-[10px] font-medium truncate ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                          <span className="text-[10px] font-medium text-slate-500 truncate">
                             {bracketFormatLabel}
                           </span>
                         </div>
 
-                        <div className={`flex items-center gap-1 text-[10px] font-medium mt-1.5 ${isActive ? 'text-blue-100/90' : 'text-slate-400'}`}>
-                          <span>Tối đa: <strong className={isActive ? 'text-white font-semibold' : 'text-slate-600 font-semibold'}>{div.maxParticipants ?? 'Theo giải'}</strong></span>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-1">
+                          <span>Tối đa: <strong className="text-slate-700 font-semibold">{div.maxParticipants ?? 'Theo giải'}</strong></span>
                           <span>•</span>
                           <span>{div.minElo != null || div.maxElo != null ? `ELO ${div.minElo ?? 0}–${div.maxElo ?? '∞'}` : 'ELO theo giải'}</span>
                         </div>
@@ -283,14 +285,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     </button>
 
                     {/* Action buttons (Edit / Delete) */}
-                    <div className="flex flex-col justify-between border-l border-slate-100/40 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex flex-col justify-between border-l border-slate-100 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         type="button" 
                         onClick={() => s.openDivisionEditor(div)}
                         disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
-                        className={`p-1.5 rounded-md transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 ${
-                          isActive ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                        }`}
+                        className="p-1 rounded transition-colors cursor-pointer text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-30"
                         title="Chỉnh sửa nội dung"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -299,9 +299,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       <button 
                         type="button" 
                         onClick={() => { s.requestDeleteDivision(div); }}
-                        className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                          isActive ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                        }`}
+                        className="p-1 rounded transition-colors cursor-pointer text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                         title="Xóa nội dung này"
                       >
                         <X className="w-3.5 h-3.5" />

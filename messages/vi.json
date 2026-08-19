@@ -2182,6 +2182,12 @@
     "notScheduled": "Chưa xếp lịch"
   },
   "TournamentList": {
+    "openCta": "Đăng ký tham gia",
+    "openBadge": "Mở đăng ký",
+    "approvalCta": "Đăng ký tham gia",
+    "approvalBadge": "Cần phê duyệt",
+    "inviteOnlyCta": "Nhập mã mời tham gia",
+    "inviteOnlyBadge": "Chỉ dành cho người được mời",
     "searchPlaceholder": "Tên giải đấu, địa điểm...",
     "singles": "Đơn",
     "doubles": "Đôi",
@@ -4238,7 +4244,7 @@
     "refundedShort": "Đã hoàn",
     "pendingRefundShort": "Chờ hoàn",
     "viewDetails": "Xem chi tiết",
-    "processRefund": "Xử lý hoàn",
+    "processRefund": "Xử lý hoàn tiền",
     "summary": "Hiển thị {shown} trên tổng số {total} giao dịch",
     "successfulAmount": "Thành công:",
     "invoiceDetails": "Chi tiết hoá đơn",
@@ -4280,7 +4286,8 @@
     "refundProofHint": "Tải biên lai chuyển khoản lên một URL công khai (Cloudinary, Google Drive, v.v.).",
     "confirmRefund": "Xác nhận hoàn tiền",
     "confirmingRefund": "Đang xác nhận...",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "receiptNotIssued": "Giao dịch này chưa có chứng từ đã phát hành."
   },
   "AdminSupport": {
     "loadRoomsError": "Không tải được hộp thư hỗ trợ.",
@@ -5528,5 +5535,45 @@
     "resolve": "Xác nhận vi phạm",
     "reject": "Bác báo cáo",
     "unknown": "Không xác định"
+  },
+  "CommunityJoin": {
+    "requestTitle": "Xin tham gia câu lạc bộ",
+    "confirmTitle": "Xác nhận tham gia",
+    "approvalDescription": "Câu lạc bộ này yêu cầu phê duyệt. Vui lòng trả lời các câu hỏi sau để ban quản trị xem xét.",
+    "answerPlaceholder": "Câu trả lời của bạn...",
+    "approvalConfirm": "Xác nhận gửi yêu cầu tham gia câu lạc bộ này?",
+    "directConfirm": "Bạn có chắc chắn muốn tham gia câu lạc bộ này?",
+    "missingAnswer": "Vui lòng trả lời đầy đủ các câu hỏi!",
+    "approvalSuccess": "Đã gửi đơn xin tham gia! Vui lòng chờ duyệt.",
+    "joinSuccess": "Tham gia câu lạc bộ thành công!",
+    "cancel": "Hủy bỏ",
+    "submitRequest": "Gửi đơn",
+    "joinNow": "Tham gia ngay"
+  },
+  "LiteInviteQr": {
+    "copySuccess": "Đã sao chép link mời!",
+    "copyError": "Không thể sao chép link.",
+    "downloadError": "Không thể tải mã QR.",
+    "invalidUrl": "Chưa thể tạo mã QR vì link mời không hợp lệ.",
+    "qrAria": "Mã QR tham gia giải",
+    "qrTitle": "Mã QR tham gia giải {tournamentName}",
+    "scanHint": "Dùng camera điện thoại để quét",
+    "heading": "Mã QR tham gia giải",
+    "description": "Người chơi quét bằng camera điện thoại. Link HTTPS sẽ mở thẳng trang đăng ký hoặc tham gia giải.",
+    "copyLink": "Sao chép link",
+    "share": "Chia sẻ",
+    "downloadPng": "Tải QR PNG",
+    "shareTitle": "Tham gia giải {tournamentName}"
+  },
+  "AdminModeration": {
+    "loadUsersFailed": "Không thể tải danh sách người dùng.",
+    "invalidStartDate": "Ngày bắt đầu không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy.",
+    "invalidEndDate": "Ngày kết thúc không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy.",
+    "startAfterEnd": "Ngày bắt đầu không được sau ngày kết thúc.",
+    "banSuccess": "Đã áp dụng chế tài thành công.",
+    "banError": "Không thể xử phạt tài khoản.",
+    "unbanSuccess": "Đã gỡ phạt tài khoản.",
+    "unbanError": "Không thể gỡ phạt tài khoản.",
+    "loadMoreUsers": "Xem thêm người dùng"
   }
 }

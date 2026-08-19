@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/Button';
 import { Copy, Download, QrCode, Share2 } from 'lucide-react';
@@ -15,6 +16,7 @@ type LiteInviteQrProps = {
 };
 
 export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: LiteInviteQrProps) {
+  const translate = useTranslations('LiteInviteQr');
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const isValid = isScannableJoinUrl(inviteUrl);
@@ -22,16 +24,16 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
   const copyInvite = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      toast.success('Đã sao chép link mời!');
+      toast.success(translate('copySuccess'));
     } catch {
-      toast.error('Không thể sao chép link.');
+      toast.error(translate('copyError'));
     }
   };
 
   const downloadQr = () => {
     const canvas = canvasWrapRef.current?.querySelector('canvas');
     if (!canvas) {
-      toast.error('Không thể tải mã QR.');
+      toast.error(translate('downloadError'));
       return;
     }
     const anchor = document.createElement('a');
@@ -43,7 +45,7 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
   if (!isValid) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-700">
-        Chưa thể tạo mã QR vì link mời không hợp lệ.
+        {translate('invalidUrl')}
       </div>
     );
   }
@@ -51,7 +53,7 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
   const qrSize = compact ? 176 : 224;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-label="Mã QR tham gia giải">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-label={translate('qrAria')}>
       <div className={`grid gap-4 ${compact ? 'sm:grid-cols-[200px_1fr]' : 'md:grid-cols-[248px_1fr]'} items-center`}>
         <div className="flex flex-col items-center">
           <div ref={canvasWrapRef} className="rounded-lg border border-slate-200 bg-white p-3">
@@ -62,19 +64,19 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
               marginSize={2}
               bgColor="#ffffff"
               fgColor="#0f172a"
-              title={`Mã QR tham gia giải ${tournamentName}`}
+              title={translate('qrTitle', { tournamentName })}
             />
           </div>
           <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
-            <QrCode className="h-3.5 w-3.5" /> Dùng camera điện thoại để quét
+            <QrCode className="h-3.5 w-3.5" /> {translate('scanHint')}
           </p>
         </div>
 
         <div className="min-w-0 space-y-3">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Mã QR tham gia giải</h3>
+            <h3 className="text-base font-semibold text-slate-900">{translate('heading')}</h3>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Người chơi quét bằng camera điện thoại. Link HTTPS sẽ mở thẳng trang đăng ký hoặc tham gia giải.
+              {translate('description')}
             </p>
           </div>
           <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3">
@@ -82,13 +84,13 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={copyInvite} className="gap-1.5 font-medium">
-              <Copy className="h-3.5 w-3.5" /> Sao chép link
+              <Copy className="h-3.5 w-3.5" /> {translate('copyLink')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setIsShareModalOpen(true)} className="gap-1.5 font-medium">
-              <Share2 className="h-3.5 w-3.5" /> Chia sẻ
+              <Share2 className="h-3.5 w-3.5" /> {translate('share')}
             </Button>
             <Button size="sm" variant="outline" onClick={downloadQr} className="gap-1.5 font-medium">
-              <Download className="h-3.5 w-3.5" /> Tải QR PNG
+              <Download className="h-3.5 w-3.5" /> {translate('downloadPng')}
             </Button>
           </div>
         </div>
@@ -97,7 +99,7 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={inviteUrl}
-        title={`Tham gia giải ${tournamentName}`}
+        title={translate('shareTitle', { tournamentName })}
       />
     </section>
   );

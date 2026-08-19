@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { paymentsApi } from '@/features/payments/api';
 import { AdminPayment, PaymentReceipt } from '@/types/payment';
 import { AlertCircle, Search, Filter, ShieldCheck, RefreshCw, X, FileText, Calendar } from 'lucide-react';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 
 export default function AdminTransactionsList() {
   const translate = useTranslations('AdminTransactions');
+  const locale = useLocale();
   const [transactions, setTransactions] = useState<AdminPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,17 +144,17 @@ export default function AdminTransactionsList() {
 
   const formatCurrency = (val: string | number) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    return new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', { style: 'currency', currency: 'VND' }).format(num);
   };
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const handleViewReceipt = async () => {
@@ -163,7 +164,7 @@ export default function AdminTransactionsList() {
       const response = await paymentsApi.getAdminPaymentReceipt(selectedPayment.id);
       setSelectedReceipt(response.data);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Giao dịch này chưa có chứng từ đã phát hành.'));
+      toast.error(getErrorMessage(err, translate('receiptNotIssued')));
     } finally {
       setLoadingReceipt(false);
     }
@@ -534,7 +535,7 @@ export default function AdminTransactionsList() {
                   onClick={() => { const p = selectedPayment; setSelectedPayment(null); handleOpenRefundModal(p); }}
                   className="px-4 py-2 bg-slate-500 text-white text-xs font-bold rounded-lg hover:bg-amber-400 transition-all"
                 >
-                  Xử lý hoàn tiền
+                  {translate('processRefund')}
                 </button>
               )}
             </div>

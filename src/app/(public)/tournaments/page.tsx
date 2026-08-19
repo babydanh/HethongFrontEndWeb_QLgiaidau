@@ -26,6 +26,7 @@ import { getRegistrationModeUi } from './registrationMode';
 
 export default function TournamentsListPage() {
   const translate = useTranslations("TournamentList");
+  const registrationTranslate = useTranslations("RegistrationMode");
   const { user } = useAuthStore();
 
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
@@ -706,7 +707,7 @@ export default function TournamentsListPage() {
               : locationParts.length === 1
               ? locationParts[0]
               : translate("locationNotUpdated");
-            const registrationModeUi = getRegistrationModeUi(translate, tournament.tournamentConfig?.registrationMode);
+            const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
 
             return (
               <Link

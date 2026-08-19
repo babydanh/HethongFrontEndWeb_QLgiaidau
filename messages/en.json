@@ -2182,6 +2182,12 @@
     "regionLabel": "Region: {region}"
   },
   "TournamentList": {
+    "openCta": "Register Now",
+    "openBadge": "Open for registration",
+    "approvalCta": "Register Now",
+    "approvalBadge": "Approval required",
+    "inviteOnlyCta": "Enter invitation code",
+    "inviteOnlyBadge": "Invite only",
     "searchPlaceholder": "Tournament name, location...",
     "singles": "Singles",
     "doubles": "Doubles",
@@ -4280,7 +4286,8 @@
     "refundProofHint": "Upload the transfer receipt to a public URL (Cloudinary, Google Drive, etc.).",
     "confirmRefund": "Confirm refund",
     "confirmingRefund": "Confirming...",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "receiptNotIssued": "This transaction does not have an issued receipt."
   },
   "AdminSupport": {
     "loadRoomsError": "Unable to load the support inbox.",
@@ -5528,5 +5535,45 @@
     "resolve": "Confirm violation",
     "reject": "Reject report",
     "unknown": "Unknown"
+  },
+  "CommunityJoin": {
+    "requestTitle": "Request to join club",
+    "confirmTitle": "Confirm membership",
+    "approvalDescription": "This club requires approval. Please answer the following questions for the moderators to review.",
+    "answerPlaceholder": "Your answer...",
+    "approvalConfirm": "Confirm sending a request to join this club?",
+    "directConfirm": "Are you sure you want to join this club?",
+    "missingAnswer": "Please answer all questions.",
+    "approvalSuccess": "Membership request sent. Please wait for approval.",
+    "joinSuccess": "You joined the club successfully.",
+    "cancel": "Cancel",
+    "submitRequest": "Send request",
+    "joinNow": "Join now"
+  },
+  "LiteInviteQr": {
+    "copySuccess": "Invitation link copied.",
+    "copyError": "Unable to copy the invitation link.",
+    "downloadError": "Unable to download the QR code.",
+    "invalidUrl": "The QR code cannot be created because the invitation link is invalid.",
+    "qrAria": "Tournament joining QR code",
+    "qrTitle": "Tournament joining QR code for {tournamentName}",
+    "scanHint": "Use your phone camera to scan",
+    "heading": "Tournament joining QR code",
+    "description": "Players can scan with their phone camera. The HTTPS link opens the tournament registration or joining page directly.",
+    "copyLink": "Copy link",
+    "share": "Share",
+    "downloadPng": "Download QR PNG",
+    "shareTitle": "Join {tournamentName}"
+  },
+  "AdminModeration": {
+    "loadUsersFailed": "Unable to load the user list.",
+    "invalidStartDate": "The start date is invalid. Please enter it in dd/mm/yyyy format.",
+    "invalidEndDate": "The end date is invalid. Please enter it in dd/mm/yyyy format.",
+    "startAfterEnd": "The start date cannot be after the end date.",
+    "banSuccess": "Account sanction applied successfully.",
+    "banError": "Unable to sanction the account.",
+    "unbanSuccess": "Account sanction removed.",
+    "unbanError": "Unable to remove the account sanction.",
+    "loadMoreUsers": "Load more users"
   }
 }

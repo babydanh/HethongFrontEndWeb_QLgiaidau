@@ -1,33 +1,33 @@
 import type { ReportCategory, ReportSource, ReportStatus, ReportTargetType } from './types';
 
+// Legacy English-safe fallbacks. Current UI components resolve these labels through the Reports namespace.
 export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
-  USER: 'Thành viên',
-  TOURNAMENT: 'Giải đấu',
-  MATCH: 'Trận đấu',
-  COMMUNITY: 'Câu lạc bộ',
+  USER: 'Member',
+  TOURNAMENT: 'Tournament',
+  MATCH: 'Match',
+  COMMUNITY: 'Club',
 };
 
 export const REPORT_CATEGORY_LABELS: Record<ReportCategory, string> = {
-  CHEATING: 'Gian lận',
-  RULE_VIOLATION: 'Vi phạm luật thi đấu',
-  ABUSIVE_BEHAVIOR: 'Hành vi xúc phạm',
-  FAKE_INFORMATION: 'Thông tin giả mạo',
-  PAYMENT_FRAUD: 'Gian lận thanh toán',
-  UNSAFE_ORGANIZATION: 'Tổ chức không an toàn',
-  OTHER: 'Vi phạm khác',
+  CHEATING: 'Cheating',
+  RULE_VIOLATION: 'Competition rule violation',
+  ABUSIVE_BEHAVIOR: 'Abusive behavior',
+  FAKE_INFORMATION: 'Fake information',
+  PAYMENT_FRAUD: 'Payment fraud',
+  UNSAFE_ORGANIZATION: 'Unsafe organization',
+  OTHER: 'Other violation',
 };
 
 export const REPORT_SOURCE_LABELS: Record<ReportSource, string> = {
-  USER_REPORT: 'Báo cáo người dùng',
-  LEGACY_DISPUTE: 'Báo cáo cũ',
+  USER_REPORT: 'User report',
+  LEGACY_DISPUTE: 'Legacy report',
 };
 
 export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
-  SUBMITTED: 'Mới tiếp nhận',
-  TRIAGED: 'Đã phân loại',
-  UNDER_REVIEW: 'Đang xác minh',
-  ESCALATED: 'Đã chuyển admin',
-  RESOLVED: 'Đã xác nhận vi phạm',
-  REJECTED: 'Đã bác báo cáo',
+  SUBMITTED: 'New',
+  TRIAGED: 'Triaged',
+  UNDER_REVIEW: 'Under review',
+  ESCALATED: 'Escalated to admin',
+  RESOLVED: 'Violation confirmed',
+  REJECTED: 'Report rejected',
 };
-

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Community, communitiesApi } from '@/features/communities/api';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
@@ -15,6 +16,7 @@ interface JoinCommunityModalProps {
 }
 
 export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: JoinCommunityModalProps) {
+  const translate = useTranslations('CommunityJoin');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +30,7 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
       if (community.joinMode === 'APPROVAL' && questions.length > 0) {
         const missing = questions.find(q => !answers[q] || answers[q].trim() === '');
         if (missing) {
-          toast.error('Vui lòng trả lời đầy đủ các câu hỏi!');
+          toast.error(translate('missingAnswer'));
           return;
         }
       }
@@ -36,9 +38,9 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
       await communitiesApi.joinCommunity(community.id, answers);
       
       if (community.joinMode === 'APPROVAL') {
-        toast.success('Đã gửi đơn xin tham gia! Vui lòng chờ duyệt.');
+        toast.success(translate('approvalSuccess'));
       } else {
-        toast.success('Tham gia câu lạc bộ thành công!');
+        toast.success(translate('joinSuccess'));
       }
       
       onSuccess();
@@ -55,7 +57,7 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
       <ModalContent className="sm:max-w-[425px] bg-white rounded-lg">
         <ModalHeader>
           <ModalTitle className="text-xl font-semibold">
-            {community.joinMode === 'APPROVAL' ? 'Xin tham gia câu lạc bộ' : 'Xác nhận tham gia'}
+            {community.joinMode === 'APPROVAL' ? translate('requestTitle') : translate('confirmTitle')}
           </ModalTitle>
         </ModalHeader>
         <div className="space-y-6">
@@ -63,7 +65,7 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
             <h3 className="text-lg font-semibold text-slate-900">{community.name}</h3>
             {community.joinMode === 'APPROVAL' && (
               <p className="text-sm text-slate-500 mt-1">
-                Câu lạc bộ này yêu cầu phê duyệt. Vui lòng trả lời các câu hỏi sau để ban quản trị xem xét.
+                {translate('approvalDescription')}
               </p>
             )}
           </div>
@@ -80,7 +82,7 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
                     rows={2}
                     value={answers[q] || ''}
                     onChange={e => setAnswers({ ...answers, [q]: e.target.value })}
-                    placeholder="Câu trả lời của bạn..."
+                    placeholder={translate('answerPlaceholder')}
                   />
                 </div>
               ))}
@@ -88,21 +90,21 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
           ) : (
             <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600">
               {community.joinMode === 'APPROVAL' 
-                ? 'Xác nhận gửi yêu cầu tham gia câu lạc bộ này?'
-                : 'Bạn có chắc chắn muốn tham gia câu lạc bộ này?'}
+                                ? translate('approvalConfirm')
+                : translate('directConfirm')}
             </div>
           )}
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Hủy bỏ
+            {translate('cancel')}
           </Button>
           <Button 
             onClick={handleSubmit} 
             isLoading={isSubmitting}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            {community.joinMode === 'APPROVAL' ? 'Gửi đơn' : 'Tham gia ngay'}
+            {community.joinMode === 'APPROVAL' ? translate('submitRequest') : translate('joinNow')}
           </Button>
         </div>
       </div>

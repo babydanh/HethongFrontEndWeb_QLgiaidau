@@ -25,7 +25,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
-import { divisionsApi, tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
+import { tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
 import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
@@ -141,6 +141,7 @@ const quickSchema = z.object({
   const registrationEnd = data.registrationEnd ? new Date(data.registrationEnd) : null;
   const tournamentStart = data.startDate ? new Date(data.startDate) : null;
   const tournamentEnd = data.endDate ? new Date(data.endDate) : null;
+  const now = new Date();
 
   if (registrationStart && registrationEnd && registrationStart >= registrationEnd) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải sau thời gian mở.' });
@@ -150,6 +151,33 @@ const quickSchema = z.object({
   }
   if (tournamentStart && tournamentEnd && tournamentStart >= tournamentEnd) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['endDate'], message: 'Thời gian kết thúc phải sau giờ bắt đầu giải.' });
+  }
+  if (tournamentStart && !Number.isNaN(tournamentStart.getTime()) && tournamentStart <= now) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['startDate'], message: 'Ngày bắt đầu giải phải ở tương lai khi tạo giải nhanh.' });
+  }
+  if (registrationEnd && !Number.isNaN(registrationEnd.getTime()) && registrationEnd <= now) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải ở tương lai để giải không tự chốt danh sách.' });
+  }
+
+  // Location is optional for Quick Create, but a partially filled venue is
+  // never useful in the public tournament page. Keep the fast path empty,
+  // while requiring the pair of venue name + detailed address when either is
+  // entered. Administrative area selectors must also be a complete pair.
+  const hasVenueName = Boolean(data.venueName);
+  const hasLocationAddress = Boolean(data.locationAddress);
+  if (hasVenueName !== hasLocationAddress) {
+    if (!hasVenueName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['venueName'], message: 'Nhập tên sân/nhà thi đấu khi đã nhập địa chỉ.' });
+    }
+    if (!hasLocationAddress) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['locationAddress'], message: 'Nhập địa chỉ chi tiết của sân/nhà thi đấu.' });
+    }
+  }
+  if (data.ward && !data.province) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['province'], message: 'Chọn tỉnh/thành trước khi chọn phường/xã.' });
+  }
+  if (data.province && !data.ward) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['ward'], message: 'Chọn phường/xã tương ứng hoặc xóa tỉnh/thành nếu chưa muốn nhập khu vực.' });
   }
 });
 
@@ -710,12 +738,41 @@ export default function QuickTournamentCreate() {
       const provinceName = provinces.find((item) => item.code === values.province)?.fullName ?? values.province;
       const wardName = wards.find((item) => item.code === values.ward)?.fullName ?? values.ward;
 
+      // Convert the selected cards into the explicit API DTO. The UI-only
+      // selectedFormats array never crosses the API boundary.
+      const divisionInputs = values.selectedFormats.map((formatId) => {
+        const config = formatConfigs.find((item) => item.id === formatId || item.key === formatId);
+        const formatKey = config?.key || formatId;
+        const divisionMaxParticipants = config?.maxParticipantsOverride && config.maxParticipants && config.maxParticipants > 0
+          ? Number(config.maxParticipants)
+          : values.maxTeams;
+        const division = toDivisionInput(
+          formatKey,
+          config?.bracketType ?? values.bracketType,
+          divisionMaxParticipants,
+          values.startDate ? new Date(values.startDate).toISOString() : undefined,
+          values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
+        );
+        return {
+          name: config?.label?.trim() || division.name,
+          matchType: division.matchType,
+          genderRestriction: division.genderRestriction,
+          maxParticipants: division.maxParticipants,
+          bracketType: division.bracketType,
+          startDate: division.startDate,
+          registrationEndDate: division.registrationEndDate,
+          minElo: config?.eloEnabled ? config.minElo : null,
+          maxElo: config?.eloEnabled ? config.maxElo : null,
+        };
+      });
+
       const createPayload: Parameters<typeof tournamentsApi.createLiteTournament>[0] = {
         name: values.name.trim(),
         sport: values.sport,
         format: values.format,
         bracketType: values.bracketType,
         maxTeams: values.maxTeams,
+        divisions: divisionInputs,
         visibility: values.visibility,
         registrationMode: values.registrationMode,
         isRanked: values.isRanked,
@@ -738,61 +795,6 @@ export default function QuickTournamentCreate() {
       };
 
       const response = await tournamentsApi.createLiteTournament(createPayload);
-
-      try {
-        const divisionInputs = values.selectedFormats.map((formatId) => {
-          const config = formatConfigs.find((item) => item.id === formatId || item.key === formatId);
-          const formatKey = config?.key || formatId;
-          const divisionMaxParticipants = (config?.maxParticipantsOverride && config?.maxParticipants && config.maxParticipants > 0)
-            ? Number(config.maxParticipants)
-            : values.maxTeams;
-          const division = toDivisionInput(
-            formatKey,
-            config?.bracketType ?? values.bracketType,
-            divisionMaxParticipants,
-            values.startDate ? new Date(values.startDate).toISOString() : undefined,
-            values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
-          );
-          return {
-            ...division,
-            name: config?.label?.trim() || division.name,
-            minElo: config?.eloEnabled ? config.minElo : null,
-            maxElo: config?.eloEnabled ? config.maxElo : null,
-          };
-        });
-        // createLite already materializes one safe default division for the
-        // app/legacy clients. Reuse it for the first selected format instead
-        // of leaving a hidden duplicate division behind.
-        const existingDivisionsResponse = await divisionsApi.getDivisions(response.id);
-        const existingDivisions = existingDivisionsResponse.data ?? [];
-        const divisionIdentity = (division: { matchType: string; genderRestriction?: string | null }) =>
-          `${division.matchType}:${division.genderRestriction ?? ''}`;
-        const usedExistingDivisionIds = new Set<string>();
-        const divisionsToCreate: CreateDivisionInput[] = [];
-
-        for (const [index, divInput] of divisionInputs.entries()) {
-          let existingDivision = existingDivisions.find((division) =>
-            !usedExistingDivisionIds.has(division.id) &&
-            divisionIdentity(division) === divisionIdentity(divInput),
-          );
-          // The Lite endpoint may have materialized a legacy default whose
-          // identity differs from the first selected card. Reuse it once
-          // instead of creating a second default division.
-          if (!existingDivision && index === 0) {
-            existingDivision = existingDivisions.find((division) => !usedExistingDivisionIds.has(division.id));
-          }
-          if (existingDivision) {
-            usedExistingDivisionIds.add(existingDivision.id);
-            await divisionsApi.updateDivision(existingDivision.id, divInput);
-          } else {
-            divisionsToCreate.push(divInput);
-          }
-        }
-        await Promise.all(divisionsToCreate.map((divInput) => divisionsApi.createDivision(response.id, divInput)));
-      } catch (divisionError: unknown) {
-        await tournamentsApi.deleteTournament(response.id).catch(() => undefined);
-        throw divisionError;
-      }
 
       toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
       if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
@@ -1023,8 +1025,8 @@ export default function QuickTournamentCreate() {
                     Khu vực hành chính
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <select
+                  <div>
+                    <select
                         {...register('province', {
                           onChange: () => {
                             setWards([]);
@@ -1057,8 +1059,12 @@ export default function QuickTournamentCreate() {
                           </option>
                         ))}
                       </select>
+                      {errors.ward && <span className="mt-1 block text-xs text-rose-600">{errors.ward.message}</span>}
                     </div>
                   </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Địa điểm là tùy chọn khi tạo nhanh. Nếu nhập tên sân hoặc địa chỉ, hãy điền đủ cả hai để người tham gia tìm đúng sân.
+                  </p>
                 </div>
               </section>
 
@@ -1471,7 +1477,15 @@ export default function QuickTournamentCreate() {
         </form>
       </div>
       {isFormatModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Thêm nội dung thi đấu">
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Thêm nội dung thi đấu"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsFormatModalOpen(false);
+          }}
+        >
           <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
@@ -1657,7 +1671,15 @@ export default function QuickTournamentCreate() {
         </div>
       )}
       {isDescriptionEditorOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Mô tả giải đấu">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mô tả giải đấu"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsDescriptionEditorOpen(false);
+          }}
+        >
           <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>

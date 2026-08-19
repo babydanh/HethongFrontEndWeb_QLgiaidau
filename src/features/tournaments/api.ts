@@ -118,6 +118,19 @@ export interface CreateDivisionInput {
 
 export type UpdateDivisionInput = Partial<Omit<CreateDivisionInput, 'tournamentId'>>;
 
+export type LiteDivisionConfigInput = Pick<
+  CreateDivisionInput,
+  | 'name'
+  | 'matchType'
+  | 'genderRestriction'
+  | 'maxParticipants'
+  | 'bracketType'
+  | 'startDate'
+  | 'registrationEndDate'
+  | 'minElo'
+  | 'maxElo'
+>;
+
 export type { Category, Tournament, ParentTournament, PaginatedTournaments, TournamentParticipant, BracketStage, BracketMatch };
 export { MatchTypeUI, MatchTypeDB, GenderRestriction };
 
@@ -553,6 +566,7 @@ export const tournamentsApi = {
     footballAllowDraw?: boolean;
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
+    divisions?: LiteDivisionConfigInput[];
     description?: string;
     registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
     venueName?: string;

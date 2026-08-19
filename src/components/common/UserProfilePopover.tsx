@@ -224,10 +224,7 @@ export default function UserProfilePopover({
   }
 
   // Permissions to manage tags in this community
-  const isOwner =
-    viewerRole === "OWNER" ||
-    currentUser?.roles?.includes("ADMIN") ||
-    (currentUser as { role?: string } | null)?.role === "ADMIN";
+  const isOwner = viewerRole === "OWNER" || currentUser?.roles?.includes("ADMIN") === true;
   const isModerator = viewerRole === "MODERATOR";
   const canManageTags = Boolean(communityId && (isOwner || isModerator));
 
@@ -283,25 +280,26 @@ export default function UserProfilePopover({
 
   // Save tags
   const handleSaveTags = async () => {
-    if (!communityId || !profileData.id || isSavingTags) return;
+    if (!communityId || !profileData?.id || isSavingTags) return;
+    const profileId = profileData.id;
     setIsSavingTags(true);
     try {
-      await communitiesApi.updateMemberTags(communityId, profileData.id, selectedTags);
+      await communitiesApi.updateMemberTags(communityId, profileId, selectedTags);
       setFetchedDetails((prev) => ({
-        ...(prev?.id === profileData.id ? prev : {}),
-        id: profileData.id,
+          ...(prev?.id === profileId ? prev : {}),
+          id: profileId,
         tags: selectedTags,
       }));
-      onTagsUpdated?.(profileData.id, selectedTags);
+      onTagsUpdated?.(profileId, selectedTags);
       setIsEditingTags(false);
-      toast.success('Đã cập nhật danh hiệu CLB thành công');
+      toast.success(translate('tagsUpdatedSuccess'));
       window.dispatchEvent(
         new CustomEvent('sporto:member-tags-updated', {
-          detail: { userId: profileData.id, tags: selectedTags },
+          detail: { userId: profileId, tags: selectedTags },
         }),
       );
     } catch {
-      toast.error('Không thể cập nhật danh hiệu CLB');
+      toast.error(translate('tagsUpdateFailed'));
     } finally {
       setIsSavingTags(false);
     }
@@ -315,7 +313,7 @@ export default function UserProfilePopover({
         left: `${left}px`,
         position: "absolute",
       }}
-      className="z-[99999] w-[340px] animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden text-slate-800"
+      className="z-[99999] w-[340px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-slate-800"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Cover Header */}
@@ -460,7 +458,7 @@ export default function UserProfilePopover({
           <div className="mt-2.5 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="font-semibold text-slate-700">Điểm ELO khởi điểm</span>
+              <span className="font-semibold text-slate-700">{translate('eloStartingScore')}</span>
             </div>
             <span className="font-extrabold text-blue-600">1,000 ELO</span>
           </div>
@@ -472,7 +470,7 @@ export default function UserProfilePopover({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wider text-slate-600">
                 <Tag className="h-3.5 w-3.5 text-blue-600" />
-                <span>Danh hiệu CLB</span>
+                <span>{translate('clubTitles')}</span>
                 {(profileData.tags ?? []).length > 0 && (
                   <span className="ml-1 text-[9px] text-slate-400 font-normal">
                     ({profileData.tags?.length})
@@ -487,7 +485,7 @@ export default function UserProfilePopover({
                   className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200/80 hover:bg-blue-100 transition-colors"
                 >
                   <Plus className="h-3 w-3" />
-                  <span>{(profileData.tags ?? []).length > 0 ? "Chỉnh sửa" : "Gán nhãn"}</span>
+                  <span>{(profileData.tags ?? []).length > 0 ? translate('editTags') : translate('assignTags')}</span>
                 </button>
               )}
             </div>
@@ -525,7 +523,7 @@ export default function UserProfilePopover({
                   })
                 ) : (
                   <p className="text-[11px] text-slate-400 italic">
-                    Chưa có danh hiệu trong CLB.
+                    {translate('noClubTitles')}
                   </p>
                 )}
               </div>
@@ -533,7 +531,7 @@ export default function UserProfilePopover({
               /* Inline Edit Mode */
               <div className="mt-2 space-y-2 animate-in fade-in duration-150">
                 <p className="text-[10px] font-semibold text-slate-500">
-                  Chọn danh hiệu để gán cho thành viên:
+                  {translate('chooseTagToAssign')}
                 </p>
 
                 {/* Preset Chips */}
@@ -575,7 +573,7 @@ export default function UserProfilePopover({
                         handleAddCustomTag();
                       }
                     }}
-                    placeholder="Nhập nhãn tùy chỉnh..."
+                    placeholder={translate('customTagPlaceholder')}
                     className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 placeholder-slate-400 outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
                   <button
@@ -584,7 +582,7 @@ export default function UserProfilePopover({
                     disabled={!customTagInput.trim()}
                     className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-40"
                   >
-                    + Thêm
+                    + {translate('addTag')}
                   </button>
                 </div>
 
@@ -599,7 +597,7 @@ export default function UserProfilePopover({
                     }}
                     className="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-700"
                   >
-                    Hủy
+                    {translate('cancelTagEdit')}
                   </button>
                   <button
                     type="button"
@@ -608,7 +606,7 @@ export default function UserProfilePopover({
                     className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50"
                   >
                     {isSavingTags && <Loader2 className="h-3 w-3 animate-spin" />}
-                    <span>Lưu danh hiệu</span>
+                    <span>{translate('saveTags')}</span>
                   </button>
                 </div>
               </div>

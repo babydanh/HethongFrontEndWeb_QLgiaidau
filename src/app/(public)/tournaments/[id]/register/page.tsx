@@ -1110,17 +1110,42 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           </span>
                         </label>
                       )}
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5">
-                        <p className="text-xs text-blue-600 font-medium mb-1">{registrationTranslate('competitionNameLabel')}</p>
-                        <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
-                        <p className="text-xs text-slate-500 mt-1">{registrationTranslate('accountNameHint')}</p>
+                      {/* Thẻ thông tin Vận động viên */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Thông tin Vận động viên</span>
+                          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Tài khoản chính</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="text-slate-500 block">Họ và tên:</span>
+                            <span className="font-bold text-slate-900 text-sm">{user?.fullName || translate('notUpdated')}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block">Số điện thoại:</span>
+                            <span className="font-semibold text-slate-800">{user?.phoneNumber || 'Chưa cập nhật'}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block">Email:</span>
+                            <span className="font-semibold text-slate-800 truncate block">{user?.email || 'Chưa cập nhật'}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block">Nội dung đăng ký:</span>
+                            <span className="font-bold text-blue-600">{selectedDivision?.name || 'Đơn Nam'}</span>
+                          </div>
+                        </div>
                         <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
                       </div>
 
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-slate-500 font-semibold">{translate('entryFee')}:</span>
-                          <span className="font-bold text-slate-900">
+                      {/* Chi tiết lệ phí & xác nhận */}
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                        <div className="flex justify-between items-center text-xs text-slate-600">
+                          <span>Hình thức đăng ký:</span>
+                          <span className="font-semibold text-slate-800">Cá nhân (Đơn)</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm pt-1 border-t border-slate-200/60">
+                          <span className="text-slate-600 font-semibold">{translate('entryFee')}:</span>
+                          <span className="font-bold text-base text-blue-600">
                             {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
                           </span>
                         </div>

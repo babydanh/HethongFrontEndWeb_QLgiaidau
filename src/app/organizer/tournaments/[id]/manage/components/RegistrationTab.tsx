@@ -34,6 +34,7 @@ import {
   parseParticipantsExcel,
 } from '@/utils/exportTournament';
 import SmartFormImportModal from './SmartFormImportModal';
+import { RegistrationFormBuilder } from './RegistrationFormBuilder';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
   getParticipantStatusClassName,
@@ -991,30 +992,13 @@ export function RegistrationTab({
             </table>
           </div>
         </div>
-
-        <div className="rounded-lg border border-blue-100 bg-blue-50 p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Sang vận hành khi giải bắt đầu</p>
-              <p className="mt-2 text-sm font-semibold text-slate-800">
-                Màn hình `Ops` dùng cho điều phối chuỗi trận, sân đấu, các vấn đề phát sinh và nhật ký vận hành trong ngày thi đấu.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 shrink-0"
-              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-            >
-              Mở panel vận hành
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
       </div>
 
       {/* RIGHT COLUMN: TESTING & WILDCARDS (span-1) */}
       <div className="space-y-6">
-        
+        {/* Custom Registration Form Builder */}
+        <RegistrationFormBuilder tournament={tournament} divisions={divisions} />
+
         {/* Mock Participant Testing Panel */}
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>

@@ -32,6 +32,7 @@ import { tournamentsApi, divisionsApi, type CreateDivisionInput } from '@/featur
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { MatchTypeDB, GenderRestriction } from '@/types/tournament';
 import { useLocale, useTranslations } from 'next-intl';
+import type { RegistrationField, RegistrationFieldType } from '@/features/tournaments/registration-form';
 
 interface SmartAiTournamentModalProps {
   isOpen: boolean;
@@ -59,6 +60,7 @@ interface ParsedTournament {
   description?: string | null;
   bannerUrl?: string | null;
   formats: ParsedFormat[];
+  registrationFormFields?: RegistrationField[];
 }
 
 export default function SmartAiTournamentModal({
@@ -185,6 +187,7 @@ export default function SmartAiTournamentModal({
 
       const tournamentId = createRes.id;
       let primaryDivisionId: string | undefined = undefined;
+      const createdDivisionIds: string[] = [];
 
       // 2. Create divisions
       if (parsedData.formats.length > 0) {
@@ -211,16 +214,53 @@ export default function SmartAiTournamentModal({
 
           if (idx === 0 && existingList.length > 0) {
             primaryDivisionId = existingList[0].id;
+            createdDivisionIds.push(existingList[0].id);
             await divisionsApi.updateDivision(existingList[0].id, divInput);
           } else {
             const createdDiv = await divisionsApi.createDivision(tournamentId, divInput);
-            if (idx === 0) primaryDivisionId = (createdDiv as any)?.data?.id || (createdDiv as any)?.id;
+            const divisionId = (createdDiv as any)?.data?.id || (createdDiv as any)?.id;
+            if (divisionId) {
+              createdDivisionIds.push(divisionId);
+              if (idx === 0) primaryDivisionId = divisionId;
+            }
           }
         }
       }
 
       // 3. Batch import participants from Excel if available
+      // 3. Clone the detected Google Form questions into a draft registration form.
+      // The organizer reviews and publishes it from the management workspace; AI never
+      // silently exposes a form to players.
+      const registrationFormFields = (parsedData.registrationFormFields ?? [])
+        .filter((field): field is RegistrationField => Boolean(field && field.label && field.type))
+        .map((field, index) => ({
+          ...field,
+          id: field.id || `ai_field_${index + 1}`,
+          required: field.required === true,
+          type: field.type as RegistrationFieldType,
+        }));
+      if (registrationFormFields.length > 0) {
+        await tournamentsApi.updateTournament(tournamentId, {
+          tournamentConfig: {
+            registrationForm: {
+              version: 1,
+              status: 'DRAFT',
+              fields: registrationFormFields,
+              divisionIds: createdDivisionIds,
+            },
+          },
+        });
+      }
+
+      // 4. Batch import participants from Excel if available
       if (excelResult && excelResult.rows.length > 0) {
+        const hasPlayer2Column = Boolean(excelResult.detectedMapping.player2NameCol);
+        const primaryIsDoubles = !primaryFormat.formatKey.includes('SINGLES');
+        if (primaryIsDoubles !== hasPlayer2Column) {
+          throw new Error(primaryIsDoubles
+            ? 'Nội dung đang chọn là nội dung đôi nhưng file Excel chưa có cột VĐV 2. Hãy chọn đúng nội dung hoặc bổ sung cột VĐV 2.'
+            : 'Nội dung đang chọn là nội dung đơn nhưng file Excel có cột VĐV 2. Hãy chọn nội dung đôi hoặc bỏ cột VĐV 2.');
+        }
         const p1Col = excelResult.detectedMapping.player1NameCol || excelResult.headers[0];
         const names = excelResult.rows
           .map((r) => {
@@ -440,6 +480,32 @@ export default function SmartAiTournamentModal({
                   ))}
                 </div>
               </div>
+
+              {parsedData.registrationFormFields && parsedData.registrationFormFields.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      Form đăng ký được AI nhận diện ({parsedData.registrationFormFields.length} câu hỏi)
+                    </h4>
+                    <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">Bản nháp để rà soát</span>
+                  </div>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+                    {parsedData.registrationFormFields.slice(0, 12).map((field) => (
+                      <div key={field.id} className="flex items-start justify-between gap-3 rounded-lg bg-white border border-slate-100 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-800 truncate">{field.label}</p>
+                          <p className="text-[11px] text-slate-500">{field.type}{field.required ? ' · Bắt buộc' : ' · Tùy chọn'}{field.options?.length ? ` · ${field.options.length} lựa chọn` : ''}{field.needsReview ? ' · Cần kiểm tra' : ''}</p>
+                        </div>
+                        {field.type === 'FILE' && <span className="text-[11px] text-slate-400 shrink-0">Tệp</span>}
+                      </div>
+                    ))}
+                    {parsedData.registrationFormFields.length > 12 && <p className="text-[11px] text-slate-500 text-center">Còn {parsedData.registrationFormFields.length - 12} câu hỏi sẽ được lưu đầy đủ trong bản nháp.</p>}
+                  </div>
+                  <p className="text-xs text-slate-500">AI đọc ngữ nghĩa câu hỏi từ Google Form/link, giữ lựa chọn và ràng buộc. Sau khi tạo, vào tab <strong>Đăng ký</strong> để chỉnh sửa rồi bấm công bố.</p>
+                  {parsedData.registrationFormFields.some((field) => field.needsReview) && <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Một số câu hỏi có cách hiểu chưa chắc chắn. Chúng được giữ nguyên ở bản nháp và phải được rà lại trước khi công bố.</p>}
+                </div>
+              )}
 
               {/* Excel Preview */}
               {excelResult && (

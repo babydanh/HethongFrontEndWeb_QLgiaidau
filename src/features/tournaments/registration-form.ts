@@ -5,6 +5,7 @@ export type RegistrationFieldType =
   | 'PHONE'
   | 'NUMBER'
   | 'SELECT'
+  | 'MULTI_SELECT'
   | 'CHECKBOX'
   | 'FILE';
 
@@ -19,6 +20,8 @@ export interface RegistrationField {
   max?: number;
   acceptedFileTypes?: string[];
   maxFileSizeMb?: number;
+  confidence?: number;
+  needsReview?: boolean;
 }
 
 export interface RegistrationFormConfig {
@@ -35,6 +38,7 @@ export const REGISTRATION_FIELD_TYPE_LABELS: Record<RegistrationFieldType, strin
   PHONE: 'Số điện thoại',
   NUMBER: 'Số',
   SELECT: 'Danh sách lựa chọn',
+  MULTI_SELECT: 'Nhiều lựa chọn',
   CHECKBOX: 'Xác nhận / đồng ý',
   FILE: 'Tệp hoặc hình ảnh',
 };
@@ -68,6 +72,8 @@ export function readRegistrationFormConfig(raw: unknown, divisionIds: string[]):
         max: typeof field.max === 'number' ? field.max : undefined,
         acceptedFileTypes: Array.isArray(field.acceptedFileTypes) ? field.acceptedFileTypes.filter((type): type is string => typeof type === 'string') : undefined,
         maxFileSizeMb: typeof field.maxFileSizeMb === 'number' ? field.maxFileSizeMb : undefined,
+        confidence: typeof field.confidence === 'number' ? field.confidence : undefined,
+        needsReview: field.needsReview === true,
       }))
     : DEFAULT_REGISTRATION_FIELDS;
   return {

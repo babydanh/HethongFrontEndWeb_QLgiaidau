@@ -232,8 +232,17 @@ const SCORE_ENTRY_GUIDANCE: Record<SportRuleKind, ScoreEntryGuidance> = {
   },
 };
 
-export function getSportRulePresets(kind: SportRuleKind): SportRulePreset[] {
-  return SPORT_RULE_PRESETS[kind];
+export function getSportRulePresets(
+  kind: SportRuleKind,
+  translate?: (key: any, values?: any) => string,
+): SportRulePreset[] {
+  const presets = SPORT_RULE_PRESETS[kind];
+  if (!translate) return presets;
+  return presets.map((preset) => ({
+    ...preset,
+    label: translate(`rules.${kind}.presets.${preset.id}.label`),
+    description: translate(`rules.${kind}.presets.${preset.id}.description`),
+  }));
 }
 
 export function getScoreEntryGuidance(kind: SportRuleKind): ScoreEntryGuidance {

@@ -28,45 +28,45 @@ function isKnockoutStage(stage: BracketStage): boolean {
 /**
  * Determine the type‑specific label for a stage.
  */
-function stageTypeLabel(type: string): string {
+function stageTypeLabel(type: string, translate: any): string {
   switch (type) {
     case 'SINGLE_ELIMINATION':
-      return 'Loại trực tiếp';
+      return translate('stageSingleElimination');
     case 'DOUBLE_ELIMINATION':
-      return 'Nhánh thắng nhánh thua';
+      return translate('stageDoubleElimination');
     case 'ROUND_ROBIN':
     case 'GROUP':
-      return 'Vòng tròn tính điểm';
+      return translate('stageRoundRobin');
     case 'GROUP_STAGE':
-      return 'Vòng bảng (Vòng tròn)';
+      return translate('stageGroupStage');
     default:
       return type;
   }
 }
 
-function stageNameLabel(name: string): string {
+function stageNameLabel(name: string, translate: any): string {
   const upperName = (name ?? '').toUpperCase();
   if (upperName.includes('DOUBLE ELIMINATION STAGE') || upperName.includes('DOUBLE_ELIMINATION')) {
-    return 'Vòng đấu Nhánh thắng nhánh thua';
+    return translate('stageDoubleEliminationLong');
   }
   if (upperName.includes('ELIMINATION STAGE') || upperName.includes('VONG LOAI TRUC TIEP')) {
-    return 'Vòng đấu Loại trực tiếp';
+    return translate('stageSingleEliminationLong');
   }
   if (
     upperName.includes('ROUND ROBIN STAGE') ||
     upperName.includes('ROUND_ROBIN') ||
     upperName.includes('VONG TRON TINH DIEM')
   ) {
-    return 'Vòng tròn tính điểm';
+    return translate('stageRoundRobin');
   }
   if (upperName.includes('VONG BANG') || upperName.includes('GROUP_STAGE') || upperName.includes('GROUP STAGE')) {
-    return 'Vòng bảng';
+    return translate('stageGroup');
   }
   if (upperName.includes('VONG PLAYOFFS') || upperName.includes('PLAYOFFS') || upperName.includes('PLAYOFF')) {
-    return 'Vòng Playoffs';
+    return translate('stagePlayoffs');
   }
-  if (name === 'Winners Bracket' || upperName === 'NHANH THANG') return 'Nhánh thắng';
-  if (name === 'Losers Bracket' || upperName === 'NHANH THUA') return 'Nhánh thua';
+  if (name === 'Winners Bracket' || upperName === 'NHANH THANG') return translate('winnersBracket');
+  if (name === 'Losers Bracket' || upperName === 'NHANH THUA') return translate('losersBracket');
   return name;
 }
 
@@ -86,6 +86,7 @@ function GroupView({
   fallbackSportRuleKind,
   roundConfig,
   viewMode = 'paged',
+  translate,
 }: {
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
@@ -98,13 +99,14 @@ function GroupView({
   fallbackSportRuleKind?: BracketTabProps['fallbackSportRuleKind'];
   roundConfig?: BracketStage['roundConfig'];
   viewMode?: 'paged' | 'full';
+  translate: any;
 }) {
   const { matches } = group;
 
   if (!matches.length) {
     return (
       <div className="text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
-        Chưa có trận đấu nào trong bảng {group.name}.
+        {translate('noMatchesInGroup', { group: group.name })}
       </div>
     );
   }
@@ -326,16 +328,16 @@ export default function BracketTab({
         <section className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-4 sm:p-5">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">Vinh danh</p>
-              <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">Kết quả chính thức</h3>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">{translate('honors')}</p>
+              <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">{translate('officialResults')}</h3>
             </div>
-            {resultError && <span className="text-[11px] font-medium text-slate-400">Đang đồng bộ lại</span>}
+            {resultError && <span className="text-[11px] font-medium text-slate-400">{translate('syncingAgain')}</span>}
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
             {result.awards.map((award) => (
               <div key={`${award.rank}-${award.participant?.participantId ?? 'pending'}`} className="rounded-xl border border-white bg-white/80 px-3 py-3 shadow-sm">
-                <p className="text-xs font-bold text-slate-400">{award.shared ? `Hạng ${award.rank} đồng hạng` : `Hạng ${award.rank}`}</p>
-                <p className="mt-1 truncate text-sm font-bold text-slate-800">{award.participant?.teamName ?? 'Chưa xác định'}</p>
+                <p className="text-xs font-bold text-slate-400">{award.shared ? translate('sharedRank', { rank: award.rank }) : translate('rank', { rank: award.rank })}</p>
+                <p className="mt-1 truncate text-sm font-bold text-slate-800">{award.participant?.teamName ?? translate('unknownParticipant')}</p>
               </div>
             ))}
           </div>
@@ -343,7 +345,7 @@ export default function BracketTab({
       )}
       {resultError && !result && (
         <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Chưa tải được kết quả giải. Hệ thống sẽ tự thử lại.
+          {translate('resultsLoadError')}
         </div>
       )}
       {/* Division info bar & View Mode Switcher */}
@@ -371,7 +373,7 @@ export default function BracketTab({
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            <LayoutGrid className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Theo vòng</span>
+            <LayoutGrid className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{translate('pagedView')}</span>
           </button>
           <button
             onClick={() => setViewMode('full')}
@@ -381,7 +383,7 @@ export default function BracketTab({
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            <Maximize2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Full sơ đồ</span>
+            <Maximize2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{translate('fullView')}</span>
           </button>
         </div>}
       </div>
@@ -399,7 +401,7 @@ export default function BracketTab({
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              {stageNameLabel(s.name)}
+              {stageNameLabel(s.name, translate)}
             </button>
           ))}
         </div>
@@ -411,10 +413,10 @@ export default function BracketTab({
           {/* Stage header */}
           <div>
             <h3 className="text-lg font-bold text-slate-900">
-              {stageNameLabel(activeStage.name)}
+              {stageNameLabel(activeStage.name, translate)}
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">
-              {translate("formatLabel")}: {stageTypeLabel(activeStage.type)}
+              {translate("formatLabel")}: {stageTypeLabel(activeStage.type, translate)}
             </p>
           </div>
 
@@ -461,7 +463,7 @@ export default function BracketTab({
               <div key={group.id}>
                 {activeStage.groups.length > 1 && (
                   <h4 className="font-bold text-slate-700 text-sm border-l-4 border-blue-500 pl-3 mb-4">
-                    {group.name || `Bảng ${String.fromCharCode(65 + groupIndex)}`}
+                    {group.name || translate('groupName', { letter: String.fromCharCode(65 + groupIndex) })}
                   </h4>
                 )}
                 <GroupView
@@ -476,6 +478,7 @@ export default function BracketTab({
                   fallbackSportRuleKind={effectiveSportRuleKind}
                   roundConfig={activeStage?.roundConfig}
                   viewMode={effectiveViewMode}
+                  translate={translate}
                 />
               </div>
             ))

@@ -78,13 +78,15 @@ export const formatNotificationTimestamp = (
   const diffInMinutes = Math.max(0, Math.floor((Date.now() - createdTime) / 60000));
 
   if (diffInMinutes < 1) {
-    return translate ? translate('timeJustNow') : 'Vừa xong';
+    return translate ? translate('timeJustNow') : locale === 'vi' ? 'Vừa xong' : 'Just now';
   }
 
   if (diffInMinutes < 60) {
     return translate
       ? translate('timeMinutesAgo', { count: diffInMinutes })
-      : `${diffInMinutes} phút trước`;
+      : locale === 'vi'
+        ? `${diffInMinutes} phút trước`
+        : `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
@@ -92,7 +94,9 @@ export const formatNotificationTimestamp = (
   if (diffInHours < 24) {
     return translate
       ? translate('timeHoursAgo', { count: diffInHours })
-      : `${diffInHours} giờ trước`;
+      : locale === 'vi'
+        ? `${diffInHours} giờ trước`
+        : `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
@@ -100,7 +104,9 @@ export const formatNotificationTimestamp = (
   if (diffInDays < 7) {
     return translate
       ? translate('timeDaysAgo', { count: diffInDays })
-      : `${diffInDays} ngày trước`;
+      : locale === 'vi'
+        ? `${diffInDays} ngày trước`
+        : `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
   }
 
   if (translate) {
@@ -113,7 +119,13 @@ export const formatNotificationTimestamp = (
     }).format(new Date(createdTime));
   }
 
-  return VIETNAMESE_DATE_FORMATTER.format(new Date(createdTime));
+  return (locale === 'vi' ? VIETNAMESE_DATE_FORMATTER : new Intl.DateTimeFormat('en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })).format(new Date(createdTime));
 };
 
 export const resolveNotificationTarget = (
@@ -150,6 +162,7 @@ export const resolveNotificationTarget = (
 export const getNotificationTypeLabel = (
   type: string,
   translate?: NotificationTranslator,
+  locale = 'vi',
 ): string => {
   const trimmedType = type.trim();
   const explicitLabel = NOTIFICATION_TYPE_LABELS[trimmedType];
@@ -175,26 +188,26 @@ export const getNotificationTypeLabel = (
   const normalizedType = trimmedType.toLowerCase();
 
   if (normalizedType.includes('payment')) {
-    return translate ? translate('notificationTypePayment') : 'Thanh toán';
+    return translate ? translate('notificationTypePayment') : locale === 'vi' ? 'Thanh toán' : 'Payment';
   }
 
   if (normalizedType.includes('tournament')) {
-    return translate ? translate('notificationTypeTournament') : 'Giải đấu';
+    return translate ? translate('notificationTypeTournament') : locale === 'vi' ? 'Giải đấu' : 'Tournament';
   }
 
   if (normalizedType.includes('community') || normalizedType.includes('club')) {
-    return translate ? translate('notificationTypeCommunity') : 'Câu lạc bộ';
+    return translate ? translate('notificationTypeCommunity') : locale === 'vi' ? 'Câu lạc bộ' : 'Club';
   }
 
   if (normalizedType.includes('chat') || normalizedType.includes('message')) {
-    return translate ? translate('notificationTypeMessage') : 'Tin nhắn';
+    return translate ? translate('notificationTypeMessage') : locale === 'vi' ? 'Tin nhắn' : 'Message';
   }
 
   if (normalizedType.includes('system')) {
-    return translate ? translate('notificationTypeSystem') : 'Hệ thống';
+    return translate ? translate('notificationTypeSystem') : locale === 'vi' ? 'Hệ thống' : 'System';
   }
 
-  return translate ? translate('notificationTypeDefault') : 'Thông báo';
+  return translate ? translate('notificationTypeDefault') : locale === 'vi' ? 'Thông báo' : 'Notification';
 };
 
 export const getNotificationTypeMeta = (type: string): NotificationTypeMeta =>
@@ -262,6 +275,7 @@ export const getNotificationTone = (
 export const getNotificationSummary = (
   type: string,
   translate?: NotificationTranslator,
+  locale = 'vi',
 ): string => {
   const tone = getNotificationTone(type);
   const keyByTone = {
@@ -276,17 +290,17 @@ export const getNotificationSummary = (
 
   switch (tone) {
     case 'danger':
-      return 'Cần chú ý';
+      return locale === 'vi' ? 'Cần chú ý' : 'Needs attention';
     case 'success':
-      return 'Đã cập nhật';
+      return locale === 'vi' ? 'Đã cập nhật' : 'Updated';
     case 'warning':
-      return 'Đang chờ xử lý';
+      return locale === 'vi' ? 'Đang chờ xử lý' : 'Pending';
     case 'accent':
-      return 'Có thể thao tác ngay';
+      return locale === 'vi' ? 'Có thể thao tác ngay' : 'Action available';
     case 'info':
-      return 'Thông tin mới';
+      return locale === 'vi' ? 'Thông tin mới' : 'New information';
     default:
-      return 'Thông báo hệ thống';
+      return locale === 'vi' ? 'Thông báo hệ thống' : 'System notification';
   }
 };
 

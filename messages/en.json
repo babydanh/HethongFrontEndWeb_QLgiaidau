@@ -2043,7 +2043,14 @@
     "teamNumber": "Team #{index}",
     "singlesWithDoubles": "Singles division but Player 2 is present (Doubles pair)",
     "doublesMissingPlayer2": "Doubles division but Player 2 is missing",
-    "duplicateEmail": "Duplicate email {email}"
+    "duplicateEmail": "Duplicate email {email}",
+    "invalidEmail": "Invalid email address: {email}",
+    "uploadDropzoneTitle": "Drag a Google Form file here or click to choose",
+    "uploadDropzoneDescription": "The system will automatically scan Name, Email, Phone, Team Name, and Match Pair columns without requiring file edits.",
+    "chooseFileFromComputer": "Choose a file from your computer",
+    "sportoTipTitle": "Tip from Sporto:",
+    "sportoTipDescription": "In your Google Form, click “View responses in Sheets” → choose File → Download → Microsoft Excel (.xlsx), then upload it here.",
+    "csvExportHint": "exported directly from Google Sheets"
   },
   "AiChat": {
     "supportTitle": "Chat live with admin",
@@ -3319,7 +3326,9 @@
       "round": "Round {round}",
       "court": "Court {court}"
     },
-    "viewTournamentDetails": "View tournament details"
+    "viewTournamentDetails": "View tournament details",
+    "teamsPerGroupHint": "Teams are distributed evenly based on the participant list or content limit.",
+    "groupCapacityWarning": "The current configuration holds {configured} teams, while {eligible} eligible teams are available. When saved, the system will automatically increase the teams per group to make room; the content limit (for example, 64) only limits registration, not the number of teams placed into groups."
   },
   "LiveMatch": {
     "unknown": "Unknown",
@@ -3859,7 +3868,42 @@
     "scheduledMatchesCard": "Matches awaiting start",
     "ongoingMatchesCard": "Live matches",
     "completedMatchesCard": "Completed matches",
-    "kickedParticipantsCard": "Removed teams"
+    "kickedParticipantsCard": "Removed teams",
+    "systemActor": "System / organizer",
+    "activity": {
+      "matchUpdated": "Match updated",
+      "matchAction": "Match action",
+      "matchDetail": "Match data was adjusted by the organizer or system.",
+      "participantStatusChanged": "Registration status changed: {oldStatus} -> {newStatus}",
+      "participantUpdated": "Registration updated",
+      "participantDetail": "Participant information was adjusted during tournament operations.",
+      "tournamentUpdated": "Tournament updated",
+      "tournamentDetail": "Tournament information was updated."
+    },
+    "fallback": {
+      "policyViolation": "Tournament policy violation",
+      "unassigned": "Unassigned",
+      "unscheduled": "Not scheduled",
+      "tbd": "TBD"
+    },
+    "toast": {
+      "participantKicked": "Player/team removed from the tournament.",
+      "matchStatusUpdated": "Match status updated.",
+      "scheduleUpdated": "Match schedule updated.",
+      "scoreUpdated": "Match score updated.",
+      "operationApplied": "Match operation applied."
+    },
+    "activityTitle": {
+      "participantKicked": "Removed from tournament",
+      "matchScheduleUpdated": "Schedule/court/referee updated",
+      "matchScoreUpdated": "Score updated",
+      "operationDecision": "Decision: {action}",
+      "statusChanged": "Status changed to {status}"
+    },
+    "detail": {
+      "court": "Court: {court}",
+      "schedule": "Schedule: {schedule}"
+    }
   },
   "OrganizerRegistration": {
     "seedUpdated": "Seed updated successfully!",

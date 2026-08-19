@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 import { divisionsApi, Division, tournamentsApi } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
@@ -52,9 +53,9 @@ interface UseOrganizerOpsResult {
   };
 }
 
-const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse): OpsActivityItem => {
+const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse, translate: (key: any, values?: any) => string): OpsActivityItem => {
   const entityType = row.tableName === 'matches' ? 'MATCH' : 'PARTICIPANT';
-  const actor = row.user?.fullName || row.user?.email || 'Hệ thống/BTC';
+  const actor = row.user?.fullName || row.user?.email || translate('systemActor');
 
   if (row.tableName === 'matches') {
     return {
@@ -65,8 +66,8 @@ const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse): 
       entityType,
       entityId: row.recordId,
       action: row.action,
-      title: row.action === 'UPDATE' ? 'Cập nhật trận đấu' : 'Thao tác trận đấu',
-      detail: 'Dữ liệu trận đấu đã được BTC hoặc hệ thống điều chỉnh.',
+      title: row.action === 'UPDATE' ? translate('activity.matchUpdated') : translate('activity.matchAction'),
+      detail: translate('activity.matchDetail'),
     };
   }
 
@@ -82,8 +83,10 @@ const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse): 
       entityType,
       entityId: row.recordId,
       action: row.action,
-      title: oldStatus && newStatus ? `Đổi trạng thái hồ sơ ${oldStatus} -> ${newStatus}` : 'Cập nhật hồ sơ đăng ký',
-      detail: 'Thông tin participant đã được điều chỉnh trong quá trình vận hành giải.',
+      title: oldStatus && newStatus
+        ? translate('activity.participantStatusChanged', { oldStatus, newStatus })
+        : translate('activity.participantUpdated'),
+      detail: translate('activity.participantDetail'),
     };
   }
 
@@ -95,8 +98,8 @@ const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse): 
     entityType: 'PARTICIPANT',
     entityId: row.recordId,
     action: row.action,
-    title: 'Cập nhật giải đấu',
-    detail: 'Thông tin giải đấu đã được cập nhật.',
+    title: translate('activity.tournamentUpdated'),
+    detail: translate('activity.tournamentDetail'),
   };
 };
 
@@ -104,6 +107,7 @@ export function useOrganizerOps(
   tournamentId: string,
   options?: UseOrganizerOpsOptions,
 ): UseOrganizerOpsResult {
+  const translate = useTranslations('OrganizerOps');
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [referees, setReferees] = useState<OpsReferee[]>([]);
@@ -174,7 +178,7 @@ export function useOrganizerOps(
     }
 
     setActivityLog((current) => {
-      const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row));
+      const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate));
       const localOnly = current.filter((item) => item.id.includes('_'));
       return [...backendLog, ...localOnly].slice(0, 60);
     });
@@ -316,23 +320,23 @@ export function useOrganizerOps(
       async () => {
         await tournamentsApi.kickParticipant(tournamentId, participantId, reason.trim() || 'Vi phạm điều lệ giải');
       },
-      'Đã loại người chơi/đội khỏi giải.',
+      translate('toast.participantKicked'),
     );
 
-    appendActivityLog('PARTICIPANT', participantId, 'KICK_PARTICIPANT', 'Loại khỏi giải', reason.trim() || 'Vi phạm điều lệ giải');
+    appendActivityLog('PARTICIPANT', participantId, 'KICK_PARTICIPANT', translate('activityTitle.participantKicked'), reason.trim() || translate('fallback.policyViolation'));
   };
 
   const updateMatchStatus = async (match: Match, status: Match['status']) => {
     try {
       setActiveMatchActionId(match.id);
       await matchesApi.updateStatus(match.id, { status });
-      toast.success('Đã cập nhật trạng thái trận.');
+      toast.success(translate('toast.matchStatusUpdated'));
       appendActivityLog(
         'MATCH',
         match.id,
         'UPDATE_MATCH_STATUS',
-        `Đổi trạng thái sang ${status}`,
-        `${match.participant1?.teamName || 'TBD'} vs ${match.participant2?.teamName || 'TBD'}`,
+        translate('activityTitle.statusChanged', { status }),
+        `${match.participant1?.teamName || translate('fallback.tbd')} vs ${match.participant2?.teamName || translate('fallback.tbd')}`,
       );
       await refresh();
     } catch (err) {
@@ -351,13 +355,13 @@ export function useOrganizerOps(
         refereeId: payload.refereeId ?? null,
         scheduledAt: payload.scheduledAt ?? null,
       });
-      toast.success('Đã cập nhật lịch thi đấu.');
+      toast.success(translate('toast.scheduleUpdated'));
       appendActivityLog(
         'MATCH',
         match.id,
         'UPDATE_MATCH_SCHEDULE',
-        'Cập nhật lịch/sân/trọng tài',
-        `Sân: ${payload.courtName || 'Chưa gán'} • Lịch: ${payload.scheduledAt || 'Chưa xếp lịch'}`,
+        translate('activityTitle.matchScheduleUpdated'),
+        translate('detail.court', { court: payload.courtName || translate('fallback.unassigned') }) + ` • ${translate('detail.schedule', { schedule: payload.scheduledAt || translate('fallback.unscheduled') })}`,
       );
       await refresh();
     } catch (err) {
@@ -393,12 +397,12 @@ export function useOrganizerOps(
           ...(payload.sideOutState ? { sideOutState: payload.sideOutState } : {}),
         },
       });
-      toast.success('Đã cập nhật tỷ số trận.');
+      toast.success(translate('toast.scoreUpdated'));
       appendActivityLog(
         'MATCH',
         match.id,
         'UPDATE_MATCH_SCORE',
-        'Cập nhật tỷ số',
+        translate('activityTitle.matchScoreUpdated'),
         `${payload.p1SetsWon} - ${payload.p2SetsWon}`,
       );
       await refresh();
@@ -417,12 +421,12 @@ export function useOrganizerOps(
         reason: payload.reason.trim(),
         winnerId: payload.winnerId,
       });
-      toast.success('Đã áp dụng quyết định nghiệp vụ cho trận.');
+      toast.success(translate('toast.operationApplied'));
       appendActivityLog(
         'MATCH',
         match.id,
         payload.action,
-        `Quyết định ${payload.action}`,
+        translate('activityTitle.operationDecision', { action: payload.action }),
         payload.reason.trim(),
       );
       await refresh();

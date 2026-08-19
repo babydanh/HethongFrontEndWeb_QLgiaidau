@@ -235,7 +235,7 @@ export default function SmartFormImportModal({
       if (p1Email) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p1Email)) {
           hasFormatMismatch = true;
-          mismatchReason = `Email không hợp lệ: ${p1Email}`;
+          mismatchReason = translate('invalidEmail', { email: p1Email });
         }
         if (seenEmails.has(p1Email.toLowerCase())) {
           hasFormatMismatch = true;
@@ -248,7 +248,7 @@ export default function SmartFormImportModal({
       if (p2Email) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p2Email)) {
           hasFormatMismatch = true;
-          const invalidMessage = `Email không hợp lệ: ${p2Email}`;
+          const invalidMessage = translate('invalidEmail', { email: p2Email });
           mismatchReason = mismatchReason ? `${mismatchReason}, ${invalidMessage}` : invalidMessage;
         }
         if (seenEmails.has(p2Email.toLowerCase())) {
@@ -404,7 +404,7 @@ export default function SmartFormImportModal({
                   <div className="flex h-11 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-medium text-slate-600">
                     <span className="font-bold text-emerald-600">.xlsx</span>,{' '}
                     <span className="font-bold text-emerald-600">.xls</span>,{' '}
-                    <span className="font-bold text-emerald-600">.csv</span> (xuất trực tiếp từ Google Sheets)
+                    <span className="font-bold text-emerald-600">.csv</span> ({translate('csvExportHint')})
                   </div>
                 </div>
               </div>
@@ -425,26 +425,26 @@ export default function SmartFormImportModal({
                   <Upload className="h-8 w-8 text-blue-600" />
                 </div>
                 <h4 className="mt-4 text-base font-bold text-slate-900">
-                  Kéo thả file Google Form vào đây hoặc bấm để chọn
+                  {translate('uploadDropzoneTitle')}
                 </h4>
                 <p className="mt-1 max-w-md text-xs font-medium text-slate-500">
-                  Hệ thống sẽ tự động quét các cột Họ tên, Email, Số điện thoại, Tên đội và Cặp đấu mà không cần sửa file
+                  {translate('uploadDropzoneDescription')}
                 </p>
                 <Button
                   type="button"
                   variant="outline"
                   className="mt-5 rounded-lg font-bold text-xs border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700"
                 >
-                  Chọn file từ máy tính
+                  {translate('chooseFileFromComputer')}
                 </Button>
               </div>
 
               <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-xs text-blue-900 flex items-start gap-3">
                 <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-bold">Mẹo từ Sporto:</p>
+                  <p className="font-bold">{translate('sportoTipTitle')}</p>
                   <p className="text-blue-800 leading-relaxed font-medium">
-                    Trong Google Form của bạn, chỉ cần bấm <strong>&quot;Xem câu trả lời trong Trang tính&quot;</strong> &rarr; Chọn <strong>Tệp &rarr; Tải xuống &rarr; Microsoft Excel (.xlsx)</strong> rồi tải lên tại đây.
+                    {translate('sportoTipDescription')}
                   </p>
                 </div>
               </div>

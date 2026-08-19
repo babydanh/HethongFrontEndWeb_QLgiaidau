@@ -802,7 +802,7 @@ export function BracketTab({
                           }}
                           className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
                         />
-                        <p className="text-[9px] text-slate-400 font-semibold">Số đội/bảng tự chia đều theo danh sách hoặc giới hạn nội dung.</p>
+                        <p className="text-[9px] text-slate-400 font-semibold">{translate('teamsPerGroupHint')}</p>
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsPerGroup')}</label>
@@ -821,7 +821,7 @@ export function BracketTab({
 
                   {participantCount > numGroups * teamsPerGroup && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                      Cấu hình hiện chứa {numGroups * teamsPerGroup} đội, trong khi có {participantCount} đội hợp lệ. Khi lưu, hệ thống sẽ tự tăng số đội mỗi bảng để đủ chỗ; giới hạn tối đa của nội dung (ví dụ 64) chỉ là giới hạn đăng ký, không phải số đội đã xếp vào bảng.
+                      {translate('groupCapacityWarning', { configured: numGroups * teamsPerGroup, eligible: participantCount })}
                     </div>
                   )}
 

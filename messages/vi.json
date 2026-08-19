@@ -1982,7 +1982,14 @@
     "teamNumber": "Đội #{index}",
     "singlesWithDoubles": "Bảng Đơn nhưng có VĐV 2 (Cặp đôi)",
     "doublesMissingPlayer2": "Bảng Đôi nhưng thiếu VĐV 2",
-    "duplicateEmail": "Trùng Email {email}"
+    "duplicateEmail": "Trùng Email {email}",
+    "invalidEmail": "Email không hợp lệ: {email}",
+    "uploadDropzoneTitle": "Kéo thả file Google Form vào đây hoặc bấm để chọn",
+    "uploadDropzoneDescription": "Hệ thống sẽ tự động quét các cột Họ tên, Email, Số điện thoại, Tên đội và Cặp đấu mà không cần sửa file.",
+    "chooseFileFromComputer": "Chọn file từ máy tính",
+    "sportoTipTitle": "Mẹo từ Sporto:",
+    "sportoTipDescription": "Trong Google Form của bạn, chỉ cần bấm “Xem câu trả lời trong Trang tính” → chọn Tệp → Tải xuống → Microsoft Excel (.xlsx) rồi tải lên tại đây.",
+    "csvExportHint": "xuất trực tiếp từ Google Sheets"
   },
   "AiChat": {
     "supportTitle": "Chat trực tiếp với admin",
@@ -3319,7 +3326,9 @@
       "round": "Vòng {round}",
       "court": "Sân {court}"
     },
-    "viewTournamentDetails": "Xem chi tiết giải đấu"
+    "viewTournamentDetails": "Xem chi tiết giải đấu",
+    "teamsPerGroupHint": "Số đội/bảng tự chia đều theo danh sách hoặc giới hạn nội dung.",
+    "groupCapacityWarning": "Cấu hình hiện chứa {configured} đội, trong khi có {eligible} đội hợp lệ. Khi lưu, hệ thống sẽ tự tăng số đội mỗi bảng để đủ chỗ; giới hạn tối đa của nội dung (ví dụ 64) chỉ là giới hạn đăng ký, không phải số đội đã xếp vào bảng."
   },
   "LiveMatch": {
     "unknown": "Chưa xác định",
@@ -3859,7 +3868,42 @@
     "scheduledMatchesCard": "Trận chờ bắt đầu",
     "ongoingMatchesCard": "Trận đang diễn ra",
     "completedMatchesCard": "Trận đã xong",
-    "kickedParticipantsCard": "Đội bị loại"
+    "kickedParticipantsCard": "Đội bị loại",
+    "systemActor": "Hệ thống/BTC",
+    "activity": {
+      "matchUpdated": "Cập nhật trận đấu",
+      "matchAction": "Thao tác trận đấu",
+      "matchDetail": "Dữ liệu trận đấu đã được BTC hoặc hệ thống điều chỉnh.",
+      "participantStatusChanged": "Đổi trạng thái hồ sơ {oldStatus} -> {newStatus}",
+      "participantUpdated": "Cập nhật hồ sơ đăng ký",
+      "participantDetail": "Thông tin participant đã được điều chỉnh trong quá trình vận hành giải.",
+      "tournamentUpdated": "Cập nhật giải đấu",
+      "tournamentDetail": "Thông tin giải đấu đã được cập nhật."
+    },
+    "fallback": {
+      "policyViolation": "Vi phạm điều lệ giải",
+      "unassigned": "Chưa gán",
+      "unscheduled": "Chưa xếp lịch",
+      "tbd": "TBD"
+    },
+    "toast": {
+      "participantKicked": "Đã loại người chơi/đội khỏi giải.",
+      "matchStatusUpdated": "Đã cập nhật trạng thái trận.",
+      "scheduleUpdated": "Đã cập nhật lịch thi đấu.",
+      "scoreUpdated": "Đã cập nhật tỷ số trận.",
+      "operationApplied": "Đã áp dụng quyết định nghiệp vụ cho trận."
+    },
+    "activityTitle": {
+      "participantKicked": "Loại khỏi giải",
+      "matchScheduleUpdated": "Cập nhật lịch/sân/trọng tài",
+      "matchScoreUpdated": "Cập nhật tỷ số",
+      "operationDecision": "Quyết định {action}",
+      "statusChanged": "Đổi trạng thái sang {status}"
+    },
+    "detail": {
+      "court": "Sân: {court}",
+      "schedule": "Lịch: {schedule}"
+    }
   },
   "OrganizerRegistration": {
     "seedUpdated": "Đã cập nhật seed!",

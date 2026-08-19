@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, useMemo, use } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -586,6 +586,45 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   // Derived state to avoid cascading state updates in useEffect
   const currentEloCheck = (!selectedDivisionData || !user?.id || !selectedDivisionData.categoryId) ? null : eloCheck;
 
+  const configuredRegistrationForm = useMemo(
+    () => readRegistrationFormConfig(tournament?.tournamentConfig?.registrationForm, allDivisions.map((division) => division.id)),
+    [tournament?.tournamentConfig?.registrationForm, allDivisions],
+  );
+
+  const registrationFields = useMemo(() => {
+    return configuredRegistrationForm.status === 'PUBLISHED' &&
+      (configuredRegistrationForm.divisionIds.length === 0 || configuredRegistrationForm.divisionIds.includes(selectedDivisionId))
+      ? configuredRegistrationForm.fields
+      : [];
+  }, [configuredRegistrationForm, selectedDivisionId]);
+
+  useEffect(() => {
+    if (!user || registrationFields.length === 0) return;
+
+    setCustomResponses((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const field of registrationFields) {
+        if (next[field.id] !== undefined && next[field.id] !== '') continue;
+
+        const labelLower = field.label.toLowerCase();
+        const isEmailField = field.type === 'EMAIL' || labelLower.includes('email') || labelLower.includes('gmail');
+        const isPhoneField = field.type === 'PHONE' || labelLower.includes('điện thoại') || labelLower.includes('sđt') || labelLower.includes('phone');
+
+        if (isEmailField && user.email) {
+          next[field.id] = user.email;
+          changed = true;
+        } else if (isPhoneField && user.phoneNumber) {
+          next[field.id] = user.phoneNumber;
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [user, registrationFields]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -728,10 +767,6 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const isFootballCategory = tournament?.category?.slug?.toLowerCase() === 'football' || tournament?.sportRules?.kind === 'FOOTBALL';
   const isTeamSport = isFootballCategory || (tournament?.tournamentConfig?.teamSize != null || tournament?.tournamentConfig?.minTeamSize != null);
   const effectiveFootballTeamSize = tournament?.tournamentConfig?.teamSize ?? (isFootballCategory ? 11 : 7);
-  const configuredRegistrationForm = readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, allDivisions.map((division) => division.id));
-  const registrationFields = configuredRegistrationForm.status === 'PUBLISHED' && (configuredRegistrationForm.divisionIds.length === 0 || configuredRegistrationForm.divisionIds.includes(selectedDivisionId))
-    ? configuredRegistrationForm.fields
-    : [];
 
   const userGender = normalizeGenderValue(user?.gender);
   const divisionGender = normalizeGenderValue(selectedDivision?.genderRestriction);
@@ -740,33 +775,6 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     divisionGender &&
     divisionGender !== 'MIXED' &&
     userGender !== divisionGender;
-
-  useEffect(() => {
-    if (!user || registrationFields.length === 0) return;
-
-    setCustomResponses((prev) => {
-      let changed = false;
-      const next = { ...prev };
-
-      for (const field of registrationFields) {
-        if (next[field.id] !== undefined && next[field.id] !== '') continue;
-
-        const labelLower = field.label.toLowerCase();
-        const isEmailField = field.type === 'EMAIL' || labelLower.includes('email') || labelLower.includes('gmail');
-        const isPhoneField = field.type === 'PHONE' || labelLower.includes('điện thoại') || labelLower.includes('sđt') || labelLower.includes('phone');
-
-        if (isEmailField && user.email) {
-          next[field.id] = user.email;
-          changed = true;
-        } else if (isPhoneField && user.phoneNumber) {
-          next[field.id] = user.phoneNumber;
-          changed = true;
-        }
-      }
-
-      return changed ? next : prev;
-    });
-  }, [user, registrationFields]);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 md:py-12 px-4 sm:px-6 lg:px-8">

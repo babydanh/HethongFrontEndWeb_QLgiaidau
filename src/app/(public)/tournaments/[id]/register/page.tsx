@@ -1151,17 +1151,35 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       </div>
 
                       {/* Chi tiết lệ phí & xác nhận */}
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
                         <div className="flex justify-between items-center text-xs text-slate-600">
                           <span>Hình thức đăng ký:</span>
                           <span className="font-semibold text-slate-800">Cá nhân (Đơn)</span>
                         </div>
-                        <div className="flex justify-between items-center text-sm pt-1 border-t border-slate-200/60">
-                          <span className="text-slate-600 font-semibold">{translate('entryFee')}:</span>
-                          <span className="font-bold text-base text-blue-600">
+                        <div className="flex justify-between items-center text-xs text-slate-600">
+                          <span>Thể thức thi đấu:</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedDivision?.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' :
+                             selectedDivision?.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + Loại trực tiếp' :
+                             selectedDivision?.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng / thua' : 'Loại trực tiếp'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200/80">
+                          <span className="text-slate-700 font-bold">{translate('entryFee')}:</span>
+                          <span className="font-extrabold text-base text-blue-600">
                             {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
                           </span>
                         </div>
+                      </div>
+
+                      {/* Lưu ý & Quy định thi đấu */}
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-2 text-xs text-slate-600">
+                        <p className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">Lưu ý trước khi xác nhận:</p>
+                        <ul className="space-y-1.5 text-[11px] leading-relaxed text-slate-500 list-disc list-inside">
+                          <li>VĐV cần có mặt tại cụm sân thi đấu trước 15 phút so với giờ thi đấu chính thức.</li>
+                          <li>Trang phục và vợt thi đấu phải tuân thủ điều lệ chính thức của giải.</li>
+                          <li>Sau khi đăng ký thành công, bạn có thể theo dõi nhánh đấu và lịch thi đấu trực tiếp trên hệ thống.</li>
+                        </ul>
                       </div>
 
                       <Button

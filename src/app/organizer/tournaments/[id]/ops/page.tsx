@@ -329,8 +329,12 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       const customConfigSummary: string[] = [];
       const resolvedRules = resolveMatchSportRules({
         matchConfig: bracketMatch?.matchConfig,
-        tournament: { sportRules: tournament?.sportRules ?? null },
+        tournament: {
+          sportRules: tournament?.sportRules ?? null,
+          tournamentConfig: tournament?.tournamentConfig,
+        },
       });
+
       const scorePresentation = getMatchScorePresentation(resolvedRules.kind, tournamentDetailTranslate);
 
       if (bracketMatch?.matchConfig?.setsToWin) {

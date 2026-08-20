@@ -1,5 +1,6 @@
 import { inferSportRuleKindFromCategory, resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
+import type { ResolvedSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import type { Match, MatchScore } from '@/types/match';
 import type { SportRuleKind, SportRulesEnvelope } from '@/types/tournament';
 
@@ -17,6 +18,7 @@ type MatchSportContext = {
       name?: string | null;
       categoryConfig?: Record<string, unknown> | null;
     } | null;
+    tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' | 'STRICT' } | null;
   } | null;
 };
 
@@ -102,7 +104,24 @@ export function resolveMatchSportRules(
       })
     : null;
 
-  return resolveSportRuleView(match.matchConfig ?? match.tournament?.sportRules, inferredFromTournament ?? fallbackKind);
+  const resolvedRules = resolveSportRuleView(
+    match.matchConfig ?? match.tournament?.sportRules,
+    inferredFromTournament ?? fallbackKind,
+  );
+  const tournamentMode = match.tournament?.tournamentConfig?.mode;
+
+  // The tournament-level mode is authoritative for every match. Match or division
+  // rule blobs may be legacy records that do not carry mode, or may still contain
+  // a stale STRICT default after a tournament is switched to Lite.
+  if (tournamentMode) {
+    const resolvedMode: ResolvedSportRuleView['mode'] = tournamentMode === 'LITE' ? 'LITE' : 'STRICT';
+    return {
+      ...resolvedRules,
+      mode: resolvedMode,
+    };
+  }
+
+  return resolvedRules;
 }
 
 type ScoreTranslate = (key: string, values?: Record<string, string | number>) => string;

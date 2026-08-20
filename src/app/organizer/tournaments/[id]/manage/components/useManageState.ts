@@ -31,6 +31,7 @@ import {
   type MatchFormatOptionValue,
 } from '@/features/tournaments/match-format-options';
 import { getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
+import { toApiIsoDateTime, toDateTimeLocalValue } from '@/utils/dateTimeInput';
 import type { StageRoundRuleConfig } from '@/types/tournament';
 
 type RoundConfigRecord = Record<string, unknown>;
@@ -454,10 +455,10 @@ export function useManageState(id: string) {
       const finalVenueId = venueRes?.data?.id || null;
       await tournamentsApi.updateTournament(id, {
         venueId: finalVenueId, city: pName || null,
-        startDate: startDate ? new Date(startDate).toISOString() : null,
-        endDate: endDate ? new Date(endDate).toISOString() : null,
-        registrationStartDate: registrationStartDate ? new Date(registrationStartDate).toISOString() : null,
-        registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
+        startDate: toApiIsoDateTime(startDate),
+        endDate: toApiIsoDateTime(endDate),
+        registrationStartDate: toApiIsoDateTime(registrationStartDate),
+        registrationEndDate: toApiIsoDateTime(registrationEndDate),
       });
       toast.success('Lưu thông tin lịch và địa điểm thành công!');
       clearManageDraft();
@@ -484,8 +485,8 @@ export function useManageState(id: string) {
 
       const regPayload: Record<string, unknown> = {
         visibility,
-        registrationStartDate: finalRegStart ? new Date(finalRegStart).toISOString() : null,
-        registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
+        registrationStartDate: toApiIsoDateTime(finalRegStart),
+        registrationEndDate: toApiIsoDateTime(registrationEndDate),
         tournamentConfig: {
           ...tournament?.tournamentConfig,
           // Club Lite keeps its frictionless OPEN policy by default, but a
@@ -596,6 +597,10 @@ export function useManageState(id: string) {
         roundsToPlay,
         rounds: selected?.roundConfig?.rounds || {},
       }));
+      const roundConfigWithMode = {
+        ...nextRoundConfig,
+        mode: (isLiteMode ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT',
+      };
       const nextSportRules = buildSportRulesPayload({
         kind: normalizedKind,
         setsToWin,
@@ -611,11 +616,12 @@ export function useManageState(id: string) {
         matchType: mapped.mt, genderRestriction: mapped.gr,
         bracketType: bracketTypeState,
         maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
-        roundConfig: nextRoundConfig,
+        roundConfig: roundConfigWithMode,
       });
       
-      // Đồng bộ mode vào tournamentConfig để mobile app (Flutter) có thể nhận diện LITE mode
+      // Đồng bộ mode vào tournamentConfig và sportRules để toàn hệ thống đồng nhất
       await tournamentsApi.updateTournament(tournament.id, {
+        sportRules: nextSportRules,
         tournamentConfig: {
           ...tournament.tournamentConfig,
           mode: isLiteMode ? 'LITE' : 'STRICT',
@@ -1151,7 +1157,7 @@ export function useManageState(id: string) {
     
     const ruleConfig = rc as StageRoundRuleConfig | undefined | null;
     setStageVenueId(ruleConfig?.venue_id || (roundNumber === 0 ? '' : stage.venueId || ''));
-    setStageScheduledDate(ruleConfig?.scheduled_date ? ruleConfig.scheduled_date.substring(0, 16) : (roundNumber === 0 ? '' : stage.scheduledDate ? stage.scheduledDate.substring(0, 16) : ''));
+    setStageScheduledDate(ruleConfig?.scheduled_date ? toDateTimeLocalValue(ruleConfig.scheduled_date) : (roundNumber === 0 ? '' : toDateTimeLocalValue(stage.scheduledDate)));
     setStageNotificationNote(ruleConfig?.custom_notes || '');
     const resolvedRules = rc
       ? resolveSportRuleView(rc, sportRuleKind)
@@ -1261,7 +1267,7 @@ export function useManageState(id: string) {
 
   const handleOpenScheduling = (match: BracketMatch) => {
     setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
-    setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
+    setMatchScheduledAt(toDateTimeLocalValue(match.scheduledAt));
     setMatchCameraId('');
     void livestreamApi.getMatchPlayback(match.id).then((res) => {
       if (res.data?.cameraName) {
@@ -1293,7 +1299,7 @@ export function useManageState(id: string) {
         }
       }
       if (!match.scheduledAt && rc?.scheduled_date) {
-        setMatchScheduledAt(rc.scheduled_date.substring(0, 16));
+        setMatchScheduledAt(toDateTimeLocalValue(rc.scheduled_date));
       }
       const resolvedRules = rc
         ? resolveSportRuleView(rc, sportRuleKind)
@@ -1366,10 +1372,10 @@ export function useManageState(id: string) {
           setCustomVenueName(quickLocation.venueName || '');
           setCustomVenueAddress(quickLocation.address || quickLocation.display || '');
         }
-        setStartDate((t.startDate || quickSchedule?.startDate)?.substring(0,16) || '');
-        setEndDate((t.endDate || quickSchedule?.endDate)?.substring(0,16) || '');
-        setRegistrationStartDate((t.registrationStartDate || quickSchedule?.registrationStartDate)?.substring(0,16) || '');
-        setRegistrationEndDate((t.registrationEndDate || quickSchedule?.registrationEndDate)?.substring(0,16) || '');
+        setStartDate(toDateTimeLocalValue(t.startDate || quickSchedule?.startDate));
+        setEndDate(toDateTimeLocalValue(t.endDate || quickSchedule?.endDate));
+        setRegistrationStartDate(toDateTimeLocalValue(t.registrationStartDate || quickSchedule?.registrationStartDate));
+        setRegistrationEndDate(toDateTimeLocalValue(t.registrationEndDate || quickSchedule?.registrationEndDate));
         setEntryFee(t.entryFee||0); setMaxParticipants(t.maxParticipants||16); setIsLimitEnabled(!!t.maxParticipants);
         let ui = MatchTypeUI.MALE_DOUBLES;
         if (t.matchType === MatchTypeDB.SINGLES) ui = t.genderRestriction === GenderRestriction.FEMALE ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.MALE_SINGLES;

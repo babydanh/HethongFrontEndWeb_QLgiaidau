@@ -3,7 +3,7 @@ import type { SportRuleKind, SportRulesEnvelope } from '@/types/tournament';
 const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   BADMINTON: {
     version: 1,
-    mode: 'STRICT',
+    mode: 'LITE',
     kind: 'BADMINTON',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 2,
@@ -11,6 +11,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
     winByTwo: true,
     maxPoints: 30,
     scoring: {
+      mode: 'LITE',
       setsToWin: 2,
       pointsPerSet: 21,
       winByTwo: true,
@@ -19,7 +20,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   TABLE_TENNIS: {
     version: 1,
-    mode: 'STRICT',
+    mode: 'LITE',
     kind: 'TABLE_TENNIS',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 3,
@@ -27,6 +28,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
     winByTwo: true,
     maxPoints: 99,
     scoring: {
+      mode: 'LITE',
       setsToWin: 3,
       pointsPerSet: 11,
       winByTwo: true,
@@ -35,7 +37,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   PICKLEBALL_RALLY: {
     version: 1,
-    mode: 'STRICT',
+    mode: 'LITE',
     kind: 'PICKLEBALL_RALLY',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 2,
@@ -43,6 +45,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
     winByTwo: true,
     maxPoints: 15,
     scoring: {
+      mode: 'LITE',
       setsToWin: 2,
       pointsPerSet: 11,
       winByTwo: true,
@@ -51,7 +54,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   PICKLEBALL_SIDE_OUT: {
     version: 1,
-    mode: 'STRICT',
+    mode: 'LITE',
     kind: 'PICKLEBALL_SIDE_OUT',
     scoringModel: 'PICKLEBALL_SIDE_OUT',
     setsToWin: 1,
@@ -65,6 +68,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
       doublesServeFlow: 'TWO_SERVER',
     },
     scoring: {
+      mode: 'LITE',
       setsToWin: 1,
       pointsPerSet: 11,
       winByTwo: true,
@@ -74,7 +78,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   TENNIS: {
     version: 1,
-    mode: 'STRICT',
+    mode: 'LITE',
     kind: 'TENNIS',
     scoringModel: 'TENNIS_SET',
     setsToWin: 2,
@@ -83,6 +87,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
     tiebreakPoints: 7,
     maxPoints: 7,
     scoring: {
+      mode: 'LITE',
       setsToWin: 2,
       pointsPerSet: 6,
       winByTwo: true,
@@ -92,7 +97,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   FOOTBALL: {
     version: 1,
-    mode: 'STRICT',
+    mode: 'LITE',
     kind: 'FOOTBALL',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 1,
@@ -105,6 +110,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
       allowDraw: true,
     },
     scoring: {
+      mode: 'LITE',
       setsToWin: 1,
       pointsPerSet: 1,
       winByTwo: false,

@@ -15,6 +15,7 @@ import { GenderRestriction } from '@/types/tournament';
 import type { TournamentFeesConfig } from '@/features/tournaments/api';
 import { api } from '@/lib/axios';
 import { inboxApi } from '@/features/chat/inbox-api';
+import { toApiIsoDateTime } from '@/utils/dateTimeInput';
 
 export default function Step4ReviewSubmit() {
   const translate = useTranslations('OrganizerCreateStep4');
@@ -143,10 +144,10 @@ export default function Step4ReviewSubmit() {
         isRanked: formData.isRanked,
         maxParticipants: formData.maxParticipants || 16,
         entryFee: effectiveEntryFee,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        registrationStartDate: formData.registrationStartDate,
-        registrationEndDate: formData.registrationEndDate,
+        startDate: toApiIsoDateTime(formData.startDate),
+        endDate: toApiIsoDateTime(formData.endDate),
+        registrationStartDate: toApiIsoDateTime(formData.registrationStartDate),
+        registrationEndDate: toApiIsoDateTime(formData.registrationEndDate),
         sportRules: formData.sportRules,
         tournamentConfig: {
           bracketType: formData.format as string,

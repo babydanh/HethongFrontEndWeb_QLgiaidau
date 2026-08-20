@@ -24,6 +24,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import { toDateLocalValue } from '@/utils/dateTimeInput';
 
 // Zod Schemas matching backend constraints
 const createProfileSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
@@ -174,7 +175,7 @@ export default function EditProfilePage() {
     defaultValues: {
       fullName: user?.fullName || '',
       phone: user?.phoneNumber || '',
-      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+      dateOfBirth: toDateLocalValue(user?.dateOfBirth),
       gender: user?.gender || '',
       address: user?.address || '',
       provinceCode: user?.provinceCode || '',
@@ -203,7 +204,7 @@ export default function EditProfilePage() {
       profileForm.reset({
         fullName: user.fullName || '',
         phone: user.phoneNumber || '',
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        dateOfBirth: toDateLocalValue(user.dateOfBirth),
         gender: user.gender || '',
         address: user.address || '',
         provinceCode: user.provinceCode || '',

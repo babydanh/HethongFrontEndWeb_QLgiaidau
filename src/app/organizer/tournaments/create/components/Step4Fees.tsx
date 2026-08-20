@@ -12,6 +12,7 @@ import { tournamentsApi } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
+import { toApiIsoDateTime } from '@/utils/dateTimeInput';
 
 const step4Schema = z.object({
   entryFee: z.number().min(0, 'Lệ phí không được là số âm'),
@@ -85,6 +86,11 @@ export default function Step4Fees() {
           delete finalData[key];
         }
       });
+      for (const key of ['registrationStartDate', 'registrationEndDate', 'startDate', 'endDate']) {
+        if (typeof finalData[key] === 'string' && finalData[key]) {
+          finalData[key] = toApiIsoDateTime(finalData[key] as string);
+        }
+      }
 
       // Call API
       const res = await tournamentsApi.createTournament(finalData);

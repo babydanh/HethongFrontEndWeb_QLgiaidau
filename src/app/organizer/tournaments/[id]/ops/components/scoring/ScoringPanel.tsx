@@ -70,7 +70,10 @@ export const buildScoreDraft = (
 ): ScoreDraft => {
   const resolvedRules = resolveMatchSportRules({
     matchConfig: match.matchConfig,
-    tournament: { sportRules: tournamentSportRules },
+    tournament: {
+      sportRules: tournamentSportRules,
+      tournamentConfig: match.tournament?.tournamentConfig,
+    },
   });
   const existingSets = extractMatchScores(match.scoreDetails);
   const seededSets = [...existingSets];
@@ -85,7 +88,7 @@ export const buildScoreDraft = (
   return {
     sets: seededSets,
     sideOutState:
-      resolvedRules.kind === 'PICKLEBALL_SIDE_OUT'
+      resolvedRules.mode !== 'LITE' && resolvedRules.kind === 'PICKLEBALL_SIDE_OUT'
         ? readSideOutState(match)
         : undefined,
     // Mỗi lần mở modal bắt đầu ở chế độ chuẩn; ngoại lệ cũ chỉ là lịch sử của set đã chốt.
@@ -118,10 +121,20 @@ export function ScoringPanel({
 
   const resolvedRules = resolveMatchSportRules({
     matchConfig: match.matchConfig,
-    tournament: { sportRules: tournamentSportRules },
+    tournament: {
+      sportRules: tournamentSportRules,
+      tournamentConfig: match.tournament?.tournamentConfig,
+    },
   });
+  const isLiteMode = resolvedRules.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind, translate);
-  const scoreGuidance = getScoreEntryGuidance(resolvedRules.kind, translate);
+  const scoreGuidance = isLiteMode
+    ? {
+        targetSummary: scoringTranslate('liteScoringSummary'),
+        examples: [],
+        operatorHint: scoringTranslate('operatorHint'),
+      }
+    : getScoreEntryGuidance(resolvedRules.kind, translate);
   const quickScoreTemplates = getQuickScoreTemplates(
     resolvedRules.kind,
     resolvedRules.pointsPerSet,
@@ -129,7 +142,7 @@ export function ScoringPanel({
     translate,
   );
   const sideOutState =
-    resolvedRules.kind === 'PICKLEBALL_SIDE_OUT'
+    !isLiteMode && resolvedRules.kind === 'PICKLEBALL_SIDE_OUT'
       ? scoreDraft.sideOutState ?? readSideOutState(match) ?? buildEmptySideOutState()
       : null;
   const servingTeamLabel =
@@ -147,7 +160,6 @@ export function ScoringPanel({
   const p1Won = finishedSets.filter((set) => set.team1Score > set.team2Score).length;
   const p2Won = finishedSets.filter((set) => set.team2Score > set.team1Score).length;
   const hasEnteredScore = scoreDraft.sets.some((set) => set.team1Score !== 0 || set.team2Score !== 0);
-  const isLiteMode = resolvedRules.mode === 'LITE';
   const overrideEnabled = scoreDraft.overrideEnabled === true || isLiteMode;
   const overrideReason = scoreDraft.overrideReason ?? '';
   const canSubmitWithOverride = !overrideEnabled || isLiteMode || overrideReason.trim().length > 0;
@@ -192,7 +204,10 @@ export function ScoringPanel({
       <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
         {scoreGuidance.targetSummary}
         <div className="mt-1 text-xs font-semibold text-blue-700">
-                  {scoringTranslate('validExamplePrefix')} {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
+          {scoreGuidance.examples.length > 0
+            ? `${scoringTranslate('validExamplePrefix')} ${scoreGuidance.examples.join(' • ')}. `
+            : ''}
+          {scoreGuidance.operatorHint}
         </div>
       </div>
 

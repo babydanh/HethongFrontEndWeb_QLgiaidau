@@ -79,7 +79,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles'>('doubles');
   const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [liteMaxTeams, setLiteMaxTeams] = useState(16);
-  const [liteStartDate, setLiteStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [liteStartDate, setLiteStartDate] = useState(() => {
+    const now = new Date();
+    const pad = (part: number) => String(part).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  });
   const [liteStartTime, setLiteStartTime] = useState('18:00');
   const [liteIsRecurring, setLiteIsRecurring] = useState(false);
   const [liteRecurringFrequency, setLiteRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');

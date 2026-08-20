@@ -179,9 +179,15 @@ export function resolveSportRuleView(
   const tiebreakerMode = (merged?.tiebreakerMode === 'playoff' ? 'playoff' : 'split') as 'split' | 'playoff';
   const hasCustomTiebreakTarget = readNumber(merged, ['tiebreakPoints', 'tiebreak_points', 'tiebreakAt', 'tiebreak_at']) !== undefined;
   const scoringModel = (merged?.scoringModel as SportScoringModel) ?? (defaults.scoringModel as SportScoringModel) ?? 'STANDARD';
+  const explicitMode = source?.mode ?? scoring?.mode;
+  const normalizedMode = explicitMode === 'LITE'
+    ? 'LITE'
+    : explicitMode === 'STRICT' || explicitMode === 'ADVANCED'
+      ? 'STRICT'
+      : undefined;
 
   return {
-    mode: (merged?.mode as 'LITE' | 'STRICT') ?? (defaults?.mode as 'LITE' | 'STRICT') ?? 'STRICT',
+    mode: normalizedMode ?? (defaults?.mode as 'LITE' | 'STRICT') ?? 'LITE',
     kind: normalizeKind(merged?.kind) ?? fallbackKind,
     scoringModel,
     setsToWin,

@@ -154,6 +154,7 @@ function LiveMatchSportLabel({ match, tournament, tournamentName }: { match?: Br
       categorySlug: (typeof matchTourn?.categorySlug === 'string' ? matchTourn.categorySlug : undefined) ?? (typeof tourn?.categorySlug === 'string' ? tourn.categorySlug : undefined) ?? (typeof matchCategory?.slug === 'string' ? matchCategory.slug : undefined) ?? (typeof tournCategory?.slug === 'string' ? tournCategory.slug : undefined) ?? null,
       categoryConfig: (matchTourn?.categoryConfig ?? tourn?.categoryConfig ?? matchCategory?.categoryConfig ?? tournCategory?.categoryConfig ?? null) as Record<string, unknown> | null,
       category: (matchTourn?.category ?? tourn?.category ?? null) as { slug?: string | null; name?: string | null; categoryConfig?: Record<string, unknown> | null } | null,
+      tournamentConfig: matchTourn?.tournamentConfig ?? tourn?.tournamentConfig ?? null,
     },
   };
   const resolvedRules = resolveMatchSportRules(context);

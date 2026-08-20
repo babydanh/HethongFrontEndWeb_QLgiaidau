@@ -49,7 +49,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 100);
     const description = teamName
       ? `Bạn được mời tham gia đội ${teamName} tại giải đấu ${tournament.name}. Nhấn vào link để xác nhận ngay!`
-      : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống Sporto. Đăng ký tham gia ngay!`;
+      : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống SportO. Đăng ký tham gia ngay!`;
       
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg';
     const canonicalUrl = `https://sporto.asia/tournaments/${id}/join-team${pid ? `?pid=${pid}&token=${token ?? ''}` : ''}`;

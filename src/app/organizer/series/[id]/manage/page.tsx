@@ -10,6 +10,7 @@ import { TournamentSeries, SeriesLeg, SeriesEvent } from '@/types/series';
 import { Button } from '@/components/ui/Button';
 import { getSportLogo } from '@/constants/sports';
 import { Input } from '@/components/ui/Input';
+import { toDateTimeLocalValue } from '@/utils/dateTimeInput';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { 
   ArrowLeft, Trophy, Calendar, Plus, Link as LinkIcon, Trash2, 
@@ -93,8 +94,8 @@ export default function SeriesManagePage() {
       setEditingLeg(leg);
       setLegName(leg.name);
       setLegOrder(leg.order);
-      setLegStartDate(leg.startDate ? new Date(leg.startDate).toISOString().split('T')[0] : '');
-      setLegEndDate(leg.endDate ? new Date(leg.endDate).toISOString().split('T')[0] : '');
+      setLegStartDate(leg.startDate ? toDateTimeLocalValue(leg.startDate).split('T')[0] : '');
+      setLegEndDate(leg.endDate ? toDateTimeLocalValue(leg.endDate).split('T')[0] : '');
       setLegDirectSlots(leg.directEntrySlots);
       setLegWildcardSlots(leg.wildcardSlots);
     } else {

@@ -32,6 +32,7 @@ import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { DateTimePicker } from '@/components/ui/Input';
+import { toApiIsoDateTime } from '@/utils/dateTimeInput';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
@@ -672,8 +673,8 @@ export default function QuickTournamentCreate() {
           formatKey,
           config?.bracketType ?? values.bracketType,
           divisionMaxParticipants,
-          values.startDate ? new Date(values.startDate).toISOString() : undefined,
-          values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
+          toApiIsoDateTime(values.startDate) ?? undefined,
+          toApiIsoDateTime(values.registrationEnd) ?? undefined,
         );
         return {
           name: config?.label?.trim() || division.name,
@@ -700,10 +701,10 @@ export default function QuickTournamentCreate() {
         isRanked: values.isRanked,
         communityId,
         genderRestriction: values.genderRestriction || undefined,
-        registrationStartDate: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
-        registrationEndDate: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
-        startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
-        endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
+        registrationStartDate: toApiIsoDateTime(values.registrationStart) ?? undefined,
+        registrationEndDate: toApiIsoDateTime(values.registrationEnd) ?? undefined,
+        startDate: toApiIsoDateTime(values.startDate) ?? undefined,
+        endDate: toApiIsoDateTime(values.endDate) ?? undefined,
         venueName: values.venueName ? values.venueName.trim() : undefined,
         locationAddress: values.locationAddress ? values.locationAddress.trim() : undefined,
         province: provinceName || undefined,

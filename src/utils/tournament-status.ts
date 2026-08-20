@@ -114,5 +114,23 @@ export const isTournamentCancelled = (status?: string | null) =>
   normalizeTournamentStatus(status) === 'CANCELLED';
 
 export const isTournamentOpenForRegistration = (status?: string | null) =>
-  isTournamentRegistrationOpen(status) || isTournamentUpcoming(status);
+  normalizeTournamentStatus(status) === 'REGISTRATION_OPEN';
+
+export const isTournamentInRegistrationWindow = (tournament?: { status?: string | null; registrationStartDate?: string | null; registrationEndDate?: string | null }) => {
+  if (!tournament) return false;
+  const status = normalizeTournamentStatus(tournament.status);
+  if (status === 'REGISTRATION_CLOSED' || status === 'IN_PROGRESS' || status === 'ONGOING' || status === 'COMPLETED' || status === 'CANCELLED' || status === 'DRAFT') {
+    return false;
+  }
+  if (status === 'REGISTRATION_OPEN') return true;
+  if (status === 'UPCOMING') {
+    const now = Date.now();
+    const start = tournament.registrationStartDate ? new Date(tournament.registrationStartDate).getTime() : 0;
+    const end = tournament.registrationEndDate ? new Date(tournament.registrationEndDate).getTime() : Infinity;
+    if (start > 0 && now >= start && now <= end) {
+      return true;
+    }
+  }
+  return false;
+};
 

@@ -14,13 +14,17 @@ interface Props {
   heightClass?: string;
 }
 
-/** Countdown — chỉ hiện ngày (dùng cho banner trang chủ) */
-function CountdownTimer({ targetDate, openingLabel, daysLabel }: { targetDate: string; openingLabel: string; daysLabel: (days: number) => string }) {
+/** Countdown — chỉ hiện ngày khi chưa tới giờ mở đăng ký (targetDate > now) */
+function CountdownTimer({ targetDate, daysLabel }: { targetDate: string; daysLabel: (days: number) => string }) {
   const [text, setText] = useState('');
   useEffect(() => {
     const update = () => {
-      const days = Math.floor((new Date(targetDate).getTime() - Date.now()) / 86400000);
-      if (days <= 0) { setText(openingLabel); return; }
+      const diff = new Date(targetDate).getTime() - Date.now();
+      const days = Math.ceil(diff / 86400000);
+      if (days <= 0) { 
+        setText(''); 
+        return; 
+      }
       setText(daysLabel(days));
     };
     update();
@@ -324,7 +328,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                       </span>
                     )}
                     {tournament.status === 'UPCOMING' && tournament.registrationStartDate && (
-                      <CountdownTimer targetDate={tournament.registrationStartDate} openingLabel={translate('registrationOpen')} daysLabel={(days) => translate('daysRemaining', { days })} />
+                      <CountdownTimer targetDate={tournament.registrationStartDate} daysLabel={(days) => translate('daysRemaining', { days })} />
                     )}
                     {tournament.locationAddress && (
                       <span className="flex items-center gap-1 line-clamp-1">

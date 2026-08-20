@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Tournament, Division, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
@@ -346,6 +346,7 @@ export default function BracketTab({
   const [result, setResult] = useState<TournamentResult | null>(null);
   const [resultError, setResultError] = useState(false);
   const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
+  const bracketLoadedRef = useRef(false);
 
   // Organizer bracket pages pass the parent tournament together with a
   // divisionId. Never render the parent's genderRestriction in that case:
@@ -386,7 +387,7 @@ export default function BracketTab({
 
   useEffect(() => {
     const fetchBracket = async () => {
-      setIsLoading(true);
+      if (!bracketLoadedRef.current) setIsLoading(true);
       try {
         const res = await tournamentsApi.getTournamentBracket(
           effectiveTournamentId,
@@ -397,7 +398,12 @@ export default function BracketTab({
           ? fetchedStages.filter(isKnockoutStage)
           : fetchedStages;
         setStages(nextStages);
-        setActiveStageId(nextStages[0]?.id ?? null);
+        setActiveStageId((currentStageId) =>
+          nextStages.some((stage) => stage.id === currentStageId)
+            ? currentStageId
+            : nextStages[0]?.id ?? null,
+        );
+        bracketLoadedRef.current = true;
       } catch (err) {
         console.error(
           'Failed to fetch bracket:',

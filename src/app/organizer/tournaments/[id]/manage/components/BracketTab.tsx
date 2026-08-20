@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import React, { useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -335,6 +335,7 @@ export function BracketTab({
   const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
   const [bracketRefreshKey, setBracketRefreshKey] = useState(0);
   const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
+  const bracketScrollYRef = useRef<number | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
 
@@ -370,6 +371,7 @@ export function BracketTab({
 
   const handleBracketParticipantDrop = async (source: BracketDragSource, target: BracketDropTarget): Promise<void> => {
     if (!selectedDivisionId || isSavingBracketSlots) return;
+    bracketScrollYRef.current = typeof window === 'undefined' ? null : window.scrollY;
 
     if (source.type === 'slot' && source.matchId) {
       const sourceMatch = findBracketMatch(source.matchId);
@@ -455,6 +457,14 @@ export function BracketTab({
       toast.error(getErrorMessage(error) || translate('bracketSlotsSaveFailed'));
     } finally {
       setIsSavingBracketSlots(false);
+      const savedScrollY = bracketScrollYRef.current;
+      bracketScrollYRef.current = null;
+      if (savedScrollY !== null && typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, savedScrollY);
+          requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+        });
+      }
     }
   };
 
@@ -1335,10 +1345,10 @@ export function BracketTab({
                 dragHandlers={bracketDragHandlers}
                 refreshKey={bracketRefreshKey}
               />
-              <DragOverlay>
+              <DragOverlay dropAnimation={null}>
                 {activeDragSource ? (
-                  <div className="rounded-lg border border-blue-400 bg-white px-3 py-2 shadow-lg ring-2 ring-blue-200 opacity-90">
-                    <span className="text-xs font-bold text-slate-800">
+                  <div className="pointer-events-none w-[250px] max-w-[250px] overflow-hidden rounded-lg border border-blue-400 bg-white px-3 py-2 shadow-lg ring-2 ring-blue-200 opacity-90">
+                    <span className="block truncate text-xs font-bold text-slate-800">
                       {activeDragSource.participant.teamName}
                     </span>
                   </div>

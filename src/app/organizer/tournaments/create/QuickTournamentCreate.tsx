@@ -255,7 +255,7 @@ const toDivisionInput = (
 };
 
 const quickDefaults = () => {
-  const regStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const regStart = new Date();
   regStart.setSeconds(0, 0);
 
   return {
@@ -355,8 +355,14 @@ export default function QuickTournamentCreate() {
       if (!raw) return;
       const saved = JSON.parse(raw) as Partial<QuickValues>;
       Object.entries(saved).forEach(([key, value]) => {
+        // Không khôi phục registrationStart từ bản nháp cũ, luôn giữ Date Time Now
+        if (key === 'registrationStart') return;
         if (value !== undefined && value !== null) setValue(key as keyof QuickValues, value as never, { shouldDirty: false });
       });
+      // Luôn cập nhật lại registrationStart thành Date Time Now hiện tại
+      const now = new Date();
+      now.setSeconds(0, 0);
+      setValue('registrationStart', formatDateTimeInput(now), { shouldDirty: false });
       toast.success('Đã khôi phục bản nháp tạo giải.', { id: 'quick-draft-restored' });
     } catch {
       window.localStorage.removeItem(draftKey);
@@ -367,6 +373,8 @@ export default function QuickTournamentCreate() {
     if (typeof window === 'undefined' || !draftHydratedRef.current) return;
     const timer = window.setTimeout(() => {
       const draft = { ...(formValues as QuickValues) } as Partial<QuickValues>;
+      // Không lưu registrationStart vào bản nháp
+      delete draft.registrationStart;
       window.localStorage.setItem(draftKey, JSON.stringify(draft));
     }, 350);
     return () => window.clearTimeout(timer);

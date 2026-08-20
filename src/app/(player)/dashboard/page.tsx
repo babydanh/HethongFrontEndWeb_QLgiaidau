@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import {
   Activity,
   Calendar,
-  CheckCircle2,
   Clock3,
   Loader2,
   Plus,
@@ -15,8 +14,6 @@ import {
   ShieldCheck,
   Trophy,
   UserCheck,
-  XCircle,
-  Bookmark,
   TrendingUp,
   TrendingDown,
   ChevronRight,

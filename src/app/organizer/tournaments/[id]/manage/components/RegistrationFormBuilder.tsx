@@ -160,6 +160,9 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
       });
       setConfig(nextConfig);
       toast.success(status === 'PUBLISHED' ? registrationFormTranslate('publishedSaved') : registrationFormTranslate('draftSaved'));
+      if (status === 'PUBLISHED') {
+        setIsOpen(false);
+      }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {

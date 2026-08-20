@@ -900,11 +900,11 @@ export function RegistrationTab({
             <table className="min-w-full divide-y divide-slate-100">
               <thead>
                 <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  <th className="pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
-                  <th className="pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
-                  <th className="pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
-                  <th className="pb-3 pr-4">{registrationTranslate('paymentHeader')}</th>
-                  <th className="pb-3 text-right">{registrationTranslate('actionsHeader')}</th>
+                  <th className="min-w-[180px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
+                  <th className="min-w-[200px] pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
+                  <th className="min-w-[110px] pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
+                  <th className="min-w-[130px] pb-3 pr-4">{registrationTranslate('paymentHeader')}</th>
+                  <th className="min-w-[220px] pb-3 text-right">{registrationTranslate('actionsHeader')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -947,7 +947,7 @@ export function RegistrationTab({
                           }
                         }}
                       >
-                        <td className="py-4 pr-4">
+                        <td className="py-4 pr-4 align-top">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                               {participant.seed != null && (
@@ -985,28 +985,27 @@ export function RegistrationTab({
                               </div>
                             )}
                             {participant.isWildcard ? (
-                              <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                              <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
                                 {registrationTranslate('wildcardLabel')}
                               </span>
                             ) : participant.teamInviteToken ? (
-                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
                                 {registrationTranslate('waitingForPartner')}
                               </span>
                             ) : null}
                           </div>
-                                                    <p className="mt-1 text-xs font-medium text-slate-500">
+                          <p className="mt-1 text-xs font-medium text-slate-500">
                             {registrationTranslate('registeredAt')} {formatDate(participant.registeredAt)}
                             {participant.seed != null ? '' : ` • ${registrationTranslate('seedMissing')}`}
                           </p>
                           {participant.registeredBy?.email ? (
-                            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 truncate max-w-[180px]">
                               <Mail className="h-3 w-3 shrink-0" />
                               {participant.registeredBy.email}
                             </p>
                           ) : null}
-
                         </td>
-                        <td className="py-4 pr-4">
+                        <td className="py-4 pr-4 align-top">
                           <div className="space-y-2">
                             {(participant.members || []).map((member) => {
                               const memberName = member.isMock
@@ -1034,79 +1033,98 @@ export function RegistrationTab({
                             })}
                           </div>
                         </td>
-                        <td className="py-4 pr-4">
+                        <td className="py-4 pr-4 align-top">
                           <span className={[
-                            'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold',
+                            'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold whitespace-nowrap',
                             getParticipantStatusClassName(participant.teamStatus),
                           ].join(' ')}>
                             {getParticipantStatusLabel(participant.teamStatus, participantStatusLabels)}
                           </span>
                         </td>
-                        <td className="py-4 pr-4">
+                        <td className="py-4 pr-4 align-top">
                           <div className="space-y-1">
-                            <span className={cn('text-xs font-bold', participant.isPaid ? 'text-blue-600' : 'text-rose-600')}>
+                            <span className={cn('text-xs font-bold whitespace-nowrap', participant.isPaid ? 'text-blue-600' : 'text-rose-600')}>
                               {participant.isPaid ? registrationTranslate('paidStatus') : registrationTranslate('unpaidStatus')}
                             </span>
-                            <p className="text-[11px] font-semibold text-slate-500">
+                            <p className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
                               {paymentAmount != null
                                 ? `${Number(paymentAmount).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} ${paymentCurrency}`
                                 : registrationTranslate('amountUnavailable')}
                             </p>
                           </div>
                         </td>
-                        <td className="py-4 text-right">
-                          <div className="flex justify-end gap-2">
+                        <td className="py-4 text-right align-top">
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedParticipant(participant)}
+                              className="border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs h-8 px-2.5"
+                            >
+                              Chi tiết
+                            </Button>
                             {participant.footballTeamId && (
                               <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => { void handleRosterLock(participant); }}
                                 disabled={rosterActionId === participant.id || isBusy || !isParticipantApproved(participant.teamStatus)}
-                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold"
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold text-xs h-8 px-2.5"
                                 title={registrationTranslate('rosterUnlockHint')}
                               >
-                                {rosterActionId === participant.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {rosterActionId === participant.id ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
                                 {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? registrationTranslate('unlockRoster') : registrationTranslate('lockRoster')}
                               </Button>
                             )}
                             {participant.seed == null && canManageSeed ? (
                               <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => {
                                   handleSeedEditStart(participant.id, null);
                                 }}
                                 disabled={isBusy}
-                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold"
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold text-xs h-8 px-2.5"
                               >
                                 {registrationTranslate('assignSeed')}
                               </Button>
                             ) : null}
-                            <Button
-                              onClick={() => { void handleApproveParticipant(participant.id); }}
-                              disabled={!canApprove || isBusy}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                            >
-                              {isBusy && canApprove ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                              {registrationTranslate('approve')}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                const confirmed = window.confirm(
+                            {canApprove && (
+                              <Button
+                                size="sm"
+                                onClick={() => { void handleApproveParticipant(participant.id); }}
+                                disabled={isBusy}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-2.5"
+                              >
+                                {isBusy ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
+                                {registrationTranslate('approve')}
+                              </Button>
+                            )}
+                            {canReject && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const confirmed = window.confirm(
+                                    isMockParticipant
+                                      ? registrationTranslate('mockDeleteConfirm', { name: participant.teamName })
+                                      : registrationTranslate('rejectConfirm', { name: participant.teamName }),
+                                  );
+                                  if (confirmed) {
+                                    void handleRejectParticipant(participant.id);
+                                  }
+                                }}
+                                disabled={isBusy}
+                                className={cn(
+                                  'font-bold text-xs h-8 px-2.5',
                                   isMockParticipant
-                                    ? registrationTranslate('mockDeleteConfirm', { name: participant.teamName })
-                                    : registrationTranslate('rejectConfirm', { name: participant.teamName }),
-                                );
-                                if (confirmed) {
-                                  void handleRejectParticipant(participant.id);
-                                }
-                              }}
-                              disabled={!canReject || isBusy}
-                              className={isMockParticipant
-                                ? 'border-rose-200 text-rose-700 hover:bg-rose-50 font-bold'
-                                : 'border-amber-200 text-amber-700 hover:bg-amber-50 font-bold'}
-                            >
-                              {isMockParticipant ? registrationTranslate('deleteMock') : registrationTranslate('rejectParticipant')}
-                            </Button>
+                                    ? 'border-rose-200 text-rose-700 hover:bg-rose-50'
+                                    : 'border-amber-200 text-amber-700 hover:bg-amber-50',
+                                )}
+                              >
+                                {isMockParticipant ? registrationTranslate('deleteMock') : registrationTranslate('rejectParticipant')}
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

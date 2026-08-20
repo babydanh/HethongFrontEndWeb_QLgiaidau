@@ -1069,21 +1069,61 @@ export function RegistrationTab({
             </p>
           </div>
 
+          {/* Division Selector directly in Mock Panel */}
+          {divisions.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Chọn nội dung tạo VĐV ảo:
+              </label>
+              <div className="grid grid-cols-1 gap-1.5">
+                {divisions.map((div) => {
+                  const isActive = div.id === selectedDivisionId;
+                  const isDivDoubles = div.matchType === 'DOUBLES' || div.matchType === 'MIXED_DOUBLES';
+                  return (
+                    <button
+                      key={div.id}
+                      type="button"
+                      onClick={() => setSelectedDivisionId(div.id)}
+                      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-bold transition-all text-left ${
+                        isActive
+                          ? 'border-blue-500 bg-blue-50 text-blue-800 ring-1 ring-blue-400'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
+                      }`}
+                    >
+                      <span className="truncate">{div.name}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                        isDivDoubles ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {isDivDoubles ? 'ĐÔI (Cặp)' : 'ĐƠN (Cá nhân)'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className={`rounded-lg border px-3 py-2 text-xs ${
             canSeedMock
               ? 'border-blue-100 bg-blue-50 text-blue-800'
               : 'border-amber-200 bg-amber-50 text-amber-800'
           }`}>
-            <span className="font-semibold">Mock sẽ được tạo vào: </span>
+            <span className="font-semibold">Đang chọn: </span>
             {selectedMockDivision ? (
               <>
                 <strong>{selectedMockDivision.name}</strong>
-                <span className="ml-1 font-semibold">({mockFormatLabel})</span>
+                <span className={`ml-1.5 font-bold px-1.5 py-0.5 rounded text-[10px] ${
+                  selectedMockDivision.matchType === 'SINGLES'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {selectedMockDivision.matchType === 'SINGLES' ? 'THỂ THỨC ĐƠN (1 dòng = 1 VĐV)' : 'THỂ THỨC ĐÔI (2 dòng = 1 Cặp)'}
+                </span>
               </>
             ) : divisions.length > 0 ? (
-              <span className="font-semibold">Chưa xác định nội dung thi đấu — hãy chọn lại division</span>
+              <span className="font-bold text-amber-700">⚠️ Vui lòng click chọn 1 nội dung thi đấu ở trên</span>
             ) : (
-              <span className="font-semibold">Thể thức chung của giải</span>
+              <span className="font-semibold">Thể thức chung của giải ({tournament.matchType === 'SINGLES' ? 'ĐƠN' : 'ĐÔI'})</span>
             )}
           </div>
 

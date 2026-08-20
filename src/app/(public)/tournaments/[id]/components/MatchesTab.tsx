@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
+import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, Division, BracketMatch, divisionsApi } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
@@ -523,12 +523,12 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
             const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
             const roundLabel = localizeMatchRoundLabel(getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize }));
-            
+
             const resolvedRules = resolveMatchSportRules({
               matchConfig: match.matchConfig,
               tournament: { sportRules: tournament.sportRules ?? null },
             });
-            const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+
             // Keep the score grid stable from the configured format, not from
             // the number of scores already submitted. A BO5 match must show
             // S1-S5 even before S4/S5 has been played.

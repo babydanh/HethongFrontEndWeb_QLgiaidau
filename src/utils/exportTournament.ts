@@ -271,8 +271,10 @@ export interface ParsedExcelResult {
   detectedMapping: {
     teamNameCol?: string;
     player1NameCol?: string;
+    player1EmailCol?: string;
     player1PhoneCol?: string;
     player2NameCol?: string;
+    player2EmailCol?: string;
     player2PhoneCol?: string;
     formatCol?: string;
     eloCol?: string;
@@ -300,8 +302,10 @@ export async function parseParticipantsExcel(file: File): Promise<ParsedExcelRes
   };
 
   const player1NameCol = findCol(['vđv 1', 'vdv 1', 'họ và tên', 'họ tên', 'người chơi 1', 'vận động viên 1', 'tên 1', 'player 1', 'full name', 'tên']);
+  const player1EmailCol = findCol(['email vđv 1', 'email 1', 'gmail 1', 'địa chỉ email', 'email', 'gmail', 'thư điện tử']);
   const player1PhoneCol = findCol(['sđt 1', 'sdt 1', 'điện thoại 1', 'phone 1', 'sđt', 'sdt', 'điện thoại', 'phone', 'mobile']);
   const player2NameCol = findCol(['vđv 2', 'vdv 2', 'đồng đội', 'họ tên vđv 2', 'người chơi 2', 'vận động viên 2', 'tên 2', 'player 2', 'partner']);
+  const player2EmailCol = findCol(['email vđv 2', 'email 2', 'gmail 2', 'email đồng đội', 'gmail đồng đội']);
   const player2PhoneCol = findCol(['sđt 2', 'sdt 2', 'điện thoại 2', 'phone 2']);
   const teamNameCol = findCol(['tên đội', 'team', 'cặp đôi', 'tên cặp', 'clb', 'club']);
   const formatCol = findCol(['nội dung', 'hạng đấu', 'hạng mục', 'division', 'category', 'thể thức']);
@@ -313,8 +317,10 @@ export async function parseParticipantsExcel(file: File): Promise<ParsedExcelRes
     detectedMapping: {
       teamNameCol,
       player1NameCol,
+      player1EmailCol,
       player1PhoneCol,
       player2NameCol,
+      player2EmailCol,
       player2PhoneCol,
       formatCol,
       eloCol,

@@ -164,6 +164,7 @@ export default function SmartFormImportModal({
       elo?: number;
       hasFormatMismatch?: boolean;
       mismatchReason?: string;
+      divisionId?: string;
     }> = [];
 
     const seenEmails = new Set<string>();
@@ -193,11 +194,23 @@ export default function SmartFormImportModal({
         }
       }
 
+      // Resolve a per-row division when the workbook contains a division column.
+      const rawDivision = columnMapping.divisionCol ? String(row[columnMapping.divisionCol] || '').trim() : '';
+      const matchedDivision = rawDivision
+        ? divisions.find((division) => division.name.trim().toLowerCase() === rawDivision.toLowerCase())
+        : targetDivision;
+      const rowIsDoubles = matchedDivision
+        ? matchedDivision.matchType === 'DOUBLES' || matchedDivision.matchType === 'MIXED_DOUBLES'
+        : isTargetDoubles;
+
       // Check format mismatch
       let hasFormatMismatch = false;
       let mismatchReason = '';
 
-      if (!isTargetDoubles && p2Name && splitDoublesIntoSingles) {
+      if (rawDivision && !matchedDivision) {
+        hasFormatMismatch = true;
+        mismatchReason = translate('divisionNotFound', { name: rawDivision });
+      } else if (!rowIsDoubles && p2Name && splitDoublesIntoSingles) {
         // Tách thành 2 dòng VĐV Đơn độc lập
         if (p1Name) {
           items.push({
@@ -224,10 +237,10 @@ export default function SmartFormImportModal({
         return;
       }
 
-      if (!isTargetDoubles && p2Name && !splitDoublesIntoSingles) {
+      if (!rowIsDoubles && p2Name && !splitDoublesIntoSingles) {
         hasFormatMismatch = true;
         mismatchReason = translate('singlesWithDoubles');
-      } else if (isTargetDoubles && !p2Name) {
+      } else if (rowIsDoubles && !p2Name) {
         hasFormatMismatch = true;
         mismatchReason = translate('doublesMissingPlayer2');
       }
@@ -272,11 +285,12 @@ export default function SmartFormImportModal({
         elo,
         hasFormatMismatch,
         mismatchReason,
+        divisionId: matchedDivision?.id || targetDivisionId || undefined,
       });
     });
 
     return items;
-  }, [excelResult, columnMapping, isTargetDoubles, splitDoublesIntoSingles, translate]);
+  }, [excelResult, columnMapping, divisions, targetDivision, targetDivisionId, isTargetDoubles, splitDoublesIntoSingles, translate]);
 
   const activeItemsToImport = useMemo(() => {
     return parsedItems.filter((item) => !excludedRowIndices.has(item.rowIndex));
@@ -308,29 +322,51 @@ export default function SmartFormImportModal({
       toast.error(translate('importNoRows'));
       return;
     }
+    if (activeItemsToImport.some((item) => item.hasFormatMismatch)) {
+      toast.error(translate('resolveValidationErrors'));
+      return;
+    }
 
     setIsImporting(true);
     try {
-      const payloadParticipants = activeItemsToImport.map((item) => ({
-        teamName: item.teamName,
-        player1Name: item.player1Name,
-        player1Email: item.player1Email,
-        player1Phone: item.player1Phone,
-        player2Name: item.player2Name,
-        player2Email: item.player2Email,
-        player2Phone: item.player2Phone,
-        elo: item.elo,
-        isPaid,
-        autoApprove,
-      }));
+      const groupedItems = new Map<string, typeof activeItemsToImport>();
+      for (const item of activeItemsToImport) {
+        const divisionKey = item.divisionId || targetDivisionId || '';
+        const group = groupedItems.get(divisionKey) || [];
+        group.push(item);
+        groupedItems.set(divisionKey, group);
+      }
 
-      const res = await tournamentsApi.importParticipants(tournament.id, {
-        divisionId: targetDivisionId || undefined,
-        participants: payloadParticipants,
-        sendInvitationEmail,
-      });
+      let importedCount = 0;
+      let lastMessage = '';
+      for (const [divisionId, items] of groupedItems) {
+        const payloadParticipants = items.map((item) => ({
+          teamName: item.teamName,
+          player1Name: item.player1Name,
+          player1Email: item.player1Email,
+          player1Phone: item.player1Phone,
+          player2Name: item.player2Name,
+          player2Email: item.player2Email,
+          player2Phone: item.player2Phone,
+          elo: item.elo,
+          isPaid,
+          autoApprove,
+          customResponses: {
+            importedFrom: 'EXCEL',
+            sourceFileName: fileName || undefined,
+            sourceRowIndex: item.rowIndex + 1,
+          },
+        }));
+        const res = await tournamentsApi.importParticipants(tournament.id, {
+          divisionId: divisionId || undefined,
+          participants: payloadParticipants,
+          sendInvitationEmail,
+        });
+        importedCount += res.data?.importedCount ?? payloadParticipants.length;
+        lastMessage = res.data?.message || lastMessage;
+      }
 
-      toast.success(res.data?.message || translate('importSuccess', { count: payloadParticipants.length }));
+      toast.success(lastMessage || translate('importSuccess', { count: importedCount }));
       await onSuccess();
       onOpenChange(false);
       setStep(1);
@@ -480,6 +516,25 @@ export default function SmartFormImportModal({
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
                     <option value="">{translate('autoTeam')}</option>
+                    {excelResult.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Nội dung thi đấu / division */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                    {translate('divisionColumn')}
+                  </label>
+                  <select
+                    value={columnMapping.divisionCol}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, divisionCol: e.target.value })}
+                    className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
+                  >
+                    <option value="">{translate('noColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}

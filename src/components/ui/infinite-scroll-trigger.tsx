@@ -17,13 +17,19 @@ export function InfiniteScrollTrigger({
 }: InfiniteScrollTriggerProps) {
   const translate = useTranslations('Common');
   const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerLockedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasMore || isLoading) return;
+    if (isLoading) {
+      triggerLockedRef.current = false;
+      return;
+    }
+    if (!hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        if (entries[0].isIntersecting && !triggerLockedRef.current) {
+          triggerLockedRef.current = true;
           onLoadMore();
         }
       },

@@ -125,7 +125,7 @@ export default function SmartAiTournamentModal({
   };
 
   const handleAnalyze = async () => {
-    if (!sourceUrl.trim() && !rawText.trim() && !excelResult) {
+    if (!sourceUrl.trim() && !rawText.trim()) {
       toast.error(translate('sourceRequired'));
       return;
     }
@@ -240,34 +240,106 @@ export default function SmartAiTournamentModal({
         });
       }
 
-      // 4. Batch import participants from Excel if available
+      // 4. Import real participant/team records from Excel when provided.
+      // Do not use the mock-participant endpoint here: it intentionally creates
+      // test users and discards emails, phones, ELO, and source metadata.
       if (excelResult && excelResult.rows.length > 0) {
-        const player2Column = excelResult.detectedMapping.player2NameCol;
-        const hasPlayer2Data = Boolean(player2Column && excelResult.rows.some((row) => String(row[player2Column] ?? '').trim().length > 0));
-        const primaryIsDoubles = !primaryFormat.formatKey.includes('SINGLES');
-        if (primaryIsDoubles !== hasPlayer2Data) {
-          throw new Error(primaryIsDoubles
-            ? translate('doublesMissingPlayerTwo')
-            : translate('singlesHasPlayerTwo'));
+        const p1Column = excelResult.detectedMapping.player1NameCol || excelResult.headers[0];
+        const p1EmailColumn = excelResult.detectedMapping.player1EmailCol;
+        const p1PhoneColumn = excelResult.detectedMapping.player1PhoneCol;
+        const p2Column = excelResult.detectedMapping.player2NameCol;
+        const p2EmailColumn = excelResult.detectedMapping.player2EmailCol;
+        const p2PhoneColumn = excelResult.detectedMapping.player2PhoneCol;
+        const teamColumn = excelResult.detectedMapping.teamNameCol;
+        const formatColumn = excelResult.detectedMapping.formatCol;
+        const eloColumn = excelResult.detectedMapping.eloCol;
+        const divisionRoutes = formats.map((format, index) => ({
+          id: createdDivisionIds[index],
+          name: format.name?.trim() || `Hạng đấu ${index + 1}`,
+          isDoubles: !format.formatKey.includes('SINGLES'),
+        }));
+        const normalizeDivisionName = (value: string) => value.trim().toLocaleLowerCase(locale).replace(/[–—]/g, '-');
+        const manualRoute = selectedFormatForExcel !== 'all'
+          ? divisionRoutes[Number(selectedFormatForExcel)]
+          : undefined;
+        if (selectedFormatForExcel !== 'all' && !manualRoute) {
+          throw new Error(translate('excelDivisionRequired'));
         }
-        const p1Col = excelResult.detectedMapping.player1NameCol || excelResult.headers[0];
-        const names = excelResult.rows
-          .map((r) => {
-            const p1 = r[p1Col];
-            const p2 = excelResult.detectedMapping.player2NameCol ? r[excelResult.detectedMapping.player2NameCol] : '';
-            const team = excelResult.detectedMapping.teamNameCol ? r[excelResult.detectedMapping.teamNameCol] : '';
-            if (team) return String(team).trim();
-            if (p1 && p2) return `${String(p1).trim()} / ${String(p2).trim()}`;
-            return String(p1 || '').trim();
-          })
-          .filter(Boolean);
 
-        if (names.length > 0) {
-          try {
-            await tournamentsApi.seedMockParticipants(tournamentId, names, primaryDivisionId);
-          } catch (seedErr) {
-            console.warn('Could not seed participants:', seedErr);
+        const rowsWithIndex = excelResult.rows
+          .map((row, index) => ({ row, index }))
+          .filter(({ row }) => {
+            const p1 = String(row[p1Column] ?? '').trim();
+            const p2 = p2Column ? String(row[p2Column] ?? '').trim() : '';
+            const team = teamColumn ? String(row[teamColumn] ?? '').trim() : '';
+            return Boolean(p1 || p2 || team);
+          });
+        const participantsByDivision = new Map<
+          string,
+          Array<Parameters<typeof tournamentsApi.importParticipants>[1]['participants'][number]>
+        >();
+
+        for (const { row, index } of rowsWithIndex) {
+          const rawDivision = formatColumn ? String(row[formatColumn] ?? '').trim() : '';
+          const route = manualRoute || (divisionRoutes.length === 1
+            ? divisionRoutes[0]
+            : rawDivision
+              ? divisionRoutes.find((candidate) => {
+                  const raw = normalizeDivisionName(rawDivision);
+                  const name = normalizeDivisionName(candidate.name);
+                  return raw === name || raw.includes(name) || name.includes(raw);
+                })
+              : undefined);
+          if (!route) {
+            throw new Error(rawDivision
+              ? translate('excelDivisionUnknown', { name: rawDivision })
+              : translate('excelDivisionRequired'));
           }
+
+          const player1Name = String(row[p1Column] ?? '').trim();
+          const player2Name = p2Column ? String(row[p2Column] ?? '').trim() : '';
+          const teamName = teamColumn ? String(row[teamColumn] ?? '').trim() : '';
+          const player1Email = p1EmailColumn ? String(row[p1EmailColumn] ?? '').trim() || undefined : undefined;
+          const player1Phone = p1PhoneColumn ? String(row[p1PhoneColumn] ?? '').trim() || undefined : undefined;
+          const player2Email = p2EmailColumn ? String(row[p2EmailColumn] ?? '').trim() || undefined : undefined;
+          const player2Phone = p2PhoneColumn ? String(row[p2PhoneColumn] ?? '').trim() || undefined : undefined;
+          const rawElo = eloColumn ? Number.parseFloat(String(row[eloColumn] ?? '')) : Number.NaN;
+          if (route.isDoubles && !player2Name) {
+            throw new Error(translate('doublesMissingPlayerTwo'));
+          }
+          if (!route.isDoubles && (player2Name || player2Email || player2Phone)) {
+            throw new Error(translate('singlesHasPlayerTwo'));
+          }
+
+          const participant = {
+            teamName: teamName || (player2Name ? `${player1Name} / ${player2Name}` : player1Name),
+            player1Name: player1Name || teamName,
+            player1Email,
+            player1Phone,
+            player2Name: player2Name || undefined,
+            player2Email,
+            player2Phone,
+            elo: Number.isFinite(rawElo) ? rawElo : undefined,
+            isPaid: true,
+            autoApprove: true,
+            customResponses: {
+              importedFrom: 'AI_EXCEL',
+              sourceFileName: fileName || undefined,
+              sourceRowIndex: index + 1,
+              sourceDivision: rawDivision || route.name,
+            },
+          };
+          const divisionParticipants = participantsByDivision.get(route.id) || [];
+          divisionParticipants.push(participant);
+          participantsByDivision.set(route.id, divisionParticipants);
+        }
+
+        for (const [divisionId, participants] of participantsByDivision) {
+          await tournamentsApi.importParticipants(tournamentId, {
+            divisionId,
+            participants,
+            sendInvitationEmail: false,
+          });
         }
       }
 
@@ -511,6 +583,27 @@ export default function SmartAiTournamentModal({
                     </span>
                     <span className="font-semibold text-slate-500">{fileName}</span>
                   </div>
+                  {parsedData.formats.length > 1 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 space-y-1.5">
+                      <label className="block text-[11px] font-semibold text-amber-900">
+                        {translate('excelDivisionMode')}
+                      </label>
+                      <select
+                        value={selectedFormatForExcel}
+                        onChange={(event) => setSelectedFormatForExcel(event.target.value)}
+                        className="w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-slate-800"
+                      >
+                        {excelResult.detectedMapping.formatCol && (
+                          <option value="all">{translate('excelDivisionAuto')}</option>
+                        )}
+                        {parsedData.formats.map((format, formatIndex) => (
+                          <option key={formatIndex} value={String(formatIndex)}>
+                            {translate('excelDivisionManual')}: {format.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg bg-white p-2">
                     <table className="w-full text-[11px] text-left">
                       <thead>

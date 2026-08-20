@@ -21,9 +21,11 @@ export type EloMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
 export type EloMatchTypeLabels = Partial<Record<EloMatchType, string>> & { categoryFallback?: string };
 
+export type EloProgressToNextLabel = (params: { remaining: number; nextName: string }) => string;
+
 export type EloDisplayLabels = {
   categoryFallback?: string;
-  progressToNext?: string;
+  progressToNext?: EloProgressToNextLabel;
   progressPeak?: string;
   onboardingShield?: string;
   shieldActive?: string;
@@ -142,7 +144,9 @@ export const getEloProgressInfo = (eloPoints: number, categoryName?: string | nu
       percent: sportProgress.percent,
       currentIdx: sportProgress.currentIndex,
       nextIdx: sportProgress.nextIndex,
-      label: nextName ? (labels?.progressToNext ?? '{remaining} ELO to {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName) : (labels?.progressPeak ?? '🏆 Peak reached'),
+      label: nextName
+        ? (labels?.progressToNext?.({ remaining, nextName }) ?? `${remaining} ELO to ${nextName}`)
+        : (labels?.progressPeak ?? '🏆 Peak reached'),
     };
   }
   const clamped = Math.max(0, eloPoints);
@@ -170,9 +174,9 @@ export const getEloProgressInfo = (eloPoints: number, categoryName?: string | nu
     const remaining = nextMin - clamped;
     const nextName = TIER_THRESHOLDS[nextIdx].name;
     if (remaining <= 0) {
-      label = (labels?.progressToNext ?? '{remaining} ELO to {nextName}').replace('{remaining}', String(nextMin - currentMin)).replace('{nextName}', nextName);
+      label = labels?.progressToNext?.({ remaining: nextMin - currentMin, nextName }) ?? `${nextMin - currentMin} ELO to ${nextName}`;
     } else {
-      label = (labels?.progressToNext ?? '{remaining} ELO to {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName);
+      label = labels?.progressToNext?.({ remaining, nextName }) ?? `${remaining} ELO to ${nextName}`;
     }
   }
 

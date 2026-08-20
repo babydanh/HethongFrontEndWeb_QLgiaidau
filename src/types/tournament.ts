@@ -70,6 +70,8 @@ export interface StageRoundRuleConfig extends SportRuleScoringConfig {
 }
 
 export interface StageRoundConfig extends SportRuleScoringConfig {
+  roundsToPlay?: number;
+  rounds_to_play?: number;
   max_sets?: number;
   deuce_gap?: number;
   scoring_type?: string;
@@ -335,6 +337,8 @@ export interface FootballRegistrationGroup {
 export interface BracketMatch {
   id: string;
   roundNumber: number;
+  /** Round-robin leg or two-legged knockout leg persisted by the backend. */
+  leg?: number | null;
   matchOrder: number;
   bracketBranch: string;
   status: string;
@@ -363,6 +367,8 @@ export interface BracketMatch {
     name: string;
     stage?: {
       name: string;
+      type?: string | null;
+      roundConfig?: StageRoundConfig | null;
     };
   } | null;
   tournament?: {

@@ -27,9 +27,10 @@ import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { formatDateTime } from '@/utils/format';
 import { getErrorMessage } from '@/utils/error';
-import { calculateStandings, getFootballForm } from './helpers';
+import { calculateStandings, getConfiguredStandingsScoring, getFootballForm } from './helpers';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { getBracketStatLabels, resolveBracketMatchRules } from './sportRuleDisplay';
+import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -69,9 +70,11 @@ export function RoundRobinView({
     : (fallbackSportRuleKind ?? 'BADMINTON');
   const statLabels = getBracketStatLabels(effectiveRuleKind, translate);
   const isFootball = effectiveRuleKind === 'FOOTBALL' || Boolean(sampleMatch?.scoreDetails?.football);
+  const configuredScoring = getConfiguredStandingsScoring(roundConfig as Record<string, unknown> | null | undefined);
   const { standings, ties } = calculateStandings(matches, {
     tiebreakerMode,
     football: isFootball,
+    scoring: configuredScoring,
   });
   const tieSet = new Set(ties.flatMap((g) => g.map((r) => r.participantId)));
   const allDone = matches.length > 0 && matches.filter((m) => !m.isBye).every((m) => m.status === 'COMPLETED');
@@ -89,8 +92,9 @@ export function RoundRobinView({
 
   const byRound: Record<number, BracketMatch[]> = {};
   matches.forEach((m) => {
-    if (!byRound[m.roundNumber]) byRound[m.roundNumber] = [];
-    byRound[m.roundNumber].push(m);
+    const round = getRoundRobinRoundInfo(m, matches).roundWithinLeg;
+    if (!byRound[round]) byRound[round] = [];
+    byRound[round].push(m);
   });
   const rounds = Object.keys(byRound)
     .map(Number)
@@ -107,7 +111,7 @@ export function RoundRobinView({
   };
   const visibleMatches = activeRound == null
     ? matches.filter((m) => !m.isBye)
-    : matches.filter((m) => !m.isBye && m.roundNumber === activeRound);
+    : matches.filter((m) => !m.isBye && getRoundRobinRoundInfo(m, matches).roundWithinLeg === activeRound);
 
   return (
     <div className="flex flex-col gap-8">
@@ -404,6 +408,7 @@ export function RoundRobinView({
                 .map((m) => {
                   const done = m.status === 'COMPLETED';
                   const live = m.status === 'ONGOING';
+                  const roundInfo = getRoundRobinRoundInfo(m, matches);
                   return (
                     <div
                       key={m.id}
@@ -423,7 +428,7 @@ export function RoundRobinView({
                       <div className="mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <span className="text-[8px] text-slate-400">#{m.matchOrder}</span>
-                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">{translate('legLabel', { number: m.roundNumber })}</span>
+                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">{translate('roundAndLeg', { leg: roundInfo.leg, round: roundInfo.roundWithinLeg })}</span>
                         </span>
                         {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> {translate('liveLabel')}</span>}
                       </div>

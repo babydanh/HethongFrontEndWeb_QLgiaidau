@@ -92,12 +92,34 @@ export function getRoundLabel(
  *
  * Returns both rankings and any unresolvable tie groups.
  */
+export interface StandingsScoring {
+  winPoints?: number;
+  drawPoints?: number;
+  lossPoints?: number;
+}
+
+export const getConfiguredStandingsScoring = (roundConfig?: Record<string, unknown> | null): StandingsScoring | undefined => {
+  const scoring = roundConfig?.scoring;
+  if (!scoring || typeof scoring !== 'object' || Array.isArray(scoring)) return undefined;
+  const values = scoring as Record<string, unknown>;
+  return {
+    winPoints: typeof values.winPoints === 'number' ? values.winPoints : undefined,
+    drawPoints: typeof values.drawPoints === 'number' ? values.drawPoints : undefined,
+    lossPoints: typeof values.lossPoints === 'number' ? values.lossPoints : undefined,
+  };
+};
+
 export function calculateStandings(
   matches: BracketMatch[],
   options?: {
     tiebreakerMode?: 'split' | 'playoff';
     football?: boolean;
     throughRound?: number;
+    scoring?: {
+      winPoints?: number;
+      drawPoints?: number;
+      lossPoints?: number;
+    };
   },
 ): { standings: StandingRow[]; ties: StandingRow[][] } {
   const map = new Map<string, StandingRow>();
@@ -148,19 +170,24 @@ export function calculateStandings(
     r2.pointsFor += parsed.p2PointsFor;
     r2.pointsAgainst += parsed.p1PointsFor;
 
+    const winPoints = options?.scoring?.winPoints ?? 3;
+    const drawPoints = options?.scoring?.drawPoints ?? 1;
+    const lossPoints = options?.scoring?.lossPoints ?? 0;
     if (m.winnerId === m.participant1.id) {
       r1.won++;
-      r1.points += 3;
+      r1.points += winPoints;
       r2.lost++;
+      r2.points += lossPoints;
     } else if (m.winnerId === m.participant2.id) {
       r2.won++;
-      r2.points += 3;
+      r2.points += winPoints;
       r1.lost++;
+      r1.points += lossPoints;
     } else {
       r1.draws++;
       r2.draws++;
-      r1.points++;
-      r2.points++;
+      r1.points += drawPoints;
+      r2.points += drawPoints;
     }
   });
 

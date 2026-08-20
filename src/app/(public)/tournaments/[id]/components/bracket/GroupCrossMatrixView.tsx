@@ -4,7 +4,8 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
-import { calculateStandings } from './helpers';
+import { calculateStandings, getConfiguredStandingsScoring } from './helpers';
+import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -16,6 +17,7 @@ interface Props {
   onLegChange?: (leg: number) => void;
   roundNavigation?: React.ReactNode;
   throughRound?: number | null;
+  roundConfig?: Record<string, unknown> | null;
 }
 
 export function GroupCrossMatrixView({ 
@@ -26,24 +28,23 @@ export function GroupCrossMatrixView({
   onLegChange,
   roundNavigation,
   throughRound = null,
+  roundConfig = null,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const displayGroupName = groupName ?? translate('defaultGroupName');
-  const { standings } = calculateStandings(matches, {
+  const activeLegMatches = matches.filter((match) => getRoundRobinRoundInfo(match, matches).leg === activeLeg);
+  const selectedMatches = throughRound == null
+    ? activeLegMatches
+    : activeLegMatches.filter((match) => getRoundRobinRoundInfo(match, matches).roundWithinLeg <= throughRound);
+  const { standings } = calculateStandings(selectedMatches, {
     tiebreakerMode: 'split',
-    throughRound: throughRound ?? undefined,
+    scoring: getConfiguredStandingsScoring(roundConfig),
   });
-
-  // Map participant index (1-based)
-  const participantMap = new Map(
-    standings.map((team, idx) => [team.participantId, idx + 1])
-  );
 
   // Quick lookup matrix: matchResult[p1Id][p2Id] = array of per-set score strings
   const scoreMatrix: Record<string, Record<string, string[]>> = {};
 
-  matches.forEach((m) => {
-    if (throughRound != null && m.roundNumber > throughRound) return;
+  selectedMatches.forEach((m) => {
     if (m.isBye || !m.participant1 || !m.participant2) return;
     const p1Id = m.participant1.id;
     const p2Id = m.participant2.id;
@@ -124,6 +125,7 @@ export function GroupCrossMatrixView({
             <tr>
               <th className="px-3 py-2.5 text-center w-10">{translate('rankHeader')}</th>
               <th className="px-4 py-2.5 text-left min-w-[180px]">{translate('participantsHeader')}</th>
+              <th className="px-3 py-2.5 text-center w-16 border-l border-slate-100">{translate('points')}</th>
               {standings.map((_, idx) => (
                 <th key={idx} className="px-3 py-2.5 text-center w-14 border-l border-slate-100">
                   {idx + 1}
@@ -144,6 +146,9 @@ export function GroupCrossMatrixView({
                   </td>
                   <td className="px-4 py-3 font-semibold text-slate-800">
                     {row.teamName}
+                  </td>
+                  <td className="px-3 py-3 text-center font-bold text-blue-600 border-l border-slate-100">
+                    {row.points}
                   </td>
                   {standings.map((otherRow) => {
                     const isSelf = row.participantId === otherRow.participantId;

@@ -307,7 +307,7 @@ const commonTranslate = useTranslations('Common');
       }
     };
     loadParentAndDivisions();
-  }, [searchParams, tournament]);
+  }, [searchParams, tournament?.id]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');

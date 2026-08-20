@@ -12,6 +12,7 @@ import {
   getRankTierName,
   getEloProgressInfo,
   getShieldStatus,
+  type EloProgressToNextLabel,
 } from '@/features/rankings/elo-display';
 import { getRankProgressInfo } from '@/utils/rank-style';
 
@@ -36,7 +37,8 @@ export default function HomepageEloProgressCard({
   const eloTranslate = useTranslations('EloDisplay');
   const eloLabels = {
     categoryFallback: eloTranslate('categoryFallback'),
-    progressToNext: eloTranslate('progressToNext'),
+    progressToNext: (({ remaining, nextName }: Parameters<EloProgressToNextLabel>[0]) =>
+      eloTranslate('progressToNext', { remaining, nextName })),
     progressPeak: eloTranslate('progressPeak'),
     onboardingShield: eloTranslate('onboardingShield'),
     shieldActive: eloTranslate('shieldActive'),

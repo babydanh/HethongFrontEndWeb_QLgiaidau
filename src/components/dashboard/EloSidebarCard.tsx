@@ -3,7 +3,7 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlayerRanking } from '@/features/rankings/api';
-import { getEloProgressInfo } from '@/features/rankings/elo-display';
+import { getEloProgressInfo, type EloProgressToNextLabel } from '@/features/rankings/elo-display';
 import { getRankStyle } from '@/utils/rank-style';
 
 const ELO_PER_STREAK_WIN = 15;
@@ -37,7 +37,8 @@ export default function EloSidebarCard({
   const eloTranslate = useTranslations('EloDisplay');
   const eloLabels = {
     categoryFallback: eloTranslate('categoryFallback'),
-    progressToNext: eloTranslate('progressToNext'),
+    progressToNext: (({ remaining, nextName }: Parameters<EloProgressToNextLabel>[0]) =>
+      eloTranslate('progressToNext', { remaining, nextName })),
     progressPeak: eloTranslate('progressPeak'),
   };
   const streak = activeRank?.winStreak ?? 0;

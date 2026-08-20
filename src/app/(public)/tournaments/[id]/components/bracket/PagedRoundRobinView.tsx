@@ -10,6 +10,7 @@ import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { buildMatchesByRound } from './helpers';
 import { RoundRobinView } from './RoundRobinView';
 import { GroupCrossMatrixView } from './GroupCrossMatrixView';
+import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
 
 interface Props {
   matches: BracketMatch[];
@@ -63,22 +64,24 @@ export function PagedRoundRobinView({
   }, [participantCount]);
 
   const legCount = useMemo(() => {
-    const maxRound = rounds[rounds.length - 1] ?? 0;
-    return Math.max(1, Math.ceil(maxRound / roundsPerLeg));
-  }, [rounds, roundsPerLeg]);
+    const persistedLegs = matches
+      .map((match) => match.leg)
+      .filter((leg): leg is number => typeof leg === 'number' && Number.isInteger(leg) && leg > 0);
+    const configuredLegs = Number(roundConfig?.roundsToPlay ?? roundConfig?.rounds_to_play ?? 0);
+    return Math.max(1, configuredLegs, ...persistedLegs, Math.ceil((rounds[rounds.length - 1] ?? 0) / roundsPerLeg));
+  }, [matches, roundConfig, rounds, roundsPerLeg]);
 
   // Use a derived clamped leg to prevent out-of-bounds rendering
   const currentLeg = Math.min(Math.max(activeLeg, 1), legCount);
 
-  const legRounds = useMemo(
-    () => rounds.filter((round) => Math.floor((round - 1) / roundsPerLeg) + 1 === currentLeg),
-    [currentLeg, rounds, roundsPerLeg],
-  );
   const legMatches = useMemo(
-    () => legRounds.flatMap((round) => byRound[round] ?? []),
-    [byRound, legRounds],
+    () => matches.filter((match) => getRoundRobinRoundInfo(match, matches).leg === currentLeg),
+    [currentLeg, matches],
   );
-
+  const legRounds = useMemo(
+    () => Array.from(new Set(legMatches.map((match) => getRoundRobinRoundInfo(match, matches).roundWithinLeg))).sort((a, b) => a - b),
+    [legMatches, matches],
+  );
   // Round numbers stay global across legs. Keep the cursor in the selected leg.
   const currentRound = activeRound != null && legRounds.includes(activeRound)
     ? activeRound
@@ -89,9 +92,7 @@ export function PagedRoundRobinView({
     setActiveLeg(clampedLeg);
     // Round numbers are global across legs. Move the round cursor with the
     // leg so the matrix never keeps rendering the previous leg's snapshot.
-    const firstRound = rounds.find(
-      (round) => Math.floor((round - 1) / roundsPerLeg) + 1 === clampedLeg,
-    );
+    const firstRound = legRoundsForNav[0];
     setActiveRound(firstRound ?? null);
   };
 
@@ -127,10 +128,6 @@ export function PagedRoundRobinView({
   const legRoundsForNav = legRounds;
   const canPrevRound = currentRound != null && legRoundsForNav.indexOf(currentRound) > 0;
   const canNextRound = currentRound != null && legRoundsForNav.indexOf(currentRound) < legRoundsForNav.length - 1;
-  const roundLabel = currentRound != null
-    ? translate('legProgress', { current: legRoundsForNav.indexOf(currentRound) + 1, total: legRoundsForNav.length })
-    : '';
-
   const roundNavigation = legRoundsForNav.length > 1 ? (
     <div className="flex items-center gap-1.5">
       <button
@@ -144,7 +141,7 @@ export function PagedRoundRobinView({
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      <span className="text-xs font-semibold text-slate-600 min-w-24 text-center">{translate('roundAndLeg', { round: currentRound ?? '-', progress: roundLabel })}</span>
+      <span className="text-xs font-semibold text-slate-600 min-w-24 text-center">{translate('roundAndLeg', { leg: currentLeg, round: currentRound ?? '-' })}</span>
       <button
         type="button"
         onClick={() => {
@@ -177,6 +174,7 @@ export function PagedRoundRobinView({
           onLegChange={changeLeg}
           roundNavigation={roundNavigation}
           throughRound={currentRound}
+          roundConfig={roundConfig as Record<string, unknown> | null | undefined}
         />
         {/* Match list — controlled by same activeRound */}
         <RoundRobinView

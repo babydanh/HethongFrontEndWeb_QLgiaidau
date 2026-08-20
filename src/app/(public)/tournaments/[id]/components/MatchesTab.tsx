@@ -11,9 +11,10 @@ import { Calendar, Play, Trophy, MapPin, Info, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
-import { buildRoundFilterOptions, getMatchRoundLabel } from '@/utils/match-round-label';
+import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo } from '@/utils/match-round-label';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getDivisionMatchLabel } from '@/utils/tournament-display';
+import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
 
 interface Props {
   tournament: Tournament;
@@ -30,6 +31,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const { openUserProfile } = useUserProfileModalStore();
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
+  const inlineDivision = divisionId
+    ? tournament.divisions?.find((division) => division.id === divisionId)
+    : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +43,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       });
       return () => { cancelled = true; };
     }
+
+    // Tournament detail already includes the selected division in normal public responses.
+    // Reuse it to avoid an extra request that can trigger the production proxy throttle.
+    if (inlineDivision) {
+      void Promise.resolve().then(() => {
+        if (!cancelled) setDisplayDivision(inlineDivision as unknown as Division);
+      });
+      return () => { cancelled = true; };
+    }
+
     void divisionsApi.getDivisions(effectiveTournamentId)
       .then((response) => {
         if (!cancelled) setDisplayDivision(response.data?.find((division) => division.id === divisionId) ?? null);
@@ -47,7 +61,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         if (!cancelled) setDisplayDivision(null);
       });
     return () => { cancelled = true; };
-  }, [divisionId, effectiveTournamentId]);
+  }, [divisionId, effectiveTournamentId, inlineDivision]);
 
   const displayMatchLabel = getDivisionMatchLabel(
     divisionId ? displayDivision?.matchType : tournament.matchType,
@@ -94,6 +108,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   );
   
   // States for filtering
+  const [selectedStageKey, setSelectedStageKey] = useState<string | 'ALL'>('ALL');
+  const [selectedLeg, setSelectedLeg] = useState<number | 'ALL'>('ALL');
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,8 +186,39 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     };
   }, [effectiveTournamentId, setMatches]);
 
-  // Extract unique rounds from current matches
+  const getMatchStageKey = (match: BracketMatch) => {
+    const stageName = match.group?.stage?.name?.trim();
+    return stageName || 'MAIN_STAGE';
+  };
+
+  const stageOptions = useMemo(() => {
+    const byStage = new Map<string, number>();
+    matches.forEach((match) => {
+      const key = getMatchStageKey(match);
+      byStage.set(key, (byStage.get(key) ?? 0) + 1);
+    });
+    return Array.from(byStage.entries()).map(([key, count]) => ({ key, count }));
+  }, [matches]);
+
+  const legOptions = useMemo(
+    () => Array.from(new Set(matches.map((match) => getRoundRobinRoundInfo(match, matches).leg)))
+      .filter((leg): leg is number => leg > 0)
+      .sort((a, b) => a - b),
+    [matches],
+  );
+
+  // Extract unique stage-aware rounds from current matches.
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
+  const visibleRoundOptions = useMemo(
+    () => roundOptions.filter((option) => matches.some((match) => {
+      const sameRound = match.roundNumber === option.roundNumber
+        && getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false }) === option.label;
+      const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
+      const sameLeg = selectedLeg === 'ALL' || getRoundRobinRoundInfo(match, matches).leg === selectedLeg;
+      return sameRound && sameStage && sameLeg;
+    })),
+    [matches, roundOptions, selectedStageKey, selectedLeg, tournament.format, bracketSize],
+  );
 
   const localizeMatchRoundLabel = (label: string) => label
     .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
@@ -217,13 +264,20 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // Filter matches based on selected states
   const filteredMatches = useMemo(() => {
     return matches.filter(m => {
-      // 1. Filter by round
+      // 1. Filter by stage
+      if (selectedStageKey !== 'ALL' && getMatchStageKey(m) !== selectedStageKey) return false;
+
+      // 2. Filter by configured leg
+      if (selectedLeg !== 'ALL' && getRoundRobinRoundInfo(m, matches).leg !== selectedLeg) return false;
+
+      // 3. Filter by internal round within the selected leg/stage
       if (selectedRoundKey !== 'ALL') {
         const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
         if (!selectedOption) return false;
 
         const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false });
-        if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label) {
+        const matchLeg = getRoundRobinRoundInfo(m, matches).leg;
+        if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label || (selectedOption.leg != null && matchLeg !== selectedOption.leg)) {
           return false;
         }
       }
@@ -270,7 +324,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
       return a.matchOrder - b.matchOrder;
     });
-  }, [matches, roundOptions, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize]);
+  }, [matches, roundOptions, selectedStageKey, selectedLeg, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize]);
+
+  const localizedLoadError = isHttpStatusError(error, 429)
+    ? (() => {
+        const retryAfterSeconds = getRetryAfterSeconds(error);
+        return retryAfterSeconds
+          ? matchTranslate('rateLimitRetryAfter', { seconds: retryAfterSeconds })
+          : matchTranslate('rateLimitHint');
+      })()
+    : getErrorMessage(error, matchTranslate('loadingError'), matchTranslate('loadingError'));
 
   // Count items for badges
   const counts = useMemo(() => {
@@ -417,18 +480,88 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           })}
         </div>
 
-        {/* Row 2: Round Slider */}
-        {roundOptions.length > 0 && (
+        {stageOptions.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('stageFilterLabel')}:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedStageKey('ALL');
+                setSelectedLeg('ALL');
+                setSelectedRoundKey('ALL');
+              }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedStageKey === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+            >
+              {matchTranslate('allStages')}
+            </button>
+            {stageOptions.map((stage) => {
+              const isActive = selectedStageKey === stage.key;
+              return (
+                <button
+                  type="button"
+                  key={stage.key}
+                  onClick={() => {
+                    setSelectedStageKey(stage.key);
+                    setSelectedLeg('ALL');
+                    setSelectedRoundKey('ALL');
+                  }}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+                >
+                  {getStageVietnameseName(stage.key)} <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>({stage.count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {legOptions.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('legsLabel')}:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedLeg('ALL');
+                setSelectedRoundKey('ALL');
+              }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedLeg === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+            >
+              {matchTranslate('allLegs')}
+            </button>
+            {legOptions.map((leg) => {
+              const isActive = selectedLeg === leg;
+              return (
+                <button
+                  type="button"
+                  key={leg}
+                  onClick={() => {
+                    setSelectedLeg(leg);
+                    setSelectedRoundKey('ALL');
+                  }}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+                >
+                  {matchTranslate('legNumber', { leg })}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Row 2: Internal round filter */}
+        {visibleRoundOptions.length > 0 && (
           <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
             <p className="text-[11px] font-medium text-slate-400">{matchTranslate('roundFilterHint')}</p>
-            {tournament.format === 'DOUBLE_ELIMINATION' || roundOptions.some((ro) => ro.branch === 'LOSERS') ? (
+            {tournament.format === 'DOUBLE_ELIMINATION' || visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') ? (
               <>
                 {/* Winners Row */}
                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('winnersLabel')}:</span>
 
                   <button
-                    onClick={() => setSelectedRoundKey('ALL')}
+                    onClick={() => {
+                    setSelectedStageKey('ALL');
+                    setSelectedLeg('ALL');
+                    setSelectedRoundKey('ALL');
+                  }}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                       selectedRoundKey === 'ALL'
                         ? 'bg-slate-900 text-white border-transparent'
@@ -437,7 +570,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                   >
                     {matchTranslate('allRounds')}
                   </button>
-                  {roundOptions
+                  {visibleRoundOptions
                     .filter((ro) => ro.branch !== 'LOSERS')
                     .map((roundOption) => {
                       const isActive = selectedRoundKey === roundOption.key;
@@ -461,10 +594,10 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 </div>
 
                 {/* Losers Row */}
-                {roundOptions.some((ro) => ro.branch === 'LOSERS') && (
+                {visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') && (
                   <div className="flex flex-wrap items-center gap-2 border-t border-slate-50 pt-2">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('losersLabel')}:</span>
-                    {roundOptions
+                    {visibleRoundOptions
                       .filter((ro) => ro.branch === 'LOSERS')
                       .map((roundOption) => {
                         const isActive = selectedRoundKey === roundOption.key;
@@ -493,7 +626,11 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('roundsLabel')}:</span>
                 <button
-                  onClick={() => setSelectedRoundKey('ALL')}
+                  onClick={() => {
+                    setSelectedStageKey('ALL');
+                    setSelectedLeg('ALL');
+                    setSelectedRoundKey('ALL');
+                  }}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                     selectedRoundKey === 'ALL'
                       ? 'bg-slate-900 text-white border-transparent'
@@ -502,7 +639,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 >
                   {matchTranslate('allRounds')}
                 </button>
-                {roundOptions.map((roundOption) => {
+                {visibleRoundOptions.map((roundOption) => {
                   const isActive = selectedRoundKey === roundOption.key;
                   return (
                     <button
@@ -529,7 +666,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
             {error && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
-          <span>{error.message || matchTranslate('loadingError')}</span>
+          <span>{localizedLoadError}</span>
           <button
             type="button"
             onClick={() => void resetAndFetch()}

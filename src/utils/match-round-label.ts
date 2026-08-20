@@ -1,6 +1,9 @@
+import type { StageRoundConfig } from '@/types/tournament';
+
 type RoundLabelStage = {
   name?: string | null;
   type?: string | null;
+  roundConfig?: StageRoundConfig | null;
 };
 
 type RoundLabelGroup = {
@@ -10,6 +13,9 @@ type RoundLabelGroup = {
 
 export type RoundLabelMatch = {
   roundNumber: number;
+  participant1Id?: string | null;
+  participant2Id?: string | null;
+  leg?: number | null;
   matchOrder?: number;
   bracketBranch?: string | null;
   group?: RoundLabelGroup;
@@ -36,9 +42,12 @@ export interface MatchRoundLabelOptions<TMatch extends RoundLabelMatch> {
 export interface RoundFilterOption {
   key: string;
   roundNumber: number;
+  internalRound: number;
+  leg?: number;
   label: string;
   count: number;
   branch?: 'WINNERS' | 'LOSERS' | 'OTHER';
+  stageKey?: string;
 }
 
 const KNOCKOUT_ROUND_LABELS: Record<number, string> = {
@@ -87,6 +96,68 @@ const isKnockoutStage = (stage?: RoundLabelStage | null, tournamentFormat?: Tour
 };
 
 const getStage = (match: RoundLabelMatch) => match.stage ?? match.group?.stage ?? null;
+
+const getRoundRobinScopeKey = (match: RoundLabelMatch) => {
+  const stage = getStage(match);
+  return `${normalizeText(stage?.type)}|${normalizeText(stage?.name)}|${normalizeText(match.group?.name)}`;
+};
+
+export interface RoundRobinRoundInfo {
+  leg: number;
+  roundWithinLeg: number;
+  roundsPerLeg: number;
+}
+
+/** Resolve the user-facing leg and round number for a Round Robin match. */
+export const getRoundRobinRoundInfo = <TMatch extends RoundLabelMatch>(
+  match: TMatch,
+  matches: TMatch[] = [],
+): RoundRobinRoundInfo => {
+  const scopeKey = getRoundRobinScopeKey(match);
+  const scopeMatches = matches.filter((candidate) => getRoundRobinScopeKey(candidate) === scopeKey);
+  const maxRound = Math.max(match.roundNumber, ...scopeMatches.map((candidate) => candidate.roundNumber));
+  const persistedLegs = scopeMatches
+    .map((candidate) => candidate.leg)
+    .filter((value): value is number => typeof value === 'number' && Number.isInteger(value) && value > 0);
+  const configuredLegCount = getStage(match)?.roundConfig?.roundsToPlay
+    ?? getStage(match)?.roundConfig?.rounds_to_play
+    ?? Math.max(1, ...persistedLegs, 1);
+  const participantIds = new Set(
+    scopeMatches.flatMap((candidate) => [candidate.participant1Id, candidate.participant2Id].filter((id): id is string => Boolean(id))),
+  );
+  const participantCount = participantIds.size;
+  const expectedRoundsPerLeg = participantCount > 1
+    ? participantCount % 2 === 0 ? participantCount - 1 : participantCount
+    : maxRound;
+  const hasGlobalRoundEncoding = configuredLegCount > 1
+    && maxRound >= expectedRoundsPerLeg * configuredLegCount;
+  const hasPersistedLeg = typeof match.leg === 'number' && Number.isInteger(match.leg) && match.leg > 0;
+  const canSplitLegacyRounds = persistedLegs.length > 0 || hasGlobalRoundEncoding;
+  const roundsPerLeg = canSplitLegacyRounds
+    ? Math.max(1, Math.ceil(maxRound / configuredLegCount))
+    : Math.max(1, maxRound);
+  const leg = hasPersistedLeg
+    ? match.leg as number
+    : canSplitLegacyRounds
+      ? Math.floor((match.roundNumber - 1) / roundsPerLeg) + 1
+      : 1;
+
+  return {
+    leg,
+    roundWithinLeg: canSplitLegacyRounds ? ((match.roundNumber - 1) % roundsPerLeg) + 1 : match.roundNumber,
+    roundsPerLeg,
+  };
+};
+
+const getRoundFilterIdentity = <TMatch extends RoundLabelMatch>(match: TMatch, matches: TMatch[]) => {
+  const stageKey = getComparableStageKey(match);
+  const isRoundRobin = isGroupOrRoundRobinStage(getStage(match));
+  if (!isRoundRobin) {
+    return { stageKey, leg: undefined, internalRound: match.roundNumber };
+  }
+  const info = getRoundRobinRoundInfo(match, matches);
+  return { stageKey, leg: info.leg, internalRound: info.roundWithinLeg };
+};
 
 const getPhasePrefix = (match: RoundLabelMatch, tournamentFormat?: TournamentFormatForRoundLabel) => {
   const stage = getStage(match);
@@ -217,12 +288,18 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
       ].includes(normalizeText(rawGroupName));
     const groupName = isGenericGroup ? null : rawGroupName;
 
+    const roundInfo = getRoundRobinRoundInfo(match, matches);
+    const allMatches = matches ?? [];
+    const roundLabel = roundInfo.leg > 1 || allMatches.some((candidate) => getRoundRobinRoundInfo(candidate, allMatches).leg > 1)
+      ? `Lượt ${roundInfo.leg} • Vòng ${roundInfo.roundWithinLeg}`
+      : `Vòng ${roundInfo.roundWithinLeg}`;
+
     if (!includePhasePrefix) {
-      return `Vòng ${match.roundNumber}`;
+      return roundLabel;
     }
 
     if (groupName) {
-      return `${groupName} • Vòng ${match.roundNumber}`;
+      return `${groupName} • ${roundLabel}`;
     }
 
     const groupLabel =
@@ -230,7 +307,7 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
       normalizeText(stage?.type) === 'GROUP_STAGE'
         ? 'Vòng bảng'
         : null;
-    return groupLabel ? `${groupLabel} • Vòng ${match.roundNumber}` : `Vòng ${match.roundNumber}`;
+    return groupLabel ? `${groupLabel} • ${roundLabel}` : roundLabel;
   }
 
   const knockoutLabel = getKnockoutRoundLabel(match, matches, bracketSize);
@@ -252,8 +329,8 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
     const branchType: RoundFilterOption['branch'] = branch === 'LOSERS' ? 'LOSERS' : (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL' ? 'OTHER' : 'WINNERS');
 
     // Group keys including bracket branch type to allow multi-row splitting
-    const stage = getStage(match);
-    const key = `${normalizeText(stage?.type)}|${normalizeText(stage?.name)}|${branchType}|${match.roundNumber}|${label}`;
+    const identity = getRoundFilterIdentity(match, matches);
+    const key = `${identity.stageKey}|${branchType}|${identity.leg ?? '-'}|${identity.internalRound}|${label}`;
     const current = optionMap.get(key);
 
     if (current) {
@@ -264,9 +341,12 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
     optionMap.set(key, {
       key,
       roundNumber: match.roundNumber,
+      internalRound: identity.internalRound,
+      ...(identity.leg !== undefined ? { leg: identity.leg } : {}),
       label,
       count: 1,
       branch: branchType,
+      stageKey: identity.stageKey,
     });
   });
 
@@ -290,7 +370,7 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
     if (priorityA !== priorityB) {
       return priorityA - priorityB;
     }
-    return a.roundNumber - b.roundNumber || a.label.localeCompare(b.label, 'vi');
+    return (a.leg ?? 0) - (b.leg ?? 0) || a.internalRound - b.internalRound || a.roundNumber - b.roundNumber || a.label.localeCompare(b.label, 'vi');
   });
 };
 

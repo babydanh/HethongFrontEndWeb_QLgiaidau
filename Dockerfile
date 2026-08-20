@@ -1,6 +1,5 @@
 FROM node:22-alpine AS base
 RUN npm install -g pnpm@9.15.4
-RUN pnpm config set package-import-method copy
 
 FROM base AS deps
 WORKDIR /app

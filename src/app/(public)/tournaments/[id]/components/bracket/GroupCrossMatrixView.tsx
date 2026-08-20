@@ -15,9 +15,9 @@ interface Props {
   activeLeg?: number;
   legCount?: number;
   onLegChange?: (leg: number) => void;
-  roundNavigation?: React.ReactNode;
   throughRound?: number | null;
   roundConfig?: Record<string, unknown> | null;
+  roundInfoMatches?: BracketMatch[];
 }
 
 export function GroupCrossMatrixView({ 
@@ -26,16 +26,17 @@ export function GroupCrossMatrixView({
   activeLeg = 1,
   legCount = 1,
   onLegChange,
-  roundNavigation,
   throughRound = null,
   roundConfig = null,
+  roundInfoMatches,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const displayGroupName = groupName ?? translate('defaultGroupName');
-  const activeLegMatches = matches.filter((match) => getRoundRobinRoundInfo(match, matches).leg === activeLeg);
+  const roundContextMatches = roundInfoMatches ?? matches;
+  const activeLegMatches = matches.filter((match) => getRoundRobinRoundInfo(match, roundContextMatches).leg === activeLeg);
   const selectedMatches = throughRound == null
     ? activeLegMatches
-    : activeLegMatches.filter((match) => getRoundRobinRoundInfo(match, matches).roundWithinLeg <= throughRound);
+    : activeLegMatches.filter((match) => getRoundRobinRoundInfo(match, roundContextMatches).roundWithinLeg <= throughRound);
   const { standings } = calculateStandings(selectedMatches, {
     tiebreakerMode: 'split',
     scoring: getConfiguredStandingsScoring(roundConfig),
@@ -93,7 +94,7 @@ export function GroupCrossMatrixView({
         <div className="font-bold text-sm text-slate-800">
           {displayGroupName}
         </div>
-        {legCount > 1 && onLegChange && (
+        {onLegChange && (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -116,7 +117,6 @@ export function GroupCrossMatrixView({
             </button>
           </div>
         )}
-        {roundNavigation}
       </div>
 
       <div className="overflow-x-auto">
@@ -125,7 +125,6 @@ export function GroupCrossMatrixView({
             <tr>
               <th className="px-3 py-2.5 text-center w-10">{translate('rankHeader')}</th>
               <th className="px-4 py-2.5 text-left min-w-[180px]">{translate('participantsHeader')}</th>
-              <th className="px-3 py-2.5 text-center w-16 border-l border-slate-100">{translate('points')}</th>
               {standings.map((_, idx) => (
                 <th key={idx} className="px-3 py-2.5 text-center w-14 border-l border-slate-100">
                   {idx + 1}
@@ -146,9 +145,6 @@ export function GroupCrossMatrixView({
                   </td>
                   <td className="px-4 py-3 font-semibold text-slate-800">
                     {row.teamName}
-                  </td>
-                  <td className="px-3 py-3 text-center font-bold text-blue-600 border-l border-slate-100">
-                    {row.points}
                   </td>
                   {standings.map((otherRow) => {
                     const isSelf = row.participantId === otherRow.participantId;

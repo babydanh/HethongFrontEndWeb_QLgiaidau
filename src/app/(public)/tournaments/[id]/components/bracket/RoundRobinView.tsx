@@ -45,8 +45,10 @@ interface Props {
   roundConfig?: StageRoundConfig | null;
   hideStandings?: boolean;
   // Controlled round navigation (from parent for sync with cross table)
-  activeRound?: number | null;
+    activeRound?: number | null;
   onRoundChange?: (round: number) => void;
+  roundInfoMatches?: BracketMatch[];
+
 }
 
 export function RoundRobinView({
@@ -60,10 +62,13 @@ export function RoundRobinView({
   fallbackSportRuleKind,
   roundConfig,
   hideStandings = false,
-  activeRound: controlledActiveRound,
+    activeRound: controlledActiveRound,
   onRoundChange,
+  roundInfoMatches,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const roundContextMatches = roundInfoMatches ?? matches;
+
   const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
   const effectiveRuleKind = sampleMatch
     ? resolveBracketMatchRules(sampleMatch, fallbackSportRuleKind).kind
@@ -92,7 +97,7 @@ export function RoundRobinView({
 
   const byRound: Record<number, BracketMatch[]> = {};
   matches.forEach((m) => {
-    const round = getRoundRobinRoundInfo(m, matches).roundWithinLeg;
+    const round = getRoundRobinRoundInfo(m, roundContextMatches).roundWithinLeg;
     if (!byRound[round]) byRound[round] = [];
     byRound[round].push(m);
   });
@@ -111,7 +116,7 @@ export function RoundRobinView({
   };
   const visibleMatches = activeRound == null
     ? matches.filter((m) => !m.isBye)
-    : matches.filter((m) => !m.isBye && getRoundRobinRoundInfo(m, matches).roundWithinLeg === activeRound);
+    : matches.filter((m) => !m.isBye && getRoundRobinRoundInfo(m, roundContextMatches).roundWithinLeg === activeRound);
 
   return (
     <div className="flex flex-col gap-8">
@@ -408,7 +413,7 @@ export function RoundRobinView({
                 .map((m) => {
                   const done = m.status === 'COMPLETED';
                   const live = m.status === 'ONGOING';
-                  const roundInfo = getRoundRobinRoundInfo(m, matches);
+                  const roundInfo = getRoundRobinRoundInfo(m, roundContextMatches);
                   return (
                     <div
                       key={m.id}

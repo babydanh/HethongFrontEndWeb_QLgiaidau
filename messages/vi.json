@@ -3195,7 +3195,7 @@
     },
     "crossTable": "Bảng chéo",
     "standingsTable": "Bảng xếp hạng",
-    "legProgress": "{current} / {total}",
+    "legProgress": "Lượt {current} / {total}",
     "roundAndLeg": "Lượt {leg} · Vòng {round}",
     "resultsAcrossLegs": "Tổng hợp kết quả {count} lượt thi đấu",
     "resultsSummary": "Tổng hợp kết quả",

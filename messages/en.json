@@ -3195,7 +3195,7 @@
     },
     "crossTable": "Cross table",
     "standingsTable": "Standings",
-    "legProgress": "{current} / {total}",
+    "legProgress": "Leg {current} / {total}",
     "roundAndLeg": "Leg {leg} · Round {round}",
     "resultsAcrossLegs": "Results across {count} legs",
     "resultsSummary": "Results summary",

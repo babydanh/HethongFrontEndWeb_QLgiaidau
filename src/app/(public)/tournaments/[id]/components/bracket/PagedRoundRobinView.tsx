@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { TableProperties } from 'lucide-react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
@@ -89,11 +88,13 @@ export function PagedRoundRobinView({
 
   const changeLeg = (nextLeg: number) => {
     const clampedLeg = Math.min(Math.max(nextLeg, 1), legCount);
+    const nextLegRounds = Array.from(new Set(
+      matches
+        .filter((match) => getRoundRobinRoundInfo(match, matches).leg === clampedLeg)
+        .map((match) => getRoundRobinRoundInfo(match, matches).roundWithinLeg),
+    )).sort((a, b) => a - b);
     setActiveLeg(clampedLeg);
-    // Round numbers are global across legs. Move the round cursor with the
-    // leg so the matrix never keeps rendering the previous leg's snapshot.
-    const firstRound = legRoundsForNav[0];
-    setActiveRound(firstRound ?? null);
+    setActiveRound(nextLegRounds[0] ?? null);
   };
 
   const viewButtons = (exclude: 'matrix' | 'table') => (
@@ -124,38 +125,6 @@ export function PagedRoundRobinView({
   // dropping teams that have a BYE or play later in the leg.
   const cumulativeMatches = legMatches;
 
-  // Round nav helpers
-  const legRoundsForNav = legRounds;
-  const canPrevRound = currentRound != null && legRoundsForNav.indexOf(currentRound) > 0;
-  const canNextRound = currentRound != null && legRoundsForNav.indexOf(currentRound) < legRoundsForNav.length - 1;
-  const roundNavigation = legRoundsForNav.length > 1 ? (
-    <div className="flex items-center gap-1.5">
-      <button
-        type="button"
-        onClick={() => {
-          const idx = legRoundsForNav.indexOf(currentRound!);
-          if (idx > 0) setActiveRound(legRoundsForNav[idx - 1]);
-        }}
-        disabled={!canPrevRound}
-        className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-      <span className="text-xs font-semibold text-slate-600 min-w-24 text-center">{translate('roundAndLeg', { leg: currentLeg, round: currentRound ?? '-' })}</span>
-      <button
-        type="button"
-        onClick={() => {
-          const idx = legRoundsForNav.indexOf(currentRound!);
-          if (idx < legRoundsForNav.length - 1) setActiveRound(legRoundsForNav[idx + 1]);
-        }}
-        disabled={!canNextRound}
-        className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-    </div>
-  ) : null;
-
   if (subView === 'matrix') {
     return (
       <div className="flex flex-col gap-4 animate-in fade-in duration-200">
@@ -168,17 +137,18 @@ export function PagedRoundRobinView({
         {/* Cross matrix — navigated per round, shows cumulative scores */}
         <GroupCrossMatrixView
           matches={cumulativeMatches}
-          groupName={legCount > 1 ? translate('crossTableLeg', { number: currentLeg }) : translate('crossTable')}
+          groupName={translate('crossTable')}
           activeLeg={currentLeg}
           legCount={legCount}
           onLegChange={changeLeg}
-          roundNavigation={roundNavigation}
           throughRound={currentRound}
           roundConfig={roundConfig as Record<string, unknown> | null | undefined}
+          roundInfoMatches={matches}
         />
         {/* Match list — controlled by same activeRound */}
         <RoundRobinView
           matches={legMatches}
+          roundInfoMatches={matches}
           onScheduleMatch={onScheduleMatch}
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}

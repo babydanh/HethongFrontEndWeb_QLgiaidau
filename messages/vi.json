@@ -2884,6 +2884,7 @@
     "scheduleVenueTime": "Xếp Sân & Giờ",
     "bracketTrayTitle": "Khu vực giữ tạm",
     "bracketTrayEmpty": "Có thể kéo participant vào đây để sắp xếp lại.",
+    "bracketDragParticipant": "Kéo để thay đổi vị trí",
     "win": "Thắng",
     "draw": "Hòa",
     "loss": "Thua",

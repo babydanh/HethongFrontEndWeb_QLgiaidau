@@ -73,11 +73,6 @@ function TrayParticipant({
       aria-label={translate('bracketDragParticipant')}
     >
       <span className="block truncate text-xs font-bold text-slate-800">{participant.teamName}</span>
-      {participant.seed != null && (
-        <span className="mt-0.5 block text-[10px] font-semibold text-slate-400">
-          {translate('seedLabel', { seed: participant.seed })}
-        </span>
-      )}
     </button>
   );
 }
@@ -623,6 +618,7 @@ export default function BracketTab({
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
+                    dragHandlers={dragHandlers}
                   />
                 ) : (
                   <DoubleElimView
@@ -634,6 +630,7 @@ export default function BracketTab({
                     onSelectMatch={onSelectMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     panEnabled={effectiveViewMode === 'full'}
+                    dragHandlers={dragHandlers}
                   />
                 );
               })()}

@@ -2884,6 +2884,7 @@
     "scheduleVenueTime": "Set court & time",
     "bracketTrayTitle": "Temporary holding area",
     "bracketTrayEmpty": "Drag a participant here while rearranging the bracket.",
+    "bracketDragParticipant": "Drag to change position",
     "win": "Win",
     "draw": "Draw",
     "loss": "Loss",

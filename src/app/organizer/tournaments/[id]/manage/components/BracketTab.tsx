@@ -2,6 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import React, { useState, useMemo } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Settings, ChevronDown, ChevronRight, Save, Trophy, LayoutGrid, Users, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
@@ -19,6 +28,13 @@ import { normalizeSportRuleKindForCategory } from '@/features/tournaments/sport-
 import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
 import type { Category } from '@/features/categories/api';
+import type {
+  BracketDragHandlers,
+  BracketDragSource,
+  BracketParticipant,
+  BracketSlot,
+} from '@/app/(public)/tournaments/[id]/components/bracket/types';
+import { isBracketMatchDragLocked } from '@/app/(public)/tournaments/[id]/components/bracket/match-status';
 
 interface BracketTabProps {
   tournament: Tournament;
@@ -311,7 +327,112 @@ export function BracketTab({
   const gsHasPlayoffStage = gsStages.some(s => s.type === 'SINGLE_ELIMINATION' || s.type === 'DOUBLE_ELIMINATION');
   const [gsActiveTab, setGsActiveTab] = useState<'group' | 'playoff'>('group');
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
+  const [trayParticipants, setTrayParticipants] = useState<BracketParticipant[]>([]);
+  const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
+  const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
+
+  type BracketDropTarget = Parameters<NonNullable<BracketDragHandlers['onParticipantDrop']>>[1];
+
+  const findBracketMatch = (matchId: string): BracketMatch | null => {
+    for (const stage of bracket?.stages ?? []) {
+      for (const group of stage.groups ?? []) {
+        const match = group.matches.find((candidate) => candidate.id === matchId);
+        if (match) return match;
+      }
+    }
+    return null;
+  };
+
+  const getCurrentSlotParticipant = (matchId: string, slot: BracketSlot): BracketParticipant | null => {
+    const key = `${matchId}:${slot}`;
+    if (Object.prototype.hasOwnProperty.call(participantOverrides, key)) {
+      return participantOverrides[key] ?? null;
+    }
+    const match = findBracketMatch(matchId);
+    return match?.[slot] ?? null;
+  };
+
+  const isBracketDropTarget = (value: unknown): value is BracketDropTarget => {
+    if (!value || typeof value !== 'object') return false;
+    const candidate = value as Record<string, unknown>;
+    if (candidate.type === 'tray') return true;
+    return candidate.type === 'slot'
+      && typeof candidate.matchId === 'string'
+      && (candidate.slot === 'participant1' || candidate.slot === 'participant2');
+  };
+
+  const handleBracketParticipantDrop = (source: BracketDragSource, target: BracketDropTarget) => {
+    if (source.type === 'slot' && source.matchId) {
+      const sourceMatch = findBracketMatch(source.matchId);
+      if (sourceMatch && isBracketMatchDragLocked(sourceMatch)) return;
+    }
+
+    if (target.type === 'slot') {
+      const targetMatch = findBracketMatch(target.matchId);
+      if (targetMatch && isBracketMatchDragLocked(targetMatch)) return;
+    }
+
+    if (target.type === 'tray') {
+      if (source.type !== 'slot' || !source.matchId || !source.slot) return;
+      setParticipantOverrides((previous) => ({
+        ...previous,
+        [`${source.matchId}:${source.slot}`]: null,
+      }));
+      setTrayParticipants((previous) => (
+        previous.some((participant) => participant.id === source.participant.id)
+          ? previous
+          : [...previous, source.participant]
+      ));
+      return;
+    }
+
+    const targetKey = `${target.matchId}:${target.slot}`;
+    const sourceKey = source.type === 'slot' && source.matchId && source.slot
+      ? `${source.matchId}:${source.slot}`
+      : null;
+    if (sourceKey === targetKey) return;
+
+    const currentOccupant = getCurrentSlotParticipant(target.matchId, target.slot);
+    setParticipantOverrides((previous) => ({
+      ...previous,
+      [targetKey]: source.participant,
+      ...(sourceKey ? { [sourceKey]: currentOccupant } : {}),
+    }));
+
+    setTrayParticipants((previous) => {
+      const withoutSource = source.type === 'tray'
+        ? previous.filter((participant) => participant.id !== source.participant.id)
+        : previous;
+      if (!currentOccupant || source.type !== 'tray' || currentOccupant.id === source.participant.id) {
+        return withoutSource;
+      }
+      return withoutSource.some((participant) => participant.id === currentOccupant.id)
+        ? withoutSource
+        : [...withoutSource, currentOccupant];
+    });
+  };
+
+  const handleBracketDragStart = (event: DragStartEvent) => {
+    const source = (event.active.data.current as { source?: BracketDragSource } | undefined)?.source;
+    setActiveDragSource(source ?? null);
+  };
+
+  const handleBracketDragEnd = (event: DragEndEvent) => {
+    setActiveDragSource(null);
+    const source = (event.active.data.current as { source?: BracketDragSource } | undefined)?.source;
+    const target = (event.over?.data.current as { target?: unknown } | undefined)?.target;
+    if (!source || !isBracketDropTarget(target)) return;
+    handleBracketParticipantDrop(source, target);
+  };
+
+  const bracketDragHandlers: BracketDragHandlers = {
+    enabled: hasBracket,
+    trayParticipants,
+    participantOverrides,
+    onParticipantDrop: handleBracketParticipantDrop,
+  };
   const isTournamentCompleted = tournament.status === 'COMPLETED';
   const canResetBracket = hasBracket && !isTournamentCompleted;
   const gskAdvancingTotal = Math.max(0, numGroups) * Math.max(0, teamsAdvancing);
@@ -1153,15 +1274,32 @@ export function BracketTab({
               )}
             </div>
           ) : (
-            <PublicBracketTab
-              tournament={tournament}
-              divisionId={selectedDivisionId || undefined}
-              onScheduleMatch={handleOpenScheduling}
-              tiebreakerMode={tiebreakerMode}
-              selectedMatchId={selectedMatchId}
-              onSelectMatch={onSelectMatch}
-              knockoutOnly
-            />
+            <DndContext
+              sensors={sensors}
+              onDragStart={handleBracketDragStart}
+              onDragEnd={handleBracketDragEnd}
+              onDragCancel={() => setActiveDragSource(null)}
+            >
+              <PublicBracketTab
+                tournament={tournament}
+                divisionId={selectedDivisionId || undefined}
+                onScheduleMatch={handleOpenScheduling}
+                tiebreakerMode={tiebreakerMode}
+                selectedMatchId={selectedMatchId}
+                onSelectMatch={onSelectMatch}
+                knockoutOnly
+                dragHandlers={bracketDragHandlers}
+              />
+              <DragOverlay>
+                {activeDragSource ? (
+                  <div className="rounded-lg border border-blue-400 bg-white px-3 py-2 shadow-lg ring-2 ring-blue-200 opacity-90">
+                    <span className="text-xs font-bold text-slate-800">
+                      {activeDragSource.participant.teamName}
+                    </span>
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           )}
         </div>
       )}

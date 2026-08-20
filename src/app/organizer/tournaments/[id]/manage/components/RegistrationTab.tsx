@@ -900,11 +900,11 @@ export function RegistrationTab({
             <table className="min-w-full divide-y divide-slate-100">
               <thead>
                 <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  <th className="min-w-[180px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
-                  <th className="min-w-[200px] pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
-                  <th className="min-w-[110px] pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
-                  <th className="min-w-[130px] pb-3 pr-4">{registrationTranslate('paymentHeader')}</th>
-                  <th className="min-w-[220px] pb-3 text-right">{registrationTranslate('actionsHeader')}</th>
+                  <th className="min-w-[160px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
+                  <th className="min-w-[180px] pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
+                  <th className="min-w-[100px] pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
+                  <th className="min-w-[120px] pb-3 pr-4">{registrationTranslate('paymentHeader')}</th>
+                  <th className="min-w-[140px] pb-3 text-right">{registrationTranslate('actionsHeader')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

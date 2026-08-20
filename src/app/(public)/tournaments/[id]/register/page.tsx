@@ -995,6 +995,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     inviteCode={inviteCode}
                     divisionId={selectedDivisionId || undefined}
                     customResponses={customResponses}
+                    registrationFields={registrationFields}
                   />
                 ) : isRegistered && participant ? (
                   <div className="space-y-6 animate-in fade-in duration-300">

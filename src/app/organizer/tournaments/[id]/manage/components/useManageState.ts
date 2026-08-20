@@ -92,6 +92,8 @@ export function useManageState(id: string) {
   const [courts, setCourts] = useState<Court[]>([]);
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
   const [matchCameraId, setMatchCameraId] = useState<string>('');
+  const divisionListRequestRef = useRef(0);
+  const divisionDataRequestRef = useRef(0);
 
   const fetchCameras = useCallback(async () => {
     if (!id) return;
@@ -311,19 +313,24 @@ export function useManageState(id: string) {
 
   const refetchDivisionData = useCallback(async () => {
     if (!selectedDivisionId) return;
+    const requestId = ++divisionDataRequestRef.current;
+    const divisionId = selectedDivisionId;
     try {
       const [pRes, bRes] = await Promise.all([
-        tournamentsApi.getOrganizerTournamentParticipants(id, selectedDivisionId),
-        tournamentsApi.getTournamentBracket(id, selectedDivisionId),
+        tournamentsApi.getOrganizerTournamentParticipants(id, divisionId),
+        tournamentsApi.getTournamentBracket(id, divisionId),
       ]);
+      if (requestId !== divisionDataRequestRef.current || divisionId !== selectedDivisionId) return;
       if (pRes.data) setParticipants(pRes.data);
       setBracket(bRes.data || null);
-    } catch { /* silent */ }
+    } catch { /* Preserve the last successful division snapshot on transient errors. */ }
   }, [id, selectedDivisionId]);
 
   const fetchDivisions = useCallback(async (tournamentId: string) => {
+    const requestId = ++divisionListRequestRef.current;
     try {
       const r = await divisionsApi.getDivisions(tournamentId);
+      if (requestId !== divisionListRequestRef.current) return;
       if (r.data && Array.isArray(r.data)) {
         setDivisions(r.data);
         setSelectedDivisionId(prev => {
@@ -332,8 +339,13 @@ export function useManageState(id: string) {
           if (reqDiv && r.data.some(d => d.id === reqDiv)) return reqDiv;
           return r.data.some(d => d.id === prev) ? prev : r.data[0].id;
         });
-      } else { setDivisions([]); setSelectedDivisionId(''); }
-    } catch { setDivisions([]); setSelectedDivisionId(''); }
+      } else {
+        setDivisions([]);
+        setSelectedDivisionId('');
+      }
+    } catch {
+      // Keep the last successful division list visible when the API is rate-limited.
+    }
   }, [searchParams]);
 
   const fetchVenueCourts = async (vId: string) => {
@@ -1478,7 +1490,6 @@ export function useManageState(id: string) {
       setIsLoading(true);
       const t = await fetchTournamentData();
       if (t?.id) {
-        await fetchDivisions(t.id);
         try {
           const [vRes, cRes, fRes, pList] = await Promise.all([venuesApi.getVenues(), categoriesApi.getCategories(), tournamentsApi.getFeesConfig(), regionsApi.getProvinces()]);
           if (vRes.data) setVenues(vRes.data);
@@ -1510,7 +1521,7 @@ export function useManageState(id: string) {
     void Promise.resolve().then(() => {
       void init();
     });
-  }, [fetchDivisions, fetchTournamentData]);
+  }, [fetchCameras, fetchDivisions, fetchTournamentData]);
 
   // Restore an unfinished form once the canonical server values are loaded.
   useEffect(() => {
@@ -1583,10 +1594,12 @@ export function useManageState(id: string) {
       ? resolvedWithTournamentMode
       : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     applyResolvedRuleState(effectiveRules);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournament?.id, categoryId]);
 
+  // Division selection hydrates the form and refreshes its data intentionally.
   useEffect(() => {
     if (!selectedDivisionId) {
       currentDivisionIdRef.current = '';
@@ -1597,6 +1610,7 @@ export function useManageState(id: string) {
       currentDivisionIdRef.current = selectedDivisionId;
       const selected = divisions.find((d) => d.id === selectedDivisionId);
       if (selected) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         applyDivisionFormValues(selected);
       }
     }
@@ -1605,12 +1619,7 @@ export function useManageState(id: string) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDivisionId]);
 
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      void fetchDivisions(id);
-    });
-  }, [fetchDivisions, id]);
-
+  // Province changes intentionally refresh the dependent ward list.
   useEffect(() => {
     if (provinceCode) {
       void regionsApi.getWardsByProvince(provinceCode).then(setWards).catch(() => {});

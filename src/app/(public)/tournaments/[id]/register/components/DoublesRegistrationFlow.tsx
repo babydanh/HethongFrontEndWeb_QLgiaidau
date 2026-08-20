@@ -24,6 +24,9 @@ import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { getRegistrationModeUi } from '../../../registrationMode';
 import ShareModal from '@/components/common/ShareModal';
+import { socketClient } from '@/lib/socket';
+import { validateRegistrationResponses } from './RegistrationCustomFields';
+import type { RegistrationField } from '@/features/tournaments/registration-form';
 
 interface Props {
   tournament: Tournament;
@@ -31,6 +34,7 @@ interface Props {
   inviteCode?: string;
   divisionId?: string;
   customResponses?: Record<string, unknown>;
+  registrationFields?: RegistrationField[];
 }
 
 type RegistrationParticipant = TournamentParticipant & {
@@ -55,7 +59,14 @@ const normalizeRegistrationParticipant = (
   };
 };
 
-export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId, customResponses }: Props) {
+export default function DoublesRegistrationFlow({
+  tournament,
+  tournamentId,
+  inviteCode,
+  divisionId,
+  customResponses,
+  registrationFields,
+}: Props) {
   const router = useRouter();
   const registrationTranslate = useTranslations('RegistrationMode');
   const doublesTranslate = useTranslations('DoublesRegistration');
@@ -117,7 +128,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     updateCountdown();
     const intervalId = setInterval(updateCountdown, 1000);
     return () => clearInterval(intervalId);
-  }, [step, participant?.partnerInviteExpiresAt, tournamentId, divisionId]);
+  }, [step, participant?.partnerInviteExpiresAt, tournamentId, divisionId, doublesTranslate, registrationTranslate]);
 
   // Check if user already has an active registration when component mounts
   useEffect(() => {
@@ -191,7 +202,58 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [step, participant?.id, tournamentId, isPolling, divisionId]);
+  }, [step, participant?.id, tournamentId, isPolling, divisionId, doublesTranslate]);
+
+  // Realtime Socket listener for partner joining/accepting
+  useEffect(() => {
+    if (step !== 2 || !tournamentId) return;
+
+    const socket = socketClient.getMatchSocket();
+    const joinTournamentRoom = () => socket.emit('joinTournament', tournamentId);
+
+    const handleRegistrationUpdate = (raw: unknown) => {
+      let payload: { tournamentId?: string; action?: string; divisionId?: string } | null = null;
+      try {
+        payload = typeof raw === 'string' ? JSON.parse(raw) as { tournamentId?: string; action?: string; divisionId?: string } : raw as { tournamentId?: string; action?: string; divisionId?: string };
+      } catch {
+        return;
+      }
+      if (payload?.tournamentId && payload.tournamentId !== tournamentId) return;
+      if (payload?.divisionId && divisionId && payload.divisionId !== divisionId) return;
+
+      void tournamentsApi.getMyRegistration(tournamentId, divisionId).then((res) => {
+        if (res.data?.registered && res.data.participant) {
+          const part = normalizeRegistrationParticipant(res.data.participant, undefined, res.data.paymentEligible);
+          if (!part) return;
+          if (isParticipantReadyForNextStep(part.teamStatus)) {
+            setParticipant(part);
+            setStep(3);
+            toast.success(doublesTranslate('partnerJoined'), { id: 'partner-joined' });
+          } else if (part.teamStatus === 'EXPIRED' || part.teamStatus === 'REJECTED' || part.teamStatus === 'WITHDRAWN') {
+            setParticipant(null);
+            setStep(1);
+            toast.error(
+              part.teamStatus === 'REJECTED' ? doublesTranslate('partnerRejected') :
+              part.teamStatus === 'WITHDRAWN' ? doublesTranslate('teamWithdrawn') :
+              doublesTranslate('inviteExpired'),
+              { id: 'partner-rejected' }
+            );
+          }
+        }
+      });
+    };
+
+    socket.on('connect', joinTournamentRoom);
+    socket.on('registration:update', handleRegistrationUpdate);
+    if (!socket.connected) socket.connect();
+    else joinTournamentRoom();
+
+    return () => {
+      socket.off('connect', joinTournamentRoom);
+      socket.off('registration:update', handleRegistrationUpdate);
+      socket.emit('leaveTournament', tournamentId);
+    };
+  }, [step, tournamentId, divisionId, doublesTranslate]);
 
   const handleSearchPartner = async () => {
     const q = trimAndNormalizeSpaces(partnerQuery);
@@ -224,6 +286,14 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     if (cleanName.length < 3) {
       toast.error(registrationTranslate('teamNameMinLength'));
       return;
+    }
+
+    if (registrationFields && registrationFields.length > 0) {
+      const customError = validateRegistrationResponses(registrationFields, customResponses ?? {}, registrationTranslate);
+      if (customError) {
+        toast.error(customError);
+        return;
+      }
     }
 
     if (!inviteLater && !searchedPartner) {

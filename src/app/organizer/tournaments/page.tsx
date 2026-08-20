@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
@@ -69,54 +69,68 @@ export default function MyTournamentsPage() {
   const locale = useLocale();
   const [parents, setParents] = useState<ParentWithDivisions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const parentsRef = useRef<ParentWithDivisions[]>([]);
+  const listRequestRef = useRef<Promise<void> | null>(null);
+  const divisionCacheRef = useRef(new Map<string, Tournament[]>());
 
-  const fetchTournaments = async () => {
-    try {
-      setIsLoading(true);
-      // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều nội dung thi đấu
-      const res = await tournamentsApi.getMyParentTournaments();
-      let parentsWithDivisions: ParentWithDivisions[] = [];
+  const fetchTournaments = useCallback(async () => {
+    if (listRequestRef.current) return listRequestRef.current;
 
-      if (res.data) {
-        parentsWithDivisions = await Promise.all(
-          res.data.map(async (p: { id: string }) => {
-            const detail = await tournamentsApi.getParentTournamentById(p.id);
-            return detail.data;
-          })
-        );
-      }
+    const request = (async () => {
+      try {
+        setIsLoading(true);
+        // Parent detail already contains its divisions; keep this fan-out limited
+        // to parent records and never clear a previously rendered snapshot on error.
+        const res = await tournamentsApi.getMyParentTournaments();
+        let parentsWithDivisions: ParentWithDivisions[] = [];
 
-      // Fetch older standalone tournaments to prevent data loss
-      const oldRes = await tournamentsApi.getMyTournaments();
-      if (oldRes.data) {
-        const standaloneTournaments = oldRes.data.filter(t => !t.parentId);
-        const pseudoParents = await Promise.all(
-          standaloneTournaments.map(async (t) => {
-            let divisionsList: Tournament[] = [];
-            try {
-              const divRes = await divisionsApi.getDivisions(t.id);
-              if (divRes.data) {
-                divisionsList = divRes.data.map((div) => ({
-                  ...div,
-                  tournamentConfig: {
-                    bracketType: div.bracketType || undefined,
-                    roundConfig: div.roundConfig || undefined,
-                  },
-                  format: div.bracketType || '',
-                  currency: 'VND',
-                  organizerId: t.organizerId || '',
-                })) as unknown as Tournament[];
-              }
-            } catch (err) {
-              console.error(`Failed to fetch divisions for tournament ${t.id}:`, err);
-            }
+        if (res.data) {
+          const parentDetails = await Promise.allSettled(
+            res.data.map(async (p: { id: string }) => {
+              const detail = await tournamentsApi.getParentTournamentById(p.id);
+              return detail.data;
+            }),
+          );
+          parentsWithDivisions = parentDetails.flatMap((result) =>
+            result.status === 'fulfilled' && result.value ? [result.value] : [],
+          );
+        }
 
-            // Fallback to the tournament itself if no divisions are found to preserve compatibility
+        // Fetch older standalone tournaments sequentially. This avoids a burst of
+        // /divisions requests when an organizer owns many legacy tournaments.
+        const oldRes = await tournamentsApi.getMyTournaments();
+        if (oldRes.data) {
+          const standaloneTournaments = oldRes.data.filter(t => !t.parentId);
+          const pseudoParents: ParentWithDivisions[] = [];
+
+          for (const t of standaloneTournaments) {
+            let divisionsList = divisionCacheRef.current.get(t.id) ?? [];
             if (divisionsList.length === 0) {
-              divisionsList = [t];
+              try {
+                const divRes = await divisionsApi.getDivisions(t.id);
+                if (Array.isArray(divRes.data) && divRes.data.length > 0) {
+                  divisionsList = divRes.data.map((div) => ({
+                    ...div,
+                    tournamentConfig: {
+                      bracketType: div.bracketType || undefined,
+                      roundConfig: div.roundConfig || undefined,
+                    },
+                    format: div.bracketType || '',
+                    currency: 'VND',
+                    organizerId: t.organizerId || '',
+                  })) as unknown as Tournament[];
+                  divisionCacheRef.current.set(t.id, divisionsList);
+                }
+              } catch (err) {
+                console.error(`Failed to fetch divisions for tournament ${t.id}:`, err);
+              }
             }
 
-            return {
+            // Keep the tournament card usable even when its optional division
+            // enrichment is rate-limited or temporarily unavailable.
+            if (divisionsList.length === 0) divisionsList = [t];
+
+            pseudoParents.push({
               id: t.id,
               name: t.name,
               description: t.description,
@@ -125,25 +139,32 @@ export default function MyTournamentsPage() {
               divisions: divisionsList,
               isStandalone: true,
               status: t.status,
-            };
-          })
-        );
-        parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
-      }
+            });
+          }
+          parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
+        }
 
-      setParents(parentsWithDivisions);
-    } catch (err) {
-      toast.error(translate('loadError'));
+        parentsRef.current = parentsWithDivisions;
+        setParents(parentsWithDivisions);
+      } catch (err) {
+        // Keep the last successful cards visible during transient 429/network errors.
+        if (parentsRef.current.length === 0) toast.error(translate('loadError'));
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+
+    listRequestRef.current = request;
+    try {
+      await request;
     } finally {
-      setIsLoading(false);
+      if (listRequestRef.current === request) listRequestRef.current = null;
     }
-  };
+  }, [translate]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      void fetchTournaments();
-    });
-  }, []);
+    void fetchTournaments();
+  }, [fetchTournaments]);
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
     e.preventDefault();
@@ -191,7 +212,7 @@ export default function MyTournamentsPage() {
     })}</Badge>;
   };
 
-  if (isLoading) {
+  if (isLoading && parents.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">

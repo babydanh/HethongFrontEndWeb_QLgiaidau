@@ -296,7 +296,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   >
                     <button 
                       type="button" 
-                      onClick={() => { s.setSelectedDivisionId(div.id); s.applyDivisionFormValues(div); }}
+                      onClick={() => s.setSelectedDivisionId(div.id)}
                       className="flex items-start gap-2.5 p-2.5 text-left cursor-pointer flex-1 min-w-0"
                       title={translate('divisions.cardClickTitle')}
                     >

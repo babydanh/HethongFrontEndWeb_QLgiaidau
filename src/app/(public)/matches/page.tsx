@@ -197,15 +197,29 @@ const getBracketTypeLabel = (type?: string, labels?: { singleElimination?: strin
   return type;
 };
 
+const normalizeMatchType = (match: EnrichedMatch): 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES' | 'OPEN' => {
+  const rawType = String(match.tournament?.matchType || '').toUpperCase();
+  if (rawType === 'SINGLES' || rawType === 'DOUBLES' || rawType === 'MIXED_DOUBLES') {
+    return rawType;
+  }
+
+  const name = (match.tournament?.name || '').toLowerCase();
+  if (name.includes('đơn') || name.includes('singles')) return 'SINGLES';
+  if (name.includes('đôi nam nữ') || name.includes('mixed doubles') || name.includes('mixed')) return 'MIXED_DOUBLES';
+  if (name.includes('đôi') || name.includes('doubles')) return 'DOUBLES';
+  return 'OPEN';
+};
+
 const detectMatchGender = (match: EnrichedMatch): 'MALE' | 'FEMALE' | 'MIXED' | 'OPEN' => {
-  if (match.tournament?.genderRestriction) {
-    return match.tournament.genderRestriction as 'MALE' | 'FEMALE' | 'MIXED';
+  const rawGender = String(match.tournament?.genderRestriction || '').toUpperCase();
+  if (rawGender === 'MALE' || rawGender === 'FEMALE' || rawGender === 'MIXED') {
+    return rawGender;
   }
 
   const tName = (match.tournament?.name || '').toLowerCase();
   if (tName.includes('nam nữ') || tName.includes('mixed')) return 'MIXED';
-  if (tName.includes('nữ')) return 'FEMALE';
-  if (tName.includes('nam')) return 'MALE';
+  if (tName.includes('nữ') || tName.includes('female') || tName.includes('women')) return 'FEMALE';
+  if (tName.includes('nam') || tName.includes('male') || tName.includes('men')) return 'MALE';
 
   return 'OPEN';
 };
@@ -433,9 +447,12 @@ export default function MatchesListPage() {
           isPublicOnly: true,
           ...(cursor ? { cursor } : {}),
           search: searchTerm || undefined,
-          categoryId: selectedCategoryId || undefined,
+                    categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
+          matchType,
+          genderRestriction,
           city: selectedProvince || undefined,
+
           isRanked: isRanked === 'true' ? true : isRanked === 'false' ? false : undefined,
           startDate: apiStartDate,
           endDate: apiEndDate,
@@ -574,45 +591,23 @@ export default function MatchesListPage() {
         if (stageType !== selectedBracketType) return false;
       }
 
-      // Lọc theo Nội dung (client-side fallback)
+      // Lọc theo nội dung thật từ matchType + genderRestriction của giải/nhánh đấu.
+      // Tên giải chỉ là fallback cho dữ liệu cũ chưa trả đủ metadata.
       if (selectedContent) {
-        const nameLower = (match.tournament?.name || '').toLowerCase();
+        const actualMatchType = normalizeMatchType(match);
+        const actualGender = detectMatchGender(match);
+        const target = {
+          SINGLE_MALE: { type: 'SINGLES', gender: 'MALE' },
+          SINGLE_FEMALE: { type: 'SINGLES', gender: 'FEMALE' },
+          DOUBLE_MALE: { type: 'DOUBLES', gender: 'MALE' },
+          DOUBLE_FEMALE: { type: 'DOUBLES', gender: 'FEMALE' },
+          DOUBLE_MIXED: { type: 'MIXED_DOUBLES', gender: 'MIXED' },
+        }[selectedContent];
 
-        // Suy luận matchType thực tế từ tên giải đấu
-        let actualMatchType = match.tournament?.matchType || '';
-        if (nameLower.includes('đơn')) {
-          actualMatchType = 'SINGLES';
-        } else if (nameLower.includes('đôi')) {
-          actualMatchType = 'DOUBLES';
-        }
-
-        const genderRestriction = match.tournament?.genderRestriction || '';
-
-        let targetMatchType = '';
-        let targetGender = '';
-
-        if (selectedContent === 'SINGLE_MALE') {
-          targetMatchType = 'SINGLES';
-          targetGender = 'MALE';
-        } else if (selectedContent === 'SINGLE_FEMALE') {
-          targetMatchType = 'SINGLES';
-          targetGender = 'FEMALE';
-        } else if (selectedContent === 'DOUBLE_MALE') {
-          targetMatchType = 'DOUBLES';
-          targetGender = 'MALE';
-        } else if (selectedContent === 'DOUBLE_FEMALE') {
-          targetMatchType = 'DOUBLES';
-          targetGender = 'FEMALE';
-        } else if (selectedContent === 'DOUBLE_MIXED') {
-          targetMatchType = 'DOUBLES';
-          targetGender = 'MIXED';
-        }
-
-        if (targetMatchType && actualMatchType !== targetMatchType) return false;
-
-        if (targetGender) {
-          const detectedGender = detectMatchGender(match);
-          if (detectedGender !== 'OPEN' && detectedGender !== targetGender) return false;
+        if (target) {
+          const typeMatches = actualMatchType === target.type
+            || (target.type === 'MIXED_DOUBLES' && actualMatchType === 'DOUBLES' && actualGender === 'MIXED');
+          if (!typeMatches || actualGender !== target.gender) return false;
         }
       }
 

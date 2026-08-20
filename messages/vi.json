@@ -2916,6 +2916,7 @@
     "rankingLabel": "Phân hạng",
     "formatLabel": "Thể thức",
     "unscheduledTime": "Chưa xếp giờ",
+    "schedulePending": "Chưa xong",
     "liveLabel": "Trực tiếp",
     "bye": "Miễn vòng",
     "pendingParticipant": "Chờ xác định",

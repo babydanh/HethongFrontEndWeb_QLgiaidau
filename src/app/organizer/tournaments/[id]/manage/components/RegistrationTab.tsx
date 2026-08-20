@@ -1554,63 +1554,67 @@ export function RegistrationTab({
                     </div>
                   </div>
 
-                  {/* Danh sách thành viên (Đơn: hiển thị 1 VĐV gọn, Đôi/Đội: hiển thị đầy đủ Leader & Partner) */}
+                  {/* Danh sách thành viên (Hiển thị rõ ràng Leader / Người đăng ký & Partner) */}
                   <div className="mt-3 space-y-2">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       {selectedIsPair ? registrationTranslate('pairMembersHeading') : 'Thành viên thi đấu'}
                     </p>
                     <div className="divide-y divide-slate-200/60 rounded-lg border border-slate-200 bg-white">
-                      {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
-                        <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5">
-                          <div className="flex min-w-0 items-center gap-2.5">
-                            <RegistrationProfileAvatar name={member.fullName} avatarUrl={member.avatarUrl} size="md" />
-                            <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>
-                              {selectedIsPair && member.role === 'MAIN' && (
-                                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">Trưởng nhóm</span>
-                              )}
-                              {selectedIsPair && member.role !== 'MAIN' && (
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">Partner</span>
-                              )}
+                      {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member, index) => {
+                        const isLeader = member.role === 'CAPTAIN' || member.role === 'MAIN' || index === 0;
+                        const isRegisteredUser = selectedParticipant.registeredBy?.id && selectedParticipant.registeredBy.id === member.userId;
+                        return (
+                          <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <RegistrationProfileAvatar name={member.fullName} avatarUrl={member.avatarUrl} size="md" />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>
+                                  {isLeader && (
+                                    <span className="rounded bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold">
+                                      {isRegisteredUser ? 'Trưởng nhóm (Người tạo)' : 'Trưởng nhóm'}
+                                    </span>
+                                  )}
+                                  {!isLeader && selectedIsPair && (
+                                    <span className="rounded bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold">
+                                      Partner
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
+                                  <Mail className="h-3 w-3 shrink-0" />
+                                  {member.email || selectedParticipant.registeredBy?.email || registrationTranslate('hiddenEmail')}
+                                  {member.phoneNumber ? <><Phone className="ml-1 h-3 w-3 shrink-0" /> {member.phoneNumber}</> : null}
+                                </p>
+                              </div>
                             </div>
-                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
-                              <Mail className="h-3 w-3 shrink-0" />
-                              {member.email || registrationTranslate('hiddenEmail')}
-                              {member.phoneNumber ? <><Phone className="ml-1 h-3 w-3 shrink-0" /> {member.phoneNumber}</> : null}
-                            </p>
+                            <span className="rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 border border-slate-200/60">
+                              ELO {member.elo?.eloPoints ?? '—'}
+                            </span>
                           </div>
-                          <span className="rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 border border-slate-200/60">
-                            ELO {member.elo?.eloPoints ?? '—'}
-                          </span>
+                        );
+                      }) : selectedParticipant.registeredBy ? (
+                        <div className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <RegistrationProfileAvatar name={selectedParticipant.registeredBy.fullName} avatarUrl={selectedParticipant.registeredBy.avatarUrl} size="md" />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="truncate text-sm font-bold text-slate-800">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</p>
+                                <span className="rounded bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold">Trưởng nhóm (Người tạo)</span>
+                              </div>
+                              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
+                                <Mail className="h-3 w-3 shrink-0" />
+                                {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}
+                                {selectedParticipant.registeredBy.phoneNumber ? <><Phone className="ml-1 h-3 w-3 shrink-0" /> {selectedParticipant.registeredBy.phoneNumber}</> : null}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      )) : (
+                      ) : (
                         <p className="px-4 py-3 text-xs text-slate-500">{registrationTranslate('noMembers')}</p>
                       )}
                     </div>
                   </div>
-
-                  {selectedParticipant.registeredBy ? (
-                    <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
-                      <RegistrationProfileAvatar
-                        name={selectedParticipant.registeredBy.fullName}
-                        avatarUrl={selectedParticipant.registeredBy.avatarUrl}
-                        size="md"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">{registrationTranslate('enteredBy')}</p>
-                        <p className="truncate text-sm font-bold text-slate-800">
-                          {selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}
-                        </p>
-                        <p className="flex flex-wrap items-center gap-1 text-xs font-medium text-slate-600">
-                          <Mail className="h-3 w-3 shrink-0" />
-                          {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}
-                          {selectedParticipant.registeredBy.phoneNumber ? <><Phone className="ml-1 h-3 w-3 shrink-0" /> {selectedParticipant.registeredBy.phoneNumber}</> : null}
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
                 </section>
 
                 <section>
@@ -1659,7 +1663,40 @@ export function RegistrationTab({
                   ) : <p className="mt-1 text-sm text-blue-900">{registrationTranslate('freeCompetition')}</p>}
                 </section>
               </div>
-              <div className="flex justify-end border-t border-slate-200 px-5 py-3"><Button type="button" variant="outline" onClick={() => setSelectedParticipant(null)}>{registrationTranslate('close')}</Button></div>
+              <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 bg-slate-50/50">
+                <div className="flex items-center gap-2">
+                  {isParticipantPendingApproval(selectedParticipant.teamStatus) && (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={async () => {
+                          await handleApproveParticipant(selectedParticipant.id);
+                          setSelectedParticipant(null);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                      >
+                        {registrationTranslate('approve')}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          if (confirm(registrationTranslate('rejectConfirm', { name: selectedParticipant.teamName }))) {
+                            await handleRejectParticipant(selectedParticipant.id);
+                            setSelectedParticipant(null);
+                          }
+                        }}
+                        className="border-amber-200 text-amber-700 hover:bg-amber-50 font-bold text-xs"
+                      >
+                        {registrationTranslate('rejectParticipant')}
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedParticipant(null)}>{registrationTranslate('close')}</Button>
+              </div>
             </ModalContent>
           </Modal>
         )}

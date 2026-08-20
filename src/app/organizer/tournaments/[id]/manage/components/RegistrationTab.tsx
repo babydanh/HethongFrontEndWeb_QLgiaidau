@@ -797,7 +797,7 @@ export function RegistrationTab({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5 max-w-full overflow-hidden">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-bold text-slate-900 text-lg">{registrationTranslate('approvalHeading')}</h3>
@@ -905,8 +905,8 @@ export function RegistrationTab({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100">
+          <div className="w-full max-w-full overflow-x-auto">
+            <table className="w-full min-w-[680px] divide-y divide-slate-100">
               <thead>
                 <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                   <th className="min-w-[160px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>

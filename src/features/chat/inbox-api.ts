@@ -16,6 +16,8 @@ export interface InboxRoom {
   pinnedMessageId?: string | null;
   unreadCount: number;
   updatedAt: string;
+  canSendMessages?: boolean;
+  messageRestriction?: 'STRANGER' | 'BLOCKED' | null;
   participants: Array<{ id: string; fullName: string | null; avatarUrl: string | null; lastReadAt?: string | null }>;
   lastMessage?: {
     id?: string;

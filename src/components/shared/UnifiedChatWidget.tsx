@@ -299,7 +299,8 @@ export default function UnifiedChatWidget() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const clubAvatarInputRef = useRef<HTMLInputElement>(null);
   const socketRoomRef = useRef<string | null>(null);
-  const typingTimerRef = useRef<number | null>(null);
+    const typingTimerRef = useRef<number | null>(null);
+  const showScrollBottomRef = useRef(false);
 
   const selectedRoom = selection.kind === 'ROOM' ? selection.room : null;
   const selectedTitle =
@@ -371,8 +372,11 @@ export default function UnifiedChatWidget() {
 
   const isOtherBlocked = useMemo(() => {
     if (!otherParticipant) return false;
-    return blockedUserIds.includes(otherParticipant.id);
-  }, [otherParticipant, blockedUserIds]);
+    return blockedUserIds.includes(otherParticipant.id) || selectedRoom?.messageRestriction === 'BLOCKED';
+  }, [otherParticipant, blockedUserIds, selectedRoom?.messageRestriction]);
+
+  const isOtherStrangerRestricted =
+    selectedRoom?.type === 'DIRECT' && selectedRoom.messageRestriction === 'STRANGER';
 
   const selectionRef = useRef(selection);
   const directChatRequestRef = useRef(0);
@@ -398,12 +402,21 @@ export default function UnifiedChatWidget() {
         if (currentActiveRoom && !fetched.some((r) => r.id === currentActiveRoom.id)) {
           return [currentActiveRoom, ...fetched];
         }
-        return fetched;
+        return fetched.map((room) => (
+          room.id === currentActiveRoom?.id
+            ? { ...room, unreadCount: currentActiveRoom.unreadCount }
+            : room
+        ));
       });
       const active = selectionRef.current;
       if (active.kind === 'ROOM') {
         const hydrated = fetched.find((room) => room.id === active.room.id);
-        if (hydrated) setSelection({ kind: 'ROOM', room: hydrated });
+        if (hydrated) {
+          setSelection({
+            kind: 'ROOM',
+            room: { ...hydrated, unreadCount: active.room.unreadCount },
+          });
+        }
       }
     } catch {
       // background refresh
@@ -463,6 +476,7 @@ export default function UnifiedChatWidget() {
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
     const isScrolledUp = distanceFromBottom > 140;
+    showScrollBottomRef.current = isScrolledUp;
     setShowScrollBottom(isScrolledUp);
     if (!isScrolledUp) {
       setUnreadSinceScrolledUp(0);
@@ -637,11 +651,13 @@ export default function UnifiedChatWidget() {
           ? current
           : [...current, { ...message, mine: message.senderId === user?.id }],
       );
+      const shouldCountAsUnread = message.senderId !== user?.id && showScrollBottomRef.current;
       setRooms((prev) =>
         prev.map((r) =>
           r.id === message.roomId
             ? {
                 ...r,
+                unreadCount: shouldCountAsUnread ? r.unreadCount + 1 : r.unreadCount,
                 lastMessage: {
                   id: message.id,
                   senderId: message.senderId,
@@ -831,6 +847,13 @@ export default function UnifiedChatWidget() {
 
     void inboxApi
       .markRead(roomId)
+      .then(() => {
+        if (!active) return;
+        setRooms((current) => current.map((room) => (
+          room.id === roomId ? { ...room, unreadCount: 0 } : room
+        )));
+        setUnreadSinceScrolledUp(0);
+      })
       .catch(() => undefined);
 
     return () => {
@@ -1184,6 +1207,10 @@ export default function UnifiedChatWidget() {
     if ((!text && selectedFiles.length === 0) || selection.kind !== 'ROOM' || sending) return;
     if (isOtherBlocked) {
       toast.error(translate('blockedUserCannotMessage'));
+      return;
+    }
+    if (isOtherStrangerRestricted) {
+      toast.error(translate('chatStrangerMessagesDisabled'));
       return;
     }
     const currentReply = replyingTo;
@@ -1540,40 +1567,44 @@ export default function UnifiedChatWidget() {
                     key={room.id}
                     type="button"
                     onClick={() => {
-                      setSelection({ kind: 'ROOM', room });
+                      const openedRoom = { ...room, unreadCount: 0 };
+                      setSelection({ kind: 'ROOM', room: openedRoom });
+                      setRooms((current) => current.map((item) => (
+                        item.id === room.id ? { ...item, unreadCount: 0 } : item
+                      )));
                       setIsMobileRoomOpen(true);
                     }}
+                    aria-label={`${roomTitle(room, roomLabels)}${room.unreadCount > 0 ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${
                       isSelected
                         ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
-                        : 'hover:bg-white text-slate-700'
+                        : room.unreadCount > 0
+                          ? 'bg-rose-50/70 text-slate-800 font-semibold hover:bg-rose-100/80'
+                          : 'hover:bg-white text-slate-700'
                     }`}
                   >
                     <span
-                      className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden shadow-sm ${
+                      className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm ${
                         isClub
                           ? 'bg-blue-600 text-white font-bold'
                           : 'bg-slate-200 text-slate-600'
                       }`}
                     >
-                      {avatar ? (
-                        <img
-                          src={avatar}
-                          alt={roomTitle(room, roomLabels)}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : isClub ? (
-                        <MessageCircle className="h-4 w-4" />
-                      ) : (
-                        <span className="text-xs font-bold">
-                          {roomTitle(room, roomLabels).charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                      {room.unreadCount > 0 && (
-                        <b className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[9px] text-white">
-                          {room.unreadCount > 99 ? '99+' : room.unreadCount}
-                        </b>
-                      )}
+                      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full">
+                        {avatar ? (
+                          <img
+                            src={avatar}
+                            alt={roomTitle(room, roomLabels)}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : isClub ? (
+                          <MessageCircle className="h-4 w-4" />
+                        ) : (
+                          <span className="text-xs font-bold">
+                            {roomTitle(room, roomLabels).charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </span>
                     </span>
                     <span className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -1590,6 +1621,14 @@ export default function UnifiedChatWidget() {
                         {room.lastMessage?.content || (room.lastMessage ? translate('imageAttachment') : translate('noMessages'))}
                       </small>
                     </span>
+                    {room.unreadCount > 0 && (
+                      <span
+                        className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold leading-4 text-white shadow-sm"
+                        title={translate('chatUnreadMessages', { count: room.unreadCount })}
+                      >
+                        {room.unreadCount > 99 ? '99+' : room.unreadCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -2805,6 +2844,12 @@ export default function UnifiedChatWidget() {
               </div>
             )}
 
+            {selection.kind === 'ROOM' && isOtherStrangerRestricted && (
+              <div className="border-t border-amber-200 bg-amber-50 px-4 py-2 text-[11px] font-medium leading-relaxed text-amber-800">
+                {translate('chatStrangerMessagesDisabled')}
+              </div>
+            )}
+
             {/* Messenger Input Bar */}
             <form
               onSubmit={(event) => {
@@ -2834,7 +2879,7 @@ export default function UnifiedChatWidget() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     title={translate('sendImage')}
-                    disabled={isOtherBlocked || sending}
+                    disabled={isOtherBlocked || isOtherStrangerRestricted || sending}
                     className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
                   >
                     <ImageIcon className="h-5 w-5" />
@@ -2844,7 +2889,7 @@ export default function UnifiedChatWidget() {
                     type="button"
                     onClick={() => setShowPollCreator(true)}
                     title={translate('createPoll')}
-                    disabled={isOtherBlocked || sending}
+                    disabled={isOtherBlocked || isOtherStrangerRestricted || sending}
                     className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
                   >
                     <BarChart2 className="h-5 w-5" />
@@ -2873,13 +2918,15 @@ export default function UnifiedChatWidget() {
                 placeholder={
                   isOtherBlocked
                     ? translate('chatBlockedPlaceholder')
+                    : isOtherStrangerRestricted
+                      ? translate('chatStrangerMessagesDisabled')
                     : selection.kind === 'AI'
                       ? translate('chatAskAssistantPlaceholder')
                       : replyingTo
                         ? translate('chatReplyPlaceholder', { name: replyingTo.senderName || translate('member') })
                         : translate('enterMessage')
                 }
-                disabled={isOtherBlocked}
+                                disabled={isOtherBlocked || isOtherStrangerRestricted}
                 className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50/70 px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 disabled:text-slate-400"
               />
 
@@ -2887,7 +2934,7 @@ export default function UnifiedChatWidget() {
               {draft.trim() || selectedFiles.length > 0 ? (
                 <button
                   type="submit"
-                  disabled={sending || isOtherBlocked}
+                  disabled={sending || isOtherBlocked || isOtherStrangerRestricted}
                   aria-label={translate('sendMessage')}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-40 shrink-0"
                 >
@@ -2901,7 +2948,7 @@ export default function UnifiedChatWidget() {
                 <button
                   type="button"
                   onClick={() => void sendRoomMessage('👍')}
-                  disabled={sending || isOtherBlocked}
+                  disabled={sending || isOtherBlocked || isOtherStrangerRestricted}
                   aria-label={translate('quickLike')}
                   title={translate('quickLike')}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-blue-600 hover:bg-blue-50 transition active:scale-125 shrink-0"
@@ -3319,6 +3366,7 @@ export default function UnifiedChatWidget() {
 
       {/* Main Floating Trigger Button */}
       <button
+        id="chat-floating-trigger"
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label={open ? translate('closeMessages') : translate('openMessages')}

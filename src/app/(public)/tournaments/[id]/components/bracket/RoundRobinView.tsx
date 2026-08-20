@@ -450,7 +450,7 @@ export function RoundRobinView({
                       <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-1 flex-col justify-end gap-1.5">
                         <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                           <Clock className="w-2 h-2 flex-shrink-0" />
-                          <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : translate('unscheduledTime')}</span>
+                          <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : translate('schedulePending')}</span>
                         </div>
                         <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                           <Info className="w-2 h-2 flex-shrink-0" />

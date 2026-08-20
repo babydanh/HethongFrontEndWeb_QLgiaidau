@@ -1055,14 +1055,6 @@ export function RegistrationTab({
                         </td>
                         <td className="py-4 text-right align-top">
                           <div className="flex flex-wrap justify-end gap-1.5">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedParticipant(participant)}
-                              className="border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs h-8 px-2.5"
-                            >
-                              Chi tiết
-                            </Button>
                             {participant.footballTeamId && (
                               <Button
                                 size="sm"

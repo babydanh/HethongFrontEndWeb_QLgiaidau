@@ -3,13 +3,13 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldCheck, XCircle } from 'lucide-react';
+import { Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldCheck, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { tournamentsApi, divisionsApi, Tournament, TournamentParticipant, type Division } from '@/features/tournaments/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
-import { formatDate, formatCurrency } from '@/utils/format';
-import { getSportLogo } from '@/constants/sports';
+import { formatCurrency } from '@/utils/format';
+import PartnerTournamentBanner from './components/PartnerTournamentBanner';
 import toast from 'react-hot-toast';
 
 export default function AcceptPartnerPage({ params }: { params: Promise<{ id: string; participantId: string }> }) {
@@ -60,7 +60,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
             router.push(`/tournaments/${id}`);
           }
         }
-      } catch (err) {
+      } catch {
         toast.error(translate('loadInviteFailed'));
         router.push(`/tournaments/${id}`);
       } finally {
@@ -69,7 +69,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
     };
 
     fetchData();
-  }, [id, participantId, router]);
+  }, [id, participantId, router, translate]);
 
   const handleJoin = async () => {
     if (!isAuthenticated || !user) {
@@ -213,7 +213,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl mx-auto">
+      <div className="mx-auto max-w-3xl">
         <button
           onClick={() => router.push(`/tournaments/${tournament.id}`)}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
@@ -221,34 +221,12 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
           <ArrowLeft className="w-4 h-4" /> {translate('backToTournamentShort')}
         </button>
 
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
-            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
-              {(() => {
-                const logo = getSportLogo(tournament.category?.name);
-                return logo ? (
-                  <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
-                ) : null;
-              })()}
-              {tournament.category?.name || translate('defaultSport')}
-            </span>
-            <h1 className="text-xl md:text-2xl font-bold mt-2 mb-3 text-white">{tournament.name}</h1>
+        <div className="space-y-5">
+          <PartnerTournamentBanner tournament={tournament} />
 
-            <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-350 font-semibold">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <span>{translate('opening')} {tournament.startDate ? formatDate(tournament.startDate) : translate('notScheduled')}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-rose-400" />
-                <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Invite Card Body */}
-          <div className="p-6 md:p-8 space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* Invite Card Body */}
+            <div className="space-y-6 p-6 md:p-8">
             <div className="text-center space-y-2 max-w-sm mx-auto">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-105 text-blue-600 mb-1">
                 <Users className="w-6 h-6 text-blue-600" />
@@ -353,6 +331,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

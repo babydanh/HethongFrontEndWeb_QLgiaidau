@@ -458,7 +458,7 @@ export function RegistrationTab({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
       
       {/* LEFT COLUMN: PUBLISH STATUS & REGISTRATION CONTROL (span-2) */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-6 min-w-0">
         
         {/* Publish Status Card */}
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
@@ -1130,7 +1130,7 @@ export function RegistrationTab({
       </div>
 
       {/* RIGHT COLUMN: TESTING & WILDCARDS (span-1) */}
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         {/* Custom Registration Form Builder */}
         <RegistrationFormBuilder tournament={tournament} divisions={divisions} />
 

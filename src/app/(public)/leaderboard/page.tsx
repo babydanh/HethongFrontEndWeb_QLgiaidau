@@ -187,78 +187,178 @@ export default function LeaderboardPage() {
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
-            {/* Sub-Filters: Sport Category & Province Selector */}
-            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex flex-wrap gap-2">
-                    {categories.map(cat => (
-                        <button
-                            key={cat.id}
-                            onClick={() => setActiveCategoryId(cat.id)}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${
-                                activeCategoryId === cat.id
-                                    ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-55"
-                            }`}
-                        >
-                            {getCategoryLabel(cat)}
-                        </button>
-                    ))}
-                </div>
+            {/* Sub-Filters: Sport Category, Match Type, Gender, Province & ELO Lookup */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    {/* Sport Categories */}
+                    <div className="flex flex-wrap gap-1.5">
+                        {categories.map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => setActiveCategoryId(cat.id)}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                    activeCategoryId === cat.id
+                                        ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                }`}
+                            >
+                                {getCategoryLabel(cat)}
+                            </button>
+                        ))}
+                    </div>
 
-                {/* Match Type Selector */}
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t('typeLabel')}</label>
-                    <div className="relative flex-grow md:flex-grow-0 md:min-w-[150px]">
-                        <select
-                            value={selectedMatchType}
-                            onChange={(e) => {
-                                const matchType = e.target.value;
-                                setSelectedMatchType(matchType);
-                                setSelectedGenderFilter(matchType === 'MIXED_DOUBLES' ? 'MIXED' : 'MALE');
-                            }}
-                            className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
-                        >
-                            <option value="SINGLES">{t("singles")}</option>
-                            <option value="DOUBLES">{t("doubles")}</option>
-                            <option value="MIXED_DOUBLES">{t("mixedDoubles")}</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                    {/* Compact ELO Player Search */}
+                    <div className="relative w-full sm:w-auto">
+                        <form onSubmit={handleSearchUser} className="flex items-center gap-1.5 w-full sm:w-[260px]">
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    placeholder={t("eloLookupPlaceholder")}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 placeholder-slate-400"
+                                />
+                                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={searchLoading}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shrink-0 disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                            >
+                                {searchLoading ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    t("eloLookupButton")
+                                )}
+                            </button>
+                        </form>
+
+                        {/* Search Popup Dropdown */}
+                        {searchError && (
+                            <div className="absolute right-0 top-full mt-1.5 z-30 bg-white p-2.5 rounded-lg shadow-lg border border-rose-200 text-rose-500 text-[11px] font-bold w-full sm:w-[280px]">
+                                {searchError}
+                            </div>
+                        )}
+                        {searchResult.length > 0 && (
+                            <div className="absolute right-0 top-full mt-1.5 z-30 bg-white p-2.5 rounded-xl shadow-xl border border-slate-200 w-full sm:w-[320px] max-h-[320px] overflow-y-auto space-y-1.5">
+                                <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-100">
+                                    <span className="text-[11px] font-bold text-slate-700">{t("eloLookupTitle")}</span>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setSearchResult([])}
+                                        className="text-[10px] text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
+                                    >
+                                        Đóng
+                                    </button>
+                                </div>
+                                {searchResult.map((u) => (
+                                    <button
+                                        type="button"
+                                        key={u.id}
+                                        onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            openUserProfile(
+                                                {
+                                                    id: u.id,
+                                                    fullName: u.fullName || t('playerFallback'),
+                                                    avatarUrl: u.avatarUrl,
+                                                    highlightRank: {
+                                                        eloPoints: u.eloPoints,
+                                                        tierName: u.tierName,
+                                                    },
+                                                },
+                                                rect,
+                                            );
+                                        }}
+                                        className="w-full flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-blue-50/40 hover:border-blue-200 transition-all cursor-pointer group text-left"
+                                    >
+                                        <div className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0">
+                                            {u.avatarUrl ? (
+                                                <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-bold text-[11px] uppercase">
+                                                    {u.fullName?.substring(0, 2) || t("initialsFallback")}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="font-bold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                                {u.fullName || t('playerFallback')}
+                                            </h4>
+                                            <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
+                                        </div>
+                                        <div className="text-right shrink-0 flex flex-col items-end">
+                                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                {u.eloPoints}
+                                            </span>
+                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
+                                                {u.tierName}
+                                            </span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Gender Filter - Only show for non-MIXED_DOUBLES */}
-                {selectedMatchType && selectedMatchType !== 'MIXED_DOUBLES' && (
-                    <div className="flex items-center gap-2 w-full md:w-auto">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t("gender")}:</label>
-                        <div className="relative flex-grow md:flex-grow-0 md:min-w-[120px]">
+                {/* Sub-Filters Row: Match Type, Gender & Province */}
+                <div className="flex flex-wrap items-center gap-3 pt-2.5 border-t border-slate-100">
+                    {/* Match Type Selector */}
+                    <div className="flex items-center gap-1.5 flex-1 min-w-[140px] sm:flex-initial">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t('typeLabel')}:</label>
+                        <div className="relative w-full sm:w-[130px]">
                             <select
-                                value={selectedGenderFilter}
-                                onChange={(e) => setSelectedGenderFilter(e.target.value)}
-                                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
+                                value={selectedMatchType}
+                                onChange={(e) => {
+                                    const matchType = e.target.value;
+                                    setSelectedMatchType(matchType);
+                                    setSelectedGenderFilter(matchType === 'MIXED_DOUBLES' ? 'MIXED' : 'MALE');
+                                }}
+                                className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                             >
-                                <option value="MALE">{t("male")}</option>
-                                <option value="FEMALE">{t("female")}</option>
+                                <option value="SINGLES">{t("singles")}</option>
+                                <option value="DOUBLES">{t("doubles")}</option>
+                                <option value="MIXED_DOUBLES">{t("mixedDoubles")}</option>
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
                         </div>
                     </div>
-                )}
 
-                {/* Province Selector */}
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t("region")}:</label>
-                    <div className="relative flex-grow md:flex-grow-0 md:min-w-[200px]">
-                        <select
-                            value={selectedProvinceCode}
-                            onChange={(e) => setSelectedProvinceCode(e.target.value)}
-                            className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
-                        >
-                            <option value="">{t("allProvinces")}</option>
-                            {provinces.map(p => (
-                                <option key={p.code} value={p.code}>{p.name}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                    {/* Gender Filter - Only show for non-MIXED_DOUBLES */}
+                    {selectedMatchType && selectedMatchType !== 'MIXED_DOUBLES' && (
+                        <div className="flex items-center gap-1.5 flex-1 min-w-[120px] sm:flex-initial">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t("gender")}:</label>
+                            <div className="relative w-full sm:w-[110px]">
+                                <select
+                                    value={selectedGenderFilter}
+                                    onChange={(e) => setSelectedGenderFilter(e.target.value)}
+                                    className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
+                                >
+                                    <option value="MALE">{t("male")}</option>
+                                    <option value="FEMALE">{t("female")}</option>
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Province Selector */}
+                    <div className="flex items-center gap-1.5 flex-1 min-w-[180px] sm:flex-initial">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t("region")}:</label>
+                        <div className="relative w-full sm:w-[180px]">
+                            <select
+                                value={selectedProvinceCode}
+                                onChange={(e) => setSelectedProvinceCode(e.target.value)}
+                                className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
+                            >
+                                <option value="">{t("allProvinces")}</option>
+                                {provinces.map(p => (
+                                    <option key={p.code} value={p.code}>{p.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -693,93 +793,6 @@ export default function LeaderboardPage() {
                                     <span className="font-bold text-xs text-[#44403C]">0 - 1099 ELO</span>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Search User Elo Card */}
-                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-4">
-                            <div className="space-y-1">
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Search className="w-4 h-4 text-blue-600" />
-                                    {t("eloLookupTitle")}
-                                </h3>
-                                <p className="text-slate-500 text-[11px] leading-relaxed">{t("eloLookupDescription")}</p>
-                            </div>
-
-                            <form onSubmit={handleSearchUser} className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder={t("eloLookupPlaceholder")}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 placeholder-slate-400"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={searchLoading}
-                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer animate-none"
-                                >
-                                    {searchLoading ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                        t("eloLookupButton")
-                                    )}
-                                </button>
-                            </form>
-
-                            {searchError && (
-                                <p className="text-[10px] text-rose-500 font-bold">{searchError}</p>
-                            )}
-
-                            {searchResult.length > 0 && (
-                                <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                                    {searchResult.map((u) => (
-                                        <button
-                                            type="button"
-                                            key={u.id}
-                                            onClick={(e) => {
-                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                openUserProfile(
-                                                    {
-                                                        id: u.id,
-                                                        fullName: u.fullName || t('playerFallback'),
-                                                        avatarUrl: u.avatarUrl,
-                                                        highlightRank: {
-                                                            eloPoints: u.eloPoints,
-                                                            tierName: u.tierName,
-                                                        },
-                                                    },
-                                                    rect,
-                                                );
-                                            }}
-                                            className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group text-left"
-                                        >
-                                            <div className="w-9 h-9 rounded-full object-cover relative overflow-hidden bg-slate-100 shrink-0">
-                                                {u.avatarUrl ? (
-                                                    <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-bold text-xs uppercase">
-                                                        {u.fullName?.substring(0, 2) || t("initialsFallback")}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="font-bold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
-                                                    {u.fullName || t('playerFallback')}
-                                                </h4>
-                                                <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
-                                            </div>
-                                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100">
-                                                    {u.eloPoints} ELO
-                                                </span>
-                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
-                                                    {u.tierName}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

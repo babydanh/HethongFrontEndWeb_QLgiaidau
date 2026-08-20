@@ -37,8 +37,8 @@ export const REGISTRATION_FIELD_TYPE_LABELS: Record<RegistrationFieldType, strin
   EMAIL: 'Email',
   PHONE: 'Số điện thoại',
   NUMBER: 'Số',
-  SELECT: 'Danh sách lựa chọn',
-  MULTI_SELECT: 'Nhiều lựa chọn',
+  SELECT: 'Chọn một đáp án',
+  MULTI_SELECT: 'Chọn nhiều đáp án',
   CHECKBOX: 'Xác nhận / đồng ý',
   FILE: 'Tệp hoặc hình ảnh',
 };

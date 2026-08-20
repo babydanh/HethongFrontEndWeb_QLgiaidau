@@ -384,10 +384,24 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                               {/* Thiết lập danh sách lựa chọn trực quan */}
                               {(field.type === 'SELECT' || field.type === 'MULTI_SELECT') && (
                                 <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/70 p-3">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-slate-700">Danh sách lựa chọn</span>
-                                    <span className="text-[11px] text-slate-400">
-                                      {field.type === 'SELECT' ? 'Chọn 1 đáp án' : 'Chọn nhiều đáp án'}
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <span className="text-xs font-bold text-slate-700">{registrationFormTranslate('choiceOptionsTitle')}</span>
+                                      <p className="mt-0.5 text-[11px] text-slate-500">
+                                        {field.type === 'SELECT'
+                                          ? registrationFormTranslate('singleChoiceHint')
+                                          : registrationFormTranslate('multiChoiceHint')}
+                                      </p>
+                                    </div>
+                                    <span className={cn(
+                                      'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold',
+                                      field.type === 'SELECT'
+                                        ? 'bg-blue-50 text-blue-700'
+                                        : 'bg-violet-50 text-violet-700'
+                                    )}>
+                                      {field.type === 'SELECT'
+                                        ? registrationFormTranslate('singleChoiceBadge')
+                                        : registrationFormTranslate('multiChoiceBadge')}
                                     </span>
                                   </div>
                                   <div className="space-y-1.5">
@@ -604,24 +618,29 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                             <span>{field.label || registrationFormTranslate('agree')}</span>
                           </label>
                         ) : field.type === 'SELECT' ? (
-                          <select
-                            disabled
-                            className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-600 cursor-not-allowed"
-                          >
-                            <option>-- Chọn một phương án --</option>
-                            {(field.options ?? []).map((opt, i) => (
-                              <option key={i}>{opt}</option>
-                            ))}
-                          </select>
-                        ) : field.type === 'MULTI_SELECT' ? (
-                          <div className="space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                          <fieldset className="space-y-1.5 rounded-lg border border-blue-100 bg-blue-50/40 p-2">
+                            <legend className="px-1 text-[10px] font-bold text-blue-700">
+                              {registrationFormTranslate('singleChoiceInstruction')}
+                            </legend>
                             {(field.options && field.options.length > 0 ? field.options : ['Lựa chọn 1', 'Lựa chọn 2']).map((opt, i) => (
-                              <label key={i} className="flex items-center gap-1.5 text-[11px] text-slate-700">
-                                <input type="checkbox" disabled className="rounded accent-blue-600" />
+                              <label key={i} className="flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700">
+                                <input type="radio" name={`preview-${field.id}`} disabled className="h-3.5 w-3.5 accent-blue-600" />
                                 <span>{opt}</span>
                               </label>
                             ))}
-                          </div>
+                          </fieldset>
+                        ) : field.type === 'MULTI_SELECT' ? (
+                          <fieldset className="space-y-1.5 rounded-lg border border-violet-100 bg-violet-50/40 p-2">
+                            <legend className="px-1 text-[10px] font-bold text-violet-700">
+                              {registrationFormTranslate('multiChoiceInstruction')}
+                            </legend>
+                            {(field.options && field.options.length > 0 ? field.options : ['Lựa chọn 1', 'Lựa chọn 2']).map((opt, i) => (
+                              <label key={i} className="flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700">
+                                <input type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-violet-600" />
+                                <span>{opt}</span>
+                              </label>
+                            ))}
+                          </fieldset>
                         ) : field.type === 'FILE' ? (
                           <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-2.5 text-center">
                             <FileUp className="h-4 w-4 text-blue-500 mx-auto mb-1" />

@@ -99,33 +99,40 @@ export default function RegistrationCustomFields({ tournamentId, fields, respons
 
           if (field.type === 'SELECT') {
             return (
-              <label key={field.id} className="block space-y-1">
-                {label}
-                <select
-                  value={typeof value === 'string' ? value : ''}
-                  onChange={(event) => onChange(field.id, event.target.value || undefined)}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs sm:text-sm font-medium text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                >
-                  <option value="">{registrationTranslate('selectOptionPlaceholder')}</option>
+              <fieldset key={field.id} className="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
+                <legend className="px-1">{label}</legend>
+                <p className="text-[11px] font-semibold text-blue-700">{registrationTranslate('singleChoiceInstruction')}</p>
+                {field.helpText && <p className="text-[11px] text-slate-500">{field.helpText}</p>}
+                <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
                   {(field.options ?? []).map((option) => (
-                    <option key={option} value={option}>{option}</option>
+                    <label key={option} className="flex cursor-pointer items-center gap-2 rounded border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                      <input
+                        type="radio"
+                        name={`registration-${field.id}`}
+                        value={option}
+                        checked={value === option}
+                        onChange={(event) => onChange(field.id, event.target.value)}
+                        className="h-4 w-4 shrink-0 accent-blue-600"
+                      />
+                      <span className="truncate">{option}</span>
+                    </label>
                   ))}
-                </select>
-                {field.helpText && <span className="block text-[11px] text-slate-500 font-normal">{field.helpText}</span>}
-              </label>
+                </div>
+              </fieldset>
             );
           }
 
           if (field.type === 'MULTI_SELECT') {
             return (
-              <fieldset key={field.id} className="space-y-2 bg-white/60 p-3 rounded-lg border border-slate-200/60">
-                {label}
+              <fieldset key={field.id} className="space-y-2 rounded-lg border border-violet-100 bg-violet-50/40 p-3">
+                <legend className="px-1">{label}</legend>
+                <p className="text-[11px] font-semibold text-violet-700">{registrationTranslate('multiChoiceInstruction')}</p>
                 {field.helpText && <p className="text-[11px] text-slate-500">{field.helpText}</p>}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
                   {(field.options ?? []).map((option) => {
                     const selected = Array.isArray(value) && value.includes(option);
                     return (
-                      <label key={option} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700 bg-white p-2 rounded border border-slate-200 hover:border-blue-300 transition-colors">
+                      <label key={option} className="flex cursor-pointer items-center gap-2 rounded border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-700 transition-colors hover:border-violet-300 has-[:checked]:border-violet-500 has-[:checked]:bg-violet-50">
                         <input
                           type="checkbox"
                           checked={selected}
@@ -133,7 +140,7 @@ export default function RegistrationCustomFields({ tournamentId, fields, respons
                             const current = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
                             onChange(field.id, event.target.checked ? [...current, option] : current.filter((item) => item !== option));
                           }}
-                          className="h-4 w-4 shrink-0 rounded accent-blue-600 cursor-pointer"
+                          className="h-4 w-4 shrink-0 rounded accent-violet-600"
                         />
                         <span className="truncate">{option}</span>
                       </label>

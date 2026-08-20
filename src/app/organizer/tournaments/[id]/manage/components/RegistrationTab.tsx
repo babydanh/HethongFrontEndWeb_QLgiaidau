@@ -76,6 +76,15 @@ interface RegistrationProfileAvatarProps {
   size?: 'sm' | 'md';
 }
 
+function formatRegistrationAnswer(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string | number => typeof item === 'string' || typeof item === 'number').join(', ');
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value && typeof value === 'object') return JSON.stringify(value);
+  return '';
+}
+
 function RegistrationProfileAvatar({ name, avatarUrl, size = 'sm' }: RegistrationProfileAvatarProps) {
   const initials = (name || '?')
     .trim()
@@ -1610,7 +1619,7 @@ export function RegistrationTab({
                     <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                       {registrationFormFields.map((field) => {
                         const value = selectedParticipant.customResponses?.[field.id];
-                        const hasValue = value !== undefined && value !== null && value !== '';
+                        const hasValue = value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && value.length === 0);
                         const fileValue = value && typeof value === 'object' && !Array.isArray(value)
                           ? value as { url?: unknown; originalName?: unknown }
                           : null;
@@ -1620,11 +1629,11 @@ export function RegistrationTab({
                         const textValue = hasValue
                           ? fileUrl
                             ? (typeof fileValue?.originalName === 'string' ? fileValue.originalName : registrationTranslate('openFileLink'))
-                            : (typeof value === 'string' ? value : JSON.stringify(value))
+                            : formatRegistrationAnswer(value)
                           : registrationTranslate('unanswered');
                         return <div key={field.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>{fileUrl ? <a href={fileUrl} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">{textValue}</a> : hasValue && typeof textValue === 'string' && /^https?:\/\//i.test(textValue) ? <a href={textValue} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">{registrationTranslate('openFileLink')}</a> : <span className={`whitespace-pre-wrap break-words text-sm ${hasValue ? 'text-slate-800' : 'text-slate-400'}`}>{textValue}</span>}</div>;
                       })}
-                      {Object.entries(selectedParticipant.customResponses ?? {}).filter(([fieldId]) => !registrationFormFields.some((field) => field.id === fieldId)).map(([fieldId, value]) => <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</span></div>)}
+                      {Object.entries(selectedParticipant.customResponses ?? {}).filter(([fieldId]) => !registrationFormFields.some((field) => field.id === fieldId)).map(([fieldId, value]) => <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{formatRegistrationAnswer(value)}</span></div>)}
                     </div>
                   ) : <p className="mt-2 rounded-xl border border-dashed border-slate-200 px-4 py-4 text-sm text-slate-500">{registrationTranslate('noCustomAnswers')}</p>}
                 </section>

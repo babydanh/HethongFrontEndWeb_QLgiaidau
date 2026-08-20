@@ -46,7 +46,7 @@ export interface BracketDragHandlers {
   onParticipantDrop?: (
     source: BracketDragSource,
     target: { type: 'slot'; matchId: string; slot: BracketSlot } | { type: 'tray' },
-  ) => void;
+  ) => void | Promise<void>;
 }
 
 export interface BracketTabProps {

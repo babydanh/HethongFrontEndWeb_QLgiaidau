@@ -465,6 +465,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               selectedDivisionId={s.selectedDivisionId} participants={s.participants}
               isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
               handleOpenScheduling={s.handleOpenScheduling} handleOpenRoundModal={s.handleOpenRoundModal}
+              refetchDivisionData={s.refetchDivisionData}
               isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
               maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
               matchType={s.matchType} setMatchType={s.setMatchType}

@@ -18,8 +18,8 @@ export function Footer() {
                 className="h-10 md:h-12 w-auto object-contain"
               />
             </Link>
-            <p className="text-sm font-medium text-slate-600">
-              {t('brandTagline')} · {t('tagline')}
+            <p className="text-sm font-semibold uppercase tracking-wider text-slate-600">
+              {t('tagline')}
             </p>
           </div>
           <div>

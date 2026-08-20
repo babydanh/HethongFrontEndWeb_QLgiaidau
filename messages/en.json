@@ -2574,7 +2574,7 @@
     "moderation": "Moderation"
   },
   "Footer": {
-    "tagline": "Professional tournament management platform.",
+    "tagline": "PLAY TOGETHER",
     "products": "Product",
     "discoverTournaments": "Discover tournaments",
     "createTournament": "Create a tournament",
@@ -2885,6 +2885,9 @@
     "bracketTrayTitle": "Temporary holding area",
     "bracketTrayEmpty": "Drag a participant here while rearranging the bracket.",
     "bracketDragParticipant": "Drag to change position",
+    "bracketSlotsSaved": "Bracket positions saved.",
+    "bracketSlotsSaveFailed": "Unable to save bracket positions.",
+    "bracketCompletedDragWarning": "A completed match was changed. Please verify its result.",
     "win": "Win",
     "draw": "Draw",
     "loss": "Loss",

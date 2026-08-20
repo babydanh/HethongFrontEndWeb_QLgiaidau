@@ -17,7 +17,8 @@ import { Settings, ChevronDown, ChevronRight, Save, Trophy, LayoutGrid, Users, A
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { tournamentsApi, type BracketSlotMutation } from '@/features/tournaments/api';
+
 import { RoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/RoundRobinView';
 import { Tournament, BracketStage, BracketMatch, type SportRuleKind, type StageRoundConfig } from '@/types/tournament';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
@@ -45,6 +46,7 @@ interface BracketTabProps {
   handleGenerateBracket: () => void;
   handleOpenScheduling: (match: BracketMatch) => void;
   handleOpenRoundModal?: (stage: BracketStage, roundNumber: number) => void;
+  refetchDivisionData?: () => Promise<void>;
 
   // Cấu hình mặc định props
   isLimitEnabled: boolean;
@@ -138,6 +140,7 @@ export function BracketTab({
   handleGenerateBracket,
   handleOpenScheduling,
   handleOpenRoundModal,
+  refetchDivisionData,
 
   isLimitEnabled,
   setIsLimitEnabled,
@@ -330,6 +333,7 @@ export function BracketTab({
   const [trayParticipants, setTrayParticipants] = useState<BracketParticipant[]>([]);
   const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
   const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
+  const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
 
@@ -363,7 +367,9 @@ export function BracketTab({
       && (candidate.slot === 'participant1' || candidate.slot === 'participant2');
   };
 
-  const handleBracketParticipantDrop = (source: BracketDragSource, target: BracketDropTarget) => {
+  const handleBracketParticipantDrop = async (source: BracketDragSource, target: BracketDropTarget): Promise<void> => {
+    if (!selectedDivisionId || isSavingBracketSlots) return;
+
     if (source.type === 'slot' && source.matchId) {
       const sourceMatch = findBracketMatch(source.matchId);
       if (sourceMatch && isBracketMatchDragLocked(sourceMatch)) return;
@@ -374,44 +380,79 @@ export function BracketTab({
       if (targetMatch && isBracketMatchDragLocked(targetMatch)) return;
     }
 
+    const previousOverrides = participantOverrides;
+    const previousTray = trayParticipants;
+    let nextOverrides = { ...previousOverrides };
+    let nextTray = [...previousTray];
+    let operation: BracketSlotMutation | null = null;
+
     if (target.type === 'tray') {
       if (source.type !== 'slot' || !source.matchId || !source.slot) return;
-      setParticipantOverrides((previous) => ({
-        ...previous,
-        [`${source.matchId}:${source.slot}`]: null,
-      }));
-      setTrayParticipants((previous) => (
-        previous.some((participant) => participant.id === source.participant.id)
-          ? previous
-          : [...previous, source.participant]
-      ));
-      return;
+      const sourceKey = `${source.matchId}:${source.slot}`;
+      nextOverrides[sourceKey] = null;
+      if (!nextTray.some((participant) => participant.id === source.participant.id)) {
+        nextTray = [...nextTray, source.participant];
+      }
+      operation = {
+        operation: 'UNASSIGN',
+        matchId: source.matchId,
+        slot: source.slot,
+      };
+    } else {
+      const targetKey = `${target.matchId}:${target.slot}`;
+      const sourceKey = source.type === 'slot' && source.matchId && source.slot
+        ? `${source.matchId}:${source.slot}`
+        : null;
+      if (sourceKey === targetKey) return;
+
+      const currentOccupant = getCurrentSlotParticipant(target.matchId, target.slot);
+      nextOverrides[targetKey] = source.participant;
+      if (sourceKey) nextOverrides[sourceKey] = currentOccupant;
+
+      if (source.type === 'tray') {
+        nextTray = nextTray.filter((participant) => participant.id !== source.participant.id);
+        if (currentOccupant && currentOccupant.id !== source.participant.id && !nextTray.some((participant) => participant.id === currentOccupant.id)) {
+          nextTray = [...nextTray, currentOccupant];
+        }
+        operation = {
+          operation: currentOccupant ? 'REPLACE' : 'ASSIGN',
+          matchId: target.matchId,
+          slot: target.slot,
+          participantId: source.participant.id,
+        };
+      } else if (source.matchId && source.slot) {
+        operation = {
+          operation: currentOccupant ? 'SWAP' : 'MOVE',
+          fromMatchId: source.matchId,
+          fromSlot: source.slot,
+          toMatchId: target.matchId,
+          toSlot: target.slot,
+        };
+      }
     }
 
-    const targetKey = `${target.matchId}:${target.slot}`;
-    const sourceKey = source.type === 'slot' && source.matchId && source.slot
-      ? `${source.matchId}:${source.slot}`
-      : null;
-    if (sourceKey === targetKey) return;
+    if (!operation) return;
 
-    const currentOccupant = getCurrentSlotParticipant(target.matchId, target.slot);
-    setParticipantOverrides((previous) => ({
-      ...previous,
-      [targetKey]: source.participant,
-      ...(sourceKey ? { [sourceKey]: currentOccupant } : {}),
-    }));
+    const sourceMatch = source.type === 'slot' && source.matchId ? findBracketMatch(source.matchId) : null;
+    const targetMatch = target.type === 'slot' ? findBracketMatch(target.matchId) : null;
+    if (sourceMatch?.status?.toUpperCase() === 'COMPLETED' || targetMatch?.status?.toUpperCase() === 'COMPLETED') {
+      toast(translate('bracketCompletedDragWarning'));
+    }
 
-    setTrayParticipants((previous) => {
-      const withoutSource = source.type === 'tray'
-        ? previous.filter((participant) => participant.id !== source.participant.id)
-        : previous;
-      if (!currentOccupant || source.type !== 'tray' || currentOccupant.id === source.participant.id) {
-        return withoutSource;
-      }
-      return withoutSource.some((participant) => participant.id === currentOccupant.id)
-        ? withoutSource
-        : [...withoutSource, currentOccupant];
-    });
+    setParticipantOverrides(nextOverrides);
+    setTrayParticipants(nextTray);
+    setIsSavingBracketSlots(true);
+    try {
+      await tournamentsApi.updateBracketSlots(tournament.id, selectedDivisionId, [operation]);
+      await refetchDivisionData?.();
+      toast.success(translate('bracketSlotsSaved'));
+    } catch (error) {
+      setParticipantOverrides(previousOverrides);
+      setTrayParticipants(previousTray);
+      toast.error(getErrorMessage(error) || translate('bracketSlotsSaveFailed'));
+    } finally {
+      setIsSavingBracketSlots(false);
+    }
   };
 
   const handleBracketDragStart = (event: DragStartEvent) => {
@@ -428,7 +469,7 @@ export function BracketTab({
   };
 
   const bracketDragHandlers: BracketDragHandlers = {
-    enabled: hasBracket,
+    enabled: hasBracket && !isSavingBracketSlots,
     trayParticipants,
     participantOverrides,
     onParticipantDrop: handleBracketParticipantDrop,

@@ -568,8 +568,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           participants={bracketManager.participants}
           isGeneratingBracket={bracketManager.isGeneratingBracket}
           handleGenerateBracket={handleBracketGenerate}
-          handleOpenScheduling={handleBracketOpenScheduling}
+                    handleOpenScheduling={handleBracketOpenScheduling}
           handleOpenRoundModal={bracketManager.handleOpenRoundModal}
+          refetchDivisionData={bracketManager.refetchDivisionData}
+
           isLimitEnabled={bracketManager.isLimitEnabled}
           setIsLimitEnabled={bracketManager.setIsLimitEnabled}
           maxParticipants={bracketManager.maxParticipants}

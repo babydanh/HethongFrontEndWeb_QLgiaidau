@@ -18,6 +18,26 @@ import {
 import { ApiResponse } from '@/types/api';
 import type { OpsAuditLogResponse } from '@/features/organizer/ops/types';
 
+export type BracketSlotMutationOperation = 'ASSIGN' | 'MOVE' | 'REPLACE' | 'UNASSIGN' | 'SWAP';
+export type BracketSlotMutationSlot = 'participant1' | 'participant2';
+
+export interface BracketSlotMutation {
+  operation: BracketSlotMutationOperation;
+  matchId?: string;
+  slot?: BracketSlotMutationSlot;
+  participantId?: string;
+  fromMatchId?: string;
+  fromSlot?: BracketSlotMutationSlot;
+  toMatchId?: string;
+  toSlot?: BracketSlotMutationSlot;
+}
+
+export interface UpdateBracketSlotsResponse {
+  success: boolean;
+  updatedMatchIds: string[];
+  matches: BracketMatch[];
+}
+
 export interface StaffMember {
   userId: string;
   role: 'CO_ORGANIZER' | 'REFEREE' | 'SPECTATOR';
@@ -453,6 +473,15 @@ export const tournamentsApi = {
     api.get<ApiResponse<{ stages: BracketStage[] }>>(`/tournaments/${id}/bracket`, {
       params: divisionId ? { divisionId } : undefined,
     }),
+  updateBracketSlots: (
+    id: string,
+    divisionId: string,
+    operations: BracketSlotMutation[],
+  ) =>
+    api.patch<ApiResponse<UpdateBracketSlotsResponse>>(
+      `/tournaments/${id}/divisions/${divisionId}/bracket/slots`,
+      { operations },
+    ),
   getTournamentResults: (id: string, divisionId?: string) =>
     api.get<ApiResponse<TournamentResult>>(`/tournaments/${id}/results`, {
       params: divisionId ? { divisionId } : undefined,

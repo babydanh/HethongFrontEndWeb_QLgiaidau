@@ -2574,7 +2574,7 @@
     "moderation": "Điều phối kiểm duyệt"
   },
   "Footer": {
-    "tagline": "Nền tảng quản lý giải đấu chuyên nghiệp.",
+    "tagline": "CHƠI CÙNG NHAU",
     "products": "Sản phẩm",
     "discoverTournaments": "Khám phá giải đấu",
     "createTournament": "Tạo giải đấu mới",
@@ -2885,6 +2885,9 @@
     "bracketTrayTitle": "Khu vực giữ tạm",
     "bracketTrayEmpty": "Có thể kéo participant vào đây để sắp xếp lại.",
     "bracketDragParticipant": "Kéo để thay đổi vị trí",
+    "bracketSlotsSaved": "Đã lưu vị trí bracket.",
+    "bracketSlotsSaveFailed": "Không thể lưu vị trí bracket.",
+    "bracketCompletedDragWarning": "Đã thay đổi một trận đã kết thúc. Vui lòng kiểm tra lại kết quả.",
     "win": "Thắng",
     "draw": "Hòa",
     "loss": "Thua",

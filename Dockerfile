@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
 RUN npm install -g pnpm@9.15.4
 
 FROM base AS deps

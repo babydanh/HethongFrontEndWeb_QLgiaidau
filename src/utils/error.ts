@@ -12,6 +12,7 @@ interface ErrorWithResponse {
   };
   message?: string;
 }
+
 /**
  * Trích xuất câu báo lỗi có ý nghĩa từ object error `unknown` (thường bắt từ try/catch Axios)
  */
@@ -20,10 +21,11 @@ export const getErrorMessage = (
   fallbackMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.',
   rateLimitMessage = fallbackMessage,
 ): string => {
-  if (!error) return fallbackMessage;
+  if (!error || typeof error !== 'object') return fallbackMessage;
+
+  const err = error as ErrorWithResponse;
 
   // Never expose the backend throttler exception name to users.
-  const err = error as ErrorWithResponse;
   if (err.response?.status === 429) {
     return rateLimitMessage;
   }
@@ -47,6 +49,7 @@ export const getErrorMessage = (
 };
 
 export const getRetryAfterSeconds = (error: unknown): number | null => {
+  if (!error || typeof error !== 'object') return null;
   const err = error as ErrorWithResponse;
   if (err.response?.status !== 429) return null;
 
@@ -69,12 +72,13 @@ export const getRetryAfterSeconds = (error: unknown): number | null => {
 };
 
 export const isHttpStatusError = (error: unknown, status: number): boolean => {
+  if (!error || typeof error !== 'object') return false;
   const err = error as ErrorWithResponse;
   return err.response?.status === status;
 };
 
 export const isNetworkError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
   const err = error as ErrorWithResponse;
   return !err.response && err.message === 'Network Error';
 };
-

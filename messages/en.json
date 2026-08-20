@@ -2868,6 +2868,7 @@
     "draftRegistrationSaved": "Draft registration saved. Complete the roster before the organizer locks it."
   },
   "TournamentDetail": {
+    "player": "Player",
     "loading": "Loading tournament data...",
     "loadErrorTitle": "Unable to open tournament page",
     "loadErrorFallback": "Tournament data does not exist or is not ready on the web.",

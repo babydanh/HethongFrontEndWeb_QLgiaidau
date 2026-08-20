@@ -2868,6 +2868,7 @@
     "draftRegistrationSaved": "Đã lưu đăng ký nháp. Hãy bổ sung đủ đội hình trước khi BTC khóa roster."
   },
   "TournamentDetail": {
+    "player": "Vận động viên",
     "loading": "Đang tải dữ liệu giải đấu...",
     "loadErrorTitle": "Không mở được trang giải đấu",
     "loadErrorFallback": "Dữ liệu giải đấu không tồn tại hoặc chưa sẵn sàng trên web.",

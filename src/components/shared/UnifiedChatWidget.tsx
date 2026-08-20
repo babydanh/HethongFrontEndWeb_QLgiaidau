@@ -13,7 +13,7 @@ import {
   Sparkles,
   Users,
   X,
-  Heart,
+  
   ShieldAlert,
   MoreVertical,
   Reply,
@@ -21,7 +21,7 @@ import {
   Check,
   Smile,
   ThumbsUp,
-  Flame,
+  
   CornerDownRight,
   Image as ImageIcon,
   Pin,
@@ -31,13 +31,13 @@ import {
   Ban,
   ZoomIn,
   Download,
-  AlertCircle,
-  MoreHorizontal,
+  
+  
   Camera,
   BarChart2,
   ExternalLink,
   Calendar,
-  Trophy,
+  
   CheckSquare,
   Square,
   Plus,

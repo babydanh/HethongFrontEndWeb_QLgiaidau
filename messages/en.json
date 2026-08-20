@@ -197,6 +197,7 @@
     "emptyHint": "Please change the filters and try again.",
     "venueLabel": "Court",
     "venuePending": "Court to be assigned",
+    "schedulePending": "Not set yet",
     "cheerLabel": "Cheer",
     "moreFilters": "More filters",
     "quickFinished": "Recently finished",

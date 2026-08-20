@@ -23,6 +23,7 @@ import {
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from './registrationMode';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
 
 export default function TournamentsListPage() {
   const locale = useLocale();
@@ -711,13 +712,7 @@ export default function TournamentsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {tournaments.map(tournament => {
             const { startDay, endDay, startMonth, endMonth } = getParsedDates(tournament.startDate, tournament.endDate);
-            const rawLoc = tournament.locationAddress || tournament.venue?.locationAddress || tournament.city || '';
-            const locationParts = rawLoc ? rawLoc.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-            const displayLocation = locationParts.length >= 2
-              ? locationParts.slice(-2).join(', ')
-              : locationParts.length === 1
-              ? locationParts[0]
-              : translate("locationNotUpdated");
+            const displayLocation = getTournamentLocationLabel(tournament) || translate("locationNotUpdated");
             const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
 
             return (

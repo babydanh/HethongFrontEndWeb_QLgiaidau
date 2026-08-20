@@ -15,6 +15,7 @@ import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo } f
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getDivisionMatchLabel } from '@/utils/tournament-display';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
+import { getMatchLocationLabel } from '@/utils/tournament-location';
 
 interface Props {
   tournament: Tournament;
@@ -833,14 +834,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           : translate('unscheduled')}
                       </span>
                     </div>
-                    {(match.courtName || match.tournament?.venueName) && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                        <span className="truncate max-w-[200px]" title={match.courtName || match.tournament?.venueName || ''}>
-                          {matchTranslate('courtPrefix', { court: match.courtName || match.tournament?.venueName || '' })}
-                        </span>
-                      </div>
-                    )}
+                    {(() => {
+                      const locationLabel = getMatchLocationLabel(match);
+                      return locationLabel ? (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                          <span className="truncate max-w-[260px]" title={locationLabel}>
+                            {matchTranslate('courtPrefix', { court: locationLabel })}
+                          </span>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
 
                   <Link

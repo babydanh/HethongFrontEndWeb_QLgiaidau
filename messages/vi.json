@@ -4108,6 +4108,8 @@
     "draftInviteWarning": "Giải đang ở trạng thái {status}. Mã/link mời này chỉ có bạn xem được cho đến khi giải được công bố.",
     "paidStatus": "Đã thanh toán",
     "unpaidStatus": "Chưa thanh toán",
+    "amountUnavailable": "Chưa có số tiền giao dịch",
+    "assignSeed": "Gán seed",
     "mockDeleteConfirm": "Bạn có chắc muốn xoá dữ liệu mock của \"{name}\" không?",
     "wildcardRemoveConfirm": "Xoá suất đặc cách của \"{name}\"?",
     "removeWildcard": "Xóa đặc cách",

@@ -14,11 +14,10 @@ import {
   UserPlus,
   CheckCircle,
   Lock,
-  ArrowRight,
-  UserCheck,
-  UserX,
   Users,
   Search,
+  Mail,
+  Phone,
   Shuffle,
   GripVertical,
   FileSpreadsheet,
@@ -28,6 +27,7 @@ import {
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Division, tournamentsApi } from '@/features/tournaments/api';
 import { formatDate } from '@/utils/format';
+import { cn } from '@/utils/cn';
 import {
   exportParticipantsExcel,
   downloadParticipantsTemplateExcel,
@@ -69,6 +69,36 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
+interface RegistrationProfileAvatarProps {
+  name?: string | null;
+  avatarUrl?: string | null;
+  size?: 'sm' | 'md';
+}
+
+function RegistrationProfileAvatar({ name, avatarUrl, size = 'sm' }: RegistrationProfileAvatarProps) {
+  const initials = (name || '?')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(-2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('') || '?';
+  const sizeClass = size === 'md' ? 'h-11 w-11 text-sm' : 'h-8 w-8 text-xs';
+
+  return avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={avatarUrl}
+      alt={name || 'Profile'}
+      className={cn('shrink-0 rounded-full object-cover ring-1 ring-slate-200', sizeClass)}
+    />
+  ) : (
+    <span className={cn('inline-flex shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 ring-1 ring-blue-200', sizeClass)}>
+      {initials}
+    </span>
+  );
+}
 
 interface RegistrationTabProps {
   tournament: Tournament;
@@ -346,6 +376,7 @@ export function RegistrationTab({
     try {
       const { tournamentsApi } = await import('@/features/tournaments/api');
       await tournamentsApi.updateParticipantSeed(tournament.id, participantId, seed);
+      await refetchDivisionData?.();
       toast.success(registrationTranslate('seedUpdated'));
       setEditingSeed(null);
     } catch (err) {
@@ -423,14 +454,6 @@ export function RegistrationTab({
 
   const selectedMockDivision = divisions.find((division) => division.id === selectedDivisionId);
   const canSeedMock = divisions.length === 0 || Boolean(selectedMockDivision);
-  const mockFormatLabel = selectedMockDivision
-    ? selectedMockDivision.matchType === 'SINGLES'
-      ? 'Đơn'
-      : selectedMockDivision.matchType === 'DOUBLES' || selectedMockDivision.matchType === 'MIXED_DOUBLES'
-        ? 'Đôi'
-        : 'Chưa rõ'
-    : 'Chưa chọn';
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
       
@@ -903,6 +926,9 @@ export function RegistrationTab({
                     const isMockParticipant = (participant.members || []).some((member) => member.isMock);
                     const canApprove = isParticipantPendingApproval(participant.teamStatus);
                     const canReject = isParticipantPendingApproval(participant.teamStatus) || isMockParticipant;
+                    const canManageSeed = isMockParticipant || (isParticipantApproved(participant.teamStatus) && participant.isPaid);
+                    const paymentAmount = participant.payment?.amount;
+                    const paymentCurrency = participant.payment?.currency || 'VND';
 
                     return (
                       <tr
@@ -968,23 +994,44 @@ export function RegistrationTab({
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-1 text-xs font-medium text-slate-500">
+                                                    <p className="mt-1 text-xs font-medium text-slate-500">
                             {registrationTranslate('registeredAt')} {formatDate(participant.registeredAt)}
                             {participant.seed != null ? '' : ` • ${registrationTranslate('seedMissing')}`}
                           </p>
+                          {participant.registeredBy?.email ? (
+                            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                              <Mail className="h-3 w-3 shrink-0" />
+                              {participant.registeredBy.email}
+                            </p>
+                          ) : null}
+
                         </td>
                         <td className="py-4 pr-4">
-                          <div className="flex flex-wrap gap-2">
-                            {(participant.members || []).map((member) => (
-                              <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
-                                {member.isMock ? registrationTranslate('virtualAthlete') : (member.fullName || registrationTranslate('unknownMemberName'))}
-                                {member.role === 'RESERVE' && (
-                                  <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700">
-                                    {registrationTranslate('reserveRole')}
-                                  </span>
-                                )}
-                              </span>
-                            ))}
+                          <div className="space-y-2">
+                            {(participant.members || []).map((member) => {
+                              const memberName = member.isMock
+                                ? registrationTranslate('virtualAthlete')
+                                : (member.fullName || registrationTranslate('unknownMemberName'));
+                              return (
+                                <div key={member.userId} className="flex items-center gap-2">
+                                  <RegistrationProfileAvatar name={memberName} avatarUrl={member.avatarUrl} />
+                                  <div className="min-w-0">
+                                    <p className="truncate text-xs font-bold text-slate-700">
+                                      {memberName}
+                                      {member.role === 'RESERVE' && (
+                                        <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">
+                                          {registrationTranslate('reserveRole')}
+                                        </span>
+                                      )}
+                                    </p>
+                                    <p className="flex items-center gap-1 truncate text-[11px] font-medium text-slate-500">
+                                      <Mail className="h-3 w-3 shrink-0" />
+                                      {member.email || registrationTranslate('hiddenEmail')}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </td>
                         <td className="py-4 pr-4">
@@ -996,9 +1043,16 @@ export function RegistrationTab({
                           </span>
                         </td>
                         <td className="py-4 pr-4">
-                          <span className={`text-xs font-bold ${participant.isPaid ? 'text-blue-600' : 'text-rose-600'}`}>
-                            {participant.isPaid ? registrationTranslate('paidStatus') : registrationTranslate('unpaidStatus')}
-                          </span>
+                          <div className="space-y-1">
+                            <span className={cn('text-xs font-bold', participant.isPaid ? 'text-blue-600' : 'text-rose-600')}>
+                              {participant.isPaid ? registrationTranslate('paidStatus') : registrationTranslate('unpaidStatus')}
+                            </span>
+                            <p className="text-[11px] font-semibold text-slate-500">
+                              {paymentAmount != null
+                                ? `${Number(paymentAmount).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} ${paymentCurrency}`
+                                : registrationTranslate('amountUnavailable')}
+                            </p>
+                          </div>
                         </td>
                         <td className="py-4 text-right">
                           <div className="flex justify-end gap-2">
@@ -1014,8 +1068,20 @@ export function RegistrationTab({
                                 {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? registrationTranslate('unlockRoster') : registrationTranslate('lockRoster')}
                               </Button>
                             )}
+                            {participant.seed == null && canManageSeed ? (
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  handleSeedEditStart(participant.id, null);
+                                }}
+                                disabled={isBusy}
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold"
+                              >
+                                {registrationTranslate('assignSeed')}
+                              </Button>
+                            ) : null}
                             <Button
-                               onClick={() => { void handleApproveParticipant(participant.id); }}
+                              onClick={() => { void handleApproveParticipant(participant.id); }}
                               disabled={!canApprove || isBusy}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                             >
@@ -1477,7 +1543,9 @@ export function RegistrationTab({
                     <div className="divide-y divide-slate-200/60 rounded-lg border border-slate-200 bg-white">
                       {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member) => (
                         <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5">
-                          <div className="min-w-0">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <RegistrationProfileAvatar name={member.fullName} avatarUrl={member.avatarUrl} size="md" />
+                            <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>
                               {selectedIsPair && member.role === 'MAIN' && (
@@ -1487,23 +1555,43 @@ export function RegistrationTab({
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">Partner</span>
                               )}
                             </div>
-                            <p className="mt-0.5 truncate text-xs text-slate-500">{member.email || registrationTranslate('hiddenEmail')}{member.phoneNumber ? ` · ${member.phoneNumber}` : ''}</p>
+                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
+                              <Mail className="h-3 w-3 shrink-0" />
+                              {member.email || registrationTranslate('hiddenEmail')}
+                              {member.phoneNumber ? <><Phone className="ml-1 h-3 w-3 shrink-0" /> {member.phoneNumber}</> : null}
+                            </p>
                           </div>
                           <span className="rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 border border-slate-200/60">
                             ELO {member.elo?.eloPoints ?? '—'}
                           </span>
                         </div>
+                      </div>
                       )) : (
                         <p className="px-4 py-3 text-xs text-slate-500">{registrationTranslate('noMembers')}</p>
                       )}
                     </div>
                   </div>
 
-                  {selectedParticipant.registeredBy && selectedParticipant.registeredBy.id !== selectedLeader?.userId && (
-                    <p className="mt-2 text-xs text-slate-500">
-                      {registrationTranslate('enteredBy')} <span className="font-semibold text-slate-700">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</span> · {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}
-                    </p>
-                  )}
+                  {selectedParticipant.registeredBy ? (
+                    <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+                      <RegistrationProfileAvatar
+                        name={selectedParticipant.registeredBy.fullName}
+                        avatarUrl={selectedParticipant.registeredBy.avatarUrl}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">{registrationTranslate('enteredBy')}</p>
+                        <p className="truncate text-sm font-bold text-slate-800">
+                          {selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}
+                        </p>
+                        <p className="flex flex-wrap items-center gap-1 text-xs font-medium text-slate-600">
+                          <Mail className="h-3 w-3 shrink-0" />
+                          {selectedParticipant.registeredBy.email || registrationTranslate('hiddenEmail')}
+                          {selectedParticipant.registeredBy.phoneNumber ? <><Phone className="ml-1 h-3 w-3 shrink-0" /> {selectedParticipant.registeredBy.phoneNumber}</> : null}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </section>
 
                 <section>
@@ -1533,13 +1621,15 @@ export function RegistrationTab({
 
                 <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-blue-800">{registrationTranslate('payment')}</h3>
-                  {Number(selectedParticipantFee) > 0 ? (
+                  {Number(selectedParticipantFee) > 0 || selectedParticipant.payment ? (
                     <div className="mt-2 space-y-2 text-sm text-blue-950">
-                      <p><span className="font-semibold">{registrationTranslate('feeDue')}</span> {Number(selectedParticipantFee).toLocaleString('vi-VN')}₫</p>
+                      {Number(selectedParticipantFee) > 0 ? (
+                        <p><span className="font-semibold">{registrationTranslate('feeDue')}</span> {Number(selectedParticipantFee).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')}₫</p>
+                      ) : null}
                       <p><span className="font-semibold">{registrationTranslate('paymentStatus')}</span> {selectedParticipant.isPaid ? registrationTranslate('paidStatusDetail') : registrationTranslate('unpaidStatusDetail')}</p>
                       {selectedParticipant.payment ? (
                         <div className="rounded-lg border border-blue-100 bg-white/70 p-3 text-xs text-slate-700">
-                          <p><span className="font-semibold">{registrationTranslate('transactionAmount')}</span> {Number(selectedParticipant.payment.amount).toLocaleString('vi-VN')} {selectedParticipant.payment.currency === 'VND' || !selectedParticipant.payment.currency ? '₫' : selectedParticipant.payment.currency}</p>
+                          <p><span className="font-semibold">{registrationTranslate('transactionAmount')}</span> {Number(selectedParticipant.payment.amount) > 0 ? `${Number(selectedParticipant.payment.amount).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} ${selectedParticipant.payment.currency === 'VND' || !selectedParticipant.payment.currency ? '₫' : selectedParticipant.payment.currency}` : registrationTranslate('amountUnavailable')}</p>
                           {selectedParticipant.payment.status && <p><span className="font-semibold">{registrationTranslate('statusCode')}</span> {selectedParticipant.payment.status}</p>}
                           {(selectedParticipant.payment.transactionReference || selectedParticipant.payment.providerTransactionId || selectedParticipant.payment.providerOrderCode) && <p><span className="font-semibold">{registrationTranslate('transactionCode')}</span> {selectedParticipant.payment.transactionReference || selectedParticipant.payment.providerTransactionId || selectedParticipant.payment.providerOrderCode}</p>}
                           {selectedParticipant.payment.receiptNumber && <p><span className="font-semibold">{registrationTranslate('receiptNumber')}</span> {selectedParticipant.payment.receiptNumber}</p>}
@@ -1554,6 +1644,15 @@ export function RegistrationTab({
             </ModalContent>
           </Modal>
         )}
+
+        <SmartFormImportModal
+          open={isSmartImportOpen}
+          onOpenChange={setIsSmartImportOpen}
+          tournament={tournament}
+          divisions={divisions}
+          selectedDivisionId={selectedDivisionId}
+          onSuccess={() => refetchDivisionData?.()}
+        />
 
       </div>
 

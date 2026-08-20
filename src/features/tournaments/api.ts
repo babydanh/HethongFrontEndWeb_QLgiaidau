@@ -72,6 +72,9 @@ export interface WorkspaceRefereeMatch {
   tournamentName: string;
   logoUrl?: string | null;
   categoryName: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  city: string | null;
   stageName: string;
   groupName: string;
   roundNumber: number;
@@ -586,7 +589,9 @@ export const tournamentsApi = {
   autoSeedParticipants: (id: string, divisionId?: string) =>
     api.post<ApiResponse<{ participantId: string; seed: number; elo: number }[]>>(`/tournaments/${id}/auto-seed`, { divisionId }),
   updateParticipantSeed: (id: string, participantId: string, seed: number) =>
-    api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { seed }),
+    api.patch<ApiResponse<{ success: boolean }>>(`/tournaments/${id}/seeds`, {
+      seeds: [{ participantId, seed }],
+    }),
   updateDivisionConfig: (id: string, divisionId: string, data: Record<string, unknown>) =>
     api.patch<ApiResponse<unknown>>(`/tournaments/${id}/divisions/${divisionId}/config`, data),
   getLiteJoinStatus: (inviteCode: string) =>

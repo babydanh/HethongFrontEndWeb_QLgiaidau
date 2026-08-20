@@ -11,8 +11,8 @@ import { useTranslations } from "next-intl";
 import { usersApi, UserProfile } from '@/features/users/api';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { formatDate, formatCurrency } from '@/utils/format';
-import {
-  getTournamentStatusClassName,
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
+import { getTournamentStatusClassName,
   getTournamentStatusLabel,
   isTournamentCancelled,
   isTournamentCompleted,
@@ -1086,7 +1086,7 @@ export default function ProfilePage() {
                           {/* Location Overlay (Bottom-Left) */}
                           <div className="absolute bottom-3 left-3 z-10">
                             <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
-                              {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || translate("locationFallback") : translate("notUpdated")}
+                              {getTournamentLocationLabel(tournament) || translate("notUpdated")}
                             </span>
                           </div>
                         </div>

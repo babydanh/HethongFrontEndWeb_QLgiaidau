@@ -45,6 +45,7 @@ import { categoriesApi, Category } from '@/features/categories/api';
 import { matchesApi, Match } from '@/features/matches/api';
 import { communitiesApi } from '@/features/communities/api';
 import { sortFollowedTournaments } from '@/utils/tournament-follow';
+import { getMatchLocationLabel } from '@/utils/tournament-location';
 import {
   getTournamentStatusClassName,
   getTournamentStatusLabel,
@@ -699,7 +700,11 @@ export default function DashboardPage() {
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || translate("competitionSport")}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("roundAndMatch", { round: match.roundNumber, match: match.matchOrder })}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("courtLabel", { name: match.courtName || translate("unassigned") })}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("courtLabel", { name: getMatchLocationLabel({
+                                  courtName: match.courtName,
+                                  city: match.city,
+                                  tournament: { venueName: match.venueName, venueAddress: match.venueAddress },
+                                }) || translate("unassigned") })}</span>
                               </div>
                             </div>
                             <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>

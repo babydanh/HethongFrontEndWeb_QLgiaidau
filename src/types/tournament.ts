@@ -374,6 +374,7 @@ export interface BracketMatch {
   tournament?: {
     name: string;
     venueName?: string | null;
+    venueAddress?: string | null;
   } | null;
 }
 

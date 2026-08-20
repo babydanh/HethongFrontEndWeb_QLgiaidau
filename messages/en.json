@@ -4108,6 +4108,8 @@
     "draftInviteWarning": "The tournament is currently {status}. This invitation code/link is only available to you until the tournament is published.",
     "paidStatus": "Paid",
     "unpaidStatus": "Unpaid",
+    "amountUnavailable": "Transaction amount unavailable",
+    "assignSeed": "Assign seed",
     "mockDeleteConfirm": "Are you sure you want to delete mock data for \"{name}\"?",
     "wildcardRemoveConfirm": "Remove wildcard slot for \"{name}\"?",
     "removeWildcard": "Remove wildcard",

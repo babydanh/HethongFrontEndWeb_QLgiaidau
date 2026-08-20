@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
 import { getTournamentStatusClassName, normalizeTournamentStatus } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
 
 interface Props {
   id?: string;
@@ -135,7 +136,7 @@ function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tour
             </div>
             <p className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">
               {sport}
-              {tournament.locationAddress && ` · ${tournament.locationAddress}`}
+              {getTournamentLocationLabel(tournament) && ` · ${getTournamentLocationLabel(tournament)}`}
               {tournament.startDate && ` · ${new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(tournament.startDate))}`}
             </p>
             {(isDoubles && partnerName) && (

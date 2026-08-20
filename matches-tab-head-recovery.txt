@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
@@ -6,7 +6,7 @@ import { Tournament, Division, BracketMatch, divisionsApi } from '@/features/tou
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
-
+import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
 import { Calendar, Play, Trophy, MapPin, Info, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -63,19 +63,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   );
   
   // Pagination Hook
-    const {
-    data: matches,
-    setData: setMatches,
-    fetchNextPage,
-    fetchPreviousPage,
-    canGoPrevious,
-    page,
-    hasMore,
-    isLoading,
-    error,
-    resetAndFetch,
-  } = useCursorPagination<BracketMatch>(
-
+  const { data: matches, setData: setMatches, fetchNextPage, hasMore, isLoading, resetAndFetch } = useCursorPagination<BracketMatch>(
     async (cursor) => {
       const matchParams: Record<string, string | number> = {
         tournament_id: effectiveTournamentId,
@@ -174,15 +162,15 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
 
   const localizeMatchRoundLabel = (label: string) => label
-    .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
-    .replaceAll('Chung kết', matchTranslate('roundFinal'))
-    .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
-    .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
-    .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
-    .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
-    .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
-    .replaceAll('Lượt', matchTranslate('leg'))
-    .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
+    .replaceAll('Chung kß║┐t tß╗òng', matchTranslate('roundGrandFinal'))
+    .replaceAll('Chung kß║┐t', matchTranslate('roundFinal'))
+    .replaceAll('B├ín kß║┐t', matchTranslate('roundSemifinal'))
+    .replaceAll('Tß╗⌐ kß║┐t', matchTranslate('roundQuarterfinal'))
+    .replaceAll('V├▓ng bß║úng', matchTranslate('roundGroupStage'))
+    .replaceAll('Nh├ính thß║»ng', matchTranslate('winnersBracket'))
+    .replaceAll('Nh├ính thua', matchTranslate('losersBracket'))
+    .replaceAll('L╞░ß╗út', matchTranslate('leg'))
+    .replace(/V├▓ng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
 
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
@@ -260,7 +248,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
       return true;
     }).sort((a, b) => {
-      // Sort Nhánh thắng (MAIN/Winners) first, Nhánh thua (LOSERS) second
+      // Sort Nh├ính thß║»ng (MAIN/Winners) first, Nh├ính thua (LOSERS) second
       const branchA = (a.bracketBranch || '').toUpperCase();
       const branchB = (b.bracketBranch || '').toUpperCase();
       
@@ -284,8 +272,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     return <div className="animate-pulse bg-slate-900/10 h-64 rounded-lg w-full"></div>;
   }
 
-    const getStatusBadge = (status: string) => {
-
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED':
         return (
@@ -369,7 +356,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         <Info className="w-4 h-4 text-slate-400" />
         <span>{matchTranslate('divisionLabel')}: <strong className="text-slate-700">{tournament.name}</strong></span>
         {displayMatchLabel !== displayTranslate('unknownFormat') && (
-          <span className="text-slate-400">• {displayMatchLabel}</span>
+          <span className="text-slate-400">ΓÇó {displayMatchLabel}</span>
         )}
       </div>
 
@@ -421,13 +408,11 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         {/* Row 2: Round Slider */}
         {roundOptions.length > 0 && (
           <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
-            <p className="text-[11px] font-medium text-slate-400">{matchTranslate('roundFilterHint')}</p>
             {tournament.format === 'DOUBLE_ELIMINATION' || roundOptions.some((ro) => ro.branch === 'LOSERS') ? (
               <>
                 {/* Winners Row */}
                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('winnersLabel')}:</span>
-
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('winnersLabel')}:</span>
                   <button
                     onClick={() => setSelectedRoundKey('ALL')}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
@@ -528,19 +513,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         )}
       </div>
 
-            {error && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
-          <span>{error.message || matchTranslate('loadingError')}</span>
-          <button
-            type="button"
-            onClick={() => void resetAndFetch()}
-            className="shrink-0 rounded-md border border-rose-200 bg-white px-2.5 py-1 font-bold text-rose-700 hover:bg-rose-100"
-          >
-            {matchTranslate('retry')}
-          </button>
-        </div>
-      )}
-
       {/* Render Matches List */}
       {filteredMatches.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -557,7 +529,13 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               tournament: { sportRules: tournament.sportRules ?? null },
             });
 
+            // Keep the score grid stable from the configured format, not from
+            // the number of scores already submitted. A BO5 match must show
+            // S1-S5 even before S4/S5 has been played.
             const maxSets = Math.max(1, resolvedRules.bestOf);
+            // Once a match is complete, hide unused BO5 columns. A 3-0 result
+            // therefore shows S1-S3; an unfinished match still shows the full
+            // configured format so users know how many sets are possible.
             const visibleSets = isCompleted
               ? Math.max(1, Math.min(maxSets, sets.length || 1))
               : maxSets;
@@ -585,19 +563,10 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     <span className={isLive ? 'text-rose-600 font-bold animate-pulse' : 'text-slate-650'}>
                       {roundLabel}
                     </span>
-                    {(() => {
-                      const stageName = getStageVietnameseName(match.group?.stage?.name);
-                      const shouldShow =
-                        stageName &&
-                        !roundLabel.toLowerCase().includes(stageName.toLowerCase()) &&
-                        stageName !== translate('stageDefault');
-                      return shouldShow ? (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span className="uppercase text-slate-500">{stageName}</span>
-                        </>
-                      ) : null;
-                    })()}
+                    <span className="text-slate-300">ΓÇó</span>
+                    <span className="uppercase text-slate-500">
+                      {getStageVietnameseName(match.group?.stage?.name)}
+                    </span>
                   </div>
                   {getStatusBadge(match.status)}
                 </div>
@@ -615,7 +584,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       {isP1Winner ? (
                         <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
                       ) : (
-                        isCompleted && <div className="w-4 h-4 shrink-0" />
+                        isCompleted && <div className="w-4 h-4 shrink-0" /> // Giß╗» khoß║úng trß╗æng ─æß╗üu ─æß║╖n
                       )}
                       {renderParticipantName(
                         match.participant1,
@@ -718,40 +687,15 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               </div>
             );
           })}
-          
+          <InfiniteScrollTrigger onLoadMore={fetchNextPage} hasMore={hasMore} isLoading={isLoading} />
         </div>
-            ) : (
+      ) : (
         <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl text-slate-450 bg-white">
           <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
           <p className="font-bold text-sm text-slate-500">{translate('matchesEmpty')}</p>
           <p className="text-xs text-slate-400 mt-1">{translate('matchesEmptyHint')}</p>
         </div>
       )}
-
-      {matches.length > 0 && (
-        <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
-          <button
-            type="button"
-            onClick={() => void fetchPreviousPage()}
-            disabled={!canGoPrevious || isLoading}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {matchTranslate('previousPage')}
-          </button>
-          <span className="min-w-20 text-center text-xs font-bold text-slate-500">
-            {matchTranslate('reportPageCount', { page })}
-          </span>
-          <button
-            type="button"
-            onClick={() => void fetchNextPage()}
-            disabled={!hasMore || isLoading}
-            className="rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {matchTranslate('nextPage')}
-          </button>
-        </div>
-      )}
     </div>
-
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface PaginationMeta {
   nextCursor?: string | null;
@@ -10,93 +10,94 @@ interface CursorPaginatedResponse<T> {
   meta: PaginationMeta;
 }
 
+interface CursorPageState {
+  cursor: string | null;
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 export function useCursorPagination<T extends { id?: string }>(
-  fetchFn: (cursor: string | null) => Promise<CursorPaginatedResponse<T>>
+  fetchFn: (cursor: string | null) => Promise<CursorPaginatedResponse<T>>,
 ) {
   const [data, setData] = useState<T[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  
-  // Track the current cursor to prevent duplicate fetches
+  const [page, setPage] = useState(1);
+  const [canGoPrevious, setCanGoPrevious] = useState(false);
+
   const fetchLock = useRef(false);
-  const fetchedCursorsRef = useRef<Set<string>>(new Set());
   const fetchFnRef = useRef(fetchFn);
-  const nextCursorRef = useRef(nextCursor);
-  const hasMoreRef = useRef(hasMore);
+  const currentPageRef = useRef<CursorPageState>({
+    cursor: null,
+    nextCursor: null,
+    hasMore: true,
+  });
+  const pageCursorsRef = useRef<Array<string | null>>([null]);
+
   useEffect(() => {
     fetchFnRef.current = fetchFn;
   }, [fetchFn]);
-  useEffect(() => {
-    nextCursorRef.current = nextCursor;
-  }, [nextCursor]);
-  useEffect(() => {
-    hasMoreRef.current = hasMore;
-  }, [hasMore]);
 
-  const fetchNextPage = useCallback(async (reset = false) => {
+  const loadPage = useCallback(async (cursor: string | null, targetPage: number) => {
     if (fetchLock.current) return;
-    if (!reset && !hasMoreRef.current) return;
-    
-    const cursorToFetch = reset ? null : nextCursorRef.current;
-    const cursorKey = cursorToFetch ?? '__initial__';
-    if (!reset && fetchedCursorsRef.current.has(cursorKey)) return;
 
+    fetchLock.current = true;
     setIsLoading(true);
     setError(null);
-    fetchLock.current = true;
-    if (reset) fetchedCursorsRef.current.clear();
-    fetchedCursorsRef.current.add(cursorKey);
-
     try {
-      const response = await fetchFnRef.current(cursorToFetch);
-      const responseCursor = response.meta.nextCursor || null;
-      const cursorAdvanced = responseCursor !== null && responseCursor !== cursorToFetch;
+      const response = await fetchFnRef.current(cursor);
+      const responseCursor = response.meta.nextCursor ?? null;
+      const cursorAdvanced = responseCursor !== null && responseCursor !== cursor;
       const responseHasMore = response.meta.hasMore === true && cursorAdvanced;
-      
-      setData((prev) => {
-        if (reset) {
-          return response.data;
-        }
-        // Basic deduplication by ID (if items have an id property)
-        const newItems = [...prev];
-        response.data.forEach((item) => {
-          if (!item.id || !newItems.find(existing => existing.id === item.id)) {
-            newItems.push(item);
-          }
-        });
-        return newItems;
-      });
-      
-      setNextCursor(responseHasMore ? responseCursor : null);
-      setHasMore(responseHasMore);
-      nextCursorRef.current = responseHasMore ? responseCursor : null;
-      hasMoreRef.current = responseHasMore;
+      const nextPageState: CursorPageState = {
+        cursor,
+        nextCursor: responseHasMore ? responseCursor : null,
+        hasMore: responseHasMore,
+      };
+
+      setData(response.data);
+      setPage(targetPage);
+      setNextCursor(nextPageState.nextCursor);
+      setHasMore(nextPageState.hasMore);
+      setCanGoPrevious(targetPage > 1);
+      currentPageRef.current = nextPageState;
+      pageCursorsRef.current[targetPage - 1] = cursor;
     } catch (err) {
-      // Stop the sentinel after an error (especially HTTP 429) so it cannot
-      // immediately retry the same cursor in a tight loop.
-      setHasMore(false);
-      hasMoreRef.current = false;
-      setNextCursor(null);
-      nextCursorRef.current = null;
-      setError(err instanceof Error ? err : new Error('An error occurred'));
+      setError(err instanceof Error ? err : new Error('Unable to load matches'));
     } finally {
       setIsLoading(false);
       fetchLock.current = false;
     }
   }, []);
 
+  const fetchNextPage = useCallback(async () => {
+    if (!currentPageRef.current.hasMore || !currentPageRef.current.nextCursor) return;
+    const targetPage = page + 1;
+    const cursor = currentPageRef.current.nextCursor;
+    pageCursorsRef.current[targetPage - 1] = cursor;
+    await loadPage(cursor, targetPage);
+  }, [loadPage, page]);
+
+  const fetchPreviousPage = useCallback(async () => {
+    if (page <= 1) return;
+    const targetPage = page - 1;
+    const cursor = pageCursorsRef.current[targetPage - 1] ?? null;
+    await loadPage(cursor, targetPage);
+  }, [loadPage, page]);
+
   const resetAndFetch = useCallback(() => {
-    fetchedCursorsRef.current.clear();
-    nextCursorRef.current = null;
-    hasMoreRef.current = true;
+    pageCursorsRef.current = [null];
+    currentPageRef.current = { cursor: null, nextCursor: null, hasMore: true };
+    setData([]);
+    setPage(1);
     setNextCursor(null);
     setHasMore(true);
-    return fetchNextPage(true);
-  }, [fetchNextPage]);
+    setCanGoPrevious(false);
+    return loadPage(null, 1);
+  }, [loadPage]);
 
-  // Initial fetch can be triggered manually or via useEffect depending on use case
   return {
     data,
     setData,
@@ -104,8 +105,10 @@ export function useCursorPagination<T extends { id?: string }>(
     hasMore,
     isLoading,
     error,
+    page,
+    canGoPrevious,
     fetchNextPage,
-    resetAndFetch
+    fetchPreviousPage,
+    resetAndFetch,
   };
 }
-

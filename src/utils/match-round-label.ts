@@ -204,9 +204,32 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
   const phasePrefix = includePhasePrefix ? getPhasePrefix(match, tournamentFormat) : null;
 
   if (isRoundRobin && !isKnockoutStage(stage, tournamentFormat)) {
-    const groupLabel = normalizeText(tournamentFormat) === 'GROUP_STAGE_KNOCKOUT' || normalizeText(stage?.type) === 'GROUP_STAGE'
-      ? 'Vòng bảng'
-      : null;
+    const rawGroupName = match.group?.name?.trim();
+    const isGenericGroup =
+      !rawGroupName ||
+      [
+        'VÒNG BẢNG',
+        'VONG BANG',
+        'GROUP STAGE',
+        'ROUND ROBIN',
+        'CHUNG',
+        'DEFAULT',
+      ].includes(normalizeText(rawGroupName));
+    const groupName = isGenericGroup ? null : rawGroupName;
+
+    if (!includePhasePrefix) {
+      return `Vòng ${match.roundNumber}`;
+    }
+
+    if (groupName) {
+      return `${groupName} • Vòng ${match.roundNumber}`;
+    }
+
+    const groupLabel =
+      normalizeText(tournamentFormat) === 'GROUP_STAGE_KNOCKOUT' ||
+      normalizeText(stage?.type) === 'GROUP_STAGE'
+        ? 'Vòng bảng'
+        : null;
     return groupLabel ? `${groupLabel} • Vòng ${match.roundNumber}` : `Vòng ${match.roundNumber}`;
   }
 

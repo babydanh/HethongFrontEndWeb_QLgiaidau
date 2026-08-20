@@ -356,6 +356,7 @@ const commonTranslate = useTranslations('Common');
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
   const showRegistrationDetails = !isTournamentInProgress(activeTournament.status) && !isTournamentCompleted(activeTournament.status);
   const registrationModeUi = getRegistrationModeUi(registrationTranslate, activeTournament.tournamentConfig?.registrationMode);
+  const hasAdvancedRegistrationForm = activeTournament.tournamentConfig?.registrationForm?.status === 'PUBLISHED';
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
   let registrationButtonLabel = registrationModeUi.ctaLabel;
@@ -563,7 +564,8 @@ const commonTranslate = useTranslations('Common');
                   }
                   const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' ||
                                                 registrationModeUi.mode !== 'OPEN' ||
-                                                divisionsList.length > 0;
+                                                divisionsList.length > 0 ||
+                                                hasAdvancedRegistrationForm;
                   if (needsRegistrationPage) {
                     router.push(registerHref);
                   } else {

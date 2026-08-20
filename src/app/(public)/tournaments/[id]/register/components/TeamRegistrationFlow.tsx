@@ -23,12 +23,18 @@ interface Props {
   maxTeamSize?: number;
   maxReserve?: number;
   registrationMode?: string;
+  isRanked?: boolean;
+  rankingConsent?: boolean;
+  onRankingConsentChange?: (value: boolean) => void;
+  rankingConsentLabel?: string;
+  rankingConsentCondition?: string;
+  rankingConsentRequiredMessage?: string;
   customResponses?: Record<string, unknown>;
   onRegistrationChanged?: () => Promise<void> | void;
 }
 
 export default function TeamRegistrationFlow({
-  tournamentId, inviteCode, divisionId, categoryId, currentUserId, participantId, participantTeamId, rosterLockedAt, teamSize, maxTeamSize, maxReserve = 0, registrationMode, customResponses,
+  tournamentId, inviteCode, divisionId, categoryId, currentUserId, participantId, participantTeamId, rosterLockedAt, teamSize, maxTeamSize, maxReserve = 0, registrationMode, isRanked = false, rankingConsent = false, onRankingConsentChange, rankingConsentLabel, rankingConsentCondition, rankingConsentRequiredMessage, customResponses,
   onRegistrationChanged,
 }: Props) {
   const router = useRouter();
@@ -108,6 +114,9 @@ export default function TeamRegistrationFlow({
   const submit = async () => {
     const team = teams.find((item) => item.id === selectedId);
     if (!team) return toast.error(translate('selectTeam'));
+    if (!participantId && isRanked && !rankingConsent) {
+      return toast.error(rankingConsentRequiredMessage || translate('selectTeam'));
+    }
     setSaving(true);
     try {
       if (participantId) {
@@ -128,7 +137,7 @@ export default function TeamRegistrationFlow({
         inviteCode,
         divisionId,
         tournamentDivisionId: divisionId,
-        rankingConsent: true,
+        rankingConsent: isRanked ? rankingConsent : true,
         customResponses,
       });
       const createdParticipantId = res.data?.participant?.id;
@@ -202,6 +211,20 @@ export default function TeamRegistrationFlow({
             </div>
           )}
         </>
+      )}
+      {!participantId && isRanked && rankingConsentLabel && (
+        <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={rankingConsent}
+            onChange={(event) => onRankingConsentChange?.(event.target.checked)}
+            className="mt-1 h-4 w-4 accent-sky-600"
+          />
+          <span>
+            {rankingConsentLabel}
+            {rankingConsentCondition && <span className="mt-1 block text-xs text-slate-500">{rankingConsentCondition}</span>}
+          </span>
+        </label>
       )}
       <Button type="button" onClick={submit} disabled={saving || loading || rosterLoading || Boolean(rosterStatus?.entry?.status === 'LOCKED' || rosterLockedAt) || !selectedId || selectedMemberIds.length === 0 || selectedReserveIds.length > maxReserve} className="w-full bg-emerald-600 hover:bg-emerald-700">{saving || rosterLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {participantId ? translate('updateRoster') : selectedMemberIds.length < teamSize ? translate('saveDraft') : translate('registerSelectedTeam')}</Button>
     </div>

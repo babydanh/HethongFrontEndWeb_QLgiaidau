@@ -979,6 +979,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     maxTeamSize={tournament?.tournamentConfig?.maxTeamSize}
                     maxReserve={tournament?.tournamentConfig?.maxReserve ?? 0}
                     registrationMode={tournament?.tournamentConfig?.registrationMode}
+                    isRanked={Boolean(tournament?.isRanked)}
+                    rankingConsent={rankingConsent}
+                    onRankingConsentChange={setRankingConsent}
+                    rankingConsentLabel={registrationTranslate('rankingConsentPrefix')}
+                    rankingConsentCondition={registrationTranslate('rankedContentCondition')}
+                    rankingConsentRequiredMessage={registrationTranslate('eloConsentRequired')}
                     customResponses={customResponses}
                     onRegistrationChanged={() => fetchTournament()}
                   />

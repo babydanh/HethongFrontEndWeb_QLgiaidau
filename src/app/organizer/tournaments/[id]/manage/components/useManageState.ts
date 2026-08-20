@@ -36,6 +36,24 @@ import type { StageRoundRuleConfig } from '@/types/tournament';
 
 type RoundConfigRecord = Record<string, unknown>;
 
+const normalizeRegionLabel = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('vi-VN')
+    .replace(/^(tinh|thanh pho|tp\.?|quan|huyen|thi xa|phuong|xa|thi tran)\s+/i, '')
+    .trim();
+
+const findRegionByLabel = (regions: Region[], value?: string | null) => {
+  if (!value) return null;
+  const normalized = normalizeRegionLabel(value);
+  return regions.find((region) =>
+    [region.code, region.name, region.fullName, region.codeName]
+      .filter(Boolean)
+      .some((label) => normalizeRegionLabel(String(label)) === normalized),
+  ) ?? null;
+};
+
 const isRoundConfigRecord = (value: unknown): value is RoundConfigRecord =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -461,8 +479,22 @@ export function useManageState(id: string) {
 
       const venueRes = await venuesApi.createVenue({ name: customVenueName.trim(), locationAddress: fullAddr });
       const finalVenueId = venueRes?.data?.id || null;
+      const existingConfig = (tournament?.tournamentConfig as Record<string, unknown> | undefined) || {};
+      const existingLocation = (existingConfig.location as Record<string, unknown> | undefined) || {};
       await tournamentsApi.updateTournament(id, {
-        venueId: finalVenueId, city: pName || null,
+        venueId: finalVenueId,
+        city: pName || null,
+        tournamentConfig: {
+          ...existingConfig,
+          location: {
+            ...existingLocation,
+            venueName: customVenueName.trim(),
+            address: customVenueAddress.trim(),
+            display: fullAddr,
+            province: pName || undefined,
+            ward: wName || undefined,
+          },
+        },
         startDate: toApiIsoDateTime(startDate),
         endDate: toApiIsoDateTime(endDate),
         registrationStartDate: toApiIsoDateTime(registrationStartDate),
@@ -1374,6 +1406,9 @@ export function useManageState(id: string) {
           venueName?: string;
           address?: string;
           display?: string;
+          province?: string;
+          district?: string;
+          ward?: string;
         } | undefined;
         const quickSchedule = quickConfig?.schedule as {
           registrationStartDate?: string;
@@ -1431,6 +1466,23 @@ export function useManageState(id: string) {
           if (cRes.data) setCategories(cRes.data);
           if (fRes.data) setFeesConfig(fRes.data);
           setProvinces(pList);
+
+          // Quick/AI creation stores region labels in tournamentConfig.location.
+          // Restore the canonical codes after the province list is available so
+          // the Manage form does not appear empty after the redirect/reload.
+          const config = t.tournamentConfig as Record<string, unknown> | undefined;
+          const location = config?.location as {
+            province?: string;
+            ward?: string;
+          } | undefined;
+          const restoredProvince = findRegionByLabel(pList, location?.province || t.city);
+          if (restoredProvince) {
+            setProvinceCode(restoredProvince.code);
+            const wardList = await regionsApi.getWards(restoredProvince.code);
+            setWards(wardList);
+            const restoredWard = findRegionByLabel(wardList, location?.ward);
+            if (restoredWard) setWardCode(restoredWard.code);
+          }
           await fetchCameras();
         } catch { /* silent */ }
       }

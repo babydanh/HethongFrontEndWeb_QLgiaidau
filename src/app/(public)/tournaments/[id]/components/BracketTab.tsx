@@ -332,6 +332,7 @@ export default function BracketTab({
   fallbackSportRuleKind,
   knockoutOnly = false,
   dragHandlers,
+  refreshKey,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const displayTranslate = useTranslations('TournamentDisplay');
@@ -408,7 +409,7 @@ export default function BracketTab({
       }
     };
     fetchBracket();
-  }, [divisionId, effectiveTournamentId, knockoutOnly]);
+  }, [divisionId, effectiveTournamentId, knockoutOnly, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -424,7 +425,7 @@ export default function BracketTab({
           setResult(response.data);
           setResultError(false);
         }
-      } catch (error) {
+      } catch {
         // Keep the last valid snapshot visible during transient 429/5xx errors.
         if (!cancelled) setResultError(true);
       } finally {

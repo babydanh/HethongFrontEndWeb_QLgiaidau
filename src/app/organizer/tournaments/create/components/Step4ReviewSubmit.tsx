@@ -141,6 +141,25 @@ export default function Step4ReviewSubmit() {
       const effectiveEntryFee = isClubTournament || !feesConfig.allowEntryFees
         ? 0
         : formData.entryFee || 0;
+      const locationParts = [
+        formData.venueName,
+        formData.locationAddress,
+        formData.ward,
+        formData.district,
+        formData.province,
+      ].map((part) => part?.trim()).filter((part): part is string => Boolean(part));
+      const locationConfig = locationParts.length > 0
+        ? {
+            location: {
+              ...(formData.venueName?.trim() ? { venueName: formData.venueName.trim() } : {}),
+              ...(formData.locationAddress?.trim() ? { address: formData.locationAddress.trim() } : {}),
+              ...(formData.province?.trim() ? { province: formData.province.trim() } : {}),
+              ...(formData.district?.trim() ? { district: formData.district.trim() } : {}),
+              ...(formData.ward?.trim() ? { ward: formData.ward.trim() } : {}),
+              display: locationParts.join(', '),
+            },
+          }
+        : {};
       const finalTournamentData: Record<string, unknown> = {
         name: formData.name,
         categoryId: formData.categoryId,
@@ -156,6 +175,8 @@ export default function Step4ReviewSubmit() {
         endDate: toApiIsoDateTime(formData.endDate),
         registrationStartDate: toApiIsoDateTime(formData.registrationStartDate),
         registrationEndDate: toApiIsoDateTime(formData.registrationEndDate),
+        city: formData.province?.trim() || undefined,
+        venueId: formData.venueId || undefined,
         sportRules: formData.sportRules,
         tournamentConfig: {
           bracketType: formData.format as string,
@@ -167,6 +188,7 @@ export default function Step4ReviewSubmit() {
           registrationMode: formData.registrationMode || 'OPEN',
           registrationScope: isClubTournament ? 'CLUB_MEMBERS_ONLY' : 'PUBLIC_OPEN',
           mode: 'STRICT',
+          ...locationConfig,
 
           // Team sport (bóng đá): sân 5/7/11 + thể thức nâng cao
           ...(formData.teamSize != null ? { teamSize: formData.teamSize } : {}),

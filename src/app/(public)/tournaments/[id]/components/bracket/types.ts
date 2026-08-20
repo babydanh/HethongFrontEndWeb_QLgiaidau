@@ -58,6 +58,8 @@ export interface BracketTabProps {
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   dragHandlers?: BracketDragHandlers;
+  /** Changes when the owner has persisted a bracket edit and the view must refetch canonical matches. */
+  refreshKey?: string | number;
 }
 
 export interface MatchPos {

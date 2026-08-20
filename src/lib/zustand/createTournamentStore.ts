@@ -56,6 +56,11 @@ interface TournamentFormData {
   registrationStartDate: string;
   registrationEndDate: string;
   venueId: string;
+  venueName: string;
+  locationAddress: string;
+  province: string;
+  district: string;
+  ward: string;
   // Step 5: Fees
   entryFee: number;
   isRanked: boolean;
@@ -110,6 +115,11 @@ const defaultFormData: TournamentFormData = {
   registrationStartDate: '',
   registrationEndDate: '',
   venueId: '',
+  venueName: '',
+  locationAddress: '',
+  province: '',
+  district: '',
+  ward: '',
   entryFee: 0,
   isRanked: true,
   registrationMode: 'OPEN',

@@ -7,7 +7,8 @@ import type { BracketMatch } from '@/features/tournaments/api';
 export function isBracketMatchLive(
   match: Pick<BracketMatch, 'status'> | null | undefined,
 ): boolean {
-  return match?.status === 'ONGOING' || match?.status === 'IN_PROGRESS';
+  const status = match?.status?.toUpperCase();
+  return status === 'ONGOING' || status === 'IN_PROGRESS' || status === 'LIVE';
 }
 
 export function isBracketMatchDragLocked(
@@ -15,3 +16,4 @@ export function isBracketMatchDragLocked(
 ): boolean {
   return isBracketMatchLive(match);
 }
+

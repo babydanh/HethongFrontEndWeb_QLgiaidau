@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Settings, ChevronDown, ChevronRight, Save, Trophy, LayoutGrid, Users, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
+import { Settings, Save, Trophy, LayoutGrid, Users, Loader2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
@@ -25,7 +25,7 @@ import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/Bracket
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-import { normalizeSportRuleKindForCategory } from '@/features/tournaments/sport-rules/options';
+
 import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
 import type { Category } from '@/features/categories/api';
@@ -333,6 +333,7 @@ export function BracketTab({
   const [trayParticipants, setTrayParticipants] = useState<BracketParticipant[]>([]);
   const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
   const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
+  const [bracketRefreshKey, setBracketRefreshKey] = useState(0);
   const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
@@ -445,6 +446,8 @@ export function BracketTab({
     try {
       await tournamentsApi.updateBracketSlots(tournament.id, selectedDivisionId, [operation]);
       await refetchDivisionData?.();
+      setParticipantOverrides({});
+      setBracketRefreshKey((current) => current + 1);
       toast.success(translate('bracketSlotsSaved'));
     } catch (error) {
       setParticipantOverrides(previousOverrides);
@@ -1330,6 +1333,7 @@ export function BracketTab({
                 onSelectMatch={onSelectMatch}
                 knockoutOnly
                 dragHandlers={bracketDragHandlers}
+                refreshKey={bracketRefreshKey}
               />
               <DragOverlay>
                 {activeDragSource ? (

@@ -8,8 +8,9 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input, DateTimePicker } from '@/components/ui/Input';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { ChevronRight, ChevronLeft, Calendar, DollarSign } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Calendar, DollarSign, MapPin } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
+import { regionsApi, type Region } from '@/features/regions/api';
 
 const getCurrentIsoMinute = () => {
   const now = new Date();
@@ -22,6 +23,11 @@ const createStep3Schema = (translate: ReturnType<typeof useTranslations>) => z.o
   endDate: z.string().min(1, translate('validationEndRequired')),
   registrationStartDate: z.string().min(1, translate('validationRegistrationStartRequired')),
   registrationEndDate: z.string().min(1, translate('validationRegistrationEndRequired')),
+  venueName: z.string().max(200).optional(),
+  locationAddress: z.string().max(500).optional(),
+  province: z.string().max(120).optional(),
+  district: z.string().max(120).optional(),
+  ward: z.string().max(120).optional(),
   entryFee: z.string().refine((val) => {
     const num = Number(val);
     return !isNaN(num) && num >= 0;
@@ -85,6 +91,9 @@ export default function Step3ScheduleFees() {
   const { formData, updateFormData, nextStep, prevStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
   const [allowEntryFees, setAllowEntryFees] = useState(true);
+  const [provinces, setProvinces] = useState<Region[]>([]);
+  const [wards, setWards] = useState<Region[]>([]);
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
   const defaultRegistrationStart = formData.registrationStartDate || getCurrentIsoMinute();
 
   const { register, handleSubmit, control, setValue, setError, setFocus, formState: { errors } } = useForm<Step3Values>({
@@ -94,6 +103,11 @@ export default function Step3ScheduleFees() {
       endDate: formData.endDate || undefined,
       registrationStartDate: defaultRegistrationStart,
       registrationEndDate: formData.registrationEndDate || undefined,
+      venueName: formData.venueName || '',
+      locationAddress: formData.locationAddress || '',
+      province: formData.province || '',
+      district: formData.district || '',
+      ward: formData.ward || '',
       entryFee: isClubTournament ? '0' : String(formData.entryFee || 0),
     },
   });
@@ -105,6 +119,43 @@ export default function Step3ScheduleFees() {
     setFocus(field);
     clearValidationTarget();
   }, [clearValidationTarget, setError, setFocus, validationTarget]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void regionsApi.getProvinces().then((items) => {
+      if (!cancelled) setProvinces(items);
+    }).catch(() => {
+      if (!cancelled) setProvinces([]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const province = provinces.find((item) => {
+      const label = item.fullName || item.name;
+      return label === formData.province || item.name === formData.province;
+    });
+    setSelectedProvinceCode(province?.code || '');
+    if (!province) setWards([]);
+  }, [formData.province, provinces]);
+
+  useEffect(() => {
+    if (!selectedProvinceCode) {
+      setWards([]);
+      return;
+    }
+    let cancelled = false;
+    void regionsApi.getWardsByProvince(selectedProvinceCode).then((items) => {
+      if (!cancelled) setWards(items);
+    }).catch(() => {
+      if (!cancelled) setWards([]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProvinceCode]);
 
   useEffect(() => {
     const loadFeePolicy = async () => {
@@ -130,6 +181,11 @@ export default function Step3ScheduleFees() {
       registrationStartDate: data.registrationStartDate,
       registrationEndDate: data.registrationEndDate,
       entryFee: isClubTournament || !allowEntryFees ? 0 : Number(data.entryFee),
+      venueName: data.venueName?.trim() || '',
+      locationAddress: data.locationAddress?.trim() || '',
+      province: data.province?.trim() || '',
+      district: data.district?.trim() || '',
+      ward: data.ward?.trim() || '',
     });
     nextStep();
   };
@@ -217,6 +273,41 @@ export default function Step3ScheduleFees() {
               )}
             />
           </div>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="w-5 h-5 text-rose-500" />
+            <h4 className="font-bold text-slate-900">{translate('locationTitle')}</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label={translate('venueName')} placeholder={translate('venueNamePlaceholder')} {...register('venueName')} error={errors.venueName?.message} />
+            <Input label={translate('locationAddress')} placeholder={translate('locationAddressPlaceholder')} {...register('locationAddress')} error={errors.locationAddress?.message} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">{translate('province')}</label>
+              <select
+                {...register('province')}
+                onChange={(event) => {
+                  setValue('province', event.target.value, { shouldDirty: true, shouldValidate: true });
+                  setSelectedProvinceCode(event.target.selectedOptions[0]?.dataset.code || '');
+                  setValue('ward', '', { shouldDirty: true });
+                }}
+                className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">{translate('provincePlaceholder')}</option>
+                {provinces.map((item) => <option key={item.code} value={item.fullName || item.name} data-code={item.code}>{item.fullName || item.name}</option>)}
+              </select>
+            </div>
+            <Input label={translate('district')} placeholder={translate('districtPlaceholder')} {...register('district')} error={errors.district?.message} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">{translate('ward')}</label>
+              <select {...register('ward')} className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">{translate('wardPlaceholder')}</option>
+                {wards.map((item) => <option key={item.code} value={item.fullName || item.name}>{item.fullName || item.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500">{translate('locationDescription')}</p>
         </div>
 
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">

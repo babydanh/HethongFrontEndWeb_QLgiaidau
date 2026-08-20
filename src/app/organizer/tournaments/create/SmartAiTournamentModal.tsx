@@ -57,6 +57,8 @@ interface ParsedTournament {
   venueName?: string | null;
   locationAddress?: string | null;
   province?: string | null;
+  district?: string | null;
+  ward?: string | null;
   description?: string | null;
   bannerUrl?: string | null;
   formats: ParsedFormat[];
@@ -200,6 +202,8 @@ export default function SmartAiTournamentModal({
         venueName: parsedData.venueName || undefined,
         locationAddress: parsedData.locationAddress || undefined,
         province: parsedData.province || undefined,
+        district: parsedData.district || undefined,
+        ward: parsedData.ward || undefined,
         description: parsedData.description || undefined,
         bannerUrl: parsedData.bannerUrl || undefined,
         bracketType: (primaryFormat.bracketType?.toLowerCase() as 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout') || 'single_elimination',

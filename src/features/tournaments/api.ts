@@ -471,7 +471,7 @@ export const tournamentsApi = {
     api.post<ApiResponse<{ message: string }>>(`/tournaments/${tournamentId}/stages/${stageId}/finalize`),
   getTournamentBracket: (id: string, divisionId?: string) =>
     api.get<ApiResponse<{ stages: BracketStage[] }>>(`/tournaments/${id}/bracket`, {
-      params: divisionId ? { divisionId } : undefined,
+      params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
     }),
   updateBracketSlots: (
     id: string,

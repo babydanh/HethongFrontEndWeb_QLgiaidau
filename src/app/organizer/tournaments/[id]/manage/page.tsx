@@ -461,7 +461,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         {s.activeTab === 'bracket' && (
           <div ref={bracketSectionRef}>
-            <BracketTab tournament={s.tournament} bracket={s.bracket}
+            <BracketTab key={s.selectedDivisionId || 'no-division'} tournament={s.tournament} bracket={s.bracket}
               selectedDivisionId={s.selectedDivisionId} participants={s.participants}
               isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
               handleOpenScheduling={s.handleOpenScheduling} handleOpenRoundModal={s.handleOpenRoundModal}

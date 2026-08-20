@@ -6,6 +6,10 @@
  */
 
 export type {
+  BracketDragHandlers,
+  BracketDragSource,
+  BracketParticipant,
+  BracketSlot,
   OnScheduleMatch,
   OnSelectBracketMatch,
   BracketTabProps,

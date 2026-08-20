@@ -8,18 +8,27 @@ interface ErrorWithResponse {
   response?: {
     status?: number;
     data?: ApiError;
+    headers?: unknown;
   };
   message?: string;
 }
 /**
  * Trích xuất câu báo lỗi có ý nghĩa từ object error `unknown` (thường bắt từ try/catch Axios)
  */
-export const getErrorMessage = (error: unknown, fallbackMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.'): string => {
+export const getErrorMessage = (
+  error: unknown,
+  fallbackMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.',
+  rateLimitMessage = fallbackMessage,
+): string => {
   if (!error) return fallbackMessage;
 
-  // Lỗi từ Axios response mapping với ApiError của backend
+  // Never expose the backend throttler exception name to users.
   const err = error as ErrorWithResponse;
-  
+  if (err.response?.status === 429) {
+    return rateLimitMessage;
+  }
+
+  // Lỗi từ Axios response mapping với ApiError của backend
   if (err.response?.data?.message) {
     // Backend thường trả về string hoặc mảng validation strings
     const msg = err.response.data.message;
@@ -35,6 +44,28 @@ export const getErrorMessage = (error: unknown, fallbackMessage = 'Đã có lỗ
   }
 
   return fallbackMessage;
+};
+
+export const getRetryAfterSeconds = (error: unknown): number | null => {
+  const err = error as ErrorWithResponse;
+  if (err.response?.status !== 429) return null;
+
+  const headers = err.response.headers as
+    | { get?: (name: string) => string | null; [key: string]: unknown }
+    | undefined;
+  const rawHeader = headers?.get?.('retry-after')
+    ?? headers?.['retry-after']
+    ?? headers?.['Retry-After'];
+  const raw = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
+  if (typeof raw !== 'string' || !raw.trim()) return null;
+
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) {
+    return Math.max(1, Math.ceil(seconds));
+  }
+
+  const dateMs = Date.parse(raw) - Date.now();
+  return Number.isFinite(dateMs) && dateMs > 0 ? Math.max(1, Math.ceil(dateMs / 1000)) : null;
 };
 
 export const isHttpStatusError = (error: unknown, status: number): boolean => {

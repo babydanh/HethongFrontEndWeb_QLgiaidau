@@ -15,7 +15,11 @@ import { useTranslations } from 'next-intl';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
-import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import type {
+  BracketDragHandlers,
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+} from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { buildMatchesByRound, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
@@ -30,6 +34,7 @@ interface Props {
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   panEnabled?: boolean;
+  dragHandlers?: BracketDragHandlers;
 }
 
 export function DoubleElimView({
@@ -41,6 +46,7 @@ export function DoubleElimView({
   onSelectMatch,
   fallbackSportRuleKind,
   panEnabled = false,
+  dragHandlers,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
@@ -430,6 +436,7 @@ export function DoubleElimView({
                     isP1Bye={isP1Bye}
                     isP2Bye={isP2Bye}
                     fallbackSportRuleKind={fallbackSportRuleKind}
+                    dragHandlers={dragHandlers}
                   />
                 </div>
               );

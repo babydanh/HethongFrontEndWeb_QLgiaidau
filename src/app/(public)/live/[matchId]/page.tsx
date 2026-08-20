@@ -32,7 +32,7 @@ import { useLiveMatch } from '@/hooks/useLiveMatch';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { socketClient } from '@/lib/socket';
 import type { MatchPenaltyRecord, MatchScore, PickleballSideOutState, TennisLivePointState } from '@/types/match';
-import { getErrorMessage } from '@/utils/error';
+import { getErrorMessage, getRetryAfterSeconds } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatCompact } from '@/utils/format';
@@ -124,6 +124,13 @@ export default function LiveMatchPage({ params }: Props) {
   const matchTranslate = useTranslations('Match');
   const livePenaltyTranslate = useTranslations('LivePenalty');
   const tournamentDetailTranslate = useTranslations('TournamentDetail');
+  const rateLimitMessage = `${translate('rateLimitTitle')} ${translate('rateLimitHint')}`;
+  const formatRateLimitMessage = (error: unknown) => {
+    const seconds = getRetryAfterSeconds(error);
+    return seconds
+      ? translate('rateLimitRetryAfter', { seconds })
+      : rateLimitMessage;
+  };
   const router = useRouter();
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
@@ -147,6 +154,15 @@ export default function LiveMatchPage({ params }: Props) {
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [overrideEnabled, setOverrideEnabled] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
+  const activeTournamentMode = match?.tournament?.tournamentConfig?.mode ?? null;
+
+  useEffect(() => {
+    // A mode switch is a new rule context. Never carry an Advanced override
+    // decision or its audit reason into the next mode.
+    setOverrideEnabled(false);
+    setOverrideReason('');
+  }, [activeTournamentMode]);
+
   // Bóng đá: kết quả luân lưu khi trận hòa ở knockout
   const [shootoutGoals, setShootoutGoals] = useState<{ p1Goals: number; p2Goals: number }>({ p1Goals: 0, p2Goals: 0 });
   const [footballScore, setFootballScore] = useState<FootballScoreState>(DEFAULT_FOOTBALL_SCORE);
@@ -582,7 +598,7 @@ export default function LiveMatchPage({ params }: Props) {
   };
 
   const resolveOverrideReason = () => {
-    if (!overrideEnabled) {
+    if (isLiteMatch || !overrideEnabled) {
       return null;
     }
 
@@ -747,7 +763,7 @@ export default function LiveMatchPage({ params }: Props) {
               id: `score-sync-${matchId}`,
             });
           } else {
-            toast.error(getErrorMessage(err, matchTranslate('liveScoreSyncFailed')), { id: `score-sync-${matchId}` });
+            toast.error(getErrorMessage(err, matchTranslate('liveScoreSyncFailed'), formatRateLimitMessage(err)), { id: `score-sync-${matchId}` });
           }
         } finally {
       scoreSyncInFlightRef.current = false;
@@ -786,7 +802,7 @@ export default function LiveMatchPage({ params }: Props) {
     scoreSyncTimerRef.current = setTimeout(() => {
       scoreSyncTimerRef.current = null;
       void flushScoreSync();
-    }, 140);
+    }, 60);
   };
 
 
@@ -883,7 +899,7 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     const appliedOverrideReason = resolveOverrideReason();
-    if (overrideEnabled && !appliedOverrideReason) {
+    if (!isLiteMatch && overrideEnabled && !appliedOverrideReason) {
       return;
     }
     const newScores = [...optimisticScoresRef.current];
@@ -952,7 +968,7 @@ export default function LiveMatchPage({ params }: Props) {
       });
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, matchTranslate('scoreUpdateFallback')));
+      toast.error(getErrorMessage(err, matchTranslate('scoreUpdateFallback'), formatRateLimitMessage(err)));
     }
   };
 
@@ -1001,7 +1017,7 @@ export default function LiveMatchPage({ params }: Props) {
       );
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, matchTranslate('statusUpdateFallback')));
+      toast.error(getErrorMessage(err, matchTranslate('statusUpdateFallback'), formatRateLimitMessage(err)));
     } finally {
       liveMutationInFlightRef.current = false;
       setIsSubmitting(false);
@@ -1014,7 +1030,7 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     const appliedOverrideReason = resolveOverrideReason();
-    if (overrideEnabled && !appliedOverrideReason) {
+    if (!isLiteMatch && overrideEnabled && !appliedOverrideReason) {
       return;
     }
     if (!beginLiveMutation()) return;
@@ -1098,7 +1114,7 @@ export default function LiveMatchPage({ params }: Props) {
         applyServerSnapshot(fresh);
         toast(matchTranslate('setChangedOtherDevice'));
       } else {
-        toast.error(getErrorMessage(err, matchTranslate('setFinishErrorFallback')));
+        toast.error(getErrorMessage(err, matchTranslate('setFinishErrorFallback'), formatRateLimitMessage(err)));
       }
     } finally {
       liveMutationInFlightRef.current = false;
@@ -1240,7 +1256,7 @@ export default function LiveMatchPage({ params }: Props) {
         applyServerSnapshot(fresh);
         toast(matchTranslate('matchChangedOtherDevice'));
       } else {
-        toast.error(getErrorMessage(err, matchTranslate('matchCompleteErrorFallback')));
+        toast.error(getErrorMessage(err, matchTranslate('matchCompleteErrorFallback'), formatRateLimitMessage(err)));
       }
         } finally {
       liveMutationInFlightRef.current = false;
@@ -1253,7 +1269,7 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     const appliedOverrideReason = resolveOverrideReason();
-    if (overrideEnabled && !appliedOverrideReason) {
+    if (!isLiteMatch && overrideEnabled && !appliedOverrideReason) {
       return;
     }
 
@@ -1272,7 +1288,7 @@ export default function LiveMatchPage({ params }: Props) {
       toast.success(matchTranslate('servingTeamChanged', { team: team === 1 ? team1Name : team2Name }));
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, matchTranslate('servingTeamUpdateFailed')));
+      toast.error(getErrorMessage(err, matchTranslate('servingTeamUpdateFailed'), formatRateLimitMessage(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -1288,7 +1304,7 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     const appliedOverrideReason = resolveOverrideReason();
-    if (overrideEnabled && !appliedOverrideReason) {
+    if (!isLiteMatch && overrideEnabled && !appliedOverrideReason) {
       return;
     }
 
@@ -1312,7 +1328,7 @@ export default function LiveMatchPage({ params }: Props) {
       );
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, matchTranslate('sideOutUpdateFailed')));
+      toast.error(getErrorMessage(err, matchTranslate('sideOutUpdateFailed'), formatRateLimitMessage(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -1329,7 +1345,7 @@ export default function LiveMatchPage({ params }: Props) {
     }
 
     const appliedOverrideReason = resolveOverrideReason();
-    if (overrideEnabled && !appliedOverrideReason) {
+    if (!isLiteMatch && overrideEnabled && !appliedOverrideReason) {
       return;
     }
 
@@ -1360,7 +1376,7 @@ export default function LiveMatchPage({ params }: Props) {
       toast.success(`${matchTranslate('penaltyRecorded', { label })}`);
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, matchTranslate('penaltySaveFailed')));
+      toast.error(getErrorMessage(err, matchTranslate('penaltySaveFailed'), formatRateLimitMessage(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -1410,7 +1426,7 @@ export default function LiveMatchPage({ params }: Props) {
       toast.success(translate('postPublished'), { id: `comment-${matchId}` });
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, translate('commentPostFailed')));
+      toast.error(getErrorMessage(err, translate('commentPostFailed'), formatRateLimitMessage(err)));
     } finally {
       setIsCommentSubmitting(false);
     }

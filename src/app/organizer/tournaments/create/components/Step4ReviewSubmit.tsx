@@ -129,7 +129,15 @@ export default function Step4ReviewSubmit() {
       }
 
       // 1. Create one tournament. Match formats are stored as tournament_divisions.
+      // The standard wizard is the mandatory/advanced path; persist that mode
+      // explicitly so later Manage/Ops screens never have to infer it from a
+      // missing tournamentConfig field.
+      const standardRoundConfig = {
+        ...formData.sportRules,
+        mode: 'STRICT' as const,
+      };
       const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
+
       const effectiveEntryFee = isClubTournament || !feesConfig.allowEntryFees
         ? 0
         : formData.entryFee || 0;
@@ -158,6 +166,8 @@ export default function Step4ReviewSubmit() {
           maxTeammateGap: formData.maxTeammateGap,
           registrationMode: formData.registrationMode || 'OPEN',
           registrationScope: isClubTournament ? 'CLUB_MEMBERS_ONLY' : 'PUBLIC_OPEN',
+          mode: 'STRICT',
+
           // Team sport (bóng đá): sân 5/7/11 + thể thức nâng cao
           ...(formData.teamSize != null ? { teamSize: formData.teamSize } : {}),
           ...(formData.teamSizeOptions ? { teamSizeOptions: formData.teamSizeOptions } : {}),
@@ -197,6 +207,7 @@ export default function Step4ReviewSubmit() {
             | 'DOUBLE_ELIMINATION'
             | 'ROUND_ROBIN'
             | 'GROUP_STAGE_KNOCKOUT',
+          roundConfig: standardRoundConfig,
         };
         return divisionsApi.createDivision(tournamentId, divisionInput);
       });

@@ -12,7 +12,11 @@ import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, ShieldCheck, Flame, Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
-import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import type {
+  BracketDragHandlers,
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+} from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { buildMatchesByRound, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
@@ -25,6 +29,7 @@ interface Props {
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
+  dragHandlers?: BracketDragHandlers;
 }
 
 type BranchTab = 'upper' | 'lower';
@@ -37,6 +42,7 @@ export function PagedDoubleElimView({
   selectedMatchId,
   onSelectMatch,
   fallbackSportRuleKind,
+  dragHandlers,
 }: Props) {
   const translate = useTranslations('BracketView');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
@@ -434,6 +440,7 @@ export function PagedDoubleElimView({
                     isP1Bye={isP1Bye}
                     isP2Bye={isP2Bye}
                     fallbackSportRuleKind={fallbackSportRuleKind}
+                    dragHandlers={dragHandlers}
                   />
                 </div>
               );

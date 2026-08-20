@@ -7,7 +7,7 @@ import { divisionsApi, Division, tournamentsApi } from '@/features/tournaments/a
 import { matchesApi } from '@/features/matches/api';
 import type { Match } from '@/types/match';
 import type { Tournament, TournamentParticipant } from '@/types/tournament';
-import { getErrorMessage } from '@/utils/error';
+import { getErrorMessage, getRetryAfterSeconds } from '@/utils/error';
 import type {
   MatchOperationInput,
   MatchScheduleInput,
@@ -108,6 +108,14 @@ export function useOrganizerOps(
   options?: UseOrganizerOpsOptions,
 ): UseOrganizerOpsResult {
   const translate = useTranslations('OrganizerOps');
+  const commonTranslate = useTranslations('Common');
+  const rateLimitMessage = `${commonTranslate('rateLimitTitle')} ${commonTranslate('rateLimitHint')}`;
+  const formatRateLimitMessage = (error: unknown) => {
+    const seconds = getRetryAfterSeconds(error);
+    return seconds
+      ? commonTranslate('rateLimitRetryAfter', { seconds })
+      : rateLimitMessage;
+  };
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [referees, setReferees] = useState<OpsReferee[]>([]);
@@ -218,7 +226,7 @@ export function useOrganizerOps(
         });
       } catch (err) {
         if (active) {
-          setError(getErrorMessage(err));
+          setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
         }
       } finally {
         if (active) {
@@ -268,7 +276,7 @@ export function useOrganizerOps(
         await loadOperationalData(selectedDivisionId);
       } catch (err) {
         if (active) {
-          setError(getErrorMessage(err));
+          setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
         }
       } finally {
         if (active) {
@@ -308,7 +316,7 @@ export function useOrganizerOps(
       toast.success(successMessage);
       await refresh();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
     } finally {
       setActiveParticipantActionId(null);
     }
@@ -340,7 +348,7 @@ export function useOrganizerOps(
       );
       await refresh();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
     } finally {
       setActiveMatchActionId(null);
     }
@@ -365,7 +373,7 @@ export function useOrganizerOps(
       );
       await refresh();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
     } finally {
       setActiveMatchActionId(null);
     }
@@ -407,7 +415,7 @@ export function useOrganizerOps(
       );
       await refresh();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
     } finally {
       setActiveMatchActionId(null);
     }
@@ -431,7 +439,7 @@ export function useOrganizerOps(
       );
       await refresh();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
     } finally {
       setActiveMatchActionId(null);
     }

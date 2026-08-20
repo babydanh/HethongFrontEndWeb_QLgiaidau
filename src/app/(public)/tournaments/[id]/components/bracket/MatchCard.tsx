@@ -8,6 +8,8 @@
 'use client';
 
 import React, { memo } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Play, Clock } from 'lucide-react';
@@ -16,8 +18,14 @@ import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import type { SportRuleKind } from '@/types/tournament';
 import { formatDateTime } from '@/utils/format';
-import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import type {
+  BracketDragHandlers,
+  BracketSlot,
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+} from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER } from './types';
+import { isBracketMatchDragLocked } from './match-status';
 
 /** Derive max columns dynamically from match configuration or scores */
 function getMaxColumns(match: BracketMatch): number {
@@ -43,20 +51,24 @@ export const MatchCard = memo(function MatchCard({
   onSelectMatch,
   selected = false,
   isP1Bye = false,
-  isP2Bye = false,
+    isP2Bye = false,
+  dragHandlers,
 }: {
+
   match: BracketMatch;
   onScheduleMatch?: OnScheduleMatch;
   onSelectMatch?: OnSelectBracketMatch;
   selected?: boolean;
   isP1Bye?: boolean;
-  isP2Bye?: boolean;
+    isP2Bye?: boolean;
   fallbackSportRuleKind?: SportRuleKind;
+  dragHandlers?: BracketDragHandlers;
 }) {
+
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
   const done = match.status === 'COMPLETED';
-  const live = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
+  const live = isBracketMatchDragLocked(match);
   const p1Won = done && match.winnerId != null && match.winnerId === match.participant1?.id;
   const p2Won = done && match.winnerId != null && match.winnerId === match.participant2?.id;
   const isOrganizer = !!onScheduleMatch;
@@ -119,17 +131,27 @@ export const MatchCard = memo(function MatchCard({
           won={p1Won}
           isByeSlot={isP1Bye || (match.isBye && !match.participant1)}
           setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
-          pickScore={(s) => s.p1}
+                    pickScore={(s) => s.p1}
           maxCols={maxCols}
+          matchId={match.id}
+          slot="participant1"
+          dragHandlers={dragHandlers}
+          locked={live}
         />
+
         <RowSide
           p={match.participant2}
           won={p2Won}
           isByeSlot={isP2Bye || (match.isBye && !match.participant2)}
           setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
-          pickScore={(s) => s.p2}
+                    pickScore={(s) => s.p2}
           maxCols={maxCols}
+          matchId={match.id}
+          slot="participant2"
+          dragHandlers={dragHandlers}
+          locked={live}
         />
+
       </div>
 
       {/* Compact 1-Line Scheduled Date & Time Footer */}
@@ -154,6 +176,8 @@ export const MatchCard = memo(function MatchCard({
   return (
     <div
       data-bracket-match-id={match.id}
+      data-bracket-match-live={live ? 'true' : 'false'}
+      aria-disabled={live}
       style={{ width: CARD_W, height: actualCardH }}
       className={
         'rounded-md overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow bg-white select-none ' +
@@ -209,26 +233,65 @@ const RowSide = memo(function RowSide({
   won,
   isByeSlot = false,
   setList,
-  pickScore,
+    pickScore,
   maxCols,
+  matchId,
+  slot,
+  dragHandlers,
+  locked,
 }: {
   p: BracketMatch['participant1'];
+
   won: boolean;
   isByeSlot?: boolean;
   setList: { p1: string; p2: string }[];
-  pickScore: (s: { p1: string; p2: string }) => string;
+    pickScore: (s: { p1: string; p2: string }) => string;
   maxCols: number;
+  matchId: string;
+  slot: BracketSlot;
+  dragHandlers?: BracketDragHandlers;
+  locked: boolean;
 }) {
   const translate = useTranslations('TournamentDetail');
+  const dragEnabled = Boolean(dragHandlers?.enabled && p && !locked);
+  const { isOver, setNodeRef: setDropNodeRef } = useDroppable({
+    id: `bracket-slot:${matchId}:${slot}`,
+    disabled: !dragHandlers?.enabled || locked,
+    data: { target: { type: 'slot', matchId, slot } },
+  });
+  const { attributes, listeners, setNodeRef: setDragNodeRef } = useDraggable({
+    id: `bracket-participant:${matchId}:${slot}`,
+    disabled: !dragEnabled,
+    data: p ? { source: { type: 'slot', matchId, slot, participant: p } } : undefined,
+  });
   return (
-    <div
+
+        <div
+      ref={setDropNodeRef}
       className={
         'flex items-center justify-between py-1 transition-colors border-l-[4px] pl-2 pr-2.5 ' +
-        (won ? 'bg-blue-50/90 border-blue-600' : 'bg-white border-transparent')
+        (won ? 'bg-blue-50/90 border-blue-600' : 'bg-white border-transparent') +
+        (isOver ? ' bg-blue-50 ring-2 ring-inset ring-blue-400' : '') +
+        (locked ? ' cursor-not-allowed opacity-90' : '')
       }
     >
       {/* Team Info */}
       <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
+        {dragEnabled && (
+          <button
+            ref={setDragNodeRef}
+            type="button"
+            {...attributes}
+            {...listeners}
+            aria-label={translate('bracketDragParticipant')}
+            title={translate('bracketDragParticipant')}
+            className="cursor-grab touch-none rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing"
+            onClick={(event) => event.stopPropagation()}
+          >
+            ⋮⋮
+          </button>
+        )}
+
         {p?.seed != null && (
           <span className="text-[8.5px] bg-slate-200 text-slate-700 px-1 rounded font-bold shrink-0">
             {p.seed}

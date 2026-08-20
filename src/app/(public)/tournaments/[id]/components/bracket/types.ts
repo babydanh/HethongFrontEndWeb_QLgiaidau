@@ -29,6 +29,25 @@ export const LOWER_SET = new Set(['LOSER', 'LOSERS', 'LOWER', 'L']);
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export type OnScheduleMatch = (match: BracketMatch) => void;
 export type OnSelectBracketMatch = (match: BracketMatch) => void;
+export type BracketSlot = 'participant1' | 'participant2';
+export type BracketParticipant = NonNullable<BracketMatch['participant1']>;
+
+export interface BracketDragSource {
+  type: 'slot' | 'tray';
+  matchId?: string;
+  slot?: BracketSlot;
+  participant: BracketParticipant;
+}
+
+export interface BracketDragHandlers {
+  enabled?: boolean;
+  trayParticipants?: BracketParticipant[];
+  participantOverrides?: Record<string, BracketParticipant | null>;
+  onParticipantDrop?: (
+    source: BracketDragSource,
+    target: { type: 'slot'; matchId: string; slot: BracketSlot } | { type: 'tray' },
+  ) => void;
+}
 
 export interface BracketTabProps {
   tournament: { id: string; name: string; genderRestriction?: string | null };
@@ -38,6 +57,7 @@ export interface BracketTabProps {
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
+  dragHandlers?: BracketDragHandlers;
 }
 
 export interface MatchPos {

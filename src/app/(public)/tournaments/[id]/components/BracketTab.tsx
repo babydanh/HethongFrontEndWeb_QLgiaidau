@@ -1,12 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Tournament, Division, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
-import { LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
+import { Archive, LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { OnScheduleMatch, OnSelectBracketMatch, BracketTabProps } from './bracket';
+import type {
+  BracketDragHandlers,
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+  BracketTabProps,
+  BracketDragSource,
+  BracketParticipant,
+} from './bracket';
 import { UPPER_SET, LOWER_SET } from './bracket';
 import { SingleElimView, DoubleElimView, RoundRobinView } from './bracket';
 import { PagedSingleElimView, PagedDoubleElimView, PagedRoundRobinView } from './bracket';
@@ -27,6 +35,100 @@ type TranslationFn = (key: string, values?: Record<string, string | number>) => 
 function isKnockoutStage(stage: BracketStage): boolean {
   return stage.type === 'SINGLE_ELIMINATION' || stage.type === 'DOUBLE_ELIMINATION';
 }
+
+function slotOverrideKey(matchId: string, slot: 'participant1' | 'participant2'): string {
+  return `${matchId}:${slot}`;
+}
+
+function TrayParticipant({
+  participant,
+  translate,
+  enabled,
+}: {
+  participant: BracketParticipant;
+  translate: TranslationFn;
+  enabled: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `bracket-tray:${participant.id}`,
+    disabled: !enabled,
+    data: {
+      source: {
+        type: 'tray',
+        participant,
+      } satisfies BracketDragSource,
+    },
+  });
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      {...attributes}
+      {...listeners}
+      disabled={!enabled}
+      className={`touch-none rounded-lg border bg-white px-3 py-2 text-left shadow-sm transition ${
+        isDragging ? 'opacity-40 ring-2 ring-blue-400' : 'hover:border-blue-300 hover:shadow'
+      }`}
+      aria-label={translate('bracketDragParticipant')}
+    >
+      <span className="block truncate text-xs font-bold text-slate-800">{participant.teamName}</span>
+      {participant.seed != null && (
+        <span className="mt-0.5 block text-[10px] font-semibold text-slate-400">
+          {translate('seedLabel', { seed: participant.seed })}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function OrganizerBracketTray({
+  dragHandlers,
+  translate,
+}: {
+  dragHandlers: NonNullable<BracketTabProps['dragHandlers']>;
+  translate: TranslationFn;
+}) {
+  const participants = dragHandlers.trayParticipants ?? [];
+  const { isOver, setNodeRef } = useDroppable({
+    id: 'bracket-tray',
+    disabled: !dragHandlers.enabled,
+    data: { target: { type: 'tray' } },
+  });
+
+  return (
+    <section
+      ref={setNodeRef}
+      data-bracket-tray={participants.length ? 'filled' : 'empty'}
+      aria-label={translate('bracketTrayTitle')}
+      className={`rounded-xl border border-dashed px-4 py-3 transition ${
+        isOver ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-200' : 'border-slate-300 bg-slate-50/70'
+      }`}
+    >
+      <div className="flex items-center gap-2 text-slate-600">
+        <Archive className="h-4 w-4 text-slate-400" aria-hidden="true" />
+        <span className="text-xs font-bold">{translate('bracketTrayTitle')}</span>
+      </div>
+      {participants.length === 0 ? (
+        <p className="mt-1 pl-6 text-[11px] font-medium text-slate-400">
+          {translate('bracketTrayEmpty')}
+        </p>
+      ) : (
+        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {participants.map((participant) => (
+            <TrayParticipant
+              key={participant.id}
+              participant={participant}
+              translate={translate}
+              enabled={Boolean(dragHandlers.enabled)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 
 /**
  * Determine the type‑specific label for a stage.
@@ -81,16 +183,18 @@ function GroupView({
   group,
   stageType,
   onScheduleMatch,
+  onSelectMatch,
   tiebreakerMode,
   tournamentId,
   stageId,
   selectedMatchId,
-  onSelectMatch,
   fallbackSportRuleKind,
   roundConfig,
   viewMode = 'paged',
   translate,
+  dragHandlers,
 }: {
+
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
   onScheduleMatch?: OnScheduleMatch;
@@ -103,8 +207,23 @@ function GroupView({
   roundConfig?: BracketStage['roundConfig'];
   viewMode?: 'paged' | 'full';
   translate: TranslationFn;
+  dragHandlers?: BracketDragHandlers;
 }) {
-  const { matches } = group;
+  const { matches: groupMatches } = group;
+  const overrides = dragHandlers?.participantOverrides;
+  const matches = groupMatches.map((match) => {
+    if (!overrides) return match;
+    const p1Key = slotOverrideKey(match.id, 'participant1');
+    const p2Key = slotOverrideKey(match.id, 'participant2');
+    const hasP1 = Object.prototype.hasOwnProperty.call(overrides, p1Key);
+    const hasP2 = Object.prototype.hasOwnProperty.call(overrides, p2Key);
+    if (!hasP1 && !hasP2) return match;
+    return {
+      ...match,
+      ...(hasP1 ? { participant1: overrides[p1Key], participant1Id: overrides[p1Key]?.id ?? null } : {}),
+      ...(hasP2 ? { participant2: overrides[p2Key], participant2Id: overrides[p2Key]?.id ?? null } : {}),
+    };
+  });
 
   if (!matches.length) {
     return (
@@ -163,6 +282,7 @@ function GroupView({
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
+          dragHandlers={dragHandlers}
         />
       ) : (
         <DoubleElimView
@@ -174,19 +294,21 @@ function GroupView({
           onSelectMatch={onSelectMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
           panEnabled={viewMode === 'full'}
+          dragHandlers={dragHandlers}
         />
       );
     }
   }
 
   return viewMode === 'paged' ? (
-    <PagedSingleElimView
-      matches={matches}
-      onScheduleMatch={onScheduleMatch}
-      selectedMatchId={selectedMatchId}
-      onSelectMatch={onSelectMatch}
-      fallbackSportRuleKind={fallbackSportRuleKind}
-    />
+      <PagedSingleElimView
+        matches={matches}
+        onScheduleMatch={onScheduleMatch}
+        selectedMatchId={selectedMatchId}
+        onSelectMatch={onSelectMatch}
+        fallbackSportRuleKind={fallbackSportRuleKind}
+        dragHandlers={dragHandlers}
+      />
   ) : (
     <SingleElimView
       matches={matches}
@@ -195,6 +317,7 @@ function GroupView({
       onSelectMatch={onSelectMatch}
       fallbackSportRuleKind={fallbackSportRuleKind}
       panEnabled={viewMode === 'full'}
+      dragHandlers={dragHandlers}
     />
   );
 }
@@ -213,6 +336,7 @@ export default function BracketTab({
   onSelectMatch,
   fallbackSportRuleKind,
   knockoutOnly = false,
+  dragHandlers,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const displayTranslate = useTranslations('TournamentDisplay');
@@ -426,6 +550,24 @@ export default function BracketTab({
         </div>}
       </div>
 
+      {onScheduleMatch && (dragHandlers?.enabled ? (
+        <OrganizerBracketTray dragHandlers={dragHandlers} translate={translate} />
+      ) : (
+        <section
+          data-bracket-tray="empty"
+          aria-label={translate('bracketTrayTitle')}
+          className="rounded-xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-3"
+        >
+          <div className="flex items-center gap-2 text-slate-600">
+            <Archive className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            <span className="text-xs font-bold">{translate('bracketTrayTitle')}</span>
+          </div>
+          <p className="mt-1 pl-6 text-[11px] font-medium text-slate-400">
+            {translate('bracketTrayEmpty')}
+          </p>
+        </section>
+      ))}
+
       {/* Stage tabs */}
       {stages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -517,6 +659,7 @@ export default function BracketTab({
                   roundConfig={activeStage?.roundConfig}
                   viewMode={effectiveViewMode}
                   translate={translate}
+                  dragHandlers={dragHandlers}
                 />
               </div>
             ))

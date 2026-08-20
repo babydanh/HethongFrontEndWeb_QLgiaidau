@@ -11,7 +11,12 @@ import React, { useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
-import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import type {
+  BracketDragHandlers,
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+} from './types';
+
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { buildMatchesByRound, getRoundLabel, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
@@ -24,6 +29,7 @@ interface Props {
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   panEnabled?: boolean;
+  dragHandlers?: BracketDragHandlers;
 }
 
 export function SingleElimView({
@@ -31,9 +37,11 @@ export function SingleElimView({
   onScheduleMatch,
   selectedMatchId,
   onSelectMatch,
-  fallbackSportRuleKind,
+    fallbackSportRuleKind,
   panEnabled = false,
+  dragHandlers,
 }: Props) {
+
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -229,8 +237,10 @@ export function SingleElimView({
                     selected={selectedMatchId === match.id}
                     isP1Bye={isP1Bye}
                     isP2Bye={isP2Bye}
-                    fallbackSportRuleKind={fallbackSportRuleKind}
+                                        fallbackSportRuleKind={fallbackSportRuleKind}
+                    dragHandlers={dragHandlers}
                   />
+
                 </div>
               );
             })}

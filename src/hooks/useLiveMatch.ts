@@ -20,12 +20,16 @@ function areScoresEqual(left: MatchScore[], right: MatchScore[]) {
 }
 
 function hasSameLiveSnapshot(left: Match, right: Match) {
+  const leftMode = left.tournament?.tournamentConfig?.mode ?? null;
+  const rightMode = right.tournament?.tournamentConfig?.mode ?? null;
+
   return (
     left.id === right.id &&
     left.status === right.status &&
     left.winnerId === right.winnerId &&
     left.p1SetsWon === right.p1SetsWon &&
     left.p2SetsWon === right.p2SetsWon &&
+    leftMode === rightMode &&
     JSON.stringify(left.scoreDetails ?? null) === JSON.stringify(right.scoreDetails ?? null)
   );
 }
@@ -40,7 +44,17 @@ function isStaleRevision(previous: Match | null, incoming: Match): boolean {
   if (previous.revision === undefined || incoming.revision === undefined) {
     return false; // no revision info → keep legacy behavior
   }
-  return incoming.revision <= previous.revision;
+  if (incoming.revision < previous.revision) {
+    return true;
+  }
+
+  if (incoming.revision === previous.revision) {
+    const previousMode = previous.tournament?.tournamentConfig?.mode ?? null;
+    const incomingMode = incoming.tournament?.tournamentConfig?.mode ?? null;
+    return previousMode === incomingMode;
+  }
+
+  return false;
 }
 
 export function useLiveMatch(matchId: string) {

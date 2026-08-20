@@ -203,7 +203,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           <div className="space-y-2 w-full md:w-auto">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {getSportLogo(s.tournament.category?.name) && <img src={getSportLogo(s.tournament.category?.name)!} alt="" className="w-3 h-3 object-contain" />}
+                {getSportLogo(s.tournament.category?.name) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={getSportLogo(s.tournament.category?.name)!} alt="" className="w-3 h-3 object-contain" />
+                )}
                 {s.tournament.category?.name || translate('status.sportFallback')}
               </span>
               {getTournamentStatusLabel(s.tournament.status, {

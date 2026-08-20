@@ -3584,7 +3584,22 @@
     "inviteOnlyBadge": "Chỉ dành cho người được mời",
     "rankedBadgeLabel": "Xếp hạng ELO",
     "recreationalBadgeLabel": "Phong trào",
-    "locationNotUpdated": "Chưa cập nhật"
+    "locationNotUpdated": "Chưa cập nhật",
+    "fieldRequired": "Vui lòng điền “{label}”.",
+    "emailInvalid": "“{label}” phải là email hợp lệ.",
+    "numberInvalid": "“{label}” phải là số.",
+    "numberBelowMinimum": "“{label}” không được nhỏ hơn {min}.",
+    "numberAboveMaximum": "“{label}” không được lớn hơn {max}.",
+    "invalidSelect": "Vui lòng chọn một giá trị hợp lệ cho “{label}”.",
+    "invalidMultiSelect": "Vui lòng chọn giá trị hợp lệ cho “{label}”.",
+    "checkboxRequired": "Bạn cần xác nhận “{label}”.",
+    "teamNameMinLength": "Tên đội phải có ít nhất 3 ký tự",
+    "partnerSearchRequired": "Vui lòng nhập Email hoặc Số điện thoại để tìm kiếm.",
+    "partnerSearchConfirm": "Vui lòng tìm kiếm và xác nhận đồng đội hoặc chọn \"Mời đồng đội sau\".",
+    "teamCreatedInviteNextStep": "Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.",
+    "copiedInviteLink": "Đã sao chép link mời đồng đội!",
+    "withdrawSuccess": "Đã rút khỏi giải đấu thành công.",
+    "partnerInviteExpiredOrClosed": "Lời mời ghép đôi đã hết hạn hoặc giải đã đóng đăng ký."
   },
   "TournamentDisplay": {
     "maleGender": "Nam",
@@ -4339,7 +4354,13 @@
     "cancelAction": "Hủy bỏ",
     "confirmWithdrawRefund": "Xác nhận rút & hoàn tiền",
     "unpaidWithdrawDescription": "Bạn chưa thanh toán lệ phí, nên sẽ không có hoàn tiền. Xác nhận hủy đăng ký?",
-    "confirmWithdraw": "Xác nhận rút lui"
+    "confirmWithdraw": "Xác nhận rút lui",
+    "partnerSearchRequired": "Vui lòng nhập Email hoặc Số điện thoại để tìm kiếm.",
+    "partnerSearchConfirm": "Vui lòng tìm kiếm và xác nhận đồng đội hoặc chọn \"Mời đồng đội sau\".",
+    "teamCreatedInviteNextStep": "Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.",
+    "copiedInviteLink": "Đã sao chép link mời đồng đội!",
+    "partnerInviteExpiredOrClosed": "Lời mời ghép đôi đã hết hạn hoặc giải đã đóng đăng ký.",
+    "withdrawSuccess": "Đã rút khỏi giải đấu thành công."
   },
   "OrganizerPayouts": {
     "selectTournament": "Vui lòng chọn giải đấu để rút tiền",

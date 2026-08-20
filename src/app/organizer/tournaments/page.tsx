@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
-import { Trophy, Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
+import { Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
@@ -27,12 +27,7 @@ interface ParentWithDivisions {
   status?: Tournament['status'];
 }
 
-const stripHtml = (html?: string | null) => {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
-};
-
-const getDefaultBanner = (_categoryName?: string | null) => {
+const getDefaultBanner = () => {
   return BRAND.assets.defaultTournamentLogo;
 };
 
@@ -51,17 +46,6 @@ const getFormatLabel = (matchType: string, genderRestriction?: string | null, tr
   return mt;
 };
 
-const getDivisionIcon = (matchType?: string, genderRestriction?: string | null) => {
-  const mt = matchType || '';
-  const gr = genderRestriction || '';
-  if (mt === 'SINGLES') {
-    return gr === 'FEMALE' ? '♀️' : '♂️';
-  }
-  if (mt === 'DOUBLES' || mt === 'MIXED_DOUBLES' || mt === 'MIXED') {
-    return gr === 'FEMALE' ? '👩‍👩' : gr === 'MIXED' ? '👥' : '👨‍👨';
-  }
-  return '🏆';
-};
 
 export default function MyTournamentsPage() {
   const router = useRouter();
@@ -121,8 +105,8 @@ export default function MyTournamentsPage() {
                   })) as unknown as Tournament[];
                   divisionCacheRef.current.set(t.id, divisionsList);
                 }
-              } catch (err) {
-                console.error(`Failed to fetch divisions for tournament ${t.id}:`, err);
+              } catch {
+                console.error(`Failed to fetch divisions for tournament ${t.id}`);
               }
             }
 
@@ -146,7 +130,7 @@ export default function MyTournamentsPage() {
 
         parentsRef.current = parentsWithDivisions;
         setParents(parentsWithDivisions);
-      } catch (err) {
+        } catch {
         // Keep the last successful cards visible during transient 429/network errors.
         if (parentsRef.current.length === 0) toast.error(translate('loadError'));
       } finally {
@@ -243,6 +227,7 @@ export default function MyTournamentsPage() {
         {parents.length === 0 ? (
           <div className="bg-white rounded-lg p-6 md:p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
             <div className="w-16 h-16 md:w-24 md:h-24 flex items-center justify-center mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
             </div>
             <h3 className="text-lg md:text-xl font-bold text-slate-900">{translate('emptyTitle')}</h3>
@@ -275,8 +260,9 @@ export default function MyTournamentsPage() {
                   {/* Visual Header */}
                   <div className="relative h-44 bg-slate-100 overflow-hidden group">
                     <Link href={publicHref} target="_blank" className="block w-full h-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner(firstDivision?.category?.name || parent.name)}
+                        src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner()}
                         alt={parent.name}
                         className={`w-full h-full transition-transform duration-300 group-hover:scale-105 ${(parent.bannerUrl || firstDivision?.bannerUrl) ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"}`}
                       />
@@ -295,7 +281,7 @@ export default function MyTournamentsPage() {
                         {firstDivision?.isRanked ? translate('ranked') : translate('unranked')}
                       </span>
                       {divisions.some(div => {
-                        const cfg = div.tournamentConfig as Record<string, any> | undefined;
+                        const cfg = div.tournamentConfig;
                         return Boolean(cfg?.recurring?.enabled || cfg?.recurring?.frequency);
                       }) && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit bg-purple-600/95 flex items-center gap-1">
@@ -335,6 +321,7 @@ export default function MyTournamentsPage() {
                         {(() => {
                           const logo = getSportLogo(firstDivision?.category?.name);
                           return logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={logo} alt={firstDivision?.category?.name || ''} className="w-3 h-3 object-contain brightness-150" />
                           ) : null;
                         })()}

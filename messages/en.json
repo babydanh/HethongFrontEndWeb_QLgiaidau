@@ -3584,7 +3584,22 @@
     "inviteOnlyBadge": "Invite only",
     "rankedBadgeLabel": "ELO ranked",
     "recreationalBadgeLabel": "Recreational",
-    "locationNotUpdated": "Location not updated"
+    "locationNotUpdated": "Location not updated",
+    "fieldRequired": "Please complete “{label}”.",
+    "emailInvalid": "“{label}” must be a valid email.",
+    "numberInvalid": "“{label}” must be a number.",
+    "numberBelowMinimum": "“{label}” cannot be less than {min}.",
+    "numberAboveMaximum": "“{label}” cannot be greater than {max}.",
+    "invalidSelect": "Please choose a valid value for “{label}”.",
+    "invalidMultiSelect": "Please choose valid values for “{label}”.",
+    "checkboxRequired": "You must confirm “{label}”.",
+    "teamNameMinLength": "Team name must contain at least 3 characters",
+    "partnerSearchRequired": "Please enter an Email or Phone Number to search.",
+    "partnerSearchConfirm": "Search for and confirm a teammate, or choose \"Invite teammate later\".",
+    "teamCreatedInviteNextStep": "Team created successfully! Now share the invite link with your teammate.",
+    "copiedInviteLink": "Teammate invite link copied!",
+    "withdrawSuccess": "Successfully withdrawn from the tournament.",
+    "partnerInviteExpiredOrClosed": "Teammate invitation expired or registration has closed."
   },
   "TournamentDisplay": {
     "maleGender": "Men",
@@ -4339,7 +4354,13 @@
     "cancelAction": "Cancel",
     "confirmWithdrawRefund": "Confirm withdrawal and refund",
     "unpaidWithdrawDescription": "You have not paid the entry fee, so there will be no refund. Confirm cancellation of registration?",
-    "confirmWithdraw": "Confirm withdrawal"
+    "confirmWithdraw": "Confirm withdrawal",
+    "partnerSearchRequired": "Please enter an Email or Phone Number to search.",
+    "partnerSearchConfirm": "Search for and confirm a teammate, or choose \"Invite teammate later\".",
+    "teamCreatedInviteNextStep": "Team created successfully! Now share the invite link with your teammate.",
+    "copiedInviteLink": "Teammate invite link copied!",
+    "partnerInviteExpiredOrClosed": "Teammate invitation expired or registration has closed.",
+    "withdrawSuccess": "Successfully withdrawn from the tournament."
   },
   "OrganizerPayouts": {
     "selectTournament": "Please select a tournament to withdraw from",

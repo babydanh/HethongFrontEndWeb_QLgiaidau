@@ -68,9 +68,10 @@ export default function DoublesRegistrationFlow({
   registrationFields,
 }: Props) {
   const router = useRouter();
-  const registrationTranslate = useTranslations('RegistrationMode');
+  const registrationTranslate = useTranslations('TournamentRegistration');
   const doublesTranslate = useTranslations('DoublesRegistration');
-  const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
+  const modeTranslate = useTranslations('RegistrationMode');
+  const registrationModeUi = getRegistrationModeUi(modeTranslate, tournament.tournamentConfig?.registrationMode);
   const isApprovalMode = registrationModeUi.mode === 'APPROVAL';
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [teamName, setTeamName] = useState('');

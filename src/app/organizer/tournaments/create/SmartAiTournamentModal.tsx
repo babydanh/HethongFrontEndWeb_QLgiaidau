@@ -117,6 +117,7 @@ export default function SmartAiTournamentModal({
     try {
       setFileName(file.name);
       const res = await parseParticipantsExcel(file);
+      setSelectedFormatForExcel('all');
       setExcelResult(res);
       toast.success(translate('excelReadSuccess', { count: res.rows.length }));
     } catch (err: any) {
@@ -311,6 +312,23 @@ export default function SmartAiTournamentModal({
             throw new Error(translate('singlesHasPlayerTwo'));
           }
 
+          const mappedColumns = new Set([
+            p1Column,
+            p1EmailColumn,
+            p1PhoneColumn,
+            p2Column,
+            p2EmailColumn,
+            p2PhoneColumn,
+            teamColumn,
+            formatColumn,
+            eloColumn,
+          ].filter((column): column is string => Boolean(column)));
+          const importedResponses = Object.fromEntries(
+            Object.entries(row)
+              .filter(([column, value]) => !mappedColumns.has(column) && value !== null && value !== undefined && String(value).trim() !== '')
+              .map(([column, value]) => [column, value]),
+          );
+
           const participant = {
             teamName: teamName || (player2Name ? `${player1Name} / ${player2Name}` : player1Name),
             player1Name: player1Name || teamName,
@@ -320,9 +338,12 @@ export default function SmartAiTournamentModal({
             player2Email,
             player2Phone,
             elo: Number.isFinite(rawElo) ? rawElo : undefined,
-            isPaid: true,
-            autoApprove: true,
+            // Excel does not prove payment or organizer approval; keep the roster pending
+            // until the organizer verifies it in Manage.
+            isPaid: false,
+            autoApprove: false,
             customResponses: {
+              ...importedResponses,
               importedFrom: 'AI_EXCEL',
               sourceFileName: fileName || undefined,
               sourceRowIndex: index + 1,
@@ -593,8 +614,10 @@ export default function SmartAiTournamentModal({
                         onChange={(event) => setSelectedFormatForExcel(event.target.value)}
                         className="w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-slate-800"
                       >
-                        {excelResult.detectedMapping.formatCol && (
+                        {excelResult.detectedMapping.formatCol ? (
                           <option value="all">{translate('excelDivisionAuto')}</option>
+                        ) : (
+                          <option value="all" disabled>{translate('excelDivisionRequired')}</option>
                         )}
                         {parsedData.formats.map((format, formatIndex) => (
                           <option key={formatIndex} value={String(formatIndex)}>

@@ -5286,11 +5286,11 @@
   },
   "SmartAiTournament": {
     "title": "Smart AI Tournament Creation",
-    "subtitle": "Automatically extract tournament regulations, divisions, and player lists from links, text, or Excel files.",
+    "subtitle": "Extract tournament rules and divisions from a link or pasted text, then optionally import the roster from Excel.",
     "excelReadSuccess": "Successfully read {count} participants from Excel file!",
     "excelReadError": "Error reading Excel file: {message}",
     "invalidFile": "Invalid file",
-    "sourceRequired": "Please enter a link, paste tournament regulations text, or upload an Excel file.",
+    "sourceRequired": "Please enter a Google Form or tournament link, or paste the tournament regulations text. Excel is imported as the roster after analysis.",
     "analysisSuccess": "AI successfully analyzed and recognized the tournament!",
     "analysisEmpty": "Could not extract tournament information. Please check the content.",
     "analysisError": "AI analysis error: {message}",

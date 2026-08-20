@@ -5286,11 +5286,11 @@
   },
   "SmartAiTournament": {
     "title": "Tạo giải đấu thông minh với AI",
-    "subtitle": "Trích xuất thông tin điều lệ, nội dung thi đấu và danh sách VĐV tự động từ link, văn bản hoặc file Excel.",
+    "subtitle": "Trích xuất điều lệ và nội dung thi đấu từ link hoặc văn bản; sau đó có thể nhập danh sách VĐV từ Excel.",
     "excelReadSuccess": "Đọc thành công {count} vận động viên từ file Excel!",
     "excelReadError": "Lỗi đọc file Excel: {message}",
     "invalidFile": "File không hợp lệ",
-    "sourceRequired": "Vui lòng nhập link bài viết, dán văn bản điều lệ hoặc tải lên file Excel.",
+    "sourceRequired": "Vui lòng nhập link Google Form hoặc link giải đấu, hoặc dán văn bản điều lệ. File Excel sẽ được nhập làm danh sách VĐV sau khi phân tích.",
     "analysisSuccess": "AI đã phân tích và nhận diện giải đấu thành công!",
     "analysisEmpty": "Không thể trích xuất thông tin giải đấu. Vui lòng kiểm tra lại nội dung.",
     "analysisError": "Lỗi phân tích AI: {message}",

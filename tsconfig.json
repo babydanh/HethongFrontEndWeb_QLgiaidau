@@ -34,13 +34,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts",
-    ".next-audit-live-fix /types/**/*.ts",
-    ".next-audit-live-fix /dev/types/**/*.ts",
-    ".next-audit-fix /types/**/*.ts",
-    ".next-audit-fix /dev/types/**/*.ts",
-    ".next-review-fix /types/**/*.ts",
-    ".next-review-fix /dev/types/**/*.ts"
+    "**/*.mts"
   ],
   "exclude": [
     "node_modules"

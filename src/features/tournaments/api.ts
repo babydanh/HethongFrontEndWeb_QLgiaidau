@@ -275,6 +275,14 @@ export interface RegisterTournamentResponse {
   teamInviteLink?: string;
 }
 
+export interface RegistrationAttachment {
+  url: string;
+  publicId: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
+}
+
 export interface FootballRosterSnapshot {
   id: string;
   userId: string;
@@ -394,6 +402,16 @@ export const tournamentsApi = {
     return api.post<ApiResponse<RegisterTournamentResponse>>(`/tournaments/${id}/register`, body, {
       params: inviteCode ? { invite: inviteCode } : undefined,
     });
+  },
+  uploadRegistrationAttachment: (tournamentId: string, fieldId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('fieldId', fieldId);
+    formData.append('file', file);
+    return api.post<ApiResponse<RegistrationAttachment>>(
+      `/tournaments/${tournamentId}/registration-attachment`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
   },
   getMyRegistration: (id: string, divisionId?: string) =>
     api.get<ApiResponse<MyRegistrationResponse>>(`/tournaments/${id}/my-registration`, {

@@ -947,7 +947,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
               {selectedDivision ? (
                 <>
-                {!isRegistered && !isGenderMismatched && <RegistrationCustomFields fields={registrationFields} responses={customResponses} onChange={(fieldId, value) => setCustomResponses((current) => ({ ...current, [fieldId]: value }))} />}
+                {!isRegistered && !isGenderMismatched && <RegistrationCustomFields tournamentId={id} fields={registrationFields} responses={customResponses} onChange={(fieldId, value) => setCustomResponses((current) => ({ ...current, [fieldId]: value }))} />}
                 {isGenderMismatched ? (
                   <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-3 animate-in fade-in duration-200">
                     <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />

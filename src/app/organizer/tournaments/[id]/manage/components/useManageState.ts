@@ -1123,16 +1123,35 @@ export function useManageState(id: string) {
     if (!mockNamesText.trim()) { toast.error('Nhập danh sách tên'); return; }
     const names = mockNamesText.split('\n').map(n=>n.trim()).filter(Boolean);
     if (!names.length) { toast.error('Nhập ít nhất 1 tên'); return; }
+
+    // A tournament with divisions must never fall back to tournament.matchType.
+    // That fallback can make a singles division seed as doubles when the global
+    // tournament type is stale or the selected division has not been resolved.
+    const selectedDivision = divisions.find((division) => division.id === selectedDivisionId);
+    if (divisions.length > 0 && !selectedDivision) {
+      toast.error('Hãy chọn đúng nội dung thi đấu trước khi sinh dữ liệu ảo');
+      return;
+    }
+    const divisionId = selectedDivision?.id;
+
     setIsSeedingMock(true);
-    try { await tournamentsApi.seedMockParticipants(id, names, selectedDivisionId||undefined); toast.success(`Đã sinh ${names.length} người chơi ảo!`); setMockNamesText(''); await refetchDivisionData(); }
+    try { await tournamentsApi.seedMockParticipants(id, names, divisionId); toast.success(`Đã sinh ${names.length} người chơi ảo!`); setMockNamesText(''); await refetchDivisionData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsSeedingMock(false); }
   };
 
   const handleClearMockData = async () => {
     if (!confirm('Xóa toàn bộ dữ liệu người chơi thử nghiệm?')) return;
+
+    const selectedDivision = divisions.find((division) => division.id === selectedDivisionId);
+    if (divisions.length > 0 && !selectedDivision) {
+      toast.error('Hãy chọn đúng nội dung thi đấu trước khi dọn dữ liệu ảo');
+      return;
+    }
+    const divisionId = selectedDivision?.id;
+
     setIsClearingMock(true);
-    try { await tournamentsApi.clearMockParticipants(id, selectedDivisionId||undefined); toast.success('Đã dọn dẹp!'); await refetchDivisionData(); }
+    try { await tournamentsApi.clearMockParticipants(id, divisionId); toast.success('Đã dọn dẹp!'); await refetchDivisionData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsClearingMock(false); }
   };

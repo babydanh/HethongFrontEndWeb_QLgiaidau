@@ -63,7 +63,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   );
   
   // Pagination Hook
-    const {
+  const {
     data: matches,
     setData: setMatches,
     fetchNextPage,
@@ -284,8 +284,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     return <div className="animate-pulse bg-slate-900/10 h-64 rounded-lg w-full"></div>;
   }
 
-    const getStatusBadge = (status: string) => {
-
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED':
         return (
@@ -718,9 +717,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               </div>
             );
           })}
-          
         </div>
-            ) : (
+      ) : (
         <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl text-slate-450 bg-white">
           <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
           <p className="font-bold text-sm text-slate-500">{translate('matchesEmpty')}</p>

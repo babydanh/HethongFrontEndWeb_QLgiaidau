@@ -421,7 +421,15 @@ export function RegistrationTab({
     }
   };
 
-  const canSeedMock = true;
+  const selectedMockDivision = divisions.find((division) => division.id === selectedDivisionId);
+  const canSeedMock = divisions.length === 0 || Boolean(selectedMockDivision);
+  const mockFormatLabel = selectedMockDivision
+    ? selectedMockDivision.matchType === 'SINGLES'
+      ? 'Đơn'
+      : selectedMockDivision.matchType === 'DOUBLES' || selectedMockDivision.matchType === 'MIXED_DOUBLES'
+        ? 'Đôi'
+        : 'Chưa rõ'
+    : 'Chưa chọn';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
@@ -1061,6 +1069,24 @@ export function RegistrationTab({
             </p>
           </div>
 
+          <div className={`rounded-lg border px-3 py-2 text-xs ${
+            canSeedMock
+              ? 'border-blue-100 bg-blue-50 text-blue-800'
+              : 'border-amber-200 bg-amber-50 text-amber-800'
+          }`}>
+            <span className="font-semibold">Mock sẽ được tạo vào: </span>
+            {selectedMockDivision ? (
+              <>
+                <strong>{selectedMockDivision.name}</strong>
+                <span className="ml-1 font-semibold">({mockFormatLabel})</span>
+              </>
+            ) : divisions.length > 0 ? (
+              <span className="font-semibold">Chưa xác định nội dung thi đấu — hãy chọn lại division</span>
+            ) : (
+              <span className="font-semibold">Thể thức chung của giải</span>
+            )}
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('virtualAthletesLabel')}</label>
@@ -1071,6 +1097,7 @@ export function RegistrationTab({
                   type="file"
                   accept=".xlsx, .xls, .csv"
                   className="hidden"
+                  disabled={!canSeedMock || isSeedingMock || isClearingMock}
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -1117,7 +1144,7 @@ export function RegistrationTab({
             <Button
               variant="outline"
               onClick={handleClearMockData}
-              disabled={isSeedingMock || isClearingMock}
+              disabled={!canSeedMock || isSeedingMock || isClearingMock}
               className="border-rose-250 hover:bg-rose-50 text-rose-600 font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 animate-none"
             >
               {isClearingMock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -1480,8 +1507,18 @@ export function RegistrationTab({
                       {registrationFormFields.map((field) => {
                         const value = selectedParticipant.customResponses?.[field.id];
                         const hasValue = value !== undefined && value !== null && value !== '';
-                        const textValue = hasValue ? (typeof value === 'string' ? value : JSON.stringify(value)) : registrationTranslate('unanswered');
-                        return <div key={field.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>{hasValue && typeof textValue === 'string' && /^https?:\/\//i.test(textValue) ? <a href={textValue} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">{registrationTranslate('openFileLink')}</a> : <span className={`whitespace-pre-wrap break-words text-sm ${hasValue ? 'text-slate-800' : 'text-slate-400'}`}>{textValue}</span>}</div>;
+                        const fileValue = value && typeof value === 'object' && !Array.isArray(value)
+                          ? value as { url?: unknown; originalName?: unknown }
+                          : null;
+                        const fileUrl = field.type === 'FILE' && typeof fileValue?.url === 'string' && /^https?:\/\//i.test(fileValue.url)
+                          ? fileValue.url
+                          : null;
+                        const textValue = hasValue
+                          ? fileUrl
+                            ? (typeof fileValue?.originalName === 'string' ? fileValue.originalName : registrationTranslate('openFileLink'))
+                            : (typeof value === 'string' ? value : JSON.stringify(value))
+                          : registrationTranslate('unanswered');
+                        return <div key={field.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>{fileUrl ? <a href={fileUrl} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">{textValue}</a> : hasValue && typeof textValue === 'string' && /^https?:\/\//i.test(textValue) ? <a href={textValue} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue-700 underline">{registrationTranslate('openFileLink')}</a> : <span className={`whitespace-pre-wrap break-words text-sm ${hasValue ? 'text-slate-800' : 'text-slate-400'}`}>{textValue}</span>}</div>;
                       })}
                       {Object.entries(selectedParticipant.customResponses ?? {}).filter(([fieldId]) => !registrationFormFields.some((field) => field.id === fieldId)).map(([fieldId, value]) => <div key={fieldId} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-4"><span className="text-xs font-bold text-slate-500">{fieldId}</span><span className="whitespace-pre-wrap break-words text-sm text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</span></div>)}
                     </div>

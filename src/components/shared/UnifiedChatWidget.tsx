@@ -231,7 +231,22 @@ export default function UnifiedChatWidget() {
   const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id;
   const [open, setOpen] = useState(false);
-  const [selection, setSelection] = useState<Selection>({ kind: 'AI' });
+  const [selection, setSelection] = useState<Selection>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('sporto_active_chat_selection');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object' && parsed.kind) {
+            return parsed as Selection;
+          }
+        }
+      } catch {
+        // fallback to default
+      }
+    }
+    return { kind: 'AI' };
+  });
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
@@ -363,6 +378,13 @@ export default function UnifiedChatWidget() {
   const directChatRequestRef = useRef(0);
   useEffect(() => {
     selectionRef.current = selection;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sporto_active_chat_selection', JSON.stringify(selection));
+      } catch {
+        // ignore quota
+      }
+    }
   }, [selection]);
 
   const refreshRooms = useCallback(async () => {
@@ -479,6 +501,12 @@ export default function UnifiedChatWidget() {
         .catch(() => undefined);
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void refreshRooms();
+    }
+  }, [isAuthenticated, refreshRooms]);
 
   useEffect(() => {
     let isSubscribed = true;

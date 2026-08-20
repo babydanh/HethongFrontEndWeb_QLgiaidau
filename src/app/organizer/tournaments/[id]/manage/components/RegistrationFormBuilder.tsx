@@ -76,12 +76,13 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
 
   // Kiểm tra xem giải có nội dung đánh đôi hay đồng đội không để hiển thị preview thông tin mặc định phù hợp
   const hasDoublesOrTeam = useMemo(() => {
-    const isTeam = tournament.tournamentConfig?.sport === 'football';
+    const categorySlug = tournament.category?.slug?.toLowerCase() || '';
+    const isTeam = categorySlug.includes('football') || categorySlug.includes('bong-da');
     const hasDoublesDivision = divisions.some(
       (d) => d.matchType === 'DOUBLES' || d.matchType === 'MIXED_DOUBLES'
     );
     return isTeam || hasDoublesDivision;
-  }, [divisions, tournament.tournamentConfig?.sport]);
+  }, [divisions, tournament.category?.slug]);
 
   const updateField = (fieldId: string, patch: Partial<RegistrationField>) => {
     setConfig((current) => ({

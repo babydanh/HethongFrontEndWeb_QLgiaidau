@@ -280,6 +280,25 @@ export function RegistrationTab({
   const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
   const [rosterActionId, setRosterActionId] = React.useState<string | null>(null);
   const [locallyLockedRosterIds, setLocallyLockedRosterIds] = React.useState<Set<string>>(new Set());
+  const [isReopeningRegistration, setIsReopeningRegistration] = React.useState(false);
+  const registrationLocked = isTournamentRegistrationClosed(tournament.status) || Boolean(tournament.isRegistrationLocked);
+
+  const handleReopenRegistration = async () => {
+    if (isReopeningRegistration) return;
+    if (!window.confirm(registrationTranslate('reopenRegistrationConfirm'))) return;
+
+    setIsReopeningRegistration(true);
+    try {
+      await tournamentsApi.reopenRegistration(tournament.id);
+      toast.success(registrationTranslate('reopenRegistrationSuccess'));
+      window.location.reload();
+    } catch (error) {
+      const { getErrorMessage } = await import('@/utils/error');
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsReopeningRegistration(false);
+    }
+  };
 
   const participantSummary = React.useMemo(() => ({
     total: participants.length,
@@ -454,13 +473,24 @@ export function RegistrationTab({
                 </div>
                 
                 {/* Lock list button */}
-                {(isTournamentRegistrationOpen(tournament.status) || isTournamentRegistrationClosed(tournament.status)) && (
-                  <Button
-                    onClick={handleOpenLockModal}
-                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
-                  >
-                    <Lock className="w-4 h-4" /> {registrationTranslate('lockListAndCreateBracket')}
-                  </Button>
+                {(isTournamentRegistrationOpen(tournament.status) || registrationLocked) && (
+                  registrationLocked ? (
+                    <Button
+                      onClick={handleReopenRegistration}
+                      disabled={isReopeningRegistration}
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
+                    >
+                      {isReopeningRegistration ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      {registrationTranslate('reopenRegistration')}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleOpenLockModal}
+                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
+                    >
+                      <Lock className="w-4 h-4" /> {registrationTranslate('lockListAndCreateBracket')}
+                    </Button>
+                  )
                 )}
               </div>
             </div>
@@ -489,6 +519,7 @@ export function RegistrationTab({
                   <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('visibilityLabel')}</label>
                   <select
                     value={visibility}
+                    disabled={registrationLocked}
                     onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
                     className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
@@ -501,6 +532,7 @@ export function RegistrationTab({
                   <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('registrationModeLabel')}</label>
                   <select
                     value={registrationMode}
+                    disabled={registrationLocked}
                     onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
                     className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
@@ -548,6 +580,7 @@ export function RegistrationTab({
                       return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
                     })()}
                     onChange={setRegistrationStartDate}
+                    disabled={registrationLocked}
                   />
                   {registrationStartDate && (
                     <div className="mt-1">
@@ -571,6 +604,7 @@ export function RegistrationTab({
                       return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
                     })()}
                     onChange={setRegistrationEndDate}
+                    disabled={registrationLocked}
                   />
                   {registrationEndDate && (
                     <div className="mt-1">
@@ -671,6 +705,7 @@ export function RegistrationTab({
                   <Button
                     variant="outline"
                     onClick={handleRegenerateInviteCode}
+                    disabled={registrationLocked}
                     className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
                   >
                     <RefreshCw className="mr-2 h-3.5 w-3.5" />
@@ -714,7 +749,7 @@ export function RegistrationTab({
           <div className="flex justify-end border-t border-slate-100 pt-5 mt-2">
             <Button
               onClick={handleSaveRegistrationSettings}
-              disabled={isSavingConfig}
+              disabled={isSavingConfig || registrationLocked}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
             >
               {isSavingConfig ? registrationTranslate('saving') : registrationTranslate('saveRegistrationInfo')}
@@ -762,6 +797,7 @@ export function RegistrationTab({
                 type="button"
                 size="sm"
                 onClick={() => setIsSmartImportOpen(true)}
+                disabled={registrationLocked}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />

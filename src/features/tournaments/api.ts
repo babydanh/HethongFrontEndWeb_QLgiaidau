@@ -425,6 +425,8 @@ export const tournamentsApi = {
   createTournament: <T>(data: T) =>
     api.post<ApiResponse<Tournament>>('/tournaments', stripCreateWizardFields(data)),
   updateTournament: <T>(id: string, data: T) => api.patch<ApiResponse<Tournament>>(`/tournaments/${id}`, data),
+  reopenRegistration: (id: string) =>
+    api.post<ApiResponse<Tournament>>(`/tournaments/${id}/reopen-registration`),
   confirmLiteRoster: (id: string) =>
     api.post<ApiResponse<Tournament>>(`/tournaments/${id}/confirm-roster`),
   deleteTournament: (id: string) => api.delete<ApiResponse<void>>(`/tournaments/${id}`),

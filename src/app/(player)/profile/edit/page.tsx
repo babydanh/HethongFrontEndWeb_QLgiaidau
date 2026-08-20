@@ -28,7 +28,9 @@ import { toDateLocalValue } from '@/utils/dateTimeInput';
 
 // Zod Schemas matching backend constraints
 const createProfileSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
+  email: z.string().email(translate('validationEmail')).max(255, translate('validationEmail')),
   fullName: z.string().min(2, translate('validationFullNameMin')).max(100, translate('validationFullNameMax')),
+
   phone: z.string().regex(/^[0-9]{10,11}$/, translate('validationPhone')).optional().or(z.literal('')),
   dateOfBirth: z.string().optional().or(z.literal(''))
     .refine(val => {
@@ -172,8 +174,10 @@ export default function EditProfilePage() {
   // Profile Form
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
+        defaultValues: {
+      email: user?.email || '',
       fullName: user?.fullName || '',
+
       phone: user?.phoneNumber || '',
       dateOfBirth: toDateLocalValue(user?.dateOfBirth),
       gender: user?.gender || '',
@@ -201,8 +205,10 @@ export default function EditProfilePage() {
   // Update default values when user loads
   useEffect(() => {
     if (user) {
-      profileForm.reset({
+            profileForm.reset({
+        email: user.email || '',
         fullName: user.fullName || '',
+
         phone: user.phoneNumber || '',
         dateOfBirth: toDateLocalValue(user.dateOfBirth),
         gender: user.gender || '',
@@ -226,11 +232,16 @@ export default function EditProfilePage() {
     },
   });
 
-  const onSubmitProfile = async (data: ProfileFormValues) => {
+    const onSubmitProfile = async (data: ProfileFormValues) => {
     try {
       setIsSubmittingProfile(true);
+      const normalizedEmail = trimSpaces(data.email).toLowerCase();
+      const currentEmail = (user?.email || '').trim().toLowerCase();
+      const emailChanged = user?.isEmailVerified !== true && normalizedEmail !== currentEmail;
       const cleanData = {
+        email: user?.isEmailVerified === true ? undefined : normalizedEmail,
         fullName: trimAndNormalizeSpaces(data.fullName),
+
         phoneNumber: trimSpaces(data.phone || ''),
         dateOfBirth: data.dateOfBirth || undefined,
         gender: user?.isGenderLocked ? undefined : (data.gender || undefined),
@@ -245,8 +256,17 @@ export default function EditProfilePage() {
       const response = await usersApi.updateProfile(cleanData);
       const responseData = ((response as unknown) as Record<string, unknown>).data || response;
       setUser(responseData as NonNullable<typeof user>);
-      toast.success(translate('profileUpdated'));
-      router.push('/profile');
+
+      if (emailChanged) {
+        await authApi.requestEmailVerification();
+        setEmailCooldown(120);
+        setEmailToken('');
+        setIsEmailModalOpen(true);
+        toast.success(translate('emailChangeVerificationSent'));
+      } else {
+        toast.success(translate('profileUpdated'));
+        router.push('/profile');
+      }
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -582,12 +602,24 @@ export default function EditProfilePage() {
               <div className="p-6">
                 <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="flex flex-col gap-5">
                   <Input
+                    label={translate('emailAddressLabel')}
+                    type="email"
+                    placeholder="name@example.com"
+                    disabled={user?.isEmailVerified === true}
+                    {...profileForm.register('email')}
+                    error={profileForm.formState.errors.email?.message}
+                  />
+                  <p className="text-xs text-slate-500 -mt-3">
+                    {user?.isEmailVerified === true ? translate('emailVerifiedLocked') : translate('emailEditHint')}
+                  </p>
+
+                  <Input
                     label={translate('fullNameLabel')}
                     placeholder={translate('fullNamePlaceholder')}
                     {...profileForm.register('fullName')}
                     error={profileForm.formState.errors.fullName?.message}
                   />
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <Input
                       label={translate('phoneLabel')}

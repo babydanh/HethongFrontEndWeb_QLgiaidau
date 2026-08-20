@@ -20,6 +20,7 @@ import ShareModal from '@/components/common/ShareModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import toast from 'react-hot-toast';
 import { BRAND } from '@/constants/brand';
+import { getSportLogo } from '@/constants/sports';
 import { socketClient } from '@/lib/socket';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -459,6 +460,17 @@ const commonTranslate = useTranslations('Common');
             </Link>
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
+                {activeTournament.category?.name && (
+                  <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200 shadow-sm flex items-center gap-1.5">
+                    {(() => {
+                      const logo = getSportLogo(activeTournament.category?.name);
+                      return logo ? (
+                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain" />
+                      ) : null;
+                    })()}
+                    {activeTournament.category.name}
+                  </span>
+                )}
                 <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md border shadow-sm ${getTournamentStatusClassName(activeTournament.status)}`}>
                   {getTournamentStatusLabel(activeTournament.status, statusLabels).toUpperCase()}
                 </span>

@@ -125,12 +125,27 @@ export default function AiChatAssistant() {
   const { isAuthenticated, user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'ai' | 'support'>('ai');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: translate('hello'),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('sporto_ai_chat_history');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch {
+        // Fallback to default
+      }
+    }
+    return [
+      {
+        role: 'assistant',
+        content: translate('hello'),
+      },
+    ];
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingSupport, setIsSendingSupport] = useState(false);
@@ -141,6 +156,17 @@ export default function AiChatAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supportTypingTimerRef = useRef<number | null>(null);
   const supportAgentTypingTimerRef = useRef<number | null>(null);
+
+  // Lưu lịch sử chat AI khi có tin nhắn mới
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      try {
+        localStorage.setItem('sporto_ai_chat_history', JSON.stringify(messages));
+      } catch {
+        // ignore storage quota error
+      }
+    }
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -462,6 +488,21 @@ export default function AiChatAssistant() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {mode === 'ai' && messages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        localStorage.removeItem('sporto_ai_chat_history');
+                      }
+                      setMessages([{ role: 'assistant', content: translate('hello') }]);
+                    }}
+                    title="Xóa đoạn chat mới"
+                    className="w-7 h-7 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer shrink-0 text-white/80 hover:text-white"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 {mode === 'support' && (
                   <button
                     type="button"

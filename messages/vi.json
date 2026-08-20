@@ -829,6 +829,10 @@
   "Common": {
     "appName": "SportO",
     "loading": "Đang tải...",
+    "loadingMore": "Đang tải thêm...",
+    "rateLimitTitle": "Hệ thống đang nhận nhiều yêu cầu.",
+    "rateLimitHint": "Vui lòng chờ vài giây rồi thử lại.",
+    "rateLimitRetryAfter": "Vui lòng chờ {seconds} giây rồi thử lại.",
     "save": "Lưu",
     "cancel": "Hủy",
     "confirm": "Xác nhận",

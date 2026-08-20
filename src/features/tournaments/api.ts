@@ -506,7 +506,7 @@ export const tournamentsApi = {
         elo?: number;
         isPaid?: boolean;
         autoApprove?: boolean;
-        customResponses?: Record<string, any>;
+        customResponses?: Record<string, unknown>;
       }>;
       sendInvitationEmail?: boolean;
     }

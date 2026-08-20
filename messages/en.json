@@ -829,6 +829,10 @@
   "Common": {
     "appName": "SportO",
     "loading": "Loading...",
+    "loadingMore": "Loading more...",
+    "rateLimitTitle": "The system is receiving many requests.",
+    "rateLimitHint": "Please wait a few seconds and try again.",
+    "rateLimitRetryAfter": "Please wait {seconds} seconds before trying again.",
     "save": "Save",
     "cancel": "Cancel",
     "confirm": "Confirm",

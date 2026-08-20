@@ -40,7 +40,7 @@
     ".next-audit-fix /types/**/*.ts",
     ".next-audit-fix /dev/types/**/*.ts",
     ".next-review-fix /types/**/*.ts",
-    ".next-review-fix /dev/types/**/*.ts"
+    ".next-review-fix /dev/types/**/*.ts",
   ],
   "exclude": [
     "node_modules"

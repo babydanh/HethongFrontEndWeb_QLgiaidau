@@ -382,7 +382,7 @@ export function BracketTab({
 
     const previousOverrides = participantOverrides;
     const previousTray = trayParticipants;
-    let nextOverrides = { ...previousOverrides };
+    const nextOverrides = { ...previousOverrides };
     let nextTray = [...previousTray];
     let operation: BracketSlotMutation | null = null;
 

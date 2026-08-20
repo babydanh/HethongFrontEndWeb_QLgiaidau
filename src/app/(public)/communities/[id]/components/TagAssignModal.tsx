@@ -14,8 +14,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
 
-const MAX_TAGS = 5;
-const MAX_TAG_LENGTH = 24;
+const MAX_TAGS = 3;
+const MAX_TAG_LENGTH = 15;
 // Khớp backend UpdateMemberTagsDto: chữ/số/khoảng trắng/_/-, không emoji/ký tự đặc biệt.
 const TAG_PATTERN = /^[\p{L}\p{N} _-]+$/u;
 const TAG_PRESETS = [
@@ -38,7 +38,7 @@ interface TagAssignModalProps {
 
 /**
  * P2C.4 — Modal gán tag BQT cho thành viên (OWNER/MODERATOR).
- * Replace toàn bộ tag khi lưu; mảng rỗng = xoá hết. Tối đa 5 tag, mỗi tag ≤ 24 ký tự.
+ * Replace toàn bộ tag khi lưu; mảng rỗng = xoá hết. Tối đa 3 tag, mỗi tag ≤ 15 ký tự.
  */
 export default function TagAssignModal({
   open,
@@ -170,7 +170,7 @@ export default function TagAssignModal({
               }}
               onKeyDown={handleKeyDown}
               disabled={isSaving || tags.length >= MAX_TAGS}
-              maxLength={MAX_TAG_LENGTH + 8}
+              maxLength={MAX_TAG_LENGTH}
               placeholder={
                 tags.length >= MAX_TAGS
                   ? translate('maxTagsReached', { count: MAX_TAGS })

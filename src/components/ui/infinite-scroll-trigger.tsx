@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 
 interface InfiniteScrollTriggerProps {
@@ -14,6 +15,7 @@ export function InfiniteScrollTrigger({
   isLoading,
   className = ''
 }: InfiniteScrollTriggerProps) {
+  const translate = useTranslations('Common');
   const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function InfiniteScrollTrigger({
       {isLoading && (
         <div className="flex items-center gap-2 text-primary-500">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm font-medium">Đang tải thêm...</span>
+          <span className="text-sm font-medium">{translate('loadingMore')}</span>
         </div>
       )}
     </div>

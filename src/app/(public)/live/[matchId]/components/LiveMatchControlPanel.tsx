@@ -440,14 +440,14 @@ export function LiveMatchControlPanel({
                 <div className="flex flex-wrap justify-end gap-2">
                 <button
                   onClick={() => handleCompleteMatch(1)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && !isFootball && (!overrideEnabled || !overrideReason.trim()))}
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
                   className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
                 >
                   <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? translate('teamWins', { team: team1Name }) : translate('teamWinsByOverride', { team: team1Name })}
                 </button>
                 <button
                   onClick={() => handleCompleteMatch(2)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && !isFootball && (!overrideEnabled || !overrideReason.trim()))}
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
                   className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
                 >
                   <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? translate('teamWins', { team: team2Name }) : translate('teamWinsByOverride', { team: team2Name })}
@@ -497,13 +497,23 @@ export function LiveMatchControlPanel({
                 <span className="mt-2 block rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
                   ⚽ {translate('footballShootoutDescription')}
                 </span>
+              ) : isLiteMatch ? (
+                <span className="mt-2 block rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800">
+                  ⚡ {translate('liteQuickFinishHint')}
+                </span>
               ) : (
-                <>
-                  {translate('overrideWinnerDescription')}
-                  <span className="mt-2 block rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800">
-                    {overrideReason.trim()}
-                  </span>
-                </>
+                <div className="mt-3 space-y-1.5 text-left">
+                  <label className="text-xs font-bold text-slate-700">
+                    {translate('overrideReasonRequired')}:
+                  </label>
+                  <input
+                    type="text"
+                    value={overrideReason}
+                    onChange={(e) => onOverrideReasonChange(e.target.value)}
+                    placeholder={translate('overrideReasonPlaceholder')}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
               )}
             </ModalDescription>
           </ModalHeader>
@@ -542,17 +552,20 @@ export function LiveMatchControlPanel({
               {translate('cancelActionShort')}
             </Button>
             <Button
-              disabled={isSubmitting || (!isFootball && (!overrideEnabled || !overrideReason.trim()))}
-              variant="warning"
-              className="w-full font-bold disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
+              disabled={isSubmitting || (!isFootball && !isLiteMatch && !overrideReason.trim())}
+              variant={isLiteMatch ? "default" : "warning"}
+              className={cn("w-full font-bold disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto", isLiteMatch && "bg-blue-600 hover:bg-blue-700 text-white")}
               onClick={() => {
                 if (confirmWinner) {
+                  if (!isLiteMatch && !overrideEnabled) {
+                    onOverrideEnabledChange(true);
+                  }
                   onCompleteMatch(confirmWinner);
                 }
                 setConfirmWinner(null);
               }}
             >
-              {isFootball ? translate('footballResultAction') : translate('overrideWinnerAction')}
+              {isFootball ? translate('footballResultAction') : isLiteMatch ? translate('teamWins', { team: confirmWinner === 1 ? team1Name : team2Name }) : translate('overrideWinnerAction')}
             </Button>
           </ModalFooter>
         </ModalContent>

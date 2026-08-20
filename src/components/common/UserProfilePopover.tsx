@@ -11,6 +11,10 @@ import { RankAvatar } from "@/components/ui/RankAvatar";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import toast from "react-hot-toast";
 
+const MAX_MEMBER_TAGS = 3;
+const MAX_MEMBER_TAG_LENGTH = 15;
+const MEMBER_TAG_PATTERN = /^[\p{L}\p{N} _-]+$/u;
+
 interface PublicProfileRank {
   categoryName?: string | null;
   matchType?: string | null;
@@ -282,18 +286,50 @@ export default function UserProfilePopover({
 
   // Toggle tag selection
   const handleToggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
+    const isSelected = selectedTags.some((selected) => selected.toLowerCase() === tag.toLowerCase());
+    if (isSelected) {
+      setSelectedTags((prev) => prev.filter((selected) => selected.toLowerCase() !== tag.toLowerCase()));
+      return;
+    }
+
+    if (selectedTags.length >= MAX_MEMBER_TAGS) {
+      toast.error(translate('tagMaxCountError', { count: MAX_MEMBER_TAGS }));
+      return;
+    }
+    if (tag.length > MAX_MEMBER_TAG_LENGTH) {
+      toast.error(translate('tagMaxLengthError', { count: MAX_MEMBER_TAG_LENGTH }));
+      return;
+    }
+    if (!MEMBER_TAG_PATTERN.test(tag)) {
+      toast.error(translate('tagInvalidCharactersError'));
+      return;
+    }
+
+    setSelectedTags((prev) => [...prev, tag]);
   };
 
   // Add custom tag
   const handleAddCustomTag = () => {
     const trimmed = customTagInput.trim();
     if (!trimmed) return;
-    if (!selectedTags.includes(trimmed)) {
-      setSelectedTags((prev) => [...prev, trimmed]);
+    if (selectedTags.length >= MAX_MEMBER_TAGS) {
+      toast.error(translate('tagMaxCountError', { count: MAX_MEMBER_TAGS }));
+      return;
     }
+    if (trimmed.length > MAX_MEMBER_TAG_LENGTH) {
+      toast.error(translate('tagMaxLengthError', { count: MAX_MEMBER_TAG_LENGTH }));
+      return;
+    }
+    if (!MEMBER_TAG_PATTERN.test(trimmed)) {
+      toast.error(translate('tagInvalidCharactersError'));
+      return;
+    }
+    if (selectedTags.some((tag) => tag.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error(translate('tagExistsError'));
+      return;
+    }
+
+    setSelectedTags((prev) => [...prev, trimmed]);
     setCustomTagInput("");
   };
 
@@ -549,6 +585,7 @@ export default function UserProfilePopover({
                         key={preset.id}
                         type="button"
                         onClick={() => handleToggleTag(preset.name)}
+                        disabled={isSavingTags || (selectedTags.length >= MAX_MEMBER_TAGS && !isSelected)}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all cursor-pointer ${
                           isSelected
                             ? "ring-2 ring-blue-500 shadow-xs"
@@ -573,6 +610,8 @@ export default function UserProfilePopover({
                     type="text"
                     value={customTagInput}
                     onChange={(e) => setCustomTagInput(e.target.value)}
+                    maxLength={MAX_MEMBER_TAG_LENGTH}
+                    disabled={isSavingTags || selectedTags.length >= MAX_MEMBER_TAGS}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -585,7 +624,7 @@ export default function UserProfilePopover({
                   <button
                     type="button"
                     onClick={handleAddCustomTag}
-                    disabled={!customTagInput.trim()}
+                    disabled={isSavingTags || selectedTags.length >= MAX_MEMBER_TAGS || !customTagInput.trim()}
                     className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-40"
                   >
                     + {translate('addTag')}

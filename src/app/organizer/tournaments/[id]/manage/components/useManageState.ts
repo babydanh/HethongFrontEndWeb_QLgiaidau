@@ -340,12 +340,19 @@ export function useManageState(id: string) {
   const applyDivisionFormValues = useCallback((selected: Division) => {
     const categoryKind = inferSportRuleKindFromCategory(selectedCategory);
     const rawResolvedRules = resolveSportRuleView(selected.roundConfig, categoryKind);
+    const tournamentMode = tournament?.tournamentConfig?.mode;
     // A legacy division may contain a stale kind from another sport. Never let
     // that override the tournament category when the division is selected.
     const normalizedKind = normalizeSportRuleKindForCategory(rawResolvedRules.kind, selectedCategory);
-    const resolvedRules = normalizedKind === rawResolvedRules.kind
+    const resolvedRulesByKind = normalizedKind === rawResolvedRules.kind
       ? rawResolvedRules
       : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
+    const resolvedRules = {
+      ...resolvedRulesByKind,
+      ...(tournamentMode
+        ? { mode: (tournamentMode === 'LITE' ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT' }
+        : {}),
+    };
     const roundConfig = selected.roundConfig as Record<string, unknown> | null | undefined;
     const groupsConfig = roundConfig?.groupsConfig as Record<string, unknown> | undefined;
     const advancementConfig = roundConfig?.advancementConfig as Record<string, unknown> | undefined;
@@ -422,6 +429,7 @@ export function useManageState(id: string) {
             pointsPerSet,
             winByTwo,
             maxPoints: winByTwo ? maxDeucePoints : null,
+            mode: isLiteMode ? 'LITE' : 'STRICT',
           }),
         };
 
@@ -659,6 +667,7 @@ export function useManageState(id: string) {
             maxPoints: winByTwo ? maxDeucePoints : null,
             tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
             tiebreakerMode,
+            mode: isLiteMode ? 'LITE' : 'STRICT',
           }),
           scoring: { winPoints: rrWinPoints, drawPoints: 0, lossPoints: rrLossPoints },
           tiebreakerRules: {
@@ -740,6 +749,7 @@ export function useManageState(id: string) {
             maxPoints: winByTwo ? maxDeucePoints : null,
             tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
             tiebreakerMode,
+            mode: isLiteMode ? 'LITE' : 'STRICT',
           }),
           groupsConfig: { numGroups, teamsPerGroup: effectiveTeamsPerGroup, roundsToPlay: gskRoundsToPlay },
           advancementConfig: {
@@ -837,6 +847,20 @@ export function useManageState(id: string) {
         selectedCategory,
       );
       const defaultRules = buildDefaultSportRules(normalizedKind);
+      const scoringMode = (isLiteMode ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT';
+      const defaultRoundConfig = buildStageRoundConfigPayload({
+        kind: normalizedKind,
+        setsToWin: defaultRules.setsToWin,
+        pointsPerSet: defaultRules.pointsPerSet,
+        winByTwo: defaultRules.winByTwo,
+        maxPoints: defaultRules.maxPoints,
+        tiebreakPoints: defaultRules.tiebreakPoints,
+        roundsToPlay: 1,
+        mode: scoringMode,
+      });
+      const divisionRoundConfig = editingDivision?.roundConfig
+        ? { ...editingDivision.roundConfig, mode: scoringMode }
+        : defaultRoundConfig;
       const divisionPayload = {
         name: divisionName,
         matchType: mapped.mt,
@@ -849,15 +873,7 @@ export function useManageState(id: string) {
         isConfigOverride: true,
         // Never reset an existing division's detailed scoring setup just
         // because its label, bracket, or ELO limits are being edited.
-        roundConfig: editingDivision?.roundConfig ?? buildStageRoundConfigPayload({
-          kind: normalizedKind,
-          setsToWin: defaultRules.setsToWin,
-          pointsPerSet: defaultRules.pointsPerSet,
-          winByTwo: defaultRules.winByTwo,
-          maxPoints: defaultRules.maxPoints,
-          tiebreakPoints: defaultRules.tiebreakPoints,
-          roundsToPlay: 1,
-        }),
+        roundConfig: divisionRoundConfig,
         minElo: newDivisionEloEnabled ? newDivisionMinElo : null,
         maxElo: newDivisionEloEnabled ? newDivisionMaxElo : null,
         maxParticipants: newDivisionLimitEnabled ? newDivisionMaxParticipants : null,

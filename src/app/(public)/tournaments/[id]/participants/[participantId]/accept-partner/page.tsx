@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldCheck, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
+import { tournamentsApi, divisionsApi, Tournament, TournamentParticipant, type Division } from '@/features/tournaments/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { formatDate, formatCurrency } from '@/utils/format';
@@ -22,6 +22,7 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
   
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [participant, setParticipant] = useState<TournamentParticipant | null>(null);
+  const [division, setDivision] = useState<Division | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -48,6 +49,12 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
           const targetTeam = pRes.data.find(p => p.id === participantId);
           if (targetTeam) {
             setParticipant(targetTeam);
+            if (targetTeam.tournamentDivisionId) {
+              const divRes = await divisionsApi.getDivisions(id);
+              if (divRes.data) {
+                setDivision(divRes.data.find(d => d.id === targetTeam.tournamentDivisionId) ?? null);
+              }
+            }
           } else {
             toast.error(translate('teamNotFound'));
             router.push(`/tournaments/${id}`);
@@ -73,9 +80,22 @@ export default function AcceptPartnerPage({ params }: { params: Promise<{ id: st
     }
 
     // Client-side validation: Gender checks
-    if (tournament?.genderRestriction) {
-      const userGender = user.gender?.toUpperCase();
-      const restriction = tournament.genderRestriction.toUpperCase();
+    const targetRestriction =
+      division?.genderRestriction ||
+      tournament?.genderRestriction;
+
+    if (targetRestriction) {
+      const normalizeGender = (val?: string | null) => {
+        if (!val) return null;
+        const n = val.trim().toUpperCase();
+        if (['MALE', 'MEN', 'NAM'].includes(n)) return 'MALE';
+        if (['FEMALE', 'WOMEN', 'NU', 'NỮ'].includes(n)) return 'FEMALE';
+        if (n === 'MIXED') return 'MIXED';
+        return 'OTHER';
+      };
+
+      const userGender = normalizeGender(user.gender);
+      const restriction = normalizeGender(targetRestriction);
 
       if (restriction === 'MALE' && userGender !== 'MALE') {
         toast.error(translate('maleOnly'));

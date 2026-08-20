@@ -110,9 +110,22 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
     }
 
     // Client-side validation: Gender checks
-    if (tournament?.genderRestriction) {
-      const userGender = user.gender?.toUpperCase();
-      const restriction = tournament.genderRestriction.toUpperCase();
+    const targetRestriction =
+      division?.genderRestriction ||
+      tournament?.genderRestriction;
+
+    if (targetRestriction) {
+      const normalizeGender = (val?: string | null) => {
+        if (!val) return null;
+        const n = val.trim().toUpperCase();
+        if (['MALE', 'MEN', 'NAM'].includes(n)) return 'MALE';
+        if (['FEMALE', 'WOMEN', 'NU', 'NỮ'].includes(n)) return 'FEMALE';
+        if (n === 'MIXED') return 'MIXED';
+        return 'OTHER';
+      };
+
+      const userGender = normalizeGender(user.gender);
+      const restriction = normalizeGender(targetRestriction);
 
       if (restriction === 'MALE' && userGender !== 'MALE') {
         toast.error(translate('maleOnly'));
@@ -161,8 +174,8 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
 
   if (!tournament || !participant) return null;
 
-  const isLocked = tournament.isRegistrationLocked;
-  const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
+  const isLocked = false;
+  const isExpired = new Date(tournament.endDate || '') < new Date();
   const isNotOpen =
     tournament.status !== 'REGISTRATION_OPEN' &&
     tournament.status !== 'UPCOMING' &&

@@ -134,7 +134,9 @@ const commonTranslate = useTranslations('Common');
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // Check live matches count
+  const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
+  // Check live matches count and set default tab to 'live' if matches are ongoing
   useEffect(() => {
     let active = true;
     const checkLive = async () => {
@@ -150,6 +152,10 @@ const commonTranslate = useTranslations('Common');
         if (active) {
           const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
           setLiveMatchesCount(count);
+          if (!hasInitializedTab && count > 0) {
+            setActiveTab('live');
+            setHasInitializedTab(true);
+          }
         }
       } catch {
         // silent fallback
@@ -159,7 +165,7 @@ const commonTranslate = useTranslations('Common');
     return () => {
       active = false;
     };
-  }, [tournamentId, selectedDivisionId]);
+  }, [tournamentId, selectedDivisionId, hasInitializedTab]);
 
   // Handle socket live match updates for live badge
   useEffect(() => {

@@ -4,6 +4,8 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslations } from 'next-intl';
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Mail, Lock } from "lucide-react";
@@ -13,6 +15,7 @@ import { authApi } from "@/features/auth/api";
 import { useAuthStore } from "@/lib/zustand/authStore";
 
 import { getBaseUrl } from "@/lib/axios";
+import { getErrorMessage } from '@/utils/error';
 
 // NOTE: A proper Form component with Label, FormControl, FormField, etc. would be ideal.
 // For now, we'll use basic HTML structure.
@@ -34,6 +37,7 @@ export const LoginForm = () => {
   });
 
   const router = useRouter();
+  const translate = useTranslations('Auth');
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -49,12 +53,7 @@ export const LoginForm = () => {
       toast.success("Đăng nhập thành công!");
       router.push("/"); // Redirect to home
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'isAxiosError' in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        toast.error(axiosError.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại.");
-      } else {
-        toast.error("Đăng nhập thất bại. Lỗi không xác định.");
-      }
+      toast.error(getErrorMessage(error, translate('loginFailed')));
     }
   };
 

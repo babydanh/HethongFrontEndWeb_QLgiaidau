@@ -15,8 +15,16 @@ export interface TennisPointUpdateResult {
   gameWinner: 1 | 2 | null;
 }
 
-export function createTennisLivePointState(currentSet: MatchScore): TennisLivePointState {
-  return currentSet.team1Score === 6 && currentSet.team2Score === 6
+type TennisPointOptions = {
+  enableTiebreak?: boolean;
+};
+
+export function createTennisLivePointState(
+  currentSet: MatchScore,
+  options: TennisPointOptions = {},
+): TennisLivePointState {
+  const enableTiebreak = options.enableTiebreak ?? true;
+  return enableTiebreak && currentSet.team1Score === 6 && currentSet.team2Score === 6
     ? { mode: 'tiebreak', team1Point: 0, team2Point: 0 }
     : { mode: 'standard', team1Point: '0', team2Point: '0' };
 }
@@ -24,16 +32,18 @@ export function createTennisLivePointState(currentSet: MatchScore): TennisLivePo
 export function readTennisLivePointState(
   match: Pick<Match, 'scoreDetails'>,
   currentSet: MatchScore,
+  options: TennisPointOptions = {},
 ): TennisLivePointState {
+  const enableTiebreak = options.enableTiebreak ?? true;
   const rawState = match.scoreDetails?.liveState?.tennisPointState;
-  const baseState = createTennisLivePointState(currentSet);
+  const baseState = createTennisLivePointState(currentSet, { enableTiebreak });
   const isTiebreakMode = baseState.mode === 'tiebreak';
 
   if (!rawState) {
     return baseState;
   }
 
-  if (rawState.mode === 'tiebreak') {
+  if (rawState.mode === 'tiebreak' && enableTiebreak) {
     return {
       mode: 'tiebreak',
       team1Point: typeof rawState.team1Point === 'number' ? rawState.team1Point : 0,
@@ -56,8 +66,9 @@ export function awardTennisPoint(
   liveState: TennisLivePointState,
   winnerTeam: 1 | 2,
   rules: Pick<ResolvedSportRuleView, 'tiebreakPoints'>,
+  options: TennisPointOptions = {},
 ): TennisPointUpdateResult {
-  if (liveState.mode === 'tiebreak') {
+  if (liveState.mode === 'tiebreak' && (options.enableTiebreak ?? true)) {
     const nextTeam1Point = (typeof liveState.team1Point === 'number' ? liveState.team1Point : 0) + (winnerTeam === 1 ? 1 : 0);
     const nextTeam2Point = (typeof liveState.team2Point === 'number' ? liveState.team2Point : 0) + (winnerTeam === 2 ? 1 : 0);
     const winnerPoints = winnerTeam === 1 ? nextTeam1Point : nextTeam2Point;
@@ -73,6 +84,7 @@ export function awardTennisPoint(
           winnerTeam === 1
             ? { ...currentSet, team1Score: currentSet.team1Score + 1 }
             : { ...currentSet, team2Score: currentSet.team2Score + 1 },
+          options,
         ),
         gameWinner: winnerTeam,
       };
@@ -102,6 +114,7 @@ export function awardTennisPoint(
         winnerTeam === 1
           ? { ...currentSet, team1Score: currentSet.team1Score + 1 }
           : { ...currentSet, team2Score: currentSet.team2Score + 1 },
+        options,
       ),
       gameWinner: winnerTeam,
     };
@@ -136,6 +149,7 @@ export function awardTennisPoint(
         winnerTeam === 1
           ? { ...currentSet, team1Score: currentSet.team1Score + 1 }
           : { ...currentSet, team2Score: currentSet.team2Score + 1 },
+        options,
       ),
       gameWinner: winnerTeam,
     };

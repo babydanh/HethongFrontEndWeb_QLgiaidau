@@ -233,6 +233,13 @@ export function buildAutoWinnerScore(
   let winnerScore = winnerCurrent;
   let loserScore = loserCurrent;
 
+  if (resolved.mode === 'LITE') {
+    return {
+      ...existingSet,
+      isFinished: true,
+    };
+  }
+
   if (resolved.kind === 'TENNIS') {
     winnerScore = Math.max(winnerScore, resolved.pointsPerSet);
     loserScore = Math.min(loserScore, winnerScore === resolved.maxPoints ? resolved.maxPoints - 1 : resolved.pointsPerSet - 2);

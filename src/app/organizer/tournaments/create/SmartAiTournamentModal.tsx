@@ -88,7 +88,7 @@ export default function SmartAiTournamentModal({
       .getCategories()
       .then((res) => {
         if (!active) return;
-        const list = (res as any)?.data || (Array.isArray(res) ? res : []);
+        const list = res.data ?? [];
         if (Array.isArray(list) && list.length > 0) {
           setCategories(list);
           setSportHint(list[0].slug || list[0].id);
@@ -140,7 +140,7 @@ export default function SmartAiTournamentModal({
         sportHint,
       });
 
-      const parsed = (res as any)?.data || (res as any);
+      const parsed = res.data;
       if (parsed && parsed.name) {
         setParsedData(parsed);
         setStep(2);
@@ -368,8 +368,8 @@ export default function SmartAiTournamentModal({
       toast.success(translate('creationSuccess'));
       onSuccess(tournamentId);
       onClose();
-    } catch (err: any) {
-      toast.error(translate('creationError', { message: err.message || translate('tryAgainLater') }));
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, translate('creationError', { message: translate('tryAgainLater') })));
     } finally {
       setIsCreating(false);
     }

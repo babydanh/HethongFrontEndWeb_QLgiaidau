@@ -44,7 +44,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
 
   useEffect(() => {
     if (!participantId) {
-      setRosterStatus(null);
       return;
     }
     let active = true;
@@ -53,6 +52,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       .catch(() => { if (active) setRosterStatus(null); });
     return () => { active = false; };
   }, [participantId, tournament.id, tournamentId]);
+
+  const visibleRosterStatus = participantId ? rosterStatus : null;
 
   const respondToRoster = async (action: 'CONFIRM' | 'DECLINE') => {
     if (!participantId || rosterAction) return;
@@ -84,7 +85,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
 
   return (
     <div className="flex flex-col gap-6">
-      {rosterStatus?.currentMember?.confirmationStatus === 'PENDING' && (
+      {visibleRosterStatus?.currentMember?.confirmationStatus === 'PENDING' && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
@@ -161,7 +162,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         avatarUrl: isRegMatch ? regUser.avatarUrl : null,
                         role: isCaptain ? 'CAPTAIN' : 'MEMBER',
                         isMock: false,
-                        elo: null as any,
+                                                elo: undefined,
+
                       };
                     });
 

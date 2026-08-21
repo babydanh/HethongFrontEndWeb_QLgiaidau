@@ -406,7 +406,9 @@ export default function LiveMatchPage({ params }: Props) {
   const optimisticResolvedRules = resolveMatchSportRules(match ?? {});
   const optimisticIsTennis = optimisticResolvedRules.kind === 'TENNIS';
   const resolvedTennisPointState = optimisticIsTennis && match
-    ? readTennisLivePointState(match, optimisticCurrentSet)
+    ? readTennisLivePointState(match, optimisticCurrentSet, {
+        enableTiebreak: optimisticResolvedRules.mode !== 'LITE',
+      })
     : null;
   const resolvedTennisPointStateKey = resolvedTennisPointState
     ? `${resolvedTennisPointState.mode}:${String(resolvedTennisPointState.team1Point)}:${String(resolvedTennisPointState.team2Point)}`
@@ -571,7 +573,8 @@ export default function LiveMatchPage({ params }: Props) {
     : getScoreEntryGuidance(resolvedRules.kind, tournamentDetailTranslate);
   const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
   const sideOutState = readSideOutState(match);
-  // Lite uses the generic counter; side-out/server rules belong to advanced presets.
+  // Lite bypasses finish constraints, but Tennis Lite still uses the Tennis point counter;
+  // side-out/server rules belong to advanced presets.
   const isPickleballSideOut = !isLiteMatch && resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
   const isTennis = resolvedRules.kind === 'TENNIS';
   const tennisPointState = isTennis ? optimisticTennisPointState ?? resolvedTennisPointState : null;
@@ -917,7 +920,9 @@ export default function LiveMatchPage({ params }: Props) {
 
       if (isTennis && tennisPointState) {
         if (action === 'inc') {
-          const tennisResult = awardTennisPoint(setObj, tennisPointState, team, resolvedRules);
+          const tennisResult = awardTennisPoint(setObj, tennisPointState, team, resolvedRules, {
+            enableTiebreak: !isLiteMatch,
+          });
           newScores[activeIdx] = tennisResult.nextSet;
           nextTennisPointState = tennisResult.nextLiveState;
         } else if (isTennisPointStateEmpty(tennisPointState)) {
@@ -931,7 +936,9 @@ export default function LiveMatchPage({ params }: Props) {
                   ...setObj,
                   team2Score: Math.max(0, setObj.team2Score - 1),
                 };
-          nextTennisPointState = createTennisLivePointState(newScores[activeIdx]);
+          nextTennisPointState = createTennisLivePointState(newScores[activeIdx], {
+            enableTiebreak: !isLiteMatch,
+          });
         } else {
           nextTennisPointState = stepBackTennisPoint(tennisPointState, team);
           newScores[activeIdx] = setObj;
@@ -986,7 +993,9 @@ export default function LiveMatchPage({ params }: Props) {
       if (newStatus === 'ONGOING' && scores.length === 0) {
         const initialScores = [{ team1Score: 0, team2Score: 0, isFinished: false }];
         const nextSetsWon = deriveSetsWon(initialScores);
-        const nextTennisState = isTennis ? createTennisLivePointState(initialScores[0]) : null;
+        const nextTennisState = isTennis
+          ? createTennisLivePointState(initialScores[0], { enableTiebreak: !isLiteMatch })
+          : null;
         scoreUpdatePayload = {
           p1SetsWon: nextSetsWon.p1SetsWon,
           p2SetsWon: nextSetsWon.p2SetsWon,

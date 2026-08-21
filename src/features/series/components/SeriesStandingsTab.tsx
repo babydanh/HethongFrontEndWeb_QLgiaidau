@@ -6,6 +6,8 @@ import { UserProfile } from '@/types/user';
 import { seriesApi } from '../api';
 import { categoriesApi } from '../../categories/api';
 import { StandingsTable } from './StandingsTable';
+import { getErrorMessage } from '@/utils/error';
+
 import { Trophy, Loader2 } from 'lucide-react';
 
 interface SeriesStandingsTabProps {
@@ -103,7 +105,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
         }
       } catch (err: unknown) {
         if (active) {
-          setError(err instanceof Error ? err.message : translate('loadError'));
+          setError(getErrorMessage(err, translate('loadError')));
         }
       } finally {
         if (active) {

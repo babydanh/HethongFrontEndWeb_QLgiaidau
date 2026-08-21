@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { authApi } from "@/features/auth/api";
 import { getBaseUrl } from "@/lib/axios";
+import { getErrorMessage } from '@/utils/error';
 
 type RegisterFormValues = {
   name: string;
@@ -58,12 +59,7 @@ export const RegisterForm = () => {
       // Ideally toggle to login tab or redirect
       router.push("/auth/login");
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'isAxiosError' in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        toast.error(axiosError.response?.data?.message || translate('registrationFailedExisting'));
-      } else {
-        toast.error(translate('registrationFailedUnknown'));
-      }
+      toast.error(getErrorMessage(error, translate('registrationFailedUnknown')));
     }
   };
 

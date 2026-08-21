@@ -912,14 +912,13 @@ export function RegistrationTab({
                   <th className="min-w-[160px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
                   <th className="min-w-[180px] pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
                   <th className="min-w-[100px] pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
-                  <th className="min-w-[120px] pb-3 pr-4">{registrationTranslate('paymentHeader')}</th>
-                  <th className="min-w-[140px] pb-3 text-right">{registrationTranslate('actionsHeader')}</th>
+                  <th className="min-w-[120px] pb-3 text-right">{registrationTranslate('paymentHeader')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredParticipants.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12">
+                    <td colSpan={4} className="py-12">
                       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                         <Users className="h-8 w-8 text-slate-300" />
                         <p className="mt-3 text-sm font-bold text-slate-700">{registrationTranslate('noMatchingProfiles')}</p>
@@ -1040,7 +1039,7 @@ export function RegistrationTab({
                             {getParticipantStatusLabel(participant.teamStatus, participantStatusLabels)}
                           </span>
                         </td>
-                        <td className="py-4 pr-4 align-top">
+                        <td className="py-4 text-right align-top">
                           <div className="space-y-1">
                             <span className={cn('text-xs font-bold whitespace-nowrap', participant.isPaid ? 'text-blue-600' : 'text-rose-600')}>
                               {participant.isPaid ? registrationTranslate('paidStatus') : registrationTranslate('unpaidStatus')}
@@ -1050,72 +1049,6 @@ export function RegistrationTab({
                                 ? `${Number(paymentAmount).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} ${paymentCurrency}`
                                 : registrationTranslate('amountUnavailable')}
                             </p>
-                          </div>
-                        </td>
-                        <td className="py-4 text-right align-top">
-                          <div className="flex flex-wrap justify-end gap-1.5">
-                            {participant.footballTeamId && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => { void handleRosterLock(participant); }}
-                                disabled={rosterActionId === participant.id || isBusy || !isParticipantApproved(participant.teamStatus)}
-                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold text-xs h-8 px-2.5"
-                                title={registrationTranslate('rosterUnlockHint')}
-                              >
-                                {rosterActionId === participant.id ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
-                                {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? registrationTranslate('unlockRoster') : registrationTranslate('lockRoster')}
-                              </Button>
-                            )}
-                            {participant.seed == null && canManageSeed ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  handleSeedEditStart(participant.id, null);
-                                }}
-                                disabled={isBusy}
-                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold text-xs h-8 px-2.5"
-                              >
-                                {registrationTranslate('assignSeed')}
-                              </Button>
-                            ) : null}
-                            {canApprove && (
-                              <Button
-                                size="sm"
-                                onClick={() => { void handleApproveParticipant(participant.id); }}
-                                disabled={isBusy}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-2.5"
-                              >
-                                {isBusy ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
-                                {registrationTranslate('approve')}
-                              </Button>
-                            )}
-                            {canReject && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const confirmed = window.confirm(
-                                    isMockParticipant
-                                      ? registrationTranslate('mockDeleteConfirm', { name: participant.teamName })
-                                      : registrationTranslate('rejectConfirm', { name: participant.teamName }),
-                                  );
-                                  if (confirmed) {
-                                    void handleRejectParticipant(participant.id);
-                                  }
-                                }}
-                                disabled={isBusy}
-                                className={cn(
-                                  'font-bold text-xs h-8 px-2.5',
-                                  isMockParticipant
-                                    ? 'border-rose-200 text-rose-700 hover:bg-rose-50'
-                                    : 'border-amber-200 text-amber-700 hover:bg-amber-50',
-                                )}
-                              >
-                                {isMockParticipant ? registrationTranslate('deleteMock') : registrationTranslate('rejectParticipant')}
-                              </Button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1196,9 +1129,8 @@ export function RegistrationTab({
                         .join('\n');
                       setMockNamesText(names);
                       toast.success(registrationTranslate('loadedAthletes', { count: res.rows.length }));
-                    } catch (err: unknown) {
-                      const message = err instanceof Error ? err.message : String(err);
-                      toast.error(registrationTranslate('readFileError', { message }));
+                    } catch {
+                      toast.error(registrationTranslate('readFileError', { message: commonTranslate('tryAgainLater') }));
                     }
                   }}
                 />
@@ -1683,6 +1615,48 @@ export function RegistrationTab({
                         {registrationTranslate('rejectParticipant')}
                       </Button>
                     </>
+                  )}
+                  {selectedParticipant.footballTeamId && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { void handleRosterLock(selectedParticipant); }}
+                      disabled={rosterActionId === selectedParticipant.id || !isParticipantApproved(selectedParticipant.teamStatus)}
+                      className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold text-xs"
+                    >
+                      {selectedParticipant.rosterLockedAt || locallyLockedRosterIds.has(selectedParticipant.id) ? registrationTranslate('unlockRoster') : registrationTranslate('lockRoster')}
+                    </Button>
+                  )}
+                  {selectedParticipant.seed == null && canSeedMock && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        handleSeedEditStart(selectedParticipant.id, null);
+                        setSelectedParticipant(null);
+                      }}
+                      className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold text-xs"
+                    >
+                      {registrationTranslate('assignSeed')}
+                    </Button>
+                  )}
+                  {(selectedParticipant.members || []).some((m) => m.isMock) && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (confirm(registrationTranslate('mockDeleteConfirm', { name: selectedParticipant.teamName }))) {
+                          await handleRejectParticipant(selectedParticipant.id);
+                          setSelectedParticipant(null);
+                        }
+                      }}
+                      className="border-rose-200 text-rose-700 hover:bg-rose-50 font-bold text-xs"
+                    >
+                      {registrationTranslate('deleteMock')}
+                    </Button>
                   )}
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setSelectedParticipant(null)}>{registrationTranslate('close')}</Button>

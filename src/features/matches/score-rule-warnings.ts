@@ -47,6 +47,10 @@ export function getScoreRuleWarnings(
   rules: ResolvedSportRuleView,
   translate?: WarningTranslate,
 ): ScoreRuleWarning[] {
+  if (rules.mode === 'LITE') {
+    return [];
+  }
+
   const warnings: ScoreRuleWarning[] = [];
   let p1Won = 0;
   let p2Won = 0;
@@ -87,7 +91,7 @@ export function getScoreRuleWarnings(
       return;
     }
 
-    if (rules.kind === 'TENNIS') {
+    if (rules.kind === 'TENNIS' && rules.mode !== 'LITE') {
       if (!isValidTennisSetScore(winnerScore, loserScore, rules)) {
         warnings.push({
           id: `tennis-${index}`,

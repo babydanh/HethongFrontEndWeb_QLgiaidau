@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
-import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
@@ -23,6 +23,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [rosterStatus, setRosterStatus] = useState<FootballRosterStatus | null>(null);
   const [rosterAction, setRosterAction] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -41,6 +42,20 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
     };
     fetchParticipants();
   }, [divisionId, tournament.id, tournamentId]);
+
+  const filteredParticipants = useMemo(() => {
+    if (!searchQuery.trim()) return participants;
+    const query = searchQuery.toLowerCase().trim();
+
+    return participants.filter((p) => {
+      if (p.teamName && p.teamName.toLowerCase().includes(query)) return true;
+      if (p.members && p.members.length > 0) {
+        return p.members.some((m) => m.fullName && m.fullName.toLowerCase().includes(query));
+      }
+      if (p.registeredBy?.fullName && p.registeredBy.fullName.toLowerCase().includes(query)) return true;
+      return false;
+    });
+  }, [participants, searchQuery]);
 
   useEffect(() => {
     if (!participantId) {
@@ -134,169 +149,196 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
         )}
       </div>
       
+      {/* Search Input Bar */}
+      {participants.length > 0 && (
+        <div className="relative w-full max-w-md">
+          <input
+            type="text"
+            placeholder="Tìm theo tên đội hoặc thành viên..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9.5 shadow-sm"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
       {participants.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="w-full text-xs sm:text-sm text-left">
-            <thead className="text-[11px] sm:text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-10 sm:w-16">#</th>
-                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">{translate("teamNameHeader")}</th>
-                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">Thanh toán</th>
-                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">Chi tiết</th>
-              </tr>
-            </thead>
-            <tbody>
-              {participants.map((team, index) => {
-                const isExpanded = expandedTeamId === team.id;
-                
-                const members = team.members && team.members.length > 0
-                  ? team.members
-                  : (team.teamName || '').split(/\s*[\/&]\s*/).filter(Boolean).map((name, i) => {
-                      const trimmed = name.trim();
-                      const isCaptain = i === 0;
-                      const regUser = team.registeredBy;
-                      const isRegMatch = regUser && regUser.fullName && regUser.fullName.trim().toLowerCase() === trimmed.toLowerCase();
-                      return {
-                        userId: isRegMatch ? regUser.id : '',
-                        fullName: trimmed,
-                        avatarUrl: isRegMatch ? regUser.avatarUrl : null,
-                        role: isCaptain ? 'CAPTAIN' : 'MEMBER',
-                        isMock: false,
-                                                elo: undefined,
+        filteredParticipants.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full text-xs sm:text-sm text-left">
+              <thead className="text-[11px] sm:text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-10 sm:w-16">#</th>
+                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">{translate("teamNameHeader")}</th>
+                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">Thanh toán</th>
+                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredParticipants.map((team, index) => {
+                  const isExpanded = expandedTeamId === team.id;
+                  
+                  const members = team.members && team.members.length > 0
+                    ? team.members
+                    : (team.teamName || '').split(/\s*[\/&]\s*/).filter(Boolean).map((name, i) => {
+                        const trimmed = name.trim();
+                        const isCaptain = i === 0;
+                        const regUser = team.registeredBy;
+                        const isRegMatch = regUser && regUser.fullName && regUser.fullName.trim().toLowerCase() === trimmed.toLowerCase();
+                        return {
+                          userId: isRegMatch ? regUser.id : '',
+                          fullName: trimmed,
+                          avatarUrl: isRegMatch ? regUser.avatarUrl : null,
+                          role: isCaptain ? 'CAPTAIN' : 'MEMBER',
+                          isMock: false,
+                          elo: undefined,
+                        };
+                      });
 
-                      };
-                    });
-
-                return (
-                  <React.Fragment key={team.id}>
-                    <tr 
-                      onClick={() => toggleExpand(team.id)}
-                      className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
-                    >
-                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{index + 1}</td>
-                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
-                          <span>{team.teamName}</span>
-                          {team.seed !== null && (
-                            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
-                              Seed {team.seed}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
-                        {team.isPaid ? (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
-                            Đã đóng phí
-                          </span>
-                        ) : (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
-                            Chờ thanh toán
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
-                        <button className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px]">
-                          {isExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        </button>
-                      </td>
-                    </tr>
-                    {isExpanded && (
-                      <tr className="bg-slate-50/50">
-                        <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
-                          <div className="flex flex-col gap-4">
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                              <User className="w-4 h-4 text-slate-400" /> Thành viên đăng ký ({members.length})
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {members.map((member, mIdx) => {
-                                const regUser = team.registeredBy;
-                                const isNameMatch = regUser && regUser.fullName && member.fullName && regUser.fullName.trim().toLowerCase() === member.fullName.trim().toLowerCase();
-                                const targetUserId = member.userId || (isNameMatch ? regUser.id : null);
-                                const avatarSrc = member.avatarUrl || (isNameMatch ? regUser.avatarUrl : null);
-                                const initial = (member.fullName || 'U').charAt(0).toUpperCase();
-
-                                const CardContent = (
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm shrink-0 ${
-                                      avatarSrc 
-                                        ? 'bg-slate-100' 
-                                        : member.role === 'CAPTAIN'
-                                          ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
-                                          : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
-                                    }`}>
-                                      {avatarSrc ? (
-                                        <img src={avatarSrc} alt={member.fullName || ''} className="w-full h-full object-cover" />
-                                      ) : (
-                                        initial
-                                      )}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="font-bold text-slate-900 text-sm truncate">{member.fullName || translate('teamMember')}</p>
-                                      {member.isMock ? (
-                                        <p className="text-xs text-slate-400 font-medium mt-0.5">{translate("virtualAthlete")}</p>
-                                      ) : member.elo ? (
-                                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                          <Award className="w-3.5 h-3.5 text-blue-500" />
-                                          <span>
-                                            {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
-                                          </span>
-                                        </p>
-                                      ) : (
-                                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">VĐV chính thức</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-
-                                return (
-                                  <div 
-                                    key={targetUserId || `m-${mIdx}`} 
-                                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-300 transition-all"
-                                  >
-                                    {targetUserId ? (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          const rect = e.currentTarget.getBoundingClientRect();
-                                          openUserProfile(
-                                            {
-                                              id: targetUserId,
-                                              fullName: member.fullName || translate('teamMember'),
-                                              avatarUrl: avatarSrc,
-                                            },
-                                            rect,
-                                            tournament.communityId || undefined,
-                                          );
-                                        }}
-                                        className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0 text-left cursor-pointer"
-                                      >
-                                        {CardContent}
-                                      </button>
-                                    ) : (
-                                      CardContent
-                                    )}
-                                    <span className={`ml-2 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border shrink-0 ${
-                                        member.role === 'CAPTAIN' 
-                                          ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                          : 'bg-slate-50 text-slate-600 border-slate-200'
-                                      }`}>
-                                        {member.role === 'CAPTAIN' ? translate('teamCaptain') : translate('teamMember')}
-                                      </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                  return (
+                    <React.Fragment key={team.id}>
+                      <tr 
+                        onClick={() => toggleExpand(team.id)}
+                        className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      >
+                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{index + 1}</td>
+                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
+                            <span>{team.teamName}</span>
+                            {team.seed !== null && (
+                              <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                Seed {team.seed}
+                              </span>
+                            )}
                           </div>
                         </td>
+                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
+                          {team.isPaid ? (
+                            <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
+                              Đã đóng phí
+                            </span>
+                          ) : (
+                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
+                              Chờ thanh toán
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
+                          <button className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px]">
+                            {isExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+                          </button>
+                        </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      {isExpanded && (
+                        <tr className="bg-slate-50/50">
+                          <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
+                            <div className="flex flex-col gap-4">
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                <User className="w-4 h-4 text-slate-400" /> Thành viên đăng ký ({members.length})
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {members.map((member, mIdx) => {
+                                  const regUser = team.registeredBy;
+                                  const isNameMatch = regUser && regUser.fullName && member.fullName && regUser.fullName.trim().toLowerCase() === member.fullName.trim().toLowerCase();
+                                  const targetUserId = member.userId || (isNameMatch ? regUser.id : null);
+                                  const avatarSrc = member.avatarUrl || (isNameMatch ? regUser.avatarUrl : null);
+                                  const initial = (member.fullName || 'U').charAt(0).toUpperCase();
+
+                                  const CardContent = (
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm shrink-0 ${
+                                        avatarSrc 
+                                          ? 'bg-slate-100' 
+                                          : member.role === 'CAPTAIN'
+                                            ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+                                            : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
+                                      }`}>
+                                        {avatarSrc ? (
+                                          <img src={avatarSrc} alt={member.fullName || ''} className="w-full h-full object-cover" />
+                                        ) : (
+                                          initial
+                                        )}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-bold text-slate-900 text-sm truncate">{member.fullName || translate('teamMember')}</p>
+                                        {member.isMock ? (
+                                          <p className="text-xs text-slate-400 font-medium mt-0.5">{translate("virtualAthlete")}</p>
+                                        ) : member.elo ? (
+                                          <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                                            <Award className="w-3.5 h-3.5 text-blue-500" />
+                                            <span>
+                                              {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
+                                            </span>
+                                          </p>
+                                        ) : (
+                                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">VĐV chính thức</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+
+                                  return (
+                                    <div 
+                                      key={targetUserId || `m-${mIdx}`} 
+                                      className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-300 transition-all"
+                                    >
+                                      {targetUserId ? (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            openUserProfile(
+                                              {
+                                                id: targetUserId,
+                                                fullName: member.fullName || translate('teamMember'),
+                                                avatarUrl: avatarSrc,
+                                              },
+                                              rect,
+                                              tournament.communityId || undefined,
+                                            );
+                                          }}
+                                          className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0 text-left cursor-pointer"
+                                        >
+                                          {CardContent}
+                                        </button>
+                                      ) : (
+                                        CardContent
+                                      )}
+                                      <span className={`ml-2 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border shrink-0 ${
+                                          member.role === 'CAPTAIN' 
+                                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                                        }`}>
+                                          {member.role === 'CAPTAIN' ? translate('teamCaptain') : translate('teamMember')}
+                                        </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
+            Không tìm thấy đội hoặc thành viên phù hợp với từ khóa &ldquo;{searchQuery}&rdquo;
+          </div>
+        )
       ) : (
         <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
           {translate("teamsEmpty")}

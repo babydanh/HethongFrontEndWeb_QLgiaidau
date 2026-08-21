@@ -1,0 +1,9 @@
+﻿D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(player)\profile\edit\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(player)\profile\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\communities\[id]\components\SettingsTab.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\delete-account\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\components\common\GlobalUserProfileModal.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\components\common\UserProfilePopover.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\features\users\api\getProfile.ts
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\features\users\api\updateProfile.ts
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\lib\zustand\userProfileModalStore.ts

@@ -584,7 +584,7 @@ const commonTranslate = useTranslations('Common');
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
 
           {/* Left Area - Tabs & Content (takes 3 cols) */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 min-w-0 max-w-full overflow-hidden">
             {/* Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => (
@@ -603,7 +603,7 @@ const commonTranslate = useTranslations('Common');
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px]">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
               {/* Division selector inside tab card */}
               {divisionsList.length > 0 && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">

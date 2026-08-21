@@ -7,8 +7,8 @@ import {
   Settings, Save, Globe, Lock, ShieldAlert, Sparkles,
   Plus, Image as ImageIcon, Loader2,
   Trash2, AlignLeft, ListChecks,
-  Users, Activity, ShieldCheck, HelpCircle,
-  Share2, MapPin, CheckCircle2, ChevronRight,
+  Users, Activity,
+  Share2, MapPin, CheckCircle2,
   Sliders, MessageSquare, Tag, Eye, Award, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';

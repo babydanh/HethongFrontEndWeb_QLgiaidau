@@ -604,7 +604,7 @@ export default function BracketTab({
 
           {/* Groups */}
           {activeStage.type === 'DOUBLE_ELIMINATION' ? (
-            <div>
+            <div className="min-w-0 max-w-full overflow-hidden">
               {(() => {
                 const allMatches = activeStage.groups.flatMap((g) => g.matches);
                 const upper = allMatches.filter((m) =>

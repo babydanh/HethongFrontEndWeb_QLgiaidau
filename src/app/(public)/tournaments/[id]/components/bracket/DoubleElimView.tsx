@@ -387,29 +387,10 @@ export function DoubleElimView({
                   left: GF_X,
                 }}
               >
-                <div className="w-1 h-3.5 bg-slate-1000 rounded-full" />
+                <div className="w-1 h-3.5 bg-slate-900 rounded-full" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
                   {translate("grandFinal")}
                 </span>
-              </div>
-            )}
-            {gfSorted.length === 1 && (
-              <div
-                className="absolute flex flex-col items-start gap-2"
-                style={{
-                  top: gfCenterY + cardH / 2 + 18,
-                  left: GF_X,
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-3.5 bg-slate-400 rounded-full" />
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    {translate("resetFinal")}
-                  </span>
-                </div>
-                <div className="text-[9px] font-bold text-slate-400 bg-white/90 border border-slate-200 rounded-lg px-2 py-1 shadow-sm">
-                  Nếu đội nhánh thắng thua ở trận đầu
-                </div>
               </div>
             )}
 

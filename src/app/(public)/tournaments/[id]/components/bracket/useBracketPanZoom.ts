@@ -9,6 +9,10 @@ export function useBracketPanZoom(enabled: boolean, onWheelZoom?: (delta: number
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!enabled || event.button !== 0) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, a, input, select, textarea, [role="button"], [data-no-pan="true"]')) {
+      return;
+    }
     dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, originX: pan.x, originY: pan.y };
     event.currentTarget.setPointerCapture(event.pointerId);
     setIsDragging(true);

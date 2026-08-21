@@ -150,26 +150,24 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       </div>
       
       {/* Search Input Bar */}
-      {participants.length > 0 && (
-        <div className="relative w-full max-w-md">
-          <input
-            type="text"
-            placeholder="Tìm theo tên đội hoặc thành viên..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9.5 shadow-sm"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-      )}
+      <div className="relative w-full max-w-md">
+        <input
+          type="text"
+          placeholder="Tìm theo tên đội hoặc thành viên..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9.5 shadow-sm"
+        />
+        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       {participants.length > 0 ? (
         filteredParticipants.length > 0 ? (

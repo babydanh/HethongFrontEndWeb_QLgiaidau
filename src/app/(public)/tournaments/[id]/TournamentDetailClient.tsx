@@ -11,7 +11,7 @@ import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
 import BracketTab from './components/BracketTab';
 import MatchesTab from './components/MatchesTab';
-import TournamentStatusSummaryCard from './components/TournamentStatusSummaryCard';
+import LiveMatchesTab from './components/LiveMatchesTab';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
@@ -23,6 +23,7 @@ import { BRAND } from '@/constants/brand';
 import { getSportLogo } from '@/constants/sports';
 import { socketClient } from '@/lib/socket';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import { matchesApi } from '@/features/matches/api';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -62,7 +63,7 @@ interface Props {
   initialTournament: Tournament | null;
 }
 
-type TournamentDetailTab = 'overview' | 'teams' | 'bracket' | 'matches';
+type TournamentDetailTab = 'live' | 'overview' | 'teams' | 'bracket' | 'matches';
 
 const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'overview',
@@ -126,10 +127,76 @@ const commonTranslate = useTranslations('Common');
 
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
+  const [liveMatchesCount, setLiveMatchesCount] = useState(0);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Check live matches count
+  useEffect(() => {
+    let active = true;
+    const checkLive = async () => {
+      try {
+        const params: Record<string, string | number> = {
+          tournament_id: tournamentId,
+          status: 'ONGOING',
+          limit: 100,
+        };
+        if (selectedDivisionId) params.division_id = selectedDivisionId;
+        const res = await matchesApi.getMatches(params);
+        const data = Array.isArray(res) ? res : (res.data || []);
+        if (active) {
+          const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
+          setLiveMatchesCount(count);
+        }
+      } catch {
+        // silent fallback
+      }
+    };
+    checkLive();
+    return () => {
+      active = false;
+    };
+  }, [tournamentId, selectedDivisionId]);
+
+  // Handle socket live match updates for live badge
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const joinTournament = () => socket.emit('joinTournament', tournamentId);
+    const handleMatchUpdate = (rawMatch: { status?: string; tournamentId?: string } | string) => {
+      let updatedMatch: { status?: string; tournamentId?: string };
+      try {
+        updatedMatch = typeof rawMatch === 'string'
+          ? JSON.parse(rawMatch) as { status?: string; tournamentId?: string }
+          : rawMatch;
+      } catch {
+        return;
+      }
+      if (updatedMatch?.tournamentId !== tournamentId) return;
+      // Refresh live count
+      const params: Record<string, string | number> = {
+        tournament_id: tournamentId,
+        status: 'ONGOING',
+        limit: 100,
+      };
+      if (selectedDivisionId) params.division_id = selectedDivisionId;
+      matchesApi.getMatches(params).then((res) => {
+        const data = Array.isArray(res) ? res : (res.data || []);
+        const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
+        setLiveMatchesCount(count);
+      }).catch(() => {});
+    };
+
+    socket.on('connect', joinTournament);
+    socket.on('match:update', handleMatchUpdate);
+    if (socket.connected) joinTournament();
+
+    return () => {
+      socket.off('connect', joinTournament);
+      socket.off('match:update', handleMatchUpdate);
+    };
+  }, [tournamentId, selectedDivisionId]);
 
   const handleShareClick = async () => {
     if (!activeTournament) return;
@@ -407,7 +474,10 @@ const commonTranslate = useTranslations('Common');
     return `${sStr} - ${eStr}`;
   };
 
-  const tabs: { id: TournamentDetailTab; label: string }[] = [
+  const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean }[] = [
+    ...(liveMatchesCount > 0
+      ? [{ id: 'live' as const, label: 'LIVE', badge: liveMatchesCount, isLive: true }]
+      : []),
     { id: 'overview', label: translate('overview') },
     { id: 'teams', label: translate('tabs.teams') },
     { id: 'bracket', label: translate('tabs.bracket') },
@@ -588,19 +658,38 @@ const commonTranslate = useTranslations('Common');
           <div className="lg:col-span-3 space-y-6 min-w-0 max-w-full overflow-hidden">
             {/* Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
-                    activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {tabs.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
+                      tab.isLive
+                        ? isActive
+                          ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80 animate-pulse'
+                        : isActive
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                    }`}
+                  >
+                    {tab.isLive && (
+                      <span className="w-2 h-2 rounded-full bg-current animate-ping shrink-0" />
+                    )}
+                    <span>{tab.label}</span>
+                    {tab.badge != null && (
+                      <span
+                        className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                          isActive ? 'bg-white text-rose-600' : 'bg-rose-600 text-white'
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Tab Content */}
@@ -629,6 +718,20 @@ const commonTranslate = useTranslations('Common');
 
               {selectedDivision ? (
                 <>
+                  {activeTab === 'live' && (
+                    <LiveMatchesTab
+                      key={selectedDivisionId || 'all'}
+                      tournament={selectedDivision}
+                      tournamentId={tournament.id}
+                      divisionId={selectedDivisionId || undefined}
+                      onLiveCountChange={(count) => {
+                        setLiveMatchesCount(count);
+                        if (count === 0 && activeTab === 'live') {
+                          setActiveTab('overview');
+                        }
+                      }}
+                    />
+                  )}
                   {activeTab === 'overview' && <OverviewTab key={selectedDivisionId || 'all'} tournament={selectedDivision} />}
                   {activeTab === 'teams' && (
                     <TeamsTab
@@ -993,12 +1096,6 @@ const commonTranslate = useTranslations('Common');
                 </div>
               )}
             </div>
-
-            <TournamentStatusSummaryCard
-              tournament={activeTournament}
-              tournamentId={tournament.id}
-              divisionId={selectedDivisionId || undefined}
-            />
 
             {/* Contact Info Card */}
             {activeTournament.contactInfo && (

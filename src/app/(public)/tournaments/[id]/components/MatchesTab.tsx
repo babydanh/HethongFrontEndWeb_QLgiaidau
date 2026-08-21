@@ -216,14 +216,18 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // Extract unique stage-aware rounds from current matches.
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
   const visibleRoundOptions = useMemo(
-    () => roundOptions.filter((option) => matches.some((match) => {
-      const sameRound = match.roundNumber === option.roundNumber
-        && getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false }) === option.label;
-      const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
-      const sameLeg = selectedLeg === 'ALL' || getRoundRobinRoundInfo(match, matches).leg === selectedLeg;
-      return sameRound && sameStage && sameLeg;
-    })),
-    [matches, roundOptions, selectedStageKey, selectedLeg, tournament.format, bracketSize],
+    () => roundOptions.filter((option) => {
+      if (selectedStageKey !== 'ALL' && option.stageKey && !option.stageKey.includes(selectedStageKey.toUpperCase())) {
+        return false;
+      }
+      return matches.some((match) => {
+        const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
+        const sameLeg = selectedLeg === 'ALL' || getRoundRobinRoundInfo(match, matches).leg === selectedLeg;
+        const sameRound = match.roundNumber === option.roundNumber;
+        return sameStage && sameLeg && sameRound;
+      });
+    }),
+    [matches, roundOptions, selectedStageKey, selectedLeg],
   );
 
   const localizeMatchRoundLabel = (label: string) => label
@@ -487,8 +491,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             })}
           </div>
 
+          {/* Stage Filter Selector (e.g. Vòng bảng vs Vòng loại trực tiếp / Playoff) */}
           {stageOptions.length > 1 && (
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('stageFilterLabel')}:</span>
               <button
                 type="button"

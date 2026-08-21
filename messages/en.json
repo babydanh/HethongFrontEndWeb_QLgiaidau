@@ -6239,6 +6239,27 @@
     "refereeC": "Le C.",
     "refereeF": "Hoang F."
   },
+  "CommunitySettings": {
+    "socialLinkValueRequired": "Enter a link value.",
+    "socialLinkLabelRequired": "Enter a link label.",
+    "socialLinkAdded": "Contact link added.",
+    "socialLinkRemoved": "Contact link removed.",
+    "communityDeleteSuccess": "Community deleted successfully.",
+    "communityDeleteError": "Unable to delete this community.",
+    "tagPresetCreated": "Tag preset created.",
+    "tagPresetCreateError": "Unable to create the tag preset.",
+    "tagPresetDeleteError": "Unable to delete the tag preset.",
+    "socialSettingsSaved": "Community interaction settings saved.",
+    "socialSettingsSaveError": "Unable to save community interaction settings.",
+    "logoUploadSuccess": "Logo uploaded successfully.",
+    "bannerUploadSuccess": "Banner uploaded successfully.",
+    "imageUploadError": "Unable to upload the image.",
+    "communityNameRequired": "Enter a community name.",
+    "provinceRequired": "Select a province or city.",
+    "primaryCategoryRequired": "Choose exactly one primary sport.",
+    "communitySettingsSaved": "Community settings updated successfully.",
+    "communitySettingsSaveError": "Unable to save community settings."
+  },
   "CommunityRankings": {
     "title": "ELO leaderboard",
     "topMembers": "Top 20 outstanding members",

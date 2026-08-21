@@ -6239,6 +6239,27 @@
     "refereeC": "Lê C.",
     "refereeF": "Hoàng F."
   },
+  "CommunitySettings": {
+    "socialLinkValueRequired": "Vui lòng nhập giá trị liên kết.",
+    "socialLinkLabelRequired": "Vui lòng nhập nhãn liên kết.",
+    "socialLinkAdded": "Đã thêm liên hệ.",
+    "socialLinkRemoved": "Đã xóa liên hệ.",
+    "communityDeleteSuccess": "Đã xóa câu lạc bộ thành công.",
+    "communityDeleteError": "Không thể xóa câu lạc bộ này.",
+    "tagPresetCreated": "Đã tạo tag preset.",
+    "tagPresetCreateError": "Không thể tạo tag preset.",
+    "tagPresetDeleteError": "Không thể xóa tag preset.",
+    "socialSettingsSaved": "Đã lưu cài đặt tương tác câu lạc bộ.",
+    "socialSettingsSaveError": "Không thể lưu cài đặt tương tác câu lạc bộ.",
+    "logoUploadSuccess": "Đã tải logo thành công.",
+    "bannerUploadSuccess": "Đã tải ảnh bìa thành công.",
+    "imageUploadError": "Không thể tải ảnh lên.",
+    "communityNameRequired": "Vui lòng nhập tên câu lạc bộ.",
+    "provinceRequired": "Vui lòng chọn tỉnh/thành phố.",
+    "primaryCategoryRequired": "Câu lạc bộ phải có đúng một môn thể thao chính.",
+    "communitySettingsSaved": "Đã cập nhật cài đặt câu lạc bộ thành công.",
+    "communitySettingsSaveError": "Không thể lưu cài đặt câu lạc bộ."
+  },
   "CommunityRankings": {
     "title": "Bảng xếp hạng ELO",
     "topMembers": "Top 20 thành viên xuất sắc nhất",

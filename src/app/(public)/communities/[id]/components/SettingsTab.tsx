@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { 
   Settings, Save, Globe, Lock, ShieldAlert, Sparkles,
   Plus, Image as ImageIcon, Loader2,
@@ -23,6 +24,8 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 export default function SettingsTab({ community }: { community: Community }) {
+  const translate = useTranslations('CommunitySettings');
+
   // General Form States
   const [name, setName] = useState(community.name);
   const [description, setDescription] = useState(community.description || '');
@@ -79,12 +82,12 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   const handleAddSocialLink = () => {
     if (!newSocialValue.trim()) {
-      toast.error('Vui lòng nhập giá trị liên kết.');
+      toast.error(translate('socialLinkValueRequired'));
       return;
     }
     const finalKey = newSocialType === 'custom' ? newSocialLabel.trim() : newSocialType;
     if (!finalKey) {
-      toast.error('Vui lòng nhập nhãn liên kết.');
+      toast.error(translate('socialLinkLabelRequired'));
       return;
     }
     setSocialLinks({
@@ -93,14 +96,14 @@ export default function SettingsTab({ community }: { community: Community }) {
     });
     setNewSocialValue('');
     setNewSocialLabel('');
-    toast.success('Đã thêm liên hệ mới!');
+    toast.success(translate('socialLinkAdded'));
   };
 
   const handleRemoveSocialLink = (key: string) => {
     const next = { ...socialLinks };
     delete next[key];
     setSocialLinks(next);
-    toast.success('Đã xóa liên hệ!');
+    toast.success(translate('socialLinkRemoved'));
   };
 
   const [isSaving, setIsSaving] = useState(false);
@@ -113,11 +116,11 @@ export default function SettingsTab({ community }: { community: Community }) {
     try {
       setIsDeleting(true);
       await communitiesApi.deleteCommunity(community.id);
-      toast.success('Đã xoá câu lạc bộ thành công.');
+      toast.success(translate('communityDeleteSuccess'));
       router.push('/communities');
     } catch (error) {
       console.error('Delete community error', error);
-      toast.error('Lỗi khi thực hiện xoá câu lạc bộ.');
+      toast.error(getErrorMessage(error, translate('communityDeleteError')));
     } finally {
       setIsDeleting(false);
     }
@@ -151,15 +154,19 @@ export default function SettingsTab({ community }: { community: Community }) {
       const response = await communitiesApi.createTagPreset(community.id, { name: nameValue, color: newTagColor });
       if (response.data) setTagPresets((current) => [...current, response.data!]);
       setNewTagName('');
-      toast.success('Đã tạo tag preset.');
-    } catch (error) { toast.error(getErrorMessage(error)); }
+      toast.success(translate('tagPresetCreated'));
+    } catch (error) {
+      toast.error(getErrorMessage(error, translate('tagPresetCreateError')));
+    }
   };
 
   const handleDeleteTagPreset = async (presetId: string) => {
     try {
       await communitiesApi.deleteTagPreset(community.id, presetId);
       setTagPresets((current) => current.filter((preset) => preset.id !== presetId));
-    } catch (error) { toast.error(getErrorMessage(error)); }
+    } catch (error) {
+      toast.error(getErrorMessage(error, translate('tagPresetDeleteError')));
+    }
   };
 
   const saveSocialSettings = async () => {
@@ -167,9 +174,9 @@ export default function SettingsTab({ community }: { community: Community }) {
       setIsSavingSocial(true);
       const response = await communitiesApi.updateSocialSettings(community.id, socialSettings);
       setSocialSettings(response.data);
-      toast.success('Đã lưu cài đặt sinh hoạt CLB.');
+      toast.success(translate('socialSettingsSaved'));
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể lưu cài đặt social.'));
+      toast.error(getErrorMessage(error, translate('socialSettingsSaveError')));
     } finally {
       setIsSavingSocial(false);
     }
@@ -198,14 +205,14 @@ export default function SettingsTab({ community }: { community: Community }) {
       const res = await uploadApi.uploadImage(file);
       if (type === 'logo') {
         setLogoUrl(res.url);
-        toast.success('Tải ảnh Logo thành công!');
+        toast.success(translate('logoUploadSuccess'));
       } else {
         setBannerUrl(res.url);
-        toast.success('Tải ảnh Bìa thành công!');
+        toast.success(translate('bannerUploadSuccess'));
       }
     } catch (error) {
       console.error('Failed to upload image', error);
-      toast.error('Lỗi tải ảnh lên.');
+      toast.error(getErrorMessage(error, translate('imageUploadError')));
     } finally {
       if (type === 'logo') setIsUploadingLogo(false);
       else setIsUploadingBanner(false);
@@ -231,15 +238,15 @@ export default function SettingsTab({ community }: { community: Community }) {
   // Save Settings
   const handleSaveSettings = async () => {
     if (!name.trim()) {
-      toast.error('Vui lòng nhập tên câu lạc bộ.');
+      toast.error(translate('communityNameRequired'));
       return;
     }
     if (!provinceCode) {
-      toast.error('Vui lòng chọn tỉnh/thành phố.');
+      toast.error(translate('provinceRequired'));
       return;
     }
     if (selectedCategoryIds.length !== 1) {
-      toast.error('Câu lạc bộ phải có đúng 1 môn thể thao chính.');
+      toast.error(translate('primaryCategoryRequired'));
       return;
     }
 
@@ -281,13 +288,13 @@ export default function SettingsTab({ community }: { community: Community }) {
       };
 
       await communitiesApi.updateCommunity(community.id, updateData);
-      toast.success('Cập nhật cài đặt câu lạc bộ thành công!');
+      toast.success(translate('communitySettingsSaved'));
       
       // Reload page to reflect changes
       window.location.reload();
     } catch (error) {
       console.error('Save settings error', error);
-      toast.error('Lỗi khi lưu cài đặt.');
+      toast.error(getErrorMessage(error, translate('communitySettingsSaveError')));
     } finally {
       setIsSaving(false);
     }

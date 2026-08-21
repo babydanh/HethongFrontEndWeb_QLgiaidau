@@ -18,6 +18,7 @@ import { ApiResponse } from '@/types/api';
 import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BRAND } from '@/constants/brand';
+import { getErrorMessage } from '@/utils/error';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -88,12 +89,7 @@ export default function LoginPage() {
       toast.success(t('loginSuccess'));
       router.push('/');
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'isAxiosError' in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        toast.error(axiosError.response?.data?.message || t('loginFailed'));
-      } else {
-        toast.error(t('loginFailed'));
-      }
+      toast.error(getErrorMessage(error, t('loginFailed')));
     } finally {
       setIsLoading(false);
     }

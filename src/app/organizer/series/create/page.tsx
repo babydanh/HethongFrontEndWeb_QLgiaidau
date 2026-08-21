@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { BRAND } from '@/constants/brand';
+import { getErrorMessage } from '@/utils/error';
 
 export default function CreateSeriesPage() {
   const router = useRouter();
@@ -97,8 +98,7 @@ export default function CreateSeriesPage() {
       toast.success(translate('createSuccess'));
       router.push(`/organizer/series/${res.id}/manage`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : translate('createError');
-      toast.error(msg);
+      toast.error(getErrorMessage(err, translate('createError')));
     } finally {
       setIsSubmitting(false);
     }

@@ -1007,12 +1007,6 @@ export function RegistrationTab({
                             {registrationTranslate('registeredAt')} {formatDate(participant.registeredAt)}
                             {participant.seed != null ? '' : ` • ${registrationTranslate('seedMissing')}`}
                           </p>
-                          {participant.registeredBy?.email ? (
-                            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 truncate max-w-[180px]">
-                              <Mail className="h-3 w-3 shrink-0" />
-                              {participant.registeredBy.email}
-                            </p>
-                          ) : null}
                         </td>
                         <td className="py-4 pr-4 align-top">
                           <div className="space-y-2">
@@ -1031,10 +1025,6 @@ export function RegistrationTab({
                                           {registrationTranslate('reserveRole')}
                                         </span>
                                       )}
-                                    </p>
-                                    <p className="flex items-center gap-1 truncate text-[11px] font-medium text-slate-500">
-                                      <Mail className="h-3 w-3 shrink-0" />
-                                      {member.email || registrationTranslate('hiddenEmail')}
                                     </p>
                                   </div>
                                 </div>

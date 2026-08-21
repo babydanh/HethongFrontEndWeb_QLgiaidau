@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/axios';
+import { getErrorMessage } from '@/utils/error';
 import {
   parseParticipantsExcel,
   downloadParticipantsTemplateExcel,
@@ -120,8 +121,8 @@ export default function SmartAiTournamentModal({
       setSelectedFormatForExcel('all');
       setExcelResult(res);
       toast.success(translate('excelReadSuccess', { count: res.rows.length }));
-    } catch (err: any) {
-      toast.error(translate('excelReadError', { message: err.message || translate('invalidFile') }));
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, translate('excelReadError', { message: translate('invalidFile') })));
     }
   };
 
@@ -147,8 +148,8 @@ export default function SmartAiTournamentModal({
       } else {
         toast.error(translate('analysisEmpty'));
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || translate('analysisError'));
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, translate('analysisError')));
     } finally {
       setIsAnalyzing(false);
     }

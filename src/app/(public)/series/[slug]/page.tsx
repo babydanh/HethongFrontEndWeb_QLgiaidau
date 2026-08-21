@@ -12,6 +12,7 @@ import { SeriesRulesTab } from '@/features/series/components/SeriesRulesTab';
 import { Calendar, Trophy, ArrowLeft, Layers, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import Link from 'next/link';
+import { getErrorMessage } from '@/utils/error';
 
 export default function SeriesDetailPage() {
   const translate = useTranslations('SeriesDetail');
@@ -40,7 +41,7 @@ export default function SeriesDetailPage() {
         }
       } catch (err: unknown) {
         if (active) {
-          setError(err instanceof Error ? err.message : translate('loadError'));
+          setError(getErrorMessage(err, translate('loadError')));
         }
       } finally {
         if (active) {

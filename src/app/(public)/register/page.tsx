@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import * as React from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { BRAND } from '@/constants/brand';
+import { getErrorMessage } from '@/utils/error';
 
 const registerSchema = z
   .object({
@@ -91,12 +92,7 @@ export default function RegisterPage() {
       toast.success(t('registerSuccess'));
       router.push('/login');
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'isAxiosError' in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        toast.error(axiosError.response?.data?.message || t('registerFailed'));
-      } else {
-        toast.error(t('registerFailed'));
-      }
+      toast.error(getErrorMessage(error, t('registerFailed')));
     } finally {
       setIsLoading(false);
     }

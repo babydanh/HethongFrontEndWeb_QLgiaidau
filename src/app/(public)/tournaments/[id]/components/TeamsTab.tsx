@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle 
 import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 
 interface Props {
   tournament: Tournament;
@@ -62,7 +63,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       setRosterStatus(refreshed.data ?? null);
       toast.success(action === 'CONFIRM' ? translate('rosterConfirmed') : translate('rosterDeclined'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : translate('rosterUpdateFailed'));
+      toast.error(getErrorMessage(error, translate('rosterUpdateFailed')));
     } finally {
       setRosterAction(false);
     }

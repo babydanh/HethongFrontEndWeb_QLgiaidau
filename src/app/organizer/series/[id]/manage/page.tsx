@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 
 export default function SeriesManagePage() {
   const translate = useTranslations('OrganizerSeriesManage');
@@ -138,8 +139,7 @@ export default function SeriesManagePage() {
       setIsLegModalOpen(false);
       fetchDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : translate('legActionError');
-      toast.error(msg);
+      toast.error(getErrorMessage(err, translate('legActionError')));
     }
   };
 
@@ -200,8 +200,7 @@ export default function SeriesManagePage() {
       setIsLinkModalOpen(false);
       fetchDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : translate('linkError');
-      toast.error(msg);
+      toast.error(getErrorMessage(err, translate('linkError')));
     } finally {
       setIsLinking(false);
     }

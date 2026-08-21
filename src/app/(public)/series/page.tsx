@@ -8,6 +8,7 @@ import { TournamentSeries } from '@/types/series';
 import { Search, Trophy, Calendar, Filter, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useDebounce } from '@/hooks/useDebounce';
+import { getErrorMessage } from '@/utils/error';
 
 export default function SeriesListPage() {
   const translate = useTranslations('SeriesList');
@@ -41,7 +42,7 @@ export default function SeriesListPage() {
         }
       } catch (err: unknown) {
         if (active) {
-          const errorMessage = err instanceof Error ? err.message : translate('loadError');
+          const errorMessage = getErrorMessage(err, translate('loadError'));
           setError(errorMessage);
         }
       } finally {

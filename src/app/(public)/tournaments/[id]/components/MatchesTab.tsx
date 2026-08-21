@@ -90,7 +90,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     error,
     resetAndFetch,
   } = useCursorPagination<BracketMatch>(
-
     async (cursor) => {
       const matchParams: Record<string, string | number> = {
         tournament_id: effectiveTournamentId,
@@ -127,8 +126,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   };
   const bracketSize = getBracketSize();
 
-  // Initial load
+  // Initial load & reset filters on division change
   useEffect(() => {
+    setSelectedStageKey('ALL');
+    setSelectedLeg('ALL');
+    setSelectedRoundKey('ALL');
+    setStatusFilter('ALL');
+    setSearchQuery('');
+    setHasDetectedRound(false);
     resetAndFetch();
   }, [divisionId, effectiveTournamentId, resetAndFetch]);
 
@@ -436,170 +441,144 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         )}
       </div>
 
-      {/* Filter Options Panel */}
-      <div className="bg-white border border-slate-200/80 rounded-lg p-4 shadow-sm flex flex-col gap-4">
-        {/* Search Input */}
-        <div className="relative w-full">
-          <input
-            type="text"
-            placeholder={matchTranslate('searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-12 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9"
-          />
-          <Search className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 hover:text-slate-650 cursor-pointer"
-            >
-              {matchTranslate('clearSearch')}
-            </button>
-          )}
-        </div>
-
-        {/* Row 1: Status Filters */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">{matchTranslate('status')}:</span>
-          {(['ALL', 'ONGOING', 'SCHEDULED', 'COMPLETED'] as const).map((filter) => {
-            const label = filter === 'ALL' ? matchTranslate('allStatuses') : filter === 'ONGOING' ? matchTranslate('ongoingStatus') : filter === 'SCHEDULED' ? matchTranslate('scheduledStatus') : matchTranslate('completedStatus');
-            const count = filter === 'ALL' ? counts.all : filter === 'ONGOING' ? counts.ongoing : filter === 'SCHEDULED' ? counts.scheduled : counts.completed;
-            const isActive = statusFilter === filter;
-            return (
+      {/* Filter Options Panel - Only show when there are matches available */}
+      {matches.length > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded-lg p-4 shadow-sm flex flex-col gap-4">
+          {/* Search Input */}
+          <div className="relative w-full">
+            <input
+              type="text"
+              placeholder={matchTranslate('searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-12 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            {searchQuery && (
               <button
-                key={filter}
-                onClick={() => setStatusFilter(filter)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
-                  isActive
-                    ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                    : 'bg-slate-50 text-slate-650 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                }`}
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 hover:text-slate-650 cursor-pointer"
               >
-                {label} ({count})
+                {matchTranslate('clearSearch')}
               </button>
-            );
-          })}
-        </div>
+            )}
+          </div>
 
-        {stageOptions.length > 1 && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('stageFilterLabel')}:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedStageKey('ALL');
-                setSelectedLeg('ALL');
-                setSelectedRoundKey('ALL');
-              }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedStageKey === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
-            >
-              {matchTranslate('allStages')}
-            </button>
-            {stageOptions.map((stage) => {
-              const isActive = selectedStageKey === stage.key;
+          {/* Row 1: Status Filters */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">{matchTranslate('status')}:</span>
+            {(['ALL', 'ONGOING', 'SCHEDULED', 'COMPLETED'] as const).map((filter) => {
+              const label = filter === 'ALL' ? matchTranslate('allStatuses') : filter === 'ONGOING' ? matchTranslate('ongoingStatus') : filter === 'SCHEDULED' ? matchTranslate('scheduledStatus') : matchTranslate('completedStatus');
+              const count = filter === 'ALL' ? counts.all : filter === 'ONGOING' ? counts.ongoing : filter === 'SCHEDULED' ? counts.scheduled : counts.completed;
+              const isActive = statusFilter === filter;
               return (
                 <button
-                  type="button"
-                  key={stage.key}
-                  onClick={() => {
-                    setSelectedStageKey(stage.key);
-                    setSelectedLeg('ALL');
-                    setSelectedRoundKey('ALL');
-                  }}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+                  key={filter}
+                  onClick={() => setStatusFilter(filter)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                      : 'bg-slate-50 text-slate-650 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
                 >
-                  {getStageVietnameseName(stage.key)} <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>({stage.count})</span>
+                  {label} ({count})
                 </button>
               );
             })}
           </div>
-        )}
 
-        {legOptions.length > 1 && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('legsLabel')}:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedLeg('ALL');
-                setSelectedRoundKey('ALL');
-              }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedLeg === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
-            >
-              {matchTranslate('allLegs')}
-            </button>
-            {legOptions.map((leg) => {
-              const isActive = selectedLeg === leg;
-              return (
-                <button
-                  type="button"
-                  key={leg}
-                  onClick={() => {
-                    setSelectedLeg(leg);
-                    setSelectedRoundKey('ALL');
-                  }}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
-                >
-                  {matchTranslate('legNumber', { leg })}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Row 2: Internal round filter */}
-        {visibleRoundOptions.length > 0 && (
-          <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
-            <p className="text-[11px] font-medium text-slate-400">{matchTranslate('roundFilterHint')}</p>
-            {tournament.format === 'DOUBLE_ELIMINATION' || visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') ? (
-              <>
-                {/* Winners Row */}
-                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('winnersLabel')}:</span>
-
+          {stageOptions.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('stageFilterLabel')}:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedStageKey('ALL');
+                  setSelectedLeg('ALL');
+                  setSelectedRoundKey('ALL');
+                }}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedStageKey === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+              >
+                {matchTranslate('allStages')}
+              </button>
+              {stageOptions.map((stage) => {
+                const isActive = selectedStageKey === stage.key;
+                return (
                   <button
+                    type="button"
+                    key={stage.key}
                     onClick={() => {
-                    setSelectedStageKey('ALL');
-                    setSelectedLeg('ALL');
-                    setSelectedRoundKey('ALL');
-                  }}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                      selectedRoundKey === 'ALL'
-                        ? 'bg-slate-900 text-white border-transparent'
-                        : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                    }`}
+                      setSelectedStageKey(stage.key);
+                      setSelectedLeg('ALL');
+                      setSelectedRoundKey('ALL');
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
                   >
-                    {matchTranslate('allRounds')}
+                    {getStageVietnameseName(stage.key)} <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>({stage.count})</span>
                   </button>
-                  {visibleRoundOptions
-                    .filter((ro) => ro.branch !== 'LOSERS')
-                    .map((roundOption) => {
-                      const isActive = selectedRoundKey === roundOption.key;
-                      return (
-                        <button
-                          key={roundOption.key}
-                          onClick={() => setSelectedRoundKey(roundOption.key)}
-                          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                            isActive
-                              ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                              : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                          }`}
-                        >
-                          {localizeMatchRoundLabel(roundOption.label)}
-                          <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
-                            ({roundOption.count})
-                          </span>
-                        </button>
-                      );
-                    })}
-                </div>
+                );
+              })}
+            </div>
+          )}
 
-                {/* Losers Row */}
-                {visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') && (
-                  <div className="flex flex-wrap items-center gap-2 border-t border-slate-50 pt-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('losersLabel')}:</span>
+          {legOptions.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('legsLabel')}:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedLeg('ALL');
+                  setSelectedRoundKey('ALL');
+                }}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedLeg === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+              >
+                {matchTranslate('allLegs')}
+              </button>
+              {legOptions.map((leg) => {
+                const isActive = selectedLeg === leg;
+                return (
+                  <button
+                    type="button"
+                    key={leg}
+                    onClick={() => {
+                      setSelectedLeg(leg);
+                      setSelectedRoundKey('ALL');
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+                  >
+                    {matchTranslate('legNumber', { leg })}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Row 2: Internal round filter */}
+          {visibleRoundOptions.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
+              <p className="text-[11px] font-medium text-slate-400">{matchTranslate('roundFilterHint')}</p>
+              {tournament.format === 'DOUBLE_ELIMINATION' || visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') ? (
+                <>
+                  {/* Winners Row */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('winnersLabel')}:</span>
+
+                    <button
+                      onClick={() => {
+                      setSelectedStageKey('ALL');
+                      setSelectedLeg('ALL');
+                      setSelectedRoundKey('ALL');
+                    }}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                        selectedRoundKey === 'ALL'
+                          ? 'bg-slate-900 text-white border-transparent'
+                          : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                      }`}
+                    >
+                      {matchTranslate('allRounds')}
+                    </button>
                     {visibleRoundOptions
-                      .filter((ro) => ro.branch === 'LOSERS')
+                      .filter((ro) => ro.branch !== 'LOSERS')
                       .map((roundOption) => {
                         const isActive = selectedRoundKey === roundOption.key;
                         return (
@@ -620,52 +599,79 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         );
                       })}
                   </div>
-                )}
-              </>
-            ) : (
-              /* Single Row for non Double Elimination */
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('roundsLabel')}:</span>
-                <button
-                  onClick={() => {
-                    setSelectedStageKey('ALL');
-                    setSelectedLeg('ALL');
-                    setSelectedRoundKey('ALL');
-                  }}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                    selectedRoundKey === 'ALL'
-                      ? 'bg-slate-900 text-white border-transparent'
-                      : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                  }`}
-                >
-                  {matchTranslate('allRounds')}
-                </button>
-                {visibleRoundOptions.map((roundOption) => {
-                  const isActive = selectedRoundKey === roundOption.key;
-                  return (
-                    <button
-                      key={roundOption.key}
-                      onClick={() => setSelectedRoundKey(roundOption.key)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                        isActive
-                          ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                          : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                      }`}
-                    >
-                      {localizeMatchRoundLabel(roundOption.label)}
-                      <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
-                        ({roundOption.count})
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
 
-            {error && (
+                  {/* Losers Row */}
+                  {visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') && (
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-50 pt-2">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('losersLabel')}:</span>
+
+                      {visibleRoundOptions
+                        .filter((ro) => ro.branch === 'LOSERS')
+                        .map((roundOption) => {
+                          const isActive = selectedRoundKey === roundOption.key;
+                          return (
+                            <button
+                              key={roundOption.key}
+                              onClick={() => setSelectedRoundKey(roundOption.key)}
+                              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                                isActive
+                                  ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                              }`}
+                            >
+                              {localizeMatchRoundLabel(roundOption.label)}
+                              <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
+                                ({roundOption.count})
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedStageKey('ALL');
+                      setSelectedLeg('ALL');
+                      setSelectedRoundKey('ALL');
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                      selectedRoundKey === 'ALL'
+                        ? 'bg-slate-900 text-white border-transparent'
+                        : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                    }`}
+                  >
+                    {matchTranslate('allRounds')}
+                  </button>
+                  {visibleRoundOptions.map((roundOption) => {
+                    const isActive = selectedRoundKey === roundOption.key;
+                    return (
+                      <button
+                        key={roundOption.key}
+                        onClick={() => setSelectedRoundKey(roundOption.key)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                          isActive
+                            ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                            : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                        }`}
+                      >
+                        {localizeMatchRoundLabel(roundOption.label)}
+                        <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
+                          ({roundOption.count})
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
           <span>{localizedLoadError}</span>
           <button

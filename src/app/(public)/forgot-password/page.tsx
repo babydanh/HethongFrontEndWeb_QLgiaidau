@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 
 const forgotSchema = z.object({
   email: z.string().email(),
@@ -30,10 +31,8 @@ export default function ForgotPasswordPage() {
       await api.post('/auth/forgot-password', data);
       setSent(true);
       toast.success(t('resetInstructionsSent'));
-    } catch (err) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      const errMsg = axiosError.response?.data?.message || t('requestError');
-      toast.error(errMsg);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, t('requestError')));
     }
   };
 

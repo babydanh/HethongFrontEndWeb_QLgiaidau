@@ -13,39 +13,86 @@ interface ErrorWithResponse {
   message?: string;
 }
 
+type SupportedLocale = 'vi' | 'en';
+
+const DEFAULT_MESSAGES: Record<SupportedLocale, { generic: string; network: string; rateLimit: string }> = {
+  vi: {
+    generic: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    network: 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.',
+    rateLimit: 'Hệ thống đang nhận nhiều yêu cầu. Vui lòng chờ vài giây rồi thử lại.',
+  },
+  en: {
+    generic: 'Something went wrong. Please try again.',
+    network: 'Unable to connect to the server. Check your connection.',
+    rateLimit: 'The system is receiving many requests. Please wait a few seconds and try again.',
+  },
+};
+
+const getCurrentLocale = (): SupportedLocale => {
+  if (typeof document === 'undefined') return 'vi';
+  return document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'vi';
+};
+
+const hasVietnameseText = (message: string): boolean =>
+  /[ăâđêôơưĂÂĐÊÔƠƯ]|\b(không|vui lòng|bạn|đã|chưa|phải|cần|tìm thấy|quyền|tin nhắn|tài khoản|thử lại)\b/i.test(message);
+
+const hasEnglishText = (message: string): boolean =>
+  /\b(the|please|your|you|cannot|can't|unable|failed|invalid|expired|not found|access|permission|server|try again|something went wrong)\b/i.test(message);
+
+const hasTechnicalText = (message: string): boolean =>
+  /\b(axios|exception|stack trace|sql|postgres|query failed|econn|jwt|token malformed|undefined|null|nan|internal server error|status code|request failed|network error)\b/i.test(message) ||
+  /\b[A-Za-z]+Error\b/.test(message) ||
+  message.includes(' at ');
+
+const isWrongLocale = (message: string, locale: SupportedLocale): boolean => {
+  if (locale === 'en') return hasVietnameseText(message);
+  return hasEnglishText(message) && !hasVietnameseText(message);
+};
+
+const resolveFallback = (fallbackMessage: string | undefined, locale: SupportedLocale, preferred: keyof typeof DEFAULT_MESSAGES.vi = 'generic'): string => {
+  if (fallbackMessage && !isWrongLocale(fallbackMessage, locale) && !hasTechnicalText(fallbackMessage)) {
+    return fallbackMessage;
+  }
+  return DEFAULT_MESSAGES[locale][preferred];
+};
+
+const readResponseMessage = (error: ErrorWithResponse): string | null => {
+  const message = error.response?.data?.message;
+  if (Array.isArray(message)) return message.find((item) => typeof item === 'string' && item.trim())?.trim() ?? null;
+  return typeof message === 'string' && message.trim() ? message.trim() : null;
+};
+
 /**
- * Trích xuất câu báo lỗi có ý nghĩa từ object error `unknown` (thường bắt từ try/catch Axios)
+ * Extracts a user-safe error message from an unknown Axios/Fetch error.
+ * Backend messages are retained only when they are human-readable and match the active UI language.
  */
 export const getErrorMessage = (
   error: unknown,
-  fallbackMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.',
-  rateLimitMessage = fallbackMessage,
+  fallbackMessage?: string,
+  rateLimitMessage?: string,
 ): string => {
-  if (!error || typeof error !== 'object') return fallbackMessage;
+  const locale = getCurrentLocale();
+  const fallback = resolveFallback(fallbackMessage, locale);
+  if (!error || typeof error !== 'object') return fallback;
 
   const err = error as ErrorWithResponse;
 
-  // Never expose the backend throttler exception name to users.
   if (err.response?.status === 429) {
-    return rateLimitMessage;
+    return resolveFallback(rateLimitMessage, locale, 'rateLimit');
   }
 
-  // Lỗi từ Axios response mapping với ApiError của backend
-  if (err.response?.data?.message) {
-    // Backend thường trả về string hoặc mảng validation strings
-    const msg = err.response.data.message;
-    if (Array.isArray(msg) && msg.length > 0) {
-      return msg[0]; // Trả về lỗi validation đầu tiên
-    }
-    return String(msg);
+  if (err.message === 'Network Error') return fallbackMessage ? fallback : DEFAULT_MESSAGES[locale].network;
+
+  const responseMessage = readResponseMessage(err);
+  if (responseMessage && !hasTechnicalText(responseMessage) && !isWrongLocale(responseMessage, locale)) {
+    return responseMessage;
   }
 
-  // Fallback về lỗi mặc định của JS Error
-  if (err.message) {
+  if (err.message && !hasTechnicalText(err.message) && !isWrongLocale(err.message, locale)) {
     return err.message;
   }
 
-  return fallbackMessage;
+  return fallback;
 };
 
 export const getRetryAfterSeconds = (error: unknown): number | null => {

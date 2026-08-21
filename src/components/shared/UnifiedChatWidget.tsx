@@ -250,7 +250,22 @@ export default function UnifiedChatWidget() {
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
-  const [aiMessages, setAiMessages] = useState<AiMessage[]>(() => createInitialAiMessages(translate));
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('sporto_ai_chat_messages');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed as AiMessage[];
+          }
+        }
+      } catch {
+        // fallback to default
+      }
+    }
+    return createInitialAiMessages(translate);
+  });
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -380,6 +395,7 @@ export default function UnifiedChatWidget() {
 
   const selectionRef = useRef(selection);
   const directChatRequestRef = useRef(0);
+
   useEffect(() => {
     selectionRef.current = selection;
     if (typeof window !== 'undefined') {
@@ -390,6 +406,16 @@ export default function UnifiedChatWidget() {
       }
     }
   }, [selection]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && aiMessages.length > 0) {
+      try {
+        localStorage.setItem('sporto_ai_chat_messages', JSON.stringify(aiMessages));
+      } catch {
+        // ignore quota
+      }
+    }
+  }, [aiMessages]);
 
   const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;

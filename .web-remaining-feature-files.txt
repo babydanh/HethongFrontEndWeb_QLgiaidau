@@ -1,0 +1,10 @@
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(player)\football-teams\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(player)\notifications\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\communities\[id]\components\MiniClubRanking.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\communities\[id]\components\RankingsTab.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\forgot-password\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\reset-password\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\tournaments\[id]\components\TeamsTab.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\tournaments\[id]\join-team\JoinTeamClient.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\tournaments\[id]\join-team\page.tsx
+D:\Duancanhan\Project_QuanLyGiaiDau\HethongFrontEndWeb_QLgiaidau\src\app\(public)\tournaments\[id]\register\components\TeamRegistrationFlow.tsx

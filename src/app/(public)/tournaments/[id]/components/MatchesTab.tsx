@@ -436,14 +436,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Division Info Header */}
-      <div className="flex items-center gap-2 text-xs text-slate-500 font-bold pb-3 border-b border-slate-200/60">
-        <Info className="w-4 h-4 text-slate-400" />
-        <span>{matchTranslate('divisionLabel')}: <strong className="text-slate-700">{tournament.name}</strong></span>
-        {displayMatchLabel !== displayTranslate('unknownFormat') && (
-          <span className="text-slate-400">• {displayMatchLabel}</span>
-        )}
-      </div>
 
       {/* Filter Options Panel - Only show when there are matches available */}
       {matches.length > 0 && (

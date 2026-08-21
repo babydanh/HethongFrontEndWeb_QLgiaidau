@@ -602,11 +602,24 @@ export default function BracketTab({
             </p>
           </div>
 
-          {/* Groups */}
           {activeStage.type === 'DOUBLE_ELIMINATION' ? (
             <div className="min-w-0 max-w-full overflow-hidden">
               {(() => {
-                const allMatches = activeStage.groups.flatMap((g) => g.matches);
+                const overrides = dragHandlers?.participantOverrides;
+                const rawMatches = activeStage.groups.flatMap((g) => g.matches);
+                const allMatches = rawMatches.map((match) => {
+                  if (!overrides) return match;
+                  const p1Key = slotOverrideKey(match.id, 'participant1');
+                  const p2Key = slotOverrideKey(match.id, 'participant2');
+                  const hasP1 = Object.prototype.hasOwnProperty.call(overrides, p1Key);
+                  const hasP2 = Object.prototype.hasOwnProperty.call(overrides, p2Key);
+                  if (!hasP1 && !hasP2) return match;
+                  return {
+                    ...match,
+                    ...(hasP1 ? { participant1: overrides[p1Key], participant1Id: overrides[p1Key]?.id ?? null } : {}),
+                    ...(hasP2 ? { participant2: overrides[p2Key], participant2Id: overrides[p2Key]?.id ?? null } : {}),
+                  };
+                });
                 const upper = allMatches.filter((m) =>
                   UPPER_SET.has((m.bracketBranch ?? '').toUpperCase()),
                 );

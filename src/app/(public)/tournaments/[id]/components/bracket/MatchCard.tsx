@@ -177,6 +177,7 @@ export const MatchCard = memo(function MatchCard({
     <div
       data-bracket-match-id={match.id}
       data-bracket-match-live={live ? 'true' : 'false'}
+      data-no-pan="true"
       aria-disabled={live}
       style={{ width: CARD_W, height: actualCardH }}
       className={

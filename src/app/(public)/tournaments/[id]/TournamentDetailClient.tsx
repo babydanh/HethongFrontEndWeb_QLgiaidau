@@ -126,6 +126,7 @@ const commonTranslate = useTranslations('Common');
   const activeTournament = selectedDivision ?? tournament;
 
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
+  const { openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
   const [liveMatchesCount, setLiveMatchesCount] = useState(0);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -806,82 +807,88 @@ const commonTranslate = useTranslations('Common');
               {/* Organizer Info */}
               <div className="border-t border-slate-100 pt-4">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">{translate('organizerLabel')}</span>
-                {activeTournament.organizer?.id ? (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      openUserProfile(
-                        {
-                          id: activeTournament.organizer.id,
-                          fullName: activeTournament.organizer.fullName || translate('organizerDefault'),
-                          avatarUrl: activeTournament.organizer.avatarUrl || null,
-                          isTrusted: activeTournament.organizer.isTrusted,
-                        },
-                        rect,
-                      );
-                    }}
-                    className="flex items-center gap-3 text-left w-full p-2 -ml-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all cursor-pointer group"
-                  >
-                    {activeTournament.organizer?.avatarUrl ? (
-                      <img
-                        src={activeTournament.organizer.avatarUrl}
-                        alt={activeTournament.organizer?.fullName || 'BTC'}
-                        className="w-10 h-10 rounded-full border border-slate-200 object-cover shadow-sm group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-105 transition-transform">
-                        <User className="w-5 h-5 text-blue-500" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-slate-900 font-bold text-sm truncate group-hover:text-blue-600 transition-colors">
-                          {activeTournament.organizer?.fullName || translate('organizerDefault')}
-                        </p>
-                        {activeTournament.organizer?.isTrusted ? (
-                          <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerTrusted')}>
-                            👑 {translate('organizerTrusted')}
-                          </span>
+                {(() => {
+                  const organizer = activeTournament.organizer;
+                  if (!organizer?.id) {
+                    return (
+                      <div className="flex items-center gap-3">
+                        {organizer?.avatarUrl ? (
+                          <img
+                            src={organizer.avatarUrl}
+                            alt={organizer.fullName || 'BTC'}
+                            className="w-10 h-10 rounded-full border border-slate-200 object-cover"
+                          />
                         ) : (
-                          <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerNew')}>
-                            🔰 {translate('organizerNew')}
-                          </span>
+                          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                            <User className="w-5 h-5 text-blue-500" />
+                          </div>
                         )}
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-slate-900 font-bold text-sm">{organizer?.fullName || translate('organizerDefault')}</p>
+                            {organizer?.isTrusted ? (
+                              <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title={translate('organizerTrusted')}>
+                                👑 {translate('organizerTrusted')}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title={translate('organizerNew')}>
+                                🔰 {translate('organizerNew')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
-                    </div>
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    {activeTournament.organizer?.avatarUrl ? (
-                      <img
-                        src={activeTournament.organizer.avatarUrl}
-                        alt={activeTournament.organizer?.fullName || 'BTC'}
-                        className="w-10 h-10 rounded-full border border-slate-200 object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
-                        <User className="w-5 h-5 text-blue-500" />
+                    );
+                  }
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        openUserProfile(
+                          {
+                            id: organizer.id,
+                            fullName: organizer.fullName || translate('organizerDefault'),
+                            avatarUrl: organizer.avatarUrl || null,
+                          },
+                          rect,
+                        );
+                      }}
+                      className="flex items-center gap-3 text-left w-full p-2 -ml-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all cursor-pointer group"
+                    >
+                      {organizer.avatarUrl ? (
+                        <img
+                          src={organizer.avatarUrl}
+                          alt={organizer.fullName || 'BTC'}
+                          className="w-10 h-10 rounded-full border border-slate-200 object-cover shadow-sm group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-105 transition-transform">
+                          <User className="w-5 h-5 text-blue-500" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-slate-900 font-bold text-sm truncate group-hover:text-blue-600 transition-colors">
+                            {organizer.fullName || translate('organizerDefault')}
+                          </p>
+                          {organizer.isTrusted ? (
+                            <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerTrusted')}>
+                              👑 {translate('organizerTrusted')}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerNew')}>
+                              🔰 {translate('organizerNew')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
                       </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-slate-900 font-bold text-sm">{activeTournament.organizer?.fullName || translate('organizerDefault')}</p>
-                        {activeTournament.organizer?.isTrusted ? (
-                          <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title={translate('organizerTrusted')}>
-                            👑 {translate('organizerTrusted')}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title={translate('organizerNew')}>
-                            🔰 {translate('organizerNew')}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
-                    </div>
-                  </div>
-                )}
+                    </button>
+                  );
+                })()}
               </div>
 
               {showRegistrationDetails && (

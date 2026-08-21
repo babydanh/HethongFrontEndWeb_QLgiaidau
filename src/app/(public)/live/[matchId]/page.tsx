@@ -1075,7 +1075,9 @@ export default function LiveMatchPage({ params }: Props) {
         isTennis &&
         nextSetsWon.p1SetsWon < resolvedRules.setsToWin &&
         nextSetsWon.p2SetsWon < resolvedRules.setsToWin
-          ? createTennisLivePointState(newScores[newScores.length - 1])
+          ? createTennisLivePointState(newScores[newScores.length - 1], {
+              enableTiebreak: !isLiteMatch,
+            })
           : null;
 
       setScores(newScores);

@@ -628,9 +628,10 @@ const commonTranslate = useTranslations('Common');
 
               {selectedDivision ? (
                 <>
-                  {activeTab === 'overview' && <OverviewTab tournament={selectedDivision} />}
+                  {activeTab === 'overview' && <OverviewTab key={selectedDivisionId || 'all'} tournament={selectedDivision} />}
                   {activeTab === 'teams' && (
                     <TeamsTab
+                      key={selectedDivisionId || 'all'}
                       tournament={selectedDivision}
                       tournamentId={tournament.id}
                       divisionId={selectedDivisionId || undefined}
@@ -638,10 +639,20 @@ const commonTranslate = useTranslations('Common');
                     />
                   )}
                   {activeTab === 'bracket' && (
-                    <BracketTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
+                    <BracketTab
+                      key={selectedDivisionId || 'all'}
+                      tournament={selectedDivision}
+                      tournamentId={tournament.id}
+                      divisionId={selectedDivisionId || undefined}
+                    />
                   )}
                   {activeTab === 'matches' && (
-                    <MatchesTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
+                    <MatchesTab
+                      key={selectedDivisionId || 'all'}
+                      tournament={selectedDivision}
+                      tournamentId={tournament.id}
+                      divisionId={selectedDivisionId || undefined}
+                    />
                   )}
                 </>
               ) : (

@@ -46,7 +46,10 @@ export default function SettingsTab({ community }: { community: Community }) {
     addressValue: locationAddress,
     provinces,
     wards,
-    onSelectProvince: (pCode) => setProvinceCode(pCode),
+    onSelectProvince: (pCode) => {
+      setProvinceCode(pCode);
+      setWards([]);
+    },
     onSelectWard: (wCode) => setWardCode(wCode),
     onWardsLoaded: (loadedWards) => setWards(loadedWards),
   });
@@ -188,8 +191,6 @@ export default function SettingsTab({ community }: { community: Community }) {
       regionsApi.getWardsByProvince(provinceCode)
         .then(setWards)
         .catch((err: unknown) => console.error('Failed to load wards', err));
-    } else {
-      setWards([]);
     }
   }, [provinceCode]);
 
@@ -459,7 +460,7 @@ export default function SettingsTab({ community }: { community: Community }) {
 
               <div className="flex flex-wrap gap-1.5 pt-1 max-h-48 overflow-y-auto">
                 {tagPresets.length === 0 ? (
-                  <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Nhấn "Kho danh hiệu mẫu" hoặc tự nhập tên để tạo tag mới.</span>
+                  <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Nhấn &quot;Kho danh hiệu mẫu&quot; hoặc tự nhập tên để tạo tag mới.</span>
                 ) : (
                   tagPresets.map((preset) => (
                     <span 
@@ -653,6 +654,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                   onChange={(e) => {
                     setProvinceCode(e.target.value);
                     setWardCode('');
+                    setWards([]);
                   }}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none"
                 >

@@ -18,13 +18,13 @@ export default function RootLayoutClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, setUser } = useAuthStore();
+  const { user, isAuthenticated, setUser, logout } = useAuthStore();
   const hasFetchedRef = useRef(false);
 
   // Sync user profile only ONCE on mount, not on every route change
   useEffect(() => {
     const isGuestRoute = ['/login', '/register', '/auth'].some((route) => pathname.startsWith(route));
-    if (isGuestRoute) return;
+    if (isGuestRoute || !isAuthenticated) return;
 
     // Skip chỉ khi user trong store đã ĐẦY ĐỦ (có trạng thái xác minh email).
     // Bản persist cũ từ login chỉ có {id, email, roles} thiếu isEmailVerified → vẫn fetch để chữa.
@@ -57,11 +57,17 @@ export default function RootLayoutClient({
         }
       })
       .catch((error: unknown) => {
-        if (!isNetworkError(error) && !isHttpStatusError(error, 401)) {
+        if (isHttpStatusError(error, 401)) {
+          // A persisted Zustand session can outlive the access/refresh cookies.
+          // Clear it so global chat does not keep issuing protected requests.
+          logout();
+          return;
+        }
+        if (!isNetworkError(error)) {
           console.error('Failed to sync user profile globally', error);
         }
       });
-  }, [pathname, setUser, user?.id, user?.email, user?.isEmailVerified]);
+  }, [pathname, isAuthenticated, setUser, logout, user?.id, user?.email, user?.isEmailVerified]);
   
   // Exclude admin & auth paths from header/footer
   const hideHeaderFooter = pathname.startsWith('/admin');

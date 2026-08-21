@@ -109,15 +109,19 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     const fetchPublicData = async () => {
       setIsLoading(true);
       try {
-        const [profileRes, matchesRes, eloHistoryRes] = await Promise.all([
+        const [profileResult, matchesResult, eloHistoryResult] = await Promise.allSettled([
           api.get<ApiResponse<PublicProfile>>(`/users/${id}/public`),
           api.get<ApiResponse<Match[]>>(`/matches?userId=${id}&limit=10`),
-          rankingsApi.getUserEloHistory(id).catch(() => ({ data: [] }))
+          rankingsApi.getUserEloHistory(id),
         ]);
 
-        setProfile(profileRes.data);
-        setMatches(matchesRes.data || []);
-        setEloHistory(eloHistoryRes?.data || []);
+        if (profileResult.status === 'rejected') {
+          throw profileResult.reason;
+        }
+
+        setProfile(profileResult.value.data);
+        setMatches(matchesResult.status === 'fulfilled' ? matchesResult.value.data || [] : []);
+        setEloHistory(eloHistoryResult.status === 'fulfilled' ? eloHistoryResult.value?.data || [] : []);
       } catch (err: unknown) {
         console.error('Failed to fetch public profile:', err);
         setError(getErrorMessage(err) || translate('loadError'));
@@ -310,7 +314,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-[400px]">
+      <div className="w-full min-w-0 min-h-[400px]">
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1 flex flex-col gap-6">
@@ -340,7 +344,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               </div>
             </div>
 
-            <div className="md:col-span-2 space-y-6">
+            <div className="md:col-span-2 w-full min-w-0 space-y-6">
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-350 mx-auto mb-3" />
                 <p className="text-slate-550 font-semibold text-lg">{translate('noActivity')}</p>
@@ -351,9 +355,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         )}
 
         {activeTab === 'matches' && (
-          <div className="space-y-6">
+          <div className="w-full min-w-0 space-y-6">
             {matches.length > 0 ? (
-              <div className="flex flex-col gap-4">
+              <div className="w-full flex flex-col gap-4">
                 {matches.map((match) => {
                   const isCompleted = match.status === 'COMPLETED';
                   const isP1 = match.participant1?.teamName?.toLowerCase() === profile.fullName?.toLowerCase();
@@ -422,7 +426,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 })}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
+              <div className="w-full text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Activity className="w-16 h-16 text-slate-350 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-700 mb-2">{translate('noMatchesTitle')}</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm font-medium">
@@ -434,8 +438,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         )}
 
         {activeTab === 'achievements' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="w-full min-w-0 space-y-6">
+            <div className="w-full bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-blue-600" />
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate('achievementsHeading')}</h3>
@@ -485,8 +489,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         )}
 
         {!hideEloSection && activeTab === 'elo' && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-6">
+          <div className="w-full min-w-0 space-y-6">
+            <div className="w-full flex flex-col gap-6">
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-5 h-5 text-blue-600" />

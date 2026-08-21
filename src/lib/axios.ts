@@ -328,6 +328,13 @@ api.interceptors.response.use(
       }
     }
 
+    // A second 401 means the refresh/retry path did not restore a session.
+    // Clear persisted auth so global chat and notification widgets stop
+    // issuing protected requests with stale client state.
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+    }
+
     // Do not turn a transient backend failure into a toast storm. Screens keep
     // their last successful snapshot and decide when the next reconciliation
     // is safe, instead of every caller retrying the same request here.

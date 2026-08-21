@@ -23,7 +23,7 @@ import {
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from './registrationMode';
-import { getTournamentLocationLabel } from '@/utils/tournament-location';
+import { getTournamentLocationLabel, getTournamentShortLocation } from '@/utils/tournament-location';
 
 export default function TournamentsListPage() {
   const locale = useLocale();
@@ -712,7 +712,8 @@ export default function TournamentsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {tournaments.map(tournament => {
             const { startDay, endDay, startMonth, endMonth } = getParsedDates(tournament.startDate, tournament.endDate);
-            const displayLocation = getTournamentLocationLabel(tournament) || translate("locationNotUpdated");
+            const fullLocation = getTournamentLocationLabel(tournament) || translate("locationNotUpdated");
+            const displayLocation = getTournamentShortLocation(tournament) || translate("locationNotUpdated");
             const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
 
             return (
@@ -755,9 +756,13 @@ export default function TournamentsListPage() {
                   </div>
 
                   {/* Location Overlay (Bottom-Left) */}
-                  <div className="absolute bottom-3 left-3 z-10">
-                    <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
-                      📍 {displayLocation}
+                  <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
+                    <span 
+                      className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 inline-flex items-center gap-1 truncate max-w-full"
+                      title={fullLocation}
+                    >
+                      <span className="shrink-0">📍</span>
+                      <span className="truncate">{displayLocation}</span>
                     </span>
                   </div>
                 </div>

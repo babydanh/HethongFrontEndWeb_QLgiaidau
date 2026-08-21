@@ -55,6 +55,43 @@ export const getTournamentLocationParts = (input: TournamentLocationInput): stri
 export const getTournamentLocationLabel = (input: TournamentLocationInput): string =>
   getTournamentLocationParts(input).join(', ');
 
+/**
+ * Trả về địa chỉ ngắn gọn (Phường/Xã, Quận/Huyện, Tỉnh/TP) cho thẻ giải đấu
+ * Giúp tránh tràn dòng và ẩn số nhà / tên đường chi tiết
+ */
+export const getTournamentShortLocation = (input: TournamentLocationInput): string => {
+  const legacyLocation = input.tournamentConfig?.location;
+  
+  // 1. Ưu tiên cấu trúc hành chính rõ ràng nếu có
+  const structuredParts = [
+    legacyLocation?.ward,
+    legacyLocation?.district,
+    legacyLocation?.province || input.city,
+  ].filter((p): p is string => Boolean(p && p.trim()));
+
+  if (structuredParts.length >= 2) {
+    return structuredParts.join(', ');
+  }
+
+  // 2. Phân tích chuỗi địa chỉ đầy đủ (lấy 2 phần cuối: ví dụ Phường ..., TP. Hồ Chí Minh)
+  const fullRaw = input.venue?.locationAddress || input.locationAddress || legacyLocation?.display || legacyLocation?.address || input.city || '';
+  if (fullRaw) {
+    const rawParts = fullRaw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (rawParts.length > 2) {
+      return rawParts.slice(-2).join(', ');
+    }
+    if (rawParts.length > 0) {
+      return rawParts.join(', ');
+    }
+  }
+
+  return getTournamentLocationLabel(input);
+};
+
 export const getMatchLocationParts = (input: MatchLocationInput): string[] =>
   uniqueParts([
     input.courtName,

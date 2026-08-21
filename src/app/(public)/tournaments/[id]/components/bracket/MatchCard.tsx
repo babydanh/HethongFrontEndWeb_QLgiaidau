@@ -192,8 +192,8 @@ export const MatchCard = memo(function MatchCard({
       }
       onClick={() => onSelectMatch?.(match)}
     >
-      {(match.participant1 || match.participant2) && !match.isBye ? (
-        <Link href={'/live/' + match.id} className="flex flex-col flex-1 hover:no-underline group">
+      {(match.participant1 || match.participant2) && !match.isBye && !isOrganizer ? (
+        <Link href={'/live/' + match.id} className="flex flex-col flex-1 hover:no-underline group" draggable={false}>
           {cardInner}
         </Link>
       ) : (

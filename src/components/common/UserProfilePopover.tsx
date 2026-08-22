@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
 import { RankAvatar } from "@/components/ui/RankAvatar";
 import { useAuthStore } from "@/lib/zustand/authStore";
+import { getCommunityTagDisplayName } from '@/app/(public)/communities/[id]/components/tag-display';
 import toast from "react-hot-toast";
 
 const MAX_MEMBER_TAGS = 3;
@@ -65,14 +66,7 @@ export default function UserProfilePopover({
 }: UserProfilePopoverProps) {
   const translate = useTranslations('Common');
   const locale = useLocale();
-  const getPresetLabel = (name: string) => {
-    if (name === 'Cây hài') return translate('tagSuggestionFunny');
-    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
-    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
-    if (name === 'Đang lên form') return translate('tagSuggestionRising');
-    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
-    return name;
-  };
+  const getPresetLabel = (name: string) => getCommunityTagDisplayName(name, translate);
   const router = useRouter();
   const { user: currentUser } = useAuthStore();
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -668,7 +662,7 @@ export default function UserProfilePopover({
               onClick={async () => {
                 if (!profileData.id || isOpeningChat) return;
                 if (!canMessage) {
-                  toast.error(translate('strangerMessagesDisabled') || 'Người dùng này hiện không nhận tin nhắn từ người lạ.');
+                  toast.error(translate('strangerMessagesDisabled'));
                   return;
                 }
                 setIsOpeningChat(true);
@@ -683,11 +677,11 @@ export default function UserProfilePopover({
                   setIsOpeningChat(false);
                 }
               }}
-              title={!canMessage ? translate('strangerMessagesDisabled') || 'Người dùng không nhận tin nhắn từ người lạ' : undefined}
+              title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
               className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <MessageCircle className="h-3.5 w-3.5" />
-              {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : (translate('strangerMessagesShort') || 'Không nhận tin')}
+              {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : translate('strangerMessagesShort')}
             </button>
           )}
 

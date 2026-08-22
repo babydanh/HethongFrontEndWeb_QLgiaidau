@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
 import type { Region } from '@/features/regions/api';
+import { useTranslations } from 'next-intl';
 
 interface SearchableRegionSelectProps {
   value: string;
@@ -34,6 +35,7 @@ export function SearchableRegionSelect({
   className = '',
   inputName,
 }: SearchableRegionSelectProps) {
+  const translate = useTranslations('Common');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,7 +106,7 @@ export function SearchableRegionSelect({
         {value && !disabled ? (
           <button
             type="button"
-            aria-label="Xóa lựa chọn"
+            aria-label={translate('regionClearSelection')}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => selectOption('')}
             className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -135,7 +137,7 @@ export function SearchableRegionSelect({
               </button>
             );
           }) : (
-            <p className="px-3 py-3 text-sm text-slate-500">Không tìm thấy địa điểm phù hợp.</p>
+            <p className="px-3 py-3 text-sm text-slate-500">{translate('noMatchingRegions')}</p>
           )}
         </div>
       ) : null}

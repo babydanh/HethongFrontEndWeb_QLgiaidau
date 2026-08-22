@@ -8,19 +8,26 @@ export type MatchFormatOptionValue =
   | 'FEMALE_DOUBLES'
   | 'MIXED_DOUBLES';
 
+export type MatchFormatTranslationKey =
+  | 'formatMaleSingles'
+  | 'formatFemaleSingles'
+  | 'formatMaleDoubles'
+  | 'formatFemaleDoubles'
+  | 'formatMixedDoubles';
+
 export interface MatchFormatOption {
   value: MatchFormatOptionValue;
-  label: string;
-  shortLabel: string;
+  labelKey: MatchFormatTranslationKey;
+  shortLabelKey: MatchFormatTranslationKey;
   icon?: string;
 }
 
 const ALL_MATCH_FORMAT_OPTIONS: MatchFormatOption[] = [
-  { value: 'MALE_SINGLES', label: 'Đơn Nam', shortLabel: 'Đơn Nam', icon: '♂️' },
-  { value: 'FEMALE_SINGLES', label: 'Đơn Nữ', shortLabel: 'Đơn Nữ', icon: '♀️' },
-  { value: 'MALE_DOUBLES', label: 'Đôi Nam', shortLabel: 'Đôi Nam', icon: '👥' },
-  { value: 'FEMALE_DOUBLES', label: 'Đôi Nữ', shortLabel: 'Đôi Nữ', icon: '👯‍♀️' },
-  { value: 'MIXED_DOUBLES', label: 'Đôi Nam Nữ', shortLabel: 'Đôi Nam Nữ', icon: '👫' },
+  { value: 'MALE_SINGLES', labelKey: 'formatMaleSingles', shortLabelKey: 'formatMaleSingles', icon: '♂️' },
+  { value: 'FEMALE_SINGLES', labelKey: 'formatFemaleSingles', shortLabelKey: 'formatFemaleSingles', icon: '♀️' },
+  { value: 'MALE_DOUBLES', labelKey: 'formatMaleDoubles', shortLabelKey: 'formatMaleDoubles', icon: '👥' },
+  { value: 'FEMALE_DOUBLES', labelKey: 'formatFemaleDoubles', shortLabelKey: 'formatFemaleDoubles', icon: '👯‍♀️' },
+  { value: 'MIXED_DOUBLES', labelKey: 'formatMixedDoubles', shortLabelKey: 'formatMixedDoubles', icon: '👫' },
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {

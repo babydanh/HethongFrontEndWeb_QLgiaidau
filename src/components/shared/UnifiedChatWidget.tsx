@@ -61,6 +61,8 @@ import {
 import { chatApi } from '@/features/chat/api';
 import { uploadApi } from '@/features/upload/api';
 import { communitiesApi } from '@/features/communities/api';
+import { getCommunityTagDisplayName } from '@/app/(public)/communities/[id]/components/tag-display';
+
 import { supportApi, type SupportMessage } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -220,14 +222,7 @@ export default function UnifiedChatWidget() {
   const locale = useLocale();
   const quickPrompts = quickPromptKeys.map((key) => translate(key));
   const roomLabels = { club: translate('club'), conversation: translate('conversation') };
-  const getPresetLabel = (name: string) => {
-    if (name === 'Cây hài') return translate('tagSuggestionFunny');
-    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
-    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
-    if (name === 'Đang lên form') return translate('tagSuggestionRising');
-    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
-    return name;
-  };
+  const getPresetLabel = (name: string) => getCommunityTagDisplayName(name, translate);
   const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id;
   const [open, setOpen] = useState(false);
@@ -568,11 +563,11 @@ export default function UnifiedChatWidget() {
       const targetUserId = (e as CustomEvent<{ userId?: string }>).detail?.userId;
       if (!targetUserId) return;
       if (!isAuthenticated) {
-        toast.error(translate('loginToMessage') || 'Vui lòng đăng nhập để nhắn tin.');
+        toast.error(translate('loginToMessage'));
         return;
       }
       if (user?.id && targetUserId === user.id) {
-        toast.error('Bạn không thể tự nhắn tin cho chính mình.');
+        toast.error(translate('directChatSelfError'));
         return;
       }
       setOpen(true);
@@ -594,9 +589,9 @@ export default function UnifiedChatWidget() {
         const errorData = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
         const rawMsg = Array.isArray(errorData?.message) ? errorData.message[0] : errorData?.message;
         let finalMsg = rawMsg;
-        if (rawMsg === 'Direct room must have exactly 2 members') {
-          finalMsg = 'Cuộc trò chuyện trực tiếp cần có đúng 2 thành viên.';
-        }
+          if (rawMsg === 'Direct room must have exactly 2 members') {
+            finalMsg = translate('directChatMembersError');
+          }
         toast.error(finalMsg || getErrorMessage(err, translate('openConversationFailed')));
       } finally {
         if (requestId === directChatRequestRef.current) setLoading(false);
@@ -604,7 +599,7 @@ export default function UnifiedChatWidget() {
     };
     window.addEventListener('sporto:open-direct-chat', handleOpenDirectChat);
     return () => window.removeEventListener('sporto:open-direct-chat', handleOpenDirectChat);
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, translate]);
 
   // Support opening specific club room via global custom event
   useEffect(() => {
@@ -1146,7 +1141,7 @@ export default function UnifiedChatWidget() {
 
       const res = await inboxApi.sendMessage(
         selection.room.id,
-        `📊 Bình chọn: ${q}`,
+        translate('pollMessagePrefix', { question: q }),
         [],
         undefined,
         'POLL',
@@ -1410,12 +1405,12 @@ export default function UnifiedChatWidget() {
         if (response.status === 429) {
           const retryAfter = response.headers.get('Retry-After');
           serverMessage = retryAfter
-            ? `Hệ thống AI đang giới hạn lượt hỏi. Vui lòng thử lại sau khoảng ${retryAfter} giây.`
-            : 'Hệ thống AI đang giới hạn lượt hỏi. Vui lòng thử lại sau một chút.';
+            ? translate('aiRateLimitWithRetryAfter', { retryAfter })
+            : translate('aiRateLimit');
         }
-        throw new Error(serverMessage || `AI unavailable (${response.status})`);
+        throw new Error(serverMessage || translate('aiUnavailable', { status: response.status }));
       }
-      if (!response.body) throw new Error('AI không trả về luồng dữ liệu.');
+      if (!response.body) throw new Error(translate('aiNoStream'));
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';

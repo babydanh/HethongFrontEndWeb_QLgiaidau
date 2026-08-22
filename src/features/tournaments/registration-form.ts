@@ -31,24 +31,24 @@ export interface RegistrationFormConfig {
   divisionIds: string[];
 }
 
-export const REGISTRATION_FIELD_TYPE_LABELS: Record<RegistrationFieldType, string> = {
-  TEXT: 'Đoạn văn ngắn',
-  TEXTAREA: 'Đoạn văn dài',
-  EMAIL: 'Email',
-  PHONE: 'Số điện thoại',
-  NUMBER: 'Số',
-  SELECT: 'Chọn một đáp án',
-  MULTI_SELECT: 'Chọn nhiều đáp án',
-  CHECKBOX: 'Xác nhận / đồng ý',
-  FILE: 'Tệp hoặc hình ảnh',
-};
+export const REGISTRATION_FIELD_TYPES: readonly RegistrationFieldType[] = [
+  'TEXT',
+  'TEXTAREA',
+  'EMAIL',
+  'PHONE',
+  'NUMBER',
+  'SELECT',
+  'MULTI_SELECT',
+  'CHECKBOX',
+  'FILE',
+];
 
 // Họ tên, số điện thoại và email đã được lấy từ hồ sơ tài khoản ở luồng đăng ký.
 // Không tự chèn lại để người chơi không phải nhập trùng; BTC có thể thêm câu hỏi riêng.
 export const DEFAULT_REGISTRATION_FIELDS: RegistrationField[] = [];
 
 function isRegistrationFieldType(value: unknown): value is RegistrationFieldType {
-  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(REGISTRATION_FIELD_TYPE_LABELS, value);
+  return typeof value === 'string' && REGISTRATION_FIELD_TYPES.includes(value as RegistrationFieldType);
 }
 
 export function readRegistrationFormConfig(raw: unknown, divisionIds: string[]): RegistrationFormConfig {

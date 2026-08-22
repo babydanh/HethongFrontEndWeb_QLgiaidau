@@ -27,7 +27,7 @@ import { tournamentsApi, type Division } from '@/features/tournaments/api';
 import type { Tournament } from '@/types/tournament';
 import {
   readRegistrationFormConfig,
-  REGISTRATION_FIELD_TYPE_LABELS,
+  REGISTRATION_FIELD_TYPES,
   type RegistrationField,
   type RegistrationFieldType,
   type RegistrationFormConfig,
@@ -352,7 +352,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                     }}
                                     className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-blue-500 focus:outline-none"
                                   >
-                                    {(Object.keys(REGISTRATION_FIELD_TYPE_LABELS) as RegistrationFieldType[]).map((value) => (
+                                    {REGISTRATION_FIELD_TYPES.map((value) => (
                                       <option key={value} value={value}>
                                         {registrationFormTranslate(fieldTypeLabelKey[value])}
                                       </option>

@@ -15,6 +15,8 @@ const MAX_FETCH_ATTEMPTS = 2;
 
 interface ApiItem {
   id: string;
+  slug?: string;
+  isActive?: boolean;
   updatedAt?: string;
   createdAt?: string;
 }
@@ -132,10 +134,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     toRouteUrl(`${baseUrl}/communities/${c.id}`, c, 'weekly', 0.7),
   );
 
+  // 4. Sport discovery routes
+  // Chỉ đưa landing page môn thể thao vào sitemap khi có ít nhất 2 giải public thật.
+  // Như vậy không phát sinh hàng loạt trang mỏng cho category chưa có dữ liệu.
+  const categories = await fetchAllPages('/categories', {});
+  const sportRoutes: MetadataRoute.Sitemap = [];
+  for (const category of categories) {
+    if (!category.slug || category.isActive === false) continue;
+    const categoryTournaments = await fetchAllPages('/tournaments', {
+      visibility: 'PUBLIC',
+      categoryId: category.id,
+    });
+    if (categoryTournaments.length < 2) continue;
+    sportRoutes.push({
+      url: `${baseUrl}/tournaments/sport/${encodeURIComponent(category.slug)}`,
+      changeFrequency: 'daily',
+      priority: 0.75,
+    });
+  }
+
   // Public profiles are client-rendered and currently have no page-specific metadata,
   // so they remain excluded until SSR metadata and a stable profile index policy exist.
   // Individual /live/[matchId] and /series/[slug] pages are highly interactive and
   // volatile; do not enumerate them here until their SEO rendering policy is defined.
-  return [...staticRoutes, ...tournamentRoutes, ...communityRoutes];
+  return [...staticRoutes, ...tournamentRoutes, ...communityRoutes, ...sportRoutes];
 }
 

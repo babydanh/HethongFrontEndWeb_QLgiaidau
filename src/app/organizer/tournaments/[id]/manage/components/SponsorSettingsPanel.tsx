@@ -28,6 +28,7 @@ type SponsorDraft = {
   displayOrder: number;
   status: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   isPublic: boolean;
+  advancedScheduling: boolean;
   startAt: string;
   endAt: string;
 };
@@ -41,9 +42,33 @@ const emptyDraft = (): SponsorDraft => ({
   displayOrder: 0,
   status: 'DRAFT',
   isPublic: true,
+  advancedScheduling: false,
   startAt: '',
   endAt: '',
 });
+
+const formatDateTimeInput = (value?: string | null) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const parseDateTimeInput = (value: string) => {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const [, day, month, year, hours, minutes] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), 0, 0);
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day) ||
+    date.getHours() !== Number(hours) ||
+    date.getMinutes() !== Number(minutes)
+  ) return null;
+  return date;
+};
 
 const toDraft = (sponsor: TournamentSponsor): SponsorDraft => ({
   displayName: sponsor.displayName,
@@ -54,8 +79,9 @@ const toDraft = (sponsor: TournamentSponsor): SponsorDraft => ({
   displayOrder: sponsor.displayOrder,
   status: sponsor.status === 'ARCHIVED' ? 'HIDDEN' : sponsor.status || 'DRAFT',
   isPublic: sponsor.isPublic ?? true,
-  startAt: sponsor.startAt ? sponsor.startAt.slice(0, 16) : '',
-  endAt: sponsor.endAt ? sponsor.endAt.slice(0, 16) : '',
+  advancedScheduling: Boolean(sponsor.startAt || sponsor.endAt),
+  startAt: formatDateTimeInput(sponsor.startAt),
+  endAt: formatDateTimeInput(sponsor.endAt),
 });
 
 export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPanelProps) {
@@ -64,6 +90,8 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
   const [drafts, setDrafts] = React.useState<Record<string, SponsorDraft>>({});
   const [newDraft, setNewDraft] = React.useState<SponsorDraft>(emptyDraft);
   const [isAdding, setIsAdding] = React.useState(false);
+  const [isAddFormOpen, setIsAddFormOpen] = React.useState(false);
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [savingId, setSavingId] = React.useState<string | null>(null);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
 
@@ -95,9 +123,17 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
       toast.error(translate('sponsors.invalidUrl'));
       return false;
     }
-    if (draft.startAt && draft.endAt && new Date(draft.startAt) > new Date(draft.endAt)) {
-      toast.error(translate('sponsors.invalidDateRange'));
-      return false;
+    if (draft.advancedScheduling) {
+      const startAt = draft.startAt ? parseDateTimeInput(draft.startAt) : null;
+      const endAt = draft.endAt ? parseDateTimeInput(draft.endAt) : null;
+      if ((draft.startAt && !startAt) || (draft.endAt && !endAt)) {
+        toast.error(translate('sponsors.invalidDateTime'));
+        return false;
+      }
+      if (startAt && endAt && startAt > endAt) {
+        toast.error(translate('sponsors.invalidDateRange'));
+        return false;
+      }
     }
     return true;
   };
@@ -111,8 +147,8 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
     displayOrder: Math.max(0, Number(draft.displayOrder) || 0),
     status: draft.status,
     isPublic: draft.isPublic,
-    startAt: draft.startAt ? new Date(draft.startAt).toISOString() : null,
-    endAt: draft.endAt ? new Date(draft.endAt).toISOString() : null,
+    startAt: draft.advancedScheduling && draft.startAt ? parseDateTimeInput(draft.startAt)?.toISOString() ?? null : null,
+    endAt: draft.advancedScheduling && draft.endAt ? parseDateTimeInput(draft.endAt)?.toISOString() ?? null : null,
   });
 
   const saveSponsor = async (sponsorId: string) => {
@@ -122,6 +158,7 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
     try {
       await tournamentsApi.updateSponsor(tournamentId, sponsorId, toPayload(draft));
       toast.success(translate('sponsors.saved'));
+      setExpandedId(null);
       await loadSponsors();
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -137,6 +174,7 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
       await tournamentsApi.createSponsor(tournamentId, toPayload(newDraft));
       toast.success(translate('sponsors.created'));
       setNewDraft(emptyDraft());
+      setIsAddFormOpen(false);
       await loadSponsors();
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -221,14 +259,30 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
         <input type="checkbox" checked={draft.isPublic} onChange={(event) => onChange({ isPublic: event.target.checked })} />
         {translate('sponsors.publicToggle')}
       </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.startAt')}</span>
-        <input type="datetime-local" value={draft.startAt} onChange={(event) => onChange({ startAt: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
+      <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 md:col-span-2">
+        <input
+          type="checkbox"
+          checked={draft.advancedScheduling}
+          onChange={(event) => onChange({ advancedScheduling: event.target.checked, ...(event.target.checked ? {} : { startAt: '', endAt: '' }) })}
+          className="mt-0.5"
+        />
+        <span>
+          <span className="block">{translate('sponsors.advancedScheduling')}</span>
+          <span className="mt-0.5 block text-[11px] font-medium text-slate-500">{translate('sponsors.advancedSchedulingDescription')}</span>
+        </span>
       </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.endAt')}</span>
-        <input type="datetime-local" value={draft.endAt} onChange={(event) => onChange({ endAt: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
-      </label>
+      {draft.advancedScheduling && (
+        <>
+          <label className="space-y-1 text-xs font-bold text-slate-600">
+            <span>{translate('sponsors.startAt')}</span>
+            <input type="text" inputMode="numeric" value={draft.startAt} onChange={(event) => onChange({ startAt: event.target.value })} placeholder={translate('sponsors.dateTimePlaceholder')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
+          </label>
+          <label className="space-y-1 text-xs font-bold text-slate-600">
+            <span>{translate('sponsors.endAt')}</span>
+            <input type="text" inputMode="numeric" value={draft.endAt} onChange={(event) => onChange({ endAt: event.target.value })} placeholder={translate('sponsors.dateTimePlaceholder')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
+          </label>
+        </>
+      )}
     </div>
   );
 
@@ -258,8 +312,32 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
               </div>
             );
           }
+          if (expandedId !== sponsor.id) {
+            return (
+              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                    <img src={sponsor.logoUrl} alt="" className="max-h-full max-w-full object-contain" onError={(event) => event.currentTarget.classList.add('hidden')} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-black text-slate-800">{sponsor.displayName}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                      <span>{translate(`sponsors.tiers.${sponsor.tier}`)}</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      <span>{translate(`sponsors.statuses.${sponsor.status}`)}</span>
+                    </div>
+                  </div>
+                  <Button type="button" variant="outline" onClick={() => setExpandedId(sponsor.id)} className="shrink-0 text-xs font-bold">{translate('sponsors.edit')}</Button>
+                </div>
+                {sponsor.shortDescription && <p className="mt-3 line-clamp-2 text-xs font-medium text-slate-500">{sponsor.shortDescription}</p>}
+              </div>
+            );
+          }
           return (
-            <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <div key={sponsor.id} className="rounded-xl border border-blue-200 bg-blue-50/30 p-4">
+              <div className="mb-3 flex justify-end">
+                <button type="button" onClick={() => setExpandedId(null)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.closeEditor')}</button>
+              </div>
               {renderEditor(draft, (patch) => updateDraft(sponsor.id, patch), sponsor.id)}
               <div className="mt-4 flex flex-wrap justify-end gap-2">
                 {sponsor.websiteUrl && <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-500"><ExternalLink className="h-3.5 w-3.5" />{translate('sponsors.preview')}</a>}
@@ -273,11 +351,22 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
-        <h5 className="mb-3 flex items-center gap-2 text-sm font-black text-slate-800"><Plus className="h-4 w-4 text-amber-600" />{translate('sponsors.addTitle')}</h5>
-        {renderEditor(newDraft, (patch) => setNewDraft((current) => ({ ...current, ...patch })), 'new')}
-        <div className="mt-4 flex justify-end">
-          <Button type="button" onClick={() => void addSponsor()} disabled={isAdding} className="bg-amber-600 text-white hover:bg-amber-700"><Plus className="mr-1.5 h-4 w-4" />{isAdding ? translate('sponsors.adding') : translate('sponsors.add')}</Button>
-        </div>
+        {!isAddFormOpen ? (
+          <Button type="button" onClick={() => setIsAddFormOpen(true)} className="w-full bg-amber-600 text-white hover:bg-amber-700 sm:w-auto">
+            <Plus className="mr-1.5 h-4 w-4" />{translate('sponsors.addTitle')}
+          </Button>
+        ) : (
+          <>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h5 className="flex items-center gap-2 text-sm font-black text-slate-800"><Plus className="h-4 w-4 text-amber-600" />{translate('sponsors.addTitle')}</h5>
+              <button type="button" onClick={() => setIsAddFormOpen(false)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.cancel')}</button>
+            </div>
+            {renderEditor(newDraft, (patch) => setNewDraft((current) => ({ ...current, ...patch })), 'new')}
+            <div className="mt-4 flex justify-end">
+              <Button type="button" onClick={() => void addSponsor()} disabled={isAdding} className="bg-amber-600 text-white hover:bg-amber-700"><Plus className="mr-1.5 h-4 w-4" />{isAdding ? translate('sponsors.adding') : translate('sponsors.add')}</Button>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Settings, ImageIcon, Gift, Users, Trash2, Plus, Phone, Mail, Globe } from 'lucide-react';
+import { Settings, ImageIcon, Gift, Users, Handshake, Trash2, Plus, Phone, Mail, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -20,8 +20,8 @@ interface BasicInfoTabProps {
   id: string;
   tournament: Tournament;
   categories: Category[];
-  basicSubTab: 'general' | 'branding' | 'prizes' | 'contact';
-  setBasicSubTab: (val: 'general' | 'branding' | 'prizes' | 'contact') => void;
+  basicSubTab: 'general' | 'branding' | 'prizes' | 'contact' | 'sponsors';
+  setBasicSubTab: (val: 'general' | 'branding' | 'prizes' | 'contact' | 'sponsors') => void;
   name: string;
   setName: (val: string) => void;
   categoryId: string;
@@ -227,6 +227,18 @@ export function BasicInfoTab({
           >
             <Users className="w-4 h-4" />
             <span>{translate('tabs.contact')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setBasicSubTab('sponsors')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
+              basicSubTab === 'sponsors'
+                ? 'bg-amber-50 text-amber-700 shadow-sm border-l-4 border-amber-500'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <Handshake className="w-4 h-4" />
+            <span>{translate('tabs.sponsors')}</span>
           </button>
         </div>
 
@@ -604,6 +616,11 @@ export function BasicInfoTab({
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {basicSubTab === 'sponsors' && (
+            <div className="animate-in fade-in duration-200">
               <SponsorSettingsPanel tournamentId={id} />
             </div>
           )}

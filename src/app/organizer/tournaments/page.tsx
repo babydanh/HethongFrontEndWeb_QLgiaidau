@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
+import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -22,6 +23,9 @@ interface ParentWithDivisions {
   description?: string | null;
   bannerUrl?: string | null;
   logoUrl?: string | null;
+  communityId?: string | null;
+  isLite?: boolean;
+  tournamentConfig?: Tournament['tournamentConfig'];
   divisions: Tournament[];
   isStandalone?: boolean;
   status?: Tournament['status'];
@@ -120,6 +124,9 @@ export default function MyTournamentsPage() {
               description: t.description,
               bannerUrl: t.bannerUrl,
               logoUrl: t.logoUrl,
+              communityId: t.communityId,
+              isLite: t.isLite,
+              tournamentConfig: t.tournamentConfig,
               divisions: divisionsList,
               isStandalone: true,
               status: t.status,
@@ -244,13 +251,13 @@ export default function MyTournamentsPage() {
               const divisions = parent.divisions || [];
               const firstDivision = divisions[0];
               const totalParticipants = divisions.reduce((acc: number, div: Tournament) => acc + (div._summary?.participantCount || 0), 0);
-              const publicHref = `/tournaments/${parent.isStandalone ? parent.id : (firstDivision?.id || parent.id)}`;
-              const manageHref = parent.isStandalone
-                ? `/organizer/tournaments/${parent.id}/manage`
-                : `/organizer/tournaments/${firstDivision?.id || parent.id}/manage`;
-              const opsHref = parent.isStandalone
-                ? `/organizer/tournaments/${parent.id}/ops`
-                : `/organizer/tournaments/${firstDivision?.id || parent.id}/ops`;
+              const managementTournamentId = parent.isStandalone ? parent.id : (firstDivision?.id || parent.id);
+              const isClubLite = isClubLiteTournament(parent) || isClubLiteTournament(firstDivision);
+              const publicHref = `/tournaments/${managementTournamentId}`;
+              const manageHref = isClubLite
+                ? `/lite/tournaments/${managementTournamentId}/manage`
+                : `/organizer/tournaments/${managementTournamentId}/manage`;
+              const opsHref = `/organizer/tournaments/${managementTournamentId}/ops`;
 
               return (
                 <div
@@ -347,7 +354,15 @@ export default function MyTournamentsPage() {
                           return (
                             <button
                               key={div.id}
-                              onClick={() => router.push(parent.isStandalone ? `/organizer/tournaments/${parent.id}/manage?divisionId=${div.id}` : `/organizer/tournaments/${div.id}/manage`)}
+                              onClick={() => {
+                                const divisionIsClubLite = isClubLiteTournament(parent) || isClubLiteTournament(div);
+                                const divisionManageHref = divisionIsClubLite
+                                  ? `/lite/tournaments/${parent.isStandalone ? parent.id : div.id}/manage`
+                                  : parent.isStandalone
+                                  ? `/organizer/tournaments/${parent.id}/manage?divisionId=${div.id}`
+                                  : `/organizer/tournaments/${div.id}/manage`;
+                                router.push(divisionManageHref);
+                              }}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-[11px] md:text-xs font-semibold border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all cursor-pointer active:scale-95"
                             >
                               {div.tournamentConfig?.bracketType && (

@@ -8,7 +8,7 @@ import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import Link from 'next/link';
 import { isNetworkError } from '@/utils/error';
-import { getMatchRoundLabel, type TournamentFormatForRoundLabel } from '@/utils/match-round-label';
+import { getMatchRoundLabel, type RoundLabelTranslations, type TournamentFormatForRoundLabel } from '@/utils/match-round-label';
 import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 
 interface Props {
@@ -19,6 +19,20 @@ interface Props {
 export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Props) {
   const translate = useTranslations('Common');
   const matchTranslate = useTranslations('Match');
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: matchTranslate('roundGrandFinal'),
+    roundFinal: matchTranslate('roundFinal'),
+    roundSemifinal: matchTranslate('roundSemifinal'),
+    roundQuarterfinal: matchTranslate('roundQuarterfinal'),
+    roundGroupStage: matchTranslate('roundGroupStage'),
+    winnersBracket: matchTranslate('winnersBracket'),
+    losersBracket: matchTranslate('losersBracket'),
+    playoff: matchTranslate('phasePlayoff'),
+    roundOf: (round) => matchTranslate('roundOf', { round }),
+    legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
+  };
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -96,16 +110,6 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
     return null; // Hide the widget entirely if there are no live matches
   }
 
-  const localizeMatchRoundLabel = (label: string) => label
-    .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
-    .replaceAll('Chung kết', matchTranslate('roundFinal'))
-    .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
-    .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
-    .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
-    .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
-    .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
-    .replaceAll('Lượt', matchTranslate('leg'))
-    .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
 
   return (
     <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg p-5 md:p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
@@ -143,12 +147,13 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
             format?: TournamentFormatForRoundLabel;
             maxParticipants?: number | null;
           } | null | undefined;
-          const roundLabel = localizeMatchRoundLabel(getMatchRoundLabel({
+          const roundLabel = getMatchRoundLabel({
             match,
             matches,
             tournamentFormat: tournamentInfo?.format,
             bracketSize: tournamentInfo?.maxParticipants ?? null,
-          }));
+            translations: roundLabelTranslations,
+          });
           return (
             <div
               key={match.id}

@@ -233,39 +233,49 @@ export function readPenaltyLog(match: Pick<Match, 'scoreDetails'>): MatchPenalty
   });
 }
 
+export type PenaltyPresetLabelKey =
+  | 'WARNING'
+  | 'POINT_PENALTY'
+  | 'GAME_PENALTY'
+  | 'CODE_VIOLATION'
+  | 'SERVICE_FAULT'
+  | 'TECHNICAL_FAULT'
+  | 'UNSPORTSMANLIKE'
+  | 'MISCONDUCT';
+
 export function buildPenaltyPresets(
   sportKind: ResolvedSportRuleView['kind'],
-): Array<{ kind: string; label: string }> {
+): Array<{ kind: PenaltyPresetLabelKey; labelKey: PenaltyPresetLabelKey }> {
   if (sportKind === 'TENNIS') {
     return [
-      { kind: 'WARNING', label: 'Nhắc nhở' },
-      { kind: 'POINT_PENALTY', label: 'Phạt một điểm' },
-      { kind: 'GAME_PENALTY', label: 'Phạt một game' },
-      { kind: 'CODE_VIOLATION', label: 'Vi phạm tác phong' },
+      { kind: 'WARNING', labelKey: 'WARNING' },
+      { kind: 'POINT_PENALTY', labelKey: 'POINT_PENALTY' },
+      { kind: 'GAME_PENALTY', labelKey: 'GAME_PENALTY' },
+      { kind: 'CODE_VIOLATION', labelKey: 'CODE_VIOLATION' },
     ];
   }
 
   if (sportKind === 'PICKLEBALL_RALLY' || sportKind === 'PICKLEBALL_SIDE_OUT') {
     return [
-      { kind: 'WARNING', label: 'Cảnh cáo' },
-      { kind: 'SERVICE_FAULT', label: 'Lỗi giao bóng' },
-      { kind: 'TECHNICAL_FAULT', label: 'Lỗi kỹ thuật' },
-      { kind: 'UNSPORTSMANLIKE', label: 'Thi đấu thiếu fair-play' },
+      { kind: 'WARNING', labelKey: 'WARNING' },
+      { kind: 'SERVICE_FAULT', labelKey: 'SERVICE_FAULT' },
+      { kind: 'TECHNICAL_FAULT', labelKey: 'TECHNICAL_FAULT' },
+      { kind: 'UNSPORTSMANLIKE', labelKey: 'UNSPORTSMANLIKE' },
     ];
   }
 
   if (sportKind === 'BADMINTON') {
     return [
-      { kind: 'WARNING', label: 'Nhắc nhở' },
-      { kind: 'SERVICE_FAULT', label: 'Lỗi giao cầu' },
-      { kind: 'MISCONDUCT', label: 'Hành vi không đúng mực' },
+      { kind: 'WARNING', labelKey: 'WARNING' },
+      { kind: 'SERVICE_FAULT', labelKey: 'SERVICE_FAULT' },
+      { kind: 'MISCONDUCT', labelKey: 'MISCONDUCT' },
     ];
   }
 
   return [
-    { kind: 'WARNING', label: 'Nhắc nhở' },
-    { kind: 'SERVICE_FAULT', label: 'Lỗi giao bóng' },
-    { kind: 'MISCONDUCT', label: 'Hành vi không đúng mực' },
+    { kind: 'WARNING', labelKey: 'WARNING' },
+    { kind: 'SERVICE_FAULT', labelKey: 'SERVICE_FAULT' },
+    { kind: 'MISCONDUCT', labelKey: 'MISCONDUCT' },
   ];
 }
 

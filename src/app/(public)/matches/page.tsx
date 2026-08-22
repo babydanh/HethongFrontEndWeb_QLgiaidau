@@ -10,7 +10,7 @@ import { matchesApi, type Match } from '@/features/matches/api';
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { regionsApi, type Region } from '@/features/regions/api';
 import type { SportRulesEnvelope } from '@/types/tournament';
-import { getMatchRoundLabel } from '@/utils/match-round-label';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import ShareModal from '@/components/common/ShareModal';
 import { BRAND } from '@/constants/brand';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
@@ -246,16 +246,32 @@ export default function MatchesListPage() {
   const translate = useTranslations('Match');
   const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
 
-  const localizeMatchRoundLabel = (label: string) => label
-    .replaceAll('Chung kết tổng', translate('roundGrandFinal'))
-    .replaceAll('Chung kết', translate('roundFinal'))
-    .replaceAll('Bán kết', translate('roundSemifinal'))
-    .replaceAll('Tứ kết', translate('roundQuarterfinal'))
-    .replaceAll('Vòng bảng', translate('roundGroupStage'))
-    .replaceAll('Nhánh thắng', translate('winnersBracket'))
-    .replaceAll('Nhánh thua', translate('losersBracket'))
-    .replaceAll('Lượt', translate('leg'))
-    .replace(/Vòng (\d+)/g, (_, round) => translate('roundOf', { round }))
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: translate('roundGrandFinal'),
+    roundFinal: translate('roundFinal'),
+    roundSemifinal: translate('roundSemifinal'),
+    roundQuarterfinal: translate('roundQuarterfinal'),
+    roundGroupStage: translate('roundGroupStage'),
+    groupPrefix: (name) => translate('groupPrefix', { name }),
+    winnersBracket: translate('winnersBracket'),
+    losersBracket: translate('losersBracket'),
+    playoff: translate('phasePlayoff'),
+    roundOf: (round) => translate('roundOf', { round }),
+    legSuffix: (leg) => `${translate('leg')} ${leg}`,
+    roundRobinLeg: (leg, round) => `${translate('leg')} ${leg} • ${translate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => translate('matchDay', { number: round }),
+  };
+
+  const getTranslatedSport = (catName?: string | null) => {
+    if (!catName) return '';
+    const lower = catName.toLowerCase();
+    if (lower.includes('cầu lông') || lower.includes('badminton')) return translate('sportBadminton');
+    if (lower.includes('pickleball')) return translate('sportPickleball');
+    if (lower.includes('tennis') || lower.includes('quần vợt')) return translate('sportTennis');
+    if (lower.includes('bóng bàn') || lower.includes('table tennis') || lower.includes('ping pong')) return translate('sportTableTennis');
+    if (lower.includes('bóng đá') || lower.includes('football') || lower.includes('soccer')) return translate('sportFootball');
+    return catName;
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [matches, setMatches] = useState<EnrichedMatch[]>([]);
@@ -1101,15 +1117,7 @@ export default function MatchesListPage() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        {translate("rankedTournament")} • {group.tournamentCategory}
-                        {(() => {
-                          const firstMatch = group.matches[0];
-                          const tConfig = firstMatch?.tournament as Record<string, unknown> | undefined;
-                          const tConfigObj = tConfig?.tournamentConfig as Record<string, unknown> | undefined;
-                          const bType = tConfig?.bracketType as string || tConfigObj?.bracketType as string || firstMatch?.stage?.type;
-                          const label = getBracketTypeLabel(bType, { singleElimination: translate('bracketSingleElimination'), doubleElimination: translate('bracketDoubleElimination'), roundRobin: translate('bracketRoundRobin'), groupStageKnockout: translate('bracketGroupStageKnockout') });
-                          return label ? ` • ${label}` : '';
-                        })()}
+                        {translate("rankedTournament")} • {getTranslatedSport(group.tournamentCategory)}
                       </span>
                     </div>
                     <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
@@ -1145,12 +1153,12 @@ export default function MatchesListPage() {
                     const p1Won = isFinished && match.winnerId === match.participant1Id;
                     const p2Won = isFinished && match.winnerId === match.participant2Id;
 
-                    const friendlyRoundNameRaw = getMatchRoundLabel({
+                    const friendlyRoundName = getMatchRoundLabel({
                       match,
                       matches: group.matches,
                       tournamentFormat: match.stage?.type,
+                      translations: roundLabelTranslations,
                     });
-                    const friendlyRoundName = localizeMatchRoundLabel(friendlyRoundNameRaw);
 
                     // Lấy thông tin chi tiết các set đấu
                     const scoreSets = (match.scoreDetails?.sets as Array<{ team1Score?: number; team2Score?: number; isFinished?: boolean }> | undefined) || [];

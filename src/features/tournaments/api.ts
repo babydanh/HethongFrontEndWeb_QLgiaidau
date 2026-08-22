@@ -522,6 +522,28 @@ export interface LiveSession {
   updatedAt: string;
 }
 
+export interface LiveSessionMonitor {
+  id: string;
+  tournamentId: string;
+  courtId: string | null;
+  matchId: string;
+  cameraDeviceId: string | null;
+  provider: LiveSessionProvider;
+  status: LiveSessionStatus;
+  title: string | null;
+  description: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  lastProviderCheckAt: string | null;
+  replayUrl: string | null;
+  replayProvider: ReplayProvider;
+  youtubeVideoId: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LiveSessionPublishConfig {
   publishUrl: string;
   expiresAt: string;
@@ -647,7 +669,7 @@ export const livestreamApi = {
       data,
     ),
   getLiveSessions: (tournamentId: string) =>
-    api.get<ApiResponse<LiveSession[]>>(
+    api.get<ApiResponse<LiveSessionMonitor[]>>(
       `/livestream/tournaments/${tournamentId}/sessions`,
     ),
   getLiveSession: (sessionId: string) =>

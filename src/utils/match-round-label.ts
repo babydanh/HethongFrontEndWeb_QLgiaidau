@@ -31,12 +31,29 @@ export type TournamentFormatForRoundLabel =
   | null
   | undefined;
 
+export interface RoundLabelTranslations {
+  roundGrandFinal: string;
+  roundFinal: string;
+  roundSemifinal: string;
+  roundQuarterfinal: string;
+  roundGroupStage: string;
+  groupPrefix?: (name: string) => string;
+  winnersBracket: string;
+  losersBracket: string;
+  playoff: string;
+  roundOf: (round: number) => string;
+  legSuffix: (leg: number) => string;
+  roundRobinLeg: (leg: number, round: number) => string;
+  roundRobinMatchday: (round: number) => string;
+}
+
 export interface MatchRoundLabelOptions<TMatch extends RoundLabelMatch> {
   match: TMatch;
   matches?: TMatch[];
   tournamentFormat?: TournamentFormatForRoundLabel;
   bracketSize?: number | null;
   includePhasePrefix?: boolean;
+  translations: RoundLabelTranslations;
 }
 
 export interface RoundFilterOption {
@@ -45,19 +62,13 @@ export interface RoundFilterOption {
   internalRound: number;
   leg?: number;
   label: string;
+  priority: number;
   count: number;
   branch?: 'WINNERS' | 'LOSERS' | 'OTHER';
   stageKey?: string;
 }
 
-const KNOCKOUT_ROUND_LABELS: Record<number, string> = {
-  2: 'Chung kết',
-  4: 'Bán kết',
-  8: 'Tứ kết',
-  16: 'Vòng 16',
-  32: 'Vòng 32',
-  64: 'Vòng 64',
-};
+const KNOCKOUT_ROUND_SIZES = new Set([2, 4, 8, 16, 32, 64]);
 
 const normalizeText = (value?: string | null) => (value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
 
@@ -159,19 +170,23 @@ const getRoundFilterIdentity = <TMatch extends RoundLabelMatch>(match: TMatch, m
   return { stageKey, leg: info.leg, internalRound: info.roundWithinLeg };
 };
 
-const getPhasePrefix = (match: RoundLabelMatch, tournamentFormat?: TournamentFormatForRoundLabel) => {
+const getPhasePrefix = (
+  match: RoundLabelMatch,
+  tournamentFormat: TournamentFormatForRoundLabel | undefined,
+  translations: RoundLabelTranslations,
+) => {
   const stage = getStage(match);
   const stageName = normalizeText(stage?.name);
   const branch = normalizeBranch(match.bracketBranch);
   const format = normalizeText(tournamentFormat);
 
-  if (branch === 'LOSERS') return 'Nhánh thua';
-  if (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL') return 'Chung kết tổng';
+  if (branch === 'LOSERS') return translations.losersBracket;
+  if (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL') return translations.roundGrandFinal;
   if (branch === 'MAIN' && (format === 'DOUBLE_ELIMINATION' || normalizeText(stage?.type) === 'DOUBLE_ELIMINATION')) {
-    return 'Nhánh thắng';
+    return translations.winnersBracket;
   }
   if ((format === 'GROUP_STAGE_KNOCKOUT' || normalizeText(stage?.type) === 'GROUP_STAGE_KNOCKOUT') && (stageName.includes('PLAYOFF') || stageName.includes('KNOCKOUT') || stageName.includes('ELIMINATION'))) {
-    return 'Playoff';
+    return translations.playoff;
   }
   return null;
 };
@@ -206,11 +221,12 @@ const getSlotCountFromBracketSize = (roundNumber: number, bracketSize?: number |
 
 export const getKnockoutRoundLabel = <TMatch extends RoundLabelMatch>(
   match: TMatch,
-  matches?: TMatch[],
-  bracketSize?: number | null,
+  matches: TMatch[] | undefined,
+  bracketSize: number | null | undefined,
+  translations: RoundLabelTranslations,
 ) => {
   const branch = normalizeBranch(match.bracketBranch);
-  if (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL') return 'Chung kết tổng';
+  if (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL') return translations.roundGrandFinal;
 
   const stage = getStage(match);
   const isGsk = stage && (
@@ -221,26 +237,38 @@ export const getKnockoutRoundLabel = <TMatch extends RoundLabelMatch>(
 
   if (branch !== 'LOSERS' && !isGsk) {
     const slotCountFromBracketSize = getSlotCountFromBracketSize(match.roundNumber, bracketSize);
-    if (slotCountFromBracketSize && KNOCKOUT_ROUND_LABELS[slotCountFromBracketSize]) {
-      return KNOCKOUT_ROUND_LABELS[slotCountFromBracketSize];
+    if (slotCountFromBracketSize && KNOCKOUT_ROUND_SIZES.has(slotCountFromBracketSize)) {
+      return slotCountFromBracketSize === 2
+        ? translations.roundFinal
+        : slotCountFromBracketSize === 4
+          ? translations.roundSemifinal
+          : slotCountFromBracketSize === 8
+            ? translations.roundQuarterfinal
+            : translations.roundOf(slotCountFromBracketSize);
     }
   }
 
   const slotCount = getRoundSlotCount(match, matches);
   let baseLabel = '';
 
-  if (slotCount && KNOCKOUT_ROUND_LABELS[slotCount]) {
-    baseLabel = KNOCKOUT_ROUND_LABELS[slotCount];
+  if (slotCount && KNOCKOUT_ROUND_SIZES.has(slotCount)) {
+    baseLabel = slotCount === 2
+      ? translations.roundFinal
+      : slotCount === 4
+        ? translations.roundSemifinal
+        : slotCount === 8
+          ? translations.roundQuarterfinal
+          : translations.roundOf(slotCount);
   } else {
     const stageMatches = (matches ?? []).filter((candidate) => getComparableStageKey(candidate) === getComparableStageKey(match));
     const maxRound = Math.max(...stageMatches.map((candidate) => candidate.roundNumber), match.roundNumber);
     const fromEnd = maxRound - match.roundNumber;
 
-    if (fromEnd === 0) baseLabel = 'Chung kết';
-    else if (fromEnd === 1) baseLabel = 'Bán kết';
-    else if (fromEnd === 2) baseLabel = 'Tứ kết';
-    else if (fromEnd >= 3 && fromEnd <= 6) baseLabel = `Vòng ${2 ** (fromEnd + 1)}`;
-    else baseLabel = `Vòng ${match.roundNumber}`;
+    if (fromEnd === 0) baseLabel = translations.roundFinal;
+    else if (fromEnd === 1) baseLabel = translations.roundSemifinal;
+    else if (fromEnd === 2) baseLabel = translations.roundQuarterfinal;
+    else if (fromEnd >= 3 && fromEnd <= 6) baseLabel = translations.roundOf(2 ** (fromEnd + 1));
+    else baseLabel = translations.roundOf(match.roundNumber);
   }
 
   // For Losers bracket, since there are two rounds for each slot size (e.g. Losers Round 2 & Losers Round 3 both have 4 matches),
@@ -255,7 +283,7 @@ export const getKnockoutRoundLabel = <TMatch extends RoundLabelMatch>(
     if (roundNumbers.length > 1) {
       const index = roundNumbers.indexOf(match.roundNumber);
       if (index !== -1) {
-        return `${baseLabel} - Lượt ${index + 1}`;
+        return `${baseLabel} - ${translations.legSuffix(index + 1)}`;
       }
     }
   }
@@ -269,10 +297,11 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
   tournamentFormat,
   bracketSize,
   includePhasePrefix = true,
+  translations,
 }: MatchRoundLabelOptions<TMatch>) => {
   const stage = getStage(match);
   const isRoundRobin = isGroupOrRoundRobinStage(stage, tournamentFormat);
-  const phasePrefix = includePhasePrefix ? getPhasePrefix(match, tournamentFormat) : null;
+  const phasePrefix = includePhasePrefix ? getPhasePrefix(match, tournamentFormat, translations) : null;
 
   if (isRoundRobin && !isKnockoutStage(stage, tournamentFormat)) {
     const rawGroupName = match.group?.name?.trim();
@@ -291,39 +320,49 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
     const roundInfo = getRoundRobinRoundInfo(match, matches);
     const allMatches = matches ?? [];
     const roundLabel = roundInfo.leg > 1 || allMatches.some((candidate) => getRoundRobinRoundInfo(candidate, allMatches).leg > 1)
-      ? `Lượt ${roundInfo.leg} • Ngày đấu ${roundInfo.roundWithinLeg}`
-      : `Ngày đấu ${roundInfo.roundWithinLeg}`;
+      ? translations.roundRobinLeg(roundInfo.leg, roundInfo.roundWithinLeg)
+      : translations.roundRobinMatchday(roundInfo.roundWithinLeg);
 
     if (!includePhasePrefix) {
       return roundLabel;
     }
 
     if (groupName) {
-      return `${groupName} • ${roundLabel}`;
+      const formattedGroupName = translations.groupPrefix
+        ? (() => {
+            const letterMatch = groupName.match(/^(?:bảng|group)\s+([a-zA-Z0-9]+)$/i) || groupName.match(/^([a-zA-Z0-9]+)$/);
+            if (letterMatch && letterMatch[1]) {
+              return translations.groupPrefix(letterMatch[1].toUpperCase());
+            }
+            return groupName;
+          })()
+        : groupName;
+      return `${formattedGroupName} • ${roundLabel}`;
     }
 
     const groupLabel =
       normalizeText(tournamentFormat) === 'GROUP_STAGE_KNOCKOUT' ||
       normalizeText(stage?.type) === 'GROUP_STAGE'
-        ? 'Vòng bảng'
+        ? translations.roundGroupStage
         : null;
     return groupLabel ? `${groupLabel} • ${roundLabel}` : roundLabel;
   }
 
-  const knockoutLabel = getKnockoutRoundLabel(match, matches, bracketSize);
+  const knockoutLabel = getKnockoutRoundLabel(match, matches, bracketSize, translations);
   return phasePrefix ? `${phasePrefix} • ${knockoutLabel}` : knockoutLabel;
 };
 
 export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
   matches: TMatch[],
-  tournamentFormat?: TournamentFormatForRoundLabel,
-  bracketSize?: number | null
+  tournamentFormat: TournamentFormatForRoundLabel | undefined,
+  bracketSize: number | null | undefined,
+  translations: RoundLabelTranslations,
 ): RoundFilterOption[] => {
   const optionMap = new Map<string, RoundFilterOption>();
 
   matches.forEach((match) => {
     // Generate label without phase prefix for grouping, but keep layout clean
-    const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize, includePhasePrefix: false });
+    const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize, includePhasePrefix: false, translations });
     // Determine bracket branch
     const branch = normalizeBranch(match.bracketBranch);
     const branchType: RoundFilterOption['branch'] = branch === 'LOSERS' ? 'LOSERS' : (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL' ? 'OTHER' : 'WINNERS');
@@ -338,39 +377,38 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
       return;
     }
 
+    const stage = getStage(match);
+    const isGroupStage = isGroupOrRoundRobinStage(stage, tournamentFormat);
+    const isGrandFinal = branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL';
+    const slotCount = getRoundSlotCount(match, matches);
+    const priority = isGroupStage ? 1
+      : isGrandFinal ? 8
+        : slotCount === 64 ? 2
+          : slotCount === 32 ? 3
+            : slotCount === 16 ? 4
+              : slotCount === 8 ? 5
+                : slotCount === 4 ? 6
+                  : slotCount === 2 ? 7
+                    : 10;
+
     optionMap.set(key, {
       key,
       roundNumber: match.roundNumber,
       internalRound: identity.internalRound,
       ...(identity.leg !== undefined ? { leg: identity.leg } : {}),
       label,
+      priority,
       count: 1,
       branch: branchType,
       stageKey: identity.stageKey,
     });
   });
 
-  const getLabelPriority = (label: string): number => {
-    const text = label.toLowerCase();
-    if (text.includes('vòng bảng') || text.includes('vong bang')) return 1;
-    if (text.includes('vòng 64')) return 2;
-    if (text.includes('vòng 32')) return 3;
-    if (text.includes('vòng 16')) return 4;
-    if (text.includes('tứ kết') || text.includes('tu ket')) return 5;
-    if (text.includes('bán kết') || text.includes('ban ket')) return 6;
-    if (text.includes('chung kết') && !text.includes('chung kết tổng')) return 7;
-    if (text.includes('chung kết tổng')) return 8;
-    return 10; // default for unknown labels
-  };
-
   return Array.from(optionMap.values()).sort((a, b) => {
-    const priorityA = getLabelPriority(a.label);
-    const priorityB = getLabelPriority(b.label);
-
-    if (priorityA !== priorityB) {
-      return priorityA - priorityB;
+    if (a.priority !== b.priority) {
+      return a.priority - b.priority;
     }
-    return (a.leg ?? 0) - (b.leg ?? 0) || a.internalRound - b.internalRound || a.roundNumber - b.roundNumber || a.label.localeCompare(b.label, 'vi');
+    return (a.leg ?? 0) - (b.leg ?? 0) || a.internalRound - b.internalRound || a.roundNumber - b.roundNumber || a.label.localeCompare(b.label);
   });
 };
 

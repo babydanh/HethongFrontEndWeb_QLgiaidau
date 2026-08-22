@@ -17,7 +17,7 @@ import { LivestreamTab } from '../manage/components/LivestreamTab';
 import { formatDate } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { getSportLogo } from '@/constants/sports';
-import { getMatchRoundLabel } from '@/utils/match-round-label';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import type { BracketMatch, LivestreamCamera } from '@/features/tournaments/api';
 
 const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
@@ -33,6 +33,20 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   const translate = useTranslations('OrganizerOps');
   const matchTranslate = useTranslations('Match');
   const tournamentDetailTranslate = useTranslations('TournamentDetail');
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: matchTranslate('roundGrandFinal'),
+    roundFinal: matchTranslate('roundFinal'),
+    roundSemifinal: matchTranslate('roundSemifinal'),
+    roundQuarterfinal: matchTranslate('roundQuarterfinal'),
+    roundGroupStage: matchTranslate('roundGroupStage'),
+    winnersBracket: matchTranslate('winnersBracket'),
+    losersBracket: matchTranslate('losersBracket'),
+    playoff: matchTranslate('phasePlayoff'),
+    roundOf: (round) => matchTranslate('roundOf', { round }),
+    legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
+  };
   const resolvedParams = use(params);
   const bracketManager = useManageState(resolvedParams.id);
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
@@ -186,17 +200,9 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         match,
         matches,
         tournamentFormat: match.stage?.type,
+        translations: roundLabelTranslations,
       });
-      const label = rawLabel
-        .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
-        .replaceAll('Chung kết', matchTranslate('roundFinal'))
-        .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
-        .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
-        .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
-        .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
-        .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
-        .replaceAll('Lượt', matchTranslate('leg'))
-        .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
+      const label = rawLabel;
       const key = `${match.roundNumber}-${label}`;
       const current = grouped.get(key) ?? {
         label,

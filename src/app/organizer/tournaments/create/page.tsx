@@ -5,6 +5,7 @@ import { Info, Zap, Calendar, CheckCircle, Check, ArrowLeft } from 'lucide-react
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
+import { useTranslations } from 'next-intl';
 import Step1Info from './components/Step1Info';
 import Step2FormatMulti from './components/Step2Format_Multi';
 import Step3ScheduleFees from './components/Step3ScheduleFees';
@@ -14,11 +15,11 @@ import { BRAND } from '@/constants/brand';
 import QuickTournamentCreate from './QuickTournamentCreate';
 
 const STEPS = [
-  { id: 1, label: 'Thông Tin', icon: Info },
-  { id: 2, label: 'Hình Thức', icon: Zap },
-  { id: 3, label: 'Lịch & Lệ Phí', icon: Calendar },
-  { id: 4, label: 'Xác Nhận', icon: CheckCircle },
-];
+  { id: 1, labelKey: 'stepInfo', icon: Info },
+  { id: 2, labelKey: 'stepFormat', icon: Zap },
+  { id: 3, labelKey: 'stepScheduleFees', icon: Calendar },
+  { id: 4, labelKey: 'stepConfirm', icon: CheckCircle },
+] as const;
 
 function AdvancedTournamentForm() {
   const router = useRouter();
@@ -26,6 +27,7 @@ function AdvancedTournamentForm() {
   const communityId = searchParams.get('communityId');
   const isClubAdvanced = Boolean(communityId);
   const { currentStep, updateFormData, setStep } = useCreateTournamentStore();
+  const translate = useTranslations('OrganizerCreatePage');
 
   useEffect(() => {
     // Reset wizard to Step 1 on page load
@@ -49,25 +51,22 @@ function AdvancedTournamentForm() {
         {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="text-left">
-            <h1 className="text-3xl font-bold text-slate-900">Tạo giải đấu (Nâng cao)</h1>
-            <p className="text-slate-500 mt-1 font-medium">Thiết lập chi tiết điều lệ, phân bảng và lệ phí qua 4 bước</p>
+            <h1 className="text-3xl font-bold text-slate-900">{translate('pageTitle')}</h1>
+            <p className="text-slate-500 mt-1 font-medium">{translate('pageSubtitle')}</p>
           </div>
           <button
             type="button"
             onClick={() => router.push(`/organizer/tournaments/create${communityId ? `?communityId=${communityId}` : ''}`)}
             className="inline-flex items-center gap-2 self-start md:self-auto rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
           >
-            <ArrowLeft className="h-4 w-4" /> Tạo nhanh
+            <ArrowLeft className="h-4 w-4" /> {translate('quickCreate')}
           </button>
         </div>
 
         {isClubAdvanced && (
           <div className="mb-8 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4 text-left">
-            <p className="text-sm font-bold text-emerald-900">Tạo giải nâng cao trong câu lạc bộ</p>
-            <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
-              Giải vẫn thuộc CLB và miễn phí đăng ký. Bạn có thể chọn công khai để người ngoài xem được trang giải,
-              hoặc không niêm yết để chỉ chia sẻ trong phạm vi nội bộ/mã mời.
-            </p>
+            <p className="text-sm font-bold text-emerald-900">{translate('clubAdvancedTitle')}</p>
+            <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">{translate('clubAdvancedDescription')}</p>
           </div>
         )}
 
@@ -90,7 +89,7 @@ function AdvancedTournamentForm() {
                   <span className={`text-xs font-bold whitespace-nowrap absolute -bottom-6 text-center ${
                     isActive ? 'text-blue-600' : isPast ? 'text-blue-600' : 'text-slate-400'
                   }`}>
-                    {step.label}
+                    {translate(step.labelKey)}
                   </span>
                 </div>
               );

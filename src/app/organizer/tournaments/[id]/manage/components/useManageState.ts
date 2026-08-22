@@ -852,12 +852,11 @@ export function useManageState(id: string) {
     setIsCreateDivisionModalOpen(true);
   };
 
-  const resetDivisionEditor = () => {
+  const resetDivisionEditor = (defaultName = '') => {
     setEditingDivision(null);
     const defaultFormat = normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory);
-    const defaultOption = availableMatchFormatOptions.find((item) => item.value === defaultFormat);
     setNewDivisionMatchType(defaultFormat);
-    setNewDivisionName(defaultOption?.shortLabel ?? 'Đôi Nam');
+    setNewDivisionName(defaultName);
     setNewDivisionBracketType(divisions[0]?.bracketType ?? 'SINGLE_ELIMINATION');
     setNewDivisionEloEnabled(eloEnabled);
     setNewDivisionMinElo(eloEnabled ? eloMin : null);

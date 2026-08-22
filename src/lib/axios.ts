@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { useAuthStore } from './zustand/authStore';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 
 let lastServerErrorToastAt = 0;
 const SERVER_ERROR_TOAST_COOLDOWN_MS = 10000;
@@ -342,7 +343,7 @@ api.interceptors.response.use(
       const now = Date.now();
       if (now - lastServerErrorToastAt >= SERVER_ERROR_TOAST_COOLDOWN_MS) {
         lastServerErrorToastAt = now;
-        toast.error('Hệ thống đang bận. Dữ liệu cũ vẫn được giữ lại, thử lại sau.');
+        toast.error(getErrorMessage(error, undefined, undefined, 'staleData'));
       }
     }
 

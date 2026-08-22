@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { AlertOctagon, CalendarClock, TimerReset } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +20,7 @@ import {
 import type { Match, MatchPenaltyRecord } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
-import { getMatchRoundLabel } from '@/utils/match-round-label';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, OpsReferee } from '@/features/organizer/ops/types';
 
 interface OpsMatchesProps {
@@ -97,6 +98,21 @@ export function OpsMatches({
   onUpdateMatchSchedule,
   onApplyMatchOperation,
 }: OpsMatchesProps) {
+  const matchTranslate = useTranslations('Match');
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: matchTranslate('roundGrandFinal'),
+    roundFinal: matchTranslate('roundFinal'),
+    roundSemifinal: matchTranslate('roundSemifinal'),
+    roundQuarterfinal: matchTranslate('roundQuarterfinal'),
+    roundGroupStage: matchTranslate('roundGroupStage'),
+    winnersBracket: matchTranslate('winnersBracket'),
+    losersBracket: matchTranslate('losersBracket'),
+    playoff: matchTranslate('phasePlayoff'),
+    roundOf: (round) => matchTranslate('roundOf', { round }),
+    legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
+  };
   const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ALL');
   const [selectedScheduleMatch, setSelectedScheduleMatch] = useState<Match | null>(null);
   const [scheduleDraft, setScheduleDraft] = useState<ScheduleDraft>({
@@ -290,6 +306,7 @@ export function OpsMatches({
       match,
       matches,
       tournamentFormat: match.stage?.type,
+      translations: roundLabelTranslations,
     });
 
     return (

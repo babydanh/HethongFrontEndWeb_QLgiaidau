@@ -25,7 +25,7 @@ import {
   type FacebookConnectionStatus,
   type FacebookPageConnection,
   type LivestreamCamera,
-  type LiveSession,
+  type LiveSessionMonitor,
   type MatchLivestream,
 } from "@/features/tournaments/api";
 import type {
@@ -34,7 +34,7 @@ import type {
   Tournament,
 } from "@/types/tournament";
 import { getErrorMessage } from "@/utils/error";
-import { getMatchRoundLabel } from "@/utils/match-round-label";
+import { getMatchRoundLabel, type RoundLabelTranslations } from "@/utils/match-round-label";
 
 interface LivestreamTabProps {
   tournament: Tournament;
@@ -85,7 +85,7 @@ const deviceStatusLabelKey: Record<
 };
 
 const liveSessionStatusLabelKey: Record<
-  LiveSession["status"],
+  LiveSessionMonitor["status"],
   | "sessionCreated"
   | "sessionStarting"
   | "sessionLive"
@@ -123,6 +123,21 @@ const flattenMatches = (
 
 export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
   const livestreamTranslate = useTranslations("OrganizerLivestream");
+  const matchTranslate = useTranslations("Match");
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: matchTranslate("roundGrandFinal"),
+    roundFinal: matchTranslate("roundFinal"),
+    roundSemifinal: matchTranslate("roundSemifinal"),
+    roundQuarterfinal: matchTranslate("roundQuarterfinal"),
+    roundGroupStage: matchTranslate("roundGroupStage"),
+    winnersBracket: matchTranslate("winnersBracket"),
+    losersBracket: matchTranslate("losersBracket"),
+    playoff: matchTranslate("phasePlayoff"),
+    roundOf: (round) => matchTranslate("roundOf", { round }),
+    legSuffix: (leg) => `${matchTranslate("leg")} ${leg}`,
+    roundRobinLeg: (leg, round) => `${matchTranslate("leg")} ${leg} • ${matchTranslate("matchDay", { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate("matchDay", { number: round }),
+  };
 
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
   const [matchStreams, setMatchStreams] = useState<
@@ -141,7 +156,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
   const [facebookConnection, setFacebookConnection] =
     useState<FacebookPageConnection | null>(null);
   const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
-  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
+  const [liveSessions, setLiveSessions] = useState<LiveSessionMonitor[]>([]);
   const [deviceName, setDeviceName] = useState("");
   const [pairingResult, setPairingResult] = useState<NonNullable<
     Awaited<ReturnType<typeof livestreamApi.createDevicePairingToken>>["data"]
@@ -158,9 +173,11 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
       match,
       matches,
       tournamentFormat: tournament.format,
+      translations: roundLabelTranslations,
     });
 
   const loadLivestreamData = async () => {
+    setIsLoading(true);
     try {
       const [cameraResponse, streamResponse, sessionResponse] =
         await Promise.all([
@@ -670,7 +687,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                         onClick={() =>
                           void handleReconnectFacebookSession(session.id)
                         }
-                        disabled={isBusy}
+                        disabled={isBusy || isLoading}
                       >
                         {isBusy ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -687,7 +704,9 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                         onClick={() =>
                           void handleStopFacebookSession(session.id)
                         }
-                        disabled={isBusy || session.status === "STOPPING"}
+                        disabled={
+                          isBusy || isLoading || session.status === "STOPPING"
+                        }
                       >
                         {isBusy ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -699,7 +718,11 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        window.open(`/live/${session.matchId}`, "_blank")
+                        window.open(
+                          `/live/${session.matchId}`,
+                          "_blank",
+                          "noopener,noreferrer",
+                        )
                       }
                     >
                       <Video className="mr-2 h-4 w-4" />

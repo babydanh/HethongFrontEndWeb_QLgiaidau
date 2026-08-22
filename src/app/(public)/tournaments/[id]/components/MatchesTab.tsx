@@ -11,7 +11,7 @@ import { Calendar, Play, Trophy, MapPin, Info, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
-import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo } from '@/utils/match-round-label';
+import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo, type RoundLabelTranslations } from '@/utils/match-round-label';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getDivisionMatchLabel } from '@/utils/tournament-display';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
@@ -30,6 +30,20 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const matchTranslate = useTranslations('Match');
   const displayTranslate = useTranslations('TournamentDisplay');
   const { openUserProfile } = useUserProfileModalStore();
+  const roundLabelTranslations = useMemo<RoundLabelTranslations>(() => ({
+    roundGrandFinal: matchTranslate('roundGrandFinal'),
+    roundFinal: matchTranslate('roundFinal'),
+    roundSemifinal: matchTranslate('roundSemifinal'),
+    roundQuarterfinal: matchTranslate('roundQuarterfinal'),
+    roundGroupStage: matchTranslate('roundGroupStage'),
+    winnersBracket: matchTranslate('winnersBracket'),
+    losersBracket: matchTranslate('losersBracket'),
+    playoff: matchTranslate('phasePlayoff'),
+    roundOf: (round) => matchTranslate('roundOf', { round }),
+    legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
+  }), [matchTranslate]);
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
   const inlineDivision = divisionId
@@ -146,7 +160,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       setHasDetectedRound(true);
       const ongoingMatch = matches.find(m => m.status === 'ONGOING');
       if (ongoingMatch && ongoingMatch.roundNumber) {
-        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize);
+        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations);
         const activeOption = options.find(option => option.roundNumber === ongoingMatch.roundNumber);
         setSelectedRoundKey(activeOption?.key ?? 'ALL');
         return;
@@ -154,13 +168,13 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       const scheduledMatches = matches.filter(m => m.status === 'SCHEDULED');
       if (scheduledMatches.length > 0) {
         const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
-        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize);
+        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations);
         const activeOption = options.find(option => option.roundNumber === minRound);
         setSelectedRoundKey(activeOption?.key ?? 'ALL');
         return;
       }
     }
-  }, [matches, hasDetectedRound, tournament.format, bracketSize]);
+  }, [matches, hasDetectedRound, tournament.format, bracketSize, roundLabelTranslations]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -214,7 +228,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   );
 
   // Extract unique stage-aware rounds from current matches.
-  const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
+  const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations), [matches, tournament.format, bracketSize, roundLabelTranslations]);
   const visibleRoundOptions = useMemo(
     () => roundOptions.filter((option) => {
       if (selectedStageKey !== 'ALL' && option.stageKey && !option.stageKey.includes(selectedStageKey.toUpperCase())) {
@@ -229,17 +243,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     }),
     [matches, roundOptions, selectedStageKey, selectedLeg],
   );
-
-  const localizeMatchRoundLabel = (label: string) => label
-    .replaceAll('Chung kết tổng', matchTranslate('roundGrandFinal'))
-    .replaceAll('Chung kết', matchTranslate('roundFinal'))
-    .replaceAll('Bán kết', matchTranslate('roundSemifinal'))
-    .replaceAll('Tứ kết', matchTranslate('roundQuarterfinal'))
-    .replaceAll('Vòng bảng', matchTranslate('roundGroupStage'))
-    .replaceAll('Nhánh thắng', matchTranslate('winnersBracket'))
-    .replaceAll('Nhánh thua', matchTranslate('losersBracket'))
-    .replaceAll('Lượt', matchTranslate('leg'))
-    .replace(/Vòng (\d+)/g, (_, round) => matchTranslate('roundOf', { round }));
 
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
@@ -289,7 +292,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
         if (!selectedOption) return false;
 
-        const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false });
+        const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false, translations: roundLabelTranslations });
         const matchLeg = getRoundRobinRoundInfo(m, matches).leg;
         if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label || (selectedOption.leg != null && matchLeg !== selectedOption.leg)) {
           return false;
@@ -592,7 +595,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                 : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                             }`}
                           >
-                            {localizeMatchRoundLabel(roundOption.label)}
+                            {roundOption.label}
                             <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
                               ({roundOption.count})
                             </span>
@@ -620,7 +623,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                   : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                               }`}
                             >
-                              {localizeMatchRoundLabel(roundOption.label)}
+                              {roundOption.label}
                               <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
                                 ({roundOption.count})
                               </span>
@@ -658,7 +661,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                             : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                         }`}
                       >
-                        {localizeMatchRoundLabel(roundOption.label)}
+                        {roundOption.label}
                         <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
                           ({roundOption.count})
                         </span>
@@ -694,7 +697,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
             const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
             const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
-            const roundLabel = localizeMatchRoundLabel(getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize }));
+            const roundLabel = getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize, translations: roundLabelTranslations });
 
             const resolvedRules = resolveMatchSportRules({
               matchConfig: match.matchConfig,

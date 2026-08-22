@@ -15,16 +15,18 @@ interface ErrorWithResponse {
 
 type SupportedLocale = 'vi' | 'en';
 
-const DEFAULT_MESSAGES: Record<SupportedLocale, { generic: string; network: string; rateLimit: string }> = {
+const DEFAULT_MESSAGES: Record<SupportedLocale, { generic: string; network: string; rateLimit: string; staleData: string }> = {
   vi: {
     generic: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     network: 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.',
     rateLimit: 'Hệ thống đang nhận nhiều yêu cầu. Vui lòng chờ vài giây rồi thử lại.',
+    staleData: 'Hệ thống đang bận. Dữ liệu cũ vẫn được giữ lại, thử lại sau.',
   },
   en: {
     generic: 'Something went wrong. Please try again.',
     network: 'Unable to connect to the server. Check your connection.',
     rateLimit: 'The system is receiving many requests. Please wait a few seconds and try again.',
+    staleData: 'The system is busy. Your last saved data is still available; please try again later.',
   },
 };
 
@@ -70,9 +72,10 @@ export const getErrorMessage = (
   error: unknown,
   fallbackMessage?: string,
   rateLimitMessage?: string,
+  preferredFallback: keyof typeof DEFAULT_MESSAGES.vi = 'generic',
 ): string => {
   const locale = getCurrentLocale();
-  const fallback = resolveFallback(fallbackMessage, locale);
+  const fallback = resolveFallback(fallbackMessage, locale, preferredFallback);
   if (!error || typeof error !== 'object') return fallback;
 
   const err = error as ErrorWithResponse;

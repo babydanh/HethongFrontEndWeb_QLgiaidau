@@ -5,6 +5,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 import {
   ArrowRight,
@@ -81,32 +82,63 @@ const DoubleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }
 const BRACKET_OPTIONS = [
   {
     id: 'single_elimination',
-    label: 'Loại trực tiếp',
-    desc: 'Nhánh đấu 1 lần thua. Nhanh gọn & gay cấn.',
+    labelKey: 'bracketSingleLabel',
+    descKey: 'bracketSingleDesc',
     Icon: SingleEliminationIcon,
   },
   {
     id: 'round_robin',
-    label: 'Vòng tròn',
-    desc: 'Mọi đội đều thi đấu tính điểm (Tối đa 15 đội/bảng).',
+    labelKey: 'bracketRoundRobinLabel',
+    descKey: 'bracketRoundRobinDesc',
     Icon: RoundRobinIcon,
   },
   {
     id: 'group_stage_knockout',
-    label: 'Vòng bảng + Knockout',
-    desc: 'Đấu vòng bảng lấy đội đầu bảng vào Play-off.',
+    labelKey: 'bracketGroupStageLabel',
+    descKey: 'bracketGroupStageDesc',
     Icon: GroupStageKnockoutIcon,
   },
   {
     id: 'double_elimination',
-    label: 'Nhánh thắng / thua',
-    desc: 'Hệ thống 2 nhánh đấu có cơ hội phục thù.',
+    labelKey: 'bracketDoubleLabel',
+    descKey: 'bracketDoubleDesc',
     Icon: DoubleEliminationIcon,
   },
 ] as const;
 
-const quickSchema = z.object({
-  name: z.string().trim().min(2, 'Nhập tên giải đấu.'),
+type QuickValues = {
+  name: string;
+  sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
+  format: 'singles' | 'doubles';
+  tournamentType: 'CLUB' | 'PUBLIC';
+  visibility: 'PRIVATE' | 'PUBLIC';
+  registrationMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+  bracketType: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
+  maxTeams: number;
+  registrationStart?: string;
+  registrationEnd?: string;
+  startDate: string;
+  endDate?: string;
+  venueName: string;
+  locationAddress: string;
+  province: string;
+  ward?: string;
+  district?: string;
+  genderRestriction: '' | 'MALE' | 'FEMALE' | 'MIXED';
+  selectedFormats: string[];
+  teamSize: '5' | '7' | '11';
+  maxReserve: number;
+  footballHalvesCount: number;
+  footballHalfDuration: number;
+  footballAllowDraw: boolean;
+  description?: string;
+  isRanked: boolean;
+};
+
+type QuickMessage = (key: string, values?: Record<string, string | number>) => string;
+
+const buildQuickSchema = (translate: QuickMessage) => z.object({
+  name: z.string().trim().min(2, translate('validationName')),
   sport: z.enum(['badminton', 'tennis', 'pickleball', 'table_tennis', 'football']),
   format: z.enum(['singles', 'doubles']),
   tournamentType: z.enum(['CLUB', 'PUBLIC']),
@@ -116,57 +148,50 @@ const quickSchema = z.object({
   maxTeams: z.number().int().min(2).max(128),
   registrationStart: z.string().optional(),
   registrationEnd: z.string().optional(),
-  startDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu giải.'),
+  startDate: z.string().min(1, translate('validationStartDate')),
   endDate: z.string().optional(),
-  venueName: z.string().trim().min(1, 'Vui lòng nhập tên sân / nhà thi đấu.'),
-  locationAddress: z.string().trim().min(1, 'Vui lòng nhập địa chỉ chi tiết của sân.'),
-  province: z.string().trim().min(1, 'Vui lòng chọn Tỉnh / Thành phố.'),
+  venueName: z.string().trim().min(1, translate('validationVenueName')),
+  locationAddress: z.string().trim().min(1, translate('validationLocation')),
+  province: z.string().trim().min(1, translate('validationProvince')),
   ward: z.string().trim().optional(),
   district: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
-  selectedFormats: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 nội dung thi đấu.'),
+  selectedFormats: z.array(z.string()).min(1, translate('validationFormats')),
   teamSize: z.enum(['5', '7', '11']),
   maxReserve: z.number().int().min(0).max(20),
   footballHalvesCount: z.number().int().min(1).max(4),
   footballHalfDuration: z.number().int().min(1).max(120),
   footballAllowDraw: z.boolean(),
-  description: z.string().trim().max(10000, 'Mô tả tối đa 10.000 ký tự.').optional(),
+  description: z.string().trim().max(10000, translate('validationDescription')).optional(),
   isRanked: z.boolean(),
 }).superRefine((data, ctx) => {
   if (data.bracketType === 'round_robin' && data.maxTeams > 15) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['maxTeams'],
-      message: 'Thể thức Vòng tròn tối đa 15 đội/bảng. Với quy mô lớn hơn (>15 đội), bạn nên chọn thể thức "Vòng bảng + Knockout" để chia nhánh đấu hợp lý.',
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['maxTeams'], message: translate('validationRoundRobin') });
   }
   const registrationStart = data.registrationStart ? new Date(data.registrationStart) : null;
   const registrationEnd = data.registrationEnd ? new Date(data.registrationEnd) : null;
   const tournamentStart = data.startDate ? new Date(data.startDate) : null;
   const tournamentEnd = data.endDate ? new Date(data.endDate) : null;
   const now = new Date();
-
   if (registrationStart && registrationEnd && registrationStart >= registrationEnd) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải sau thời gian mở.' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: translate('validationRegOpenAfter') });
   }
   if (registrationEnd && tournamentStart && registrationEnd >= tournamentStart) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải trước giờ bắt đầu giải.' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: translate('validationRegBeforeStart') });
   }
   if (tournamentStart && tournamentEnd && tournamentStart >= tournamentEnd) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['endDate'], message: 'Thời gian kết thúc phải sau giờ bắt đầu giải.' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['endDate'], message: translate('validationEndAfterStart') });
   }
   if (tournamentStart && !Number.isNaN(tournamentStart.getTime()) && tournamentStart <= now) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['startDate'], message: 'Ngày bắt đầu giải phải ở tương lai khi tạo giải nhanh.' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['startDate'], message: translate('validationStartFuture') });
   }
   if (registrationEnd && !Number.isNaN(registrationEnd.getTime()) && registrationEnd <= now) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải ở tương lai để giải không tự chốt danh sách.' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: translate('validationRegEndFuture') });
   }
   if (data.ward && !data.province) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['province'], message: 'Chọn tỉnh/thành trước khi chọn phường/xã.' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['province'], message: translate('validationProvinceBeforeWard') });
   }
 });
-
-type QuickValues = z.infer<typeof quickSchema>;
 type QuickSport = QuickValues['sport'];
 
 type QuickFormatConfig = {
@@ -183,14 +208,14 @@ type QuickFormatConfig = {
 };
 
 const QUICK_FORMAT_OPTIONS = [
-  { key: 'MALE_SINGLES', label: 'Đơn nam' },
-  { key: 'FEMALE_SINGLES', label: 'Đơn nữ' },
-  { key: 'MALE_DOUBLES', label: 'Đôi nam' },
-  { key: 'FEMALE_DOUBLES', label: 'Đôi nữ' },
-  { key: 'MIXED_DOUBLES', label: 'Đôi nam nữ' },
-  { key: 'FOOTBALL_MALE', label: 'Đội nam' },
-  { key: 'FOOTBALL_FEMALE', label: 'Đội nữ' },
-  { key: 'FOOTBALL_MIXED', label: 'Không giới hạn' },
+  { key: 'MALE_SINGLES', labelKey: 'formatMaleSingles' },
+  { key: 'FEMALE_SINGLES', labelKey: 'formatFemaleSingles' },
+  { key: 'MALE_DOUBLES', labelKey: 'formatMaleDoubles' },
+  { key: 'FEMALE_DOUBLES', labelKey: 'formatFemaleDoubles' },
+  { key: 'MIXED_DOUBLES', labelKey: 'formatMixedDoubles' },
+  { key: 'FOOTBALL_MALE', labelKey: 'formatFootballMale' },
+  { key: 'FOOTBALL_FEMALE', labelKey: 'formatFootballFemale' },
+  { key: 'FOOTBALL_MIXED', labelKey: 'formatFootballMixed' },
 ] as const;
 
 const DEFAULT_RACKET_FORMATS = QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => item.key);
@@ -226,26 +251,25 @@ const formatDateTimeDisplay = (val?: string) => {
 
 const toDivisionInput = (
   formatKey: string,
+  divisionName: string,
   bracketType: QuickValues['bracketType'],
   maxParticipants: number,
   startDate?: string,
   registrationEndDate?: string,
 ): CreateDivisionInput => {
-  const definitions: Record<string, { name: string; matchType: MatchTypeDB; genderRestriction?: GenderRestriction }> = {
-    MALE_SINGLES: { name: 'Đơn Nam', matchType: MatchTypeDB.SINGLES, genderRestriction: GenderRestriction.MALE },
-    FEMALE_SINGLES: { name: 'Đơn Nữ', matchType: MatchTypeDB.SINGLES, genderRestriction: GenderRestriction.FEMALE },
-    MALE_DOUBLES: { name: 'Đôi Nam', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.MALE },
-    FEMALE_DOUBLES: { name: 'Đôi Nữ', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.FEMALE },
-    MIXED_DOUBLES: { name: 'Đôi Nam Nữ', matchType: MatchTypeDB.MIXED_DOUBLES, genderRestriction: GenderRestriction.MIXED },
-    FOOTBALL_MALE: { name: 'Đội Nam', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.MALE },
-    FOOTBALL_FEMALE: { name: 'Đội Nữ', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.FEMALE },
-    FOOTBALL_MIXED: { name: 'Không giới hạn', matchType: MatchTypeDB.DOUBLES },
+  const genderRestrictionByFormat: Record<string, GenderRestriction | undefined> = {
+    MALE_SINGLES: GenderRestriction.MALE,
+    FEMALE_SINGLES: GenderRestriction.FEMALE,
+    MALE_DOUBLES: GenderRestriction.MALE,
+    FEMALE_DOUBLES: GenderRestriction.FEMALE,
+    MIXED_DOUBLES: GenderRestriction.MIXED,
+    FOOTBALL_MALE: GenderRestriction.MALE,
+    FOOTBALL_FEMALE: GenderRestriction.FEMALE,
   };
-  const definition = definitions[formatKey] ?? definitions.MALE_DOUBLES;
   return {
-    name: definition.name,
-    matchType: definition.matchType,
-    genderRestriction: definition.genderRestriction,
+    name: divisionName,
+    matchType: formatKey.includes('SINGLES') ? MatchTypeDB.SINGLES : formatKey.includes('MIXED_DOUBLES') ? MatchTypeDB.MIXED_DOUBLES : MatchTypeDB.DOUBLES,
+    genderRestriction: genderRestrictionByFormat[formatKey],
     maxParticipants,
     entryFee: 0,
     bracketType: bracketType.toUpperCase() as CreateDivisionInput['bracketType'],
@@ -269,6 +293,16 @@ const quickDefaults = () => {
 export default function QuickTournamentCreate() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const translate = useTranslations('OrganizerQuickCreate');
+  const quickSchema = useMemo(() => buildQuickSchema(translate), [translate]);
+  const getFormatLabel = (key: string) => {
+    const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === key);
+    return option ? translate(option.labelKey) : key;
+  };
+  const getBracketLabel = (key: QuickValues['bracketType']) => {
+    const option = BRACKET_OPTIONS.find((item) => item.id === key);
+    return option ? translate(option.labelKey) : translate('bracketSingleLabel');
+  };
   const communityId = searchParams.get('communityId') || undefined;
   const scheduleDefaults = useMemo(() => quickDefaults(), []);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -312,7 +346,7 @@ export default function QuickTournamentCreate() {
   const [formatDraft, setFormatDraft] = useState<QuickFormatConfig>({
     id: 'MALE_DOUBLES',
     key: 'MALE_DOUBLES',
-    label: 'Đôi nam',
+      label: translate('formatMaleDoubles'),
     bracketType: 'single_elimination',
     maxParticipantsOverride: false,
     maxParticipants: null,
@@ -324,7 +358,7 @@ export default function QuickTournamentCreate() {
     ...QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({
       id: item.key,
       key: item.key,
-      label: item.label,
+      label: translate(item.labelKey),
       eloEnabled: false,
       minElo: null,
       maxElo: null,
@@ -363,11 +397,11 @@ export default function QuickTournamentCreate() {
       const now = new Date();
       now.setSeconds(0, 0);
       setValue('registrationStart', formatDateTimeInput(now), { shouldDirty: false });
-      toast.success('Đã khôi phục bản nháp tạo giải.', { id: 'quick-draft-restored' });
+      toast.success(translate('draftRestored'), { id: 'quick-draft-restored' });
     } catch {
       window.localStorage.removeItem(draftKey);
     }
-  }, [draftKey, setValue]);
+  }, [draftKey, setValue, translate]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !draftHydratedRef.current) return;
@@ -467,19 +501,19 @@ export default function QuickTournamentCreate() {
     let active = true;
     categoriesApi.getCategories().then((response) => {
       if (active) setCategories((response.data ?? []).filter((category) => category.isActive !== false));
-    }).catch(() => toast.error('Không thể tải danh sách môn thể thao.')).finally(() => {
+    }).catch(() => toast.error(translate('categoriesLoadError'))).finally(() => {
       if (active) setLoadingCategories(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [translate]);
 
   useEffect(() => {
     let active = true;
     regionsApi.getProvinces().then((response) => {
       if (active) setProvinces(response ?? []);
-    }).catch(() => { if (active) toast.error('Không thể tải danh sách tỉnh/thành.'); });
+    }).catch(() => { if (active) toast.error(translate('provincesLoadError')); });
     return () => { active = false; };
-  }, []);
+  }, [translate]);
 
   const syncLegacyFormat = (primary: string) => {
     if (!primary) return;
@@ -537,7 +571,7 @@ export default function QuickTournamentCreate() {
     setFormatDraft({
       id: newId,
       key: defaultOpt.key,
-      label: defaultOpt.label,
+      label: getFormatLabel(defaultOpt.key),
       bracketType: undefined,
       maxParticipantsOverride: false,
       maxParticipants: null,
@@ -556,16 +590,16 @@ export default function QuickTournamentCreate() {
     setValue('selectedFormats', nextSelected, { shouldValidate: true });
     const firstConfig = formatConfigs.find((c) => c.id === nextSelected[0] || c.key === nextSelected[0]);
     if (firstConfig) syncLegacyFormat(firstConfig.key);
-    toast.success('Đã xóa nội dung thi đấu.');
+    toast.success(translate('formatRemoved'));
   };
 
   const saveFormatConfig = () => {
     if (formatDraft.eloEnabled && formatDraft.minElo !== null && formatDraft.maxElo !== null && formatDraft.minElo > formatDraft.maxElo) {
-      toast.error('ELO tối thiểu phải nhỏ hơn hoặc bằng ELO tối đa.');
+      toast.error(translate('eloRangeError'));
       return;
     }
     const defaultOption = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatDraft.key);
-    const normalizedLabel = formatDraft.label.trim() || defaultOption?.label || formatDraft.key;
+    const normalizedLabel = formatDraft.label.trim() || (defaultOption ? translate(defaultOption.labelKey) : formatDraft.key);
     const normalizedDraft: QuickFormatConfig = {
       ...formatDraft,
       label: normalizedLabel,
@@ -578,11 +612,11 @@ export default function QuickTournamentCreate() {
       setFormatConfigs((current) =>
         current.map((item) => (item.id === editingFormatId ? normalizedDraft : item))
       );
-      toast.success('Đã cập nhật nội dung thi đấu.');
+      toast.success(translate('formatUpdated'));
     } else {
       setFormatConfigs((current) => [...current, normalizedDraft]);
       setValue('selectedFormats', [...selectedFormats, normalizedDraft.id], { shouldValidate: true });
-      toast.success('Đã thêm nội dung thi đấu mới.');
+      toast.success(translate('formatAdded'));
     }
 
     syncLegacyFormat(normalizedDraft.key);
@@ -594,7 +628,7 @@ export default function QuickTournamentCreate() {
       const defaultFootball = QUICK_FORMAT_OPTIONS.slice(5).map((item) => ({
         id: item.key,
         key: item.key,
-        label: item.label,
+        label: translate(item.labelKey),
         bracketType: undefined,
         maxParticipantsOverride: false,
         maxParticipants: null,
@@ -608,7 +642,7 @@ export default function QuickTournamentCreate() {
       const defaultRacket = QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({
         id: item.key,
         key: item.key,
-        label: item.label,
+        label: translate(item.labelKey),
         bracketType: undefined,
         maxParticipantsOverride: false,
         maxParticipants: null,
@@ -634,14 +668,14 @@ export default function QuickTournamentCreate() {
     }).catch(() => { 
       if (active) {
         setWards([]);
-        toast.error('Không thể tải danh sách phường/xã.'); 
+        toast.error(translate('wardsLoadError')); 
       }
     });
 
     return () => {
       active = false;
     };
-  }, [province, provinces]);
+  }, [province, provinces, translate]);
 
   const onSubmit = async (values: QuickValues) => {
     try {
@@ -654,15 +688,15 @@ export default function QuickTournamentCreate() {
       const endDateTime = endDate ? new Date(endDate) : undefined;
 
       if (regStartDate && regEndDate && regStartDate >= regEndDate) {
-        toast.error('Thời gian mở đăng ký phải trước thời gian đóng.');
+        toast.error(translate('validationRegOpenAfter'));
         return;
       }
       if (regEndDate && startDateTime && regEndDate >= startDateTime) {
-        toast.error('Thời gian đóng đăng ký phải trước giờ bắt đầu giải.');
+        toast.error(translate('validationRegBeforeStart'));
         return;
       }
       if (endDateTime && startDateTime && startDateTime >= endDateTime) {
-        toast.error('Thời gian kết thúc phải sau thời gian bắt đầu.');
+        toast.error(translate('validationEndAfterStart'));
         return;
       }
 
@@ -679,6 +713,7 @@ export default function QuickTournamentCreate() {
           : values.maxTeams;
         const division = toDivisionInput(
           formatKey,
+          config?.label?.trim() || getFormatLabel(formatKey),
           config?.bracketType ?? values.bracketType,
           divisionMaxParticipants,
           toApiIsoDateTime(values.startDate) ?? undefined,
@@ -727,11 +762,11 @@ export default function QuickTournamentCreate() {
 
       const response = await tournamentsApi.createLiteTournament(createPayload);
 
-      toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
+      toast.success(values.visibility === 'PUBLIC' ? translate('createdPendingApproval') : translate('createSuccess'));
       if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
       router.push(`/organizer/tournaments/${response.id}/manage`);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể tạo giải đấu.'));
+      toast.error(getErrorMessage(error, translate('createFailed')));
     } finally {
       setIsSubmitting(false);
     }
@@ -747,10 +782,10 @@ export default function QuickTournamentCreate() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/25">
                 <Trophy className="h-5 w-5" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Tạo giải đấu nhanh</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{translate('pageTitle')}</h1>
             </div>
             <p className="mt-1.5 text-xs md:text-sm text-slate-500">
-              Khởi tạo giải đấu nhanh gọn trong 1 phút. Bạn có thể bổ sung luật chi tiết và phân nhánh bên trong trang quản lý bất cứ lúc nào.
+              {translate('pageSubtitle')}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-auto">
@@ -760,14 +795,14 @@ export default function QuickTournamentCreate() {
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 transition"
             >
               <Sparkles className="h-4 w-4 text-amber-500" />
-              Tạo bằng AI / Excel
+              {translate('createWithAiExcel')}
             </button>
             <button
               type="button"
               onClick={() => router.push(`/organizer/tournaments/create?mode=advanced${communityId ? `&communityId=${communityId}` : ''}`)}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 transition"
             >
-              <Settings2 className="h-4 w-4 text-slate-500" /> Tạo bản nâng cao (4 bước)
+              <Settings2 className="h-4 w-4 text-slate-500" /> {translate('advancedCreate')}
             </button>
           </div>
         </div>
@@ -777,7 +812,7 @@ export default function QuickTournamentCreate() {
           <div className="flex items-start gap-3">
             <Info className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
             <div className="text-xs md:text-sm leading-relaxed">
-              <strong className="font-bold text-amber-900">Lưu ý quan trọng:</strong> Giải phong trào được tạo tức thì và hoàn toàn miễn phí. Sau khi tạo xong, bạn có thể chỉnh sửa mọi thông tin (lịch thi đấu, thể thức, điều lệ, danh sách VĐV) trước khi bấm Bắt đầu giải.
+              <strong className="font-bold text-amber-900">{translate('importantNoticeTitle')}</strong> {translate('importantNoticeBody')}
             </div>
           </div>
         </div>
@@ -786,7 +821,7 @@ export default function QuickTournamentCreate() {
         <form
           onSubmit={handleSubmit(onSubmit, (fieldErrors) => {
             const firstError = Object.values(fieldErrors)[0]?.message;
-            toast.error(firstError || 'Vui lòng điền đầy đủ các thông tin bắt buộc (*).');
+            toast.error(firstError || translate('requiredFieldsError'));
           })}
         >
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
@@ -800,18 +835,18 @@ export default function QuickTournamentCreate() {
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <Trophy className="h-4 w-4" />
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">Thông tin giải đấu</h2>
+                  <h2 className="text-base font-bold text-slate-900">{translate('basicInfoTitle')}</h2>
                 </div>
 
                 {/* Tên giải đấu */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Tên giải đấu <span className="text-rose-500">*</span>
+                    {translate('tournamentNameLabel')} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     {...register('name')}
                     className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="Ví dụ: Giải Cầu Lông Mùa Hè 2026 / Giao Hữu Sporto"
+                    placeholder={translate('tournamentNamePlaceholder')}
                   />
                   {errors.name && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.name.message}</span>}
                 </div>
@@ -819,7 +854,7 @@ export default function QuickTournamentCreate() {
                 {/* Môn thể thao */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Môn thể thao <span className="text-rose-500">*</span>
+                    {translate('sportLabel')} <span className="text-rose-500">*</span>
                   </label>
                   <select
                     {...register('sport', {
@@ -834,7 +869,7 @@ export default function QuickTournamentCreate() {
                     })}
                   </select>
                   <span className="mt-1.5 block text-xs text-slate-500">
-                    {selectedCategory ? `Áp dụng bộ luật mặc định: ${selectedCategory.name}` : 'Chọn môn để nạp luật thi đấu.'}
+                    {selectedCategory ? translate('defaultRulesApplied', { sport: selectedCategory.name }) : translate('selectSportHint')}
                   </span>
                 </div>
 
@@ -842,14 +877,14 @@ export default function QuickTournamentCreate() {
                 <div>
                   <div className="flex items-center justify-between gap-3">
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Mô tả giải đấu (tùy chọn)
+                      {translate('descriptionLabel')}
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsDescriptionEditorOpen(true)}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-700"
                     >
-                      Mở trình soạn thảo
+                      {translate('openEditor')}
                     </button>
                   </div>
                   <button
@@ -858,7 +893,7 @@ export default function QuickTournamentCreate() {
                     className="mt-2 flex min-h-36 w-full items-start rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-left text-sm transition hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   >
                     <span className={description ? 'line-clamp-6 text-slate-800' : 'text-slate-400'}>
-                      {description ? description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : 'Tóm tắt thể thức, đối tượng tham gia...'}
+                      {description ? description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : translate('descriptionPlaceholder')}
                     </span>
                   </button>
                   <input type="hidden" {...register('description')} />
@@ -871,19 +906,19 @@ export default function QuickTournamentCreate() {
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                     <Calendar className="h-4 w-4" />
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">Lịch trình thi đấu</h2>
+                  <h2 className="text-base font-bold text-slate-900">{translate('scheduleTitle')}</h2>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
-                    label="Mở đăng ký"
+                    label={translate('registrationStartLabel')}
                     value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
                   <DateTimePicker
-                    label="Ngày bắt đầu giải"
+                    label={translate('startDateLabel')}
                     value={startDate || ''}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
@@ -892,7 +927,7 @@ export default function QuickTournamentCreate() {
                   <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                     <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
-                        label="Đóng đăng ký"
+                        label={translate('registrationEndLabel')}
                         value={registrationEnd || ''}
                         onChange={handleRegistrationEndChange}
                         error={errors.registrationEnd?.message}
@@ -900,7 +935,7 @@ export default function QuickTournamentCreate() {
                       />
 
                       <DateTimePicker
-                        label="Kết thúc dự kiến"
+                        label={translate('endDateLabel')}
                         value={endDate || ''}
                         onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
                         error={errors.endDate?.message}
@@ -916,30 +951,30 @@ export default function QuickTournamentCreate() {
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                     <MapPin className="h-4 w-4" />
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">Địa điểm & Sân thi đấu</h2>
+                  <h2 className="text-base font-bold text-slate-900">{translate('locationTitle')}</h2>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Tên sân / Nhà thi đấu <span className="text-rose-500">*</span>
+                      {translate('venueLabel')} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       {...register('venueName')}
                       className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      placeholder="Ví dụ: Sân Cầu Lông Kỳ Hòa"
+                      placeholder={translate('venuePlaceholder')}
                     />
                     {errors.venueName && <span className="mt-1 block text-xs text-rose-600">{errors.venueName.message}</span>}
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Địa chỉ chi tiết <span className="text-rose-500">*</span>
+                      {translate('addressLabel')} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       {...register('locationAddress')}
                       className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      placeholder="Số nhà, tên đường..."
+                      placeholder={translate('addressPlaceholder')}
                     />
                     {errors.locationAddress && <span className="mt-1 block text-xs text-rose-600">{errors.locationAddress.message}</span>}
                     {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
@@ -957,7 +992,7 @@ export default function QuickTournamentCreate() {
                 {/* Dropdowns Tỉnh/Thành ➔ Phường/Xã */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                    Khu vực hành chính <span className="text-rose-500">*</span>
+                    {translate('administrativeAreaLabel')} <span className="text-rose-500">*</span>
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
@@ -965,7 +1000,7 @@ export default function QuickTournamentCreate() {
                         value={province || ''}
                         options={provinces}
                         inputName="province"
-                        placeholder="Gõ để tìm Tỉnh / Thành phố (*)"
+                        placeholder={translate('provincePlaceholder')}
                         onChange={(value) => {
                           setWards([]);
                           setValue('province', value, { shouldValidate: true, shouldDirty: true });
@@ -980,14 +1015,14 @@ export default function QuickTournamentCreate() {
                         options={wards}
                         inputName="ward"
                         disabled={!province || wards.length === 0}
-                        placeholder={!province ? 'Chọn Tỉnh/Thành trước' : wards.length === 0 ? 'Đang tải danh sách...' : 'Gõ để tìm Phường / Xã'}
+                        placeholder={!province ? translate('selectProvinceFirst') : wards.length === 0 ? translate('loadingWards') : translate('wardPlaceholder')}
                         onChange={(value) => setValue('ward', value, { shouldValidate: true, shouldDirty: true })}
                         error={errors.ward?.message}
                       />
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
-                    Vui lòng nhập đầy đủ tên sân, địa chỉ và khu vực để VĐV nắm rõ thông tin thi đấu.
+                    {translate('locationHint')}
                   </p>
                 </div>
               </section>
@@ -999,58 +1034,58 @@ export default function QuickTournamentCreate() {
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
                       <Flame className="h-4 w-4" />
                     </div>
-                    <h2 className="text-base font-bold text-slate-900">Thiết lập luật bóng đá</h2>
+                    <h2 className="text-base font-bold text-slate-900">{translate('footballRulesTitle')}</h2>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Số lượng cầu thủ</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{translate('teamSizeLabel')}</label>
                       <select {...register('teamSize')} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
-                        <option value="5">Sân 5 người</option>
-                        <option value="7">Sân 7 người</option>
-                        <option value="11">Sân 11 người</option>
+                        <option value="5">{translate('footballField5')}</option>
+                        <option value="7">{translate('footballField7')}</option>
+                        <option value="11">{translate('footballField11')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Dự bị tối đa</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{translate('maxReserveLabel')}</label>
                       <input
                         type="number"
                         min={0}
                         max={20}
                         {...register('maxReserve', { valueAsNumber: true })}
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        placeholder="Số dự bị"
+                        placeholder={translate('reservePlaceholder')}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Số hiệp thi đấu</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{translate('halvesLabel')}</label>
                       <input
                         type="number"
                         min={1}
                         max={4}
                         {...register('footballHalvesCount', { valueAsNumber: true })}
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        placeholder="2 hiệp"
+                        placeholder={translate('halvesPlaceholder')}
                       />
                     </div>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2 pt-2">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Thời lượng mỗi hiệp (phút)</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{translate('halfDurationLabel')}</label>
                       <input
                         type="number"
                         min={1}
                         max={120}
                         {...register('footballHalfDuration', { valueAsNumber: true })}
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        placeholder="45 phút"
+                        placeholder={translate('halfDurationPlaceholder')}
                       />
                     </div>
                     <div className="flex items-end">
                       <label className="flex w-full items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 cursor-pointer hover:bg-slate-50">
                         <input type="checkbox" {...register('footballAllowDraw')} className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" />
-                        Cho phép tỷ số hòa
+                        {translate('allowDrawLabel')}
                       </label>
                     </div>
                   </div>
@@ -1070,11 +1105,11 @@ export default function QuickTournamentCreate() {
                       <Layers className="h-4 w-4" />
                     </div>
                     <h3 className="text-sm font-bold text-slate-900">
-                      {sport === 'football' ? 'Nội dung bóng đá' : 'Nội dung thi đấu'}
+                      {sport === 'football' ? translate('footballContentTitle') : translate('competitionContentTitle')}
                     </h3>
                   </div>
                   <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
-                    {selectedFormats.length} đã chọn
+                    {translate('selectedFormatsCount', { count: selectedFormats.length })}
                   </span>
                 </div>
 
@@ -1086,10 +1121,12 @@ export default function QuickTournamentCreate() {
                       const isSelected = selectedFormats.includes(formatId);
                       const activeBracketId = config.bracketType ?? bracketType;
                       const activeBracketOption = BRACKET_OPTIONS.find((item) => item.id === activeBracketId);
-                      const bracketTitle = activeBracketOption?.label ?? 'Loại trực tiếp';
+                      const bracketTitle = activeBracketOption
+                        ? translate(activeBracketOption.labelKey)
+                        : translate('bracketSingleLabel');
                       const participantTitle = config.maxParticipantsOverride && config.maxParticipants
-                        ? `${config.maxParticipants} người/đội`
-                        : `Quy mô: ${maxTeams}`;
+                        ? translate('participantLimit', { count: config.maxParticipants })
+                        : translate('participantScale', { count: maxTeams });
 
                       return (
                         <div
@@ -1128,7 +1165,7 @@ export default function QuickTournamentCreate() {
                                     ELO {config.minElo ?? 0}–{config.maxElo ?? '∞'}
                                   </span>
                                 ) : (
-                                  <span className="text-slate-400">Không ELO</span>
+                                  <span className="text-slate-400">{translate('eloDisabled')}</span>
                                 )}
                               </div>
                             </div>
@@ -1138,17 +1175,17 @@ export default function QuickTournamentCreate() {
                               type="button"
                               onClick={() => openFormatModal(formatId)}
                               className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700 cursor-pointer shadow-2xs"
-                              aria-label={`Sửa ${config.label}`}
+                              aria-label={translate('editFormatAria', { label: config.label })}
                             >
-                              <Settings2 className="h-3.5 w-3.5" /> Sửa
+                              <Settings2 className="h-3.5 w-3.5" /> {translate('editFormat')}
                             </button>
                             {config.isCustom && (
                               <button
                                 type="button"
                                 onClick={() => removeFormat(formatId)}
                                 className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 cursor-pointer shadow-2xs"
-                                title="Xóa nội dung này"
-                                aria-label={`Xóa ${config.label}`}
+                                title={translate('removeFormatTitle')}
+                                aria-label={translate('removeFormatAria', { label: config.label })}
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -1163,7 +1200,7 @@ export default function QuickTournamentCreate() {
                   onClick={() => openFormatModal()}
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Thêm nội dung
+                  <Plus className="h-3.5 w-3.5" /> {translate('addFormat')}
                 </button>
                 {errors.selectedFormats && (
                   <span className="block text-xs text-rose-600 font-medium">{errors.selectedFormats.message}</span>
@@ -1177,9 +1214,9 @@ export default function QuickTournamentCreate() {
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                       <GitBranch className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900">Thể thức bảng đấu</h3>
+                    <h3 className="text-sm font-bold text-slate-900">{translate('bracketTitle')}</h3>
                   </div>
-                  <span className="text-xs text-slate-400">Chọn 1</span>
+                  <span className="text-xs text-slate-400">{translate('chooseOne')}</span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2.5">
@@ -1209,14 +1246,14 @@ export default function QuickTournamentCreate() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between">
                             <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
-                              {opt.label}
+                              {translate(opt.labelKey)}
                             </span>
                             {isSelected && (
                               <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
                             )}
                           </div>
                           <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
-                            {opt.desc}
+                            {translate(opt.descKey)}
                           </p>
                         </div>
                       </button>
@@ -1234,10 +1271,10 @@ export default function QuickTournamentCreate() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5 text-blue-600" />
-                      Quy mô giải đấu (Số đội/người)
+                      {translate('tournamentScaleLabel')}
                     </span>
                     <span className="text-xs text-slate-400">
-                      {bracketType === 'round_robin' ? 'Tối đa 15 đội/bảng' : 'Tối đa 128'}
+                      {bracketType === 'round_robin' ? translate('roundRobinScaleLimit') : translate('generalScaleLimit')}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -1259,7 +1296,7 @@ export default function QuickTournamentCreate() {
                       );
                     })}
                     <div className="flex items-center gap-1 ml-auto">
-                      <span className="text-[11px] text-slate-500">Khác:</span>
+                      <span className="text-[11px] text-slate-500">{translate('otherOption')}</span>
                       <input
                         type="number"
                         min={2}
@@ -1276,14 +1313,14 @@ export default function QuickTournamentCreate() {
                     <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <p className="leading-relaxed">
-                          <strong className="font-bold text-amber-950">💡 Gợi ý:</strong> Thể thức Vòng tròn tối đa <strong>15 đội/bảng</strong> để đảm bảo lịch thi đấu. Với <strong>{maxTeams} đội</strong>, bạn nên chọn <strong>Vòng bảng + Knockout</strong>.
+                          <strong className="font-bold text-amber-950">{translate('smartSuggestionLabel')}</strong> {translate('roundRobinSuggestion', { maxTeams })}
                         </p>
                         <button
                           type="button"
                           onClick={() => setValue('bracketType', 'group_stage_knockout', { shouldValidate: true })}
                           className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-amber-950 transition"
                         >
-                          Đổi sang Vòng bảng
+                          {translate('switchToGroupStage')}
                         </button>
                       </div>
                     </div>
@@ -1296,7 +1333,7 @@ export default function QuickTournamentCreate() {
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
                     <Eye className="h-3.5 w-3.5 text-blue-600" />
-                    Hiển thị giải đấu
+                    {translate('visibilityTitle')}
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -1310,9 +1347,9 @@ export default function QuickTournamentCreate() {
                     >
                       <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
                         <span className={`h-3 w-3 rounded-full border-2 ${visibility === 'PUBLIC' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
-                        Công khai
+                        {translate('publicVisibility')}
                       </div>
-                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">Xuất hiện trên bảng Khám phá</span>
+                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">{translate('publicVisibilityDescription')}</span>
                     </button>
                     <button
                       type="button"
@@ -1325,9 +1362,9 @@ export default function QuickTournamentCreate() {
                     >
                       <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
                         <span className={`h-3 w-3 rounded-full border-2 ${visibility === 'PRIVATE' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
-                        Không niêm yết
+                        {translate('privateVisibility')}
                       </div>
-                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">Chỉ truy cập bằng liên kết/mã</span>
+                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">{translate('privateVisibilityDescription')}</span>
                     </button>
                   </div>
                 </div>
@@ -1339,13 +1376,13 @@ export default function QuickTournamentCreate() {
                     <div>
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
                         <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-                        Chế độ tiếp nhận đăng ký
+                        {translate('registrationModeTitle')}
                       </span>
                       <div className="grid grid-cols-3 gap-1.5">
                         {[
-                          { val: 'OPEN', label: 'Tự do', sub: 'Vào ngay' },
-                          { val: 'APPROVAL', label: 'Xét duyệt', sub: 'BTC duyệt' },
-                          { val: 'INVITE_ONLY', label: 'Mã mời', sub: 'Cần mã' },
+                          { val: 'OPEN', labelKey: 'registrationOpen', subKey: 'registrationOpenShort' },
+                          { val: 'APPROVAL', labelKey: 'registrationApproval', subKey: 'registrationApprovalShort' },
+                          { val: 'INVITE_ONLY', labelKey: 'registrationInviteOnly', subKey: 'registrationInviteOnlyShort' },
                         ].map((item) => {
                           const isSelected = registrationMode === item.val;
                           return (
@@ -1359,8 +1396,8 @@ export default function QuickTournamentCreate() {
                                   : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                               }`}
                             >
-                              <div className="text-xs font-bold">{item.label}</div>
-                              <div className="text-[10px] text-slate-400 mt-0.5">{item.sub}</div>
+                              <div className="text-xs font-bold">{translate(item.labelKey)}</div>
+                              <div className="text-[10px] text-slate-400 mt-0.5">{translate(item.subKey)}</div>
                             </button>
                           );
                         })}
@@ -1380,18 +1417,18 @@ export default function QuickTournamentCreate() {
                   {isSubmitting ? (
                     <>
                       <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      Đang khởi tạo giải...
+                      {translate('creatingTournament')}
                     </>
                   ) : (
                     <>
-                      Tạo giải đấu ngay
+                      {translate('createTournamentNow')}
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </button>
 
                 <p className="text-center text-[11px] text-slate-400">
-                  Nhấn Tạo giải để khởi tạo và chuyển tới trang quản lý bảng đấu
+                  {translate('submitHint')}
                 </p>
               </div>
 
@@ -1405,7 +1442,7 @@ export default function QuickTournamentCreate() {
           className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-          aria-label="Thêm nội dung thi đấu"
+          aria-label={translate('formatDialogAria')}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setIsFormatModalOpen(false);
           }}
@@ -1414,16 +1451,16 @@ export default function QuickTournamentCreate() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-base font-bold text-slate-900">
-                  {editingFormatId ? 'Chỉnh sửa nội dung thi đấu' : 'Thêm nội dung thi đấu mới'}
+                  {editingFormatId ? translate('editFormatTitle') : translate('addFormatTitle')}
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">Mặc định dùng thể thức chung của giải; bạn có thể chọn riêng cho nội dung này.</p>
+                <p className="mt-0.5 text-xs text-slate-500">{translate('formatModalSubtitle')}</p>
               </div>
-              <button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label={translate('close')}><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-4 p-5">
               {/* 1. Chọn loại */}
               <label className="block text-xs font-semibold text-slate-700">
-                Loại nội dung
+                {translate('formatTypeLabel')}
                 <select
                   value={formatDraft.key}
                   onChange={(event) => {
@@ -1432,7 +1469,7 @@ export default function QuickTournamentCreate() {
                       setFormatDraft((current) => ({
                         ...current,
                         key: option.key,
-                        label: option.label,
+                        label: translate(option.labelKey),
                       }));
                     }
                   }}
@@ -1442,7 +1479,7 @@ export default function QuickTournamentCreate() {
                     .filter((option) => (sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')))
                     .map((option) => (
                       <option key={option.key} value={option.key}>
-                        {option.label}
+                        {translate(option.labelKey)}
                       </option>
                     ))}
                 </select>
@@ -1450,14 +1487,14 @@ export default function QuickTournamentCreate() {
 
               {/* 2. Tên nội dung riêng */}
               <label className="block text-xs font-semibold text-slate-700">
-                Tên nội dung riêng
+                {translate('customFormatNameLabel')}
                 <input
                   value={formatDraft.label}
                   onChange={(event) => setFormatDraft((current) => ({ ...current, label: event.target.value }))}
-                  placeholder="Để trống sẽ dùng tên mặc định"
+                  placeholder={translate('customFormatNamePlaceholder')}
                   className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
                 />
-                <span className="mt-1 block text-[10.5px] font-normal text-slate-500">Tên này sẽ hiển thị trong danh sách nội dung và bảng đấu.</span>
+                <span className="mt-1 block text-[10.5px] font-normal text-slate-500">{translate('customFormatNameHint')}</span>
               </label>
 
               {/* 3. Tùy chọn nâng cao (Thu gọn mặc định) */}
@@ -1469,10 +1506,10 @@ export default function QuickTournamentCreate() {
                 >
                   <span className="flex items-center gap-2">
                     <Settings2 className="h-4 w-4 text-blue-600" />
-                    Tùy chọn nâng cao (Thể thức, Số lượng, ELO)
+                    {translate('advancedOptions')}
                   </span>
                   <span className="text-[11px] font-semibold text-blue-600">
-                    {showAdvancedOptions ? 'Thu gọn ▲' : 'Mở rộng ▼'}
+                    {showAdvancedOptions ? translate('collapse') : translate('expand')}
                   </span>
                 </button>
 
@@ -1481,7 +1518,7 @@ export default function QuickTournamentCreate() {
                     {/* 3.1 Thể thức bảng đấu riêng */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700">
-                        Thể thức bảng đấu riêng
+                        {translate('customBracketLabel')}
                         <select
                           value={formatDraft.bracketType ?? ''}
                           onChange={(event) => setFormatDraft((current) => ({
@@ -1490,9 +1527,9 @@ export default function QuickTournamentCreate() {
                           }))}
                           className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500"
                         >
-                          <option value="">Kế thừa từ thể thức chung của giải ({BRACKET_OPTIONS.find(b => b.id === bracketType)?.label ?? 'Loại trực tiếp'})</option>
+                          <option value="">{translate('inheritBracket', { bracket: getBracketLabel(bracketType) })}</option>
                           {BRACKET_OPTIONS.map((option) => (
-                            <option key={option.id} value={option.id}>{option.label}</option>
+                            <option key={option.id} value={option.id}>{translate(option.labelKey)}</option>
                           ))}
                         </select>
                       </label>
@@ -1511,7 +1548,7 @@ export default function QuickTournamentCreate() {
                           }))}
                           className="h-4 w-4 rounded text-blue-600 cursor-pointer"
                         />
-                        Tùy chỉnh số lượng tham gia riêng cho nội dung này
+                        {translate('overrideParticipants')}
                       </label>
 
                       {formatDraft.maxParticipantsOverride ? (
@@ -1528,12 +1565,12 @@ export default function QuickTournamentCreate() {
                               }))}
                               className="w-32 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-900"
                             />
-                            <span className="text-xs text-slate-500 font-medium">người/đội tối đa</span>
+                            <span className="text-xs text-slate-500 font-medium">{translate('participantLimitUnit')}</span>
                           </div>
                         </div>
                       ) : (
                         <p className="text-[11px] text-slate-500">
-                          Mặc định kế thừa theo quy mô chung của giải: <span className="font-bold text-slate-700">{maxTeams} người/đội</span>.
+                          {translate('inheritedParticipantLimit', { count: maxTeams })}
                         </p>
                       )}
                     </div>
@@ -1550,13 +1587,13 @@ export default function QuickTournamentCreate() {
                           }))}
                           className="h-4 w-4 rounded text-blue-600 cursor-pointer"
                         />
-                        Giới hạn ELO cho nội dung này
+                        {translate('limitElo')}
                       </label>
 
                       {formatDraft.eloEnabled && (
                         <div className="grid grid-cols-2 gap-3 pt-1">
                           <label className="text-xs font-semibold text-slate-600">
-                            ELO tối thiểu
+                            {translate('minElo')}
                             <input
                               type="number"
                               min={0}
@@ -1570,7 +1607,7 @@ export default function QuickTournamentCreate() {
                             />
                           </label>
                           <label className="text-xs font-semibold text-slate-600">
-                            ELO tối đa
+                            {translate('maxElo')}
                             <input
                               type="number"
                               min={0}
@@ -1579,7 +1616,7 @@ export default function QuickTournamentCreate() {
                                 ...current,
                                 maxElo: event.target.value === '' ? null : Number(event.target.value),
                               }))}
-                              placeholder="Không giới hạn"
+                              placeholder={translate('unlimited')}
                               className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
                             />
                           </label>
@@ -1590,7 +1627,7 @@ export default function QuickTournamentCreate() {
                 )}
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Hủy</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">{editingFormatId ? 'Lưu thay đổi' : <><Plus className="h-3.5 w-3.5" /> Thêm nội dung</>}</button></div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">{translate('cancel')}</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">{editingFormatId ? translate('saveChanges') : <><Plus className="h-3.5 w-3.5" /> {translate('addFormat')}</>}</button></div>
           </div>
         </div>
       )}
@@ -1599,7 +1636,7 @@ export default function QuickTournamentCreate() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-          aria-label="Mô tả giải đấu"
+          aria-label={translate('descriptionDialogAria')}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setIsDescriptionEditorOpen(false);
           }}
@@ -1607,10 +1644,10 @@ export default function QuickTournamentCreate() {
           <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Mô tả giải đấu</h2>
-                <p className="mt-0.5 text-xs text-slate-500">Thêm thể thức, đối tượng, lưu ý và hình ảnh. Nội dung được lưu vào bản nháp.</p>
+                <h2 className="text-base font-bold text-slate-900">{translate('descriptionEditorTitle')}</h2>
+                <p className="mt-0.5 text-xs text-slate-500">{translate('descriptionEditorSubtitle')}</p>
               </div>
-              <button type="button" onClick={() => setIsDescriptionEditorOpen(false)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Đóng">
+              <button type="button" onClick={() => setIsDescriptionEditorOpen(false)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label={translate('close')}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -1618,12 +1655,12 @@ export default function QuickTournamentCreate() {
               <RichTextEditor
                 value={description}
                 onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
-                placeholder="Nhấn Tab để bắt đầu viết..."
+                placeholder={translate('descriptionEditorPlaceholder')}
               />
             </div>
             <div className="flex justify-end border-t border-slate-100 px-5 py-3">
               <button type="button" onClick={() => setIsDescriptionEditorOpen(false)} className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700">
-                Lưu mô tả
+                {translate('saveDescription')}
               </button>
             </div>
           </div>

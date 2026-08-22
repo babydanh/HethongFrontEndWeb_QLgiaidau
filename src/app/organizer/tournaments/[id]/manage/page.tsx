@@ -117,9 +117,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       : division.name;
   };
   const getLocalizedFormatOptionLabel = (value: string) => translate(`createDivision.matchFormat.${value}`);
+  const getDefaultDivisionName = () => {
+    const option = s.availableMatchFormatOptions.find((item) => item.value === 'MALE_DOUBLES') ?? s.availableMatchFormatOptions[0];
+    return option ? getLocalizedFormatOptionLabel(option.value) : '';
+  };
   const getDivisionEditorName = () => {
     const option = s.availableMatchFormatOptions.find((item) => item.value === s.newDivisionMatchType);
-    return option && s.newDivisionName === option.shortLabel
+    return option && s.newDivisionName === getLocalizedFormatOptionLabel(option.value)
       ? getLocalizedFormatOptionLabel(option.value)
       : s.newDivisionName;
   };
@@ -271,7 +275,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </div>
             <Button
               size="sm"
-              onClick={() => { s.resetDivisionEditor(); s.setIsCreateDivisionModalOpen(true); }}
+              onClick={() => { s.resetDivisionEditor(getDefaultDivisionName()); s.setIsCreateDivisionModalOpen(true); }}
               disabled={s.divisions.length >= 20 || isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
               className="font-bold text-xs flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap disabled:opacity-50"
               title={s.divisions.length >= 20 ? translate('divisions.maxLimitTitle') : translate('divisions.addTitle')}
@@ -763,7 +767,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <ModalHeader><ModalTitle className="text-lg font-bold">{s.editingDivision ? translate('createDivision.editTitle') : translate('createDivision.addTitle')}</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
                 <div><label className="text-xs font-bold text-slate-500">{translate('createDivision.typeLabel')}</label>
-                  <select value={s.newDivisionMatchType} onChange={e => { const value = e.target.value; const option = s.availableMatchFormatOptions.find((item) => item.value === value); s.setNewDivisionMatchType(value); s.setNewDivisionName(option?.shortLabel ?? ''); }} className="w-full border rounded-lg p-2 text-sm">
+                  <select value={s.newDivisionMatchType} onChange={e => { const value = e.target.value; const option = s.availableMatchFormatOptions.find((item) => item.value === value); s.setNewDivisionMatchType(value); s.setNewDivisionName(option ? getLocalizedFormatOptionLabel(option.value) : ''); }} className="w-full border rounded-lg p-2 text-sm">
                     {s.availableMatchFormatOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {translate(`createDivision.matchFormat.${option.value}`)}
@@ -777,7 +781,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     onChange={(e) => {
                       const option = s.availableMatchFormatOptions.find((item) => item.value === s.newDivisionMatchType);
                       const localizedDefault = option ? getLocalizedFormatOptionLabel(option.value) : '';
-                      s.setNewDivisionName(option && e.target.value === localizedDefault ? option.shortLabel : e.target.value);
+                      s.setNewDivisionName(option && e.target.value === localizedDefault ? localizedDefault : e.target.value);
                     }}
                     placeholder={translate('createDivision.namePlaceholder')}
                     maxLength={255}

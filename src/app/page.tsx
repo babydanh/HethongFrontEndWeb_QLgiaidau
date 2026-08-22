@@ -33,7 +33,7 @@ import {
 } from '@/features/rankings/elo-display';
 import { isNetworkError } from '@/utils/error';
 import { isTournamentCancelled, isTournamentCompleted, isTournamentInProgress } from '@/utils/tournament-status';
-import { getMatchRoundLabel } from '@/utils/match-round-label';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
@@ -203,42 +203,6 @@ function translateStageName(name: string | null | undefined, translate?: (key: s
   return key ? (translate?.(key) ?? key) : name;
 }
 
-function translateRoundLabel(label: string, translate: (key: string, values?: Record<string, string | number>) => string): string {
-  const translateToken = (token: string): string => {
-    const normalized = token.trim();
-    const staticMap: Record<string, string> = {
-      'Chung kết tổng': 'phaseGrandFinal',
-      'Chung kết': 'roundFinal',
-      'Bán kết': 'roundSemifinal',
-      'Tứ kết': 'roundQuarterfinal',
-      'Nhánh thua': 'phaseLosers',
-      'Nhánh thắng': 'phaseWinners',
-      'Playoff': 'phasePlayoff',
-    };
-    const staticKey = staticMap[normalized];
-    if (staticKey) return translate(staticKey);
-
-    const ofRoundMatch = normalized.match(/^Vòng\s+(16|32|64)$/i);
-    if (ofRoundMatch) return translate(`roundOf${ofRoundMatch[1]}`);
-
-    const roundMatch = normalized.match(/^Vòng\s+(\d+)$/i);
-    if (roundMatch) return translate('roundNumber', { number: Number(roundMatch[1]) });
-
-    const matchDay = normalized.match(/^Ngày đấu\s+(\d+)$/i);
-    if (matchDay) return translate('matchDay', { number: Number(matchDay[1]) });
-
-    const legMatch = normalized.match(/^Lượt\s+(\d+)$/i);
-    if (legMatch) return translate('roundLeg', { number: Number(legMatch[1]) });
-
-    return token;
-  };
-
-  return label
-    .split(' • ')
-    .map((phase) => phase.split(' - ').map(translateToken).join(' - '))
-    .join(' • ');
-}
-
 /** Đếm ngược — chỉ hiện ngày (dùng cho trang chủ / danh sách) */
 function RegistrationCountdown({ targetDate }: { targetDate: string }) {
   const translate = useTranslations('Home');
@@ -356,6 +320,22 @@ export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const translate = useTranslations('Home');
   const locale = useLocale();
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: translate('phaseGrandFinal'),
+    roundFinal: translate('roundFinal'),
+    roundSemifinal: translate('roundSemifinal'),
+    roundQuarterfinal: translate('roundQuarterfinal'),
+    roundGroupStage: translate('roundGroupStage'),
+    winnersBracket: translate('phaseWinners'),
+    losersBracket: translate('phaseLosers'),
+    playoff: translate('phasePlayoff'),
+    roundOf: (round) => round === 16 || round === 32 || round === 64
+      ? translate(`roundOf${round}`)
+      : translate('roundNumber', { number: round }),
+    legSuffix: (leg) => translate('roundLeg', { number: leg }),
+    roundRobinLeg: (leg, round) => `${translate('roundLeg', { number: leg })} • ${translate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => translate('matchDay', { number: round }),
+  };
   // Bóng bàn đang tạm ẩn khỏi các bộ lọc/khám phá công khai. Vẫn giữ
   // support trong luồng quản trị và dữ liệu giải cũ để không làm mất dữ liệu.
   const isHiddenPublicSport = (category: Category) => {
@@ -888,12 +868,13 @@ export default function HomePage() {
     const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
     const isLive = (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') && !isCompleted;
     const isScheduled = match.status === 'SCHEDULED';
-    const roundLabel = translateRoundLabel(getMatchRoundLabel({
+    const roundLabel = getMatchRoundLabel({
       match,
       matches: contextMatches,
       tournamentFormat: contextTournament?.format ?? rankedTournament?.format,
       bracketSize: contextTournament?.maxParticipants ?? rankedTournament?.maxParticipants ?? null,
-    }), translate);
+      translations: roundLabelTranslations,
+    });
 
     return (
       <motion.div

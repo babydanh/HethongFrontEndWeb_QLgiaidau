@@ -4,26 +4,26 @@ import { BRAND } from '@/constants/brand';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  const translate = await getTranslations('TournamentList');
-  const title = translate('tournamentsMetadataTitle');
-  const description = translate('tournamentsMetadataDescription');
-  const keywords = translate.raw('tournamentsMetadataKeywords') as string[];
+  const translate = await getTranslations('Match');
+  const title = translate('matchesMetadataTitle');
+  const description = translate('matchesMetadataDescription');
+  const keywords = translate.raw('matchesMetadataKeywords') as string[];
   const image = {
     url: BRAND.assets.logo512,
     width: 512,
     height: 512,
-    alt: translate('tournamentsMetadataImageAlt'),
+    alt: translate('matchesMetadataImageAlt'),
   };
 
   return {
     title,
     description,
     keywords,
-    alternates: { canonical: '/tournaments' },
+    alternates: { canonical: '/matches' },
     openGraph: {
       title,
       description,
-      url: '/tournaments',
+      url: '/matches',
       siteName: BRAND.name,
       type: 'website',
       locale: locale === 'en' ? 'en_US' : 'vi_VN',
@@ -38,6 +38,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function TournamentsLayout({ children }: { children: React.ReactNode }) {
+export default function MatchesLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

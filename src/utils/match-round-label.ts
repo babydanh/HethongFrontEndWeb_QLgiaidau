@@ -291,8 +291,8 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
     const roundInfo = getRoundRobinRoundInfo(match, matches);
     const allMatches = matches ?? [];
     const roundLabel = roundInfo.leg > 1 || allMatches.some((candidate) => getRoundRobinRoundInfo(candidate, allMatches).leg > 1)
-      ? `Lượt ${roundInfo.leg} • Vòng ${roundInfo.roundWithinLeg}`
-      : `Vòng ${roundInfo.roundWithinLeg}`;
+      ? `Lượt ${roundInfo.leg} • Ngày đấu ${roundInfo.roundWithinLeg}`
+      : `Ngày đấu ${roundInfo.roundWithinLeg}`;
 
     if (!includePhasePrefix) {
       return roundLabel;

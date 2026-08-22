@@ -11,6 +11,8 @@ export interface PlayerRanking {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  currentStreakType?: 'WIN' | 'LOSS' | 'NONE';
+  currentStreakCount?: number;
   updatedAt: string;
   tierName?: string;
   communityId?: string;
@@ -39,17 +41,29 @@ export interface PlayerRanking {
 export interface EloHistoryLog {
   id: string;
   userId: string;
-  matchId?: string;
-  oldElo: number;
+  categoryId: string;
+  matchId?: string | null;
+  previousElo: number;
+  oldElo?: number;
   newElo: number;
   changedPoints: number;
-  reason?: string;
+  reason?: string | null;
   createdAt: string;
   match?: {
-    id: string;
-    tournamentId: string;
+    id?: string;
+    tournamentId?: string;
     tournamentName?: string;
-  };
+    status?: string;
+    completedAt?: string | null;
+    p1SetsWon?: number;
+    p2SetsWon?: number;
+    scoreDetails?: Record<string, unknown> | null;
+    result?: 'WIN' | 'LOSS' | 'DRAW';
+    opponent?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
 }
 
 export interface PaginatedRankings {

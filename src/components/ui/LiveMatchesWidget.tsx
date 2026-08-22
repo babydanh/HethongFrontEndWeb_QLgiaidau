@@ -9,6 +9,7 @@ import { socketClient } from '@/lib/socket';
 import Link from 'next/link';
 import { isNetworkError } from '@/utils/error';
 import { getMatchRoundLabel, type TournamentFormatForRoundLabel } from '@/utils/match-round-label';
+import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 
 interface Props {
   limit?: number;
@@ -165,13 +166,16 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
 
               {/* Opponent 1 vs Opponent 2 & Scores */}
               <div className="flex flex-1 justify-center items-center gap-6 w-full md:w-auto">
-                {/* Team 1 */}
-                <div className="flex-1 text-right max-w-[180px]">
-                  <span className="text-sm font-semibold text-white tracking-wide block truncate group-hover:text-blue-300 transition-colors">
-                    {match.participant1?.teamName || translate('unknown')}
-                  </span>
+                {/* Player / doubles pair 1 */}
+                <div className="flex-1 max-w-[180px]">
+                  <ParticipantIdentity
+                    participant={match.participant1}
+                    fallback={translate('unknown')}
+                    align="right"
+                    compact
+                  />
                   {match.participant1?.seed && (
-                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium ml-1">
+                    <span className="ml-1 text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium">
                       #{match.participant1.seed}
                     </span>
                   )}
@@ -200,13 +204,15 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
                   )}
                 </div>
 
-                {/* Team 2 */}
-                <div className="flex-1 text-left max-w-[180px]">
-                  <span className="text-sm font-semibold text-white tracking-wide block truncate group-hover:text-blue-300 transition-colors">
-                    {match.participant2?.teamName || translate('unknown')}
-                  </span>
+                {/* Player / doubles pair 2 */}
+                <div className="flex-1 max-w-[180px]">
+                  <ParticipantIdentity
+                    participant={match.participant2}
+                    fallback={translate('unknown')}
+                    compact
+                  />
                   {match.participant2?.seed && (
-                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium ml-1">
+                    <span className="ml-1 text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium">
                       #{match.participant2.seed}
                     </span>
                   )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,11 +15,9 @@ import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
 import { toApiIsoDateTime } from '@/utils/dateTimeInput';
 
-const step4Schema = z.object({
-  entryFee: z.number().min(0, 'Lệ phí không được là số âm'),
-});
-
-type Step4Values = z.infer<typeof step4Schema>;
+type Step4Values = {
+  entryFee: number;
+};
 
 interface CreateTournamentPayload {
   entryFee: number;
@@ -33,9 +32,13 @@ interface CreateTournamentPayload {
 }
 
 export default function Step4Fees() {
+  const translate = useTranslations('OrganizerCreateStep4');
   const { formData, updateFormData, prevStep, reset } = useCreateTournamentStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const step4Schema = z.object({
+    entryFee: z.number().min(0, translate('validationFee')),
+  });
 
   const { register, handleSubmit, formState: { errors } } = useForm<Step4Values>({
     resolver: zodResolver(step4Schema),
@@ -95,7 +98,7 @@ export default function Step4Fees() {
       // Call API
       const res = await tournamentsApi.createTournament(finalData);
       
-      toast.success('Tạo giải đấu thành công!');
+      toast.success(translate('createdSuccessShort'));
       reset(); // Clear persist storage
       
       // Navigate to the newly created tournament or dashboard
@@ -116,54 +119,54 @@ export default function Step4Fees() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Lệ phí & Hoàn tất</h2>
-        <p className="text-sm text-slate-500">Thiết lập lệ phí tham gia và kiểm tra lại thông tin giải đấu.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('feesTitle')}</h2>
+        <p className="text-sm text-slate-500">{translate('feesSubtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         
         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-          <h4 className="font-bold text-slate-900 mb-4">Lệ phí tham gia (VNĐ)</h4>
+          <h4 className="font-bold text-slate-900 mb-4">{translate('entryFeeLabel')}</h4>
           <Input
             type="number"
-            placeholder="Ví dụ: 500000"
+            placeholder={translate('entryFeePlaceholder')}
             {...register('entryFee', { valueAsNumber: true })}
             error={errors.entryFee?.message}
           />
           <div className="mt-3 flex items-start gap-2 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
             <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
-              <strong>Lưu ý về Thanh toán:</strong> Nền tảng sẽ thu hộ lệ phí tham gia và tự động đối soát. Phí nền tảng (Platform fee) áp dụng linh hoạt theo cấu hình hệ thống (Miễn phí 0đ nếu hệ thống đặt 0%). Nhập 0 nếu giải đấu miễn phí.
+              <strong>{translate('paymentNoteTitle')}</strong> {translate('paymentNote')}
             </p>
           </div>
         </div>
 
         {/* Summary Card */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
-          <h4 className="font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">Tóm tắt giải đấu</h4>
+          <h4 className="font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">{translate('summaryTitle')}</h4>
           <div className="grid grid-cols-2 gap-y-3 text-sm">
-            <div className="text-slate-500">Tên giải đấu:</div>
-            <div className="font-semibold text-slate-900">{formData.name || 'Chưa nhập'}</div>
+<div className="text-slate-500">{translate('summaryName')}</div>
+            <div className="font-semibold text-slate-900">{formData.name || translate('notEntered')}</div>
             
-            <div className="text-slate-500">Thể thức:</div>
+            <div className="text-slate-500">{translate('summaryFormat')}</div>
             <div className="font-semibold text-slate-900">{formData.format}</div>
             
-            <div className="text-slate-500">Số đội tối đa:</div>
-            <div className="font-semibold text-slate-900">{formData.maxParticipants || 'Không giới hạn'}</div>
+<div className="text-slate-500">{translate('summaryMaxParticipants')}</div>
+            <div className="font-semibold text-slate-900">{formData.maxParticipants || translate('unlimited')}</div>
             
-            <div className="text-slate-500">Khai mạc:</div>
-            <div className="font-semibold text-slate-900">{formData.startDate || 'Chưa chọn'}</div>
+<div className="text-slate-500">{translate('summaryStartDate')}</div>
+            <div className="font-semibold text-slate-900">{formData.startDate || translate('notSelected')}</div>
           </div>
         </div>
 
         <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
           <Button type="button" variant="outline" onClick={prevStep} disabled={isSubmitting} className="border-slate-200 text-slate-600">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại
+            <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
           </Button>
           <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30">
-            {isSubmitting ? 'Đang xử lý...' : (
+            {isSubmitting ? translate('submitLoading') : (
               <>
-                <CheckCircle className="w-4 h-4 mr-1.5" /> Hoàn tất tạo giải
+                <CheckCircle className="w-4 h-4 mr-1.5" /> {translate('completeCreate')}
               </>
             )}
           </Button>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { stripHtmlAndNormalize } from '@/utils/string';
 import { getTournament } from './tournament-fetcher';
 
@@ -9,12 +10,13 @@ interface LayoutProps {
 
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
   const resolvedParams = await params;
+  const translate = await getTranslations('TournamentDetail');
   const tournament = await getTournament(resolvedParams.id);
 
   if (tournament) {
     const title = `${tournament.name} | SportO`;
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 160);
-    const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống SportO. Đăng ký tham gia ngay!`;
+    const description = cleanDesc || translate('metaDescriptionFallback', { tournament: tournament.name });
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg';
 
     const canonicalUrl = `https://sporto.asia/tournaments/${resolvedParams.id}`;
@@ -42,8 +44,8 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   }
 
   return {
-    title: 'Chi tiết giải đấu | SportO',
-    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống SportO.',
+    title: translate('metaFallbackTitle'),
+    description: translate('metaFallbackDescription'),
   };
 }
 

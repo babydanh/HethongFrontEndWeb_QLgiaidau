@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { stripHtmlAndNormalize } from '@/utils/string';
 import TournamentDetailClient from './TournamentDetailClient';
@@ -30,7 +31,18 @@ function mapEventStatus(status?: string): string {
 
 export default async function TournamentDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
-  const tournament = await getTournament(resolvedParams.id);
+  let tournament: Awaited<ReturnType<typeof getTournament>>;
+  try {
+    tournament = await getTournament(resolvedParams.id);
+  } catch {
+    // Preserve Next.js error handling for transient API/5xx failures instead of
+    // turning an outage into a misleading not-found page.
+    throw new Error('Tournament detail is temporarily unavailable');
+  }
+
+  if (!tournament) {
+    notFound();
+  }
 
   const sportsEventSchema = tournament ? {
     '@context': 'https://schema.org',
@@ -60,12 +72,43 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     },
   } : null;
 
+  const breadcrumbSchema = tournament ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'SportO',
+        item: 'https://sporto.asia',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Giải đấu',
+        item: 'https://sporto.asia/tournaments',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: tournament.name,
+        item: `https://sporto.asia/tournaments/${resolvedParams.id}`,
+      },
+    ],
+  } : null;
+
   return (
     <>
       {sportsEventSchema && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventSchema) }}
+        />
+      )}
+      {breadcrumbSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
       <TournamentDetailClient tournamentId={resolvedParams.id} initialTournament={tournament} />

@@ -110,11 +110,11 @@ export default function LeaderboardPage() {
                 const apiCategories = (catsRes && catsRes.data && catsRes.data.length > 0) ? catsRes.data : [];
                 
                 const FALLBACK_CATEGORIES: Category[] = [
-                  { id: 'cat-badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
-                  { id: 'cat-table-tennis', name: 'Bóng bàn', slug: 'table_tennis', isActive: true },
-                  { id: 'cat-pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true },
-                  { id: 'cat-tennis', name: 'Tennis', slug: 'tennis', isActive: true },
-                  { id: 'cat-football', name: 'Bóng đá', slug: 'football', isActive: true },
+                  { id: 'cat-badminton', name: t('sportBadminton'), slug: 'badminton', isActive: true },
+                  { id: 'cat-table-tennis', name: t('sportTableTennis'), slug: 'table_tennis', isActive: true },
+                  { id: 'cat-pickleball', name: t('sportPickleball'), slug: 'pickleball', isActive: true },
+                  { id: 'cat-tennis', name: t('sportTennis'), slug: 'tennis', isActive: true },
+                  { id: 'cat-football', name: t('sportFootball'), slug: 'football', isActive: true },
                 ];
 
                 const merged: Category[] = [...apiCategories];
@@ -248,7 +248,7 @@ export default function LeaderboardPage() {
                                         onClick={() => setSearchResult([])}
                                         className="text-[10px] text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
                                     >
-                                        Đóng
+                                        {t('closeLookup')}
                                     </button>
                                 </div>
                                 {searchResult.map((u) => (

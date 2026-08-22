@@ -830,7 +830,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   </div>
                   {tournament.locationAddress && (
                     <div className="flex items-center justify-between py-0.5">
-                      <span className="text-slate-500 font-medium">Địa điểm:</span>
+                      <span className="text-slate-500 font-medium">{registrationTranslate('locationLabel')}:</span>
                       <span className="font-semibold text-slate-900 truncate max-w-[200px]" title={tournament.locationAddress}>{tournament.locationAddress}</span>
                     </div>
                   )}
@@ -1133,42 +1133,42 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       {/* Thẻ thông tin Vận động viên */}
                       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Thông tin Vận động viên</span>
-                          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Tài khoản chính</span>
+<span className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationTranslate('athleteInfoTitle')}</span>
+                          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{registrationTranslate('primaryAccount')}</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                           <div>
-                            <span className="text-slate-500 block">Họ và tên:</span>
+                            <span className="text-slate-500 block">{registrationTranslate('fullNameFieldLabel')}</span>
                             <span className="font-bold text-slate-900 text-sm">{user?.fullName || translate('notUpdated')}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 block">Số điện thoại:</span>
-                            <span className="font-semibold text-slate-800">{user?.phoneNumber || 'Chưa cập nhật'}</span>
+                            <span className="text-slate-500 block">{registrationTranslate('phoneFieldLabel')}</span>
+                            <span className="font-semibold text-slate-800">{user?.phoneNumber || translate('notUpdated')}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 block">Email:</span>
-                            <span className="font-semibold text-slate-800 truncate block">{user?.email || 'Chưa cập nhật'}</span>
+                            <span className="text-slate-500 block">{registrationTranslate('emailFieldLabel')}</span>
+                            <span className="font-semibold text-slate-800 truncate block">{user?.email || translate('notUpdated')}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 block">Nội dung đăng ký:</span>
-                            <span className="font-bold text-blue-600">{selectedDivision?.name || 'Đơn Nam'}</span>
+                            <span className="text-slate-500 block">{registrationTranslate('registrationContentLabel')}</span>
+                            <span className="font-bold text-blue-600">{selectedDivision?.name || registrationTranslate('singlesLabel')}</span>
                           </div>
                         </div>
-                        <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
+                        <input type="hidden" {...register('teamName')} value={user?.fullName || registrationTranslate('athleteFallback')} />
                       </div>
 
                       {/* Chi tiết lệ phí & xác nhận */}
                       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
                         <div className="flex justify-between items-center text-xs text-slate-600">
-                          <span>Hình thức đăng ký:</span>
-                          <span className="font-semibold text-slate-800">Cá nhân (Đơn)</span>
+<span>{registrationTranslate('registrationModeLabel')}</span>
+                          <span className="font-semibold text-slate-800">{registrationTranslate('singlesRegistrationMode')}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs text-slate-600">
-                          <span>Thể thức thi đấu:</span>
+<span>{registrationTranslate('competitionFormatLabel')}</span>
                           <span className="font-semibold text-slate-800">
-                            {selectedDivision?.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' :
-                             selectedDivision?.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + Loại trực tiếp' :
-                             selectedDivision?.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng / thua' : 'Loại trực tiếp'}
+                            {selectedDivision?.format === 'ROUND_ROBIN' ? registrationTranslate('formatRoundRobinLabel') :
+                             selectedDivision?.format === 'GROUP_STAGE_KNOCKOUT' ? registrationTranslate('formatGroupStageKnockoutLabel') :
+                             selectedDivision?.format === 'DOUBLE_ELIMINATION' ? registrationTranslate('formatDoubleEliminationLabel') : registrationTranslate('formatSingleEliminationLabel')}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200/80">
@@ -1181,11 +1181,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
                       {/* Lưu ý & Quy định thi đấu */}
                       <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-2 text-xs text-slate-600">
-                        <p className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">Lưu ý trước khi xác nhận:</p>
+<p className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">{registrationTranslate('beforeConfirmationTitle')}</p>
                         <ul className="space-y-1.5 text-[11px] leading-relaxed text-slate-500 list-disc list-inside">
-                          <li>VĐV cần có mặt tại cụm sân thi đấu trước 15 phút so với giờ thi đấu chính thức.</li>
-                          <li>Trang phục và vợt thi đấu phải tuân thủ điều lệ chính thức của giải.</li>
-                          <li>Sau khi đăng ký thành công, bạn có thể theo dõi nhánh đấu và lịch thi đấu trực tiếp trên hệ thống.</li>
+                          <li>{registrationTranslate('beforeConfirmationPresence')}</li>
+                          <li>{registrationTranslate('beforeConfirmationEquipment')}</li>
+                          <li>{registrationTranslate('beforeConfirmationTracking')}</li>
                         </ul>
                       </div>
 

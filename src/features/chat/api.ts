@@ -17,7 +17,7 @@ const normalizeMessage = (message: ChatMessageApiRow): ChatMessage => ({
   senderId: message.senderId,
   sender: {
     id: message.senderId,
-    fullName: message.senderName || 'Người dùng',
+    fullName: message.senderName?.trim() || '',
     avatarUrl: message.senderAvatarUrl || message.senderAvatar || undefined,
   },
   content: message.messageText || '',

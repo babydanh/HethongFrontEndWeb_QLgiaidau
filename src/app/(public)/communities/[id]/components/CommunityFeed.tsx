@@ -232,14 +232,15 @@ export default function CommunityFeed({
         },
         crypto.randomUUID(),
       );
+      const responseAuthor = response.data.author;
       const postWithAuthor = {
         ...response.data,
-        author: response.data.author?.fullName && response.data.author.fullName !== "Thành viên CLB"
-          ? response.data.author
+        author: responseAuthor?.id
+          ? responseAuthor
           : {
-              id: user?.id || response.data.author.id,
-              fullName: user?.fullName || response.data.author.fullName,
-              avatarUrl: user?.avatarUrl || response.data.author.avatarUrl,
+              id: user?.id || responseAuthor?.id || "",
+              fullName: user?.fullName || responseAuthor?.fullName || translate('clubMemberFallback'),
+              avatarUrl: user?.avatarUrl || responseAuthor?.avatarUrl,
             },
       };
       setPosts((current) => [

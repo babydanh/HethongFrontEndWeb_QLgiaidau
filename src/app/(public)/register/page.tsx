@@ -129,11 +129,11 @@ export default function RegisterPage() {
         {/* Headline + list */}
         <div className="relative z-10 px-10 pb-4">
           <h1 className="text-4xl font-bold text-white leading-tight tracking-tight">
-            Tham gia ngay
+            {t('registerHeroJoinNow')}
             <br />
             <span className="text-blue-400">{t('competitiveCommunity')}</span>
             <br />
-            hàng đầu
+            {t('registerHeroLeading')}
           </h1>
           <p className="mt-3 text-slate-300 text-sm leading-relaxed max-w-[320px]">
             {t('registerDescription')}
@@ -195,7 +195,7 @@ export default function RegisterPage() {
               </Link>
             </div>
 
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Tạo tài khoản</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t('registerPageTitle')}</h2>
             <p className="mt-1 text-sm text-slate-500">
               {t('registerSubtitle')}
             </p>
@@ -224,7 +224,7 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('fullName')}</label>
-                <Input placeholder="Nguyễn Văn A" {...register('fullName')} error={errors.fullName ? t('fullNameMinLength') : undefined} />
+                <Input placeholder={t('namePlaceholder')} {...register('fullName')} error={errors.fullName ? t('fullNameMinLength') : undefined} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('email')}</label>
@@ -259,7 +259,7 @@ export default function RegisterPage() {
             </form>
 
             <p className="mt-5 text-center text-sm text-slate-500">
-              Đã có tài khoản?{' '}
+              {t('alreadyHaveAccount')}{' '}
               <Link href="/login" className="font-bold text-blue-600 hover:underline">
                 {t('signInNow')}
               </Link>

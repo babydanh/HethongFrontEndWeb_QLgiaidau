@@ -193,7 +193,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   }, [effectiveTournamentId, setMatches]);
 
   const getMatchStageKey = (match: BracketMatch) => {
-    const stageName = match.group?.stage?.name?.trim();
+    const stageName = match.stage?.name?.trim() || match.group?.stage?.name?.trim();
     return stageName || 'MAIN_STAGE';
   };
 
@@ -245,9 +245,13 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const getStageVietnameseName = (rawName?: string | null) => {
     if (!rawName) return translate('stageDefault');
     const map: Record<string, string> = {
-      'Elimination Stage': translate('stageElimination'),
+            'Elimination Stage': translate('stageElimination'),
       'Knockout Stage': translate('stageElimination'),
+      'Loại trực tiếp': translate('stageElimination'),
+      'Vòng loại trực tiếp': translate('stageElimination'),
+      'Vòng bảng': translate('stageGroup'),
       'Group Stage': translate('stageGroup'),
+
       'Round Robin': translate('stageRoundRobin'),
       'Vong tron tinh diem': translate('stageRoundRobin'),
       'Vong loai truc tiep': translate('stageElimination'),

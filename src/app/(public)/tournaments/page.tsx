@@ -29,16 +29,8 @@ export default function TournamentsListPage() {
   const locale = useLocale();
   const translate = useTranslations("TournamentList");
   const registrationTranslate = useTranslations("RegistrationMode");
-  const moreFiltersLabel = translate.has("moreFilters")
-    ? translate("moreFilters")
-    : locale === "vi"
-      ? "Bộ lọc thêm"
-      : "More filters";
-  const recentlyFinishedLabel = translate.has("recentlyFinished")
-    ? translate("recentlyFinished")
-    : locale === "vi"
-      ? "Mới kết thúc"
-      : "Recently finished";
+  const moreFiltersLabel = translate('moreFilters');
+  const recentlyFinishedLabel = translate('recentlyFinished');
   const { user } = useAuthStore();
 
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {

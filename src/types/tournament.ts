@@ -343,8 +343,8 @@ export interface BracketMatch {
   bracketBranch: string;
   status: string;
   isBye: boolean;
-  participant1: { id: string; teamName: string; seed: number | null; logoUrl?: string | null; members?: { userId: string; fullName: string | null }[] } | null;
-  participant2: { id: string; teamName: string; seed: number | null; logoUrl?: string | null; members?: { userId: string; fullName: string | null }[] } | null;
+  participant1: { id: string; teamName: string; seed: number | null; logoUrl?: string | null; members?: { userId: string; fullName: string | null; avatarUrl?: string | null }[] } | null;
+  participant2: { id: string; teamName: string; seed: number | null; logoUrl?: string | null; members?: { userId: string; fullName: string | null; avatarUrl?: string | null }[] } | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
   winnerId: string | null;
@@ -363,6 +363,11 @@ export interface BracketMatch {
   refereeName?: string | null;
   groupId: string;
   matchConfig?: SportRuleScoringConfig | null;
+  stage?: {
+    name: string;
+    type?: string | null;
+    roundConfig?: StageRoundConfig | null;
+  } | null;
   group?: {
     name: string;
     stage?: {

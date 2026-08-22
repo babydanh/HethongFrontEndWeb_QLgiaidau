@@ -13,18 +13,13 @@ import {
 } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
+import { getCommunityTagDisplayName } from './tag-display';
 
 const MAX_TAGS = 3;
 const MAX_TAG_LENGTH = 15;
 // Khớp backend UpdateMemberTagsDto: chữ/số/khoảng trắng/_/-, không emoji/ký tự đặc biệt.
 const TAG_PATTERN = /^[\p{L}\p{N} _-]+$/u;
-const TAG_PRESETS = [
-  "Cây hài",
-  "Kèo thơm",
-  "MVP tuần",
-  "Đang lên form",
-  "Kèo khó",
-];
+
 
 interface TagAssignModalProps {
   open: boolean;
@@ -50,15 +45,14 @@ export default function TagAssignModal({
   onSave,
 }: TagAssignModalProps) {
   const translate = useTranslations('Common');
-  const getPresetLabel = (name: string) => {
-    if (name === "Cây hài") return translate('tagSuggestionFunny');
-    if (name === "Kèo thơm") return translate('tagSuggestionGoodMatch');
-    if (name === "MVP tuần") return translate('tagSuggestionWeeklyMvp');
-    if (name === "Đang lên form") return translate('tagSuggestionRising');
-    if (name === "Kèo khó") return translate('tagSuggestionToughMatch');
-    return name;
-  };
-  const availablePresets = presets?.length ? presets : TAG_PRESETS.map((name) => ({ name, color: '#E2E8F0' }));
+  const defaultPresets = [
+    { name: translate('tagSuggestionFunny'), color: '#E2E8F0' },
+    { name: translate('tagSuggestionGoodMatch'), color: '#E2E8F0' },
+    { name: translate('tagSuggestionWeeklyMvp'), color: '#E2E8F0' },
+    { name: translate('tagSuggestionRising'), color: '#E2E8F0' },
+    { name: translate('tagSuggestionToughMatch'), color: '#E2E8F0' },
+  ];
+  const availablePresets = presets?.length ? presets : defaultPresets;
   const [tags, setTags] = useState<string[]>(currentTags);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -141,12 +135,12 @@ export default function TagAssignModal({
                   key={tag}
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
                 >
-                  {getPresetLabel(tag)}
+                  {getCommunityTagDisplayName(tag, translate)}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
                     disabled={isSaving}
-                    aria-label={translate('tagRemoveAria', { tag: getPresetLabel(tag) })}
+                    aria-label={translate('tagRemoveAria', { tag: getCommunityTagDisplayName(tag, translate) })}
                     className="text-slate-400 hover:text-rose-600 transition-colors"
                   >
                     <X className="h-3 w-3" strokeWidth={1.5} />
@@ -197,7 +191,7 @@ export default function TagAssignModal({
           <div className="flex flex-wrap gap-2">
             {availablePresets.map((preset) => (
               <button
-                key={getPresetLabel(preset.name)}
+                key={preset.name}
                 type="button"
                 onClick={() => {
                   setInput(preset.name);
@@ -207,7 +201,7 @@ export default function TagAssignModal({
                 className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 disabled:opacity-50"
                 style={{ backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66` }}
               >
-                {getPresetLabel(preset.name)}
+                {preset.name}
               </button>
             ))}
           </div>

@@ -31,6 +31,7 @@ import { calculateStandings, getConfiguredStandingsScoring, getFootballForm } fr
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { getBracketStatLabels, resolveBracketMatchRules } from './sportRuleDisplay';
 import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
+import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -316,7 +317,7 @@ export function RoundRobinView({
                 {group.length === 2 && (
                   <>
                     <button onClick={async () => {
-                      const t = toast.loading('Đang tạo Play-off...');
+                      const t = toast.loading(translate('creatingPlayoff'));
                       try {
                         await tournamentsApi.createPlayoffMatch(tournamentId!, {
                           stageId: stageId!,
@@ -438,13 +439,21 @@ export function RoundRobinView({
                         {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> {translate('liveLabel')}</span>}
                       </div>
                       <div className="space-y-2.5">
-                        <div className="flex min-h-[28px] items-center justify-between">
-                          <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant1?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant1?.teamName ?? translate('pendingParticipant')}</span>
-                          <span className={'font-bold text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p1SetsWon : '-'}</span>
+                        <div className="flex min-h-[34px] items-center justify-between gap-2">
+                          <ParticipantIdentity
+                            participant={m.participant1}
+                            fallback={translate('pendingParticipant')}
+                            compact
+                          />
+                          <span className={'shrink-0 font-bold text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p1SetsWon : '-'}</span>
                         </div>
-                        <div className="flex min-h-[28px] items-center justify-between">
-                          <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant2?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant2?.teamName ?? translate('pendingParticipant')}</span>
-                          <span className={'font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p2SetsWon : '-'}</span>
+                        <div className="flex min-h-[34px] items-center justify-between gap-2">
+                          <ParticipantIdentity
+                            participant={m.participant2}
+                            fallback={translate('pendingParticipant')}
+                            compact
+                          />
+                          <span className={'shrink-0 font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p2SetsWon : '-'}</span>
                         </div>
                       </div>
                       <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-1 flex-col justify-end gap-1.5">

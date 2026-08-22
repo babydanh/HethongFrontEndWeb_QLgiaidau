@@ -30,19 +30,10 @@ export function PenaltyPanel({
   const locale = useLocale();
   const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const schema = useMemo(() => getPenaltySchema(sportKind), [sportKind]);
-  const schemaKey = sportKind === 'TENNIS'
-    ? 'TENNIS'
-    : sportKind === 'PICKLEBALL_RALLY' || sportKind === 'PICKLEBALL_SIDE_OUT'
-      ? 'PICKLEBALL_SIDE_OUT'
-      : sportKind === 'TABLE_TENNIS'
-        ? 'TABLE_TENNIS'
-        : sportKind === 'BADMINTON'
-          ? 'BADMINTON'
-          : 'DEFAULT';
   const localizedSchema = useMemo(() => ({
     ...schema,
-    title: translate(`schema.${schemaKey}.title`),
-    description: translate(`schema.${schemaKey}.description`),
+    title: translate(`schema.${schema.schemaKey}.title`),
+    description: translate(`schema.${schema.schemaKey}.description`),
     groups: schema.groups.map((group) => ({
       ...group,
       label: translate(`schema.groups.${group.id}`),
@@ -51,10 +42,12 @@ export function PenaltyPanel({
         label: translate(`schema.items.${item.kind}.label`),
         effectLabel: translate(`schema.items.${item.kind}.effectLabel`),
         description: translate(`schema.items.${item.kind}.description`),
-        cardLabel: item.cardLabel ? translate(`schema.items.${item.kind}.cardLabel`) : undefined,
+        cardLabel: item.cardLabelKey
+          ? translate(`schema.items.${item.kind}.${item.cardLabelKey}`)
+          : undefined,
       })),
     })),
-  }), [schema, schemaKey, translate]);
+  }), [schema, translate]);
   const [selectedPenaltyTeam, setSelectedPenaltyTeam] = useState<PenaltyTeamSelection>('neutral');
   const [selectedPenaltyKind, setSelectedPenaltyKind] = useState<string>(schema.groups[0]?.items[0]?.kind ?? '');
   const [penaltyNote, setPenaltyNote] = useState('');
@@ -137,9 +130,9 @@ export function PenaltyPanel({
                         <p className="text-sm font-bold text-slate-900">{item.label}</p>
                         <p className="mt-1 text-[11px] font-semibold text-slate-500">{item.effectLabel}</p>
                       </div>
-                      {item.cardLabel ? (
+                      {item.cardLabelKey ? (
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                          {item.cardLabel}
+                          {translate(`schema.items.${item.kind}.${item.cardLabelKey}`)}
                         </span>
                       ) : null}
                     </div>
@@ -201,7 +194,7 @@ export function PenaltyPanel({
             onAddPenalty(
               resolvePenaltyTeam(),
               selectedPenalty.kind,
-              localizedSelectedPenalty?.label ?? selectedPenalty.label,
+              localizedSelectedPenalty?.label ?? translate(`schema.items.${selectedPenalty.kind}.label`),
               penaltyNote.trim() || undefined,
             );
             setPenaltyNote('');
@@ -228,7 +221,7 @@ export function PenaltyPanel({
             <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
               <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                 <div className="font-bold text-slate-900">
-                  {localizedPenaltyKinds.find((penalty) => penalty.kind === item.kind)?.label ?? item.label}
+                  {localizedPenaltyKinds.find((penalty) => penalty.kind === item.kind)?.label ?? translate(`schema.items.${item.kind}.label`)}
                   {item.team === 1 ? ` • ${team1Name}` : item.team === 2 ? ` • ${team2Name}` : translate('allMatch')}
                 </div>
                 <div className="text-[11px] text-slate-500">{new Date(item.createdAt).toLocaleString(dateLocale)}</div>

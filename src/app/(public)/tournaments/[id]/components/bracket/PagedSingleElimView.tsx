@@ -112,7 +112,7 @@ export function PagedSingleElimView({
     });
 
     return map;
-  }, [visibleRounds, byRound, matches, cardH, roundGap, CARD_W]);
+  }, [visibleRounds, byRound, matches, cardH, roundGap]);
 
   // Calculate dynamic bounding height to fit matches tightly
   const totalHeight = useMemo(() => {
@@ -128,15 +128,18 @@ export function PagedSingleElimView({
   const numVisible = visibleRounds.length;
   const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
 
-  const localizeRoundLabel = (label: string) => label
-    .replaceAll('Chung kết', bracketTranslate('singleFinal'))
-    .replaceAll('Bán kết', bracketTranslate('singleSemifinal'))
-    .replaceAll('Tứ kết', bracketTranslate('singleQuarterfinal'))
-    .replaceAll('Vòng 128', bracketTranslate('singleRound128'))
-    .replaceAll('Vòng 64', bracketTranslate('singleRound64'))
-    .replaceAll('Vòng 32', bracketTranslate('singleRound32'))
-    .replaceAll('Vòng 16', bracketTranslate('singleRound16'))
-    .replace(/Vòng (\d+)/g, (_, number) => bracketTranslate('singleRound', { number }));
+  const roundLabelTranslations = {
+    final: bracketTranslate('singleFinal'),
+    semifinal: bracketTranslate('singleSemifinal'),
+    quarterfinal: bracketTranslate('singleQuarterfinal'),
+    roundOf: (number: number) => {
+      if (number === 128) return bracketTranslate('singleRound128');
+      if (number === 64) return bracketTranslate('singleRound64');
+      if (number === 32) return bracketTranslate('singleRound32');
+      if (number === 16) return bracketTranslate('singleRound16');
+      return bracketTranslate('singleRound', { number });
+    },
+  };
 
   if (!rounds.length) {
     return (
@@ -165,7 +168,7 @@ export function PagedSingleElimView({
               {bracketTranslate('roundProgress', { current: activeRoundIndex + 1, total: rounds.length })}
             </span>
             <h4 className="text-sm sm:text-base font-bold text-slate-900">
-              {localizeRoundLabel(getRoundLabel(currentRound - 1, maxRound))}
+              {getRoundLabel(currentRound - 1, maxRound, '', roundLabelTranslations)}
             </h4>
           </div>
         </div>
@@ -263,7 +266,7 @@ export function PagedSingleElimView({
                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      {localizeRoundLabel(getRoundLabel(r - 1, maxRound))}
+                      {getRoundLabel(r - 1, maxRound, '', roundLabelTranslations)}
                     </button>
                   </div>
                 );

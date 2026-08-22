@@ -61,20 +61,28 @@ export function buildMatchesByRound(
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /** Round label from right (0 = final, 1 = semi, …) */
+export interface RoundLabelTranslations {
+  final: string;
+  semifinal: string;
+  quarterfinal: string;
+  roundOf: (number: number) => string;
+}
+
 export function getRoundLabel(
   ri: number,
   total: number,
   prefix = '',
+  translations: RoundLabelTranslations,
 ): string {
   const fromEnd = total - 1 - ri;
-  if (fromEnd === 0) return prefix ? `${prefix} Chung kết` : 'Chung kết';
-  if (fromEnd === 1) return prefix ? `${prefix} Bán kết` : 'Bán kết';
-  if (fromEnd === 2) return prefix ? `${prefix} Tứ kết` : 'Tứ kết';
-  if (fromEnd === 3) return prefix ? `${prefix} Vòng 16` : 'Vòng 16';
-  if (fromEnd === 4) return prefix ? `${prefix} Vòng 32` : 'Vòng 32';
-  if (fromEnd === 5) return prefix ? `${prefix} Vòng 64` : 'Vòng 64';
-  if (fromEnd === 6) return prefix ? `${prefix} Vòng 128` : 'Vòng 128';
-  return `${prefix ? prefix + ' ' : ''}Vòng ${ri + 1}`;
+  const label = fromEnd === 0
+    ? translations.final
+    : fromEnd === 1
+      ? translations.semifinal
+      : fromEnd === 2
+        ? translations.quarterfinal
+        : translations.roundOf(fromEnd === 3 ? 16 : fromEnd === 4 ? 32 : fromEnd === 5 ? 64 : fromEnd === 6 ? 128 : ri + 1);
+  return prefix ? `${prefix} ${label}` : label;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

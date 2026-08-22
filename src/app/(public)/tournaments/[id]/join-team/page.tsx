@@ -1,4 +1,5 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { getTournament } from '../tournament-fetcher';
 import JoinTeamClient from './JoinTeamClient';
 import { stripHtmlAndNormalize } from '@/utils/string';
@@ -18,6 +19,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const resolvedSearchParams = await searchParams;
   
   const id = resolvedParams.id;
+  const translate = await getTranslations('TournamentInviteJoin');
   const pid = typeof resolvedSearchParams.pid === 'string' ? resolvedSearchParams.pid : null;
   const token = typeof resolvedSearchParams.token === 'string' ? resolvedSearchParams.token : null;
 
@@ -42,14 +44,14 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   }
 
   if (tournament) {
-    const title = teamName 
-      ? `Tham gia đội ${teamName} - ${tournament.name} | SportO`
-      : `Mời tham gia đội - ${tournament.name} | SportO`;
-      
+    const title = teamName
+      ? translate('metaTitleWithTeam', { team: teamName, tournament: tournament.name })
+      : translate('metaTitleWithoutTeam', { tournament: tournament.name });
+
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 100);
     const description = teamName
-      ? `Bạn được mời tham gia đội ${teamName} tại giải đấu ${tournament.name}. Nhấn vào link để xác nhận ngay!`
-      : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống SportO. Đăng ký tham gia ngay!`;
+      ? translate('metaDescriptionWithTeam', { team: teamName, tournament: tournament.name })
+      : cleanDesc || translate('metaDescriptionFallback', { tournament: tournament.name });
       
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg';
     const canonicalUrl = `https://sporto.asia/tournaments/${id}/join-team${pid ? `?pid=${pid}&token=${token ?? ''}` : ''}`;
@@ -77,8 +79,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     };
   }
 
-  const fallbackTitle = 'Mời tham gia đội thi đấu | SportO';
-  const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại SportO. Nhấn để xem chi tiết và xác nhận!';
+  const fallbackTitle = translate('metaFallbackTitle');
+  const fallbackDesc = translate('metaFallbackDescription');
   const fallbackImage = 'https://sporto.asia/sporto_v1.svg';
 
   return {

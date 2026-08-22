@@ -105,6 +105,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/tournaments`, changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/communities`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/matches`, changeFrequency: 'always', priority: 0.8 },
+    { url: `${baseUrl}/leaderboard`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${baseUrl}/series`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/terms`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/download`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
   ];
@@ -114,6 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // (tournaments.service.ts findAll -> repositories.findAll({ ...query, visibility: 'PUBLIC' })),
   // đồng thời repository loại DRAFT/PENDING_APPROVAL/SUSPENDED/CANCELLED khi không truyền createdBy.
   // Truyền visibility=PUBLIC tường minh để không đưa giải PRIVATE vào sitemap.
+  // Không lọc COMPLETED: trang kết quả/lịch sử của giải đã kết thúc vẫn có giá trị SEO.
   const tournaments = await fetchAllPages('/tournaments', { visibility: 'PUBLIC' });
   const tournamentRoutes: MetadataRoute.Sitemap = tournaments.map((t) =>
     toRouteUrl(`${baseUrl}/tournaments/${t.id}`, t, 'daily', 0.8),
@@ -128,6 +132,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     toRouteUrl(`${baseUrl}/communities/${c.id}`, c, 'weekly', 0.7),
   );
 
+  // Public profiles are client-rendered and currently have no page-specific metadata,
+  // so they remain excluded until SSR metadata and a stable profile index policy exist.
+  // Individual /live/[matchId] and /series/[slug] pages are highly interactive and
+  // volatile; do not enumerate them here until their SEO rendering policy is defined.
   return [...staticRoutes, ...tournamentRoutes, ...communityRoutes];
 }
 

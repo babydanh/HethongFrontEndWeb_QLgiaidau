@@ -122,18 +122,30 @@ export function writeFootballScore(score: FootballScoreState): Record<string, un
   };
 }
 
-export function footballPhaseLabel(phase: FootballMatchPhase): string {
-  const labels: Record<FootballMatchPhase, string> = {
-    FIRST_HALF: 'Hiệp 1',
-    HALFTIME: 'Giải lao',
-    SECOND_HALF: 'Hiệp 2',
-    STOPPAGE_TIME: 'Bù giờ',
-    FULL_TIME: 'Hết giờ',
-    EXTRA_TIME_FIRST_HALF: 'Hiệp phụ 1',
-    EXTRA_TIME_BREAK: 'Nghỉ hiệp phụ',
-    EXTRA_TIME_SECOND_HALF: 'Hiệp phụ 2',
-    PENALTY_SHOOTOUT: 'Luân lưu',
-    COMPLETED: 'Hoàn thành',
+export type FootballPhaseTranslationKey =
+  | 'footballFirstHalf'
+  | 'footballSecondHalf'
+  | 'footballHalftime'
+  | 'footballStoppageTime'
+  | 'footballFullTime'
+  | 'footballExtraTimeFirstHalf'
+  | 'footballExtraTimeBreak'
+  | 'footballExtraTimeSecondHalf'
+  | 'footballPenaltyShootout'
+  | 'footballCompleted';
+
+export function footballPhaseLabel(phase: FootballMatchPhase): FootballPhaseTranslationKey {
+  const labels: Record<FootballMatchPhase, FootballPhaseTranslationKey> = {
+    FIRST_HALF: 'footballFirstHalf',
+    HALFTIME: 'footballHalftime',
+    SECOND_HALF: 'footballSecondHalf',
+    STOPPAGE_TIME: 'footballStoppageTime',
+    FULL_TIME: 'footballFullTime',
+    EXTRA_TIME_FIRST_HALF: 'footballExtraTimeFirstHalf',
+    EXTRA_TIME_BREAK: 'footballExtraTimeBreak',
+    EXTRA_TIME_SECOND_HALF: 'footballExtraTimeSecondHalf',
+    PENALTY_SHOOTOUT: 'footballPenaltyShootout',
+    COMPLETED: 'footballCompleted',
   };
   return labels[phase];
 }

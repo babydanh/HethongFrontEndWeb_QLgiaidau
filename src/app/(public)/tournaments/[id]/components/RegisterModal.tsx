@@ -113,14 +113,14 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-md border border-amber-200 leading-snug">
-                  ⏱️ <strong>{translate('pairingDeadline')}:</strong> Hệ thống giữ chỗ tối đa <strong>1 giờ</strong> hoặc đến khi đóng đăng ký, tùy mốc nào đến trước. Đồng đội cần xác nhận trước thời hạn đó.
+                  ⏱️ <strong>{translate('pairingDeadline')}:</strong> {translate('pairingDeadlineNotice', { hours: 1 })}
                 </p>
               </div>
             )}
             
             <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-lg">
               <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                * Lưu ý: Lệ phí tham gia sẽ được thông báo ở bước tiếp theo nếu có. Bằng việc đăng ký, bạn đồng ý với các điều khoản của Ban tổ chức.
+                {translate('registrationTermsNotice')}
               </p>
             </div>
 
@@ -132,7 +132,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
                   onChange={(event) => setRankingConsent(event.target.checked)}
                   className="mt-1 h-4 w-4 accent-sky-600"
                 />
-                <span>{translate('rankingConsentLabel')} trên bảng xếp hạng.</span>
+                <span>{translate('rankingConsentLabel')}</span>
               </label>
             )}
 

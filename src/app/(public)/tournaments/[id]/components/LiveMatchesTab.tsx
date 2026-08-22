@@ -195,14 +195,14 @@ export default function LiveMatchesTab({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">
-                Các trận đang diễn ra trực tiếp
+                {translate('liveMatchesTabTitle')}
               </h3>
               <span className="bg-rose-600 text-white text-xs font-black px-2 py-0.5 rounded-full shadow-sm">
                 {filteredMatches.length}
               </span>
             </div>
             <p className="text-xs text-rose-700/80 font-medium mt-0.5">
-              Tự động cập nhật tỷ số trực tiếp và phòng thi đấu theo thời gian thực
+              {translate('liveMatchesTabDescription')}
             </p>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function LiveMatchesTab({
           <div className="relative w-full sm:w-64">
             <input
               type="text"
-              placeholder="Tìm tên VĐV, đội, sân..."
+              placeholder={translate('liveMatchesTabSearchPlaceholder')}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -248,10 +248,10 @@ export default function LiveMatchesTab({
                   <div className="flex items-center gap-1.5">
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-black bg-rose-50 text-rose-600 border border-rose-200 animate-pulse uppercase tracking-wider">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />
-                      LIVE
+                      {translate('liveLabel')}
                     </span>
                     <span className="text-xs font-extrabold text-slate-800">
-                      Trận #{match.matchOrder ?? 1}
+                      {translate('liveMatchesTabMatchNumber', { number: match.matchOrder ?? 1 })}
                     </span>
                   </div>
 
@@ -263,7 +263,7 @@ export default function LiveMatchesTab({
                     )}
                     {match.roundNumber && (
                       <span className="text-xs font-medium text-slate-500">
-                        Vòng {match.roundNumber}
+                        {translate('liveMatchesTabRoundNumber', { round: match.roundNumber })}
                       </span>
                     )}
                   </div>
@@ -315,10 +315,10 @@ export default function LiveMatchesTab({
                 <div className="mt-3 pt-2 flex items-center justify-between text-xs font-semibold text-slate-500">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Đang thi đấu'}
+                    {match.scheduledAt ? formatDateTime(match.scheduledAt) : translate('liveMatchesTabInProgress')}
                   </span>
                   <span className="text-rose-600 group-hover:underline flex items-center gap-1 font-bold">
-                    Vào phòng Live <PlayCircle className="w-3.5 h-3.5" />
+                    {translate('liveMatchesTabEnterRoom')} <PlayCircle className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </Link>
@@ -330,9 +330,9 @@ export default function LiveMatchesTab({
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
             <Radio className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-700">Hiện chưa có trận đấu nào đang Live</p>
+          <p className="text-sm font-bold text-slate-700">{translate('liveMatchesTabEmptyTitle')}</p>
           <p className="text-xs text-slate-400 mt-1">
-            Khi ban tổ chức bắt đầu trận đấu, trận sẽ tự động hiển thị tại đây.
+            {translate('liveMatchesTabEmptyDescription')}
           </p>
         </div>
       )}
@@ -341,7 +341,11 @@ export default function LiveMatchesTab({
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-2">
           <p className="text-xs text-slate-500 font-semibold">
-            Trang <strong className="text-slate-800">{validPage}</strong> / {totalPages} (Tổng cộng {filteredMatches.length} trận)
+            {translate('liveMatchesTabPaginationSummary', {
+              page: validPage,
+              totalPages,
+              count: filteredMatches.length,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -350,7 +354,7 @@ export default function LiveMatchesTab({
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm transition-all"
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> Trang trước
+              <ChevronLeft className="w-3.5 h-3.5" /> {translate('previousPage')}
             </button>
             <button
               type="button"
@@ -358,7 +362,7 @@ export default function LiveMatchesTab({
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm transition-all"
             >
-              Trang sau <ChevronRight className="w-3.5 h-3.5" />
+              {translate('nextPage')} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

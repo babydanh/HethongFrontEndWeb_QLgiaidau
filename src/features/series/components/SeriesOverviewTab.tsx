@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { TournamentSeries, SeriesLeg } from '@/types/series';
 import { Trophy, Calendar, MapPin, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -13,6 +13,8 @@ interface SeriesOverviewTabProps {
 export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, legs }) => {
   const translate = useTranslations('SeriesDetail');
   const commonTranslate = useTranslations('Common');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   // Find the next upcoming tournament event in the ongoing/upcoming legs
   const allEvents = legs.flatMap(l => l.events || []);
   const upcomingEvent = allEvents
@@ -24,7 +26,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
     })[0];
 
   const formattedPrize = series.totalPrize
-    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(series.totalPrize)
+    ? new Intl.NumberFormat(dateLocale, { style: 'currency', currency: 'VND' }).format(series.totalPrize)
     : translate('formatAgreement');
 
   return (
@@ -113,7 +115,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
                 <span>
-                  {new Date(upcomingEvent.tournament.startDate || '').toLocaleDateString('vi-VN')}
+                  {new Date(upcomingEvent.tournament.startDate || '').toLocaleDateString(dateLocale)}
                 </span>
               </div>
               {upcomingEvent.region && (

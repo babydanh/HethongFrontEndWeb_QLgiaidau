@@ -85,28 +85,7 @@ export function FootballOfficialPanel({
 }: FootballOfficialPanelProps) {
   const translate = useTranslations('LiveMatch');
 
-  const localizedPhaseLabel = (phase: FootballMatchPhase) => {
-    switch (phase) {
-      case 'FIRST_HALF':
-        return translate('footballFirstHalf');
-      case 'HALFTIME':
-        return translate('footballHalftime');
-      case 'STOPPAGE_TIME':
-        return translate('footballStoppageTime');
-      case 'FULL_TIME':
-        return translate('footballFullTime');
-      case 'EXTRA_TIME_FIRST_HALF':
-        return translate('footballExtraTimeFirstHalf');
-      case 'EXTRA_TIME_BREAK':
-        return translate('footballExtraTimeBreak');
-      case 'EXTRA_TIME_SECOND_HALF':
-        return translate('footballExtraTimeSecondHalf');
-      case 'PENALTY_SHOOTOUT':
-        return translate('footballPenaltyShootout');
-      default:
-        return footballPhaseLabel(phase);
-    }
-  };
+  const localizedPhaseLabel = (phase: FootballMatchPhase) => translate(footballPhaseLabel(phase));
   return (
     <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">

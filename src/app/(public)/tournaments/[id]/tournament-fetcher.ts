@@ -37,11 +37,18 @@ export const getTournament = cache(async (id: string) => {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // A missing/private/cancelled tournament should become a real 404 at the route.
+      // Keep 429/5xx as errors so a temporary API outage is not cached as "not found".
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        return null;
+      }
+      throw new Error(`Tournament detail request failed with ${response.status}`);
+    }
     const res = await response.json();
     return res.data ?? null;
   } catch (error) {
     console.error('Failed to fetch tournament:', error);
-    return null;
+    throw error;
   }
 });

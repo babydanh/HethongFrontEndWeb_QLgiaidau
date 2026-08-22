@@ -129,7 +129,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
         {tournament.maxParticipants && tournament.maxParticipants > 0 ? (
           <div className="w-full max-w-sm mt-1">
             <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-              <span className="text-slate-500 uppercase tracking-wider">Số lượng hồ sơ</span>
+              <span className="text-slate-500 uppercase tracking-wider">{translate("rosterCountLabel")}</span>
               <span className="text-slate-800">{participants.length} / {tournament.maxParticipants}</span>
             </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -143,7 +143,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           </div>
         ) : (
           <div className="flex justify-between items-center text-xs mb-1.5 font-bold w-full max-w-sm mt-1">
-            <span className="text-slate-500 uppercase tracking-wider">Số lượng hồ sơ</span>
+            <span className="text-slate-500 uppercase tracking-wider">{translate("rosterCountLabel")}</span>
             <span className="text-slate-800">{participants.length} / ∞</span>
           </div>
         )}
@@ -153,7 +153,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       <div className="relative w-full max-w-md">
         <input
           type="text"
-          placeholder="Tìm theo tên đội hoặc thành viên..."
+          placeholder={translate("teamSearchPlaceholder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9.5 shadow-sm"
@@ -177,8 +177,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                 <tr>
                   <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-10 sm:w-16">#</th>
                   <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">{translate("teamNameHeader")}</th>
-                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">Thanh toán</th>
-                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">Chi tiết</th>
+                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">{translate("paymentStatusHeader")}</th>
+                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">{translate("detailsHeader")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,11 +222,11 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
                           {team.isPaid ? (
                             <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
-                              Đã đóng phí
+                              {translate("paymentPaid")}
                             </span>
                           ) : (
                             <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
-                              Chờ thanh toán
+                              {translate("paymentPending")}
                             </span>
                           )}
                         </td>
@@ -241,7 +241,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
                             <div className="flex flex-col gap-4">
                               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                <User className="w-4 h-4 text-slate-400" /> Thành viên đăng ký ({members.length})
+                                <User className="w-4 h-4 text-slate-400" /> {translate("registeredMembers", { count: members.length })}
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {members.map((member, mIdx) => {
@@ -274,11 +274,11 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                           <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
                                             <Award className="w-3.5 h-3.5 text-blue-500" />
                                             <span>
-                                              {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
+                                              {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? translate("eloDoublesLabel") : 'ELO'}
                                             </span>
                                           </p>
                                         ) : (
-                                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">VĐV chính thức</p>
+                                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">{translate("officialAthlete")}</p>
                                         )}
                                       </div>
                                     </div>
@@ -334,7 +334,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           </div>
         ) : (
           <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
-            Không tìm thấy đội hoặc thành viên phù hợp với từ khóa &ldquo;{searchQuery}&rdquo;
+            {translate("teamsSearchEmpty", { query: searchQuery })}
           </div>
         )
       ) : (

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { TableProperties } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TableProperties } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
@@ -171,8 +171,36 @@ export function PagedRoundRobinView({
         <p className="text-xs font-semibold text-slate-500">{translate('resultsAcrossLegs', { count: legCount })}</p>
         {viewButtons('table')}
       </div>
+      {legCount > 1 && (
+        <div className="flex items-center justify-center gap-2" aria-label={translate('selectGroupLeg')}>
+          <button
+            type="button"
+            onClick={() => changeLeg(currentLeg - 1)}
+            disabled={currentLeg <= 1}
+            aria-label={translate('legLabel', { number: Math.max(1, currentLeg - 1) })}
+            className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="min-w-24 text-center text-xs font-semibold text-slate-600">
+            {translate('legProgress', { current: currentLeg, total: legCount })}
+          </span>
+          <button
+            type="button"
+            onClick={() => changeLeg(currentLeg + 1)}
+            disabled={currentLeg >= legCount}
+            aria-label={translate('legLabel', { number: Math.min(legCount, currentLeg + 1) })}
+            className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <RoundRobinView
-        matches={matches}
+        matches={legMatches}
+        roundInfoMatches={matches}
+        activeRound={currentRound}
+        onRoundChange={setActiveRound}
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}

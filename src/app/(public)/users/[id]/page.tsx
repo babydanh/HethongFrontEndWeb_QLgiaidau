@@ -26,6 +26,8 @@ interface UserRank {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  currentStreakType?: 'WIN' | 'LOSS' | 'NONE';
+  currentStreakCount?: number;
   tierName?: string | null;
   partnerName?: string | null;
 }
@@ -173,6 +175,26 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   };
 
   const displayedRanks = [...(profile.ranks || []), ...(profile.pairRanks || [])];
+
+  const getHistoryResult = (item: EloHistoryLog) =>
+    item.match?.result ?? (item.changedPoints > 0 ? 'WIN' : item.changedPoints < 0 ? 'LOSS' : 'DRAW');
+
+  const getHistoryScore = (item: EloHistoryLog) => {
+    const match = item.match;
+    const football = match?.scoreDetails?.football;
+    if (football && typeof football === 'object' && !Array.isArray(football)) {
+      const value = football as Record<string, unknown>;
+      const team1Goals = Number(value.team1Goals);
+      const team2Goals = Number(value.team2Goals);
+      if (Number.isFinite(team1Goals) && Number.isFinite(team2Goals)) {
+        return `${team1Goals}-${team2Goals}`;
+      }
+    }
+    if (typeof match?.p1SetsWon === 'number' && typeof match?.p2SetsWon === 'number') {
+      return `${match.p1SetsWon}-${match.p2SetsWon}`;
+    }
+    return null;
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
@@ -499,7 +521,26 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
                 {displayedRanks.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {displayedRanks.map((rank) => (
+                    {displayedRanks.map((rank) => {
+                      const streakType = rank.currentStreakType ?? (rank.winStreak > 0 ? 'WIN' : 'NONE');
+                      const streakCount = rank.currentStreakCount ?? rank.winStreak;
+                      const streakLabel = streakType === 'WIN'
+                        ? translate('currentWinStreak')
+                        : streakType === 'LOSS'
+                          ? translate('currentLossStreak')
+                          : translate('noCurrentStreak');
+                      const streakClass = streakType === 'WIN'
+                        ? 'text-blue-600'
+                        : streakType === 'LOSS'
+                          ? 'text-rose-600'
+                          : 'text-slate-400';
+                      const streakIconClass = streakType === 'WIN'
+                        ? 'fill-blue-500 text-blue-600'
+                        : streakType === 'LOSS'
+                          ? 'fill-rose-500 text-rose-600'
+                          : 'text-slate-400';
+
+                      return (
                       <div key={`${rank.categoryId}-${rank.matchType}`} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                         <div className="space-y-1.5 flex-1">
                           <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
@@ -520,19 +561,23 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                               <div className="font-bold text-blue-600 mt-0.5">{rank.matchesWon}</div>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                              <div className="text-[10px] text-slate-400 font-bold uppercase">{translate('streak')}</div>
-                              <div className="font-bold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
-                                <Zap className="w-3 h-3 fill-blue-500 text-blue-650" /> {rank.winStreak}
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">{translate('currentStreak')}</div>
+                              <div className={`font-bold ${streakClass} mt-0.5 flex items-center justify-center gap-1`} title={streakLabel}>
+                                <Zap className={`w-3 h-3 ${streakIconClass}`} />
+                                <span>{streakType === 'NONE' ? '—' : streakCount}</span>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-450 text-sm font-medium">
-                    {translate('eloParticipationEmpty')}
+                  <div className="bg-white rounded-lg border border-dashed border-slate-200 p-8 text-center">
+                    <Award className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-700 text-sm font-bold">{translate('eloNoMatches')}</p>
+                    <p className="text-slate-400 text-xs mt-1">{translate('eloNoMatchesHint')}</p>
                   </div>
                 )}
               </div>
@@ -590,23 +635,45 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 {eloHistory.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     {eloHistory.map((item) => {
-                      const isGain = item.changedPoints >= 0;
+                      const result = getHistoryResult(item);
+                      const score = getHistoryScore(item);
+                      const isWin = result === 'WIN';
+                      const isLoss = result === 'LOSS';
+                      const isGain = item.changedPoints > 0;
                       return (
-                        <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
-                          <div>
-                            <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate('rankingMatch')}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}</p>
-                          </div>
-                          <div className="flex items-center gap-3 text-right">
-                            <div>
-                              <span className="text-[10px] text-slate-450 block font-bold">{translate('newElo')}</span>
-                              <span className="text-sm font-bold text-slate-750">{item.newElo}</span>
+                        <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 last:border-b-0">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase ${
+                                  isWin ? 'bg-blue-50 text-blue-700' : isLoss ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {isWin ? translate('win') : isLoss ? translate('loss') : translate('drawResult')}
+                                </span>
+                                <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate('rankingMatch')}</p>
+                              </div>
+                              <p className="text-xs text-slate-400 mt-1">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')} · {translate('officialMatch')}</p>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-600">
+                                <span><strong>{translate('opponent')}:</strong> {item.match?.opponent?.name || translate('unknownOpponent')}</span>
+                                {score && <span><strong>{translate('score')}:</strong> {score}</span>}
+                              </div>
                             </div>
-                            <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
-                              isGain ? 'bg-blue-50 text-blue-700' : 'bg-rose-50 text-rose-700'
-                            }`}>
-                              {isGain ? `+${item.changedPoints}` : item.changedPoints}
-                            </span>
+                            <div className="grid grid-cols-3 gap-2 min-w-[230px] text-center">
+                              <div className="rounded-lg bg-white border border-slate-100 px-2 py-2">
+                                <span className="text-[10px] text-slate-400 block font-bold uppercase">{translate('eloBefore')}</span>
+                                <span className="text-sm font-bold text-slate-700">{item.previousElo ?? item.oldElo ?? '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white border border-slate-100 px-2 py-2">
+                                <span className="text-[10px] text-slate-400 block font-bold uppercase">{translate('eloAfter')}</span>
+                                <span className="text-sm font-bold text-slate-900">{item.newElo}</span>
+                              </div>
+                              <div className={`rounded-lg border px-2 py-2 ${isGain ? 'bg-blue-50 border-blue-100' : 'bg-rose-50 border-rose-100'}`}>
+                                <span className="text-[10px] text-slate-400 block font-bold uppercase">{translate('eloChange')}</span>
+                                <span className={`text-sm font-bold ${isGain ? 'text-blue-700' : 'text-rose-700'}`}>
+                                  {item.changedPoints > 0 ? `+${item.changedPoints}` : item.changedPoints}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );

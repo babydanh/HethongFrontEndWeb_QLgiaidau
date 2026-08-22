@@ -48,7 +48,8 @@ export function DoubleElimView({
   panEnabled = false,
   dragHandlers,
 }: Props) {
-  const translate = useTranslations('TournamentDetail');
+    const translate = useTranslations('TournamentDetail');
+  const bracketTranslate = useTranslations('BracketView');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -202,7 +203,7 @@ export function DoubleElimView({
         <button
           onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Thu nhỏ"
+          title={bracketTranslate('zoomOut')}
         >
           -
         </button>
@@ -212,7 +213,7 @@ export function DoubleElimView({
         <button
           onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Phóng to"
+          title={bracketTranslate('zoomIn')}
         >
           +
         </button>
@@ -222,14 +223,14 @@ export function DoubleElimView({
             resetPan();
           }}
           className="px-2.5 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Đặt lại tỷ lệ"
+          title={bracketTranslate('resetZoom')}
         >
-          Mặc định
+          {bracketTranslate('defaultZoom')}
         </button>
         <button
           onClick={() => setIsFullscreen(!isFullscreen)}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
-          title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+          title={isFullscreen ? bracketTranslate('exitFullscreen') : bracketTranslate('fullscreen')}
         >
           {isFullscreen ? (
             <Minimize2 className="w-4 h-4" />

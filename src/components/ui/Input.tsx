@@ -1,4 +1,8 @@
+"use client";
+
 import * as React from "react"
+
+import { useTranslations } from 'next-intl';
 import { cn } from "@/utils/cn"
 
 export interface InputProps
@@ -58,6 +62,7 @@ export interface DateTimePickerProps {
 
 export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
   ({ name, label, value, onChange, error, className, disabled, min, max }, ref) => {
+    const translate = useTranslations('Common');
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
     const [draft, setDraft] = React.useState('');
@@ -134,7 +139,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
           <input
             value={draft}
             disabled={disabled}
-            placeholder="dd/mm/yyyy HH:mm"
+            placeholder={translate('dateTimePlaceholder')}
             onChange={(event) => {
               const nextDraft = event.target.value;
               setDraft(nextDraft);
@@ -151,7 +156,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             }}
             className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed"
           />
-          <button type="button" aria-label="Mở lịch chọn ngày giờ" disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">
+          <button type="button" aria-label={translate('openDateTimePicker')} disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">
             <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -206,6 +211,7 @@ export interface DatePickerProps {
 
 const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
   ({ name, label, value, onChange, error, className, disabled, min, max }, ref) => {
+    const translate = useTranslations('Common');
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
 
@@ -264,10 +270,10 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             value={formatDate(value)}
             disabled={disabled}
             readOnly
-            placeholder="dd/mm/yyyy"
+            placeholder={translate('datePlaceholder')}
             className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed"
           />
-          <button type="button" aria-label="Mở lịch chọn ngày" disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">
+          <button type="button" aria-label={translate('openDatePicker')} disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">
             <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"

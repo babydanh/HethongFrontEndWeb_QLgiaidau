@@ -8,6 +8,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
@@ -41,7 +42,19 @@ export function SingleElimView({
   panEnabled = false,
   dragHandlers,
 }: Props) {
-
+  const translate = useTranslations('BracketView');
+  const roundLabelTranslations = {
+    final: translate('singleFinal'),
+    semifinal: translate('singleSemifinal'),
+    quarterfinal: translate('singleQuarterfinal'),
+    roundOf: (number: number) => {
+      if (number === 128) return translate('singleRound128');
+      if (number === 64) return translate('singleRound64');
+      if (number === 32) return translate('singleRound32');
+      if (number === 16) return translate('singleRound16');
+      return translate('singleRound', { number });
+    },
+  };
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -98,7 +111,7 @@ export function SingleElimView({
         <button
           onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
           className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Thu nhỏ"
+          title={translate('zoomOut')}
         >
           -
         </button>
@@ -108,7 +121,7 @@ export function SingleElimView({
         <button
           onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
           className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Phóng to"
+          title={translate('zoomIn')}
         >
           +
         </button>
@@ -118,14 +131,14 @@ export function SingleElimView({
             resetPan();
           }}
           className="px-2.5 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Đặt lại tỷ lệ"
+          title={translate('resetZoom')}
         >
-          Mặc định
+          {translate('defaultZoom')}
         </button>
         <button
           onClick={() => setIsFullscreen(!isFullscreen)}
           className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
-          title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+          title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
         >
           {isFullscreen ? (
             <Minimize2 className="w-4 h-4" />
@@ -166,7 +179,7 @@ export function SingleElimView({
                   className="text-center"
                 >
                   <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border bg-slate-50 text-slate-600 border-slate-200">
-                    {getRoundLabel(ri, maxRound)}
+                    {getRoundLabel(ri, maxRound, '', roundLabelTranslations)}
                   </span>
                 </div>
               ))}

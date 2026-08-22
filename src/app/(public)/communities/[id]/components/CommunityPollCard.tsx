@@ -12,6 +12,38 @@ import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { cn } from '@/utils/cn';
 
+type PollOptionKind = 'positive' | 'neutral' | 'negative' | 'other';
+
+const getPollOptionKind = (optionText: string): PollOptionKind => {
+  const normalized = optionText
+    .replace(/[✅⏳❌]/gu, '')
+    .trim()
+    .toLocaleLowerCase('vi-VN');
+
+  if (
+    optionText.includes('✅') ||
+    ['có tham gia', 'đăng ký', 'yes', 'register', 'join'].includes(normalized)
+  ) {
+    return 'positive';
+  }
+
+  if (
+    optionText.includes('⏳') ||
+    ['chưa chắc chắn', 'có thể', 'maybe', 'not sure'].includes(normalized)
+  ) {
+    return 'neutral';
+  }
+
+  if (
+    optionText.includes('❌') ||
+    ['bận', 'không tham gia', 'no', 'busy', 'cannot join'].includes(normalized)
+  ) {
+    return 'negative';
+  }
+
+  return 'other';
+};
+
 interface CommunityPollCardProps {
   communityId: string;
   poll: CommunityPoll;
@@ -50,12 +82,10 @@ export default function CommunityPollCard({
         setCurrentPoll(res.data);
         onPollUpdated?.(res.data);
         const selected = res.data.options.find((option: CommunityPollOption) => option.id === optionId);
-        const shouldRegister = selected?.isVoted === true && tournamentInviteCode && (
-          selected.optionText.includes('Có tham gia') ||
-          selected.optionText.includes('Đăng ký') ||
-          selected.optionText.includes('✅')
-        );
-        if (shouldRegister) {
+        const shouldRegister =
+          selected?.isVoted === true &&
+          getPollOptionKind(selected.optionText) === 'positive';
+        if (shouldRegister && tournamentInviteCode) {
           try {
             await tournamentsApi.joinLite(tournamentInviteCode);
             toast.success(translate('communityPollVoteAndJoinSuccess'));
@@ -108,10 +138,11 @@ export default function CommunityPollCard({
 
   const sortedOptions = [...currentPoll.options].sort((a, b) => {
     const getScore = (text: string) => {
-      if (text.includes('Có tham gia') || text.includes('Đăng ký') || text.includes('✅')) return 1;
-      if (text.includes('Chưa chắc chắn') || text.includes('suy nghĩ') || text.includes('⏳')) return 2;
-      if (text.includes('Không') || text.includes('Bận') || text.includes('❌')) return 3;
-      return 2;
+      const kind = getPollOptionKind(text);
+      if (kind === 'positive') return 1;
+      if (kind === 'neutral') return 2;
+      if (kind === 'negative') return 3;
+      return 4;
     };
     return getScore(a.optionText) - getScore(b.optionText);
   });

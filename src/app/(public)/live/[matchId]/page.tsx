@@ -2083,8 +2083,8 @@ export default function LiveMatchPage({ params }: Props) {
                         const localizedPenaltyLabel = action
                           ? livePenaltyTranslate(`schema.items.${action.kind}.label`)
                           : penalty.label;
-                        const localizedCardLabel = action?.cardLabel
-                          ? livePenaltyTranslate(`schema.items.${action.kind}.cardLabel`)
+                        const localizedCardLabel = action?.cardLabelKey
+                          ? livePenaltyTranslate(`schema.items.${action.kind}.${action.cardLabelKey}`)
                           : undefined;
 
                         return (

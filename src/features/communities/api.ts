@@ -41,7 +41,7 @@ function mapPost(post: BackendPost): CommunityPost {
   return {
     id: post.id,
     communityId: post.communityId,
-    author: post.author ?? { id: post.authorId, fullName: 'Thành viên CLB', avatarUrl: null },
+    author: post.author ?? { id: post.authorId, fullName: '', avatarUrl: null },
     tournamentId: post.tournamentId ?? null,
     type: post.type ?? 'NORMAL',
     tournament: post.tournament ?? null,

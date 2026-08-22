@@ -312,7 +312,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                               {matchLabel}
                             </span>
                             <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                              {bracketLabel} • {participantCount} hồ sơ tham gia
+                              {bracketLabel} • {inviteTranslate('participantCount', { count: participantCount, max: '' })}
                             </span>
                           </span>
                         </button>

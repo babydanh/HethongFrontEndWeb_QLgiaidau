@@ -4,7 +4,7 @@ import type {
 } from '@/features/notifications/types';
 import {
   DEFAULT_NOTIFICATION_META,
-  NOTIFICATION_TYPE_LABELS,
+  NOTIFICATION_TYPE_LABEL_KEYS,
   NOTIFICATION_TYPE_META,
   type NotificationTypeMeta,
 } from '@/features/notifications/constants';
@@ -165,24 +165,21 @@ export const getNotificationTypeLabel = (
   locale = 'vi',
 ): string => {
   const trimmedType = type.trim();
-  const explicitLabel = NOTIFICATION_TYPE_LABELS[trimmedType];
+  const translationKey = NOTIFICATION_TYPE_LABEL_KEYS[trimmedType];
 
-  if (explicitLabel) {
-    if (translate) {
-      try {
-        const translated = translate(`notificationType_${trimmedType}`);
-        if (
-          translated &&
-          !translated.startsWith('Notifications.notificationType_') &&
-          !translated.startsWith('notificationType_')
-        ) {
-          return translated;
-        }
-      } catch {
-        // fallback to explicitLabel below
+  if (translationKey && translate) {
+    try {
+      const translated = translate(translationKey);
+      if (
+        translated &&
+        !translated.startsWith('Notifications.notificationType_') &&
+        !translated.startsWith('notificationType_')
+      ) {
+        return translated;
       }
+    } catch {
+      // Continue with category fallback for unknown or incomplete catalogs.
     }
-    return explicitLabel;
   }
 
   const normalizedType = trimmedType.toLowerCase();

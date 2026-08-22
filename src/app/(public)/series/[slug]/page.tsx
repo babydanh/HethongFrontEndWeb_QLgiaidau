@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { seriesApi } from '@/features/series/api';
 import { TournamentSeries, SeriesLeg, SeriesStatus } from '@/types/series';
@@ -16,6 +16,8 @@ import { getErrorMessage } from '@/utils/error';
 
 export default function SeriesDetailPage() {
   const translate = useTranslations('SeriesDetail');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const params = useParams();
   const slug = params?.slug as string;
 
@@ -55,7 +57,7 @@ export default function SeriesDetailPage() {
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [slug, translate]);
 
   if (isLoading) {
     return (
@@ -100,7 +102,7 @@ export default function SeriesDetailPage() {
   const status = statusConfigs[series.status];
 
   const formattedPrize = series.totalPrize
-    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(series.totalPrize)
+    ? new Intl.NumberFormat(dateLocale, { style: 'currency', currency: 'VND' }).format(series.totalPrize)
     : translate('formatAgreement');
 
   return (
@@ -136,7 +138,7 @@ export default function SeriesDetailPage() {
                 {status.text}
               </span>
               <span className="bg-white/10 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-white/10">
-                🏆 TOURNAMENT SERIES
+                🏆 {translate('seriesTypeLabel')}
               </span>
             </div>
 
@@ -149,7 +151,7 @@ export default function SeriesDetailPage() {
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4 text-slate-400" />
                 {series.startDate && series.endDate
-                  ? `${new Date(series.startDate).toLocaleDateString('vi-VN')} — ${new Date(series.endDate).toLocaleDateString('vi-VN')}`
+                  ? `${new Date(series.startDate).toLocaleDateString(dateLocale)} — ${new Date(series.endDate).toLocaleDateString(dateLocale)}`
                   : translate('timeNotSet')}
               </span>
               <span className="text-slate-600 font-normal">|</span>
@@ -162,7 +164,7 @@ export default function SeriesDetailPage() {
             {totalEvents.length > 0 && (
               <div className="flex flex-col gap-1.5 mt-4 max-w-md bg-white/5 backdrop-blur-md p-3.5 rounded-lg border border-white/5">
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-300">
-                  <span>TIẾN ĐỘ CHUỖI GIẢI</span>
+                  <span>{translate('progressLabel')}</span>
                   <span>{translate('eventsCompleted', { completed: completedEvents, total: totalEvents.length })} ({completionPercentage}%)</span>
                 </div>
                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">

@@ -22,6 +22,7 @@ import UserProfilePopover, {
   type PopoverUserProfile,
 } from "@/components/common/UserProfilePopover";
 import { useAuthStore } from "@/lib/zustand/authStore";
+import { getCommunityTagDisplayName, isSameCommunityTag } from './tag-display';
 
 interface CommunityPostCardProps {
   post: CommunityPost;
@@ -42,14 +43,7 @@ export default function CommunityPostCard({
 }: CommunityPostCardProps) {
   const translate = useTranslations("Common");
   const locale = useLocale();
-  const getPresetLabel = (name: string) => {
-    if (name === 'Cây hài') return translate('tagSuggestionFunny');
-    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
-    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
-    if (name === 'Đang lên form') return translate('tagSuggestionRising');
-    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
-    return name;
-  };
+  
   const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [overrideCommentCount, setOverrideCommentCount] = useState<number | null>(null);
@@ -410,7 +404,8 @@ export default function CommunityPostCard({
               {authorMemberInfo?.tags && authorMemberInfo.tags.length > 0 && (
                 <div className="flex items-center flex-wrap gap-1">
                   {authorMemberInfo.tags.map((tag) => {
-                    const preset = tagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
+                    const preset = tagPresets.find((p) => isSameCommunityTag(p.name, tag));
+                    const displayTag = getCommunityTagDisplayName(tag, translate);
                     return (
                       <span
                         key={tag}
@@ -431,7 +426,7 @@ export default function CommunityPostCard({
                         }
                       >
                         <span className="w-1 h-1 rounded-full bg-slate-900/40 shrink-0" />
-                        {getPresetLabel(tag)}
+                        {displayTag}
                       </span>
                     );
                   })}

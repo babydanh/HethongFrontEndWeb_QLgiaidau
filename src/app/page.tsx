@@ -39,6 +39,7 @@ import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 import { RankAvatar } from '@/components/ui/RankAvatar';
+import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 
 interface EnrichedTournament {
   id: string;
@@ -222,6 +223,9 @@ function translateRoundLabel(label: string, translate: (key: string, values?: Re
 
     const roundMatch = normalized.match(/^Vòng\s+(\d+)$/i);
     if (roundMatch) return translate('roundNumber', { number: Number(roundMatch[1]) });
+
+    const matchDay = normalized.match(/^Ngày đấu\s+(\d+)$/i);
+    if (matchDay) return translate('matchDay', { number: Number(matchDay[1]) });
 
     const legMatch = normalized.match(/^Lượt\s+(\d+)$/i);
     if (legMatch) return translate('roundLeg', { number: Number(legMatch[1]) });
@@ -934,11 +938,13 @@ export default function HomePage() {
 
           {/* 2. Opponents Match Grid */}
           <div className="px-3.5 py-3 flex items-center justify-between gap-3 bg-white">
-            {/* Player 1 */}
-            <div className="flex items-center gap-2 w-5/12 min-w-0">
-              <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                {getTeamShortName(match.participant1?.teamName, translate('pendingTeam'))}
-              </span>
+            {/* Player / doubles pair 1 */}
+            <div className="flex items-center w-5/12 min-w-0">
+              <ParticipantIdentity
+                participant={match.participant1}
+                fallback={translate('pendingTeam')}
+                compact
+              />
             </div>
 
             {/* Score / Status Display Panel */}
@@ -962,11 +968,14 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Player 2 */}
-            <div className="flex items-center gap-2 w-5/12 min-w-0 justify-end text-right">
-              <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                {getTeamShortName(match.participant2?.teamName, translate('pendingTeam'))}
-              </span>
+            {/* Player / doubles pair 2 */}
+            <div className="flex items-center w-5/12 min-w-0 justify-end text-right">
+              <ParticipantIdentity
+                participant={match.participant2}
+                fallback={translate('pendingTeam')}
+                align="right"
+                compact
+              />
             </div>
           </div>
 

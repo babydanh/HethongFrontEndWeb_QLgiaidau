@@ -67,14 +67,6 @@ export default function MembersTab({
   const PAGE_SIZE = 50;
   const formatMemberDate = (date: string) =>
     new Date(date).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
-  const getPresetLabel = (name: string) => {
-    if (name === 'Cây hài') return translate('tagSuggestionFunny');
-    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
-    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
-    if (name === 'Đang lên form') return translate('tagSuggestionRising');
-    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
-    return name;
-  };
   
   // Menu dropdown state
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
@@ -260,7 +252,7 @@ export default function MembersTab({
           className="px-2 py-0.5 rounded-lg border text-[10px] font-semibold"
           style={preset ? { backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66`, color: preset.color } : undefined}
         >
-          {getPresetLabel(tag)}
+          {tag}
         </span>
       );
     });

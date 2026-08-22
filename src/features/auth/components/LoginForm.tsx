@@ -20,14 +20,22 @@ import { getErrorMessage } from '@/utils/error';
 // NOTE: A proper Form component with Label, FormControl, FormField, etc. would be ideal.
 // For now, we'll use basic HTML structure.
 
-const loginSchema = z.object({
-  email: z.string().email({ message: "Email không hợp lệ." }),
-  password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." }),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 export const LoginForm = () => {
+  const router = useRouter();
+  const translate = useTranslations('Auth');
+  const loginSchema = React.useMemo(
+    () =>
+      z.object({
+        email: z.string().email({ message: translate('invalidEmail') }),
+        password: z.string().min(6, { message: translate('passwordMinLength') }),
+      }),
+    [translate],
+  );
   const {
     register,
     handleSubmit,
@@ -36,21 +44,18 @@ export const LoginForm = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const router = useRouter();
-  const translate = useTranslations('Auth');
-
   const onSubmit = async (data: LoginFormValues) => {
     try {
       const response = await authApi.login(data);
       const user = response.user;
       
       if (!user) {
-        throw new Error('Không nhận được thông tin người dùng từ máy chủ.');
+        throw new Error(translate('userInfoError'));
       }
       
       useAuthStore.getState().setUser(user);
       
-      toast.success("Đăng nhập thành công!");
+      toast.success(translate('loginSuccess'));
       router.push("/"); // Redirect to home
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, translate('loginFailed')));
@@ -64,7 +69,7 @@ export const LoginForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
+        <label htmlFor="email" className="text-sm font-medium leading-none">{translate('email')}</label>
         <Input
           id="email"
           type="email"
@@ -75,7 +80,7 @@ export const LoginForm = () => {
         {errors.email && <p className="text-sm text-danger">{errors.email.message}</p>}
       </div>
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium leading-none">Mật khẩu</label>
+        <label htmlFor="password" className="text-sm font-medium leading-none">{translate('password')}</label>
         <Input
           id="password"
           type="password"
@@ -86,8 +91,8 @@ export const LoginForm = () => {
           <p className="text-sm text-danger">{errors.password.message}</p>
         )}
       </div>
-      <Button type="submit" className="w-full" isLoading={isSubmitting}>
-        Đăng nhập bằng Email
+<Button type="submit" className="w-full" isLoading={isSubmitting}>
+        {translate('signInWithEmail')}
       </Button>
 
       <div className="relative my-4">
@@ -95,7 +100,7 @@ export const LoginForm = () => {
           <div className="w-full border-t border-muted"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-background text-muted-foreground">Hoặc</span>
+          <span className="px-2 bg-background text-muted-foreground">{translate('or')}</span>
         </div>
       </div>
 
@@ -107,7 +112,7 @@ export const LoginForm = () => {
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           <path d="M1 1h22v22H1z" fill="none" />
         </svg>
-        Đăng nhập bằng Google
+        {translate('continueWithGoogle')}
       </Button>
     </form>
   );

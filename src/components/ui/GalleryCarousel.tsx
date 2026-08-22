@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
 import ImageLightboxModal from '@/components/common/ImageLightboxModal';
@@ -12,6 +13,7 @@ interface GalleryCarouselProps {
 }
 
 export default function GalleryCarousel({ images = [], defaultBanner, className = '' }: GalleryCarouselProps) {
+  const translate = useTranslations('Common');
   const allImages = [
     ...(defaultBanner ? [defaultBanner] : []),
     ...images.filter((img) => img !== defaultBanner)
@@ -49,10 +51,10 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
         <div className="relative z-10 flex flex-col items-center gap-2">
           <img
             src={BRAND.assets.logoFull}
-            alt={`${BRAND.name} Logo`}
+            alt={translate('brandLogoAlt', { name: BRAND.name })}
             className="h-16 md:h-20 w-auto object-contain drop-shadow-md"
           />
-          <span className="text-[11px] tracking-widest text-slate-300 font-bold uppercase mt-1">HỆ THỐNG QUẢN LÝ GIẢI ĐẤU CHUYÊN NGHIỆP</span>
+          <span className="text-[11px] tracking-widest text-slate-300 font-bold uppercase mt-1">{translate('galleryEmptyTagline')}</span>
         </div>
       </div>
     );
@@ -76,7 +78,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
               {/* Sharp crisp full-size dynamic height image */}
               <img
                 src={src}
-                alt={`Slide ${idx + 1}`}
+                alt={translate('slideImageAlt', { index: idx + 1 })}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -86,7 +88,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
         {/* Zoom Hint Badge on Hover */}
         <div className="absolute top-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/10 shadow-md">
           <ZoomIn className="w-3.5 h-3.5 text-white" />
-          <span>Nhấn để xem & phóng to</span>
+          <span>{translate('galleryZoomHint')}</span>
         </div>
 
         {/* Navigation Arrows */}
@@ -98,7 +100,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
                 handlePrev();
               }}
               className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/75 border border-white/10 hover:border-white/20 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0 cursor-pointer backdrop-blur-sm shadow-lg z-20"
-              aria-label="Previous image"
+              aria-label={translate('previousImage')}
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -108,7 +110,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
                 handleNext();
               }}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/75 border border-white/10 hover:border-white/20 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 cursor-pointer backdrop-blur-sm shadow-lg z-20"
-              aria-label="Next image"
+              aria-label={translate('nextImage')}
             >
               <ChevronRight className="w-6 h-6" />
             </button>
@@ -128,7 +130,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
                 className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                   idx === activeIndex ? 'w-6 bg-blue-500' : 'w-2 bg-white/40 hover:bg-white/80'
                 }`}
-                aria-label={`Go to slide ${idx + 1}`}
+                aria-label={translate('goToSlide', { index: idx + 1 })}
               ></button>
             ))}
           </div>

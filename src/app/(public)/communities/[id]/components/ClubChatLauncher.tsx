@@ -11,6 +11,7 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import type { ChatMessage } from '@/types/community-social';
 import { getErrorMessage } from '@/utils/error';
 import toast from 'react-hot-toast';
+import { getCommunityTagDisplayName, isSameCommunityTag } from './tag-display';
 
 interface ClubChatLauncherProps {
   communityId: string;
@@ -48,15 +49,6 @@ export default function ClubChatLauncher({
   const [clubMembersMap, setClubMembersMap] = useState<Record<string, { role?: string; tags?: string[] }>>({});
   const [clubTagPresets, setClubTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const endRef = useRef<HTMLDivElement>(null);
-
-  const getPresetLabel = (name: string) => {
-    if (name === 'Cây hài') return translate('tagSuggestionFunny');
-    if (name === 'Kèo thơm') return translate('tagSuggestionGoodMatch');
-    if (name === 'MVP tuần') return translate('tagSuggestionWeeklyMvp');
-    if (name === 'Đang lên form') return translate('tagSuggestionRising');
-    if (name === 'Kèo khó') return translate('tagSuggestionToughMatch');
-    return name;
-  };
 
   useEffect(() => {
     if (!open) return;
@@ -259,18 +251,19 @@ export default function ClubChatLauncher({
             ) : (
               messages.map((message) => {
                 const isMe = user?.id && message.senderId === user.id;
+                const senderName = message.senderName?.trim() || translate('clubMemberFallback');
                 return (
                   <div
                     key={message.id}
                     className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                   >
-                    {!isMe && message.senderName && (() => {
+                    {!isMe && (() => {
                       const memberMeta = clubMembersMap[message.senderId];
                       const memberTags = memberMeta?.tags ?? [];
                       return (
                         <div className="mb-1 flex flex-wrap items-center gap-1 px-1">
                           <span className="text-[11px] font-semibold text-slate-500">
-                            {message.senderName}
+                            {senderName}
                           </span>
                           {memberMeta?.role === 'OWNER' && (
                             <span className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">
@@ -283,7 +276,8 @@ export default function ClubChatLauncher({
                             </span>
                           )}
                           {memberTags.map((tag) => {
-                            const preset = clubTagPresets.find((item) => item.name.toLowerCase() === tag.toLowerCase());
+                            const preset = clubTagPresets.find((item) => isSameCommunityTag(item.name, tag));
+                            const displayTag = getCommunityTagDisplayName(tag, translate);
                             return (
                               <span
                                 key={tag}
@@ -298,7 +292,7 @@ export default function ClubChatLauncher({
                                   color: '#1e293b',
                                 }}
                               >
-                                {getPresetLabel(tag)}
+                                {displayTag}
                               </span>
                             );
                           })}

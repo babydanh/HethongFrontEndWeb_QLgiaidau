@@ -58,10 +58,10 @@ const fieldTypeLabelKey: Record<RegistrationFieldType, 'fieldText' | 'fieldTexta
 };
 
 const FILE_TYPE_PRESETS = [
-  { label: 'Hình ảnh (JPG, PNG, WebP)', value: 'image/*' },
-  { label: 'Tài liệu (PDF, DOCX)', value: '.pdf,.doc,.docx' },
-  { label: 'Bảng tính (XLSX, CSV)', value: '.xlsx,.xls,.csv' },
-];
+  { labelKey: 'fileImagePreset', value: 'image/*' },
+  { labelKey: 'fileDocumentPreset', value: '.pdf,.doc,.docx' },
+  { labelKey: 'fileSpreadsheetPreset', value: '.xlsx,.xls,.csv' },
+] as const;
 
 export function RegistrationFormBuilder({ tournament, divisions }: RegistrationFormBuilderProps) {
   const registrationFormTranslate = useTranslations('OrganizerRegistrationForm');
@@ -268,7 +268,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
-                              <p className="text-sm font-bold text-slate-900">{field.label || '(Chưa đặt tên câu hỏi)'}</p>
+                              <p className="text-sm font-bold text-slate-900">{field.label || registrationFormTranslate('unnamedQuestion')}</p>
                               <p className="mt-0.5 text-[11px] text-slate-500">
                                 {registrationFormTranslate(fieldTypeLabelKey[field.type])}
                                 {field.required ? ` · ${registrationFormTranslate('required')}` : ` · ${registrationFormTranslate('notRequired')}`}
@@ -330,7 +330,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                 <input
                                   value={field.label}
                                   onChange={(event) => updateField(field.id, { label: event.target.value })}
-                                  placeholder="Nhập tiêu đề câu hỏi..."
+                                  placeholder={registrationFormTranslate('questionNamePlaceholder')}
                                   className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm focus:border-blue-500 focus:outline-none"
                                   autoFocus
                                 />
@@ -346,7 +346,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                       updateField(field.id, {
                                         type: nextType,
                                         options: (nextType === 'SELECT' || nextType === 'MULTI_SELECT') && !field.options?.length
-                                          ? ['Lựa chọn 1', 'Lựa chọn 2']
+                                          ? [registrationFormTranslate('choiceOption', { number: 1 }), registrationFormTranslate('choiceOption', { number: 2 })]
                                           : field.options,
                                       });
                                     }}
@@ -416,7 +416,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                             updateField(field.id, { options: next });
                                           }}
                                           className="h-8 flex-1 rounded border border-slate-300 bg-white px-2.5 text-xs focus:border-blue-500 focus:outline-none"
-                                          placeholder={`Lựa chọn ${optIdx + 1}`}
+                                          placeholder={registrationFormTranslate('choiceOption', { number: optIdx + 1 })}
                                         />
                                         <button
                                           type="button"
@@ -438,7 +438,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                           addOptionToField(field.id);
                                         }
                                       }}
-                                      placeholder="+ Thêm lựa chọn mới..."
+                                      placeholder={registrationFormTranslate('addOptionPlaceholder')}
                                       className="h-8 flex-1 rounded border border-dashed border-slate-300 bg-white px-2.5 text-xs placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                                     />
                                     <Button
@@ -448,7 +448,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                       onClick={() => addOptionToField(field.id)}
                                       className="h-8 text-xs font-semibold"
                                     >
-                                      <Plus className="h-3 w-3 mr-1" /> Thêm
+                                      <Plus className="h-3 w-3 mr-1" /> {registrationFormTranslate('addOption')}
                                     </Button>
                                   </div>
                                 </div>
@@ -458,7 +458,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                               {field.type === 'FILE' && (
                                 <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-xs">
                                   <p className="font-bold text-slate-700 flex items-center gap-1.5">
-                                    <UploadCloud className="h-4 w-4 text-blue-600" /> Cấu hình tệp tải lên
+                                    <UploadCloud className="h-4 w-4 text-blue-600" /> {registrationFormTranslate('fileUploadSettings')}
                                   </p>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                                     {FILE_TYPE_PRESETS.map((preset) => {
@@ -477,13 +477,13 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                                             }}
                                             className="h-3.5 w-3.5 rounded accent-blue-600"
                                           />
-                                          <span>{preset.label}</span>
+                                          <span>{registrationFormTranslate(preset.labelKey)}</span>
                                         </label>
                                       );
                                     })}
                                   </div>
                                   <div className="flex items-center gap-2 pt-1.5">
-                                    <span className="text-slate-600">Dung lượng tối đa (MB):</span>
+                                    <span className="text-slate-600">{registrationFormTranslate('maxFileSize')}</span>
                                     <input
                                       type="number"
                                       min={1}
@@ -565,26 +565,26 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                     {registrationFormTranslate('preview')}
                   </p>
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                    Giao diện VĐV
+                    {registrationFormTranslate('athleteInterface')}
                   </span>
                 </div>
                 <h3 className="mt-2.5 text-sm font-bold text-slate-900 line-clamp-2">{tournament.name}</h3>
 
                 {/* Thông tin mặc định từ hệ thống */}
                 <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 space-y-1.5 text-[11px] text-slate-500">
-                  <p className="font-bold text-slate-700 text-[11px]">Thông tin mặc định (Hệ thống tự lấy):</p>
+                  <p className="font-bold text-slate-700 text-[11px]">{registrationFormTranslate('systemDefaultInfo')}</p>
                   <div className="flex justify-between py-0.5 border-b border-slate-200/60">
-                    <span>Họ và tên VĐV:</span>
-                    <span className="font-semibold text-slate-700">Lấy từ Hồ sơ</span>
+                    <span>{registrationFormTranslate('athleteFullName')}</span>
+                    <span className="font-semibold text-slate-700">{registrationFormTranslate('fromProfile')}</span>
                   </div>
                   <div className="flex justify-between py-0.5 border-b border-slate-200/60">
-                    <span>Email &amp; SĐT:</span>
-                    <span className="font-semibold text-slate-700">Gắn theo tài khoản</span>
+                    <span>{registrationFormTranslate('emailAndPhone')}</span>
+                    <span className="font-semibold text-slate-700">{registrationFormTranslate('linkedAccount')}</span>
                   </div>
                   {hasDoublesOrTeam && (
                     <div className="flex justify-between py-0.5">
-                      <span>Partner / Tên đội:</span>
-                      <span className="font-semibold text-blue-600">Chọn đồng đội</span>
+                      <span>{registrationFormTranslate('partnerOrTeam')}</span>
+                      <span className="font-semibold text-blue-600">{registrationFormTranslate('choosePartner')}</span>
                     </div>
                   )}
                 </div>
@@ -593,14 +593,14 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                 {config.fields.length > 0 && (
                   <div className="mt-4 space-y-3.5 border-t border-slate-100 pt-3">
                     <p className="font-bold text-slate-700 text-xs flex items-center justify-between">
-                      <span>Câu hỏi bổ sung:</span>
-                      <span className="text-[10px] text-slate-400 font-normal">{config.fields.length} câu</span>
+                      <span>{registrationFormTranslate('additionalQuestions')}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{registrationFormTranslate('questionCount', { count: config.fields.length })}</span>
                     </p>
 
                     {config.fields.map((field) => (
                       <div key={field.id} className="space-y-1 text-xs">
                         <label className="font-semibold text-slate-700 block">
-                          {field.label || '(Chưa đặt tên)'}
+                          {field.label || registrationFormTranslate('unnamedQuestionShort')}
                           {field.required && <span className="ml-1 text-rose-500">*</span>}
                         </label>
                         {field.helpText && <p className="text-[10px] text-slate-400">{field.helpText}</p>}
@@ -610,7 +610,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                           <textarea
                             disabled
                             className="min-h-14 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed resize-none"
-                            placeholder={field.helpText || 'Nhập câu trả lời...'}
+                            placeholder={field.helpText || registrationFormTranslate('answerPlaceholder')}
                           />
                         ) : field.type === 'CHECKBOX' ? (
                           <label className="flex items-center gap-2 text-xs text-slate-700 bg-slate-50 p-2 rounded border border-slate-200">
@@ -622,7 +622,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                             <legend className="px-1 text-[10px] font-bold text-blue-700">
                               {registrationFormTranslate('singleChoiceInstruction')}
                             </legend>
-                            {(field.options && field.options.length > 0 ? field.options : ['Lựa chọn 1', 'Lựa chọn 2']).map((opt, i) => (
+                            {(field.options && field.options.length > 0 ? field.options : [registrationFormTranslate('choiceOption', { number: 1 }), registrationFormTranslate('choiceOption', { number: 2 })]).map((opt, i) => (
                               <label key={i} className="flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700">
                                 <input type="radio" name={`preview-${field.id}`} disabled className="h-3.5 w-3.5 accent-blue-600" />
                                 <span>{opt}</span>
@@ -634,7 +634,7 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                             <legend className="px-1 text-[10px] font-bold text-violet-700">
                               {registrationFormTranslate('multiChoiceInstruction')}
                             </legend>
-                            {(field.options && field.options.length > 0 ? field.options : ['Lựa chọn 1', 'Lựa chọn 2']).map((opt, i) => (
+                            {(field.options && field.options.length > 0 ? field.options : [registrationFormTranslate('choiceOption', { number: 1 }), registrationFormTranslate('choiceOption', { number: 2 })]).map((opt, i) => (
                               <label key={i} className="flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700">
                                 <input type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-violet-600" />
                                 <span>{opt}</span>
@@ -644,15 +644,15 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
                         ) : field.type === 'FILE' ? (
                           <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-2.5 text-center">
                             <FileUp className="h-4 w-4 text-blue-500 mx-auto mb-1" />
-                            <p className="text-[11px] font-semibold text-blue-700">Tải lên tệp / ảnh</p>
-                            <p className="text-[9px] text-slate-400">Tối đa {field.maxFileSizeMb ?? 10}MB</p>
+                            <p className="text-[11px] font-semibold text-blue-700">{registrationFormTranslate('uploadFileOrImage')}</p>
+                            <p className="text-[9px] text-slate-400">{registrationFormTranslate('maximumFileSize', { size: field.maxFileSizeMb ?? 10 })}</p>
                           </div>
                         ) : (
                           <input
                             disabled
                             className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs text-slate-400 cursor-not-allowed"
                             type={field.type === 'EMAIL' ? 'email' : field.type === 'NUMBER' ? 'number' : 'text'}
-                            placeholder={field.helpText || 'Nhập câu trả lời...'}
+                            placeholder={field.helpText || registrationFormTranslate('answerPlaceholder')}
                           />
                         )}
                       </div>

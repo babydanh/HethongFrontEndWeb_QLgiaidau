@@ -59,32 +59,29 @@ interface MatchBucket {
   directAdvance: Match[];
 }
 
-const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; label: string }> = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'SCHEDULED', label: 'Sắp đấu' },
-  { value: 'ONGOING', label: 'Đang đấu' },
-  { value: 'COMPLETED', label: 'Hoàn tất' },
-  { value: 'DISPUTED', label: 'Cần xử lý' },
+const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; labelKey: string }> = [
+  { value: 'ALL', labelKey: 'statusAll' },
+  { value: 'SCHEDULED', labelKey: 'statusScheduled' },
+  { value: 'ONGOING', labelKey: 'statusOngoing' },
+  { value: 'COMPLETED', labelKey: 'statusCompleted' },
+  { value: 'DISPUTED', labelKey: 'statusDisputed' },
 ];
 
-const BRANCH_LABELS: Record<string, string> = {
-  MAIN: 'Nhánh chính',
-  WINNERS: 'Nhánh thắng',
-  LOSERS: 'Nhánh thua',
-  GRAND_FINALS: 'Chung kết tổng',
+const BRANCH_LABEL_KEYS: Record<string, string> = {
+  MAIN: 'branchMain',
+  WINNERS: 'branchWinners',
+  LOSERS: 'branchLosers',
+  GRAND_FINALS: 'branchGrandFinals',
 };
 
-const getBranchLabel = (branch: string | null | undefined) =>
-  (branch && BRANCH_LABELS[branch]) || branch || 'Nhánh chính';
-
-const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; label: string; description: string }> = [
-  { value: 'WALKOVER', label: 'Thắng trắng', description: 'Đối thủ không ra sân hoặc không đủ điều kiện thi đấu.' },
-  { value: 'NO_SHOW', label: 'Không đến sân', description: 'Một bên không có mặt đúng thời hạn theo điều lệ.' },
-  { value: 'RETIREMENT', label: 'Chấn thương / bỏ cuộc', description: 'Trận kết thúc sớm do một bên xin dừng.' },
-  { value: 'DISQUALIFICATION', label: 'Truất quyền', description: 'BTC xử thua do vi phạm điều lệ hoặc gian lận.' },
-  { value: 'OVERRIDE_RESULT', label: 'Chốt lại kết quả', description: 'BTC chốt lại kết quả cuối cùng theo biên bản.' },
-  { value: 'POSTPONE', label: 'Hoãn trận', description: 'Trận chưa bắt đầu; xóa lịch hiện tại để BTC xếp lại giờ và sân.' },
-  { value: 'ABANDON', label: 'Bỏ trận / cần xử lý', description: 'Trận không thể tiếp tục; chuyển sang tranh chấp để BTC hoặc admin phân xử.' },
+const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; labelKey: string; descriptionKey: string }> = [
+  { value: 'WALKOVER', labelKey: 'operationWalkover', descriptionKey: 'operationWalkoverDescription' },
+  { value: 'NO_SHOW', labelKey: 'operationNoShow', descriptionKey: 'operationNoShowDescription' },
+  { value: 'RETIREMENT', labelKey: 'operationRetirement', descriptionKey: 'operationRetirementDescription' },
+  { value: 'DISQUALIFICATION', labelKey: 'operationDisqualification', descriptionKey: 'operationDisqualificationDescription' },
+  { value: 'OVERRIDE_RESULT', labelKey: 'operationOverrideResult', descriptionKey: 'operationOverrideResultDescription' },
+  { value: 'POSTPONE', labelKey: 'operationPostpone', descriptionKey: 'operationPostponeDescription' },
+  { value: 'ABANDON', labelKey: 'operationAbandon', descriptionKey: 'operationAbandonDescription' },
 ];
 
 export function OpsMatches({
@@ -99,6 +96,7 @@ export function OpsMatches({
   onApplyMatchOperation,
 }: OpsMatchesProps) {
   const matchTranslate = useTranslations('Match');
+  const translate = useTranslations('OrganizerOpsMatches');
   const roundLabelTranslations: RoundLabelTranslations = {
     roundGrandFinal: matchTranslate('roundGrandFinal'),
     roundFinal: matchTranslate('roundFinal'),
@@ -287,9 +285,9 @@ export function OpsMatches({
     const sideOutState = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT' ? readSideOutState(match) : null;
     const servingTeamLabel =
       sideOutState?.servingTeam === 1
-        ? match.participant1?.teamName || 'Đội 1'
+        ? match.participant1?.teamName || translate('teamOne')
         : sideOutState?.servingTeam === 2
-          ? match.participant2?.teamName || 'Đội 2'
+          ? match.participant2?.teamName || translate('teamTwo')
           : null;
     const matchSets = extractMatchScores(match.scoreDetails);
     const overriddenSets = matchSets
@@ -323,34 +321,36 @@ export function OpsMatches({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-              {getBranchLabel(match.bracketBranch)} • {roundLabel} • Trận {match.matchOrder}
+              {match.bracketBranch && BRANCH_LABEL_KEYS[match.bracketBranch]
+                ? translate(BRANCH_LABEL_KEYS[match.bracketBranch])
+                : match.bracketBranch || translate('branchMain')} • {roundLabel} • {translate('matchNumber', { number: match.matchOrder })}
             </p>
             <p className="text-sm font-bold text-slate-900">
-              {match.participant1?.teamName || 'Chờ xác định'} gặp {match.participant2?.teamName || 'Chờ xác định'}
+              {match.participant1?.teamName || translate('tbd')} {translate('versus')} {match.participant2?.teamName || translate('tbd')}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-700">
-                {STATUS_FILTERS.find((option) => option.value === match.status)?.label ?? match.status}
+                {(() => { const option = STATUS_FILTERS.find((item) => item.value === match.status); return option ? translate(option.labelKey) : match.status; })()}
               </span>
               {attentionCount > 0 || scoreOverride?.reason ? (
                 <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">
-                  Cần chú ý: {attentionCount || 1}
+                  {translate('attentionCount', { count: attentionCount || 1 })}
                 </span>
               ) : (
                 <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
-                  Không có ngoại lệ
+                  {translate('noExceptions')}
                 </span>
               )}
               {matchInsight?.hasCustomConfig ? (
                 <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
-                  Luật riêng
+                  {translate('customRules')}
                 </span>
               ) : null}
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
-              <span>Sân: {match.courtName || 'Chưa gán'}</span>
-              <span>Lịch: {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp lịch'}</span>
-              <span>Trọng tài: {match.refereeName || (match.refereeId ? "đã phân công" : "chưa phân công")}</span>
+              <span>{translate('court')}: {match.courtName || translate('unassigned')}</span>
+              <span>{translate('schedule')}: {match.scheduledAt ? formatDateTime(match.scheduledAt) : translate('scheduleUnset')}</span>
+              <span>{translate('referee')}: {match.refereeName || (match.refereeId ? translate('refereeAssigned') : translate('refereeUnassigned'))}</span>
               <span>{scoreSummary}</span>
             </div>
             {matchSets.length > 0 ? (
@@ -369,7 +369,7 @@ export function OpsMatches({
                     title={set.scoreOverride?.reason || undefined}
                   >
                     {scorePresentation.sequenceLabel} {index + 1}: {set.team1Score}-{set.team2Score}
-                    {set.scoreOverride?.reason ? ' • ngoại lệ' : set.isFinished ? ' • chốt' : ' • đang đấu'}
+                    {set.scoreOverride?.reason ? ` • ${translate('exception')}` : set.isFinished ? ` • ${translate('locked')}` : ` • ${translate('inProgress')}`}
                   </span>
                 ))}
               </div>
@@ -379,30 +379,30 @@ export function OpsMatches({
               open={attentionCount > 0 || isBlocked || isDirectAdvance}
             >
               <summary className="cursor-pointer list-none font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
-                Xem chi tiết điều phối
+                {translate('detailsSummary')}
               </summary>
               <div className="mt-3 space-y-2">
             {isDirectAdvance ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
-                Đi thẳng / miễn đấu: trận này không cần điều phối sân vì nhánh đã tự xác định đội đi tiếp.
+                {translate('directAdvanceInfo')}
               </div>
             ) : null}
             {specialResult?.action ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
-                Quyết định BTC: {specialResult.action}
+                {translate('organizerDecision')}: {specialResult.action}
                 {specialResult.reason ? ` • ${specialResult.reason}` : ''}
               </div>
             ) : null}
             {scoreOverride?.reason ? (
               <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
-                Ngoại lệ điểm số: {scoreOverride.reason}
+                {translate('scoreException')}: {scoreOverride.reason}
                 {scoreOverride.decidedAt ? ` • ${formatDateTime(scoreOverride.decidedAt)}` : ''}
               </div>
             ) : null}
             {overriddenSets.length > 0 ? (
               <details className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-amber-950">
                 <summary className="cursor-pointer font-bold">
-                  Ngoại lệ theo set ({overriddenSets.length})
+                  {translate('setExceptions', { count: overriddenSets.length })}
                 </summary>
                 <div className="mt-2 space-y-2">
                   {overriddenSets.map(({ set, index }) => (
@@ -417,13 +417,13 @@ export function OpsMatches({
             {penalties.length > 0 ? (
               <details className="rounded-lg border border-slate-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
                 <summary className="cursor-pointer font-bold">
-                  Thẻ & hình phạt ({penalties.length})
+                  {translate('cardsAndPenalties', { count: penalties.length })}
                 </summary>
                 <div className="mt-2 space-y-2">
                   {penalties.map((penalty) => (
                     <div key={penalty.id} className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2">
                       <p className="font-bold">
-                        {penalty.team === 1 ? match.participant1?.teamName || 'Đội 1' : penalty.team === 2 ? match.participant2?.teamName || 'Đội 2' : 'Toàn trận'}: {penalty.label}
+                        {penalty.team === 1 ? match.participant1?.teamName || translate('teamOne') : penalty.team === 2 ? match.participant2?.teamName || translate('teamTwo') : translate('wholeMatch')}: {penalty.label}
                       </p>
                       <p className="mt-1 font-medium text-rose-800">
                         {penalty.note || penalty.kind} • {formatDateTime(penalty.createdAt)}
@@ -435,24 +435,24 @@ export function OpsMatches({
             ) : null}
             {matchInsight?.hasCustomConfig ? (
               <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
-                Cấu hình riêng: {matchInsight.customConfigSummary.join(' • ')}
+                {translate('customConfiguration')}: {matchInsight.customConfigSummary.join(' • ')}
               </div>
             ) : null}
             {sideOutState ? (
               <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                 {servingTeamLabel
-                  ? `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`
-                  : 'Chưa chốt đội giao hiện tại'}
+                  ? translate('servingStatus', { team: servingTeamLabel, server: sideOutState.serverNumber })
+                  : translate('serverNotConfirmed')}
               </div>
             ) : null}
             {matchInsight?.dependencyBlocked ? (
               <div className="rounded-lg border border-slate-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
-                Chưa đủ điều kiện nhánh đấu: {matchInsight.dependencySummary.join(' • ')}
+                {translate('dependencyBlocked')}: {matchInsight.dependencySummary.join(' • ')}
               </div>
             ) : null}
             {!match.participant1Id || !match.participant2Id ? (
               <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
-                Chưa đủ hai đối thủ. Chỉ nên điều phối sau khi nhánh trước chốt xong.
+                {translate('opponentsNotReady')}
               </div>
             ) : null}
               </div>
@@ -467,19 +467,20 @@ export function OpsMatches({
               disabled={isBusy || isDirectAdvance || isBlocked}
             >
               <CalendarClock className="mr-2 h-4 w-4" />
-              Lịch
+                            {translate('scheduleAction')}
+
             </Button>
             <Button
               variant="outline"
               className="border-amber-200 text-amber-700 hover:bg-amber-50"
               onClick={() => onFocusMatch?.(match.id)}
             >
-              Xem sơ đồ
+              {translate('viewBracket')}
             </Button>
             <Button asChild variant="outline" className="border-slate-200 font-bold text-slate-700">
               <Link href={`/live/${match.id}`}>
                 <TimerReset className="mr-2 h-4 w-4" />
-                Mở bảng điểm
+                {translate('openScoreboard')}
               </Link>
             </Button>
             <Button
@@ -496,7 +497,7 @@ export function OpsMatches({
               }
             >
               <AlertOctagon className="mr-2 h-4 w-4" />
-              Xử lý đặc biệt
+              {translate('specialOperation')}
             </Button>
           </div>
         </div>
@@ -531,32 +532,32 @@ export function OpsMatches({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Điều phối trận đấu</h2>
+              <h2 className="text-lg font-bold text-slate-900">{translate('title')}</h2>
               <p className="text-sm font-medium text-slate-500">
-                Đây là khu vực chính của ngày thi đấu: gọi trận, gán sân, cập nhật tỷ số và chốt các tình huống đặc biệt ngay tại bàn điều hành.
+                {translate('subtitle')}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Đã xếp lịch</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{translate('scheduledCount')}</p>
               <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ xếp lịch</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">{translate('unscheduledCount')}</p>
               <p className="mt-2 text-lg font-bold text-amber-700">{summary.unscheduledReady}</p>
             </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đang đấu</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{translate('ongoingCount')}</p>
               <p className="mt-2 text-lg font-bold text-blue-700">{summary.ongoing}</p>
             </div>
             <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Đang nghẽn nhánh</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">{translate('blockedCount')}</p>
               <p className="mt-2 text-lg font-bold text-rose-700">{summary.blocked}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đi thẳng / miễn đấu</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{translate('directAdvanceCount')}</p>
               <p className="mt-2 text-lg font-bold text-emerald-700">{summary.directAdvance}</p>
             </div>
           </div>
@@ -574,7 +575,7 @@ export function OpsMatches({
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
                 )}
               >
-                {option.label}
+                {translate(option.labelKey)}
               </button>
             ))}
           </div>
@@ -584,34 +585,34 @@ export function OpsMatches({
           {statusFilter === 'ALL' ? (
             <>
               {renderMatchSection(
-                'Các trận đã xếp lịch',
-                'Đây là danh sách sắp đấu thực sự: đã đủ đối thủ và đã có thời gian thi đấu.',
+                translate('scheduledSectionTitle'),
+                translate('scheduledSectionDescription'),
                 buckets.scheduled.slice(0, 8),
-                'Chưa có trận nào được xếp lịch rõ ràng.',
+                translate('scheduledSectionEmpty'),
               )}
               {renderMatchSection(
-                'Các trận chờ điều phối',
-                'Đã đủ hai đối thủ nhưng BTC chưa gán giờ/sân cụ thể.',
+                translate('readySectionTitle'),
+                translate('readySectionDescription'),
                 buckets.unscheduledReady.slice(0, 8),
-                'Không còn trận nào chờ xếp lịch.',
+                translate('readySectionEmpty'),
               )}
               {renderMatchSection(
-                'Các trận chưa đủ điều kiện chạy',
-                'Các trận này chưa nên xếp như trận bình thường vì còn chờ nhánh trước hoặc chưa đủ hai đối thủ.',
+                translate('blockedSectionTitle'),
+                translate('blockedSectionDescription'),
                 buckets.blocked.slice(0, 8),
-                'Không có trận nào đang nghẽn nhánh.',
+                translate('blockedSectionEmpty'),
               )}
               {renderMatchSection(
-                'Các suất đi thẳng / miễn đấu',
-                'Các cặp này đã được hệ thống cho đi tiếp tự động, không cần đưa vào hàng chờ điều phối sân.',
+                translate('directAdvanceSectionTitle'),
+                translate('directAdvanceSectionDescription'),
                 buckets.directAdvance.slice(0, 8),
-                'Hiện không có suất đi thẳng hoặc miễn đấu.',
+                translate('directAdvanceSectionEmpty'),
               )}
             </>
           ) : filteredMatches.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-              <p className="text-sm font-bold text-slate-700">Không có trận phù hợp</p>
-              <p className="mt-1 text-xs font-medium text-slate-500">Đổi bộ lọc để xem thêm trận trong giải.</p>
+              <p className="text-sm font-bold text-slate-700">{translate('filteredEmptyTitle')}</p>
+              <p className="mt-1 text-xs font-medium text-slate-500">{translate('filteredEmptyDescription')}</p>
             </div>
           ) : (
             filteredMatches.slice(0, 12).map(renderMatchCard)
@@ -622,50 +623,50 @@ export function OpsMatches({
       <Modal open={Boolean(selectedScheduleMatch)} onOpenChange={(open) => !open && setSelectedScheduleMatch(null)}>
         <ModalContent className="sm:max-w-2xl">
           <ModalHeader>
-            <ModalTitle>Cập nhật lịch thi đấu</ModalTitle>
-            <ModalDescription>Điều phối sân, lịch và trọng tài ngay từ panel vận hành.</ModalDescription>
+            <ModalTitle>{translate('scheduleModalTitle')}</ModalTitle>
+            <ModalDescription>{translate('scheduleModalDescription')}</ModalDescription>
           </ModalHeader>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Tên sân</label>
+              <label className="text-sm font-bold text-slate-700">{translate('courtNameLabel')}</label>
               <input
                 value={scheduleDraft.courtName}
                 onChange={(event) => setScheduleDraft((current) => ({ ...current, courtName: event.target.value }))}
                 className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
-                placeholder="Ví dụ: Sân trung tâm"
+                placeholder={translate('courtNamePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Thời gian thi đấu</label>
+              <label className="text-sm font-bold text-slate-700">{translate('matchTimeLabel')}</label>
               <DateTimePicker
                 value={scheduleDraft.scheduledAt}
                 onChange={(value) => setScheduleDraft((current) => ({ ...current, scheduledAt: value }))}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-bold text-slate-700">Địa chỉ sân</label>
+              <label className="text-sm font-bold text-slate-700">{translate('courtAddressLabel')}</label>
               <input
                 value={scheduleDraft.courtAddress}
                 onChange={(event) => setScheduleDraft((current) => ({ ...current, courtAddress: event.target.value }))}
                 className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
-                placeholder="Ví dụ: 12 Nguyễn Trãi, Quận 1"
+                placeholder={translate('courtAddressPlaceholder')}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-bold text-slate-700">Trọng tài</label>
+              <label className="text-sm font-bold text-slate-700">{translate('referee')}</label>
               <div className="flex h-11 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">
-                Chưa ghi nhận — {referees.length > 0 ? 'Trọng tài được chấp nhận sẽ tự ghi nhận khi bấm Bắt đầu trên Live.' : 'Chưa có trọng tài được chấp nhận.'}
+                {translate('refereeStatus', { status: referees.length > 0 ? translate('refereeAutoAssigned') : translate('refereeNoneAccepted') })}
               </div>
             </div>
           </div>
 
           <ModalFooter className="gap-2">
             <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setSelectedScheduleMatch(null)}>
-              Hủy
+              {translate('cancel')}
             </Button>
             <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => void handleSubmitSchedule()}>
-              Lưu lịch thi đấu
+              {translate('saveSchedule')}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -674,8 +675,8 @@ export function OpsMatches({
       <Modal open={Boolean(selectedOperationMatch)} onOpenChange={(open) => !open && setSelectedOperationMatch(null)}>
         <ModalContent className="sm:max-w-2xl">
           <ModalHeader>
-            <ModalTitle>Quyết định nghiệp vụ đặc biệt</ModalTitle>
-          <ModalDescription>Chọn tình huống và ghi lý do để lưu vào nhật ký giải. Chỉ các quyết định chốt kết quả mới cần chọn đội thắng.</ModalDescription>
+            <ModalTitle>{translate('specialOperationTitle')}</ModalTitle>
+          <ModalDescription>{translate('specialOperationDescription')}</ModalDescription>
           </ModalHeader>
 
           <div className="space-y-4">
@@ -692,15 +693,15 @@ export function OpsMatches({
                       : 'border-slate-200 bg-white hover:border-slate-300',
                   )}
                 >
-                  <p className="text-sm font-bold text-slate-900">{option.label}</p>
-                  <p className="mt-1 text-xs font-medium text-slate-500">{option.description}</p>
+                  <p className="text-sm font-bold text-slate-900">{translate(option.labelKey)}</p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">{translate(option.descriptionKey)}</p>
                 </button>
               ))}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Đội thắng theo quyết định</label>
+                <label className="text-sm font-bold text-slate-700">{translate('winnerLabel')}</label>
                 <select
                   value={operationDraft.winnerId}
                   onChange={(event) => setOperationDraft((current) => ({ ...current, winnerId: event.target.value }))}
@@ -709,44 +710,44 @@ export function OpsMatches({
                 >
                   <option value="">
                     {operationDraft.action === 'POSTPONE' || operationDraft.action === 'ABANDON'
-                      ? 'Không chốt đội thắng'
-                      : 'Chọn đội thắng'}
+                      ? translate('noWinnerRequired')
+                      : translate('selectWinner')}
                   </option>
                   {selectedOperationMatch?.participant1Id ? (
                     <option value={selectedOperationMatch.participant1Id}>
-                      {selectedOperationMatch.participant1?.teamName || 'Đội 1'}
+                      {selectedOperationMatch.participant1?.teamName || translate('teamOne')}
                     </option>
                   ) : null}
                   {selectedOperationMatch?.participant2Id ? (
                     <option value={selectedOperationMatch.participant2Id}>
-                      {selectedOperationMatch.participant2?.teamName || 'Đội 2'}
+                      {selectedOperationMatch.participant2?.teamName || translate('teamTwo')}
                     </option>
                   ) : null}
                 </select>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs font-medium text-slate-600">
                 {operationDraft.action === 'POSTPONE'
-                  ? 'Trận sẽ quay về trạng thái chờ xếp lịch; sau đó BTC cần gán lại ngày giờ và sân.'
+                  ? translate('postponeHint')
                   : operationDraft.action === 'ABANDON'
-                    ? 'Trận sẽ chuyển sang cần xử lý, không cộng ELO và không tự đẩy nhánh đấu.'
-                    : 'Kết quả sẽ chốt trận, đẩy nhánh đấu đi tiếp và lưu audit log.'}
+                    ? translate('abandonHint')
+                    : translate('operationResultHint')}
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Lý do bắt buộc</label>
+              <label className="text-sm font-bold text-slate-700">{translate('reasonLabel')}</label>
               <textarea
                 value={operationDraft.reason}
                 onChange={(event) => setOperationDraft((current) => ({ ...current, reason: event.target.value }))}
                 className="min-h-28 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                placeholder="Ví dụ: đội B xin dừng vì chấn thương cổ chân, đã xác nhận cùng trọng tài..."
+                placeholder={translate('reasonPlaceholder')}
               />
             </div>
           </div>
 
           <ModalFooter>
             <Button variant="outline" className="border-slate-200" onClick={() => setSelectedOperationMatch(null)}>
-              Hủy
+              {translate('cancel')}
             </Button>
             <Button
               className="bg-amber-600 text-white hover:bg-amber-700"
@@ -758,7 +759,7 @@ export function OpsMatches({
                 activeMatchActionId === selectedOperationMatch?.id
               }
             >
-              Áp dụng quyết định
+              {translate('applyDecision')}
             </Button>
           </ModalFooter>
         </ModalContent>

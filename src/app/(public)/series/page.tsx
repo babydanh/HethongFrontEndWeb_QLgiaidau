@@ -38,7 +38,11 @@ export default function SeriesListPage() {
         
         const response = await seriesApi.getSeriesList(params);
         if (active) {
-          setSeriesList(response.data || []);
+          setSeriesList(
+            (response.data || []).filter(
+              (item) => item.visibility === 'PUBLIC' && (item.status === 'ACTIVE' || item.status === 'COMPLETED'),
+            ),
+          );
         }
       } catch (err: unknown) {
         if (active) {

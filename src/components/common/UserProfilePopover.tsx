@@ -89,8 +89,7 @@ export default function UserProfilePopover({
         ...(fetchedDetails?.id === user.id ? fetchedDetails : {}),
       }
     : null;
-
-
+  const displayName = profileData?.fullName || translate('memberFallback');
 
   // Fetch additional details from public profile API and community members
   useEffect(() => {
@@ -394,7 +393,7 @@ export default function UserProfilePopover({
           <div className="rounded-full shadow-md">
             <RankAvatar
               src={profileData.avatarUrl}
-              name={profileData.fullName}
+              name={displayName}
               size="lg"
               className="h-[60px] w-[60px]"
               elo={primaryRank?.eloPoints}
@@ -436,7 +435,7 @@ export default function UserProfilePopover({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h4 className="truncate text-base font-bold text-slate-900">
-              {profileData.fullName}
+              {displayName}
             </h4>
             {profileData.isVerified && (
               <span title={translate('verifiedAccount')} className="inline-flex items-center shrink-0">

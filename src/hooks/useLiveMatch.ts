@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
 import { extractMatchScores } from '@/features/matches/score-display';
@@ -58,6 +59,7 @@ function isStaleRevision(previous: Match | null, incoming: Match): boolean {
 }
 
 export function useLiveMatch(matchId: string) {
+  const translate = useTranslations('LiveMatch');
   const [match, setMatch] = useState<Match | null>(null);
   const [scores, setScores] = useState<MatchScore[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
@@ -81,7 +83,7 @@ export function useLiveMatch(matchId: string) {
       } catch (err: unknown) {
         console.error('Failed to fetch match details:', err);
         if (isMounted) {
-          setError('Không thể tải thông tin trận đấu');
+          setError(translate('loadFailed'));
         }
       } finally {
         if (isMounted) {
@@ -108,7 +110,7 @@ export function useLiveMatch(matchId: string) {
     return () => {
       isMounted = false;
     };
-  }, [matchId]);
+  }, [matchId, translate]);
 
   useEffect(() => {
     let isMounted = true;

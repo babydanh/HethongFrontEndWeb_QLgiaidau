@@ -38,8 +38,15 @@ export default function SeriesDetailPage() {
         setError(null);
         const res = await seriesApi.getSeriesDetail(slug);
         if (active) {
-          setSeries(res.series);
-          setLegs(res.legs || []);
+          const isPublicSeries = res.series.visibility === 'PUBLIC' && res.series.status !== 'DRAFT';
+          if (!isPublicSeries) {
+            setSeries(null);
+            setLegs([]);
+            setError(translate('notFoundDescription'));
+          } else {
+            setSeries(res.series);
+            setLegs(res.legs || []);
+          }
         }
       } catch (err: unknown) {
         if (active) {

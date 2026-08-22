@@ -76,7 +76,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteGenderRestriction, setLiteGenderRestriction] = useState<'MALE' | 'FEMALE' | ''>('');
   const [liteTeamSize, setLiteTeamSize] = useState<5 | 7 | 11>(7);
   const [liteMaxReserve, setLiteMaxReserve] = useState(5);
-  const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles'>('doubles');
+  const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles' | 'mixed_doubles'>('singles');
   const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [liteMaxTeams, setLiteMaxTeams] = useState(16);
   const [liteStartDate, setLiteStartDate] = useState(() => {
@@ -154,6 +154,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         sport: liteSport,
         communityId: id,
         format: liteSport === 'football' ? 'doubles' : liteFormat,
+        ...(liteSport !== 'football' && liteFormat === 'mixed_doubles' ? { genderRestriction: 'MIXED' as const } : {}),
         ...(liteSport === 'football'
           ? { genderRestriction: liteGenderRestriction || undefined, teamSize: liteTeamSize, maxReserve: liteMaxReserve }
           : {}),
@@ -180,14 +181,14 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       setLiteGenderRestriction('');
       setLiteTeamSize(7);
       setLiteMaxReserve(5);
-      setLiteFormat('doubles');
+      setLiteFormat('singles');
       setLiteBracketType('single_elimination');
       setLiteMaxTeams(16);
 
-      // Redirect directly to the manage page of the newly created tournament
+      // Redirect directly to the dedicated quick-tournament manage page.
       const newId = res?.id;
       if (newId) {
-        router.push(`/organizer/tournaments/${newId}/manage`);
+        router.push(`/lite/tournaments/${newId}/manage`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -433,7 +434,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
                   {isLiteTournament(t) ? (
-                    <Link href={`/organizer/tournaments/${t.id}/manage`} className="flex-1">
+                    <Link href={`/lite/tournaments/${t.id}/manage`} className="flex-1">
                       <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
                         <Settings className="w-3.5 h-3.5" /> {translate('communityTournamentQuickManage')}
                       </Button>
@@ -580,7 +581,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         </div>
                         <select
                           value={liteSport}
-                          onChange={(e) => setLiteSport(e.target.value as LiteSport)}
+                          onChange={(e) => {
+                            const nextSport = e.target.value as LiteSport;
+                            setLiteSport(nextSport);
+                            if (nextSport === 'football') setLiteFormat('doubles');
+                          }}
                           disabled={isClubLocked}
                           className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                         >
@@ -603,12 +608,13 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     <label className="text-sm font-semibold text-slate-750 text-slate-700">{translate('communityTournamentFormatLabel')}</label>
                     <select
                       value={liteFormat}
-                      onChange={(e) => setLiteFormat(e.target.value as 'singles' | 'doubles')}
+                      onChange={(e) => setLiteFormat(e.target.value as 'singles' | 'doubles' | 'mixed_doubles')}
                       disabled={liteSport === 'football'}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="singles">{translate('communityTournamentSinglesFormat')}</option>
-                      <option value="doubles">{translate('communityTournamentDoublesFormat')}</option>
+<option value="doubles">{translate('communityTournamentDoublesFormat')}</option>
+                      <option value="mixed_doubles">{translate('communityTournamentMixedFormat')}</option>
                     </select>
                   </div>
                 </div>

@@ -1,12 +1,29 @@
 'use client';
 
-import { use, useEffect, useState, useCallback } from 'react';
+import { use, useEffect, useState, useCallback, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { tournamentsApi, type Tournament } from '@/features/tournaments/api';
+import {
+  tournamentsApi,
+  type BracketMatch,
+  type BracketStage,
+  type BracketSlotMutation,
+  type Tournament,
+  GenderRestriction,
+  MatchTypeDB,
+} from '@/features/tournaments/api';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
+import type {
+  BracketDragHandlers,
+  BracketDragSource,
+  BracketParticipant,
+  BracketSlot,
+} from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { getSportLogo } from '@/constants/sports';
 import {
   Trophy, Users, Swords, Calendar,
@@ -15,7 +32,7 @@ import {
   Unlink, Loader2, User, FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import type { LiteParticipant } from '@/types/tournament';
@@ -64,9 +81,10 @@ function SportLabel({ name }: { name?: string | null }) {
 
 export default function LiteTournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('LiteManage');
+  const bracketTranslate = useTranslations('TournamentDetail');
   const locale = useLocale();
   const { id } = use(params);
-  const router = useRouter();
+  
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<LiteTab>('overview');
@@ -79,6 +97,25 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [ruleHalves, setRuleHalves] = useState(2);
   const [ruleHalfDuration, setRuleHalfDuration] = useState(45);
   const [ruleAllowDraw, setRuleAllowDraw] = useState(true);
+  const [hasBracket, setHasBracket] = useState(false);
+  const [selectedMatchType, setSelectedMatchType] = useState<MatchTypeDB>(MatchTypeDB.SINGLES);
+  const [matchTypeSaving, setMatchTypeSaving] = useState(false);
+  const [bracket, setBracket] = useState<{ stages: BracketStage[] } | null>(null);
+  const [bracketRefreshKey, setBracketRefreshKey] = useState(0);
+  const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
+  const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
+  const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
+  const bracketScrollYRef = useRef<number | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const liteDivisionId = tournament?.divisions?.[0]?.id;
+
+  const fetchBracket = useCallback(async (divisionId = liteDivisionId) => {
+    const response = await tournamentsApi.getTournamentBracket(id, divisionId);
+    const loadedBracket = response.data ?? null;
+    setBracket(loadedBracket);
+    setHasBracket(Boolean(loadedBracket?.stages?.length));
+    return loadedBracket;
+  }, [id, liteDivisionId]);
 
   useEffect(() => {
     const fetch = async () => {
@@ -87,6 +124,16 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         const res = await tournamentsApi.getTournamentById(id);
         const loaded = res.data ?? null;
         setTournament(loaded);
+        const loadedDivision = loaded?.divisions?.[0];
+        const loadedMatchType = loadedDivision?.matchType ?? loaded?.matchType;
+        const normalizedLoadedMatchType = loadedMatchType?.toUpperCase();
+        const effectiveLoadedMatchType = normalizedLoadedMatchType === MatchTypeDB.DOUBLES &&
+            loadedDivision?.genderRestriction?.toUpperCase() === GenderRestriction.MIXED
+          ? MatchTypeDB.MIXED_DOUBLES
+          : normalizedLoadedMatchType;
+        if (Object.values(MatchTypeDB).includes(effectiveLoadedMatchType as MatchTypeDB)) {
+          setSelectedMatchType(effectiveLoadedMatchType as MatchTypeDB);
+        }
         if (loaded?.sportRules?.kind === 'FOOTBALL') {
           setRuleHalves(Number(loaded.sportRules.halvesCount ?? 2));
           setRuleHalfDuration(Number(loaded.sportRules.halfDuration ?? 45));
@@ -97,8 +144,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
           setRuleMaxPoints(Number(loaded.sportRules.maxPoints ?? 30));
           setRuleWinByTwo(loaded.sportRules.winByTwo !== false);
         }
-        const bracket = await tournamentsApi.getTournamentBracket(id);
-        setHasBracket(Boolean(bracket.data?.stages?.length));
+        await fetchBracket(loaded?.divisions?.[0]?.id);
       } catch {
         setTournament(null);
       } finally {
@@ -106,7 +152,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       }
     };
     fetch();
-  }, [id]);
+  }, [id, fetchBracket]);
 
   const handleSaveRules = async () => {
     if (!tournament || ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)) {
@@ -130,6 +176,60 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }
   };
 
+  const handleSaveMatchType = async () => {
+    const division = tournament?.divisions?.[0];
+    const divisionId = division?.id;
+    const rawCurrentMatchType = division?.matchType ?? tournament?.matchType;
+    const currentMatchType = rawCurrentMatchType?.toUpperCase() === MatchTypeDB.DOUBLES &&
+        division?.genderRestriction?.toUpperCase() === GenderRestriction.MIXED
+      ? MatchTypeDB.MIXED_DOUBLES
+      : rawCurrentMatchType?.toUpperCase();
+    const isFootball = tournament?.sportRules?.kind === 'FOOTBALL';
+    const lifecycleLocked = Boolean(
+      !tournament ||
+      !divisionId ||
+      hasBracket ||
+      tournament.isRegistrationLocked ||
+      ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status),
+    );
+
+    if (lifecycleLocked || (isFootball && selectedMatchType !== MatchTypeDB.DOUBLES)) {
+      toast.error(translate('matchTypeSaveBlocked'));
+      return;
+    }
+    if (!divisionId) return;
+    if (selectedMatchType === currentMatchType) return;
+    if (!window.confirm(translate('matchTypeSaveConfirm'))) return;
+
+    setMatchTypeSaving(true);
+    try {
+      const participantsResponse = await tournamentsApi.getLiteParticipants(id);
+      if ((participantsResponse.data ?? []).length > 0) {
+        toast.error(translate('matchTypeSaveBlocked'));
+        return;
+      }
+      await tournamentsApi.updateDivisionConfig(id, divisionId, {
+        matchType: selectedMatchType,
+        genderRestriction: selectedMatchType === MatchTypeDB.MIXED_DOUBLES
+          ? GenderRestriction.MIXED
+          : null,
+      });
+      setTournament((current) => current ? {
+        ...current,
+        matchType: selectedMatchType,
+        genderRestriction: selectedMatchType === MatchTypeDB.MIXED_DOUBLES ? 'MIXED' : null,
+        divisions: current.divisions?.map((candidate) => candidate.id === divisionId
+          ? { ...candidate, matchType: selectedMatchType, genderRestriction: selectedMatchType === MatchTypeDB.MIXED_DOUBLES ? 'MIXED' : null }
+          : candidate),
+      } : current);
+      toast.success(translate('matchTypeSaveSuccess'));
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setMatchTypeSaving(false);
+    }
+  };
+
   // --- Participants / pairing state ---
   const [participants, setParticipants] = useState<LiteParticipant[]>([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
@@ -139,13 +239,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [generatingStrategy, setGeneratingStrategy] = useState<'RANDOM' | 'ELO_BALANCED' | null>(null);
   const [unpairingId, setUnpairingId] = useState<string | null>(null);
   const [bracketLoading, setBracketLoading] = useState(false);
-  const [hasBracket, setHasBracket] = useState(false);
   const [mockLoading, setMockLoading] = useState(false);
   const [rosterConfirming, setRosterConfirming] = useState(false);
 
-  useEffect(() => {
-    router.replace(`/organizer/tournaments/${id}/manage`);
-  }, [id, router]);
+  
 
   const fetchParticipants = useCallback(async () => {
     if (!id) return;
@@ -184,6 +281,125 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const pairedParticipants = participants.filter(
     (p) => p.teamStatus === 'COMPLETE' || p.teamStatus === 'PENDING_APPROVAL'
   );
+  const canonicalMatchType = (
+    tournament?.divisions?.[0]?.matchType ?? tournament?.matchType ?? ''
+  ).toUpperCase();
+  const isPairFormat = ['DOUBLES', 'MIXED_DOUBLES'].includes(canonicalMatchType);
+  const isSingleEliminationBracket = Boolean(
+    bracket?.stages?.length === 1 && bracket.stages[0]?.type === 'SINGLE_ELIMINATION',
+  );
+  const tournamentDragLocked = ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament?.status ?? '');
+  const bracketDragEnabled = Boolean(
+    hasBracket &&
+    liteDivisionId &&
+    isSingleEliminationBracket &&
+    !tournamentDragLocked &&
+    !isSavingBracketSlots,
+  );
+
+  type LiteBracketDropTarget = Parameters<NonNullable<BracketDragHandlers['onParticipantDrop']>>[1];
+
+  const findBracketMatch = (matchId: string): BracketMatch | null => {
+    for (const stage of bracket?.stages ?? []) {
+      for (const group of stage.groups ?? []) {
+        const match = group.matches.find((candidate) => candidate.id === matchId);
+        if (match) return match;
+      }
+    }
+    return null;
+  };
+
+  const getCurrentSlotParticipant = (matchId: string, slot: BracketSlot): BracketParticipant | null => {
+    const key = `${matchId}:${slot}`;
+    if (Object.prototype.hasOwnProperty.call(participantOverrides, key)) {
+      return participantOverrides[key] ?? null;
+    }
+    return findBracketMatch(matchId)?.[slot] ?? null;
+  };
+
+  const isMatchDragLocked = (match: BracketMatch | null): boolean => {
+    const status = match?.status?.toUpperCase();
+    return tournamentDragLocked || status === 'LIVE' || status === 'ONGOING' || status === 'IN_PROGRESS' || status === 'COMPLETED';
+  };
+
+  const handleBracketParticipantDrop = async (
+    source: BracketDragSource,
+    target: LiteBracketDropTarget,
+  ): Promise<void> => {
+    if (!bracketDragEnabled || source.type !== 'slot' || !source.matchId || !source.slot || target.type !== 'slot') return;
+
+    const sourceMatch = findBracketMatch(source.matchId);
+    const targetMatch = findBracketMatch(target.matchId);
+    if (isMatchDragLocked(sourceMatch) || isMatchDragLocked(targetMatch)) return;
+
+    const sourceKey = `${source.matchId}:${source.slot}`;
+    const targetKey = `${target.matchId}:${target.slot}`;
+    if (sourceKey === targetKey) return;
+
+    const currentOccupant = getCurrentSlotParticipant(target.matchId, target.slot);
+    const previousOverrides = participantOverrides;
+    const nextOverrides = { ...previousOverrides };
+    nextOverrides[targetKey] = source.participant;
+    nextOverrides[sourceKey] = currentOccupant;
+
+    const operation: BracketSlotMutation = currentOccupant
+      ? {
+          operation: 'SWAP',
+          fromMatchId: source.matchId,
+          fromSlot: source.slot,
+          toMatchId: target.matchId,
+          toSlot: target.slot,
+        }
+      : {
+          operation: 'MOVE',
+          fromMatchId: source.matchId,
+          fromSlot: source.slot,
+          toMatchId: target.matchId,
+          toSlot: target.slot,
+        };
+
+    bracketScrollYRef.current = typeof window === 'undefined' ? null : window.scrollY;
+    setParticipantOverrides(nextOverrides);
+    setIsSavingBracketSlots(true);
+    try {
+      await tournamentsApi.updateBracketSlots(id, liteDivisionId!, [operation]);
+      await fetchBracket(liteDivisionId);
+      setParticipantOverrides({});
+      setBracketRefreshKey((current) => current + 1);
+      toast.success(bracketTranslate('bracketSlotsSaved'));
+    } catch (error) {
+      setParticipantOverrides(previousOverrides);
+      toast.error(getErrorMessage(error) || bracketTranslate('bracketSlotsSaveFailed'));
+    } finally {
+      setIsSavingBracketSlots(false);
+      const savedScrollY = bracketScrollYRef.current;
+      bracketScrollYRef.current = null;
+      if (savedScrollY !== null && typeof window !== 'undefined') {
+        requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+      }
+    }
+  };
+
+  const handleBracketDragStart = (event: DragStartEvent) => {
+    const source = (event.active.data.current as { source?: BracketDragSource } | undefined)?.source;
+    setActiveDragSource(source ?? null);
+  };
+
+  const handleBracketDragEnd = (event: DragEndEvent) => {
+    setActiveDragSource(null);
+    const source = (event.active.data.current as { source?: BracketDragSource } | undefined)?.source;
+    const target = (event.over?.data.current as { target?: unknown } | undefined)?.target;
+    if (!source || !target || typeof target !== 'object') return;
+    const targetRecord = target as Record<string, unknown>;
+    if (targetRecord.type !== 'slot' || typeof targetRecord.matchId !== 'string' || (targetRecord.slot !== 'participant1' && targetRecord.slot !== 'participant2')) return;
+    void handleBracketParticipantDrop(source, targetRecord as LiteBracketDropTarget);
+  };
+
+  const bracketDragHandlers: BracketDragHandlers = {
+    enabled: bracketDragEnabled,
+    participantOverrides,
+    onParticipantDrop: handleBracketParticipantDrop,
+  };
 
   const toggleSelection = (pid: string) => {
     setSelectedIds((prev) => {
@@ -271,8 +487,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     setBracketLoading(true);
     try {
       await tournamentsApi.generateLiteBracket(id);
-      const bracket = await tournamentsApi.getTournamentBracket(id);
-      setHasBracket(Boolean(bracket.data?.stages?.length));
+      await fetchBracket(liteDivisionId);
+      setParticipantOverrides({});
+      setBracketRefreshKey((current) => current + 1);
       toast.success(translate('bracketCreatedSuccess'));
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -301,8 +518,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     setBracketLoading(true);
     try {
       await tournamentsApi.resetLiteBracket(id);
-      const bracket = await tournamentsApi.getTournamentBracket(id);
-      setHasBracket(Boolean(bracket.data?.stages?.length));
+      await fetchBracket(liteDivisionId);
+      setParticipantOverrides({});
+      setBracketRefreshKey((current) => current + 1);
       toast.success(translate('resetBracketSuccess'));
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -317,7 +535,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     if (num < 1 || num > 50) return toast.error(translate('mockParticipantCountError'));
     setMockLoading(true);
     try {
-      const names = Array.from({ length: num }, (_, i) => `VĐV ảo ${i + 1}`);
+      const names = Array.from({ length: num }, (_, i) => translate('mockParticipantName', { count: i + 1 }));
       await tournamentsApi.seedMockParticipants(id, names);
       toast.success(translate('mockParticipantCreated', { count: num }));
       await fetchParticipants();
@@ -358,6 +576,14 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       ? buildLiteJoinUrl(tournament.inviteCode, window.location.origin)
       : `${window.location.origin}/tournaments/${tournament.id}/register?invite=${encodeURIComponent(tournament.inviteCode)}`
     : null;
+  const currentMatchType = tournament.divisions?.[0]?.matchType ?? tournament.matchType;
+  const formatSettingLocked = Boolean(
+    hasBracket ||
+    tournament.isRegistrationLocked ||
+    (tournament.divisions?.[0]?._count?.participants ?? 0) > 0 ||
+    ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status),
+  );
+  const isFootballTournament = tournament.sportRules?.kind === 'FOOTBALL';
 
   return (
     <div className="min-h-screen bg-slate-50 py-6 px-4 md:px-8">
@@ -384,7 +610,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
               <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
                 <SportLabel name={tournament.category?.name} />
                 <span className="text-slate-300">|</span>
-                <span>{tournament.matchType === 'SINGLES' ? translate('matchTypeSingles') : tournament.matchType === 'DOUBLES' ? translate('matchTypeDoubles') : tournament.matchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles') : tournament.matchType}</span>
+                <span>{currentMatchType === 'SINGLES' ? translate('matchTypeSingles') : currentMatchType === 'DOUBLES' ? translate('matchTypeDoubles') : currentMatchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles') : currentMatchType}</span>
                 {tournament.maxParticipants && (
                   <>
                     <span className="text-slate-300">|</span>
@@ -447,10 +673,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoCard label={translate('sportLabel')} value={tournament.category?.name || translate('unknownValue')} />
                 <InfoCard label={translate('matchTypeLabel')} value={
-                  tournament.matchType === 'SINGLES' ? translate('matchTypeSingles')
-                  : tournament.matchType === 'DOUBLES' ? translate('matchTypeDoubles')
-                  : tournament.matchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles')
-                  : tournament.matchType || translate('unknownValue')
+                  currentMatchType === 'SINGLES' ? translate('matchTypeSingles')
+                  : currentMatchType === 'DOUBLES' ? translate('matchTypeDoubles')
+                  : currentMatchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles')
+                  : currentMatchType || translate('unknownValue')
                 } />
                 <InfoCard label={translate('formatLabel')} value={
                                     tournament.format === 'SINGLE_ELIMINATION' ? translate('formatSingleElimination')
@@ -469,6 +695,31 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 {(tournament.locationAddress || tournament.tournamentConfig?.location?.display) && (
                   <InfoCard label={translate('locationLabel')} value={tournament.locationAddress || tournament.tournamentConfig?.location?.display || '—'} />
                 )}
+              </div>
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">{translate('matchTypeSettingTitle')}</h4>
+                    <p className="mt-1 text-xs text-slate-600">{translate('matchTypeSettingDescription')}</p>
+                  </div>
+                  <div className="flex flex-col items-stretch gap-2 sm:min-w-56">
+                    <select
+                      value={isFootballTournament ? MatchTypeDB.DOUBLES : selectedMatchType}
+                      onChange={(event) => setSelectedMatchType(event.target.value as MatchTypeDB)}
+                      disabled={formatSettingLocked || isFootballTournament || matchTypeSaving}
+                      className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      aria-label={translate('matchTypeSettingTitle')}
+                    >
+                      {!isFootballTournament && <option value={MatchTypeDB.SINGLES}>{translate('matchTypeSingles')}</option>}
+                      <option value={MatchTypeDB.DOUBLES}>{translate('matchTypeDoubles')}</option>
+                      {!isFootballTournament && <option value={MatchTypeDB.MIXED_DOUBLES}>{translate('matchTypeMixedDoubles')}</option>}
+                    </select>
+                    <Button size="sm" onClick={handleSaveMatchType} disabled={formatSettingLocked || isFootballTournament || matchTypeSaving || selectedMatchType === currentMatchType}>
+                      {matchTypeSaving ? translate('saving') : translate('saveMatchType')}
+                    </Button>
+                  </div>
+                </div>
+                {formatSettingLocked && <p className="mt-3 text-xs font-semibold text-amber-700">{translate('matchTypeSettingLocked')}</p>}
               </div>
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -581,8 +832,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 </div>
               ) : (
                 <>
-                  {/* Doubles: pending pool + pairing */}
-                  {tournament?.matchType === 'DOUBLES' ? (
+                  {/* Pair formats: pending pool + pairing */}
+                  {isPairFormat ? (
                     <>
                       {/* Pending pool */}
                       <div>
@@ -797,7 +1048,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   )}
 
                   {/* Create bracket */}
-                  {(tournament?.matchType === 'DOUBLES' ? pairedParticipants.length > 0 : participants.length > 0) && (
+                  {(isPairFormat ? pairedParticipants.length > 0 : participants.length > 0) && (
                     <div className="pt-4 border-t border-slate-100">
                       <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                         <div className="min-w-0">
@@ -844,31 +1095,23 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Link href={`/tournaments/${id}?tab=bracket`} target="_blank">
                     <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> {translate('viewBracket')}</Button>
                   </Link>
-                  <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
+                  <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading || tournamentDragLocked} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
                     <RefreshCw className="w-4 h-4" /> {translate('resetBracketAction')}
                   </Button>
                 </div>
               )}
-              {(participants.length > 0 || (!tournament?.matchType || tournament.matchType !== 'DOUBLES')) && (
+              {(isPairFormat ? pairedParticipants.length > 0 : participants.length > 0) && (
                 <div className="bg-slate-50 rounded-lg p-6 text-center">
-                  <Swords className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-                  <p className="text-sm text-slate-500 mb-4">
-                    {tournament?.matchType === 'DOUBLES'
-                      ? translate('pairingCompletePrompt')
-                      : translate('createBracketPrompt')}
-                  </p>
-                  {!hasBracket && <Button
-                    onClick={handleGenerateBracket}
-                    disabled={bracketLoading}
-                    className="gap-2"
-                  >
-                    {bracketLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Swords className="w-4 h-4" />
-                    )}
-                    {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
-                  </Button>}
+                  {!hasBracket && <>
+                    <Swords className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+                    <p className="text-sm text-slate-500 mb-4">
+                      {isPairFormat ? translate('pairingCompletePrompt') : translate('createBracketPrompt')}
+                    </p>
+                    <Button onClick={handleGenerateBracket} disabled={bracketLoading} className="gap-2">
+                      {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4" />}
+                      {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
+                    </Button>
+                  </>}
                 </div>
               )}
               {participants.length === 0 && (
@@ -876,6 +1119,33 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Swords className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                   <p className="text-sm text-slate-400">{translate('noParticipantsInvite')}</p>
                 </div>
+              )}
+              {hasBracket && (
+                bracketDragEnabled ? (
+                  <DndContext sensors={sensors} onDragStart={handleBracketDragStart} onDragEnd={handleBracketDragEnd}>
+                    <PublicBracketTab
+                      tournament={tournament}
+                      tournamentId={id}
+                      divisionId={liteDivisionId}
+                      dragHandlers={bracketDragHandlers}
+                      refreshKey={bracketRefreshKey}
+                    />
+                    <DragOverlay>
+                      {activeDragSource ? (
+                        <div className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-bold text-slate-800 shadow-lg">
+                          {activeDragSource.participant.teamName}
+                        </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                ) : (
+                  <PublicBracketTab
+                    tournament={tournament}
+                    tournamentId={id}
+                    divisionId={liteDivisionId}
+                    refreshKey={bracketRefreshKey}
+                  />
+                )
               )}
             </div>
           )}

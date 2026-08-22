@@ -14,6 +14,7 @@ import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-r
 import ShareModal from '@/components/common/ShareModal';
 import { BRAND } from '@/constants/brand';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
+import AdBannerCard from '@/components/ui/AdBannerCard';
 
 interface EnrichedTournament {
   id: string;
@@ -1509,6 +1510,19 @@ export default function MatchesListPage() {
           </button>
         </div>
       )}
+
+      {/* Banner Quảng cáo / Đối tác dưới phân trang */}
+      <div className="mt-10 pt-4 border-t border-slate-100">
+        <AdBannerCard
+          variant="horizontal"
+          sponsor="SPORTO STORE & ĐỐI TÁC"
+          title="Trang thiết bị & Dụng cụ Thể thao chính hãng"
+          description="Ưu đãi độc quyền cho vận động viên và các câu lạc bộ trên SportO — Giảm đến 20% phụ kiện thi đấu."
+          ctaText="Khám phá ngay"
+          badgeLabel="Tài trợ"
+          href="/tournaments"
+        />
+      </div>
 
       <ShareModal
         isOpen={isShareModalOpen}

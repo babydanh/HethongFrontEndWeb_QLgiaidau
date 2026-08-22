@@ -39,7 +39,7 @@ export const useUserProfileModalStore = create<UserProfileModalState>((set) => (
       communityId,
     });
   },
-  openUserById: (userId, fullName = 'Thành viên', avatarUrl = null, anchorRect = null, communityId) => {
+  openUserById: (userId, fullName = '', avatarUrl = null, anchorRect = null, communityId) => {
     const defaultRect = anchorRect || (typeof window !== 'undefined'
       ? new DOMRect(window.innerWidth / 2 - 165, window.innerHeight / 2 - 150, 330, 300)
       : null);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Division, Tournament, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
+import { Division, Tournament, TournamentSponsor, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark } from 'lucide-react';
@@ -11,6 +11,7 @@ import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
 import BracketTab from './components/BracketTab';
 import MatchesTab from './components/MatchesTab';
+import SponsorsTab from './components/SponsorsTab';
 import LiveMatchesTab from './components/LiveMatchesTab';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -63,13 +64,14 @@ interface Props {
   initialTournament: Tournament | null;
 }
 
-type TournamentDetailTab = 'live' | 'overview' | 'teams' | 'bracket' | 'matches';
+type TournamentDetailTab = 'live' | 'overview' | 'teams' | 'bracket' | 'matches' | 'sponsors';
 
 const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'overview',
   'teams',
   'bracket',
   'matches',
+  'sponsors',
 ];
 
 export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
@@ -129,12 +131,28 @@ const commonTranslate = useTranslations('Common');
   const { openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
   const [liveMatchesCount, setLiveMatchesCount] = useState(0);
+  const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    tournamentsApi.getPublicSponsors(tournamentId)
+      .then((response) => {
+        if (active) setPublicSponsors(Array.isArray(response.data) ? response.data : []);
+      })
+      .catch(() => {
+        // Sponsor content is optional; a failed request must not break tournament operations.
+        if (active) setPublicSponsors([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [tournamentId]);
 
   // Check live matches count and set default tab to 'live' if matches are ongoing
   useEffect(() => {
@@ -383,13 +401,17 @@ const commonTranslate = useTranslations('Common');
     if (!requestedTab || !TOURNAMENT_DETAIL_TABS.includes(requestedTab as TournamentDetailTab)) {
       return;
     }
+    if (requestedTab === 'sponsors' && publicSponsors.length === 0) {
+      if (activeTab === 'sponsors') setActiveTab('overview');
+      return;
+    }
 
     if (activeTab !== requestedTab) {
       Promise.resolve().then(() => {
         setActiveTab(requestedTab as TournamentDetailTab);
       });
     }
-  }, [activeTab, searchParams]);
+  }, [activeTab, publicSponsors.length, searchParams]);
 
   if (isInitialLoading) {
     return (
@@ -489,6 +511,9 @@ const commonTranslate = useTranslations('Common');
     { id: 'teams', label: translate('tabs.teams') },
     { id: 'bracket', label: translate('tabs.bracket') },
     { id: 'matches', label: translate('tabs.matches') },
+    ...(publicSponsors.length > 0
+      ? [{ id: 'sponsors' as const, label: translate('tabs.sponsors') }]
+      : []),
   ];
 
   return (
@@ -757,7 +782,7 @@ const commonTranslate = useTranslations('Common');
                       divisionId={selectedDivisionId || undefined}
                     />
                   )}
-                  {activeTab === 'matches' && (
+                                    {activeTab === 'matches' && (
                     <MatchesTab
                       key={selectedDivisionId || 'all'}
                       tournament={selectedDivision}
@@ -765,6 +790,8 @@ const commonTranslate = useTranslations('Common');
                       divisionId={selectedDivisionId || undefined}
                     />
                   )}
+                  {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
+
                 </>
               ) : (
                 <p className="text-center text-slate-400 italic py-12">{translate("rankingDataUnavailable")}</p>

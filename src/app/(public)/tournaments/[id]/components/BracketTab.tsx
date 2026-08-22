@@ -552,7 +552,7 @@ export default function BracketTab({
         </div>}
       </div>
 
-      {onScheduleMatch && (dragHandlers?.enabled ? (
+      {(onScheduleMatch || dragHandlers?.enabled) && (dragHandlers?.enabled ? (
         <OrganizerBracketTray dragHandlers={dragHandlers} translate={translate} />
       ) : (
         <section

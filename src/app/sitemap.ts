@@ -16,7 +16,15 @@ const MAX_FETCH_ATTEMPTS = 2;
 interface ApiItem {
   id: string;
   slug?: string;
+  status?: string;
+  visibility?: string;
   isActive?: boolean;
+  city?: string | null;
+  tournamentConfig?: {
+    location?: {
+      province?: string | null;
+    } | null;
+  } | null;
   updatedAt?: string;
   createdAt?: string;
 }
@@ -80,6 +88,18 @@ async function fetchAllPages(path: string, params: Record<string, string>): Prom
   }
 
   return all;
+}
+
+function toSlug(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .replace(/^(tinh|thanh-pho|tp)\s+/i, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function toRouteUrl(
@@ -153,10 +173,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Public profiles are client-rendered and currently have no page-specific metadata,
-  // so they remain excluded until SSR metadata and a stable profile index policy exist.
-  // Individual /live/[matchId] and /series/[slug] pages are highly interactive and
-  // volatile; do not enumerate them here until their SEO rendering policy is defined.
-  return [...staticRoutes, ...tournamentRoutes, ...communityRoutes, ...sportRoutes];
+  // 5. Public series detail routes
+  // Chỉ lấy series public có slug ổn định; layout của series đã có metadata và robots policy.
+  const series = await fetchAllPages('/series', { visibility: 'PUBLIC' });
+  const seriesRoutes: MetadataRoute.Sitemap = series
+    .filter((item) =>
+      Boolean(item.slug)
+      && item.visibility === 'PUBLIC'
+      && ['ACTIVE', 'COMPLETED'].includes(String(item.status).toUpperCase()),
+    )
+    .map((item) => toRouteUrl(`${baseUrl}/series/${encodeURIComponent(item.slug as string)}`, item, 'weekly', 0.65));
+
+  // 6. Region discovery routes
+  // Chỉ index khu vực có ít nhất 2 giải public thật, tránh tạo landing page mỏng.
+  const regions = new Map<string, { name: string; count: number }>();
+  for (const tournament of tournaments) {
+    const regionName = tournament.tournamentConfig?.location?.province?.trim() || tournament.city?.trim();
+    if (!regionName) continue;
+    const slug = toSlug(regionName);
+    const current = regions.get(slug) ?? { name: regionName, count: 0 };
+    current.count += 1;
+    regions.set(slug, current);
+  }
+  const regionRoutes: MetadataRoute.Sitemap = Array.from(regions.entries())
+    .filter(([, region]) => region.count >= 2)
+    .map(([slug]) => ({
+      url: `${baseUrl}/tournaments/region/${encodeURIComponent(slug)}`,
+      changeFrequency: 'daily',
+      priority: 0.75,
+    }));
+
+  // Public profiles have route-level metadata but are intentionally not enumerated:
+  // users can opt out/deactivate, and a full profile index would create a large personal-data surface.
+  // Individual /live/[matchId] pages are highly interactive and volatile, so they remain excluded.
+  return [...staticRoutes, ...tournamentRoutes, ...communityRoutes, ...sportRoutes, ...seriesRoutes, ...regionRoutes];
 }
 

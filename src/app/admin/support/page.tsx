@@ -481,7 +481,7 @@ export default function AdminSupportPage() {
                   {customer?.avatarUrl ? (
                     <img
                       src={customer.avatarUrl}
-                      alt={customer.fullName || 'Người dùng'}
+                      alt={customer.fullName || customer.email || translate('unknownUser')}
                       className="h-full w-full object-cover"
                     />
                   ) : (

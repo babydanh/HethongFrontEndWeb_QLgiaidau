@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
@@ -84,7 +84,7 @@ function FullCountdownAdmin({ targetDate }: { targetDate: string }) {
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, [targetDate]);
+  }, [targetDate, translate]);
   if (!text) return null;
   return (
     <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
@@ -94,7 +94,9 @@ function FullCountdownAdmin({ targetDate }: { targetDate: string }) {
 }
 
 export default function AdminTournamentsPage() {
+  const locale = useLocale();
   const translate = useTranslations('AdminTournaments');
+  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const { user } = useAuthStore();
   const isModeratorOnly =
     Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
@@ -315,7 +317,13 @@ export default function AdminTournamentsPage() {
   const formatMoney = (amount: string) => {
     const value = parseFloat(amount);
     if (isNaN(value) || value === 0) return translate('free');
-    return value.toLocaleString('vi-VN') + 'đ';
+    return translate('feeValue', { amount: value.toLocaleString(numberLocale) });
+  };
+
+  const getVisibilityLabel = (visibility: string) => {
+    if (visibility === 'PRIVATE' || visibility === 'UNLISTED') return translate('adminPrivateTournament');
+    if (visibility === 'PUBLIC') return translate('adminPublicTournament');
+    return translate('unknownValue');
   };
 
   return (
@@ -422,8 +430,8 @@ export default function AdminTournamentsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Thông tin giải đấu</th>
-                  <th className="p-4">Người tổ chức</th>
+                  <th className="p-4 pl-6">{translate('tournamentInfo')}</th>
+                  <th className="p-4">{translate('organizer')}</th>
                   <th className="p-4">{translate("adminFeeFormat")}</th>
                   <th className="p-4">{translate("status")}</th>
                   <th className="p-4 pr-6 text-right">{translate("adminActionColumn")}</th>
@@ -440,7 +448,7 @@ export default function AdminTournamentsPage() {
                             {item.tournamentType === 'CLUB' ? translate('adminInternalTournament') : translate('adminOpenTournament')}
                           </span>
                           <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                            {item.visibility === 'PRIVATE' ? translate('adminPrivateTournament') : translate('adminPublicTournament')}
+                            {getVisibilityLabel(item.visibility)}
                           </span>
                           <span className="bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold px-2 py-0.5 rounded">
                             {item.tournamentConfig?.registrationMode === 'APPROVAL' ? translate('adminApprovalRegistration') : item.tournamentConfig?.registrationMode === 'INVITE_ONLY' ? translate('inviteOnlyRegistration') : translate('openRegistration')}
@@ -448,14 +456,14 @@ export default function AdminTournamentsPage() {
                         </div>
                         <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {translate('createdAt', { date: new Date(item.createdAt).toLocaleDateString('vi-VN') })}
+                          {translate('createdAt', { date: new Date(item.createdAt).toLocaleDateString(numberLocale) })}
                         </p>
                       </div>
                     </td>
                     <td className="p-4">
                       <div>
-                        <p className="font-semibold text-slate-800">{item.creator?.fullName || 'N/A'}</p>
-                        <p className="text-xs text-slate-500">{item.creator?.email || 'N/A'}</p>
+                        <p className="font-semibold text-slate-800">{item.creator?.fullName || translate('unknownValue')}</p>
+                        <p className="text-xs text-slate-500">{item.creator?.email || translate('unknownValue')}</p>
                       </div>
                     </td>
                     <td className="p-4">
@@ -628,14 +636,14 @@ export default function AdminTournamentsPage() {
                     <div className="absolute top-3 right-3 flex gap-1.5">
                       {getStatusBadge(detailTournament.status)}
                       <span className="bg-slate-900/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                        {detailTournament.visibility}
+                        {getVisibilityLabel(detailTournament.visibility)}
                       </span>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="text-xl font-bold text-slate-900 leading-snug">{detailTournament.name}</h4>
-                    <p className="text-xs text-slate-400 mt-1">ID: {detailTournament.id}</p>
+                    <p className="text-xs text-slate-400 mt-1">{translate('idLabel')}: {detailTournament.id}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -649,7 +657,7 @@ export default function AdminTournamentsPage() {
                               const logo = getSportLogo(detailTournament.category?.name);
                               return logo ? <img src={logo} alt="" className="w-3 h-3 object-contain" /> : null;
                             })()}
-                            {detailTournament.category?.name || 'N/A'}
+                            {detailTournament.category?.name || translate('unknownValue')}
                           </span>
                           <span className="bg-slate-50 text-slate-600 text-xs px-2.5 py-1 rounded-lg font-semibold border border-slate-200">
                             {detailTournament.tournamentType === 'CLUB' ? translate('internalClub') : translate('publicTournament')}
@@ -683,8 +691,8 @@ export default function AdminTournamentsPage() {
                         <span className="text-xs text-slate-400 block font-medium">{translate('eventSchedule')}</span>
                         <p className="text-slate-800 font-semibold mt-1 flex items-center gap-1.5">
                           <Calendar className="w-4 h-4 text-slate-400" />
-                          {detailTournament.startDate ? new Date(detailTournament.startDate).toLocaleDateString('vi-VN') : translate('notScheduled')}
-                          {detailTournament.endDate && ` - ${new Date(detailTournament.endDate).toLocaleDateString('vi-VN')}`}
+                          {detailTournament.startDate ? new Date(detailTournament.startDate).toLocaleDateString(numberLocale) : translate('notScheduled')}
+                          {detailTournament.endDate && ` - ${new Date(detailTournament.endDate).toLocaleDateString(numberLocale)}`}
                         </p>
                       </div>
                     </div>
@@ -693,8 +701,8 @@ export default function AdminTournamentsPage() {
                     <div className="space-y-3.5">
                       <div>
                         <span className="text-xs text-slate-400 block font-medium">{translate('creator')}</span>
-                        <p className="font-semibold text-slate-800 mt-1">{detailTournament.creator?.fullName || 'N/A'}</p>
-                        <p className="text-xs text-slate-500">{detailTournament.creator?.email || 'N/A'}</p>
+                        <p className="font-semibold text-slate-800 mt-1">{detailTournament.creator?.fullName || translate('unknownValue')}</p>
+                        <p className="text-xs text-slate-500">{detailTournament.creator?.email || translate('unknownValue')}</p>
                       </div>
 
                       <div>
@@ -702,7 +710,7 @@ export default function AdminTournamentsPage() {
                         <p className="font-semibold text-slate-800 mt-1 flex items-start gap-1">
                           <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                           <span>
-                            {detailTournament.venue?.name || 'N/A'}
+                            {detailTournament.venue?.name || translate('unknownValue')}
                             {detailTournament.venue?.locationAddress && (
                               <span className="block text-xs text-slate-400 font-normal mt-0.5">{detailTournament.venue.locationAddress}</span>
                             )}
@@ -722,8 +730,8 @@ export default function AdminTournamentsPage() {
                       <div>
                         <span className="text-xs text-slate-400 block font-medium">{translate('registrationPeriod')}</span>
                         <p className="text-xs text-slate-600 mt-1">
-                          {detailTournament.registrationStartDate ? new Date(detailTournament.registrationStartDate).toLocaleDateString('vi-VN') : 'N/A'}
-                          {detailTournament.registrationEndDate && ` - ${new Date(detailTournament.registrationEndDate).toLocaleDateString('vi-VN')}`}
+                          {detailTournament.registrationStartDate ? new Date(detailTournament.registrationStartDate).toLocaleDateString(numberLocale) : translate('unknownValue')}
+                          {detailTournament.registrationEndDate && ` - ${new Date(detailTournament.registrationEndDate).toLocaleDateString(numberLocale)}`}
                         </p>
                         {isTournamentUpcoming(detailTournament.status) && detailTournament.registrationStartDate && (
                           <FullCountdownAdmin targetDate={detailTournament.registrationStartDate} />

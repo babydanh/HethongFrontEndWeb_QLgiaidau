@@ -39,6 +39,39 @@ export interface UpdateBracketSlotsResponse {
   matches: BracketMatch[];
 }
 
+export const SPONSOR_TIERS = [
+  "TITLE",
+  "DIAMOND",
+  "GOLD",
+  "SILVER",
+  "BRONZE",
+  "IN_KIND",
+] as const;
+export type SponsorTier = (typeof SPONSOR_TIERS)[number];
+export type SponsorStatus = "DRAFT" | "PUBLISHED" | "HIDDEN" | "ARCHIVED";
+
+export interface TournamentSponsor {
+  id: string;
+  tournamentId?: string;
+  displayName: string;
+  tier: SponsorTier;
+  logoUrl: string;
+  websiteUrl: string | null;
+  shortDescription: string | null;
+  displayOrder: number;
+  status?: SponsorStatus;
+  isPublic?: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type SponsorPayload = Omit<
+  TournamentSponsor,
+  "id" | "tournamentId" | "createdAt" | "updatedAt" | "status"
+> & { status?: Exclude<SponsorStatus, "ARCHIVED"> };
+
 export interface StaffMember {
   userId: string;
   role: "CO_ORGANIZER" | "REFEREE" | "SPECTATOR";
@@ -823,6 +856,21 @@ export const tournamentsApi = {
     api.post<ApiResponse<Tournament>>(`/tournaments/${id}/confirm-roster`),
   deleteTournament: (id: string) =>
     api.delete<ApiResponse<void>>(`/tournaments/${id}`),
+  getPublicSponsors: (id: string) =>
+    api.get<ApiResponse<TournamentSponsor[]>>(`/tournaments/${id}/sponsors`),
+  getOrganizerSponsors: (id: string) =>
+    api.get<ApiResponse<TournamentSponsor[]>>(`/tournaments/${id}/sponsors/manage`),
+  createSponsor: (id: string, data: SponsorPayload) =>
+    api.post<ApiResponse<TournamentSponsor>>(`/tournaments/${id}/sponsors`, data),
+  updateSponsor: (id: string, sponsorId: string, data: Partial<SponsorPayload>) =>
+    api.patch<ApiResponse<TournamentSponsor>>(
+      `/tournaments/${id}/sponsors/${sponsorId}`,
+      data,
+    ),
+  archiveSponsor: (id: string, sponsorId: string) =>
+    api.delete<ApiResponse<TournamentSponsor>>(
+      `/tournaments/${id}/sponsors/${sponsorId}`,
+    ),
   getTournamentGallery: (id: string) =>
     api.get<ApiResponse<string[]>>(`/tournaments/${id}/gallery`),
   addTournamentGalleryImage: (id: string, url: string) =>

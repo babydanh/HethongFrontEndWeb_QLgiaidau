@@ -1,7 +1,7 @@
-import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { stripHtmlAndNormalize } from '@/utils/string';
 import TournamentDetailClient from './TournamentDetailClient';
 import { getTournament } from './tournament-fetcher';
@@ -44,6 +44,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const translate = await getTranslations('TournamentDetail');
   const sportsEventSchema = tournament ? {
     '@context': 'https://schema.org',
     '@type': 'SportsEvent',
@@ -56,11 +57,11 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
       '@type': 'Place',
-      name: tournament.venue?.name || tournament.city || 'Sân thi đấu thể thao',
+      name: tournament.venue?.name || tournament.city || translate('schemaVenueFallback'),
       address: {
         '@type': 'PostalAddress',
-        streetAddress: tournament.venue?.locationAddress || tournament.city || 'Việt Nam',
-        addressLocality: tournament.city || 'Việt Nam',
+        streetAddress: tournament.venue?.locationAddress || tournament.city || translate('schemaCountryFallback'),
+        addressLocality: tournament.city || translate('schemaCountryFallback'),
         addressCountry: 'VN',
       },
     },
@@ -85,7 +86,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'Giải đấu',
+        name: translate('breadcrumbTournaments'),
         item: 'https://sporto.asia/tournaments',
       },
       {

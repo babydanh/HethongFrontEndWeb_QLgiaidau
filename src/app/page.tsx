@@ -40,6 +40,7 @@ import ShareModal from '@/components/common/ShareModal';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 import { RankAvatar } from '@/components/ui/RankAvatar';
 import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
+import AdBannerCard from '@/components/ui/AdBannerCard';
 
 interface EnrichedTournament {
   id: string;
@@ -1625,19 +1626,14 @@ export default function HomePage() {
            )}
 
            {/* Widget 2 — Banner Ads 4:3 */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col cursor-pointer group">
-            <div className="aspect-[4/3] bg-slate-900 relative p-5 flex flex-col justify-end">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10"></div>
-              <div className="absolute inset-0 bg-blue-600 opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
-              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase z-20">{translate('advertisement')}</div>
-
-              <div className="relative z-20 mt-auto">
-                 <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">{translate('promoStore')}</span>
-                 <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-blue-200 transition-colors">{translate('promoProduct')}</h4>
-                 <p className="text-[10px] text-white/80 font-medium line-clamp-2">{translate('promoOffer')}</p>
-              </div>
-            </div>
-          </div>
+           <AdBannerCard
+             variant="sidebar"
+             sponsor={translate('promoStore')}
+             title={translate('promoProduct')}
+             description={translate('promoOffer')}
+             href="/tournaments"
+             badgeLabel={translate('advertisement')}
+           />
 
         </div>
       </main>

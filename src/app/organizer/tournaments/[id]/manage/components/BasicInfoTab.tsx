@@ -13,6 +13,7 @@ import { uploadApi } from '@/features/upload/api';
 import { tournamentsApi, Division } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
 import { isTournamentDraft } from '@/utils/tournament-status';
+import SponsorSettingsPanel from './SponsorSettingsPanel';
 
 interface BasicInfoTabProps {
   validationField?: string | null;
@@ -602,6 +603,8 @@ export function BasicInfoTab({
                   </Button>
                 </div>
               </div>
+
+              <SponsorSettingsPanel tournamentId={id} />
             </div>
           )}
         </div>

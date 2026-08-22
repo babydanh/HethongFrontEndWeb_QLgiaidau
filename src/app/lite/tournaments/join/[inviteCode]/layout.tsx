@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 type Props = {
   params: Promise<{ inviteCode: string }>;
@@ -8,6 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { inviteCode } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sporto.asia';
+  const translate = await getTranslations('LiteJoinMetadata');
 
   try {
     const response = await fetch(
@@ -20,8 +22,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
       const tournament = payload.data?.tournament;
       if (tournament?.name) {
-        const title = `Tham gia ${tournament.name} | SportO`;
-        const description = `Tham gia giải đấu Lite ${tournament.name} trên SportO.`;
+        const title = translate('titleWithTournament', { tournament: tournament.name });
+        const description = translate('descriptionWithTournament', { tournament: tournament.name });
         const url = `${siteUrl}/lite/tournaments/join/${encodeURIComponent(inviteCode)}`;
         return {
           title,
@@ -37,8 +39,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: 'Lời mời tham gia giải Lite | SportO',
-    description: 'Mở lời mời để xem thông tin và tham gia giải đấu Lite trên SportO.',
+    title: translate('fallbackTitle'),
+    description: translate('fallbackDescription'),
   };
 }
 

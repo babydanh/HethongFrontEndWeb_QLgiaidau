@@ -24,6 +24,7 @@ import {
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from './registrationMode';
 import { getTournamentLocationLabel, getTournamentShortLocation } from '@/utils/tournament-location';
+import AdBannerCard from '@/components/ui/AdBannerCard';
 
 export default function TournamentsListPage() {
   const locale = useLocale();
@@ -894,7 +895,19 @@ export default function TournamentsListPage() {
         </div>
       )}
 
+      {/* Banner Quảng cáo / Đối tác dưới phân trang */}
+      <div className="mt-10 pt-4 border-t border-slate-100">
+        <AdBannerCard
+          variant="horizontal"
+          sponsor={translate('promoStoreTitle')}
+          title={translate('promoStoreHeadline')}
+          description={translate('promoStoreDesc')}
+          ctaText={translate('promoStoreCta')}
+          badgeLabel={translate('sponsoredBadge')}
+          href="/tournaments"
+        />
+      </div>
+
     </div>
   );
 }
-

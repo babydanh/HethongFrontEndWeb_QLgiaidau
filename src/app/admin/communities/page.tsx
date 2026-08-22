@@ -288,7 +288,7 @@ export default function AdminCommunitiesReview() {
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {community.locationAddress || 'N/A'}
+                            {community.locationAddress || translate('noLocation')}
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="w-3 h-3" />

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, Trophy, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import type { Tournament } from '@/features/tournaments/api';
@@ -17,6 +18,8 @@ export default function TournamentBracketModal({
   onClose,
   tournament,
 }: TournamentBracketModalProps) {
+  const translate = useTranslations('TournamentBracketModal');
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -41,7 +44,7 @@ export default function TournamentBracketModal({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                SƠ ĐỒ THI ĐẤU
+                {translate('bracketLabel')}
               </span>
               {tournament.category?.name && (
                 <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
@@ -60,13 +63,13 @@ export default function TournamentBracketModal({
             href={`/tournaments/${tournament.id}`}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors"
           >
-            <span>Trang giải đấu</span>
+            <span>{translate('viewTournament')}</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
           <button
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-            title="Đóng (Esc)"
+            title={translate('closeTitle')}
           >
             <X className="h-5 w-5" />
           </button>

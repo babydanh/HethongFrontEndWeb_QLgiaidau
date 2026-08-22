@@ -486,7 +486,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     try {
       setIsSubmitting(true);
       const cleanData = {
-        teamName: trimAndNormalizeSpaces(data.teamName) || user?.fullName || 'Vận động viên',
+        teamName: trimAndNormalizeSpaces(data.teamName) || user?.fullName || registrationTranslate('athleteFallback'),
         inviteCode: inviteCode || undefined,
         tournamentDivisionId: selectedDivisionId || undefined,
         rankingConsent,

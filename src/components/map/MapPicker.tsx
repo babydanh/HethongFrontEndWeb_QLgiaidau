@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 // @ts-ignore
 import Map, { Marker, NavigationControl } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -14,6 +15,7 @@ interface MapPickerProps {
 }
 
 export function MapPicker({ defaultLat = 21.028511, defaultLng = 105.804817, onChange, className = '' }: MapPickerProps) {
+  const translate = useTranslations('MapPicker');
   const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
     defaultLat && defaultLng ? { lat: defaultLat, lng: defaultLng } : null
   );
@@ -49,7 +51,7 @@ export function MapPicker({ defaultLat = 21.028511, defaultLng = 105.804817, onC
         )}
       </Map>
       <div className="absolute top-2 left-2 bg-white px-3 py-2 rounded-md shadow-sm text-sm font-medium text-slate-700 pointer-events-none">
-        Click trên bản đồ để ghim vị trí
+        {translate('pinInstruction')}
       </div>
     </div>
   );

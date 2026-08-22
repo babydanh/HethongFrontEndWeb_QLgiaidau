@@ -59,7 +59,7 @@ export default function EloPeakCard({
       {peakElo > eloPoints && (
         <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-blue-600 bg-slate-50 py-1.5 px-3 rounded-lg">
           <TrendingDown className="w-3 h-3" />
-          Cách đỉnh {peakElo - eloPoints} ELO
+          {translate('peakGap', { points: peakElo - eloPoints })}
         </div>
       )}
 
@@ -81,13 +81,13 @@ export default function EloPeakCard({
             <span>{nextTierDefinition?.minElo ?? 'MAX'}</span>
           </div>
           <span className="text-[10px] font-medium text-slate-500 text-center block">
-            {Math.round(progress)}% đến {nextTier.name}
+            {translate('progressPercent', { percent: Math.round(progress), nextName: nextTier.name })}
           </span>
         </div>
       ) : (
         <div className="text-center py-2">
           <span className="text-[10px] font-semibold text-blue-600 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">
-            👑 Đã đạt đỉnh — Tier S
+            {translate('maxTierReached')}
           </span>
         </div>
       )}
@@ -122,9 +122,9 @@ export default function EloPeakCard({
       )}
 
       {/* Category */}
-      {categoryName && categoryName !== 'Chung' && (
+      {categoryName && (
         <div className="text-[9px] font-medium text-slate-400 text-center">
-          {translate('categoryLabel')}: {categoryName}
+          {translate('categoryLabel', { name: categoryName })}
         </div>
       )}
     </div>

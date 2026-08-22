@@ -74,6 +74,35 @@ export default function SmartAiTournamentModal({
   const translate = useTranslations('SmartAiTournament');
   const locale = useLocale();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  const getBracketLabel = (bracketType?: ParsedFormat['bracketType'] | string | null) => {
+    switch (bracketType) {
+      case 'DOUBLE_ELIMINATION':
+        return translate('bracketDoubleElimination');
+      case 'ROUND_ROBIN':
+        return translate('bracketRoundRobin');
+      case 'GROUP_STAGE_KNOCKOUT':
+        return translate('bracketGroupStageKnockout');
+      case 'SINGLE_ELIMINATION':
+      default:
+        return translate('singleElimination');
+    }
+  };
+
+  const getFieldTypeLabel = (type: RegistrationFieldType) => {
+    const labels: Partial<Record<RegistrationFieldType, string>> = {
+      TEXT: translate('fieldTypeText'),
+      TEXTAREA: translate('fieldTypeTextarea'),
+      NUMBER: translate('fieldTypeNumber'),
+      PHONE: translate('fieldTypePhone'),
+      EMAIL: translate('fieldTypeEmail'),
+      SELECT: translate('fieldTypeSelect'),
+      MULTI_SELECT: translate('fieldTypeMultiSelect'),
+      CHECKBOX: translate('fieldTypeCheckbox'),
+      FILE: translate('fieldTypeFile'),
+    };
+    return labels[type] || type;
+  };
   const [sourceUrl, setSourceUrl] = useState('');
   const [rawText, setRawText] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -162,7 +191,7 @@ export default function SmartAiTournamentModal({
       setIsCreating(true);
 
       // 1. Create lite tournament
-      const primaryFormat = parsedData.formats?.[0] || { formatKey: 'DOUBLES_MALE', name: 'Đôi Nam', bracketType: 'SINGLE_ELIMINATION' as const, maxParticipants: 16 };
+      const primaryFormat = parsedData.formats?.[0] || { formatKey: 'DOUBLES_MALE', name: translate('defaultDivisionName', { count: 1 }), bracketType: 'SINGLE_ELIMINATION' as const, maxParticipants: 16 };
       const matchType: 'singles' | 'doubles' | 'mixed_doubles' = primaryFormat.formatKey.includes('SINGLES')
         ? 'singles'
         : primaryFormat.formatKey.includes('MIXED') ? 'mixed_doubles' : 'doubles';
@@ -174,7 +203,7 @@ export default function SmartAiTournamentModal({
 
       const formats = parsedData.formats?.length ? parsedData.formats : [primaryFormat];
       const divisionInputs: CreateDivisionInput[] = formats.map((fmt, index) => ({
-        name: fmt.name?.trim() || `Hạng đấu ${index + 1}`,
+        name: fmt.name?.trim() || translate('defaultDivisionName', { count: index + 1 }),
         matchType: fmt.formatKey.includes('SINGLES')
           ? MatchTypeDB.SINGLES
           : fmt.formatKey.includes('MIXED')
@@ -192,7 +221,7 @@ export default function SmartAiTournamentModal({
       }));
 
       const createRes = await tournamentsApi.createLiteTournament({
-        name: parsedData.name.trim() || 'Giải đấu thể thao',
+        name: parsedData.name.trim() || translate('defaultTournamentName'),
         sport: parsedData.sport,
         format: matchType,
         genderRestriction,
@@ -257,7 +286,7 @@ export default function SmartAiTournamentModal({
         const eloColumn = excelResult.detectedMapping.eloCol;
         const divisionRoutes = formats.map((format, index) => ({
           id: createdDivisionIds[index],
-          name: format.name?.trim() || `Hạng đấu ${index + 1}`,
+          name: format.name?.trim() || translate('defaultDivisionName', { count: index + 1 }),
           isDoubles: !format.formatKey.includes('SINGLES'),
         }));
         const normalizeDivisionName = (value: string) => value.trim().toLocaleLowerCase(locale).replace(/[–—]/g, '-');
@@ -503,9 +532,9 @@ export default function SmartAiTournamentModal({
                       ))
                     ) : (
                       <>
-                        <option value="pickleball">Pickleball</option>
+                        <option value="pickleball">{translate('pickleball')}</option>
                         <option value="badminton">{translate('badminton')}</option>
-                        <option value="tennis">Tennis</option>
+                        <option value="tennis">{translate('tennis')}</option>
                         <option value="table_tennis">{translate('tableTennis')}</option>
                         <option value="football">{translate('football')}</option>
                       </>
@@ -559,9 +588,9 @@ export default function SmartAiTournamentModal({
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                        <span>                          {fmt.bracketType || translate('singleElimination')}</span>
+                        <span>{getBracketLabel(fmt.bracketType)}</span>
                         {(fmt.minElo || fmt.maxElo) && (
-                          <span>• ELO: {fmt.minElo || 0} - {fmt.maxElo || '∞'}</span>
+                          <span>{translate('eloRange', { min: fmt.minElo ?? 0, max: fmt.maxElo ?? translate('unlimited') })}</span>
                         )}
                       </div>
                     </div>
@@ -574,24 +603,24 @@ export default function SmartAiTournamentModal({
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                       <FileText className="w-4 h-4 text-blue-600" />
-                      Form đăng ký được AI nhận diện ({parsedData.registrationFormFields.length} câu hỏi)
+                      {translate('registrationFormTitle', { count: parsedData.registrationFormFields.length })}
                     </h4>
-                    <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">Bản nháp để rà soát</span>
+                    <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">{translate('registrationFormDraftBadge')}</span>
                   </div>
                   <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2">
                     {parsedData.registrationFormFields.slice(0, 12).map((field) => (
                       <div key={field.id} className="flex items-start justify-between gap-3 rounded-lg bg-white border border-slate-100 px-3 py-2">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-slate-800 truncate">{field.label}</p>
-                          <p className="text-[11px] text-slate-500">{field.type}{field.required ? ' · Bắt buộc' : ' · Tùy chọn'}{field.options?.length ? ` · ${field.options.length} lựa chọn` : ''}{field.needsReview ? ' · Cần kiểm tra' : ''}</p>
+                          <p className="text-[11px] text-slate-500">{getFieldTypeLabel(field.type)}{field.required ? ` · ${translate('requiredField')}` : ` · ${translate('optionalField')}`}{field.options?.length ? ` · ${translate('optionCount', { count: field.options.length })}` : ''}{field.needsReview ? ` · ${translate('needsReview')}` : ''}</p>
                         </div>
-                        {field.type === 'FILE' && <span className="text-[11px] text-slate-400 shrink-0">Tệp</span>}
+                        {field.type === 'FILE' && <span className="text-[11px] text-slate-400 shrink-0">{translate('fileField')}</span>}
                       </div>
                     ))}
-                    {parsedData.registrationFormFields.length > 12 && <p className="text-[11px] text-slate-500 text-center">Còn {parsedData.registrationFormFields.length - 12} câu hỏi sẽ được lưu đầy đủ trong bản nháp.</p>}
+                    {parsedData.registrationFormFields.length > 12 && <p className="text-[11px] text-slate-500 text-center">{translate('remainingQuestions', { count: parsedData.registrationFormFields.length - 12 })}</p>}
                   </div>
-                  <p className="text-xs text-slate-500">AI đọc ngữ nghĩa câu hỏi từ Google Form/link, giữ lựa chọn và ràng buộc. Sau khi tạo, vào tab <strong>Đăng ký</strong> để chỉnh sửa rồi bấm công bố.</p>
-                  {parsedData.registrationFormFields.some((field) => field.needsReview) && <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Một số câu hỏi có cách hiểu chưa chắc chắn. Chúng được giữ nguyên ở bản nháp và phải được rà lại trước khi công bố.</p>}
+                  <p className="text-xs text-slate-500">{translate('registrationFormHelp')}</p>
+                  {parsedData.registrationFormFields.some((field) => field.needsReview) && <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{translate('registrationFormReviewWarning')}</p>}
                 </div>
               )}
 
@@ -644,8 +673,8 @@ export default function SmartAiTournamentModal({
                           return (
                             <tr key={rIdx} className="border-b border-slate-50">
                               <td className="py-1 text-slate-400">{rIdx + 1}</td>
-                              <td className="py-1 font-medium text-slate-700">{p1 || '---'}</td>
-                              <td className="py-1 text-slate-500">{phone || '---'}</td>
+                              <td className="py-1 font-medium text-slate-700">{p1 || translate('emptyCell')}</td>
+                              <td className="py-1 text-slate-500">{phone || translate('emptyCell')}</td>
                             </tr>
                           );
                         })}

@@ -15,15 +15,16 @@ interface SystemConfig {
   updatedAt: string;
 }
 
-const DEFAULT_ENTRY_FEE_POLICY: SystemConfig = {
-  key: 'ALLOW_TOURNAMENT_ENTRY_FEES',
-  value: 'true',
-  description: 'Cho phép ban tổ chức đặt lệ phí đăng ký cho giải đấu mới hoặc khi chỉnh sửa giải.',
-  updatedAt: '',
-};
+const DEFAULT_ENTRY_FEE_POLICY_KEY = 'ALLOW_TOURNAMENT_ENTRY_FEES';
 
 export default function ConfigsPage() {
   const translate = useTranslations('AdminConfigs');
+  const defaultEntryFeePolicy: SystemConfig = {
+    key: DEFAULT_ENTRY_FEE_POLICY_KEY,
+    value: 'true',
+    description: translate('entryFeePolicyDescription'),
+    updatedAt: '',
+  };
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConfig, setSelectedConfig] = useState<SystemConfig | null>(null);
@@ -32,8 +33,8 @@ export default function ConfigsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const entryFeePolicy =
-    configs.find((config) => config.key === 'ALLOW_TOURNAMENT_ENTRY_FEES') ??
-    DEFAULT_ENTRY_FEE_POLICY;
+    configs.find((config) => config.key === DEFAULT_ENTRY_FEE_POLICY_KEY) ??
+    defaultEntryFeePolicy;
 
   async function fetchConfigs() {
     setLoading(true);
@@ -41,14 +42,14 @@ export default function ConfigsPage() {
       const response = await api.get<ApiResponse<SystemConfig[]>>('/admin/configs');
       const loadedConfigs = response.data || [];
 
-      if (loadedConfigs.some((config) => config.key === DEFAULT_ENTRY_FEE_POLICY.key)) {
+      if (loadedConfigs.some((config) => config.key === DEFAULT_ENTRY_FEE_POLICY_KEY)) {
         setConfigs(loadedConfigs);
       } else {
         const feesResponse = await tournamentsApi.getFeesConfig().catch(() => null);
         setConfigs([
           ...loadedConfigs,
           {
-            ...DEFAULT_ENTRY_FEE_POLICY,
+            ...defaultEntryFeePolicy,
             value: feesResponse?.data?.allowEntryFees === false ? 'false' : 'true',
           },
         ]);
@@ -200,7 +201,7 @@ export default function ConfigsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {configs.filter((config) => config.key !== 'ALLOW_TOURNAMENT_ENTRY_FEES').map((config) => (
+                {configs.filter((config) => config.key !== DEFAULT_ENTRY_FEE_POLICY_KEY).map((config) => (
                   <tr key={config.key} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6 font-mono text-blue-600 font-semibold">{config.key}</td>
                     <td className="p-4 font-semibold text-slate-800">{config.value}</td>

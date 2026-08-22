@@ -1082,7 +1082,7 @@ export function RegistrationTab({
               ? 'border-blue-100 bg-blue-50 text-blue-800'
               : 'border-amber-200 bg-amber-50 text-amber-800'
           }`}>
-            <span className="font-semibold">Nội dung thi đấu đang chọn: </span>
+            <span className="font-semibold">{registrationTranslate('selectedDivisionLabel')}: </span>
             {selectedMockDivision ? (
               <>
                 <strong>{selectedMockDivision.name}</strong>
@@ -1091,13 +1091,13 @@ export function RegistrationTab({
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-amber-100 text-amber-800'
                 }`}>
-                  {selectedMockDivision.matchType === 'SINGLES' ? 'ĐƠN (1 dòng = 1 VĐV)' : 'ĐÔI (2 dòng = 1 Cặp)'}
+                  {selectedMockDivision.matchType === 'SINGLES' ? registrationTranslate('singlesMockBadge') : registrationTranslate('doublesMockBadge')}
                 </span>
               </>
             ) : divisions.length > 0 ? (
-              <span className="font-bold text-amber-700">⚠️ Chọn nội dung ở thanh trên cùng</span>
+              <span className="font-bold text-amber-700">{registrationTranslate('selectDivisionWarning')}</span>
             ) : (
-              <span className="font-semibold">Thể thức chung của giải ({tournament.matchType === 'SINGLES' ? 'ĐƠN' : 'ĐÔI'})</span>
+              <span className="font-semibold">{registrationTranslate('generalFormat', { format: tournament.matchType === 'SINGLES' ? registrationTranslate('singlesShort') : registrationTranslate('doublesShort') })}</span>
             )}
           </div>
 
@@ -1479,7 +1479,7 @@ export function RegistrationTab({
                   {/* Danh sách thành viên (Hiển thị rõ ràng Leader / Người đăng ký & Partner) */}
                   <div className="mt-3 space-y-2">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      {selectedIsPair ? registrationTranslate('pairMembersHeading') : 'Thành viên thi đấu'}
+                      {selectedIsPair ? registrationTranslate('pairMembersHeading') : registrationTranslate('membersHeading')}
                     </p>
                     <div className="divide-y divide-slate-200/60 rounded-lg border border-slate-200 bg-white">
                       {selectedParticipant.members.length > 0 ? selectedParticipant.members.map((member, index) => {
@@ -1494,12 +1494,12 @@ export function RegistrationTab({
                                   <p className="truncate text-sm font-bold text-slate-800">{member.fullName || registrationTranslate('noNameUpdated')}</p>
                                   {isLeader && (
                                     <span className="rounded bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold">
-                                      {isRegisteredUser ? 'Trưởng nhóm (Người tạo)' : 'Trưởng nhóm'}
+                                      {isRegisteredUser ? registrationTranslate('leaderCreated') : registrationTranslate('leader')}
                                     </span>
                                   )}
                                   {!isLeader && selectedIsPair && (
                                     <span className="rounded bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold">
-                                      Partner
+                                      {registrationTranslate('partner')}
                                     </span>
                                   )}
                                 </div>
@@ -1522,7 +1522,7 @@ export function RegistrationTab({
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <p className="truncate text-sm font-bold text-slate-800">{selectedParticipant.registeredBy.fullName || registrationTranslate('noNameUpdated')}</p>
-                                <span className="rounded bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold">Trưởng nhóm (Người tạo)</span>
+                                <span className="rounded bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold">{registrationTranslate('leaderCreated')}</span>
                               </div>
                               <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
                                 <Mail className="h-3 w-3 shrink-0" />

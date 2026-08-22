@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
           title,
           description,
           alternates: { canonical },
+          robots: { index: false, follow: true },
           openGraph: {
             title,
             description,
@@ -57,6 +58,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
     title: translate('defaultTitle'),
     description: translate('defaultDescription'),
     alternates: { canonical },
+    robots: { index: false, follow: true },
   };
 }
 

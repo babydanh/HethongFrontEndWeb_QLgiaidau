@@ -1197,12 +1197,11 @@ export default function MatchesListPage() {
                               ) : (
                                 <>
                                   <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">{translate("statusScheduled")}</span>
-                                                                    {match.scheduledAt ? (
+                                  {match.scheduledAt ? (
                                     <span>• {new Date(match.scheduledAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                   ) : (
                                     <span>• {friendlyRoundName}</span>
                                   )}
-
                                 </>
                               )}
                             </span>

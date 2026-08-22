@@ -1104,30 +1104,29 @@ export default function MatchesListPage() {
                 {/* Header giải đấu */}
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
-                  <Link
-                    href={`/tournaments/${group.tournamentId}`}
-                    className="w-14 h-14 rounded-full bg-white overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity shadow-sm"
-                  >
-                    {group.tournamentLogoUrl ? (
-                      <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-10 h-10 object-contain" />
-                    ) : (
-                      <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-10 h-10 object-contain opacity-60" />
-                    )}
-                  </Link>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        {translate("rankedTournament")} • {getTranslatedSport(group.tournamentCategory)}
-                      </span>
-                    </div>
-                    <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
-                      <h3 className="font-bold text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">
-                        {group.tournamentName}
-                      </h3>
+                    <Link
+                      href={`/tournaments/${group.tournamentId}`}
+                      className="w-14 h-14 rounded-full bg-white overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity shadow-sm"
+                    >
+                      {group.tournamentLogoUrl ? (
+                        <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-10 h-10 object-contain" />
+                      ) : (
+                        <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-10 h-10 object-contain opacity-60" />
+                      )}
                     </Link>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {translate("rankedTournament")} • {getTranslatedSport(group.tournamentCategory)}
+                        </span>
+                      </div>
+                      <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
+                        <h3 className="font-bold text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">
+                          {group.tournamentName}
+                        </h3>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-
                 </div>
 
                 {/* Grid 3 cột x 2 hàng */}

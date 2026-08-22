@@ -135,7 +135,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [community, setCommunity] = useState<Community | null>(null);
   const [sport, setSport] = useState<LiteSport>('badminton');
   const [name, setName] = useState('');
-  const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
+  const [format, setFormat] = useState<'singles' | 'doubles' | 'mixed_doubles'>('singles');
+  const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
   const [footballTeamSize, setFootballTeamSize] = useState<5 | 7 | 11>(7);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
@@ -201,6 +202,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         sport,
         communityId,
         format: sport === 'football' ? 'doubles' : format,
+        ...(sport !== 'football' && format === 'mixed_doubles' ? { genderRestriction: 'MIXED' as const } : {}),
         teamSize: sport === 'football' ? footballTeamSize : undefined,
         bracketType,
         maxTeams,
@@ -216,7 +218,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         recurringTimeOfDay: isRecurring ? timeOfDay : undefined,
       });
       toast.success(translate('liteCreatedSuccess'));
-      if (result?.id) router.push(`/organizer/tournaments/${result.id}/manage`);
+      if (result?.id) router.push(`/lite/tournaments/${result.id}/manage`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -320,8 +322,10 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
               </div>
             </section>
 
-            {/* Card 2: Thời gian bắt đầu giải & Định kỳ */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
+            {isAdvancedOptionsOpen && (
+              <>
+                {/* Card 2: Thời gian bắt đầu giải & Định kỳ */}
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Calendar className="h-4 w-4" />
@@ -405,7 +409,9 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   </div>
                 )}
               </div>
-            </section>
+                </section>
+              </>
+            )}
           </div>
 
           {/* CỘT PHẢI: Nội dung thi đấu, 4 Thể thức bảng đấu & Quy mô ELO */}
@@ -473,11 +479,29 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                     <span className="text-xs font-bold">{translate('liteDoublesOption')}</span>
                     <span className="text-[10px] text-slate-400">{translate('liteDoublesHint')}</span>
                   </button>
+
+                  {isAdvancedOptionsOpen && (
+                    <button
+                      type="button"
+                      onClick={() => setFormat('mixed_doubles')}
+                      className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-2.5 text-center transition ${
+                        format === 'mixed_doubles'
+                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <Users className={`h-5 w-5 ${format === 'mixed_doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <span className="text-xs font-bold">{translate('communityTournamentMixedFormat')}</span>
+                      <span className="text-[10px] text-slate-400">{translate('liteMixedDoublesHint')}</span>
+                    </button>
+                  )}
                 </div>
               )}
             </section>
 
-            {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
+            {isAdvancedOptionsOpen && (
+              <>
+                {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2">
@@ -622,8 +646,31 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   />
                 </button>
               </div>
-            </section>
+                </section>
+              </>
+            )}
           </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setIsAdvancedOptionsOpen((value) => !value)}
+            className="flex w-full items-center justify-between gap-3 text-left"
+            aria-expanded={isAdvancedOptionsOpen}
+          >
+            <span>
+              <span className="block text-sm font-bold text-slate-800">
+                {translate('liteAdvancedOptions')}
+              </span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                {translate('liteAdvancedOptionsDescription')}
+              </span>
+            </span>
+            <span className="shrink-0 text-xs font-bold text-blue-600">
+              {isAdvancedOptionsOpen ? translate('liteHideAdvancedOptions') : translate('liteShowAdvancedOptions')}
+            </span>
+          </button>
         </div>
 
         {/* Bottom Tip & Action Buttons */}

@@ -8,6 +8,7 @@ import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2
 import { Button } from '@/components/ui/Button';
 import { communitiesApi, MemberStreak } from '@/features/communities/api';
 import TagAssignModal from './TagAssignModal';
+import { getCommunityTagDisplayName, isSameCommunityTag } from './tag-display';
 import { usersApi } from '@/features/users/api';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
@@ -245,14 +246,28 @@ export default function MembersTab({
   const renderMemberPills = (item: MemberData) => {
     const pills: React.ReactNode[] = [];
     (item.member?.tags ?? []).forEach((tag) => {
-      const preset = tagPresets.find((candidate) => candidate.name.toLowerCase() === tag.toLowerCase());
+      const preset = tagPresets.find((candidate) => isSameCommunityTag(candidate.name, tag) || candidate.name.toLowerCase() === tag.toLowerCase());
+      const displayTag = getCommunityTagDisplayName(tag, translate as any) || tag;
       pills.push(
         <span
           key={`tag-${tag}`}
-          className="px-2 py-0.5 rounded-lg border text-[10px] font-semibold"
-          style={preset ? { backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66`, color: preset.color } : undefined}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10.5px] font-bold shadow-2xs transition-all"
+          style={
+            preset?.color && preset.color !== '#E2E8F0' && preset.color !== '#e2e8f0'
+              ? {
+                  backgroundColor: preset.color.startsWith('#') ? `${preset.color}20` : '#f1f5f9',
+                  borderColor: preset.color.startsWith('#') ? `${preset.color}80` : '#cbd5e1',
+                  color: '#0f172a',
+                }
+              : {
+                  backgroundColor: '#f1f5f9',
+                  borderColor: '#cbd5e1',
+                  color: '#1e293b',
+                }
+          }
         >
-          {tag}
+          <Tag className="h-2.5 w-2.5 text-slate-500 shrink-0" strokeWidth={2} />
+          <span>{displayTag}</span>
         </span>
       );
     });
@@ -265,7 +280,7 @@ export default function MembersTab({
       pills.push(
         <span
           key="streak"
-          className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${streakClasses}`}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10.5px] font-bold ${streakClasses}`}
         >
           {item.streak.label ||
             (item.streak.type === 'ELO_UP'
@@ -275,7 +290,7 @@ export default function MembersTab({
       );
     }
     if (pills.length === 0) return null;
-    return <div className="flex flex-wrap gap-1 mt-1">{pills}</div>;
+    return <div className="flex flex-wrap gap-1.5 mt-1.5">{pills}</div>;
   };
 
   const handleSaveTags = async (tags: string[]) => {

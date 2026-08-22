@@ -212,6 +212,40 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
     }
   };
 
+  const getInitials = (name: string) => name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SP';
+
+  const renderPreview = (draft: SponsorDraft) => {
+    const isPubliclyReady = draft.status === 'PUBLISHED' && draft.isPublic;
+    return (
+      <aside className="rounded-2xl border border-blue-200 bg-blue-50/50 p-3" aria-label={translate('sponsors.previewTitle')}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-blue-700">{translate('sponsors.previewTitle')}</p>
+            <p className="mt-0.5 text-[11px] font-medium text-slate-500">{translate('sponsors.previewDescription')}</p>
+          </div>
+          <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black uppercase tracking-wide text-blue-600">{translate('sponsors.previewBadge')}</span>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 text-sm font-black text-amber-700">
+              {getInitials(draft.displayName)}
+              {draft.logoUrl && <img src={draft.logoUrl} alt="" className="absolute inset-0 h-full w-full bg-white object-contain p-2" onError={(event) => event.currentTarget.classList.add('hidden')} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-black text-slate-900">{draft.displayName.trim() || translate('sponsors.previewPlaceholder')}</p>
+              <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-amber-600">{translate(`sponsors.tiers.${draft.tier}`)}</p>
+            </div>
+          </div>
+          {draft.shortDescription.trim() && <p className="mt-3 line-clamp-3 text-xs font-medium leading-5 text-slate-500">{draft.shortDescription.trim()}</p>}
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] font-bold">
+            <span className={isPubliclyReady ? 'text-emerald-600' : 'text-slate-400'}>{isPubliclyReady ? (draft.advancedScheduling ? translate('sponsors.previewScheduled') : translate('sponsors.previewAlwaysVisible')) : translate('sponsors.previewNotPublic')}</span>
+            {draft.websiteUrl.trim() && <span className="inline-flex items-center gap-1 text-blue-600"><ExternalLink className="h-3 w-3" />{translate('sponsors.preview')}</span>}
+          </div>
+        </div>
+      </aside>
+    );
+  };
+
   const renderEditor = (draft: SponsorDraft, onChange: (patch: Partial<SponsorDraft>) => void, target: 'new' | string) => (
     <div className="grid gap-3 md:grid-cols-2">
       <label className="space-y-1 text-xs font-bold text-slate-600">
@@ -338,7 +372,10 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
               <div className="mb-3 flex justify-end">
                 <button type="button" onClick={() => setExpandedId(null)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.closeEditor')}</button>
               </div>
-              {renderEditor(draft, (patch) => updateDraft(sponsor.id, patch), sponsor.id)}
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+                <div>{renderEditor(draft, (patch) => updateDraft(sponsor.id, patch), sponsor.id)}</div>
+                {renderPreview(draft)}
+              </div>
               <div className="mt-4 flex flex-wrap justify-end gap-2">
                 {sponsor.websiteUrl && <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-500"><ExternalLink className="h-3.5 w-3.5" />{translate('sponsors.preview')}</a>}
                 <Button type="button" variant="outline" onClick={() => void archiveSponsor(sponsor.id)} disabled={savingId === sponsor.id} className="border-rose-200 text-rose-600"><Trash2 className="mr-1.5 h-4 w-4" />{translate('sponsors.archive')}</Button>
@@ -361,7 +398,10 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
               <h5 className="flex items-center gap-2 text-sm font-black text-slate-800"><Plus className="h-4 w-4 text-amber-600" />{translate('sponsors.addTitle')}</h5>
               <button type="button" onClick={() => setIsAddFormOpen(false)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.cancel')}</button>
             </div>
-            {renderEditor(newDraft, (patch) => setNewDraft((current) => ({ ...current, ...patch })), 'new')}
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <div>{renderEditor(newDraft, (patch) => setNewDraft((current) => ({ ...current, ...patch })), 'new')}</div>
+              {renderPreview(newDraft)}
+            </div>
             <div className="mt-4 flex justify-end">
               <Button type="button" onClick={() => void addSponsor()} disabled={isAdding} className="bg-amber-600 text-white hover:bg-amber-700"><Plus className="mr-1.5 h-4 w-4" />{isAdding ? translate('sponsors.adding') : translate('sponsors.add')}</Button>
             </div>

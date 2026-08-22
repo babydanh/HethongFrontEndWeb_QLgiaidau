@@ -243,8 +243,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [mockLoading, setMockLoading] = useState(false);
   const [rosterConfirming, setRosterConfirming] = useState(false);
 
-  
-
   const fetchParticipants = useCallback(async () => {
     if (!id) return;
     setParticipantsLoading(true);
@@ -259,23 +257,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }
   }, [id]);
 
-  useEffect(() => {
-    if (activeTab !== 'participants') return;
-    const load = async () => {
-      setParticipantsLoading(true);
-      setParticipantsError(null);
-      try {
-        const res = await tournamentsApi.getLiteParticipants(id);
-        setParticipants(res.data ?? []);
-      } catch (err) {
-        setParticipantsError(getErrorMessage(err));
-      } finally {
-        setParticipantsLoading(false);
-      }
-    };
-    load();
-  }, [activeTab, id]);
-
   const pendingParticipants = participants.filter(
     (p) => p.teamStatus === 'PENDING_PARTNER'
   );
@@ -286,6 +267,16 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     tournament?.divisions?.[0]?.matchType ?? tournament?.matchType ?? ''
   ).toUpperCase();
   const isPairFormat = ['DOUBLES', 'MIXED_DOUBLES'].includes(canonicalMatchType);
+  const bracketEligibleCount = participants.filter(
+    (participant) => participant.teamStatus === 'COMPLETE',
+  ).length;
+  const registeredParticipantCount =
+    tournament?._summary?.participantCount ??
+    tournament?.divisions?.[0]?._count?.participants ??
+    tournament?._count?.participants ??
+    0;
+  const registeredMatchCount =
+    tournament?._summary?.matchesTotal ?? tournament?._count?.matches ?? 0;
   const isSingleEliminationBracket = Boolean(
     bracket?.stages?.length === 1 && bracket.stages[0]?.type === 'SINGLE_ELIMINATION',
   );
@@ -484,6 +475,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   };
 
   const handleGenerateBracket = async () => {
+    if (bracketEligibleCount < 2) {
+      toast.error(translate('bracketMinimumParticipants', { count: 2 }));
+      return;
+    }
     if (!confirm(translate('createBracketConfirm'))) return;
     setBracketLoading(true);
     try {
@@ -652,7 +647,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key === 'participants' || tab.key === 'bracket') {
+                    void fetchParticipants();
+                  }
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm'
@@ -688,8 +688,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   : tournament.format || translate('unknownValue')
                 } />
                 <InfoCard label={translate('maxParticipants')} value={tournament.maxParticipants?.toString() || '—'} />
-                <InfoCard label={translate('participantLabel')} value={tournament._count?.participants?.toString() || '0'} />
-                <InfoCard label={translate('matchesTitle')} value={tournament._count?.matches?.toString() || '0'} />
+                <InfoCard label={translate('participantLabel')} value={registeredParticipantCount.toString()} />
+                <InfoCard label={translate('matchesTitle')} value={registeredMatchCount.toString()} />
                 {tournament.startDate && (
                   <InfoCard label={translate('startDate')} value={new Date(tournament.startDate).toLocaleDateString(locale)} />
                 )}
@@ -1049,7 +1049,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   )}
 
                   {/* Create bracket */}
-                  {(isPairFormat ? pairedParticipants.length > 0 : participants.length > 0) && (
+                  {participants.length > 0 && (
                     <div className="pt-4 border-t border-slate-100">
                       <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                         <div className="min-w-0">
@@ -1066,18 +1066,25 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           </Button>
                         )}
                       </div>
-                      {!hasBracket && <Button
-                        onClick={handleGenerateBracket}
-                        disabled={bracketLoading}
-                        className="w-full gap-2"
-                      >
+                      {!hasBracket && <>
+                        <Button
+                          onClick={handleGenerateBracket}
+                          disabled={bracketLoading || bracketEligibleCount < 2}
+                          className="w-full gap-2"
+                        >
                         {bracketLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <Swords className="w-4 h-4" />
                         )}
-                        {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
-                      </Button>}
+                          {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
+                        </Button>
+                        {bracketEligibleCount < 2 && (
+                          <p className="mt-2 text-center text-xs font-semibold text-amber-700">
+                            {translate('bracketMinimumParticipants', { count: 2 })}
+                          </p>
+                        )}
+                      </>}
                     </div>
                   )}
                 </>
@@ -1101,21 +1108,26 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   </Button>
                 </div>
               )}
-              {(isPairFormat ? pairedParticipants.length > 0 : participants.length > 0) && (
+              {participants.length > 0 && (
                 <div className="bg-slate-50 rounded-lg p-6 text-center">
                   {!hasBracket && <>
                     <Swords className="w-10 h-10 mx-auto mb-3 text-slate-300" />
                     <p className="text-sm text-slate-500 mb-4">
                       {isPairFormat ? translate('pairingCompletePrompt') : translate('createBracketPrompt')}
                     </p>
-                    <Button onClick={handleGenerateBracket} disabled={bracketLoading} className="gap-2">
+                    <Button onClick={handleGenerateBracket} disabled={bracketLoading || bracketEligibleCount < 2} className="gap-2">
                       {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4" />}
                       {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
                     </Button>
                   </>}
                 </div>
               )}
-              {participants.length === 0 && (
+              {participantsLoading && participants.length === 0 ? (
+                <div className="bg-slate-50 rounded-lg p-6 text-center">
+                  <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-blue-400" />
+                  <p className="text-sm text-slate-400">{translate('loadingParticipants')}</p>
+                </div>
+              ) : participants.length === 0 && (
                 <div className="bg-slate-50 rounded-lg p-6 text-center">
                   <Swords className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                   <p className="text-sm text-slate-400">{translate('noParticipantsInvite')}</p>

@@ -187,33 +187,37 @@ export default function SmartAiTournamentModal({
   const handleCreateTournament = async () => {
     if (!parsedData) return;
 
+    let createdTournamentId: string | null = null;
     try {
       setIsCreating(true);
 
       // 1. Create lite tournament
       const primaryFormat = parsedData.formats?.[0] || { formatKey: 'DOUBLES_MALE', name: translate('defaultDivisionName', { count: 1 }), bracketType: 'SINGLE_ELIMINATION' as const, maxParticipants: 16 };
-      const matchType: 'singles' | 'doubles' | 'mixed_doubles' = primaryFormat.formatKey.includes('SINGLES')
-        ? 'singles'
-        : primaryFormat.formatKey.includes('MIXED') ? 'mixed_doubles' : 'doubles';
-      const genderRestriction: 'MALE' | 'FEMALE' | 'MIXED' = primaryFormat.formatKey.includes('FEMALE')
-        ? 'FEMALE'
-        : primaryFormat.formatKey.includes('MIXED')
-        ? 'MIXED'
-        : 'MALE';
+      const isFootballFormat = (formatKey: string) => formatKey.startsWith('FOOTBALL_');
+      const getGenderRestriction = (formatKey: string): 'MALE' | 'FEMALE' | 'MIXED' | undefined => {
+        if (formatKey === 'FOOTBALL_OPEN') return undefined;
+        if (formatKey.includes('FEMALE')) return 'FEMALE';
+        if (formatKey.includes('MIXED')) return 'MIXED';
+        return 'MALE';
+      };
+      const matchType: 'singles' | 'doubles' | 'mixed_doubles' = isFootballFormat(primaryFormat.formatKey)
+        ? 'doubles'
+        : primaryFormat.formatKey.includes('SINGLES')
+          ? 'singles'
+          : primaryFormat.formatKey.includes('MIXED') ? 'mixed_doubles' : 'doubles';
+      const genderRestriction = getGenderRestriction(primaryFormat.formatKey);
 
       const formats = parsedData.formats?.length ? parsedData.formats : [primaryFormat];
       const divisionInputs: CreateDivisionInput[] = formats.map((fmt, index) => ({
         name: fmt.name?.trim() || translate('defaultDivisionName', { count: index + 1 }),
-        matchType: fmt.formatKey.includes('SINGLES')
-          ? MatchTypeDB.SINGLES
-          : fmt.formatKey.includes('MIXED')
-            ? MatchTypeDB.MIXED_DOUBLES
-            : MatchTypeDB.DOUBLES,
-        genderRestriction: fmt.formatKey.includes('FEMALE')
-          ? GenderRestriction.FEMALE
-          : fmt.formatKey.includes('MIXED')
-            ? GenderRestriction.MIXED
-            : GenderRestriction.MALE,
+        matchType: isFootballFormat(fmt.formatKey)
+          ? MatchTypeDB.DOUBLES
+          : fmt.formatKey.includes('SINGLES')
+            ? MatchTypeDB.SINGLES
+            : fmt.formatKey.includes('MIXED')
+              ? MatchTypeDB.MIXED_DOUBLES
+              : MatchTypeDB.DOUBLES,
+        genderRestriction: getGenderRestriction(fmt.formatKey) as GenderRestriction | undefined,
         bracketType: fmt.bracketType || 'SINGLE_ELIMINATION',
         maxParticipants: fmt.maxParticipants || primaryFormat.maxParticipants || 16,
         minElo: fmt.minElo ?? null,
@@ -242,7 +246,11 @@ export default function SmartAiTournamentModal({
         divisions: divisionInputs,
       });
 
+      if (!createRes?.id || !Array.isArray(createRes.divisionIds) || createRes.divisionIds.length === 0) {
+        throw new Error(translate('creationResponseInvalid'));
+      }
       const tournamentId = createRes.id;
+      createdTournamentId = tournamentId;
       const createdDivisionIds = createRes.divisionIds;
       const primaryDivisionId = createdDivisionIds[0];
 
@@ -398,7 +406,13 @@ export default function SmartAiTournamentModal({
       onSuccess(tournamentId);
       onClose();
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, translate('creationError', { message: translate('tryAgainLater') })));
+      if (createdTournamentId) {
+        toast.error(translate('partialCreationWarning'));
+        onSuccess(createdTournamentId);
+        onClose();
+      } else {
+        toast.error(getErrorMessage(err, translate('creationError', { message: translate('tryAgainLater') })));
+      }
     } finally {
       setIsCreating(false);
     }

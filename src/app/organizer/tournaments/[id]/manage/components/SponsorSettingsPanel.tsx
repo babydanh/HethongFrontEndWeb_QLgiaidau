@@ -245,6 +245,19 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
       <div className="space-y-4">
         {sponsors.map((sponsor) => {
           const draft = drafts[sponsor.id] || toDraft(sponsor);
+          if (sponsor.status === 'ARCHIVED') {
+            return (
+              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-100 p-4 opacity-75" aria-label={translate('sponsors.archived')}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black text-slate-700">{sponsor.displayName}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">{translate(`sponsors.tiers.${sponsor.tier}`)}</p>
+                  </div>
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-600">{translate('sponsors.archived')}</span>
+                </div>
+              </div>
+            );
+          }
           return (
             <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
               {renderEditor(draft, (patch) => updateDraft(sponsor.id, patch), sponsor.id)}

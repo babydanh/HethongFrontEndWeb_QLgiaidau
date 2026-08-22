@@ -27,7 +27,8 @@ import type {
 import { getSportLogo } from '@/constants/sports';
 import {
   Trophy, Users, Swords, Calendar,
-  Link as LinkIcon, ExternalLink, Copy, ChevronLeft,
+    ExternalLink, Copy, ChevronLeft,
+
   AlertTriangle, CheckCircle, RefreshCw, UserPlus, Shuffle,
   Unlink, Loader2, User, FlaskConical,
 } from 'lucide-react';

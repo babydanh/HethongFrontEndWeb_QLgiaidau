@@ -15,6 +15,8 @@ interface PlayerSportTierBadgeBarProps {
   region?: string | null;
   className?: string;
   size?: 'sm' | 'md';
+  variant?: 'light' | 'dark';
+  onlyRanked?: boolean;
 }
 
 /**
@@ -67,20 +69,20 @@ export function getShortTierCode(tierName?: string | null, elo?: number | null):
 }
 
 const getTierColorClass = (shortCode: string): string => {
-  if (shortCode === 'TS') return 'text-amber-400 font-black drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]';
-  if (shortCode === 'HTA') return 'text-rose-500 font-extrabold';
-  if (shortCode === 'LTA') return 'text-rose-400 font-bold';
-  if (shortCode === 'HTB') return 'text-blue-500 font-extrabold';
-  if (shortCode === 'LTB') return 'text-blue-400 font-bold';
-  if (shortCode === 'HTC') return 'text-emerald-500 font-extrabold';
-  if (shortCode === 'LTC') return 'text-emerald-400 font-bold';
-  if (shortCode === 'HTD') return 'text-slate-300 font-bold';
-  if (shortCode === 'LTD') return 'text-slate-400 font-semibold';
-  if (shortCode === 'PRO') return 'text-amber-400 font-black';
-  if (shortCode === 'ADV') return 'text-emerald-400 font-bold';
-  if (shortCode === 'INT') return 'text-blue-400 font-bold';
-  if (shortCode === 'BEG') return 'text-slate-400 font-semibold';
-  return 'text-slate-500';
+  if (shortCode === 'TS') return 'text-amber-500 font-black drop-shadow-[0_0_4px_rgba(245,158,11,0.4)]';
+  if (shortCode === 'HTA') return 'text-rose-600 font-extrabold';
+  if (shortCode === 'LTA') return 'text-rose-500 font-bold';
+  if (shortCode === 'HTB') return 'text-blue-600 font-extrabold';
+  if (shortCode === 'LTB') return 'text-blue-500 font-bold';
+  if (shortCode === 'HTC') return 'text-emerald-600 font-extrabold';
+  if (shortCode === 'LTC') return 'text-emerald-500 font-bold';
+  if (shortCode === 'HTD') return 'text-slate-600 font-bold';
+  if (shortCode === 'LTD') return 'text-slate-500 font-semibold';
+  if (shortCode === 'PRO') return 'text-amber-500 font-black';
+  if (shortCode === 'ADV') return 'text-emerald-600 font-bold';
+  if (shortCode === 'INT') return 'text-blue-600 font-bold';
+  if (shortCode === 'BEG') return 'text-slate-500 font-semibold';
+  return 'text-slate-400';
 };
 
 export function PlayerSportTierBadgeBar({
@@ -88,110 +90,140 @@ export function PlayerSportTierBadgeBar({
   categories = [],
   region = 'VN',
   className,
-  size = 'md',
+  size = 'sm',
+  variant = 'light',
+  onlyRanked = true,
 }: PlayerSportTierBadgeBarProps) {
   const translate = useTranslations('SportTierBar');
 
   // Filter only active sports
   const activeCategories = (categories || []).filter((cat) => cat?.isActive !== false);
 
+  // Map each category to its active rank
+  const sportsWithRank = activeCategories.map((category) => {
+    const sportRanks = (userRankings || []).filter(
+      (r) =>
+        r.categoryId === category.id ||
+        r.categoryName?.toLowerCase() === category.name?.toLowerCase(),
+    );
+    const activeSportRank = sportRanks
+      .filter((r) => r.matchesPlayed > 0)
+      .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
+
+    const isRanked = Boolean(activeSportRank && activeSportRank.matchesPlayed > 0);
+    const rankStyle = isRanked
+      ? getRankStyle(activeSportRank?.eloPoints, activeSportRank?.tier?.name || activeSportRank?.tierName, category.name)
+      : null;
+    const shortCode = isRanked
+      ? getShortTierCode(activeSportRank?.tier?.name || activeSportRank?.tierName, activeSportRank?.eloPoints)
+      : '--';
+    const logoUrl = getSportLogo(category.name);
+
+    return {
+      category,
+      activeSportRank,
+      isRanked,
+      rankStyle,
+      shortCode,
+      logoUrl,
+    };
+  });
+
+  const displaySports = onlyRanked ? sportsWithRank.filter((s) => s.isRanked) : sportsWithRank;
+
+  // Nếu người chơi chưa có rank nào và chọn onlyRanked thì không cần hiện hoặc ẩn
+  if (onlyRanked && displaySports.length === 0) {
+    return null;
+  }
+
+  const isDark = variant === 'dark';
   const isSmall = size === 'sm';
 
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-3 bg-slate-900/90 text-white rounded-xl px-3 py-2 border border-slate-800 shadow-md backdrop-blur-xs select-none max-w-full overflow-x-auto no-scrollbar',
+        'inline-flex items-center gap-2 rounded-lg px-2 py-1 border shadow-xs select-none max-w-full overflow-x-auto no-scrollbar',
+        isDark
+          ? 'bg-slate-900/90 text-white border-slate-800'
+          : 'bg-white text-slate-800 border-slate-200/90',
         className,
       )}
     >
-      {/* Region Badge */}
-      <div className="flex flex-col items-center justify-center shrink-0 pr-2.5 border-r border-slate-800">
-        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5">
-          {translate('region')}
-        </span>
-        <span className="inline-flex items-center justify-center font-black rounded-lg bg-rose-950/80 text-rose-300 border border-rose-800/80 px-2 py-0.5 text-xs shadow-xs">
-          {region || 'VN'}
-        </span>
-      </div>
+      {/* Region Tag */}
+      {region && (
+        <div className={cn(
+          'flex items-center gap-1 shrink-0 pr-1.5 border-r',
+          isDark ? 'border-slate-800' : 'border-slate-200',
+        )}>
+          <span className={cn(
+            'inline-flex items-center justify-center font-extrabold rounded-md px-1.5 py-0.5 text-[10px] tracking-wider',
+            isDark
+              ? 'bg-rose-950/80 text-rose-300 border border-rose-800/80'
+              : 'bg-rose-50 text-rose-600 border border-rose-200',
+          )}>
+            {region}
+          </span>
+        </div>
+      )}
 
       {/* Sport Tiers Badges */}
-      <div className="flex items-center gap-2.5 min-w-0">
-        {activeCategories.length === 0 ? (
-          <span className="text-xs text-slate-500 italic">--</span>
-        ) : (
-          activeCategories.map((category) => {
-            // Find player's highest rank for this active category
-            const sportRanks = (userRankings || []).filter(
-              (r) =>
-                r.categoryId === category.id ||
-                r.categoryName?.toLowerCase() === category.name?.toLowerCase(),
-            );
-            const activeSportRank = sportRanks
-              .filter((r) => r.matchesPlayed > 0)
-              .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
-
-            const isRanked = Boolean(activeSportRank && activeSportRank.matchesPlayed > 0);
-            const rankStyle = isRanked
-              ? getRankStyle(activeSportRank?.eloPoints, activeSportRank?.tier?.name || activeSportRank?.tierName, category.name)
-              : null;
-            const shortCode = isRanked
-              ? getShortTierCode(activeSportRank?.tier?.name || activeSportRank?.tierName, activeSportRank?.eloPoints)
-              : '--';
-
-            const logoUrl = getSportLogo(category.name);
-
-            return (
+      <div className="flex items-center gap-2 min-w-0">
+        {displaySports.map(({ category, activeSportRank, isRanked, rankStyle, shortCode, logoUrl }) => {
+          return (
+            <div
+              key={category.id}
+              title={
+                isRanked
+                  ? `${category.name}: ${activeSportRank?.eloPoints} ELO (${rankStyle?.name || shortCode}) • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
+                  : `${category.name}: ${translate('unranked')}`
+              }
+              className={cn(
+                'group relative flex items-center gap-1 transition-transform hover:scale-105 cursor-pointer',
+                !isRanked && 'opacity-40 hover:opacity-75',
+              )}
+            >
+              {/* Sport Icon Circle */}
               <div
-                key={category.id}
-                title={
-                  isRanked
-                    ? `${category.name}: ${activeSportRank?.eloPoints} ELO (${rankStyle?.name || shortCode}) • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
-                    : `${category.name}: ${translate('unranked')}`
-                }
                 className={cn(
-                  'group relative flex flex-col items-center justify-center transition-transform hover:scale-105 cursor-pointer',
-                  !isRanked && 'opacity-35 hover:opacity-75',
+                  'relative rounded-full flex items-center justify-center border transition-all',
+                  isSmall ? 'w-5 h-5' : 'w-6 h-6',
+                  isRanked
+                    ? isDark
+                      ? `${rankStyle?.ringClass || 'ring-blue-500'} bg-slate-800 border-slate-700`
+                      : 'bg-slate-50 border-slate-200'
+                    : isDark
+                      ? 'bg-slate-800/50 border-slate-700/50'
+                      : 'bg-slate-100 border-slate-200',
                 )}
               >
-                {/* Sport Icon Circle */}
-                <div
-                  className={cn(
-                    'relative rounded-full flex items-center justify-center border transition-all',
-                    isSmall ? 'w-7 h-7' : 'w-8 h-8',
-                    isRanked
-                      ? `${rankStyle?.ringClass || 'ring-blue-500'} bg-slate-800/90 border-slate-700`
-                      : 'bg-slate-800/50 border-slate-700/50',
-                  )}
-                >
-                  {logoUrl ? (
-                    <Image
-                      src={logoUrl}
-                      alt={category.name}
-                      width={isSmall ? 16 : 18}
-                      height={isSmall ? 16 : 18}
-                      unoptimized
-                      className="object-contain filter drop-shadow-xs"
-                    />
-                  ) : (
-                    <span className="text-[10px] font-bold text-slate-300">
-                      {category.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-
-                {/* Short Tier Label */}
-                <span
-                  className={cn(
-                    'mt-1 text-[10px] tracking-tight leading-none',
-                    isRanked ? getTierColorClass(shortCode) : 'text-slate-500 font-semibold',
-                  )}
-                >
-                  {shortCode}
-                </span>
+                {logoUrl ? (
+                  <Image
+                    src={logoUrl}
+                    alt={category.name}
+                    width={isSmall ? 12 : 14}
+                    height={isSmall ? 12 : 14}
+                    unoptimized
+                    className="object-contain"
+                  />
+                ) : (
+                  <span className="text-[8px] font-bold text-slate-500">
+                    {category.name.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
               </div>
-            );
-          })
-        )}
+
+              {/* Short Tier Label */}
+              <span
+                className={cn(
+                  'text-[10px] tracking-tight leading-none',
+                  isRanked ? getTierColorClass(shortCode) : 'text-slate-400 font-medium',
+                )}
+              >
+                {shortCode}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

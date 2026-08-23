@@ -597,18 +597,31 @@ export default function ProfilePage() {
           {/* Info */}
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
-                {isLoading ? (
-                  <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
-                ) : (
-                  displayUser?.fullName || translate("anonymousUser")
-                )}
-                {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
-                  <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200">
-                    <ShieldCheck className="w-5 h-5 text-blue-600" />
-                  </span>
-                )}
-              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+                  {isLoading ? (
+                    <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
+                  ) : (
+                    displayUser?.fullName || translate("anonymousUser")
+                  )}
+                  {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
+                    <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                      <ShieldCheck className="w-5 h-5 text-blue-600" />
+                    </span>
+                  )}
+                </h1>
+
+                {/* Gamified Multi-Sport Tier Badge Bar: Trắng sáng, gọn gàng kế tên xác minh, chỉ hiện khi đã có rank */}
+                <PlayerSportTierBadgeBar
+                  userRankings={userRankings?.publicRanks}
+                  categories={categories}
+                  region="VN"
+                  variant="light"
+                  onlyRanked={true}
+                  size="sm"
+                />
+              </div>
+
               <p className="text-slate-500 font-semibold mt-0.5">
                 {isLoading ? (
                   <span className="w-32 h-4 bg-slate-200 animate-pulse rounded inline-block mt-1"></span>
@@ -659,15 +672,6 @@ export default function ProfilePage() {
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
                 </span>
               )}
-            </div>
-
-            {/* Gamified Multi-Sport Tier Badge Bar */}
-            <div className="pt-1">
-              <PlayerSportTierBadgeBar
-                userRankings={userRankings?.publicRanks}
-                categories={categories}
-                region="VN"
-              />
             </div>
           </div>
 

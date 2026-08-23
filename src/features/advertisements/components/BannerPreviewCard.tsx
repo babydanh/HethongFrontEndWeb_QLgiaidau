@@ -38,6 +38,8 @@ interface BannerPreviewCardProps {
 type PreviewMode = 'placement' | 'page';
 type PreviewViewport = 'desktop' | 'mobile';
 type SampleLayout = 'slide' | 'stack';
+type PreviewReference = 1 | 2 | 3 | 4 | 5 | 6;
+const PREVIEW_REFERENCES: PreviewReference[] = [1, 2, 3, 4, 5, 6];
 
 type PreviewSample = {
   id: string;
@@ -85,6 +87,14 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
       cta: translate('previewSampleEventCta'),
     },
   ];
+  const referenceHints: Record<PreviewReference, string> = {
+    1: translate('previewReference1Hint'),
+    2: translate('previewReference2Hint'),
+    3: translate('previewReference3Hint'),
+    4: translate('previewReference4Hint'),
+    5: translate('previewReference5Hint'),
+    6: translate('previewReference6Hint'),
+  };
   const isApp = APP_SLOTS.includes(placementSlot);
   const isSidebar = placementSlot === 'HOMEPAGE_SIDEBAR';
   const isHorizontal = placementSlot === 'TOURNAMENTS_BOTTOM' || placementSlot === 'MATCHES_BOTTOM';
@@ -100,6 +110,18 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const [sampleLayout, setSampleLayout] = useState<SampleLayout>(isSidebar ? 'stack' : 'slide');
   const [sampleIndex, setSampleIndex] = useState(0);
   const [showSamples, setShowSamples] = useState(true);
+  const defaultReference: PreviewReference = isSidebar
+    ? 1
+    : placementSlot === 'TOURNAMENTS_BOTTOM'
+      ? 2
+      : placementSlot === 'MATCHES_BOTTOM'
+        ? 3
+        : placementSlot === 'GLOBAL_HEADER'
+          ? 4
+          : isApp
+            ? 6
+            : 5;
+  const [previewReference, setPreviewReference] = useState<PreviewReference>(defaultReference);
 
   /* eslint-disable react-hooks/set-state-in-effect -- reset preview controls when the placement/device context changes */
   useEffect(() => {
@@ -107,7 +129,8 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
     setSampleLayout(isSidebar ? 'stack' : 'slide');
     setSampleCount(3);
     setSampleIndex(0);
-  }, [isApp, isSidebar]);
+    setPreviewReference(defaultReference);
+  }, [defaultReference, isApp, isSidebar]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   /* eslint-disable react-hooks/set-state-in-effect -- reset the preview error when the selected image changes */
@@ -392,7 +415,53 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
     </div>
   );
 
+  const renderPagination = () => (
+    <div className="flex items-center justify-center gap-1.5 border-t border-slate-200 pt-3">
+      <span className="rounded-md px-2 py-1 text-[8px] text-slate-400">{translate('previewPrevious')}</span>
+      <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[8px] font-semibold text-slate-600">1</span>
+      <span className="rounded-md bg-slate-700 px-2 py-1 text-[8px] font-semibold text-white">2</span>
+      <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[8px] font-semibold text-slate-600">3</span>
+      <span className="rounded-md px-2 py-1 text-[8px] text-slate-600">{translate('previewNext')}</span>
+    </div>
+  );
+
+  const renderDetailAside = () => (
+    <div className="space-y-2.5">
+      <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
+        <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400">{translate('previewOrganizer')}</p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="h-6 w-6 rounded-full bg-slate-200" />
+          <div>
+            <p className="text-[8.5px] font-bold text-slate-700">{translate('previewOrganizerName')}</p>
+            <p className="text-[7.5px] text-slate-400">{translate('previewOrganizerRole')}</p>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
+        <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400">{translate('previewDetailInfo')}</p>
+        <div className="mt-2 space-y-1 text-[8px] text-slate-500">
+          <p>{translate('previewDetailDate')}</p>
+          <p>{translate('previewDetailLocation')}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFooterMock = () => (
+    <div className="border-t border-slate-200 pt-3">
+      <div className="grid grid-cols-3 gap-3 text-[8px] text-slate-500">
+        <div><p className="font-bold text-slate-700">SportO</p><p>{translate('previewFooterTagline')}</p></div>
+        <div><p className="font-bold text-slate-700">{translate('previewFooterProduct')}</p><p>{translate('previewTournaments')}</p></div>
+        <div><p className="font-bold text-slate-700">{translate('previewFooterLegal')}</p><p>{translate('previewPrivacy')}</p></div>
+      </div>
+    </div>
+  );
+
   const renderPageMockup = () => {
+    const referenceSidebar = previewReference === 1 || previewReference === 5;
+    const referenceBottom = previewReference === 2 || previewReference === 3;
+    const referenceFooter = previewReference === 4 || previewReference === 6;
+
     if (isApp || viewport === 'mobile') {
       return (
         <div className="mx-auto w-full max-w-[320px] rounded-[32px] border-[5px] border-slate-800 bg-slate-900 p-1 shadow-xl">
@@ -500,7 +569,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
             </span>
           </div>
 
-          {isSidebar ? (
+          {referenceSidebar ? (
             <div className="grid grid-cols-[minmax(0,1fr)_165px] gap-3 items-start">
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -517,7 +586,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
 
               <div className="space-y-2.5">
                 {renderPreviewSamples(true)}
-                {renderSidebarWidget()}
+                {previewReference === 1 ? renderSidebarWidget() : renderDetailAside()}
               </div>
             </div>
           ) : (
@@ -536,7 +605,9 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
                 {renderMatchRow(0)}
                 {renderMatchRow(1)}
               </div>
+              {referenceBottom && renderPagination()}
               {renderPreviewSamples(true)}
+              {referenceFooter && renderFooterMock()}
             </>
           )}
         </div>
@@ -677,6 +748,25 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+        <span className="mr-1 text-[9px] font-semibold text-slate-600">{translate('previewReferenceLabel')}</span>
+        <div className="flex flex-wrap items-center gap-1">
+          {PREVIEW_REFERENCES.map((reference) => (
+            <button
+              key={reference}
+              type="button"
+              aria-pressed={previewReference === reference}
+              aria-label={translate('previewReference', { number: reference })}
+              onClick={() => setPreviewReference(reference)}
+              className={`h-6 min-w-6 rounded-md px-1.5 text-[9px] font-bold ${previewReference === reference ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              {reference}
+            </button>
+          ))}
+        </div>
+        <span className="text-[8.5px] text-slate-400">{referenceHints[previewReference]}</span>
       </div>
 
       {/* Main Preview Container */}

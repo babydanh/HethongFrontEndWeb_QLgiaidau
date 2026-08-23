@@ -343,7 +343,6 @@ export function RoundRobinView({
             ))}
           </div>
         )}
-
         {/* Luon hien nut ket thuc som */}
         {tournamentId && stageId && (
           <div className="mt-2 flex justify-end">
@@ -363,58 +362,27 @@ export function RoundRobinView({
       </div>
       )}
 
-      {/* Match schedule is paged by round so multi-leg groups stay readable. */}
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-<Clock className="w-4 h-4 text-slate-400" /> {translate('matchSchedule')}
+          <Clock className="w-4 h-4 text-slate-400" /> {translate('matchSchedule')}
           <span className="text-[10px] text-slate-400 font-semibold normal-case">
-            ({translate('matchCount', { count: visibleMatches.length })})
+            ({translate('matchCount', { count: matches.filter(m => !m.isBye).length })})
           </span>
         </h5>
 
-        {rounds.length > 1 && (
-          <div className="mb-3 flex flex-wrap gap-2 items-center" aria-label={translate('selectGroupRound')}>
-            <button
-              type="button"
-              onClick={() => {
-                const idx = rounds.indexOf(activeRound!);
-                if (idx > 0) setActiveRound(rounds[idx - 1]);
-              }}
-              disabled={activeRound === rounds[0]}
-              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
-              {translate('roundProgress', { current: activeRound ?? '-', total: rounds[rounds.length - 1] ?? '-' })}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                const idx = rounds.indexOf(activeRound!);
-                if (idx !== -1 && idx < rounds.length - 1) setActiveRound(rounds[idx + 1]);
-              }}
-              disabled={activeRound === rounds[rounds.length - 1]}
-              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1 no-scrollbar">
-          {visibleMatches.length === 0 ? (
+          {matches.filter(m => !m.isBye).length === 0 ? (
             <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
               {translate("noMatches")}
             </div>
           ) : (
             <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {visibleMatches
+              {matches
+                .filter(m => !m.isBye)
                 .sort((a, b) => a.matchOrder - b.matchOrder)
-                .map((m) => {
+                .map((m, idx) => {
                   const done = m.status === 'COMPLETED';
                   const live = m.status === 'ONGOING';
-                  const roundInfo = getRoundRobinRoundInfo(m, roundContextMatches);
                   return (
                     <div
                       key={m.id}
@@ -432,9 +400,10 @@ export function RoundRobinView({
                       }
                     >
                       <div className="mb-1.5 flex items-center justify-between">
-                        <span className="flex items-center gap-1">
-                          <span className="text-[8px] text-slate-400">#{m.matchOrder}</span>
-                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">{translate('roundAndLeg', { leg: roundInfo.leg, round: roundInfo.roundWithinLeg })}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded">
+                            Trận #{idx + 1}
+                          </span>
                         </span>
                         {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> {translate('liveLabel')}</span>}
                       </div>

@@ -206,7 +206,10 @@ export default function AdminEloPage() {
         setCategoryId(nextQuery.categoryId);
         setQuery(nextQuery);
         if (active[0]) void loadContexts({ nextQuery });
-        else setPlayers([]);
+        else {
+          setPlayers([]);
+          setLoading(false);
+        }
       }).catch((error: unknown) => {
         if (!cancelled) toast.error(getErrorMessage(error, translate('loadCategoriesFailed')));
       });

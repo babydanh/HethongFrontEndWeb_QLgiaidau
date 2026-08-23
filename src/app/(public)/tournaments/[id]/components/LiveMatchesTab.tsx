@@ -261,11 +261,15 @@ export default function LiveMatchesTab({
                         {match.courtName || match.tournament?.venueName}
                       </span>
                     )}
-                    {match.roundNumber && (
+                    {match.group?.name ? (
+                      <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                        {match.group.name}
+                      </span>
+                    ) : match.roundNumber ? (
                       <span className="text-xs font-medium text-slate-500">
                         {translate('liveMatchesTabRoundNumber', { round: match.roundNumber })}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 

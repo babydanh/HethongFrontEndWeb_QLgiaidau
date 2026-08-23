@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import {
   Bell,
   CalendarDays,
+  ChevronLeft,
   ChevronRight,
   Code,
   Eye,
+  EyeOff,
   Image as ImageIcon,
   Lock,
   MapPin,
@@ -35,6 +37,16 @@ interface BannerPreviewCardProps {
 
 type PreviewMode = 'placement' | 'page';
 type PreviewViewport = 'desktop' | 'mobile';
+type SampleLayout = 'slide' | 'stack';
+
+type PreviewSample = {
+  id: string;
+  kicker: string;
+  title: string;
+  detail: string;
+  cta: string;
+  tone: string;
+};
 
 const APP_SLOTS: AdPlacementSlot[] = [
   'APP_HOME_FEED',
@@ -49,9 +61,34 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   title,
   imageUrl,
   targetUrl,
-  customHtml,
 }) => {
   const translate = useTranslations('AdminBanners');
+  const previewSamples: PreviewSample[] = [
+    {
+      id: 'sample-primary',
+      kicker: translate('previewSamplePrimaryKicker'),
+      title: translate('previewSamplePrimaryTitle'),
+      detail: translate('previewSamplePrimaryDetail'),
+      cta: translate('previewSamplePrimaryCta'),
+      tone: 'from-sky-500 via-blue-600 to-indigo-700',
+    },
+    {
+      id: 'sample-community',
+      kicker: translate('previewSampleCommunityKicker'),
+      title: translate('previewSampleCommunityTitle'),
+      detail: translate('previewSampleCommunityDetail'),
+      cta: translate('previewSampleCommunityCta'),
+      tone: 'from-emerald-500 via-teal-600 to-cyan-700',
+    },
+    {
+      id: 'sample-event',
+      kicker: translate('previewSampleEventKicker'),
+      title: translate('previewSampleEventTitle'),
+      detail: translate('previewSampleEventDetail'),
+      cta: translate('previewSampleEventCta'),
+      tone: 'from-orange-500 via-rose-600 to-fuchsia-700',
+    },
+  ];
   const isApp = APP_SLOTS.includes(placementSlot);
   const isSidebar = placementSlot === 'HOMEPAGE_SIDEBAR';
   const isHorizontal = placementSlot === 'TOURNAMENTS_BOTTOM' || placementSlot === 'MATCHES_BOTTOM';
@@ -63,14 +100,25 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const [previewMode, setPreviewMode] = useState<PreviewMode>('page');
   const [viewport, setViewport] = useState<PreviewViewport>(isApp ? 'mobile' : 'desktop');
   const [imageError, setImageError] = useState(false);
+  const [sampleCount, setSampleCount] = useState(3);
+  const [sampleLayout, setSampleLayout] = useState<SampleLayout>(isSidebar ? 'stack' : 'slide');
+  const [sampleIndex, setSampleIndex] = useState(0);
+  const [showSamples, setShowSamples] = useState(true);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- reset preview controls when the placement/device context changes */
   useEffect(() => {
     setViewport(isApp ? 'mobile' : 'desktop');
-  }, [isApp]);
+    setSampleLayout(isSidebar ? 'stack' : 'slide');
+    setSampleCount(3);
+    setSampleIndex(0);
+  }, [isApp, isSidebar]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
+  /* eslint-disable react-hooks/set-state-in-effect -- reset the preview error when the selected image changes */
   useEffect(() => {
     setImageError(false);
   }, [imageUrl]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const slotBadge = isSidebar
     ? '300 × 250 · 4:3'
@@ -87,6 +135,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const getAspectClass = (compact = false) => {
     if (isSidebar) return compact ? 'aspect-[4/3]' : 'aspect-[4/3] max-w-[320px]';
     if (isHeader) return compact ? 'aspect-[8/1]' : 'aspect-[6/1] sm:aspect-[8/1]';
+    if (isHorizontal) return compact ? 'aspect-[8/1]' : 'aspect-[5.5/1] sm:aspect-[7/1] md:aspect-[8/1]';
     if (isAppFeed) return compact ? 'aspect-[16/9]' : 'aspect-[16/9] max-w-[340px]';
     if (isAppMatches) return compact ? 'aspect-[320/50]' : 'aspect-[320/50] max-w-[340px]';
     if (isAppDetail) return compact ? 'aspect-[3/1]' : 'aspect-[3/1] max-w-[360px]';
@@ -148,6 +197,105 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
     );
   };
 
+  const renderSampleBanner = (sample: PreviewSample, compact = false) => (
+    <div className={`relative w-full ${getAspectClass(compact)} overflow-hidden rounded-xl bg-gradient-to-br ${sample.tone} ${compact ? 'p-2' : 'p-3'} text-white shadow-sm`}>
+      <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full border-[12px] border-white/10" />
+      <div className="absolute -bottom-12 -left-8 h-28 w-28 rounded-full border-[12px] border-white/10" />
+      <div className="relative flex h-full flex-col justify-between">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded bg-white/20 px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider text-white/90">
+            {translate('previewSampleBadge')}
+          </span>
+          <span className="text-[8px] font-semibold text-white/70">SportO</span>
+        </div>
+        <div className="max-w-[78%]">
+          <p className="text-[7.5px] font-semibold uppercase tracking-[0.16em] text-white/70">{sample.kicker}</p>
+          <p className={`mt-0.5 font-black leading-tight tracking-tight text-white ${compact ? 'text-[10px]' : 'text-[13px]'}`}>{sample.title}</p>
+          <p className={`mt-1 leading-tight text-white/80 ${compact ? 'line-clamp-1 text-[7px]' : 'line-clamp-2 text-[8.5px]'}`}>{sample.detail}</p>
+          <span className={`inline-flex rounded-md bg-white px-2 font-bold text-slate-800 shadow-sm ${compact ? 'mt-1 py-0.5 text-[7px]' : 'mt-2 py-1 text-[8px]'}`}>{sample.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPreviewItem = (sample: PreviewSample | null, compact = false) => {
+    if (!sample) {
+      return (
+        <div className="relative">
+          {renderAd(compact)}
+          <span className="absolute left-2 top-2 rounded-md bg-blue-600/90 px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider text-white shadow-sm">
+            {translate('previewCurrentBanner')}
+          </span>
+        </div>
+      );
+    }
+    return renderSampleBanner(sample, compact);
+  };
+
+  const renderPreviewSamples = (compact = false) => {
+    const previewItems: (PreviewSample | null)[] = showSamples
+      ? [null, ...previewSamples].slice(0, sampleCount)
+      : [null];
+    const safeIndex = Math.min(sampleIndex, previewItems.length - 1);
+
+    if (sampleLayout === 'stack') {
+      return (
+        <div className="space-y-2">
+          {previewItems.map((item, index) => (
+            <div key={item?.id || 'current-banner'} className="relative">
+              {renderPreviewItem(item, compact)}
+              {index === 0 && previewItems.length > 1 && (
+                <span className="absolute bottom-2 right-2 rounded bg-blue-600/90 px-1.5 py-0.5 text-[7px] font-semibold text-white">
+                  {translate('previewCurrentBanner')}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative">
+        <div className="overflow-hidden rounded-xl">
+          {renderPreviewItem(previewItems[safeIndex], compact)}
+        </div>
+        {previewItems.length > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label={translate('previewPrevious')}
+              onClick={() => setSampleIndex((current) => (current - 1 + previewItems.length) % previewItems.length)}
+              className="absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-slate-900/55 text-white shadow-sm backdrop-blur-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              aria-label={translate('previewNext')}
+              onClick={() => setSampleIndex((current) => (current + 1) % previewItems.length)}
+              className="absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-slate-900/55 text-white shadow-sm backdrop-blur-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-1.5 py-1">
+              {previewItems.map((item, index) => (
+                <button
+                  key={item?.id || 'current-banner-dot'}
+                  type="button"
+                  aria-label={translate('previewSlide', { current: index + 1, total: previewItems.length })}
+                  aria-current={safeIndex === index ? 'true' : undefined}
+                  onClick={() => setSampleIndex(index)}
+                  className={`h-1.5 rounded-full transition-all focus:outline-hidden focus-visible:ring-1 focus-visible:ring-white ${safeIndex === index ? 'w-4 bg-white' : 'w-1.5 bg-white/60'}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderBrowserBar = () => (
     <div className="flex items-center justify-between border-b border-slate-200/80 bg-slate-100/90 px-3 py-1.5">
       <div className="flex items-center gap-1.5">
@@ -182,7 +330,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
     </div>
   );
 
-  const renderTournamentCard = (compact = false) => (
+  const renderTournamentCard = () => (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
       <div className="relative h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 px-3 py-1.5 text-white">
         <span className="rounded bg-white/90 px-1 py-0.5 text-[7.5px] font-extrabold uppercase text-blue-700">
@@ -232,8 +380,8 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const renderSidebarWidget = () => (
     <div className="rounded-xl border border-slate-100 bg-white p-2.5 shadow-2xs">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Top VĐV ELO</span>
-        <span className="text-[8px] font-semibold text-blue-600">Tuần này</span>
+        <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400">{translate('previewTopPlayers')}</span>
+        <span className="text-[8px] font-semibold text-blue-600">{translate('previewThisWeek')}</span>
       </div>
       <div className="space-y-1">
         <div className="flex items-center justify-between text-[8px] text-slate-600">
@@ -295,7 +443,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
                   </div>
                   {renderMatchRow(0)}
                   {renderMatchRow(1)}
-                  <div className="pt-1">{renderAd(true)}</div>
+                  <div className="pt-1">{renderPreviewSamples(true)}</div>
                 </div>
               ) : (
                 <>
@@ -305,8 +453,8 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
                     </p>
                     <span className="text-[8.5px] font-semibold text-blue-600">{translate('previewSeeAll')}</span>
                   </div>
-                  {renderAd(true)}
-                  {renderTournamentCard(true)}
+                  {renderPreviewSamples(true)}
+                  {renderTournamentCard()}
                   <div className="flex items-center gap-2 rounded-lg bg-white p-2 shadow-2xs">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 text-rose-500">
                       <Users className="h-3 w-3" />
@@ -337,7 +485,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
         <div className="space-y-3 p-3.5">
           {isHeader && (
             <div className="mb-2">
-              {renderAd(true)}
+              {renderPreviewSamples(true)}
             </div>
           )}
 
@@ -372,15 +520,15 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
               </div>
 
               <div className="space-y-2.5">
-                {renderAd(true)}
+                {renderPreviewSamples(true)}
                 {renderSidebarWidget()}
               </div>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-2.5">
-                {renderTournamentCard(true)}
-                {renderTournamentCard(true)}
+                {renderTournamentCard()}
+                {renderTournamentCard()}
               </div>
               <div className="flex items-center justify-between">
                 <h4 className="text-[10px] font-bold text-slate-800">
@@ -392,7 +540,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
                 {renderMatchRow(0)}
                 {renderMatchRow(1)}
               </div>
-              {renderAd(true)}
+              {renderPreviewSamples(true)}
             </>
           )}
         </div>
@@ -477,13 +625,71 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
         </div>
       </div>
 
+      <div className="space-y-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-bold text-blue-900">{translate('previewSampleTitle')}</p>
+            <p className="text-[8.5px] text-blue-700/80">{translate('previewSampleHelp')}</p>
+          </div>
+          <button
+            type="button"
+            aria-pressed={showSamples}
+            aria-label={showSamples ? translate('previewHideSamples') : translate('previewShowSamples')}
+            onClick={() => setShowSamples((visible) => !visible)}
+            className="inline-flex h-7 items-center gap-1 rounded-lg border border-blue-200 bg-white px-2 text-[9px] font-bold text-blue-700 shadow-2xs hover:bg-blue-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            {showSamples ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            {showSamples ? translate('previewHideSamples') : translate('previewShowSamples')}
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-semibold text-slate-600">{translate('previewSampleCount')}</span>
+            <div className="flex items-center gap-1 rounded-lg bg-white p-0.5 shadow-2xs">
+              {[1, 2, 3].map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  aria-pressed={sampleCount === count}
+                  onClick={() => {
+                    setSampleCount(count);
+                    setSampleIndex(0);
+                  }}
+                  className={`h-6 min-w-6 rounded-md px-1.5 text-[9px] font-bold ${sampleCount === count ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg bg-white p-0.5 shadow-2xs">
+            <button
+              type="button"
+              aria-pressed={sampleLayout === 'slide'}
+              onClick={() => setSampleLayout('slide')}
+              className={`rounded-md px-2 py-1 text-[9px] font-bold ${sampleLayout === 'slide' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              {translate('previewSlideMode')}
+            </button>
+            <button
+              type="button"
+              aria-pressed={sampleLayout === 'stack'}
+              onClick={() => setSampleLayout('stack')}
+              className={`rounded-md px-2 py-1 text-[9px] font-bold ${sampleLayout === 'stack' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              {translate('previewStackMode')}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Preview Container */}
       <div className="transition-all duration-300">
         {previewMode === 'page' ? (
           renderPageMockup()
         ) : (
           <div className="flex justify-center rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-2xs">
-            {renderAd()}
+            {renderPreviewSamples()}
           </div>
         )}
       </div>

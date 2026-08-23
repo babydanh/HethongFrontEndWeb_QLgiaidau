@@ -220,7 +220,14 @@ export default function SmartAiTournamentModal({
         toast.error(translate('analysisEmpty'));
       }
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, translate('analysisError')));
+      const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      const rawMessage = Array.isArray(responseMessage) ? responseMessage[0] : responseMessage;
+      const normalizedMessage = typeof rawMessage === 'string' ? rawMessage.toLowerCase() : '';
+      if (normalizedMessage.includes('google form') && (normalizedMessage.includes('đăng nhập') || normalizedMessage.includes('sign in') || normalizedMessage.includes('sign-in'))) {
+        toast.error(translate('googleFormAuthRequired'));
+      } else {
+        toast.error(getErrorMessage(err, translate('analysisError')));
+      }
     } finally {
       setIsAnalyzing(false);
     }

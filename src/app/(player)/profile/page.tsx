@@ -652,7 +652,7 @@ export default function ProfilePage() {
                 );
               })}
               {(() => {
-                const activeRanks = userRankings?.publicRanks?.filter(r => r.matchesPlayed > 0) || [];
+                const activeRanks = userRankings?.publicRanks?.filter(r => r.matchesPlayed > 0 || r.adminLeaderboardEligible || r.eloPoints > 0) || [];
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
                     <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">

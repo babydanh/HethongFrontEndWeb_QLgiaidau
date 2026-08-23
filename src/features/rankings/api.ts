@@ -144,6 +144,7 @@ export interface AdminEloPlayerContextDetail {
   status: AdminRankingStatus;
   statusExpiresAt: string | null;
   leaderboardEligible: boolean;
+  adminBootstrapEligible: boolean;
   updatedAt: string;
 }
 

@@ -8,6 +8,7 @@ export interface PlayerRanking {
   eloPoints: number;
   peakElo?: number;
   shieldActive?: boolean;
+  adminLeaderboardEligible?: boolean;
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;

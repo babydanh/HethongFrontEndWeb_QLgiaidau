@@ -111,13 +111,14 @@ export function RoundRobinView({
   const activeRound = isControlled
     ? (controlledActiveRound != null && rounds.includes(controlledActiveRound) ? controlledActiveRound : rounds[0] ?? null)
     : (selectedRound != null && rounds.includes(selectedRound) ? selectedRound : rounds[0] ?? null);
-  const setActiveRound = (r: number) => {
+    const setActiveRound = (r: number) => {
     if (isControlled) onRoundChange?.(r);
     else setSelectedRound(r);
   };
-  const visibleMatches = activeRound == null
-    ? matches.filter((m) => !m.isBye)
-    : matches.filter((m) => !m.isBye && getRoundRobinRoundInfo(m, roundContextMatches).roundWithinLeg === activeRound);
+  const visibleRounds = activeRound == null
+    ? rounds
+    : rounds.filter((round) => round === activeRound);
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -374,15 +375,46 @@ export function RoundRobinView({
             {translate("noMatches")}
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
-            {rounds.map((roundNum) => {
+          <div className="flex flex-col gap-4">
+            {rounds.length > 1 && (
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2" aria-label={translate('selectGroupRound')}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentIndex = Math.max(0, rounds.indexOf(activeRound ?? rounds[0]));
+                    setActiveRound(rounds[Math.max(0, currentIndex - 1)]);
+                  }}
+                  disabled={activeRound == null || activeRound <= rounds[0]}
+                  aria-label={translate('previousRound')}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-xs font-bold text-slate-700">
+                  {translate('roundProgress', { current: activeRound ?? rounds[0], total: rounds.length })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentIndex = Math.max(0, rounds.indexOf(activeRound ?? rounds[0]));
+                    setActiveRound(rounds[Math.min(rounds.length - 1, currentIndex + 1)]);
+                  }}
+                  disabled={activeRound == null || activeRound >= rounds[rounds.length - 1]}
+                  aria-label={translate('nextRound')}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            {visibleRounds.map((roundNum) => {
               const roundMatches = byRound[roundNum]?.filter(m => !m.isBye) || [];
               if (roundMatches.length === 0) return null;
               return (
                 <div key={roundNum} className="flex flex-col gap-2.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black uppercase tracking-wider text-slate-700 bg-slate-200/80 px-2.5 py-1 rounded-md">
-                      Vòng {roundNum}
+                      {translate('roundTitle', { round: roundNum })}
                     </span>
                     <div className="h-px flex-1 bg-slate-200" />
                   </div>

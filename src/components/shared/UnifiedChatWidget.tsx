@@ -586,12 +586,19 @@ export default function UnifiedChatWidget() {
         setSelection({ kind: 'ROOM', room });
         setRooms((prev) => dedupeRooms([room, ...prev], user?.id));
       } catch (err: unknown) {
-        const errorData = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
+        const typedError = err as { response?: { status?: number; data?: { message?: string | string[] } } };
+        const errorData = typedError.response?.data;
         const rawMsg = Array.isArray(errorData?.message) ? errorData.message[0] : errorData?.message;
+        const normalizedMessage = typeof rawMsg === 'string' ? rawMsg.toLowerCase() : '';
         let finalMsg = rawMsg;
-          if (rawMsg === 'Direct room must have exactly 2 members') {
-            finalMsg = translate('directChatMembersError');
-          }
+        if (
+          typedError.response?.status === 403 &&
+          (normalizedMessage.includes('stranger') || normalizedMessage.includes('người lạ') || normalizedMessage.includes('không nhận tin nhắn'))
+        ) {
+          finalMsg = translate('chatStrangerMessagesDisabled');
+        } else if (rawMsg === 'Direct room must have exactly 2 members') {
+          finalMsg = translate('directChatMembersError');
+        }
         toast.error(finalMsg || getErrorMessage(err, translate('openConversationFailed')));
       } finally {
         if (requestId === directChatRequestRef.current) setLoading(false);

@@ -2100,7 +2100,15 @@
     "joinTournamentToEarnElo": "Register for a tournament to start earning ELO!",
     "completedMatchesCount": "{count} matches completed",
     "referee": "Referee",
-    "courtLabel": "Court {court}"
+    "courtLabel": "Court {court}",
+    "stageMainBracket": "Main Bracket",
+    "stageElimination": "Elimination Stage",
+    "stageDoubleElimination": "Double Elimination",
+    "stageGroup": "Group Stage",
+    "stageKnockout": "Knockout Stage",
+    "stagePlayoff": "Playoff Stage",
+    "stageWinners": "Winners Bracket",
+    "stageLosers": "Losers Bracket"
   },
   "LivePenalty": {
     "title": "Penalty log",
@@ -7576,6 +7584,11 @@
     "noPlayers": "No players found.",
     "peakElo": "Peak Elo",
     "excluded": "Excluded",
+    "leaderboardEligible": "Eligible for leaderboard",
+    "needsMatch": "Needs 1 completed match",
+    "eligibleContexts": "Eligible profiles",
+    "ineligibleContexts": "Profiles awaiting first match",
+    "manualEloDoesNotQualify": "Manual Elo changes do not count as a match. This profile appears on the leaderboard only after at least 1 completed match and when it is not hidden or banned.",
     "updated": "Last updated",
     "tier": "Tier",
     "expiresAt": "Expires",

@@ -113,6 +113,8 @@ export interface AdminEloPlayerSummary {
   visibleContextCount: number;
   hiddenContextCount: number;
   bannedContextCount: number;
+  eligibleContextCount: number;
+  ineligibleContextCount: number;
   highestElo: number | null;
   lastUpdatedAt: string | null;
 }
@@ -138,6 +140,7 @@ export interface AdminEloPlayerContextDetail {
   tierName: string | null;
   status: AdminRankingStatus;
   statusExpiresAt: string | null;
+  leaderboardEligible: boolean;
   updatedAt: string;
 }
 

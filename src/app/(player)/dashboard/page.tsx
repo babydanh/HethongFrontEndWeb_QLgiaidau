@@ -547,9 +547,31 @@ export default function DashboardPage() {
 
                     <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
                       <span className="font-semibold text-slate-600 truncate max-w-[260px]">
-                        {upcomingMatch.group?.name
-                          ? `${upcomingMatch.group.name} • ${upcomingMatch.group.stage?.name || translate("roundFallback")}`
-                          : (upcomingMatch.stage?.type || upcomingMatch.group?.stage?.name || translate("roundFallback"))}
+                        {(() => {
+                          const localizeTerm = (text?: string | null): string => {
+                            if (!text) return '';
+                            const t = text.trim();
+                            if (/main\s*bracket/i.test(t)) return translate("stageMainBracket");
+                            if (/elimination\s*stage/i.test(t) || /elimination/i.test(t)) return translate("stageElimination");
+                            if (/double\s*elimination/i.test(t)) return translate("stageDoubleElimination");
+                            if (/group\s*stage/i.test(t) || /group/i.test(t)) return translate("stageGroup");
+                            if (/knockout/i.test(t)) return translate("stageKnockout");
+                            if (/playoff/i.test(t)) return translate("stagePlayoff");
+                            if (/winners/i.test(t)) return translate("stageWinners");
+                            if (/losers/i.test(t)) return translate("stageLosers");
+                            return t;
+                          };
+
+                          const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
+                          const stageName = upcomingMatch.group?.stage?.name 
+                            ? localizeTerm(upcomingMatch.group.stage.name)
+                            : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : (upcomingMatch.stage?.name ? localizeTerm(upcomingMatch.stage.name) : ''));
+
+                          if (groupName && stageName) {
+                            return `${groupName} • ${stageName}`;
+                          }
+                          return groupName || stageName || translate("roundFallback");
+                        })()}
                       </span>
                       <Link href={`/live/${upcomingMatch.id}`}>
                         <span className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700">

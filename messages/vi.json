@@ -2034,7 +2034,15 @@
     "joinTournamentToEarnElo": "Đăng ký tham gia giải đấu để bắt đầu tích lũy ELO!",
     "completedMatchesCount": "{count} trận đã xong",
     "referee": "Trọng tài",
-    "courtLabel": "Sân {court}"
+    "courtLabel": "Sân {court}",
+    "stageMainBracket": "Nhánh đấu chính",
+    "stageElimination": "Vòng loại trực tiếp",
+    "stageDoubleElimination": "Nhánh thắng - Nhánh thua",
+    "stageGroup": "Vòng bảng",
+    "stageKnockout": "Vòng loại trực tiếp",
+    "stagePlayoff": "Vòng Playoff",
+    "stageWinners": "Nhánh thắng",
+    "stageLosers": "Nhánh thua"
   },
   "LivePenalty": {
     "title": "Nhật ký hình phạt",
@@ -7569,6 +7577,11 @@
     "noPlayers": "Không tìm thấy người chơi.",
     "peakElo": "Elo đỉnh",
     "excluded": "Bị loại",
+    "leaderboardEligible": "Đủ điều kiện lên bảng xếp hạng",
+    "needsMatch": "Cần ít nhất 1 trận hoàn tất",
+    "eligibleContexts": "Hồ sơ đủ điều kiện",
+    "ineligibleContexts": "Hồ sơ chờ trận đầu tiên",
+    "manualEloDoesNotQualify": "Cộng hoặc chỉnh Elo thủ công không được tính là một trận đấu. Hồ sơ chỉ xuất hiện trên bảng xếp hạng khi đã có ít nhất 1 trận hoàn tất và không bị ẩn hoặc loại khỏi bảng.",
     "updated": "Cập nhật gần nhất",
     "tier": "Bậc Elo",
     "expiresAt": "Hết hạn",

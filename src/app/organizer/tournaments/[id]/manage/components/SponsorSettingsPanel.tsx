@@ -226,57 +226,52 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
 
     return (
       <aside
-        className={cn('rounded-lg border p-3', tierStyle.surfaceClassName)}
+        className={cn('rounded-2xl border p-2.5', tierStyle.surfaceClassName)}
         aria-label={translate('sponsors.previewTitle')}
       >
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div>
-            <p className={cn('text-xs font-black uppercase tracking-wide', tierStyle.accentClassName)}>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className={cn('truncate text-[10px] font-black uppercase tracking-[0.12em]', tierStyle.accentClassName)}>
               {translate('sponsors.previewTitle')}
             </p>
-            <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+            <p className="mt-0.5 truncate text-[9px] font-medium text-slate-500">
               {translate('sponsors.previewDescription')}
             </p>
           </div>
-          <span className={cn('shrink-0 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
+          <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
             {tierLabel}
           </span>
         </div>
 
-        <div className={cn('border border-t-4 bg-white p-4 shadow-sm', tierStyle.accentBorderClassName)}>
+        <div className={cn('rounded-xl border border-t-2 bg-white p-2.5 shadow-sm', tierStyle.accentBorderClassName)}>
           <div className="flex flex-col items-center text-center">
             <SponsorLogo
               logoUrl={draft.logoUrl}
               alt={displayName}
               initials={getInitials(displayName)}
-              className={cn('h-24 w-full max-w-[220px] border-b p-3', tierStyle.logoFrameClassName)}
+              className={cn('h-16 w-full max-w-[170px] rounded-lg border p-2', tierStyle.logoFrameClassName)}
               imageClassName="h-full w-full"
             />
-            <p className="mt-3 w-full truncate text-sm font-black text-slate-900">{displayName}</p>
-            <p className={cn('mt-1 text-[10px] font-black uppercase tracking-wide', tierStyle.accentClassName)}>
+            <p className="mt-2 w-full truncate text-xs font-black text-slate-900">{displayName}</p>
+            <span className={cn('mt-1 rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
               {tierLabel}
-            </p>
+            </span>
           </div>
 
           {draft.shortDescription.trim() ? (
-            <p className="mt-4 line-clamp-3 text-center text-xs font-medium leading-5 text-slate-500">
+            <p className="mt-2 line-clamp-2 text-center text-[10px] font-medium leading-4 text-slate-500">
               {draft.shortDescription.trim()}
             </p>
           ) : null}
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] font-bold">
-            <span className={isPubliclyReady ? 'text-emerald-600' : 'text-slate-400'}>
+          <div className="mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[9px] font-bold">
+            <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', isPubliclyReady ? 'bg-emerald-500' : 'bg-slate-300')} />
+            <span className={isPubliclyReady ? 'truncate text-emerald-600' : 'truncate text-slate-400'}>
               {isPubliclyReady
                 ? draft.advancedScheduling
                   ? translate('sponsors.previewScheduled')
                   : translate('sponsors.previewAlwaysVisible')
                 : translate('sponsors.previewNotPublic')}
             </span>
-            {draft.websiteUrl.trim() ? (
-              <span className="inline-flex items-center gap-1 text-blue-600">
-                <ExternalLink className="h-3 w-3" />
-                {translate('sponsors.preview')}
-              </span>
-            ) : null}
           </div>
         </div>
       </aside>

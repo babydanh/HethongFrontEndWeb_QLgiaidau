@@ -25,7 +25,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { getRegistrationModeUi } from '../../../registrationMode';
 import ShareModal from '@/components/common/ShareModal';
 import { socketClient } from '@/lib/socket';
-import { validateRegistrationResponses } from './RegistrationCustomFields';
+import RegistrationCustomFields, { validateRegistrationResponses } from './RegistrationCustomFields';
 import type { RegistrationField } from '@/features/tournaments/registration-form';
 
 interface Props {
@@ -34,6 +34,7 @@ interface Props {
   inviteCode?: string;
   divisionId?: string;
   customResponses?: Record<string, unknown>;
+  onCustomResponsesChange?: (updater: (current: Record<string, unknown>) => Record<string, unknown>) => void;
   registrationFields?: RegistrationField[];
 }
 
@@ -65,6 +66,7 @@ export default function DoublesRegistrationFlow({
   inviteCode,
   divisionId,
   customResponses,
+  onCustomResponsesChange,
   registrationFields,
 }: Props) {
   const router = useRouter();
@@ -616,6 +618,18 @@ export default function DoublesRegistrationFlow({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Thông tin đăng ký bổ sung (Custom Fields) */}
+            {registrationFields && registrationFields.length > 0 && (
+              <RegistrationCustomFields
+                tournamentId={tournamentId}
+                fields={registrationFields}
+                responses={customResponses || {}}
+                onChange={(fieldId, value) =>
+                  onCustomResponsesChange?.((current) => ({ ...current, [fieldId]: value }))
+                }
+              />
             )}
 
             {tournament?.isRanked && (

@@ -10,6 +10,9 @@ import { getErrorMessage } from '@/utils/error';
 import { Check, Loader2, Plus, ShieldCheck, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import RegistrationCustomFields, { validateRegistrationResponses } from './RegistrationCustomFields';
+import type { RegistrationField } from '@/features/tournaments/registration-form';
+
 interface Props {
   tournamentId: string;
   inviteCode?: string;
@@ -30,11 +33,13 @@ interface Props {
   rankingConsentCondition?: string;
   rankingConsentRequiredMessage?: string;
   customResponses?: Record<string, unknown>;
+  onCustomResponsesChange?: (updater: (current: Record<string, unknown>) => Record<string, unknown>) => void;
+  registrationFields?: RegistrationField[];
   onRegistrationChanged?: () => Promise<void> | void;
 }
 
 export default function TeamRegistrationFlow({
-  tournamentId, inviteCode, divisionId, categoryId, currentUserId, participantId, participantTeamId, rosterLockedAt, teamSize, maxTeamSize, maxReserve = 0, registrationMode, isRanked = false, rankingConsent = false, onRankingConsentChange, rankingConsentLabel, rankingConsentCondition, rankingConsentRequiredMessage, customResponses,
+  tournamentId, inviteCode, divisionId, categoryId, currentUserId, participantId, participantTeamId, rosterLockedAt, teamSize, maxTeamSize, maxReserve = 0, registrationMode, isRanked = false, rankingConsent = false, onRankingConsentChange, rankingConsentLabel, rankingConsentCondition, rankingConsentRequiredMessage, customResponses, onCustomResponsesChange, registrationFields,
   onRegistrationChanged,
 }: Props) {
   const router = useRouter();
@@ -116,6 +121,13 @@ export default function TeamRegistrationFlow({
     if (!team) return toast.error(translate('selectTeam'));
     if (!participantId && isRanked && !rankingConsent) {
       return toast.error(rankingConsentRequiredMessage || translate('selectTeam'));
+    }
+    if (!participantId && registrationFields && registrationFields.length > 0) {
+      const customValidationError = validateRegistrationResponses(registrationFields, customResponses || {});
+      if (customValidationError) {
+        toast.error(customValidationError);
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -211,6 +223,16 @@ export default function TeamRegistrationFlow({
             </div>
           )}
         </>
+      )}
+      {!participantId && registrationFields && registrationFields.length > 0 && (
+        <RegistrationCustomFields
+          tournamentId={tournamentId}
+          fields={registrationFields}
+          responses={customResponses || {}}
+          onChange={(fieldId, value) =>
+            onCustomResponsesChange?.((current) => ({ ...current, [fieldId]: value }))
+          }
+        />
       )}
       {!participantId && isRanked && rankingConsentLabel && (
         <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-sm text-slate-700">

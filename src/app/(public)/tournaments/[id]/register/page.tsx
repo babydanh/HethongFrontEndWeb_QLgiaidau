@@ -947,7 +947,6 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
               {selectedDivision ? (
                 <>
-                {!isRegistered && !isGenderMismatched && <RegistrationCustomFields tournamentId={id} fields={registrationFields} responses={customResponses} onChange={(fieldId, value) => setCustomResponses((current) => ({ ...current, [fieldId]: value }))} />}
                 {isGenderMismatched ? (
                   <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-3 animate-in fade-in duration-200">
                     <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
@@ -986,6 +985,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     rankingConsentCondition={registrationTranslate('rankedContentCondition')}
                     rankingConsentRequiredMessage={registrationTranslate('eloConsentRequired')}
                     customResponses={customResponses}
+                    onCustomResponsesChange={setCustomResponses}
+                    registrationFields={registrationFields}
                     onRegistrationChanged={() => fetchTournament()}
                   />
                 ) : isDoubles ? (
@@ -995,6 +996,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     inviteCode={inviteCode}
                     divisionId={selectedDivisionId || undefined}
                     customResponses={customResponses}
+                    onCustomResponsesChange={setCustomResponses}
                     registrationFields={registrationFields}
                   />
                 ) : isRegistered && participant ? (
@@ -1156,6 +1158,18 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         </div>
                         <input type="hidden" {...register('teamName')} value={user?.fullName || registrationTranslate('athleteFallback')} />
                       </div>
+
+                      {/* Thông tin đăng ký bổ sung (Custom Fields) */}
+                      {registrationFields && registrationFields.length > 0 && (
+                        <RegistrationCustomFields
+                          tournamentId={id}
+                          fields={registrationFields}
+                          responses={customResponses}
+                          onChange={(fieldId, value) =>
+                            setCustomResponses((current) => ({ ...current, [fieldId]: value }))
+                          }
+                        />
+                      )}
 
                       {/* Chi tiết lệ phí & xác nhận */}
                       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">

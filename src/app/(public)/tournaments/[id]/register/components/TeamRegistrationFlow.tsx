@@ -44,6 +44,7 @@ export default function TeamRegistrationFlow({
 }: Props) {
   const router = useRouter();
   const translate = useTranslations('TeamRegistration');
+  const registrationTranslate = useTranslations('TournamentRegistration');
   const [teams, setTeams] = useState<FootballTeam[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [newName, setNewName] = useState('');
@@ -123,7 +124,7 @@ export default function TeamRegistrationFlow({
       return toast.error(rankingConsentRequiredMessage || translate('selectTeam'));
     }
     if (!participantId && registrationFields && registrationFields.length > 0) {
-      const customValidationError = validateRegistrationResponses(registrationFields, customResponses || {});
+      const customValidationError = validateRegistrationResponses(registrationFields, customResponses || {}, registrationTranslate);
       if (customValidationError) {
         toast.error(customValidationError);
         return;

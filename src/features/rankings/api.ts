@@ -63,6 +63,7 @@ export interface AdminEloOperationResult {
   newElo: number | null;
   changedPoints: number | null;
   status: AdminRankingStatus;
+  leaderboardEligible: boolean;
 }
 
 export interface AdminEloOperationHistoryItem {
@@ -75,6 +76,8 @@ export interface AdminEloOperationHistoryItem {
   changedPoints: number | null;
   previousStatus: AdminRankingStatus | null;
   newStatus: AdminRankingStatus | null;
+  previousLeaderboardEligible: boolean | null;
+  newLeaderboardEligible: boolean | null;
   reason: string;
   expiresAt: string | null;
   adminUserId: string;
@@ -155,6 +158,8 @@ export interface AdminEloRecentOperation {
   changedPoints: number | null;
   previousStatus: AdminRankingStatus | null;
   newStatus: AdminRankingStatus | null;
+  previousLeaderboardEligible: boolean | null;
+  newLeaderboardEligible: boolean | null;
   reason: string;
   createdAt: string;
 }

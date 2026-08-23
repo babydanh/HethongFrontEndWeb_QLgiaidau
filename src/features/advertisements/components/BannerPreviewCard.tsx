@@ -45,7 +45,6 @@ type PreviewSample = {
   title: string;
   detail: string;
   cta: string;
-  tone: string;
 };
 
 const APP_SLOTS: AdPlacementSlot[] = [
@@ -70,7 +69,6 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
       title: translate('previewSamplePrimaryTitle'),
       detail: translate('previewSamplePrimaryDetail'),
       cta: translate('previewSamplePrimaryCta'),
-      tone: 'from-sky-500 via-blue-600 to-indigo-700',
     },
     {
       id: 'sample-community',
@@ -78,7 +76,6 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
       title: translate('previewSampleCommunityTitle'),
       detail: translate('previewSampleCommunityDetail'),
       cta: translate('previewSampleCommunityCta'),
-      tone: 'from-emerald-500 via-teal-600 to-cyan-700',
     },
     {
       id: 'sample-event',
@@ -86,7 +83,6 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
       title: translate('previewSampleEventTitle'),
       detail: translate('previewSampleEventDetail'),
       cta: translate('previewSampleEventCta'),
-      tone: 'from-orange-500 via-rose-600 to-fuchsia-700',
     },
   ];
   const isApp = APP_SLOTS.includes(placementSlot);
@@ -198,21 +194,21 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   };
 
   const renderSampleBanner = (sample: PreviewSample, compact = false) => (
-    <div className={`relative w-full ${getAspectClass(compact)} overflow-hidden rounded-xl bg-gradient-to-br ${sample.tone} ${compact ? 'p-2' : 'p-3'} text-white shadow-sm`}>
-      <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full border-[12px] border-white/10" />
-      <div className="absolute -bottom-12 -left-8 h-28 w-28 rounded-full border-[12px] border-white/10" />
-      <div className="relative flex h-full flex-col justify-between">
+    <div className={`relative w-full ${getAspectClass(compact)} overflow-hidden rounded-xl border border-slate-200 bg-slate-100 ${compact ? 'p-2' : 'p-3'}`}>
+      <div className="absolute inset-0 bg-slate-200" />
+      <ImageIcon className="absolute right-4 top-1/2 h-8 w-8 -translate-y-1/2 text-slate-300" />
+      <div className="relative flex h-full flex-col justify-between text-slate-800">
         <div className="flex items-center justify-between gap-2">
-          <span className="rounded bg-white/20 px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider text-white/90">
+          <span className="rounded border border-slate-300 bg-white/85 px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider text-slate-500">
             {translate('previewSampleBadge')}
           </span>
-          <span className="text-[8px] font-semibold text-white/70">SportO</span>
+          <span className="text-[8px] font-semibold text-slate-500">SportO</span>
         </div>
         <div className="max-w-[78%]">
-          <p className="text-[7.5px] font-semibold uppercase tracking-[0.16em] text-white/70">{sample.kicker}</p>
-          <p className={`mt-0.5 font-black leading-tight tracking-tight text-white ${compact ? 'text-[10px]' : 'text-[13px]'}`}>{sample.title}</p>
-          <p className={`mt-1 leading-tight text-white/80 ${compact ? 'line-clamp-1 text-[7px]' : 'line-clamp-2 text-[8.5px]'}`}>{sample.detail}</p>
-          <span className={`inline-flex rounded-md bg-white px-2 font-bold text-slate-800 shadow-sm ${compact ? 'mt-1 py-0.5 text-[7px]' : 'mt-2 py-1 text-[8px]'}`}>{sample.cta}</span>
+          <p className="text-[7.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">{sample.kicker}</p>
+          <p className={`mt-0.5 font-black leading-tight tracking-tight text-slate-900 ${compact ? 'text-[10px]' : 'text-[13px]'}`}>{sample.title}</p>
+          <p className={`mt-1 leading-tight text-slate-600 ${compact ? 'line-clamp-1 text-[7px]' : 'line-clamp-2 text-[8.5px]'}`}>{sample.detail}</p>
+          <span className={`inline-flex rounded-md bg-slate-800 px-2 font-bold text-white ${compact ? 'mt-1 py-0.5 text-[7px]' : 'mt-2 py-1 text-[8px]'}`}>{sample.cta}</span>
         </div>
       </div>
     </div>
@@ -332,11 +328,11 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
 
   const renderTournamentCard = () => (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
-      <div className="relative h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 px-3 py-1.5 text-white">
-        <span className="rounded bg-white/90 px-1 py-0.5 text-[7.5px] font-extrabold uppercase text-blue-700">
+      <div className="relative h-12 bg-slate-200 px-3 py-1.5 text-slate-600">
+        <span className="rounded border border-slate-300 bg-white/90 px-1 py-0.5 text-[7.5px] font-extrabold uppercase text-slate-600">
           {translate('previewFeatured')}
         </span>
-        <Trophy className="absolute bottom-1.5 right-2.5 h-6 w-6 text-white/50" />
+        <Trophy className="absolute bottom-1.5 right-2.5 h-6 w-6 text-slate-400" />
       </div>
       <div className="space-y-1 p-2.5">
         <p className="truncate text-[10px] font-bold text-slate-800">{translate('previewTournamentTitle')}</p>
@@ -412,14 +408,14 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
             </div>
 
             {/* Mobile App Bar */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-2.5 text-white">
+            <div className="border-b border-slate-200 bg-white px-3.5 py-2.5 text-slate-900">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[8px] font-semibold text-blue-100">{translate('previewGreeting')}</p>
+                  <p className="text-[8px] font-semibold text-slate-500">{translate('previewGreeting')}</p>
                   <p className="text-[11px] font-black tracking-tight">{translate('previewDiscover')}</p>
                 </div>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
-                  <Bell className="h-3 w-3 text-white" />
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
+                  <Bell className="h-3 w-3 text-slate-500" />
                 </span>
               </div>
             </div>
@@ -427,8 +423,8 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
             {/* App Body Content */}
             <div className="space-y-2.5 p-3">
               {isAppDetail && (
-                <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 p-2.5 text-white">
-                  <p className="text-[7.5px] uppercase tracking-wider text-white/70">
+                <div className="rounded-xl border border-slate-200 bg-slate-100 p-2.5 text-slate-800">
+                  <p className="text-[7.5px] uppercase tracking-wider text-slate-500">
                     {translate('previewTournamentLabel')}
                   </p>
                   <p className="mt-0.5 text-[10px] font-bold">{translate('previewTournamentTitle')}</p>
@@ -478,7 +474,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
     }
 
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-md">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {renderBrowserBar()}
         {renderWebHeader()}
 
@@ -625,18 +621,18 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
         </div>
       </div>
 
-      <div className="space-y-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2.5">
+      <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold text-blue-900">{translate('previewSampleTitle')}</p>
-            <p className="text-[8.5px] text-blue-700/80">{translate('previewSampleHelp')}</p>
+            <p className="text-[10px] font-bold text-slate-800">{translate('previewSampleTitle')}</p>
+            <p className="text-[8.5px] text-slate-500">{translate('previewSampleHelp')}</p>
           </div>
           <button
             type="button"
             aria-pressed={showSamples}
             aria-label={showSamples ? translate('previewHideSamples') : translate('previewShowSamples')}
             onClick={() => setShowSamples((visible) => !visible)}
-            className="inline-flex h-7 items-center gap-1 rounded-lg border border-blue-200 bg-white px-2 text-[9px] font-bold text-blue-700 shadow-2xs hover:bg-blue-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[9px] font-bold text-slate-700 shadow-2xs hover:bg-slate-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-500"
           >
             {showSamples ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             {showSamples ? translate('previewHideSamples') : translate('previewShowSamples')}
@@ -655,7 +651,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
                     setSampleCount(count);
                     setSampleIndex(0);
                   }}
-                  className={`h-6 min-w-6 rounded-md px-1.5 text-[9px] font-bold ${sampleCount === count ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  className={`h-6 min-w-6 rounded-md px-1.5 text-[9px] font-bold ${sampleCount === count ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
                 >
                   {count}
                 </button>
@@ -667,7 +663,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
               type="button"
               aria-pressed={sampleLayout === 'slide'}
               onClick={() => setSampleLayout('slide')}
-              className={`rounded-md px-2 py-1 text-[9px] font-bold ${sampleLayout === 'slide' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`rounded-md px-2 py-1 text-[9px] font-bold ${sampleLayout === 'slide' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
             >
               {translate('previewSlideMode')}
             </button>
@@ -675,7 +671,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
               type="button"
               aria-pressed={sampleLayout === 'stack'}
               onClick={() => setSampleLayout('stack')}
-              className={`rounded-md px-2 py-1 text-[9px] font-bold ${sampleLayout === 'stack' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`rounded-md px-2 py-1 text-[9px] font-bold ${sampleLayout === 'stack' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
             >
               {translate('previewStackMode')}
             </button>
@@ -688,7 +684,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
         {previewMode === 'page' ? (
           renderPageMockup()
         ) : (
-          <div className="flex justify-center rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-2xs">
+          <div className="flex justify-center rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
             {renderPreviewSamples()}
           </div>
         )}

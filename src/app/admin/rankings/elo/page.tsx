@@ -151,14 +151,22 @@ export default function AdminEloPage() {
   const requestSequence = useRef(0);
   const historyRequestSequence = useRef(0);
   const canManage = currentUser?.roles?.includes('ADMIN') === true;
-  const activeCategories = useMemo(() => categories.filter((category) => category.isActive), [categories]);
+  const activeCategories = useMemo(() => (Array.isArray(categories) ? categories.filter((category) => category?.isActive) : []), [categories]);
   const selectedCategory = useMemo(
     () => activeCategories.find((category) => category.id === query.categoryId) ?? null,
     [activeCategories, query.categoryId],
   );
-  const playerGroups = players;
+  const playerGroups = Array.isArray(players) ? players : [];
 
   const loadContexts = useCallback(async ({ nextQuery, cursor = null, append = false }: { nextQuery: FilterState; cursor?: string | null; append?: boolean }) => {
+    if (!nextQuery.categoryId) {
+      setPlayers([]);
+      setLoading(false);
+      setLoadingMore(false);
+      setNextCursor(null);
+      setHasMore(false);
+      return;
+    }
     const requestId = ++requestSequence.current;
     if (append) setLoadingMore(true);
     else {
@@ -179,12 +187,16 @@ export default function AdminEloPage() {
         cursor: cursor || undefined,
       });
       if (requestId !== requestSequence.current) return;
-      const page = result.data;
-      setPlayers((current) => append
-        ? [...current, ...page.data.filter((item) => !current.some((existing) => existing.userId === item.userId))]
-        : page.data);
-      setNextCursor(page.meta.nextCursor);
-      setHasMore(page.meta.hasMore);
+      const page = result?.data;
+      const incomingList = Array.isArray(page?.data) ? page.data : Array.isArray(page) ? page : [];
+      setPlayers((current) => {
+        const currentList = Array.isArray(current) ? current : [];
+        return append
+          ? [...currentList, ...incomingList.filter((item) => !currentList.some((existing) => existing?.userId === item?.userId))]
+          : incomingList;
+      });
+      setNextCursor(page?.meta?.nextCursor ?? null);
+      setHasMore(Boolean(page?.meta?.hasMore));
     } catch (error: unknown) {
       if (requestId === requestSequence.current) toast.error(getErrorMessage(error, translate('loadFailed')));
     } finally {
@@ -200,7 +212,8 @@ export default function AdminEloPage() {
     const timer = window.setTimeout(() => {
       void categoriesApi.getCategories().then((result) => {
         if (cancelled) return;
-        const active = result.data.filter((category) => category.isActive);
+        const rawCategories = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+        const active = rawCategories.filter((category) => category?.isActive);
         setCategories(active);
         const nextQuery = active[0] ? { ...INITIAL_QUERY, categoryId: active[0].id } : INITIAL_QUERY;
         setCategoryId(nextQuery.categoryId);
@@ -421,7 +434,7 @@ export default function AdminEloPage() {
               <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('excluded')}</div><strong className="text-lg text-red-700">{selectedPlayer.hiddenContextCount + selectedPlayer.bannedContextCount}</strong></div>
             </div>
             <div className="space-y-3">
-              {playerDetail.contexts.map((context) => (
+              {(Array.isArray(playerDetail.contexts) ? playerDetail.contexts : []).map((context) => (
                 <article key={context.contextId} className="rounded-xl border border-slate-200 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div><h3 className="font-semibold text-slate-900">{context.scope === 'PUBLIC' ? translate('publicScope') : translate('communityScope')} · {translate(getMatchTypeLabelKey(context.matchType))}</h3><p className="text-xs text-slate-500">{context.genderRestriction || translate('allGenders')}{context.communityId ? ` · ${translate('communityId')}: ${context.communityId}` : ''}</p></div>
@@ -432,7 +445,7 @@ export default function AdminEloPage() {
                 </article>
               ))}
             </div>
-            {playerDetail.recentOperations.length > 0 && <div><h3 className="mb-2 font-semibold text-slate-900">{translate('recentOperations')}</h3><div className="space-y-2">{playerDetail.recentOperations.slice(0, 5).map((item) => <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm"><div className="flex justify-between gap-2"><strong>{translate(getOperationLabelKey(item.operation))}</strong><time className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString(locale)}</time></div><p className="mt-1 text-slate-600">{item.reason}</p></div>)}</div></div>}
+            {Array.isArray(playerDetail.recentOperations) && playerDetail.recentOperations.length > 0 && <div><h3 className="mb-2 font-semibold text-slate-900">{translate('recentOperations')}</h3><div className="space-y-2">{playerDetail.recentOperations.slice(0, 5).map((item) => <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm"><div className="flex justify-between gap-2"><strong>{translate(getOperationLabelKey(item.operation))}</strong><time className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString(locale)}</time></div><p className="mt-1 text-slate-600">{item.reason}</p></div>)}</div></div>}
             </>}
           </div>}
         </ModalContent>

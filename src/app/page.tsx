@@ -1156,7 +1156,7 @@ export default function HomePage() {
           {/* Section 1: Giải đấu nổi bật */}
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end relative z-[30]">
-              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h2>
+              <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h1>
               <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 relative z-[31]">
                 {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -1546,53 +1546,6 @@ export default function HomePage() {
               </div>
             </section>
           )}
-
-            {/* SEO Content Section (Rich text & semantic H1 for Search Engine Bots & Visitors) */}
-            <section className="bg-white rounded-2xl border border-slate-200/80 p-6 md:p-8 shadow-xs">
-              <div className="mb-4">
-                <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                  {translate('seoH1')}
-                </h1>
-                <h2 className="text-xs md:text-sm font-medium text-slate-500 mt-1">
-                  {translate('seoIntroTitle')}
-                </h2>
-              </div>
-              <div className="space-y-2.5 text-slate-600 text-xs md:text-sm leading-relaxed">
-                <p>
-                  {translate('seoIntroP1')}
-                </p>
-                <p>
-                  {translate('seoIntroP2')}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-6 pt-6 border-t border-slate-100">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1.5">
-                    {translate('seoFeature1Title')}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    {translate('seoFeature1Desc')}
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1.5">
-                    {translate('seoFeature2Title')}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    {translate('seoFeature2Desc')}
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1.5">
-                    {translate('seoFeature3Title')}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    {translate('seoFeature3Desc')}
-                  </p>
-                </div>
-              </div>
-            </section>
 
           </div>
 

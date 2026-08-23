@@ -24,6 +24,7 @@ import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
 import FootballTeamEloCard from '@/components/dashboard/FootballTeamEloCard';
 import RoleSummaryCard from '@/components/dashboard/RoleSummaryCard';
 import TournamentListSection, { AvatarCircle } from '@/components/dashboard/TournamentListSection';
+import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -459,46 +460,99 @@ export default function DashboardPage() {
                 </section>
               )}
 
-              {/* Next Upcoming Match Hero Card */}
-              <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm overflow-hidden">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
-                  <Clock3 className="w-4 h-4 text-blue-600" /> {translate("nextMatchTitle")}
-                </h2>
+              {/* Next Upcoming Match Hero Card (Light & clean design with full tournament & participant details) */}
+              <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Clock3 className="w-4 h-4 text-blue-600" /> {translate("nextMatchTitle")}
+                  </h2>
+                  {upcomingMatch?.tournament?.name && (
+                    <Link
+                      href={`/tournaments/${upcomingMatch.tournament.id || upcomingMatch.tournamentId}`}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 truncate max-w-[220px] flex items-center gap-1.5"
+                    >
+                      <AvatarCircle
+                        src={upcomingMatch.tournament.logoUrl || upcomingMatch.tournament.bannerUrl}
+                        name={upcomingMatch.tournament.name}
+                        size={22}
+                      />
+                      <span className="truncate">{upcomingMatch.tournament.name}</span>
+                    </Link>
+                  )}
+                </div>
+
                 {isLoading ? (
-                  <div className="flex justify-center py-6">
+                  <div className="flex justify-center py-8">
                     <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                   </div>
                 ) : upcomingMatch ? (
-                  <div className="bg-slate-900 rounded-lg p-5 text-white relative overflow-hidden">
-                    <div className="flex items-center justify-between gap-2 mb-4">
-                      <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider">
-                        {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
-                      </span>
-                      <span className="text-xs text-slate-300 truncate max-w-[200px]">
-                        {upcomingMatch.tournament?.name || translate("tournament")}
-                      </span>
+                  <div className="bg-slate-50/80 rounded-xl border border-slate-200/80 p-5 relative overflow-hidden transition-all hover:border-slate-300">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200/70">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider",
+                          upcomingMatch.status === 'ONGOING'
+                            ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
+                            : "bg-blue-50 text-blue-600 border border-blue-200"
+                        )}>
+                          {upcomingMatch.status === 'ONGOING' && <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />}
+                          {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">
+                          {translate("roundAndMatch", {
+                            round: upcomingMatch.roundNumber ?? 1,
+                            match: upcomingMatch.matchOrder ?? 1,
+                          })}
+                        </span>
+                      </div>
+
+                      {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName || upcomingMatch.scheduledAt) && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                          {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName) && (
+                            <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                              {upcomingMatch.courtName || upcomingMatch.tournament?.venueName}
+                            </span>
+                          )}
+                          {upcomingMatch.scheduledAt && (
+                            <span>
+                              {formatDate(upcomingMatch.scheduledAt, locale, true, translate("notUpdated"))}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-2">
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-white line-clamp-1">
-                          {upcomingMatch.participant1?.teamName || translate("you")}
-                        </p>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
+                      <div className="flex items-center justify-start min-w-0">
+                        <ParticipantIdentity
+                          participant={upcomingMatch.participant1}
+                          fallback={translate("you")}
+                        />
                       </div>
-                      <div className="text-sm font-black text-slate-500 italic">VS</div>
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-white line-clamp-1">
-                          {upcomingMatch.participant2?.teamName || translate("opponent")}
-                        </p>
+
+                      <div className="flex flex-col items-center justify-center px-2">
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
+                          VS
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-end min-w-0">
+                        <ParticipantIdentity
+                          participant={upcomingMatch.participant2}
+                          fallback={translate("opponent")}
+                          align="right"
+                        />
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                      <span>
-                        {translate("roundLabel", { name: upcomingMatch.group?.stage?.name || upcomingMatch.group?.name || translate("roundFallback") })}
+                    <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
+                      <span className="font-semibold text-slate-600 truncate max-w-[260px]">
+                        {upcomingMatch.group?.name
+                          ? `${upcomingMatch.group.name} • ${upcomingMatch.group.stage?.name || translate("roundFallback")}`
+                          : (upcomingMatch.stage?.type || upcomingMatch.group?.stage?.name || translate("roundFallback"))}
                       </span>
                       <Link href={`/live/${upcomingMatch.id}`}>
-                        <span className="inline-flex items-center gap-1 font-bold text-blue-400 hover:text-blue-300">
+                        <span className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700">
                           {translate("viewScore")} <ChevronRight className="w-3.5 h-3.5" />
                         </span>
                       </Link>

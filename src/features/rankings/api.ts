@@ -102,6 +102,67 @@ export interface ApiEnvelope<T> {
   meta?: Record<string, unknown>;
 }
 
+export interface AdminEloPlayerSummary {
+  userId: string;
+  email: string;
+  fullName: string;
+  avatarUrl: string | null;
+  contextCount: number;
+  publicContextCount: number;
+  communityContextCount: number;
+  visibleContextCount: number;
+  hiddenContextCount: number;
+  bannedContextCount: number;
+  highestElo: number | null;
+  lastUpdatedAt: string | null;
+}
+
+export interface AdminEloPlayerPage {
+  data: AdminEloPlayerSummary[];
+  meta: { limit: number; hasMore: boolean; nextCursor: string | null };
+}
+
+export interface AdminEloPlayerContextDetail {
+  contextId: string;
+  scope: AdminRankingScope;
+  communityId: string | null;
+  communityName: string | null;
+  categoryId: string;
+  matchType: string;
+  genderRestriction: string | null;
+  eloPoints: number;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak: number;
+  peakElo: number;
+  tierName: string | null;
+  status: AdminRankingStatus;
+  statusExpiresAt: string | null;
+  updatedAt: string;
+}
+
+export interface AdminEloRecentOperation {
+  id: string;
+  operation: AdminEloOperation;
+  scope: AdminRankingScope;
+  communityId: string | null;
+  matchType: string;
+  previousElo: number | null;
+  newElo: number | null;
+  changedPoints: number | null;
+  previousStatus: AdminRankingStatus | null;
+  newStatus: AdminRankingStatus | null;
+  reason: string;
+  createdAt: string;
+}
+
+export interface AdminEloPlayerDetail {
+  user: { id: string; email: string; fullName: string; avatarUrl: string | null };
+  category: { id: string; name: string; slug: string };
+  contexts: AdminEloPlayerContextDetail[];
+  recentOperations: AdminEloRecentOperation[];
+}
+
 export interface AdminRankingContextPage {
   data: AdminRankingContext[];
   meta: { limit: number; hasMore: boolean; nextCursor: string | null };
@@ -128,6 +189,10 @@ export const rankingsApi = {
     api.get<{ data: FootballTeamRanking[]; meta: { nextCursor?: string | null; hasMore?: boolean } }>('/rankings/football-teams', { params }),
   listAdminContexts: (params: AdminRankingContextQuery = {}) =>
     api.get<ApiEnvelope<AdminRankingContextPage>>('/rankings/admin/contexts', { params }),
+  listAdminPlayers: (params: { limit?: number; categoryId: string; search?: string; scope?: AdminRankingScope; communityId?: string; matchType?: string; status?: AdminRankingStatus; cursor?: string | null }) =>
+    api.get<ApiEnvelope<AdminEloPlayerPage>>('/rankings/admin/players', { params }),
+  getAdminPlayerDetail: (userId: string, categoryId: string) =>
+    api.get<ApiEnvelope<AdminEloPlayerDetail>>(`/rankings/admin/players/${userId}/detail`, { params: { categoryId } }),
   applyAdminOperation: (payload: AdminEloOperationPayload) =>
     api.post<ApiEnvelope<AdminEloOperationResult>>('/rankings/admin/operations', payload),
   getAdminHistory: (contextId: string, limit = 50, cursor?: string | null) =>

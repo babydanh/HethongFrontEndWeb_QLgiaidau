@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import {
   advertisementsApi,
   type AdPlacementSlot,
@@ -9,166 +11,326 @@ import {
 } from '@/features/advertisements/api';
 
 export interface AdBannerProps {
-  /**
-   * Vị trí hiển thị (Component tự động gọi API lấy banner đang active từ Backend)
-   */
   slot?: AdPlacementSlot;
-
-  /**
-   * Kiểu hiển thị banner:
-   * - 'sidebar': Cột bên phải (Trang chủ, chi tiết trận đấu) - Tỷ lệ 4:3 / 300x250
-   * - 'horizontal': Ngang rộng đặt dưới phân trang (Tournaments, Matches) - Tỷ lệ Leaderboard 728x90 ~ 970x250
-   * - 'inline': Chèn xen kẽ giữa các card trong danh sách
-   */
+  /** Category context for sport-targeted banners; omitted means global-only. */
+  categoryId?: string;
   variant?: 'sidebar' | 'horizontal' | 'inline';
-
-  /** URL ảnh banner tràn viền (Trường hợp truyền trực tiếp không qua slot) */
   imageUrl?: string;
-
-  /** Đường dẫn khi click vào banner (Trường hợp truyền trực tiếp không qua slot) */
   href?: string;
-
-  /** Tiêu đề / alt ảnh */
   title?: string;
-
-  /** Tên nhà tài trợ (Tùy chọn) */
   sponsor?: string;
-
-  /** Mô tả ngắn (Tùy chọn) */
   description?: string;
-
-  /** Chữ trên nút CTA (Tùy chọn) */
   ctaText?: string;
-
-  /** Nhãn phân loại (mặc định: "QC") */
   badgeLabel?: string;
-
-  /** Class CSS tùy biến thêm */
   className?: string;
-
-  /** Mã nhúng HTML / Script quảng cáo bên thứ 3 (Google AdSense, Ad Network) */
   customHtml?: string;
-
-  /** Callback khi người dùng click (để đo lường analytics) */
   onClick?: () => void;
 }
 
+const ROTATION_INTERVAL_MS = 6000;
+const ACTIVE_BANNERS_REFRESH_INTERVAL_MS = 60000;
+
 export function AdBannerCard({
   slot,
+  categoryId,
   variant = 'sidebar',
-  title = 'Quảng cáo',
-  href: staticHref = '#',
+  title,
+  href: staticHref,
   imageUrl: staticImageUrl,
-  badgeLabel = 'QC',
+  badgeLabel,
   className = '',
   customHtml: staticCustomHtml,
   onClick,
 }: AdBannerProps) {
-  const [activeBanner, setActiveBanner] = useState<Advertisement | null>(null);
-  const [hasLoaded, setHasLoaded] = useState<boolean>(!slot); // Nếu không có slot thì coi như đã load
+  const translate = useTranslations('Advertisements');
+  const resolvedTitle = title || translate('defaultTitle');
+  const resolvedBadgeLabel = badgeLabel || translate('badge');
+  const [banners, setBanners] = useState<Advertisement[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState<boolean>(!slot);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
+  const viewedBannerIds = useRef(new Set<string>());
+  const activeBannerId = useRef<string | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- synchronize remote banner data with display state */
   useEffect(() => {
     if (!slot) {
       setHasLoaded(true);
       return;
     }
+
     let isMounted = true;
-    advertisementsApi
-      .getActiveBySlot(slot)
-      .then((banners) => {
-        if (isMounted) {
-          if (banners && banners.length > 0) {
-            const topBanner = banners[0];
-            setActiveBanner(topBanner);
-            // Ghi nhận 1 lượt view
-            advertisementsApi.recordView(topBanner.id);
-          } else {
-            setActiveBanner(null);
-          }
-          setHasLoaded(true);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setActiveBanner(null);
-          setHasLoaded(true);
-        }
-      });
+    let refreshTimer: number | undefined;
+    viewedBannerIds.current.clear();
+    activeBannerId.current = null;
+    setHasLoaded(false);
+    setBanners([]);
+    setActiveIndex(0);
+
+    const loadBanners = async (isInitialLoad: boolean) => {
+      try {
+        const items = await advertisementsApi.getActiveBySlot(slot, categoryId);
+        if (!isMounted) return;
+        const nextBanners = Array.isArray(items) ? items : [];
+        setBanners(nextBanners);
+        setActiveIndex((currentIndex) => {
+          if (isInitialLoad || nextBanners.length === 0) return 0;
+          const preservedIndex = activeBannerId.current
+            ? nextBanners.findIndex((banner) => banner.id === activeBannerId.current)
+            : -1;
+          return preservedIndex >= 0
+            ? preservedIndex
+            : Math.min(currentIndex, nextBanners.length - 1);
+        });
+        if (isInitialLoad) setHasLoaded(true);
+      } catch {
+        if (!isMounted || !isInitialLoad) return;
+        setBanners([]);
+        setActiveIndex(0);
+        setHasLoaded(true);
+      }
+    };
+
+    const scheduleRefresh = () => {
+      if (!isMounted) return;
+      refreshTimer = window.setTimeout(async () => {
+        if (!document.hidden) await loadBanners(false);
+        scheduleRefresh();
+      }, ACTIVE_BANNERS_REFRESH_INTERVAL_MS);
+    };
+
+    void loadBanners(true).finally(scheduleRefresh);
+
     return () => {
       isMounted = false;
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
     };
-  }, [slot]);
+  }, [slot, categoryId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  // NGUYÊN TẮC: Có banner thì hiện, không có thì TẮT HOÀN TOÀN (return null)
-  if (slot) {
-    if (!hasLoaded || !activeBanner) {
-      return null;
-    }
+  const activeBanner = slot ? banners[activeIndex] || null : null;
+  useEffect(() => {
+    activeBannerId.current = activeBanner?.id || null;
+  }, [activeBanner]);
+
+  const hasCarousel = Boolean(slot && activeBanner && banners.length > 1);
+  const isRotationPaused = isPaused || (isHovering && hoverPaused) || focusPaused;
+  const isHorizontal = variant === 'horizontal';
+  const aspectRatioClass = isHorizontal
+    ? 'aspect-[3.5/1] sm:aspect-[4.5/1] md:aspect-[5.5/1]'
+    : 'aspect-[4/3]';
+
+  useEffect(() => {
+    if (!hasCarousel || isRotationPaused) return;
+    const timer = window.setInterval(() => {
+      if (document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      setActiveIndex((current) => (current + 1) % banners.length);
+    }, ROTATION_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [banners.length, hasCarousel, isRotationPaused]);
+
+  useEffect(() => {
+    if (!activeBanner || viewedBannerIds.current.has(activeBanner.id)) return;
+    viewedBannerIds.current.add(activeBanner.id);
+    void advertisementsApi.recordView(activeBanner.id);
+  }, [activeBanner]);
+
+  if (slot && (!hasLoaded || !activeBanner)) {
+    return null;
   }
 
-  const href = activeBanner ? (activeBanner.targetUrl || '#') : staticHref;
-  const imageUrl = activeBanner ? (activeBanner.imageUrl || undefined) : staticImageUrl;
-  const customHtml = activeBanner?.bannerType === 'CUSTOM_HTML' ? activeBanner.customHtml : staticCustomHtml;
-  const isExternal = href.startsWith('http://') || href.startsWith('https://');
-
-  const handleClick = () => {
-    if (activeBanner) {
-      advertisementsApi.recordClick(activeBanner.id);
-    }
+  const handleClick = (banner?: Advertisement) => {
+    if (banner) void advertisementsApi.recordClick(banner.id);
     onClick?.();
   };
 
-  // 1. Mã nhúng HTML / Script Google AdSense
-  if (customHtml) {
-    return (
-      <div
-        className={`w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xs ${className}`}
-        dangerouslySetInnerHTML={{ __html: customHtml }}
-      />
-    );
-  }
+  const renderBannerContent = (
+    banner: Advertisement | null,
+    options?: { isStatic?: boolean; fillTrack?: boolean },
+  ) => {
+    const isStatic = options?.isStatic ?? false;
+    const fillTrack = options?.fillTrack ?? false;
+    const contentClassName = fillTrack ? '' : className;
+    const currentImageUrl = banner ? banner.imageUrl || undefined : staticImageUrl;
+    const currentCustomHtml = banner?.bannerType === 'CUSTOM_HTML'
+      ? banner.customHtml
+      : isStatic
+        ? staticCustomHtml
+        : undefined;
+    const currentHref = banner ? banner.targetUrl?.trim() || undefined : staticHref?.trim() || undefined;
+    const isExternal = Boolean(currentHref && (currentHref.startsWith('http://') || currentHref.startsWith('https://')));
 
-  // 2. Banner Ảnh Tràn Viền (Full-Bleed Image Banner - Click chuyển route)
-  if (imageUrl) {
-    const isHorizontal = variant === 'horizontal';
-    const aspectRatioClass = isHorizontal
-      ? 'aspect-[3.5/1] sm:aspect-[4.5/1] md:aspect-[5.5/1]'
-      : 'aspect-[4/3]';
+    if (currentCustomHtml) {
+      return (
+        <div
+          onClick={() => handleClick(banner || undefined)}
+          className={`w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xs ${fillTrack ? 'h-full' : ''} ${contentClassName}`}
+          dangerouslySetInnerHTML={{ __html: currentCustomHtml }}
+        />
+      );
+    }
 
-    const fullBleedContent = (
+    if (!currentImageUrl) return null;
+
+    const content = (
       <div
-        onClick={handleClick}
-        className={`group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-300 cursor-pointer ${aspectRatioClass} ${className}`}
+        onClick={currentHref ? () => handleClick(banner || undefined) : undefined}
+        className={`group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-xs transition-all duration-300 hover:border-slate-300 hover:shadow-md ${fillTrack ? 'h-full' : aspectRatioClass} ${contentClassName}`}
       >
         <img
-          src={imageUrl}
-          alt={activeBanner?.title || title || 'Quảng cáo'}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
+          src={currentImageUrl}
+          alt={banner?.title || resolvedTitle}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102 motion-reduce:transform-none"
         />
-        {/* Nhãn QC nhỏ gọn ở góc */}
-        <span className="absolute top-2.5 right-2.5 rounded bg-black/45 backdrop-blur-xs px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/90 select-none border border-white/10 shadow-xs">
-          {badgeLabel}
+        <span className="absolute right-2.5 top-2.5 select-none rounded border border-white/10 bg-black/45 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/90 shadow-xs backdrop-blur-xs">
+          {resolvedBadgeLabel}
         </span>
       </div>
     );
 
+    if (!currentHref) return content;
+
     return isExternal ? (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer sponsored"
-        className="block w-full focus:outline-hidden"
-      >
-        {fullBleedContent}
+      <a href={currentHref} target="_blank" rel="noopener noreferrer sponsored" className="block h-full w-full focus:outline-hidden">
+        {content}
       </a>
     ) : (
-      <Link href={href} className="block w-full focus:outline-hidden">
-        {fullBleedContent}
+      <Link href={currentHref} className="block h-full w-full focus:outline-hidden">
+        {content}
       </Link>
     );
+  };
+
+  const move = (direction: 'previous' | 'next') => {
+    setActiveIndex((current) => {
+      if (direction === 'previous') return (current - 1 + banners.length) % banners.length;
+      return (current + 1) % banners.length;
+    });
+  };
+
+  if (!slot) {
+    return renderBannerContent(null, { isStatic: true });
   }
 
-  return null;
+  return (
+    <div
+      role={hasCarousel ? 'region' : undefined}
+      aria-roledescription={hasCarousel ? 'carousel' : undefined}
+      aria-label={hasCarousel ? translate('carouselLabel') : undefined}
+      onMouseEnter={() => {
+        setIsHovering(true);
+        setHoverPaused(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovering(false);
+        setHoverPaused(false);
+      }}
+      onFocus={() => {
+        if (hasCarousel) setFocusPaused(true);
+      }}
+      onKeyDown={(event) => {
+        if (!hasCarousel) return;
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          move('previous');
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          move('next');
+        }
+      }}
+      className={`relative w-full rounded-2xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className}`}
+    >
+      {hasCarousel && (
+        <button
+          type="button"
+          aria-label={isRotationPaused ? translate('play') : translate('pause')}
+          onClick={() => {
+            if (isRotationPaused) {
+              setIsPaused(false);
+              setHoverPaused(false);
+              setFocusPaused(false);
+            } else {
+              setIsPaused(true);
+            }
+          }}
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-slate-900/55 text-white shadow-md backdrop-blur-sm transition hover:bg-slate-900/80 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+        >
+          {isRotationPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+        </button>
+      )}
+      <div className={`w-full overflow-hidden rounded-2xl ${aspectRatioClass}`}>
+        <div
+          className="flex h-full w-full transition-transform duration-300 ease-[cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none"
+          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        >
+          {banners.map((banner, index) => (
+            <div
+              key={banner.id}
+              role={hasCarousel ? 'group' : undefined}
+              aria-roledescription={hasCarousel ? translate('slideRole') : undefined}
+              aria-label={hasCarousel ? translate('slide', { current: index + 1, total: banners.length }) : undefined}
+              aria-hidden={index !== activeIndex}
+              inert={index !== activeIndex ? true : undefined}
+              className="h-full min-w-full flex-none"
+            >
+              {renderBannerContent(banner, { fillTrack: true })}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {hasCarousel && (
+        <>
+          <span className="sr-only" aria-live={isRotationPaused ? 'polite' : 'off'}>
+            {translate('slide', { current: activeIndex + 1, total: banners.length })}
+          </span>
+          <div className="pointer-events-none absolute inset-x-2 top-1/2 flex -translate-y-1/2 justify-between">
+            <button
+              type="button"
+              aria-label={translate('previous')}
+              onClick={() => move('previous')}
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-slate-900/55 text-white shadow-md backdrop-blur-sm transition hover:bg-slate-900/80 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              aria-label={translate('next')}
+              onClick={() => move('next')}
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-slate-900/55 text-white shadow-md backdrop-blur-sm transition hover:bg-slate-900/80 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div
+            role="group"
+            aria-label={translate('chooseSlide')}
+            className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/45 px-2 py-1 backdrop-blur-sm"
+          >
+            {banners.map((banner, index) => (
+              <button
+                key={banner.id}
+                type="button"
+                aria-label={translate('slide', { current: index + 1, total: banners.length })}
+                aria-current={index === activeIndex ? 'true' : undefined}
+                onClick={() => setActiveIndex(index)}
+                className="group flex h-6 w-6 items-center justify-center rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`block rounded-full transition-all motion-reduce:transition-none ${index === activeIndex ? 'h-1.5 w-5 bg-white' : 'h-1.5 w-1.5 bg-white/60 group-hover:bg-white'}`}
+                />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default AdBannerCard;

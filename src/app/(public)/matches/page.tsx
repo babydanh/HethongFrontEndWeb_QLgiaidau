@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Search, ChevronDown, Play, Trophy, Heart, Share2, X, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
+import { Search, ChevronDown, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -1519,12 +1519,7 @@ export default function MatchesListPage() {
         <AdBannerCard
           slot="MATCHES_BOTTOM"
           variant="horizontal"
-          sponsor="SPORTO STORE & ĐỐI TÁC"
-          title="Trang thiết bị & Dụng cụ Thể thao chính hãng"
-          description="Ưu đãi độc quyền cho vận động viên và các câu lạc bộ trên SportO — Giảm đến 20% phụ kiện thi đấu."
-          ctaText="Khám phá ngay"
-          badgeLabel="Tài trợ"
-          href="/tournaments"
+          categoryId={selectedCategoryId || undefined}
         />
       </div>
 

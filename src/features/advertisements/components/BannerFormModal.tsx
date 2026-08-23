@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import {
   X,
   Image as ImageIcon,
@@ -16,6 +17,8 @@ import {
   Calendar,
   Layers,
   ChevronDown,
+  Search,
+  ExternalLink,
 } from 'lucide-react';
 import { BannerPreviewCard } from './BannerPreviewCard';
 import { DateTimePicker } from '@/components/ui/Input';
@@ -27,6 +30,7 @@ import type {
   CreateAdvertisementPayload,
   UpdateAdvertisementPayload,
 } from '../api';
+import type { Category } from '@/types/category';
 import toast from 'react-hot-toast';
 
 interface BannerFormModalProps {
@@ -35,6 +39,7 @@ interface BannerFormModalProps {
   onSubmit: (payload: CreateAdvertisementPayload | UpdateAdvertisementPayload) => Promise<void>;
   initialData?: Advertisement | null;
   isSubmitting?: boolean;
+  categories?: Category[];
 }
 
 const PLACEMENT_OPTIONS: Array<{
@@ -117,7 +122,9 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
   onSubmit,
   initialData,
   isSubmitting = false,
+  categories = [],
 }) => {
+  const translate = useTranslations('AdminBanners');
   const isEditing = Boolean(initialData);
 
   const [title, setTitle] = useState('');
@@ -128,6 +135,8 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
   const [ctaText, setCtaText] = useState('Xem ngay');
   const [customHtml, setCustomHtml] = useState('');
   const [placementSlot, setPlacementSlot] = useState<AdPlacementSlot>('HOMEPAGE_SIDEBAR');
+  const [categoryId, setCategoryId] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
   const [displayOrder, setDisplayOrder] = useState<number>(0);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [startDate, setStartDate] = useState<string>('');
@@ -142,6 +151,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
     setMounted(true);
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- synchronize controlled form state from the edit record */
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || '');
@@ -152,6 +162,8 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
       setCtaText(initialData.ctaText || 'Xem ngay');
       setCustomHtml(initialData.customHtml || '');
       setPlacementSlot(initialData.placementSlot || 'HOMEPAGE_SIDEBAR');
+      setCategoryId(initialData.categoryId || '');
+      setCategorySearch('');
       setDisplayOrder(initialData.displayOrder ?? 0);
       setIsActive(initialData.isActive ?? true);
       setStartDate(initialData.startDate ? initialData.startDate.slice(0, 16) : '');
@@ -165,16 +177,39 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
       setCtaText('Xem ngay');
       setCustomHtml('');
       setPlacementSlot('HOMEPAGE_SIDEBAR');
+      setCategoryId('');
+      setCategorySearch('');
       setDisplayOrder(0);
       setIsActive(true);
       setStartDate('');
       setEndDate('');
     }
   }, [initialData, isOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!isOpen || !mounted) return null;
 
   const currentSlotMeta = PLACEMENT_OPTIONS.find((s) => s.value === placementSlot) || PLACEMENT_OPTIONS[0];
+  const uniqueCategories = Array.from(
+    new Map(
+      categories
+        .filter((category) => category.isActive !== false)
+        .map((category) => [
+          (category.name || category.slug).trim().toLocaleLowerCase(),
+          category,
+        ]),
+    ).values(),
+  );
+  const normalizedCategorySearch = categorySearch.trim().toLocaleLowerCase();
+  const filteredCategories = uniqueCategories
+    .filter((category) => {
+      if (!normalizedCategorySearch) return true;
+      return `${category.name} ${category.slug} ${category.description || ''}`
+        .toLocaleLowerCase()
+        .includes(normalizedCategorySearch);
+    })
+    .slice(0, 8);
+  const selectedCategory = uniqueCategories.find((category) => category.id === categoryId) || null;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -256,6 +291,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
       ctaText: bannerType === 'IMAGE_LINK' ? ctaText.trim() || undefined : undefined,
       customHtml: bannerType === 'CUSTOM_HTML' ? customHtml.trim() : undefined,
       placementSlot,
+      categoryId: categoryId || null,
       displayOrder: Number(displayOrder) || 0,
       isActive,
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
@@ -364,7 +400,105 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
                 </div>
               </div>
 
-              {/* 2. Loại hình quảng cáo */}
+              {/* 2. Nhắm theo môn thể thao */}
+              <section className="rounded-xl border border-blue-100 bg-blue-50/40 p-3.5">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700">
+                      {translate('targetSportLabel')}
+                    </label>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      {translate('targetSportHelp')}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-md border border-blue-100 bg-white px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                    {categoryId ? translate('targetSportSpecific') : translate('targetAllSports')}
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="search"
+                    value={categorySearch}
+                    onChange={(event) => setCategorySearch(event.target.value)}
+                    placeholder={translate('targetSportSearchPlaceholder')}
+                    aria-label={translate('targetSportSearchLabel')}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3.5 text-sm font-medium text-slate-800 transition-all focus:border-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                {selectedCategory ? (
+                  <div className="mt-2 rounded-xl border border-blue-200 bg-white p-3 shadow-xs">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900">{selectedCategory.name}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">/{selectedCategory.slug}</p>
+                        <a
+                          href={`/tournaments/sport/${encodeURIComponent(selectedCategory.slug)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {translate('targetSportOpenPage')}
+                        </a>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCategoryId('');
+                          setCategorySearch('');
+                        }}
+                        className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50"
+                      >
+                        {translate('targetSportClear')}
+                      </button>
+                    </div>
+                    {selectedCategory.description && (
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">{selectedCategory.description}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                      <span className="rounded-md bg-slate-100 px-2 py-1 font-semibold">ID: {selectedCategory.id}</span>
+                      {selectedCategory.categoryConfig?.supportedMatchTypes?.length ? (
+                        <span className="rounded-md bg-slate-100 px-2 py-1 font-semibold">
+                          {translate('targetSportMatchTypes')}: {selectedCategory.categoryConfig.supportedMatchTypes.join(', ')}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1">
+                    {categories.length === 0 ? (
+                      <p className="px-3 py-3 text-center text-xs text-slate-500">{translate('targetSportLoading')}</p>
+                    ) : filteredCategories.length > 0 ? (
+                      filteredCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => {
+                            setCategoryId(category.id);
+                            setCategorySearch(category.name);
+                          }}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors hover:bg-blue-50"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-bold text-slate-800">{category.name}</span>
+                            <span className="block truncate text-[10px] text-slate-500">/{category.slug}</span>
+                          </span>
+                          <span className="ml-3 shrink-0 text-[10px] font-semibold text-blue-600">
+                            {translate('targetSportViewDetails')}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-3 text-center text-xs text-slate-500">{translate('targetSportNoResults')}</p>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              {/* 3. Loại hình quảng cáo */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Loại hình quảng cáo *

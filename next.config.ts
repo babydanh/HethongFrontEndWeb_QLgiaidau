@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  poweredByHeader: false,
   // Keep production's default `.next`, while allowing CI/local verification
   // to use an isolated directory when an old build artifact is locked.
   distDir: process.env.NEXT_DIST_DIR || '.next',

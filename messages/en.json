@@ -2970,10 +2970,17 @@
     "matchDay": "Matchday {number}",
     "roundLeg": "Leg {number}",
     "phaseLosers": "Losers bracket",
-    "phaseWinners": "Winners bracket",
-    "phaseGrandFinal": "Grand final",
-    "phasePlayoff": "Playoff",
-    "cheerError": "Unable to send cheer. Please try again."
+    "cheerError": "Unable to send cheer. Please try again.",
+    "seoH1": "SportO - Play together",
+    "seoIntroTitle": "Leading sports tournament management & community platform",
+    "seoIntroP1": "SportO is a comprehensive sports platform that helps athletes, organizers, and clubs easily create tournaments, generate brackets and schedules automatically, and follow live real-time scores.",
+    "seoIntroP2": "Supporting top popular sports including Pickleball, Badminton, Tennis, Table Tennis, and Football with standardized ELO rating systems, fair tier divisions, and comprehensive player profiles.",
+    "seoFeature1Title": "Fast Tournament Creation",
+    "seoFeature1Desc": "Create tournaments in a few simple steps with multiple formats: single/double elimination, round-robin group stages, and bracket seeding.",
+    "seoFeature2Title": "Live Scores & Updates",
+    "seoFeature2Desc": "Real-time point-by-point scoreboard updates via WebSockets, live court tracking, and seamless match sharing.",
+    "seoFeature3Title": "Communities & ELO Ratings",
+    "seoFeature3Desc": "Join local sports clubs, play competitive matches, earn rating points, and climb the system-wide ELO leaderboard."
   },
   "TeamRegistration": {
     "registrationPermission": "Can register",
@@ -7414,6 +7421,18 @@
     "locationLabel": "Location: ",
     "imageAlt": "SportO {category}"
   },
+  "Advertisements": {
+    "defaultTitle": "Advertisement",
+    "badge": "Ad",
+    "carouselLabel": "Advertisements",
+    "slideRole": "slide",
+    "chooseSlide": "Choose a banner",
+    "previous": "Previous banner",
+    "next": "Next banner",
+    "slide": "Banner {current} of {total}",
+    "pause": "Pause automatic rotation",
+    "play": "Resume automatic rotation"
+  },
   "AdminBanners": {
     "previewTitle": "Advertisement preview",
     "previewModePlacement": "Banner frame",
@@ -7454,7 +7473,21 @@
     "previewClubActivityMeta": "Your club posted a new update",
     "previewToday": "Today",
     "previewLatestActivity": "Latest activity",
-    "previewLocation": "Ho Chi Minh City"
+    "previewLocation": "Ho Chi Minh City",
+    "targetSportLabel": "Target sport",
+    "targetSportHelp": "Leave empty to show on every sport. Choose one sport for contextual delivery.",
+    "targetSportSpecific": "Selected sport",
+    "targetSportSaved": "Saved sport",
+    "targetSportFilter": "Filter by sport",
+    "targetAllSports": "All sports",
+    "targetSportSearchPlaceholder": "Search by sport name...",
+    "targetSportSearchLabel": "Search sport",
+    "targetSportViewDetails": "View details",
+    "targetSportOpenPage": "Open sport page",
+    "targetSportNoResults": "No matching sport found",
+    "targetSportLoading": "Loading sports...",
+    "targetSportClear": "Clear selection",
+    "targetSportMatchTypes": "Supported formats"
   },
   "AdminElo": {
     "title": "Elo management",
@@ -7466,6 +7499,11 @@
     "communityScope": "Community",
     "communityId": "Community ID",
     "communityIdPlaceholder": "Enter a community ID",
+    "category": "Active category",
+    "selectCategory": "Select an active category",
+    "noActiveCategories": "No active categories are available.",
+    "loadCategoriesFailed": "Unable to load active categories.",
+    "loadProfileFailed": "Unable to load the player Elo profile.",
     "categoryId": "Category ID",
     "categoryIdPlaceholder": "Enter a category ID",
     "matchType": "Match type",
@@ -7482,7 +7520,19 @@
     "banned": "Excluded",
     "player": "Player",
     "context": "Context",
+    "contexts": "contexts",
+    "highestElo": "Highest Elo",
+    "profileTitle": "Elo profile",
+    "viewProfile": "View Elo profile",
+    "noPlayers": "No players found.",
+    "peakElo": "Peak Elo",
+    "excluded": "Excluded",
+    "updated": "Last updated",
+    "recentOperations": "Recent admin adjustments",
+    "allGenders": "All genders",
     "rating": "Elo",
+    "eloUnit": "Elo",
+    "matchTypeUnknown": "Other",
     "matches": "Matches",
     "actions": "Actions",
     "manage": "Manage",
@@ -7513,6 +7563,7 @@
     "retryOperation": "If the response was lost, retrying this same operation is safe.",
     "historyTitle": "Admin operation history",
     "noHistory": "No admin operations recorded for this context.",
+    "loadMoreHistory": "Load more history",
     "requiredReason": "Please enter a reason of at least 5 characters.",
     "requiredValue": "Please enter a valid positive value.",
     "resetWarning": "Reset changes the current rating but preserves match history.",
@@ -7521,7 +7572,7 @@
     "forbidden": "You do not have permission to manage Elo.",
     "loading": "Loading ranking contexts",
     "processing": "Saving operation",
-    "loadMoreUsers": "Load more ranking contexts"
+    "loadMoreUsers": "Load more players"
   }
 }
 

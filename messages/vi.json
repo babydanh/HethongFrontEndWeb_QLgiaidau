@@ -2963,9 +2963,17 @@
     "roundLeg": "Lượt {number}",
     "phaseLosers": "Nhánh thua",
     "phaseWinners": "Nhánh thắng",
-    "phaseGrandFinal": "Chung kết tổng",
-    "phasePlayoff": "Playoff",
-    "cheerError": "Không thể gửi cổ vũ, vui lòng thử lại."
+    "cheerError": "Không thể gửi cổ vũ, vui lòng thử lại.",
+    "seoH1": "SportO - Chơi cùng nhau",
+    "seoIntroTitle": "Hệ thống quản lý giải đấu & kết nối thể thao hàng đầu",
+    "seoIntroP1": "SportO là nền tảng thể thao toàn diện giúp vận động viên, ban tổ chức và các câu lạc bộ dễ dàng khởi tạo giải đấu, bốc thăm xếp lịch thi đấu tự động và cập nhật tỉ số trực tiếp thời gian thực.",
+    "seoIntroP2": "Hệ thống hỗ trợ đa dạng các bộ môn thể thao phổ biến hàng đầu như Pickleball, Cầu lông, Quần vợt (Tennis), Bóng bàn và Bóng đá với hệ thống tính điểm ELO chuẩn hóa, phân hạng trình độ công bằng và hồ sơ vận động viên chi tiết.",
+    "seoFeature1Title": "Tổ chức giải nhanh chóng",
+    "seoFeature1Desc": "Tạo giải đấu trong vài bước, hỗ trợ nhiều thể thức thi đấu như loại trực tiếp, chia bảng vòng tròn tính điểm, phân nhánh nhánh thắng - nhánh thua tự động.",
+    "seoFeature2Title": "Tỉ số & Livestream trực tiếp",
+    "seoFeature2Desc": "Cập nhật bảng điểm theo từng set và game đấu theo thời gian thực (realtime) qua WebSocket, kết nối camera sân đấu và chia sẻ trận đấu dễ dàng.",
+    "seoFeature3Title": "Cộng đồng & Xếp hạng ELO",
+    "seoFeature3Desc": "Tham gia các câu lạc bộ thể thao địa phương, giao lưu thi đấu cọ xát, tích lũy điểm thưởng và nâng cao thứ hạng trên bảng xếp hạng ELO toàn hệ thống."
   },
   "TeamRegistration": {
     "registrationPermission": "Có quyền đăng ký",
@@ -7406,6 +7414,18 @@
     "locationLabel": "Địa điểm: ",
     "imageAlt": "SportO {category}"
   },
+  "Advertisements": {
+    "defaultTitle": "Quảng cáo",
+    "badge": "QC",
+    "carouselLabel": "Quảng cáo",
+    "slideRole": "trang chiếu",
+    "chooseSlide": "Chọn banner",
+    "previous": "Banner trước",
+    "next": "Banner tiếp theo",
+    "slide": "Banner {current} trên {total}",
+    "pause": "Tạm dừng tự động chuyển",
+    "play": "Tiếp tục tự động chuyển"
+  },
   "AdminBanners": {
     "previewTitle": "Xem trước quảng cáo",
     "previewModePlacement": "Khung banner",
@@ -7446,7 +7466,21 @@
     "previewClubActivityMeta": "CLB vừa cập nhật bài viết mới",
     "previewToday": "Hôm nay",
     "previewLatestActivity": "Hoạt động mới nhất",
-    "previewLocation": "TP. Hồ Chí Minh"
+    "previewLocation": "TP. Hồ Chí Minh",
+    "targetSportLabel": "Nhắm theo môn thể thao",
+    "targetSportHelp": "Để trống để hiển thị trên mọi môn. Chọn một môn để quảng cáo theo ngữ cảnh.",
+    "targetSportSpecific": "Theo môn đã chọn",
+    "targetSportSaved": "Môn đã lưu",
+    "targetSportFilter": "Lọc theo môn thể thao",
+    "targetAllSports": "Tất cả môn",
+    "targetSportSearchPlaceholder": "Tìm theo tên môn thể thao...",
+    "targetSportSearchLabel": "Tìm môn thể thao",
+    "targetSportViewDetails": "Xem chi tiết",
+    "targetSportOpenPage": "Mở trang môn",
+    "targetSportNoResults": "Không tìm thấy môn phù hợp",
+    "targetSportLoading": "Đang tải danh sách môn thể thao...",
+    "targetSportClear": "Bỏ chọn",
+    "targetSportMatchTypes": "Nội dung hỗ trợ"
   },
   "AdminElo": {
     "title": "Quản lý Elo",
@@ -7458,6 +7492,11 @@
     "communityScope": "Cộng đồng",
     "communityId": "ID cộng đồng",
     "communityIdPlaceholder": "Nhập ID cộng đồng",
+    "category": "Bộ môn đang hoạt động",
+    "selectCategory": "Chọn một bộ môn đang hoạt động",
+    "noActiveCategories": "Hiện không có bộ môn đang hoạt động.",
+    "loadCategoriesFailed": "Không thể tải danh sách bộ môn đang hoạt động.",
+    "loadProfileFailed": "Không thể tải hồ sơ Elo của người chơi.",
     "categoryId": "ID bộ môn",
     "categoryIdPlaceholder": "Nhập ID bộ môn",
     "matchType": "Loại nội dung đấu",
@@ -7474,7 +7513,19 @@
     "banned": "Đã loại khỏi bảng",
     "player": "Người chơi",
     "context": "Ngữ cảnh",
+    "contexts": "ngữ cảnh",
+    "highestElo": "Elo cao nhất",
+    "profileTitle": "Hồ sơ Elo",
+    "viewProfile": "Xem hồ sơ Elo",
+    "noPlayers": "Không tìm thấy người chơi.",
+    "peakElo": "Elo đỉnh",
+    "excluded": "Bị loại",
+    "updated": "Cập nhật gần nhất",
+    "recentOperations": "Các lần admin điều chỉnh gần đây",
+    "allGenders": "Tất cả giới tính",
     "rating": "Elo",
+    "eloUnit": "Elo",
+    "matchTypeUnknown": "Khác",
     "matches": "Số trận",
     "actions": "Thao tác",
     "manage": "Quản lý",
@@ -7505,6 +7556,7 @@
     "retryOperation": "Nếu phản hồi bị gián đoạn, bạn có thể thử lại cùng thao tác một cách an toàn.",
     "historyTitle": "Lịch sử thao tác của admin",
     "noHistory": "Chưa có thao tác admin nào cho ngữ cảnh này.",
+    "loadMoreHistory": "Tải thêm lịch sử",
     "requiredReason": "Vui lòng nhập lý do tối thiểu 5 ký tự.",
     "requiredValue": "Vui lòng nhập giá trị dương hợp lệ.",
     "resetWarning": "Reset chỉ đổi điểm hiện tại và vẫn giữ lịch sử trận đấu.",
@@ -7513,7 +7565,7 @@
     "forbidden": "Bạn không có quyền quản lý Elo.",
     "loading": "Đang tải ngữ cảnh xếp hạng",
     "processing": "Đang lưu thao tác",
-    "loadMoreUsers": "Tải thêm ngữ cảnh xếp hạng"
+    "loadMoreUsers": "Tải thêm người chơi"
   }
 }
 

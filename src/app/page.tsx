@@ -1547,10 +1547,57 @@ export default function HomePage() {
             </section>
           )}
 
-        </div>
+            {/* SEO Content Section (Rich text & semantic H1 for Search Engine Bots & Visitors) */}
+            <section className="bg-white rounded-2xl border border-slate-200/80 p-6 md:p-8 shadow-xs">
+              <div className="mb-4">
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                  {translate('seoH1')}
+                </h1>
+                <h2 className="text-xs md:text-sm font-medium text-slate-500 mt-1">
+                  {translate('seoIntroTitle')}
+                </h2>
+              </div>
+              <div className="space-y-2.5 text-slate-600 text-xs md:text-sm leading-relaxed">
+                <p>
+                  {translate('seoIntroP1')}
+                </p>
+                <p>
+                  {translate('seoIntroP2')}
+                </p>
+              </div>
 
-        {/* Right Column (3/12) */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-6 pt-6 border-t border-slate-100">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1.5">
+                    {translate('seoFeature1Title')}
+                  </h3>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    {translate('seoFeature1Desc')}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1.5">
+                    {translate('seoFeature2Title')}
+                  </h3>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    {translate('seoFeature2Desc')}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1.5">
+                    {translate('seoFeature3Title')}
+                  </h3>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    {translate('seoFeature3Desc')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          {/* Right Column (3/12) */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
 
           {!isClient ? (
              <div className="animate-pulse bg-slate-200 h-[180px] rounded-2xl w-full"></div>

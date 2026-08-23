@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Megaphone,
   Plus,
@@ -26,15 +27,19 @@ import {
   type CreateAdvertisementPayload,
   type UpdateAdvertisementPayload,
 } from '@/features/advertisements/api';
+import { categoriesApi, type Category } from '@/features/categories/api';
 import { BannerFormModal } from '@/features/advertisements/components/BannerFormModal';
 import toast from 'react-hot-toast';
 
 export default function AdminBannersPage() {
+  const translate = useTranslations('AdminBanners');
   const [banners, setBanners] = useState<Advertisement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [slotFilter, setSlotFilter] = useState<string>('ALL');
   const [activeFilter, setActiveFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,20 +61,48 @@ export default function AdminBannersPage() {
       if (searchQuery.trim()) {
         params.search = searchQuery.trim();
       }
+      if (categoryFilter !== 'ALL') {
+        params.categoryId = categoryFilter;
+      }
 
       const res = await advertisementsApi.listForAdmin(params);
-      setBanners(res.items || []);
+      setBanners(Array.isArray(res?.items) ? res.items : []);
     } catch (error) {
       console.error('Failed to load banners:', error);
       toast.error('Không thể tải danh sách banner quảng cáo');
     } finally {
       setIsLoading(false);
     }
-  }, [slotFilter, activeFilter, searchQuery]);
+  }, [slotFilter, activeFilter, searchQuery, categoryFilter]);
 
-  useEffect(() => {
+    useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch callback owns loading/list state synchronization
     fetchBanners();
   }, [fetchBanners]);
+
+  useEffect(() => {
+    let active = true;
+    categoriesApi
+      .getCategories()
+      .then((response) => {
+        if (!active) return;
+        const unique = new Map<string, Category>();
+        (response.data || []).forEach((category) => {
+          if (category.isActive === false) return;
+          const key = (category.name || category.slug).trim().toLocaleLowerCase();
+          if (!unique.has(key)) unique.set(key, category);
+        });
+        setCategories(Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name)));
+      })
+      .catch((error) => {
+        console.error('Failed to load sports:', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
 
   const handleToggle = async (banner: Advertisement) => {
     try {
@@ -308,6 +341,17 @@ export default function AdminBannersPage() {
             <option value="ACTIVE">Đang bật (Active)</option>
             <option value="INACTIVE">Đã tắt (Inactive)</option>
           </select>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 bg-white focus:outline-hidden focus:border-blue-600"
+            aria-label={translate('targetSportFilter')}
+          >
+            <option value="ALL">{translate('targetAllSports')}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -386,6 +430,9 @@ export default function AdminBannersPage() {
                         </span>
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
                           {banner.bannerType === 'CUSTOM_HTML' ? 'Google Ads / Script' : 'Ảnh & Link'}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
+                          {banner.categoryId ? categoryById.get(banner.categoryId)?.name || translate('targetSportSaved') : translate('targetAllSports')}
                         </span>
                         {banner.isActive ? (
                           <span className="text-[10px] font-bold text-emerald-600 inline-flex items-center gap-1">
@@ -495,6 +542,7 @@ export default function AdminBannersPage() {
         onSubmit={handleSave}
         initialData={editingBanner}
         isSubmitting={isSubmitting}
+        categories={categories}
       />
     </div>
   );

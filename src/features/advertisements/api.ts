@@ -24,6 +24,7 @@ export interface Advertisement {
   ctaText?: string | null;
   customHtml?: string | null;
   placementSlot: AdPlacementSlot;
+  categoryId?: string | null;
   displayOrder: number;
   viewsCount: number;
   clicksCount: number;
@@ -43,13 +44,14 @@ export interface CreateAdvertisementPayload {
   ctaText?: string;
   customHtml?: string;
   placementSlot: AdPlacementSlot;
+  categoryId?: string | null;
   displayOrder?: number;
   isActive?: boolean;
   startDate?: string;
   endDate?: string;
 }
 
-export interface UpdateAdvertisementPayload extends Partial<CreateAdvertisementPayload> {}
+export type UpdateAdvertisementPayload = Partial<CreateAdvertisementPayload>;
 
 export interface AdvertisementsListResponse {
   items: Advertisement[];
@@ -61,10 +63,12 @@ export interface AdvertisementsListResponse {
 
 export const advertisementsApi = {
   // Public API
-  getActiveBySlot: async (slot: AdPlacementSlot): Promise<Advertisement[]> => {
+  getActiveBySlot: async (slot: AdPlacementSlot, categoryId?: string): Promise<Advertisement[]> => {
     try {
-      const data = await api.get<Advertisement[]>(`/advertisements/active?slot=${slot}`);
-      return data || [];
+      const params = new URLSearchParams({ slot });
+      if (categoryId) params.set('categoryId', categoryId);
+      const data = await api.get<Advertisement[]>(`/advertisements/active?${params.toString()}`);
+      return Array.isArray(data) ? data : [];
     } catch {
       return [];
     }
@@ -91,6 +95,7 @@ export const advertisementsApi = {
     placementSlot?: AdPlacementSlot;
     isActive?: boolean;
     search?: string;
+    categoryId?: string;
     page?: number;
     limit?: number;
   }): Promise<AdvertisementsListResponse> => {

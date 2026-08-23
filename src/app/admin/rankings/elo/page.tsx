@@ -39,8 +39,6 @@ type FilterState = {
   communityId: string;
   categoryId: string;
   matchType: string;
-  minElo: string;
-  maxElo: string;
 };
 
 const INITIAL_QUERY: FilterState = {
@@ -50,8 +48,6 @@ const INITIAL_QUERY: FilterState = {
   communityId: '',
   categoryId: '',
   matchType: '',
-  minElo: '',
-  maxElo: '',
 };
 
 const RATING_OPERATIONS: AdminEloOperation[] = ['ADD', 'SUBTRACT', 'SET', 'RESET'];
@@ -125,8 +121,6 @@ export default function AdminEloPage() {
   const [communityId, setCommunityId] = useState(INITIAL_QUERY.communityId);
   const [categoryId, setCategoryId] = useState(INITIAL_QUERY.categoryId);
   const [matchType, setMatchType] = useState(INITIAL_QUERY.matchType);
-  const [minElo, setMinElo] = useState(INITIAL_QUERY.minElo);
-  const [maxElo, setMaxElo] = useState(INITIAL_QUERY.maxElo);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -241,8 +235,6 @@ export default function AdminEloPage() {
       communityId: communityId.trim(),
       categoryId: categoryId.trim(),
       matchType,
-      minElo: minElo.trim(),
-      maxElo: maxElo.trim(),
     };
     setQuery(nextQuery);
     void loadContexts({ nextQuery });
@@ -390,25 +382,23 @@ export default function AdminEloPage() {
         {scope === 'COMMUNITY' && <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('communityId')}</span><input value={communityId} onChange={(event) => setCommunityId(event.target.value)} placeholder={translate('communityIdPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => setMatchType(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allMatchTypes')}</option><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('minElo')}</span><input type="number" min={0} step={1} value={minElo} onChange={(event) => setMinElo(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('maxElo')}</span><input type="number" min={0} step={1} value={maxElo} onChange={(event) => setMaxElo(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
         <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={applyFilters} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-[760px] w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{translate('player')}</th><th className="px-4 py-3">{translate('contexts')}</th><th className="px-4 py-3">{translate('highestElo')}</th><th className="px-4 py-3">{translate('status')}</th><th className="px-4 py-3">{translate('actions')}</th></tr></thead>
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{translate('player')}</th><th className="px-4 py-3">{translate('rankingProfiles')}</th><th className="px-4 py-3">{translate('highestElo')}</th><th className="px-4 py-3">{translate('status')}</th><th className="px-4 py-3">{translate('actions')}</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {loading && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>}
               {!loading && playerGroups.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">{translate('noPlayers')}</td></tr>}
               {!loading && playerGroups.map((player) => (
                 <tr key={player.userId} className="align-top">
                   <td className="px-4 py-4"><div className="flex items-center gap-3"><div className="h-9 w-9 overflow-hidden rounded-full bg-slate-100">{player.avatarUrl && <Image src={player.avatarUrl} alt="" width={36} height={36} unoptimized className="h-full w-full object-cover" />}</div><div><div className="font-semibold text-slate-900">{player.fullName}</div><div className="text-xs text-slate-500">{player.email}</div></div></div></td>
-                  <td className="px-4 py-4 text-slate-600"><div className="font-semibold text-slate-900">{player.contextCount} {translate('contexts')}</div><div className="mt-1 flex flex-wrap gap-1 text-xs"><span className="rounded bg-slate-100 px-2 py-1">{translate('publicScope')}: {player.publicContextCount}</span><span className="rounded bg-slate-100 px-2 py-1">{translate('communityScope')}: {player.communityContextCount}</span></div></td>
+                  <td className="px-4 py-4 text-slate-600"><div className="font-semibold text-slate-900">{player.contextCount} {translate('rankingProfiles')}</div><div className="mt-1 flex flex-wrap gap-1 text-xs"><span className="rounded bg-slate-100 px-2 py-1">{translate('publicScope')}: {player.publicContextCount}</span><span className="rounded bg-slate-100 px-2 py-1">{translate('communityScope')}: {player.communityContextCount}</span></div></td>
                   <td className="px-4 py-4"><div className="font-bold text-slate-900">{player.highestElo ?? '—'} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{player.lastUpdatedAt ? new Date(player.lastUpdatedAt).toLocaleString(locale) : '—'}</div></td>
                   <td className="px-4 py-4"><div className="flex flex-wrap gap-1 text-xs"><span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">{translate('visible')}: {player.visibleContextCount}</span><span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">{translate('hidden')}: {player.hiddenContextCount}</span><span className="rounded-full bg-red-100 px-2 py-1 text-red-700">{translate('banned')}: {player.bannedContextCount}</span></div></td>
-                  <td className="px-4 py-4"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('viewProfile')}</Button></td>
+                  <td className="px-4 py-4"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('managePlayer')}</Button></td>
                 </tr>
               ))}
             </tbody>
@@ -421,27 +411,28 @@ export default function AdminEloPage() {
       <Modal open={selectedPlayer !== null} onOpenChange={(open) => { if (!open) setSelectedPlayer(null); }}>
         <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <ModalHeader>
-            <ModalTitle>{selectedPlayer ? `${selectedPlayer.fullName} · ${translate('profileTitle')}` : translate('profileTitle')}</ModalTitle>
+            <ModalTitle>{selectedPlayer ? `${selectedPlayer.fullName} · ${translate('profileAndManagement')}` : translate('profileAndManagement')}</ModalTitle>
             <ModalDescription>{selectedPlayer ? `${selectedPlayer.email} · ${selectedCategory?.name ?? translate('selectCategory')}` : ''}</ModalDescription>
           </ModalHeader>
           {selectedPlayer && <div className="space-y-4">
             {playerDetailLoading && <div className="py-10 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>}
             {playerDetail && <>
             <div className="grid gap-3 sm:grid-cols-4">
-              <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('contexts')}</div><strong className="text-lg text-slate-900">{selectedPlayer.contextCount}</strong></div>
+              <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('rankingProfiles')}</div><strong className="text-lg text-slate-900">{selectedPlayer.contextCount}</strong></div>
               <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('highestElo')}</div><strong className="text-lg text-slate-900">{selectedPlayer.highestElo ?? '—'} {translate('eloUnit')}</strong></div>
               <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('visible')}</div><strong className="text-lg text-emerald-700">{selectedPlayer.visibleContextCount}</strong></div>
               <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('excluded')}</div><strong className="text-lg text-red-700">{selectedPlayer.hiddenContextCount + selectedPlayer.bannedContextCount}</strong></div>
             </div>
+            <p className="text-sm text-slate-600">{translate('selectProfileToManage')}</p>
             <div className="space-y-3">
-              {(Array.isArray(playerDetail.contexts) ? playerDetail.contexts : []).map((context) => (
+              {playerDetail.contexts.map((context) => (
                 <article key={context.contextId} className="rounded-xl border border-slate-200 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div><h3 className="font-semibold text-slate-900">{context.scope === 'PUBLIC' ? translate('publicScope') : translate('communityScope')} · {translate(getMatchTypeLabelKey(context.matchType))}</h3><p className="text-xs text-slate-500">{context.genderRestriction || translate('allGenders')}{context.communityId ? ` · ${translate('communityId')}: ${context.communityId}` : ''}</p></div>
+                    <div><h3 className="font-semibold text-slate-900">{context.scope === 'PUBLIC' ? translate('publicScope') : translate('communityScope')} · {translate(getMatchTypeLabelKey(context.matchType))}</h3><p className="text-xs text-slate-500">{context.genderRestriction || translate('allGenders')}{context.communityName ? ` · ${context.communityName}` : ''}</p></div>
                     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${context.status === 'BANNED' ? 'bg-red-100 text-red-700' : context.status === 'HIDDEN' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{context.status === 'BANNED' ? translate('banned') : context.status === 'HIDDEN' ? translate('hidden') : translate('visible')}</span>
                   </div>
-                  <div className="mt-3 grid gap-3 text-sm sm:grid-cols-4"><div><span className="block text-xs text-slate-500">{translate('currentElo')}</span><strong>{context.eloPoints} {translate('eloUnit')}</strong></div><div><span className="block text-xs text-slate-500">{translate('peakElo')}</span><strong>{context.peakElo} {translate('eloUnit')}</strong></div><div><span className="block text-xs text-slate-500">{translate('matches')}</span><strong>{context.matchesWon}/{context.matchesPlayed}</strong></div><div><span className="block text-xs text-slate-500">{translate('updated')}</span><strong>{new Date(context.updatedAt).toLocaleString(locale)}</strong></div></div>
-                  <div className="mt-3 flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => openOperation(toAdminContext(playerDetail, context))} disabled={processing}>{translate('manage')}</Button><Button type="button" variant="outline" onClick={() => openHistory(toAdminContext(playerDetail, context))} disabled={historyLoading}><History className="mr-1 h-4 w-4" />{translate('history')}</Button></div>
+                  <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-4"><div><span className="block text-xs text-slate-500">{translate('currentElo')}</span><strong>{context.eloPoints} {translate('eloUnit')}</strong></div><div><span className="block text-xs text-slate-500">{translate('peakElo')}</span><strong>{context.peakElo} {translate('eloUnit')}</strong></div><div><span className="block text-xs text-slate-500">{translate('matches')}</span><strong>{context.matchesWon}/{context.matchesPlayed}</strong></div><div><span className="block text-xs text-slate-500">{translate('tier')}</span><strong>{context.tierName || '—'}</strong></div></div><div className="mt-2 text-xs text-slate-500">{translate('updated')}: {new Date(context.updatedAt).toLocaleString(locale)}{context.statusExpiresAt ? ` · ${translate('expiresAt')}: ${new Date(context.statusExpiresAt).toLocaleString(locale)}` : ''}</div>
+                  <div className="mt-3 flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => openOperation(toAdminContext(playerDetail, context))} disabled={processing}>{translate('manageElo')}</Button><Button type="button" variant="outline" onClick={() => openHistory(toAdminContext(playerDetail, context))} disabled={historyLoading}><History className="mr-1 h-4 w-4" />{translate('history')}</Button></div>
                 </article>
               ))}
             </div>
@@ -458,8 +449,9 @@ export default function AdminEloPage() {
             <ModalDescription>{selected ? `${selected.fullName} · ${selected.eloPoints} ${translate('eloUnit')}` : ''}</ModalDescription>
           </ModalHeader>
           {selected && <div className="space-y-4">
+            <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{translate('operationGuide')}</p>
             <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('operation')}</span><select value={operation} onChange={(event) => { setOperation(event.target.value as AdminEloOperation); setExpiresAt(''); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="ADD">{translate('add')}</option><option value="SUBTRACT">{translate('subtract')}</option><option value="SET">{translate('set')}</option><option value="RESET">{translate('reset')}</option><option value="HIDE">{translate('hide')}</option><option value="BAN">{translate('ban')}</option><option value="RESTORE">{translate('restore')}</option></select></label>
-            {isRatingOperation(operation) && operation !== 'RESET' && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('value')}</span><input type="number" min={1} max={10000} step={1} value={value} onChange={(event) => setValue(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
+            {isRatingOperation(operation) && operation !== 'RESET' && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate(operation === 'SET' ? 'targetElo' : 'adjustmentPoints')}</span><input type="number" min={1} max={10000} step={1} value={value} onChange={(event) => setValue(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
             {['HIDE', 'BAN'].includes(operation) && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('expiry')}</span><input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
             <div className="rounded-lg bg-slate-50 p-3 text-sm"><div className="flex justify-between"><span>{translate('currentElo')}</span><strong>{selected.eloPoints}</strong></div><div className="mt-1 flex justify-between"><span>{translate('newElo')}</span><strong>{previewElo(selected, operation, Number(value) || 0)}</strong></div>{['HIDE', 'BAN'].includes(operation) && <p className="mt-2 flex gap-2 text-xs text-amber-800"><ShieldAlert className="h-4 w-4 shrink-0" />{translate('excludeWarning')}</p>}{operation === 'RESET' && <p className="mt-2 text-xs text-amber-800">{translate('resetWarning')}</p>}</div>
             <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('reason')}</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder={translate('reasonPlaceholder')} rows={4} maxLength={500} className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>

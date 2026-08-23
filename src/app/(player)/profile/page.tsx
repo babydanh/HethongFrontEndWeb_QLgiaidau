@@ -33,6 +33,8 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
+import { PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
+import { categoriesApi, Category } from '@/features/categories/api';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 
@@ -219,6 +221,7 @@ export default function ProfilePage() {
   const [coOrganizerTournaments, setCoOrganizerTournaments] = useState<Tournament[]>([]);
   const [refereeTournaments, setRefereeTournaments] = useState<WorkspaceRefereeInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -300,10 +303,11 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
-        const [data, communitiesRes, workspaceRes] = await Promise.all([
+        const [data, communitiesRes, workspaceRes, categoriesRes] = await Promise.all([
           usersApi.getProfile(),
           communitiesApi.getMyCommunities(),
-          tournamentsApi.getMyWorkspace()
+          tournamentsApi.getMyWorkspace(),
+          categoriesApi.getCategories().catch(() => null),
         ]);
         if (isMounted) {
           setProfileData(data);
@@ -313,6 +317,7 @@ export default function ProfilePage() {
           setOrganizedTournaments(workspaceRes.data?.organizedTournaments || []);
           setCoOrganizerTournaments(workspaceRes.data?.coOrganizerTournaments || []);
           setRefereeTournaments(workspaceRes.data?.refereeTournaments || workspaceRes.data?.refereeInvites || []);
+          setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
 
           // Sync roles/details with useAuthStore so header displays updated roles immediately
           if (data) {
@@ -654,6 +659,15 @@ export default function ProfilePage() {
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
                 </span>
               )}
+            </div>
+
+            {/* Gamified Multi-Sport Tier Badge Bar */}
+            <div className="pt-1">
+              <PlayerSportTierBadgeBar
+                userRankings={userRankings?.publicRanks}
+                categories={categories}
+                region="VN"
+              />
             </div>
           </div>
 

@@ -18,32 +18,31 @@ interface PlayerSportTierBadgeBarProps {
 }
 
 /**
- * Rút gọn tên Tier chuẩn theo cấu trúc phân hạng của SportO:
+ * Rút gọn tên Tier chuẩn theo hệ thống chữ cái của SportO:
  * - Tier S -> TS
- * - High Tier A -> HT1
- * - Low Tier A -> LT1
- * - High Tier B -> HT2
- * - Low Tier B -> LT2
- * - High Tier C -> HT3
- * - Low Tier C -> LT3
- * - High Tier D -> HT4
- * - Low Tier D -> LT4
- * - Custom specific (Pro/Adv/Int/Beg) -> PRO / ADV / INT / BEG
+ * - High Tier A -> HTA
+ * - Low Tier A -> LTA
+ * - High Tier B -> HTB
+ * - Low Tier B -> LTB
+ * - High Tier C -> HTC
+ * - Low Tier C -> LTC
+ * - High Tier D -> HTD
+ * - Low Tier D -> LTD
  */
 export function getShortTierCode(tierName?: string | null, elo?: number | null): string {
   if (!tierName && !elo) return '--';
   const name = (tierName || '').trim();
 
-  // Standard tiers
+  // Standard tiers (theo A, B, C, D, S)
   if (/Tier S/i.test(name)) return 'TS';
-  if (/High Tier A/i.test(name)) return 'HT1';
-  if (/Low Tier A/i.test(name)) return 'LT1';
-  if (/High Tier B/i.test(name)) return 'HT2';
-  if (/Low Tier B/i.test(name)) return 'LT2';
-  if (/High Tier C/i.test(name)) return 'HT3';
-  if (/Low Tier C/i.test(name)) return 'LT3';
-  if (/High Tier D/i.test(name)) return 'HT4';
-  if (/Low Tier D/i.test(name)) return 'LT4';
+  if (/High Tier A/i.test(name)) return 'HTA';
+  if (/Low Tier A/i.test(name)) return 'LTA';
+  if (/High Tier B/i.test(name)) return 'HTB';
+  if (/Low Tier B/i.test(name)) return 'LTB';
+  if (/High Tier C/i.test(name)) return 'HTC';
+  if (/Low Tier C/i.test(name)) return 'LTC';
+  if (/High Tier D/i.test(name)) return 'HTD';
+  if (/Low Tier D/i.test(name)) return 'LTD';
 
   // Sport-specific tier abbreviations
   if (/Pro/i.test(name)) return 'PRO';
@@ -51,21 +50,38 @@ export function getShortTierCode(tierName?: string | null, elo?: number | null):
   if (/Intermediate/i.test(name)) return 'INT';
   if (/Beginner/i.test(name)) return 'BEG';
 
-  // Fallback by elo value if name is generic
+  // Fallback by elo value
   if (typeof elo === 'number' && Number.isFinite(elo)) {
     if (elo >= 1800) return 'TS';
-    if (elo >= 1700) return 'HT1';
-    if (elo >= 1600) return 'LT1';
-    if (elo >= 1500) return 'HT2';
-    if (elo >= 1400) return 'LT2';
-    if (elo >= 1300) return 'HT3';
-    if (elo >= 1200) return 'LT3';
-    if (elo >= 1100) return 'HT4';
-    return 'LT4';
+    if (elo >= 1700) return 'HTA';
+    if (elo >= 1600) return 'LTA';
+    if (elo >= 1500) return 'HTB';
+    if (elo >= 1400) return 'LTB';
+    if (elo >= 1300) return 'HTC';
+    if (elo >= 1200) return 'LTC';
+    if (elo >= 1100) return 'HTD';
+    return 'LTD';
   }
 
   return '--';
 }
+
+const getTierColorClass = (shortCode: string): string => {
+  if (shortCode === 'TS') return 'text-amber-400 font-black drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]';
+  if (shortCode === 'HTA') return 'text-rose-500 font-extrabold';
+  if (shortCode === 'LTA') return 'text-rose-400 font-bold';
+  if (shortCode === 'HTB') return 'text-blue-500 font-extrabold';
+  if (shortCode === 'LTB') return 'text-blue-400 font-bold';
+  if (shortCode === 'HTC') return 'text-emerald-500 font-extrabold';
+  if (shortCode === 'LTC') return 'text-emerald-400 font-bold';
+  if (shortCode === 'HTD') return 'text-slate-300 font-bold';
+  if (shortCode === 'LTD') return 'text-slate-400 font-semibold';
+  if (shortCode === 'PRO') return 'text-amber-400 font-black';
+  if (shortCode === 'ADV') return 'text-emerald-400 font-bold';
+  if (shortCode === 'INT') return 'text-blue-400 font-bold';
+  if (shortCode === 'BEG') return 'text-slate-400 font-semibold';
+  return 'text-slate-500';
+};
 
 export function PlayerSportTierBadgeBar({
   userRankings = [],
@@ -166,14 +182,8 @@ export function PlayerSportTierBadgeBar({
                 {/* Short Tier Label */}
                 <span
                   className={cn(
-                    'mt-1 font-black text-[10px] tracking-tight leading-none',
-                    isRanked
-                      ? shortCode === 'TS'
-                        ? 'text-amber-400 font-extrabold drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]'
-                        : shortCode.startsWith('HT')
-                          ? 'text-amber-300'
-                          : 'text-sky-300'
-                      : 'text-slate-500',
+                    'mt-1 text-[10px] tracking-tight leading-none',
+                    isRanked ? getTierColorClass(shortCode) : 'text-slate-500 font-semibold',
                   )}
                 >
                   {shortCode}

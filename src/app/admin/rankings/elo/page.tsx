@@ -144,6 +144,7 @@ export default function AdminEloPage() {
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const requestSequence = useRef(0);
   const historyRequestSequence = useRef(0);
+  const playerDetailRequestSequence = useRef(0);
   const canManage = currentUser?.roles?.includes('ADMIN') === true;
   const activeCategories = useMemo(() => (Array.isArray(categories) ? categories.filter((category) => category?.isActive) : []), [categories]);
   const selectedCategory = useMemo(
@@ -218,7 +219,12 @@ export default function AdminEloPage() {
           setLoading(false);
         }
       }).catch((error: unknown) => {
-        if (!cancelled) toast.error(getErrorMessage(error, translate('loadCategoriesFailed')));
+        if (!cancelled) {
+          setCategories([]);
+          setPlayers([]);
+          setLoading(false);
+          toast.error(getErrorMessage(error, translate('loadCategoriesFailed')));
+        }
       });
     }, 0);
     return () => {
@@ -240,23 +246,33 @@ export default function AdminEloPage() {
     void loadContexts({ nextQuery });
   };
 
+  const closePlayerDetail = () => {
+    playerDetailRequestSequence.current += 1;
+    setSelectedPlayer(null);
+    setPlayerDetail(null);
+    setPlayerDetailLoading(false);
+  };
+
   const openPlayerDetail = async (player: AdminEloPlayerSummary) => {
+    const requestId = ++playerDetailRequestSequence.current;
     setSelectedPlayer(player);
     setPlayerDetail(null);
     setPlayerDetailLoading(true);
     try {
       const result = await rankingsApi.getAdminPlayerDetail(player.userId, query.categoryId);
+      if (requestId !== playerDetailRequestSequence.current) return;
       setPlayerDetail(result.data);
     } catch (error: unknown) {
+      if (requestId !== playerDetailRequestSequence.current) return;
       toast.error(getErrorMessage(error, translate('loadProfileFailed')));
-      setSelectedPlayer(null);
+      closePlayerDetail();
     } finally {
-      setPlayerDetailLoading(false);
+      if (requestId === playerDetailRequestSequence.current) setPlayerDetailLoading(false);
     }
   };
 
   const openOperation = (context: AdminRankingContext) => {
-    setSelectedPlayer(null);
+    closePlayerDetail();
     setSelected(context);
     setOperation('ADD');
     setValue('');
@@ -359,7 +375,7 @@ export default function AdminEloPage() {
   }, [translate]);
 
   const openHistory = (context: AdminRankingContext) => {
-    setSelectedPlayer(null);
+    closePlayerDetail();
     setHistoryContext(context);
     void loadHistory(context);
   };
@@ -408,7 +424,7 @@ export default function AdminEloPage() {
 
       {!loading && hasMore && <div className="flex justify-center"><Button type="button" variant="outline" disabled={loadingMore || !nextCursor} onClick={() => void loadContexts({ nextQuery: query, cursor: nextCursor, append: true })}>{loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{translate('loadMoreUsers')}</Button></div>}
 
-      <Modal open={selectedPlayer !== null} onOpenChange={(open) => { if (!open) setSelectedPlayer(null); }}>
+      <Modal open={selectedPlayer !== null} onOpenChange={(open) => { if (!open) closePlayerDetail(); }}>
         <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <ModalHeader>
             <ModalTitle>{selectedPlayer ? `${selectedPlayer.fullName} · ${translate('profileAndManagement')}` : translate('profileAndManagement')}</ModalTitle>

@@ -19,8 +19,6 @@ import {
   HelpCircle,
   X,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
@@ -30,7 +28,6 @@ import { getErrorMessage } from '@/utils/error';
 import { calculateStandings, getConfiguredStandingsScoring, getFootballForm } from './helpers';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { getBracketStatLabels, resolveBracketMatchRules } from './sportRuleDisplay';
-import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
 import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 import toast from 'react-hot-toast';
 
@@ -45,10 +42,8 @@ interface Props {
   fallbackSportRuleKind?: SportRuleKind;
   roundConfig?: StageRoundConfig | null;
   hideStandings?: boolean;
-  // Controlled round navigation (from parent for sync with cross table)
-    activeRound?: number | null;
-  onRoundChange?: (round: number) => void;
-  roundInfoMatches?: BracketMatch[];
+    /** The selected leg. Internal scheduler rounds are intentionally not exposed here. */
+  activeLeg?: number;
 
 }
 
@@ -63,13 +58,9 @@ export function RoundRobinView({
   fallbackSportRuleKind,
   roundConfig,
   hideStandings = false,
-    activeRound: controlledActiveRound,
-  onRoundChange,
-  roundInfoMatches,
+  activeLeg = 1,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
-  const roundContextMatches = roundInfoMatches ?? matches;
-
   const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
   const effectiveRuleKind = sampleMatch
     ? resolveBracketMatchRules(sampleMatch, fallbackSportRuleKind).kind
@@ -96,28 +87,7 @@ export function RoundRobinView({
     return advanceConfig?.teamsAdvancing ?? 0;
   })();
 
-  const byRound: Record<number, BracketMatch[]> = {};
-  matches.forEach((m) => {
-    const round = getRoundRobinRoundInfo(m, roundContextMatches).roundWithinLeg;
-    if (!byRound[round]) byRound[round] = [];
-    byRound[round].push(m);
-  });
-  const rounds = Object.keys(byRound)
-    .map(Number)
-    .sort((a, b) => a - b);
-  const [selectedRound, setSelectedRound] = useState<number | null>(null);
-  // If controlled (parent provides activeRound), use that; else use internal state
-  const isControlled = controlledActiveRound !== undefined;
-  const activeRound = isControlled
-    ? (controlledActiveRound != null && rounds.includes(controlledActiveRound) ? controlledActiveRound : rounds[0] ?? null)
-    : (selectedRound != null && rounds.includes(selectedRound) ? selectedRound : rounds[0] ?? null);
-    const setActiveRound = (r: number) => {
-    if (isControlled) onRoundChange?.(r);
-    else setSelectedRound(r);
-  };
-  const visibleRounds = activeRound == null
-    ? rounds
-    : rounds.filter((round) => round === activeRound);
+  const scheduleMatches = matches.filter((match) => !match.isBye);
 
 
   return (
@@ -361,7 +331,7 @@ export function RoundRobinView({
           </div>
         )}
       </div>
-      )}      {/* Danh sách trận đấu nhóm rõ ràng theo từng Vòng */}
+      )}      {/* All pairings for the selected leg are shown together. */}
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
           <Clock className="w-4 h-4 text-slate-400" /> {translate('matchSchedule')}
@@ -370,57 +340,23 @@ export function RoundRobinView({
           </span>
         </h5>
 
-        {rounds.length === 0 ? (
+        {scheduleMatches.length === 0 ? (
           <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
             {translate("noMatches")}
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {rounds.length > 1 && (
-              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2" aria-label={translate('selectGroupRound')}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = Math.max(0, rounds.indexOf(activeRound ?? rounds[0]));
-                    setActiveRound(rounds[Math.max(0, currentIndex - 1)]);
-                  }}
-                  disabled={activeRound == null || activeRound <= rounds[0]}
-                  aria-label={translate('previousRound')}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="text-xs font-bold text-slate-700">
-                  {translate('roundProgress', { current: activeRound ?? rounds[0], total: rounds.length })}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = Math.max(0, rounds.indexOf(activeRound ?? rounds[0]));
-                    setActiveRound(rounds[Math.min(rounds.length - 1, currentIndex + 1)]);
-                  }}
-                  disabled={activeRound == null || activeRound >= rounds[rounds.length - 1]}
-                  aria-label={translate('nextRound')}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-            {visibleRounds.map((roundNum) => {
-              const roundMatches = byRound[roundNum]?.filter(m => !m.isBye) || [];
-              if (roundMatches.length === 0) return null;
-              return (
-                <div key={roundNum} className="flex flex-col gap-2.5">
+            {scheduleMatches.length > 0 && (
+              <div key="selected-leg-schedule" className="flex flex-col gap-2.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black uppercase tracking-wider text-slate-700 bg-slate-200/80 px-2.5 py-1 rounded-md">
-                      {translate('roundTitle', { round: roundNum })}
+                      {activeLeg ? translate('legLabel', { number: activeLeg }) : translate('matchSchedule')}
                     </span>
                     <div className="h-px flex-1 bg-slate-200" />
                   </div>
 
                   <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    {roundMatches
+                    {scheduleMatches
                       .sort((a, b) => a.matchOrder - b.matchOrder)
                       .map((m) => {
                         const done = m.status === 'COMPLETED';
@@ -443,7 +379,7 @@ export function RoundRobinView({
                           >
                             <div className="mb-1.5 flex items-center justify-between">
                               <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded">
-                                Trận #{m.matchOrder}
+                                {translate('matchNumber', { number: m.matchOrder })}
                               </span>
                               {live && (
                                 <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse">
@@ -495,8 +431,7 @@ export function RoundRobinView({
                       })}
                   </div>
                 </div>
-              );
-            })}
+            )}
           </div>
         )}
       </div>

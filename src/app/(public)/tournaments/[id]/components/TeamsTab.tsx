@@ -213,8 +213,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
                             <span>{team.teamName}</span>
                             {team.seed !== null && (
-                              <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                Seed {team.seed}
+<span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                {translate('seedLabel', { number: team.seed })}
                               </span>
                             )}
                           </div>
@@ -316,7 +316,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                             ? 'bg-blue-50 text-blue-700 border-blue-200' 
                                             : 'bg-slate-50 text-slate-600 border-slate-200'
                                         }`}>
-                                          {member.role === 'CAPTAIN' ? translate('teamCaptain') : translate('teamMember')}
+                                          {member.role === 'CAPTAIN' ? translate('teamCaptain') : member.role === 'RESERVE' ? translate('reserveRole') : member.role === 'MAIN' ? translate('mainRole') : translate('teamMember')}
                                         </span>
                                     </div>
                                   );

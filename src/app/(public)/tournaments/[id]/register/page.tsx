@@ -1159,18 +1159,6 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         <input type="hidden" {...register('teamName')} value={user?.fullName || registrationTranslate('athleteFallback')} />
                       </div>
 
-                      {/* Thông tin đăng ký bổ sung (Custom Fields) */}
-                      {registrationFields && registrationFields.length > 0 && (
-                        <RegistrationCustomFields
-                          tournamentId={id}
-                          fields={registrationFields}
-                          responses={customResponses}
-                          onChange={(fieldId, value) =>
-                            setCustomResponses((current) => ({ ...current, [fieldId]: value }))
-                          }
-                        />
-                      )}
-
                       {/* Chi tiết lệ phí & xác nhận */}
                       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
                         <div className="flex justify-between items-center text-xs text-slate-600">
@@ -1202,6 +1190,18 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <li>{registrationTranslate('beforeConfirmationTracking')}</li>
                         </ul>
                       </div>
+
+                      {/* Thông tin đăng ký bổ sung (Custom Fields) */}
+                      {registrationFields && registrationFields.length > 0 && (
+                        <RegistrationCustomFields
+                          tournamentId={id}
+                          fields={registrationFields}
+                          responses={customResponses}
+                          onChange={(fieldId, value) =>
+                            setCustomResponses((current) => ({ ...current, [fieldId]: value }))
+                          }
+                        />
+                      )}
 
                       <Button
                         type="submit"

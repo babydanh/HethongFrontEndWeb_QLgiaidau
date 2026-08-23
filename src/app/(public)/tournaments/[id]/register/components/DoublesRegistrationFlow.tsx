@@ -620,18 +620,6 @@ export default function DoublesRegistrationFlow({
               </div>
             )}
 
-            {/* Thông tin đăng ký bổ sung (Custom Fields) */}
-            {registrationFields && registrationFields.length > 0 && (
-              <RegistrationCustomFields
-                tournamentId={tournamentId}
-                fields={registrationFields}
-                responses={customResponses || {}}
-                onChange={(fieldId, value) =>
-                  onCustomResponsesChange?.((current) => ({ ...current, [fieldId]: value }))
-                }
-              />
-            )}
-
             {tournament?.isRanked && (
               <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-700">
                 <input
@@ -660,6 +648,18 @@ export default function DoublesRegistrationFlow({
                 </span>
               </div>
             </div>
+
+            {/* Thông tin đăng ký bổ sung (Custom Fields) */}
+            {registrationFields && registrationFields.length > 0 && (
+              <RegistrationCustomFields
+                tournamentId={tournamentId}
+                fields={registrationFields}
+                responses={customResponses || {}}
+                onChange={(fieldId, value) =>
+                  onCustomResponsesChange?.((current) => ({ ...current, [fieldId]: value }))
+                }
+              />
+            )}
 
             <Button
               type="submit"

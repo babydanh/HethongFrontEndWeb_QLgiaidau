@@ -2,11 +2,10 @@
 
 import React, { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, TableProperties } from 'lucide-react';
+import { TableProperties } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
-import { buildMatchesByRound } from './helpers';
 import { RoundRobinView } from './RoundRobinView';
 import { GroupCrossMatrixView } from './GroupCrossMatrixView';
 import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
@@ -37,17 +36,6 @@ export function PagedRoundRobinView({
   const translate = useTranslations('TournamentDetail');
   const [subView, setSubView] = useState<'matrix' | 'table'>('matrix');
   const [activeLeg, setActiveLeg] = useState(1);
-  // Shared round state — drives both cross table and match list
-  const [activeRound, setActiveRound] = useState<number | null>(null);
-
-  const byRound = useMemo(() => buildMatchesByRound(matches), [matches]);
-  const rounds = useMemo(
-    () => Object.keys(byRound).map(Number).sort((a, b) => a - b),
-    [byRound],
-  );
-
-
-
   const participantCount = useMemo(() => {
     const ids = new Set<string>();
     matches.forEach((match) => {
@@ -67,8 +55,9 @@ export function PagedRoundRobinView({
       .map((match) => match.leg)
       .filter((leg): leg is number => typeof leg === 'number' && Number.isInteger(leg) && leg > 0);
     const configuredLegs = Number(roundConfig?.roundsToPlay ?? roundConfig?.rounds_to_play ?? 0);
-    return Math.max(1, configuredLegs, ...persistedLegs, Math.ceil((rounds[rounds.length - 1] ?? 0) / roundsPerLeg));
-  }, [matches, roundConfig, rounds, roundsPerLeg]);
+    const maxRoundNumber = Math.max(0, ...matches.map((match) => match.roundNumber));
+    return Math.max(1, configuredLegs, ...persistedLegs, Math.ceil(maxRoundNumber / roundsPerLeg));
+  }, [matches, roundConfig, roundsPerLeg]);
 
   // Use a derived clamped leg to prevent out-of-bounds rendering
   const currentLeg = Math.min(Math.max(activeLeg, 1), legCount);
@@ -77,24 +66,8 @@ export function PagedRoundRobinView({
     () => matches.filter((match) => getRoundRobinRoundInfo(match, matches).leg === currentLeg),
     [currentLeg, matches],
   );
-  const legRounds = useMemo(
-    () => Array.from(new Set(legMatches.map((match) => getRoundRobinRoundInfo(match, matches).roundWithinLeg))).sort((a, b) => a - b),
-    [legMatches, matches],
-  );
-  // Round numbers stay global across legs. Keep the cursor in the selected leg.
-  const currentRound = activeRound != null && legRounds.includes(activeRound)
-    ? activeRound
-    : legRounds[0] ?? null;
-
   const changeLeg = (nextLeg: number) => {
-    const clampedLeg = Math.min(Math.max(nextLeg, 1), legCount);
-    const nextLegRounds = Array.from(new Set(
-      matches
-        .filter((match) => getRoundRobinRoundInfo(match, matches).leg === clampedLeg)
-        .map((match) => getRoundRobinRoundInfo(match, matches).roundWithinLeg),
-    )).sort((a, b) => a - b);
-    setActiveLeg(clampedLeg);
-    setActiveRound(nextLegRounds[0] ?? null);
+    setActiveLeg(Math.min(Math.max(nextLeg, 1), legCount));
   };
 
   const viewButtons = (exclude: 'matrix' | 'table') => (
@@ -120,10 +93,21 @@ export function PagedRoundRobinView({
     </div>
   );
 
-  // Keep every team in the matrix, but calculate/display only results through
-  // the selected round. This makes round navigation progressive without
-  // dropping teams that have a BYE or play later in the leg.
-  const cumulativeMatches = legMatches;
+  const legSelector = legCount > 1 ? (
+    <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1" aria-label={translate('selectGroupLeg')}>
+      {Array.from({ length: legCount }, (_, index) => index + 1).map((leg) => (
+        <button
+          key={leg}
+          type="button"
+          onClick={() => changeLeg(leg)}
+          aria-pressed={currentLeg === leg}
+          className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${currentLeg === leg ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'}`}
+        >
+          {translate('legLabel', { number: leg })}
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   if (subView === 'matrix') {
     return (
@@ -132,23 +116,24 @@ export function PagedRoundRobinView({
           <p className="text-xs font-semibold text-slate-500">
             {legCount > 1 ? translate('resultsAcrossLegs', { count: legCount }) : translate('resultsSummary')}
           </p>
-          {viewButtons('matrix')}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {legSelector}
+            {viewButtons('matrix')}
+          </div>
         </div>
-        {/* Cross matrix — navigated per round, shows cumulative scores */}
+        {/* Cross matrix for the complete selected leg. */}
         <GroupCrossMatrixView
-          matches={cumulativeMatches}
+          matches={legMatches}
           groupName={translate('crossTable')}
           activeLeg={currentLeg}
           legCount={legCount}
-          onLegChange={changeLeg}
-          throughRound={currentRound}
+          throughRound={null}
           roundConfig={roundConfig as Record<string, unknown> | null | undefined}
           roundInfoMatches={matches}
         />
-        {/* Match list — controlled by same activeRound */}
+        {/* Match list — every pairing in the selected leg, without internal round pagination. */}
         <RoundRobinView
           matches={legMatches}
-          roundInfoMatches={matches}
           onScheduleMatch={onScheduleMatch}
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}
@@ -158,8 +143,7 @@ export function PagedRoundRobinView({
           roundConfig={roundConfig}
           tiebreakerMode={tiebreakerMode}
           hideStandings={true}
-          activeRound={currentRound}
-          onRoundChange={setActiveRound}
+          activeLeg={currentLeg}
         />
       </div>
     );
@@ -169,38 +153,14 @@ export function PagedRoundRobinView({
     <div className="flex flex-col gap-4 animate-in fade-in duration-200">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-semibold text-slate-500">{translate('resultsAcrossLegs', { count: legCount })}</p>
-        {viewButtons('table')}
-      </div>
-      {legCount > 1 && (
-        <div className="flex items-center justify-center gap-2" aria-label={translate('selectGroupLeg')}>
-          <button
-            type="button"
-            onClick={() => changeLeg(currentLeg - 1)}
-            disabled={currentLeg <= 1}
-            aria-label={translate('legLabel', { number: Math.max(1, currentLeg - 1) })}
-            className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="min-w-24 text-center text-xs font-semibold text-slate-600">
-            {translate('legProgress', { current: currentLeg, total: legCount })}
-          </span>
-          <button
-            type="button"
-            onClick={() => changeLeg(currentLeg + 1)}
-            disabled={currentLeg >= legCount}
-            aria-label={translate('legLabel', { number: Math.min(legCount, currentLeg + 1) })}
-            className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {legSelector}
+          {viewButtons('table')}
         </div>
-      )}
+      </div>
       <RoundRobinView
         matches={legMatches}
-        roundInfoMatches={matches}
-        activeRound={currentRound}
-        onRoundChange={setActiveRound}
+        activeLeg={currentLeg}
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}

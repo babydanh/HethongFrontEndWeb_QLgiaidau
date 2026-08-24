@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { DollarSign, Gift, Info, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -69,9 +69,6 @@ export function FinanceTab({
     const canPayout = (isTournamentCompleted(tournament.status) || isTournamentInProgress(tournament.status)) && !!handleRequestPayout;
   const formatEntryFee = (value: number) => (Number.isFinite(value) && value > 0 ? value.toLocaleString(numberLocale) : '');
 
-  useEffect(() => {
-    if (!isEntryFeeFocused) setEntryFeeDraft(formatEntryFee(entryFee));
-  }, [entryFee, isEntryFeeFocused, numberLocale]);
 
   const handleEntryFeeChange = (rawValue: string) => {
     const digitsOnly = rawValue.replace(/[^0-9]/g, '');

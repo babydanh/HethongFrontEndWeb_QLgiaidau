@@ -23,19 +23,19 @@ export function RouteGuard({ allowedRoles, children }: RouteGuardProps) {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const mounted = useMounted();
+  const hasAllowedRole = Boolean(user?.roles?.some((role) => allowedRoles.includes(role)));
 
   useEffect(() => {
     if (!mounted) return;
 
     if (!isAuthenticated) {
-      router.push('/login');
-    } else if (user && !allowedRoles.some(r => user.roles?.includes(r))) {
-      router.push('/');
+      router.replace('/login');
+    } else if (user && !hasAllowedRole) {
+      router.replace('/');
     }
-  }, [mounted, isAuthenticated, user, allowedRoles, router]);
+  }, [hasAllowedRole, mounted, isAuthenticated, user, router]);
 
-  if (!mounted || !isAuthenticated || !user) return null;
-  if (!allowedRoles.some(r => user.roles?.includes(r))) return null;
+  if (!mounted || !isAuthenticated || !user || !hasAllowedRole) return null;
 
   return <>{children}</>;
 }

@@ -192,9 +192,15 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         };
                       });
                   const isExpandable = isExpandableFormat || members.length > 1;
-                  // Singles are intentionally open by default; expandable formats
-                  // keep their existing one-row-at-a-time interaction.
-                  const isExpanded = !isExpandable || expandedTeamId === team.id;
+                  const inlineSingleMember = members[0];
+                  const inlineSingleName =
+                    inlineSingleMember?.fullName?.trim() ||
+                    team.teamName?.trim() ||
+                    team.registeredBy?.fullName?.trim() ||
+                    translate('teamMember');
+                  const inlineSingleAvatar =
+                    inlineSingleMember?.avatarUrl || team.registeredBy?.avatarUrl || null;
+                  const isExpanded = isExpandable && expandedTeamId === team.id;
 
                   return (
                     <React.Fragment key={team.id}>
@@ -208,10 +214,23 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                                 <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{(currentPage - 1) * pageSize + index + 1}</td>
 
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
-                            <span>{team.teamName}</span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5 leading-normal sm:gap-2">
+                            {!isExpandable ? (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500" aria-hidden="true">
+                                  {inlineSingleAvatar ? (
+                                    <img src={inlineSingleAvatar} alt="" className="h-full w-full object-cover" />
+                                  ) : (
+                                    inlineSingleName.charAt(0).toUpperCase()
+                                  )}
+                                </span>
+                                <span className="min-w-0 truncate" title={inlineSingleName}>{inlineSingleName}</span>
+                              </div>
+                            ) : (
+                              <span>{team.teamName}</span>
+                            )}
                             {team.seed !== null && (
-<span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700 sm:text-[10px]">
                                 {translate('seedLabel', { number: team.seed })}
                               </span>
                             )}
@@ -246,7 +265,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           )}
                         </td>
                       </tr>
-                      {isExpanded && (
+                      {isExpandable && isExpanded && (
                         <tr className="bg-slate-50/50 animate-in fade-in duration-200">
                           <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
                             <div className="flex flex-col gap-4">

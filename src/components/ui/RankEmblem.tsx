@@ -346,7 +346,7 @@ export function RankEmblem({
   sportName,
   size = 'md',
   layout = 'badge',
-  showElo = true,
+  showElo = false,
   className,
 }: RankEmblemProps) {
   const theme = getTierTheme(tierName, elo, tierCode);
@@ -405,7 +405,8 @@ export function RankEmblem({
         dim.gap,
         className,
       )}
-      title={`${theme.name} (${theme.code}) • ${elo ?? 0} ELO`}
+              title={`${sportName ? `${sportName}: ` : ''}${theme.name} (${theme.code})`}
+
     >
       <PolygonEmblemIcon theme={theme} sizePx={dim.iconSize} sportLogo={sportLogo} />
       <div className="flex flex-col leading-tight min-w-0 pr-1">

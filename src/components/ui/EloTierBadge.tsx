@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cn } from '@/utils/cn';
 import { getRankStyle } from '@/utils/rank-style';
 import { getShortTierCode } from '@/components/ui/PlayerSportTierBadgeBar';
+import { getSportLogo } from '@/constants/sports';
 import { PolygonEmblemIcon, getTierTheme } from '@/components/ui/RankEmblem';
 
 export interface EloTierBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -50,10 +51,14 @@ export function EloTierBadge({
         size === 'sm' ? 'gap-1 text-[11px]' : size === 'md' ? 'gap-1.5 text-xs' : 'gap-2 text-sm',
         className,
       )}
-      title={`${tier.name} (${tier.shortCode}) • ${elo} ELO`}
+      title={`${categoryName ? `${categoryName}: ` : ''}${tier.name} (${tier.shortCode})`}
       {...props}
     >
-      <PolygonEmblemIcon theme={tier.theme} sizePx={iconSizes[size]} />
+      <PolygonEmblemIcon
+        theme={tier.theme}
+        sizePx={iconSizes[size]}
+        sportLogo={getSportLogo(categoryName)}
+      />
       <span
         className="font-black uppercase tracking-tight leading-none"
         style={{
@@ -64,9 +69,6 @@ export function EloTierBadge({
         }}
       >
         {showFullName ? tier.name : tier.shortCode}
-      </span>
-      <span className="text-[10px] font-semibold text-slate-400">
-        ({elo})
       </span>
     </div>
   );

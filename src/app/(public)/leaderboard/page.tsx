@@ -20,6 +20,7 @@ interface LeaderboardSearchResult {
     email?: string;
     eloPoints: number;
     tierName: string;
+    categoryName?: string;
 }
 
 export default function LeaderboardPage() {
@@ -85,12 +86,14 @@ export default function LeaderboardPage() {
                             ...u,
                             eloPoints: matchRank?.eloPoints ?? 1000,
                             tierName: matchRank?.tier?.name || matchRank?.tierName || t("unranked"),
+                            categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
                         };
                     } catch {
                         return {
                             ...u,
                             eloPoints: 1000,
                             tierName: t("unranked"),
+                            categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
                         };
                     }
                 })
@@ -288,13 +291,13 @@ export default function LeaderboardPage() {
                                             </h4>
                                             <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                         </div>
-                                        <div className="text-right shrink-0 flex flex-col items-end">
-                                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                {u.eloPoints}
-                                            </span>
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
-                                                {u.tierName}
-                                            </span>
+                                        <div className="shrink-0">
+                                            <EloTierBadge
+                                                elo={u.eloPoints}
+                                                tierName={u.tierName}
+                                                categoryName={u.categoryName}
+                                                size="sm"
+                                            />
                                         </div>
                                     </button>
                                 ))}
@@ -696,9 +699,15 @@ export default function LeaderboardPage() {
                                                         {player?.user?.fullName || t("waiting")}
                                                     </span>
                                                     {player ? (
-                                                        <span className="text-[11px] font-bold text-blue-600">{player.eloPoints} ELO</span>
+                                                        <EloTierBadge
+                                                            elo={player.eloPoints}
+                                                            tierName={getCanonicalTierName(player)}
+                                                            categoryName={player.categoryName}
+                                                            size="sm"
+                                                            className="scale-90 origin-center"
+                                                        />
                                                     ) : (
-                                                        <span className="text-[10px] text-slate-400 font-bold">--- ELO</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold">---</span>
                                                     )}
                                                 </button>
                                             );
@@ -852,7 +861,6 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                 <th className="py-3 px-3 w-12 text-center">{t("rankHeader")}</th>
                                 <th className="py-3 px-3">{t("player")}</th>
                                 <th className="py-3 px-3">{t("eloRank")}</th>
-                                <th className="py-3 px-3 text-right">ELO</th>
                                 <th className="py-3 px-3 text-right">{t("winRate")}</th>
                             </tr>
                         </thead>
@@ -925,13 +933,6 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                 size="sm"
                                                 className="scale-90 origin-left"
                                             />
-                                            )}
-                                        </td>
-                                        <td className="py-2.5 px-3 text-right font-bold text-blue-650">
-                                            {isPlaceholder ? (
-                                                <span className="text-slate-450 font-bold">---</span>
-                                            ) : (
-                                                rank.eloPoints
                                             )}
                                         </td>
                                         <td className="py-2.5 px-3 text-right text-emerald-650 font-bold">

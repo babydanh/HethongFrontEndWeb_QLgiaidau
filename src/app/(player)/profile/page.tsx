@@ -33,11 +33,10 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
-import { getShortTierCode, PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
+import { PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
-import { getRankStyle } from '@/utils/rank-style';
-import { getSportLogo } from '@/constants/sports';
+
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 
@@ -662,38 +661,7 @@ export default function ProfilePage() {
                   </span>
                 );
               })}
-              {(() => {
-                const activeRanks = eligiblePublicRanks;
 
-                if (activeRanks.length > 0) {
-                  return activeRanks.map((rank) => (
-                    <EloTierBadge
-                      key={rank.id}
-                      elo={rank.eloPoints}
-                      tierName={rank.tier?.name || rank.tierName}
-                      categoryName={rank.categoryName}
-                      size="md"
-                    />
-                  ));
-                }
-                if (latestEloHistory) {
-                  const historyCategoryName = categories.find((category) => category.id === latestEloHistory.categoryId)?.name;
-                  const historyTierName = getRankStyle(latestEloHistory.newElo, undefined, historyCategoryName).name;
-                  return (
-                    <EloTierBadge
-                      elo={latestEloHistory.newElo}
-                      tierName={historyTierName}
-                      categoryName={historyCategoryName}
-                      size="md"
-                    />
-                  );
-                }
-                return (
-                  <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                    {translate("unranked")}
-                  </span>
-                );
-              })()}
               {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}

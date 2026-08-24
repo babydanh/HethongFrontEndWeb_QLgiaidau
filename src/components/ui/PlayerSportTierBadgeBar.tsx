@@ -178,12 +178,12 @@ export function PlayerSportTierBadgeBar({
               key={category.id}
               title={
                 isRanked
-                  ? `${category.name}: ${activeSportRank?.eloPoints} ELO (${rankStyle?.name || shortCode}) • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
+                  ? `${category.name}: ${rankStyle?.name || shortCode} • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
                   : `${category.name}: ${translate('unranked')}`
               }
               aria-label={
                 isRanked
-                  ? `${category.name}: ${rankStyle?.name || shortCode}, ${activeSportRank?.eloPoints} ELO, ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
+                  ? `${category.name}: ${rankStyle?.name || shortCode}, ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
                   : `${category.name}: ${translate('unranked')}`
               }
               className={cn(

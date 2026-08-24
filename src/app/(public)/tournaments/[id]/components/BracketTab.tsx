@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import type { Tournament, Division, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
-import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
+import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
+import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
-import { Archive, LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
+import { Archive, LayoutGrid, Maximize2, Trophy, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type {
   BracketDragHandlers,
@@ -18,7 +18,6 @@ import type {
 import { UPPER_SET, LOWER_SET } from './bracket';
 import { SingleElimView, DoubleElimView, RoundRobinView } from './bracket';
 import { PagedSingleElimView, PagedDoubleElimView, PagedRoundRobinView } from './bracket';
-import { getDivisionMatchLabel } from '@/utils/tournament-display';
 import { socketClient } from '@/lib/socket';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -337,7 +336,6 @@ export default function BracketTab({
   refreshKey,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
-  const displayTranslate = useTranslations('TournamentDisplay');
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const effectiveSportRuleKind =
     fallbackSportRuleKind ?? getSportRuleKind(tournament.sportRules);
@@ -353,49 +351,11 @@ export default function BracketTab({
   const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
   const [result, setResult] = useState<TournamentResult | null>(null);
   const [resultError, setResultError] = useState(false);
-  const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
   const [matchUpdateVersion, setMatchUpdateVersion] = useState(0);
   const [appliedOwnerSnapshot, setAppliedOwnerSnapshot] = useState<typeof bracketSnapshot>(bracketSnapshot);
   const bracketLoadedRef = useRef(hasOwnerSnapshot);
   const lastRefreshKeyRef = useRef(refreshKey);
   const lastMatchUpdateVersionRef = useRef(0);
-
-  // Organizer bracket pages pass the parent tournament together with a
-  // divisionId. Never render the parent's genderRestriction in that case:
-  // another division (for example Đơn nữ) can otherwise leak into Đơn nam.
-  useEffect(() => {
-    let cancelled = false;
-    if (!divisionId) {
-      void Promise.resolve().then(() => {
-        if (!cancelled) setDisplayDivision(null);
-      });
-      return () => { cancelled = true; };
-    }
-
-    void divisionsApi.getDivisions(effectiveTournamentId)
-      .then((response) => {
-        if (cancelled) return;
-        setDisplayDivision(response.data?.find((division) => division.id === divisionId) ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setDisplayDivision(null);
-      });
-
-    return () => { cancelled = true; };
-  }, [divisionId, effectiveTournamentId]);
-
-  const displayMatchLabel = getDivisionMatchLabel(
-    divisionId ? displayDivision?.matchType : tournament.matchType,
-    divisionId ? displayDivision?.genderRestriction : tournament.genderRestriction,
-    {
-      maleGender: displayTranslate('maleGender'),
-      femaleGender: displayTranslate('femaleGender'),
-      mixedGender: displayTranslate('mixedGender'),
-      singlesFormat: displayTranslate('singlesFormat'),
-      doublesFormat: displayTranslate('doublesFormat'),
-      mixedDoublesFormat: displayTranslate('mixedDoublesFormat'),
-    },
-  );
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -538,17 +498,8 @@ export default function BracketTab({
   // ── Empty ──
   if (!renderedStages.length) {
     return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
-          <Info className="w-3.5 h-3.5" />
-          <span>
-            {translate("rankingLabel")}:{' '}
-            <strong className="text-slate-600">{tournament.name}</strong>
-          </span>
-          {displayMatchLabel !== displayTranslate('unknownFormat') && (
-            <span className="text-slate-300">• {displayMatchLabel}</span>
-          )}
-        </div>
+            <div className="space-y-3">
+
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-lg">
           <Trophy className="w-12 h-12 text-slate-200 mb-3" />
           <h4 className="font-bold text-slate-600 mb-1">{translate("bracketEmptyTitle")}</h4>
@@ -587,21 +538,10 @@ export default function BracketTab({
           {translate('resultsLoadError')}
         </div>
       )}
-      {/* Division info bar & View Mode Switcher */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
-          <Info className="w-3.5 h-3.5" />
-          <span>
-            {translate("rankingLabel")}:{' '}
-            <strong className="text-slate-700">{tournament.name}</strong>
-          </span>
-          {displayMatchLabel !== displayTranslate('unknownFormat') && (
-            <span className="text-slate-300">• {displayMatchLabel}</span>
-          )}
-        </div>
+            {/* View mode switcher: keep the diagram content below this compact toolbar. */}
+      <div className="flex justify-end border-b border-slate-100 pb-3">
+        {activeStageSupportsFullView && <div className="grid w-full max-w-sm grid-cols-2 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner sm:w-auto">
 
-        {/* Full sơ đồ chỉ áp dụng cho vòng loại trực tiếp. */}
-        {activeStageSupportsFullView && <div className="grid w-full grid-cols-2 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner sm:w-auto">
           <button
             onClick={() => setViewMode('paged')}
             className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all cursor-pointer sm:px-3 sm:py-1.5 sm:text-xs ${

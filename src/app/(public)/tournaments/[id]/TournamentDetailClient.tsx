@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } from '@/features/tournaments/api';
@@ -77,8 +78,28 @@ const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'sponsors',
 ];
 
+function createDivisionTournament(tournament: Tournament, division: Division): Tournament {
+  return {
+    ...tournament,
+    id: tournament.id,
+    name: division.name || tournament.name,
+    matchType: division.matchType,
+    genderRestriction: division.genderRestriction ?? null,
+    format: division.bracketType ?? tournament.format,
+    prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
+    status: tournament.status,
+    maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
+    entryFee: division.entryFee ?? tournament.entryFee,
+    _count: {
+      ...(tournament._count || { matches: 0, participants: 0 }),
+      participants: division._count?.participants ?? 0,
+    },
+  };
+}
+
 export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const reduceMotion = useReducedMotion();
   const registrationTranslate = useTranslations('RegistrationMode');
 const commonTranslate = useTranslations('Common');
   const locale = useLocale();
@@ -101,7 +122,6 @@ const commonTranslate = useTranslations('Common');
   const searchParams = useSearchParams();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [openDivisionId, setOpenDivisionId] = useState<string>('');
-  const [renderedDivisionId, setRenderedDivisionId] = useState<string>('');
   const [divisionsList, setDivisionsList] = useState<Division[]>([]);
   const [initialDivisionId] = useState(() => searchParams.get('divisionId'));
   const visibleDivisionId = openDivisionId || selectedDivisionId;
@@ -111,26 +131,7 @@ const commonTranslate = useTranslations('Common');
     }
 
     const division = divisionsList.find((item) => item.id === visibleDivisionId);
-    if (!division) {
-      return tournament;
-    }
-
-    return {
-      ...tournament,
-      id: tournament.id,
-      name: division.name || tournament.name,
-      matchType: division.matchType,
-      genderRestriction: division.genderRestriction ?? null,
-      format: division.bracketType ?? tournament.format,
-      prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
-      status: tournament.status,
-      maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
-      entryFee: division.entryFee ?? tournament.entryFee,
-      _count: {
-        ...(tournament._count || { matches: 0, participants: 0 }),
-        participants: division._count?.participants ?? 0,
-      },
-    };
+    return division ? createDivisionTournament(tournament, division) : tournament;
   })();
   const activeTournament = selectedDivision ?? tournament;
 
@@ -151,6 +152,7 @@ const commonTranslate = useTranslations('Common');
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const contentDetailRef = useRef<HTMLDivElement>(null);
+  const divisionRowRefs = useRef(new Map<string, HTMLDivElement>());
   const shouldScrollToDivisionRef = useRef(false);
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
@@ -282,7 +284,6 @@ const commonTranslate = useTranslations('Common');
       setActiveTab('live');
       setSelectedDivisionId(liveDivisionId);
       setOpenDivisionId(liveDivisionId);
-      setRenderedDivisionId(liveDivisionId);
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set('divisionId', liveDivisionId);
       nextParams.set('tab', 'live');
@@ -306,9 +307,15 @@ const commonTranslate = useTranslations('Common');
     if (!shouldScrollToDivisionRef.current || !openDivisionId) return;
     shouldScrollToDivisionRef.current = false;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const delay = prefersReducedMotion ? 0 : 180;
+    const delay = prefersReducedMotion ? 0 : 220;
     const timeoutId = window.setTimeout(() => {
-      contentDetailRef.current?.scrollIntoView({
+      const content = contentDetailRef.current;
+      if (!content) return;
+      const rect = content.getBoundingClientRect();
+      const headerOffset = 88;
+      const isOutsideViewport = rect.top < headerOffset || rect.bottom > window.innerHeight - 16;
+      if (!isOutsideViewport) return;
+      content.scrollIntoView({
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
         block: 'nearest',
       });
@@ -324,9 +331,12 @@ const commonTranslate = useTranslations('Common');
       setOpenDivisionId('');
       return;
     }
-    shouldScrollToDivisionRef.current = true;
+    const row = divisionRowRefs.current.get(divisionId);
+    const rowRect = row?.getBoundingClientRect();
+    shouldScrollToDivisionRef.current = Boolean(
+      rowRect && (rowRect.top < 88 || rowRect.bottom > window.innerHeight - 16),
+    );
     setSelectedDivisionId(divisionId);
-    setRenderedDivisionId(divisionId);
     setOpenDivisionId(divisionId);
     setPendingDivisionId(divisionId);
   };
@@ -490,7 +500,6 @@ const commonTranslate = useTranslations('Common');
           );
           if (nextDivisionId) {
             setOpenDivisionId(nextDivisionId);
-            setRenderedDivisionId(nextDivisionId);
           }
         });
       } catch (err: unknown) {
@@ -508,7 +517,6 @@ const commonTranslate = useTranslations('Common');
         currentDivisionId === requestedDivisionId ? currentDivisionId : requestedDivisionId,
       );
       setOpenDivisionId(requestedDivisionId);
-      setRenderedDivisionId(requestedDivisionId);
     });
   }, [divisionsList, searchParams]);
 
@@ -857,14 +865,22 @@ const commonTranslate = useTranslations('Common');
                   <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                     {divisionsList.map((division) => {
                       const isActive = division.id === openDivisionId;
-                      const shouldRenderContent = division.id === renderedDivisionId;
+                      const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
                       const liveCount = liveCountsByDivision[division.id] ?? 0;
                       const participantCount = division._count?.participants ?? 0;
-                      const matchCount = division._count?.matches ?? 0;
-                      const count = activeTab === 'matches' ? matchCount : participantCount;
-                      const CountIcon = activeTab === 'matches' ? Calendar : Users;
+                      const maxParticipants = division.maxParticipants ?? 0;
+                      const participantCapacity = maxParticipants > 0
+                        ? `${participantCount} / ${maxParticipants}`
+                        : `${participantCount}`;
                       return (
-                        <div key={division.id} className="border-b border-slate-100 last:border-b-0">
+                        <div
+                          key={division.id}
+                          ref={(node) => {
+                            if (node) divisionRowRefs.current.set(division.id, node);
+                            else divisionRowRefs.current.delete(division.id);
+                          }}
+                          className="border-b border-slate-100 last:border-b-0"
+                        >
                           <button
                             type="button"
                             aria-current={isActive ? 'true' : undefined}
@@ -894,66 +910,71 @@ const commonTranslate = useTranslations('Common');
                                 </span>
                               )}
                               <span
-                                aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
+                                aria-label={`${translate('participantsCount')}: ${participantCapacity}`}
                                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
                                   isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
                                 }`}
                               >
-                                <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                {count}
+                                <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                                {participantCapacity}
                               </span>
                             </button>
-                            <div
-                              className={`grid transition-[grid-template-rows,opacity] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
-                                isActive ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                              }`}
-                            >
-                              <div className="min-h-0 overflow-hidden">
-                                {shouldRenderContent && (
-                                  <div ref={isActive ? contentDetailRef : undefined} id={isActive ? 'selected-division-content' : undefined} className="scroll-mt-24 border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5">
-                              {selectedDivision && shouldRenderContent ? (
+                            <AnimatePresence initial={false} mode="sync">
+                              {isActive && divisionTournament && (
+                                <motion.div
+                                  key={division.id}
+                                  ref={contentDetailRef}
+                                  id="selected-division-content"
+                                  initial={reduceMotion ? false : { height: 0, opacity: 0, y: -4 }}
+                                  animate={{ height: 'auto', opacity: 1, y: 0 }}
+                                  exit={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -4 }}
+                                  transition={reduceMotion
+                                    ? { duration: 0 }
+                                    : {
+                                        height: { duration: 0.22, ease: [0.23, 1, 0.32, 1] },
+                                        opacity: { duration: 0.16, ease: 'easeOut' },
+                                        y: { duration: 0.22, ease: [0.23, 1, 0.32, 1] },
+                                      }}
+                                  className="scroll-mt-24 overflow-hidden border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5 motion-reduce:transition-none"
+                                >
                                 <>
                                   {activeTab === 'live' && (
                                     <LiveMatchesTab
-                                      key={visibleDivisionId || 'all'}
-                                      tournament={selectedDivision}
+                                      key={division.id}
+                                      tournament={divisionTournament}
                                       tournamentId={tournament.id}
-                                      divisionId={visibleDivisionId || undefined}
+                                      divisionId={division.id}
                                     />
                                   )}
                                   {activeTab === 'teams' && (
                                     <TeamsTab
-                                      key={visibleDivisionId || 'all'}
-                                      tournament={selectedDivision}
+                                      key={division.id}
+                                      tournament={divisionTournament}
                                       tournamentId={tournament.id}
-                                      divisionId={visibleDivisionId || undefined}
+                                      divisionId={division.id}
                                       participantId={searchParams.get('participantId') || undefined}
                                     />
                                   )}
                                   {activeTab === 'bracket' && (
                                     <BracketTab
-                                      key={visibleDivisionId || 'all'}
-                                      tournament={selectedDivision}
+                                      key={division.id}
+                                      tournament={divisionTournament}
                                       tournamentId={tournament.id}
-                                      divisionId={visibleDivisionId || undefined}
+                                      divisionId={division.id}
                                     />
                                   )}
                                   {activeTab === 'matches' && (
                                     <MatchesTab
-                                      key={visibleDivisionId || 'all'}
-                                      tournament={selectedDivision}
+                                      key={division.id}
+                                      tournament={divisionTournament}
                                       tournamentId={tournament.id}
-                                      divisionId={visibleDivisionId || undefined}
+                                      divisionId={division.id}
                                     />
                                   )}
                                 </>
-                              ) : (
-                                <p className="py-8 text-center italic text-slate-400">{translate('rankingDataUnavailable')}</p>
+                                  </motion.div>
                               )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            </AnimatePresence>
                         </div>
                       );
                     })}

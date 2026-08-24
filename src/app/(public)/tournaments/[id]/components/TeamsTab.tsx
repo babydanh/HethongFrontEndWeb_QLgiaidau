@@ -126,40 +126,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           </div>
         </div>
       )}
-      <div className="flex flex-col gap-3">
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">
-            {translate("teamsTitle")}
-          </h3>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            {translate("publicRosterNote")}
-          </p>
-        </div>
-        
-        {/* Standardized progress bar matching right card */}
-        {tournament.maxParticipants && tournament.maxParticipants > 0 ? (
-          <div className="w-full max-w-sm mt-1">
-            <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-              <span className="text-slate-500 uppercase tracking-wider">{translate("rosterCountLabel")}</span>
-              <span className="text-slate-800">{participants.length} / {tournament.maxParticipants}</span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  (participants.length / tournament.maxParticipants) * 100 >= 90 ? 'bg-rose-500' : (participants.length / tournament.maxParticipants) * 100 >= 70 ? 'bg-amber-500' : 'bg-blue-650'
-                }`}
-                style={{ width: `${Math.min(100, (participants.length / tournament.maxParticipants) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-between items-center text-xs mb-1.5 font-bold w-full max-w-sm mt-1">
-            <span className="text-slate-500 uppercase tracking-wider">{translate("rosterCountLabel")}</span>
-            <span className="text-slate-800">{participants.length} / ∞</span>
-          </div>
-        )}
-      </div>
-      
       {/* Search Input Bar */}
       <div className="relative w-full max-w-md">
         <input

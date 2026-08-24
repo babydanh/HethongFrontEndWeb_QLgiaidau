@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { cn } from '@/utils/cn';
 import { getShortTierCode } from '@/components/ui/PlayerSportTierBadgeBar';
-import { getSportLogo } from '@/constants/sports';
+import { getSportAccentColor, getSportLogo } from '@/constants/sports';
 
 export type RankTierCode = 'TS' | 'HTA' | 'LTA' | 'HTB' | 'LTB' | 'HTC' | 'LTC' | 'HTD' | 'LTD' | 'PRO' | 'ADV' | 'INT' | 'BEG' | '--';
 
@@ -242,6 +242,21 @@ export function getTierTheme(tierName?: string | null, elo?: number | null, expl
   return TIER_THEMES[code] || TIER_THEMES['LTD'];
 }
 
+export function isHighTierCode(code?: string | null): boolean {
+  const normalized = code?.toUpperCase() || '';
+  return normalized === 'TS' || normalized.startsWith('HT') || ['PRO', 'ADV', 'INT'].includes(normalized);
+}
+
+export function getTierBadgeStyle(theme: TierThemeConfig, code: string) {
+  const isHigh = isHighTierCode(code);
+  return {
+    isHigh,
+    backgroundColor: `${theme.coreFillStart}${isHigh ? '22' : '10'}`,
+    borderColor: `${theme.ringInner}${isHigh ? '99' : '55'}`,
+    textColor: isHigh ? theme.coreFillEnd : theme.textColor,
+  };
+}
+
 /**
  * Component SVG Polygon Shield Insignia mô phỏng chính xác mẫu Hình 2:
  * Vành đa giác kim loại vát góc + Lõi đá quý đa giác + Điểm nhấn phát sáng
@@ -339,6 +354,45 @@ export function PolygonEmblemIcon({
   );
 }
 
+export function SportBadgeIcon({
+  sportName,
+  sizePx = 22,
+}: {
+  sportName?: string | null;
+  sizePx?: number;
+}) {
+  const sportLogo = getSportLogo(sportName);
+  const accentColor = getSportAccentColor(sportName);
+
+  return (
+    <span
+      className="inline-flex items-center justify-center shrink-0 rounded-full border"
+      style={{
+        width: sizePx,
+        height: sizePx,
+        backgroundColor: `${accentColor}16`,
+        borderColor: `${accentColor}55`,
+      }}
+      aria-hidden="true"
+    >
+      {sportLogo ? (
+        <Image
+          src={sportLogo}
+          alt=""
+          width={Math.round(sizePx * 0.58)}
+          height={Math.round(sizePx * 0.58)}
+          unoptimized
+          className="object-contain"
+        />
+      ) : (
+        <span className="text-[10px] font-black" style={{ color: accentColor }}>
+          •
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function RankEmblem({
   elo,
   tierName,
@@ -350,8 +404,7 @@ export function RankEmblem({
   className,
 }: RankEmblemProps) {
   const theme = getTierTheme(tierName, elo, tierCode);
-  const sportLogo = sportName ? getSportLogo(sportName) : null;
-
+  const tierStyle = getTierBadgeStyle(theme, theme.code);
   const sizeDimensions = {
     sm: { iconSize: 22, textSize: 'text-xs', eloSize: 'text-[10px]', gap: 'gap-1.5' },
     md: { iconSize: 32, textSize: 'text-sm font-black', eloSize: 'text-xs', gap: 'gap-2' },
@@ -365,7 +418,7 @@ export function RankEmblem({
   if (layout === 'icon-only') {
     return (
       <div className={cn('inline-flex items-center justify-center', className)} title={`${theme.name} (${theme.code})`}>
-        <PolygonEmblemIcon theme={theme} sizePx={dim.iconSize} sportLogo={sportLogo} />
+        <SportBadgeIcon sportName={sportName} sizePx={dim.iconSize} />
       </div>
     );
   }
@@ -374,14 +427,11 @@ export function RankEmblem({
   if (layout === 'stacked') {
     return (
       <div className={cn('inline-flex flex-col items-center justify-center group select-none', dim.gap, className)}>
-        <PolygonEmblemIcon theme={theme} sizePx={dim.iconSize} sportLogo={sportLogo} />
+        <SportBadgeIcon sportName={sportName} sizePx={dim.iconSize} />
         <span
           className={cn('font-black uppercase tracking-wider text-center leading-none')}
           style={{
-            background: theme.textGradient,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: `drop-shadow(0 2px 3px rgba(0,0,0,0.6))`,
+            color: tierStyle.textColor,
             fontSize: size === 'sm' ? '11px' : size === 'md' ? '14px' : size === 'lg' ? '18px' : '24px',
           }}
         >
@@ -400,23 +450,19 @@ export function RankEmblem({
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-xl px-2.5 py-1 border shadow-xs transition-all hover:scale-[1.02] select-none',
-        'bg-slate-900/90 text-white border-slate-700/80',
+        'inline-flex items-center rounded-full px-2.5 py-1 border shadow-xs transition-all hover:scale-[1.02] select-none',
         dim.gap,
         className,
       )}
-              title={`${sportName ? `${sportName}: ` : ''}${theme.name} (${theme.code})`}
-
+      style={{ backgroundColor: tierStyle.backgroundColor, borderColor: tierStyle.borderColor }}
+      title={`${sportName ? `${sportName}: ` : ''}${theme.name} (${theme.code})`}
     >
-      <PolygonEmblemIcon theme={theme} sizePx={dim.iconSize} sportLogo={sportLogo} />
+      <SportBadgeIcon sportName={sportName} sizePx={dim.iconSize} />
       <div className="flex flex-col leading-tight min-w-0 pr-1">
         <span
           className={cn('font-black uppercase tracking-wider')}
           style={{
-            background: theme.textGradient,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: `drop-shadow(0 1px 2px rgba(0,0,0,0.4))`,
+            color: tierStyle.textColor,
             fontSize: size === 'sm' ? '11px' : size === 'md' ? '13px' : '15px',
           }}
         >

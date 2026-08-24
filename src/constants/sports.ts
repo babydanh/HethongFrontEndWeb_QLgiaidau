@@ -32,6 +32,7 @@ export const SPORT_LOGOS: Record<string, string> = {
  * @returns Đường dẫn logo, hoặc null nếu không tìm thấy
  */
 export function getSportLogo(name?: string | null): string | null {
+
   if (!name) return null;
 
   // Try exact match first
@@ -49,6 +50,21 @@ export function getSportLogo(name?: string | null): string | null {
   if (lower.includes('bóng đá') || lower.includes('football') || lower.includes('soccer')) return '/images/football.svg';
 
   return null;
+}
+
+/**
+ * Accent color used by compact sport-first rank badges.
+ * Tier colors remain reserved for the rank level itself.
+ */
+export function getSportAccentColor(name?: string | null): string {
+  if (!name) return '#64748B';
+  const lower = name.toLowerCase();
+  if (lower.includes('tennis') || lower.includes('quần vợt')) return '#D97706';
+  if (lower.includes('badminton') || lower.includes('cầu lông')) return '#2563EB';
+  if (lower.includes('bóng bàn') || lower.includes('ping')) return '#E11D48';
+  if (lower.includes('pickleball')) return '#059669';
+  if (lower.includes('bóng đá') || lower.includes('football') || lower.includes('soccer')) return '#0F766E';
+  return '#64748B';
 }
 
 /**

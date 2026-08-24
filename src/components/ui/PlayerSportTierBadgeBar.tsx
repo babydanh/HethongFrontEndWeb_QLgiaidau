@@ -1,15 +1,14 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { getSportLogo } from '@/constants/sports';
 import type { PlayerRanking } from '@/types/ranking';
 import type { Category } from '@/types/category';
 import { getRankStyle } from '@/utils/rank-style';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import { cn } from '@/utils/cn';
-import { PolygonEmblemIcon, getTierTheme } from '@/components/ui/RankEmblem';
+import { getSportAccentColor } from '@/constants/sports';
+import { getTierBadgeStyle, SportBadgeIcon, getTierTheme } from '@/components/ui/RankEmblem';
 
 interface PlayerSportTierBadgeBarProps {
   userRankings?: PlayerRanking[] | null;
@@ -70,23 +69,6 @@ export function getShortTierCode(tierName?: string | null, elo?: number | null):
   return '--';
 }
 
-const getTierColorClass = (shortCode: string): string => {
-  if (shortCode === 'TS') return 'text-amber-500 font-black drop-shadow-[0_0_4px_rgba(245,158,11,0.4)]';
-  if (shortCode === 'HTA') return 'text-rose-600 font-extrabold';
-  if (shortCode === 'LTA') return 'text-rose-500 font-bold';
-  if (shortCode === 'HTB') return 'text-blue-600 font-extrabold';
-  if (shortCode === 'LTB') return 'text-blue-500 font-bold';
-  if (shortCode === 'HTC') return 'text-emerald-600 font-extrabold';
-  if (shortCode === 'LTC') return 'text-emerald-500 font-bold';
-  if (shortCode === 'HTD') return 'text-slate-600 font-bold';
-  if (shortCode === 'LTD') return 'text-slate-500 font-semibold';
-  if (shortCode === 'PRO') return 'text-amber-500 font-black';
-  if (shortCode === 'ADV') return 'text-emerald-600 font-bold';
-  if (shortCode === 'INT') return 'text-blue-600 font-bold';
-  if (shortCode === 'BEG') return 'text-slate-500 font-semibold';
-  return 'text-slate-400';
-};
-
 export function PlayerSportTierBadgeBar({
   userRankings = [],
   categories = [],
@@ -120,15 +102,12 @@ export function PlayerSportTierBadgeBar({
     const shortCode = isRanked
       ? getShortTierCode(canonicalTierName, activeSportRank?.eloPoints)
       : '--';
-    const logoUrl = getSportLogo(category.name);
-
     return {
       category,
       activeSportRank,
       isRanked,
       rankStyle,
       shortCode,
-      logoUrl,
     };
   });
 
@@ -171,8 +150,10 @@ export function PlayerSportTierBadgeBar({
 
       {/* Sport Tiers Badges */}
       <div className="flex items-center gap-2.5 min-w-0">
-        {displaySports.map(({ category, activeSportRank, isRanked, rankStyle, shortCode, logoUrl }) => {
+        {displaySports.map(({ category, activeSportRank, isRanked, rankStyle, shortCode }) => {
           const theme = getTierTheme(rankStyle?.name || shortCode, activeSportRank?.eloPoints, shortCode);
+          const tierBadgeStyle = getTierBadgeStyle(theme, shortCode);
+          const sportAccent = getSportAccentColor(category.name);
           return (
             <div
               key={category.id}
@@ -187,26 +168,25 @@ export function PlayerSportTierBadgeBar({
                   : `${category.name}: ${translate('unranked')}`
               }
               className={cn(
-                'group relative flex items-center gap-1.5 transition-transform hover:scale-105 cursor-pointer',
+                'group relative flex items-center gap-1.5 rounded-full border px-1.5 py-1 transition-transform hover:scale-105 cursor-pointer',
                 !isRanked && 'opacity-40 hover:opacity-75',
               )}
+              style={{
+                backgroundColor: tierBadgeStyle.backgroundColor,
+                borderColor: `${sportAccent}99`,
+              }}
             >
-              {/* 3D Polygon Insignia */}
-              <PolygonEmblemIcon
-                theme={theme}
+              <SportBadgeIcon
+                sportName={category.name}
                 sizePx={isSmall ? 22 : 26}
-                sportLogo={logoUrl}
               />
 
               {/* Short Tier Label with 3D gradient */}
               <span
                 className={cn('text-[11px] font-black uppercase tracking-tight leading-none')}
                 style={{
-                  background: isRanked ? theme.textGradient : undefined,
-                  WebkitBackgroundClip: isRanked ? 'text' : undefined,
-                  WebkitTextFillColor: isRanked ? 'transparent' : undefined,
-                  filter: isRanked ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' : undefined,
-                  color: !isRanked ? '#94a3b8' : undefined,
+                  color: isRanked ? tierBadgeStyle.textColor : '#94a3b8',
+                  fontWeight: tierBadgeStyle.isHigh ? 900 : 800,
                 }}
               >
                 {shortCode}

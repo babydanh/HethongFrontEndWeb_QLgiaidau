@@ -2,8 +2,8 @@ import * as React from 'react';
 import { cn } from '@/utils/cn';
 import { getRankStyle } from '@/utils/rank-style';
 import { getShortTierCode } from '@/components/ui/PlayerSportTierBadgeBar';
-import { getSportLogo } from '@/constants/sports';
-import { PolygonEmblemIcon, getTierTheme } from '@/components/ui/RankEmblem';
+import { getSportAccentColor } from '@/constants/sports';
+import { getTierBadgeStyle, SportBadgeIcon, getTierTheme } from '@/components/ui/RankEmblem';
 
 export interface EloTierBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   elo: number;
@@ -36,36 +36,36 @@ export function EloTierBadge({
   ...props
 }: EloTierBadgeProps) {
   const tier = getEloTier(elo, tierName, categoryName);
+  const tierBadgeStyle = getTierBadgeStyle(tier.theme, tier.shortCode);
 
   const iconSizes = {
-    sm: 18,
-    md: 22,
-    lg: 28,
+    sm: 22,
+    md: 26,
+    lg: 32,
   };
 
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-xl px-2 py-0.5 border shadow-xs transition-all select-none',
-        'bg-slate-900/90 text-white border-slate-700/80',
+        'inline-flex items-center rounded-full px-2 py-1 border shadow-xs transition-all select-none',
+        'bg-white',
         size === 'sm' ? 'gap-1 text-[11px]' : size === 'md' ? 'gap-1.5 text-xs' : 'gap-2 text-sm',
         className,
       )}
+      style={{
+        backgroundColor: tierBadgeStyle.backgroundColor,
+        borderColor: `${getSportAccentColor(categoryName)}99`,
+        color: tierBadgeStyle.textColor,
+      }}
       title={`${categoryName ? `${categoryName}: ` : ''}${tier.name} (${tier.shortCode})`}
       {...props}
     >
-      <PolygonEmblemIcon
-        theme={tier.theme}
-        sizePx={iconSizes[size]}
-        sportLogo={getSportLogo(categoryName)}
-      />
+      <SportBadgeIcon sportName={categoryName} sizePx={iconSizes[size]} />
       <span
         className="font-black uppercase tracking-tight leading-none"
         style={{
-          background: tier.theme.textGradient,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))',
+          color: tierBadgeStyle.textColor,
+          fontWeight: tierBadgeStyle.isHigh ? 900 : 800,
         }}
       >
         {showFullName ? tier.name : tier.shortCode}

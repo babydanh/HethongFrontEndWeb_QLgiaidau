@@ -245,7 +245,8 @@ export default function Step4ReviewSubmit() {
             data?: { id?: string };
             id?: string;
           }>(`/chat/rooms?type=CLUB&communityId=${formData.communityId}`);
-          const clubRoom = clubRoomRes.data.data ?? clubRoomRes.data;
+          const rawData = clubRoomRes?.data as { data?: { id?: string }; id?: string } | undefined;
+          const clubRoom = rawData && typeof rawData === 'object' && 'data' in rawData && rawData.data ? rawData.data : rawData;
           if (clubRoom?.id) {
             await inboxApi.sendMessage(
               clubRoom.id,

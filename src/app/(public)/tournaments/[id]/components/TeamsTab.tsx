@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { cn } from '@/utils/cn';
 
 interface Props {
   tournament: Tournament;
@@ -66,6 +67,11 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+  const isTeamSport = Boolean(tournament.tournamentConfig?.teamSize);
+  const isExpandableFormat =
+    isTeamSport ||
+    tournament.matchType === 'DOUBLES' ||
+    tournament.matchType === 'MIXED_DOUBLES';
 
   useEffect(() => {
 
@@ -169,8 +175,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
               <tbody>
                                 {visibleParticipants.map((team, index) => {
 
-                  const isExpanded = expandedTeamId === team.id;
-                  
                   const members = team.members && team.members.length > 0
                     ? team.members
                     : (team.teamName || '').split(/\s*[\/&]\s*/).filter(Boolean).map((name, i) => {
@@ -187,12 +191,19 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           elo: undefined,
                         };
                       });
+                  const isExpandable = isExpandableFormat || members.length > 1;
+                  // Singles are intentionally open by default; expandable formats
+                  // keep their existing one-row-at-a-time interaction.
+                  const isExpanded = !isExpandable || expandedTeamId === team.id;
 
                   return (
                     <React.Fragment key={team.id}>
-                      <tr 
-                        onClick={() => toggleExpand(team.id)}
-                        className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      <tr
+                        onClick={isExpandable ? () => toggleExpand(team.id) : undefined}
+                        className={cn(
+                          'bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors',
+                          isExpandable && 'cursor-pointer',
+                        )}
                       >
                                                 <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{(currentPage - 1) * pageSize + index + 1}</td>
 
@@ -216,15 +227,27 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                               {translate("paymentPending")}
                             </span>
                           )}
-                        </td>
-                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
-                          <button className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px]">
-                            {isExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
-                          </button>
+                        </td>                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
+                          {isExpandable ? (
+                            <button
+                              type="button"
+                              aria-label={translate('detailsHeader')}
+                              aria-expanded={isExpanded}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleExpand(team.id);
+                              }}
+                              className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px] transition-colors"
+                            >
+                              <ChevronDown className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200", isExpanded && "rotate-180 text-blue-600")} />
+                            </button>
+                          ) : (
+                            <User className="ml-auto h-4 w-4 text-slate-400" aria-hidden="true" />
+                          )}
                         </td>
                       </tr>
                       {isExpanded && (
-                        <tr className="bg-slate-50/50">
+                        <tr className="bg-slate-50/50 animate-in fade-in duration-200">
                           <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
                             <div className="flex flex-col gap-4">
                               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">

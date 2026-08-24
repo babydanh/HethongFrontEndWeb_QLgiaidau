@@ -291,10 +291,13 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 const activeRanks = displayedRanks.filter(r => r.matchesPlayed > 0);
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
-                    <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-xs font-bold shrink-0">
-                      <span className="text-[10px] font-bold text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
-                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} categoryName={rank.categoryName} size="sm" className="scale-90 origin-left" />
-                    </div>
+                    <EloTierBadge
+                      key={`${rank.categoryId}-${rank.matchType}`}
+                      elo={rank.eloPoints}
+                      tierName={rank.tierName || undefined}
+                      categoryName={rank.categoryName}
+                      size="sm"
+                    />
                   ));
                 }
                 return (

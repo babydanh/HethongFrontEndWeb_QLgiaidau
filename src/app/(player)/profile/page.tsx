@@ -622,7 +622,7 @@ export default function ProfilePage() {
                   )}
                 </h1>
 
-                {/* Gamified Multi-Sport Tier Badge Bar: Trắng sáng, gọn gàng kế tên xác minh, chỉ hiện khi đã có rank */}
+                {/* Gamified Multi-Sport Tier Badge Bar */}
                 <PlayerSportTierBadgeBar
                   userRankings={userRankings?.publicRanks}
                   categories={categories}
@@ -663,34 +663,29 @@ export default function ProfilePage() {
                 );
               })}
               {(() => {
-                                const activeRanks = eligiblePublicRanks;
+                const activeRanks = eligiblePublicRanks;
 
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
-                    <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">{rank.categoryName}:</span>
-                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name || rank.tierName} categoryName={rank.categoryName} size="sm" />
-                    </div>
+                    <EloTierBadge
+                      key={rank.id}
+                      elo={rank.eloPoints}
+                      tierName={rank.tier?.name || rank.tierName}
+                      categoryName={rank.categoryName}
+                      size="md"
+                    />
                   ));
                 }
                 if (latestEloHistory) {
                   const historyCategoryName = categories.find((category) => category.id === latestEloHistory.categoryId)?.name;
                   const historyTierName = getRankStyle(latestEloHistory.newElo, undefined, historyCategoryName).name;
-                  const historyTierCode = getShortTierCode(historyTierName, latestEloHistory.newElo);
-                  const historySportLogo = getSportLogo(historyCategoryName);
                   return (
-                    <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
-                      <span
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-extrabold tracking-wide text-slate-700"
-                        title={`${historyCategoryName || translate('eloStats')}: ${historyTierName} (${historyTierCode}), ${latestEloHistory.newElo} ELO • ${translate('eloRecordedNotRanked')}`}
-                        aria-label={`${historyCategoryName || translate('eloStats')}: ${historyTierName}, ${historyTierCode}, ${latestEloHistory.newElo} ELO • ${translate('eloRecordedNotRanked')}`}
-                      >
-                        {historySportLogo ? (
-                          <Image src={historySportLogo} alt="" width={14} height={14} unoptimized className="object-contain" />
-                        ) : null}
-                        <span>{historyTierCode}</span>
-                      </span>
-                    </div>
+                    <EloTierBadge
+                      elo={latestEloHistory.newElo}
+                      tierName={historyTierName}
+                      categoryName={historyCategoryName}
+                      size="md"
+                    />
                   );
                 }
                 return (

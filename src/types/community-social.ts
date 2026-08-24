@@ -76,6 +76,7 @@ export interface CommunityPostTournament {
   bannerUrl?: string | null;
   maxParticipants?: number | null;
   inviteCode?: string | null;
+  hasBracket?: boolean;
   isLite?: boolean | null;
   bracketType?: string | null;
 }

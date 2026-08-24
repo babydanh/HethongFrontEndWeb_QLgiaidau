@@ -9,6 +9,7 @@ import type { Category } from '@/types/category';
 import { getRankStyle } from '@/utils/rank-style';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import { cn } from '@/utils/cn';
+import { PolygonEmblemIcon, getTierTheme } from '@/components/ui/RankEmblem';
 
 interface PlayerSportTierBadgeBarProps {
   userRankings?: PlayerRanking[] | null;
@@ -169,8 +170,9 @@ export function PlayerSportTierBadgeBar({
       )}
 
       {/* Sport Tiers Badges */}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0">
         {displaySports.map(({ category, activeSportRank, isRanked, rankStyle, shortCode, logoUrl }) => {
+          const theme = getTierTheme(rankStyle?.name || shortCode, activeSportRank?.eloPoints, shortCode);
           return (
             <div
               key={category.id}
@@ -185,46 +187,27 @@ export function PlayerSportTierBadgeBar({
                   : `${category.name}: ${translate('unranked')}`
               }
               className={cn(
-                'group relative flex items-center gap-1 transition-transform hover:scale-105 cursor-pointer',
+                'group relative flex items-center gap-1.5 transition-transform hover:scale-105 cursor-pointer',
                 !isRanked && 'opacity-40 hover:opacity-75',
               )}
             >
-              {/* Sport Icon Circle */}
-              <div
-                className={cn(
-                  'relative rounded-full flex items-center justify-center border transition-all',
-                  isSmall ? 'w-5 h-5' : 'w-6 h-6',
-                  isRanked
-                    ? isDark
-                      ? `${rankStyle?.ringClass || 'ring-blue-500'} bg-slate-800 border-slate-700`
-                      : 'bg-slate-50 border-slate-200'
-                    : isDark
-                      ? 'bg-slate-800/50 border-slate-700/50'
-                      : 'bg-slate-100 border-slate-200',
-                )}
-              >
-                {logoUrl ? (
-                  <Image
-                    src={logoUrl}
-                    alt={category.name}
-                    width={isSmall ? 12 : 14}
-                    height={isSmall ? 12 : 14}
-                    unoptimized
-                    className="object-contain"
-                  />
-                ) : (
-                  <span className="text-[8px] font-bold text-slate-500">
-                    {category.name.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-              </div>
+              {/* 3D Polygon Insignia */}
+              <PolygonEmblemIcon
+                theme={theme}
+                sizePx={isSmall ? 22 : 26}
+                sportLogo={logoUrl}
+              />
 
-              {/* Short Tier Label */}
+              {/* Short Tier Label with 3D gradient */}
               <span
-                className={cn(
-                  'text-[10px] tracking-tight leading-none',
-                  isRanked ? getTierColorClass(shortCode) : 'text-slate-400 font-medium',
-                )}
+                className={cn('text-[11px] font-black uppercase tracking-tight leading-none')}
+                style={{
+                  background: isRanked ? theme.textGradient : undefined,
+                  WebkitBackgroundClip: isRanked ? 'text' : undefined,
+                  WebkitTextFillColor: isRanked ? 'transparent' : undefined,
+                  filter: isRanked ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' : undefined,
+                  color: !isRanked ? '#94a3b8' : undefined,
+                }}
               >
                 {shortCode}
               </span>

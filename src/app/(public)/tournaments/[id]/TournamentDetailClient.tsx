@@ -303,42 +303,36 @@ const commonTranslate = useTranslations('Common');
     router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
   }, [debouncedDivisionId, router, searchParams, tournamentId]);
 
-  useEffect(() => {
-    if (!shouldScrollToDivisionRef.current || !openDivisionId) return;
-    shouldScrollToDivisionRef.current = false;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const delay = prefersReducedMotion ? 0 : 220;
-    const timeoutId = window.setTimeout(() => {
-      const content = contentDetailRef.current;
-      if (!content) return;
-      const rect = content.getBoundingClientRect();
-      const headerOffset = 88;
-      const isOutsideViewport = rect.top < headerOffset || rect.bottom > window.innerHeight - 16;
-      if (!isOutsideViewport) return;
-      content.scrollIntoView({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-        block: 'nearest',
+  const scrollToDivisionRow = (divisionId: string) => {
+    const row = divisionRowRefs.current.get(divisionId);
+    if (!row) return;
+    const headerOffset = 96;
+    const rect = row.getBoundingClientRect();
+    const isOutside = rect.top < headerOffset || rect.top > window.innerHeight - 180;
+    if (isOutside) {
+      const targetY = window.scrollY + rect.top - headerOffset;
+      window.scrollTo({
+        top: Math.max(0, targetY),
+        behavior: 'smooth',
       });
-    }, delay);
-    return () => window.clearTimeout(timeoutId);
-  }, [activeTab, openDivisionId]);
+    }
+  };
 
   const handleDivisionSelect = (divisionId: string) => {
     hasUserNavigatedRef.current = true;
     if (openDivisionId === divisionId) {
-      shouldScrollToDivisionRef.current = false;
       setPendingDivisionId(null);
       setOpenDivisionId('');
       return;
     }
-    const row = divisionRowRefs.current.get(divisionId);
-    const rowRect = row?.getBoundingClientRect();
-    shouldScrollToDivisionRef.current = Boolean(
-      rowRect && (rowRect.top < 88 || rowRect.bottom > window.innerHeight - 16),
-    );
     setSelectedDivisionId(divisionId);
     setOpenDivisionId(divisionId);
     setPendingDivisionId(divisionId);
+
+    // Smoothly ensure the selected division header is in optimal viewport position
+    requestAnimationFrame(() => {
+      scrollToDivisionRow(divisionId);
+    });
   };
 
   const handleShareClick = async () => {
@@ -892,52 +886,46 @@ const commonTranslate = useTranslations('Common');
                                 : 'bg-white text-slate-800 hover:bg-slate-50'
                             }`}
                           >
-                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
                               isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
                             }`}>
-                              <ChevronRight className={`h-5 w-5 transition-transform ${isActive ? 'rotate-90' : ''}`} aria-hidden="true" />
+                              <ChevronRight className={`h-5 w-5 transition-transform duration-300 ease-out ${isActive ? 'rotate-90 text-blue-600' : 'text-slate-400'}`} aria-hidden="true" />
                             </span>
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
-                              </span>
-                              {liveCount > 0 && (
-                                <span
-                                  aria-label={translate('divisionLiveCount', { count: liveCount })}
-                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-black text-rose-700 sm:text-xs"
-                                >
-                                  <span className="h-1.5 w-1.5 rounded-full bg-rose-600 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
-                                  <span>{liveCount}</span>
-                                </span>
-                              )}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
+                            </span>
+                            {liveCount > 0 && (
                               <span
-                                aria-label={`${translate('participantsCount')}: ${participantCapacity}`}
-                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
-                                  isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
-                                }`}
+                                aria-label={translate('divisionLiveCount', { count: liveCount })}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-black text-rose-700 sm:text-xs"
                               >
-                                <Users className="h-3.5 w-3.5" aria-hidden="true" />
-                                {participantCapacity}
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-600 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+                                <span>{liveCount}</span>
                               </span>
-                            </button>
-                            <AnimatePresence initial={false} mode="sync">
+                            )}
+                            <span
+                              aria-label={`${translate('participantsCount')}: ${participantCapacity}`}
+                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm transition-colors ${
+                                isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                              {participantCapacity}
+                            </span>
+                          </button>
+
+                          <div
+                            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                              isActive ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+                            }`}
+                          >
+                            <div className="overflow-hidden">
                               {isActive && divisionTournament && (
-                                <motion.div
-                                  key={division.id}
+                                <div
                                   ref={contentDetailRef}
                                   id="selected-division-content"
-                                  initial={reduceMotion ? false : { height: 0, opacity: 0, y: -4 }}
-                                  animate={{ height: 'auto', opacity: 1, y: 0 }}
-                                  exit={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -4 }}
-                                  transition={reduceMotion
-                                    ? { duration: 0 }
-                                    : {
-                                        height: { duration: 0.22, ease: [0.23, 1, 0.32, 1] },
-                                        opacity: { duration: 0.16, ease: 'easeOut' },
-                                        y: { duration: 0.22, ease: [0.23, 1, 0.32, 1] },
-                                      }}
-                                  className="scroll-mt-24 overflow-hidden border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5 motion-reduce:transition-none"
+                                  className="border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5"
                                 >
-                                <>
                                   {activeTab === 'live' && (
                                     <LiveMatchesTab
                                       key={division.id}
@@ -971,10 +959,10 @@ const commonTranslate = useTranslations('Common');
                                       divisionId={division.id}
                                     />
                                   )}
-                                </>
-                                  </motion.div>
+                                </div>
                               )}
-                            </AnimatePresence>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}

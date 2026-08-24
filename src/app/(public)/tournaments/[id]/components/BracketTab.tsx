@@ -19,6 +19,7 @@ import { UPPER_SET, LOWER_SET } from './bracket';
 import { SingleElimView, DoubleElimView, RoundRobinView } from './bracket';
 import { PagedSingleElimView, PagedDoubleElimView, PagedRoundRobinView } from './bracket';
 import { getDivisionMatchLabel } from '@/utils/tournament-display';
+import { socketClient } from '@/lib/socket';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HELPERS
@@ -346,6 +347,7 @@ export default function BracketTab({
   const [result, setResult] = useState<TournamentResult | null>(null);
   const [resultError, setResultError] = useState(false);
   const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
+  const [matchUpdateVersion, setMatchUpdateVersion] = useState(0);
   const bracketLoadedRef = useRef(false);
 
   // Organizer bracket pages pass the parent tournament together with a
@@ -386,6 +388,33 @@ export default function BracketTab({
   );
 
   useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const joinTournament = () => socket.emit('joinTournament', effectiveTournamentId);
+    const handleMatchUpdate = (rawMatch: unknown) => {
+      let payload: { tournamentId?: string; divisionId?: string } | null = null;
+      try {
+        payload = typeof rawMatch === 'string'
+          ? JSON.parse(rawMatch) as { tournamentId?: string; divisionId?: string }
+          : rawMatch as { tournamentId?: string; divisionId?: string };
+      } catch {
+        return;
+      }
+      if (!payload || payload.tournamentId !== effectiveTournamentId) return;
+      if (payload.divisionId && divisionId && payload.divisionId !== divisionId) return;
+      setMatchUpdateVersion((version) => version + 1);
+    };
+
+    socket.on('connect', joinTournament);
+    socket.on('match:update', handleMatchUpdate);
+    if (socket.connected) joinTournament();
+
+    return () => {
+      socket.off('connect', joinTournament);
+      socket.off('match:update', handleMatchUpdate);
+    };
+  }, [divisionId, effectiveTournamentId]);
+
+  useEffect(() => {
     const fetchBracket = async () => {
       if (!bracketLoadedRef.current) setIsLoading(true);
       try {
@@ -415,7 +444,7 @@ export default function BracketTab({
       }
     };
     fetchBracket();
-  }, [divisionId, effectiveTournamentId, knockoutOnly, refreshKey]);
+  }, [divisionId, effectiveTournamentId, knockoutOnly, refreshKey, matchUpdateVersion]);
 
   useEffect(() => {
     let cancelled = false;

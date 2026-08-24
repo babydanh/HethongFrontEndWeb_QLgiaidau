@@ -844,6 +844,7 @@ export default function QuickTournamentCreate() {
                     {translate('tournamentNameLabel')} <span className="text-rose-500">*</span>
                   </label>
                   <input
+                    data-testid="tournament-name-input"
                     {...register('name')}
                     className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     placeholder={translate('tournamentNamePlaceholder')}
@@ -857,6 +858,7 @@ export default function QuickTournamentCreate() {
                     {translate('sportLabel')} <span className="text-rose-500">*</span>
                   </label>
                   <select
+                    data-testid="sport-select"
                     {...register('sport', {
                       onChange: (e) => handleSportChange(e.target.value as QuickSport),
                     })}
@@ -911,15 +913,13 @@ export default function QuickTournamentCreate() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
-                    label={translate('registrationStartLabel')}
-                    value={registrationStart || ''}
+					label={translate('registrationStartLabel')}                    value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
                   <DateTimePicker
-                    label={translate('startDateLabel')}
-                    value={startDate || ''}
+					label={translate('startDateLabel')}                    value={startDate || ''}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
                   />
@@ -960,6 +960,7 @@ export default function QuickTournamentCreate() {
                       {translate('venueLabel')} <span className="text-rose-500">*</span>
                     </label>
                     <input
+                      data-testid="venue-name-input"
                       {...register('venueName')}
                       className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder={translate('venuePlaceholder')}
@@ -972,6 +973,7 @@ export default function QuickTournamentCreate() {
                       {translate('addressLabel')} <span className="text-rose-500">*</span>
                     </label>
                     <input
+                      data-testid="location-address-input"
                       {...register('locationAddress')}
                       className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder={translate('addressPlaceholder')}
@@ -1139,6 +1141,7 @@ export default function QuickTournamentCreate() {
                         >
                           <button
                             type="button"
+                            data-testid={`format-option-${formatId}`}
                             onClick={() => toggleFormat(formatId)}
                             className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
                           >
@@ -1411,6 +1414,7 @@ export default function QuickTournamentCreate() {
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
                 <button
                   type="submit"
+                  data-testid="submit-quick-create-btn"
                   disabled={isSubmitting}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99]"
                 >

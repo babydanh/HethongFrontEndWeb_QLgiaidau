@@ -80,6 +80,7 @@ export function SearchableRegionSelect({
       >
         <Search className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
         <input
+          data-testid={inputName ? `${inputName}-select-input` : 'region-select-input'}
           name={inputName}
           value={open ? query : selectedLabel}
           disabled={disabled}
@@ -126,6 +127,7 @@ export function SearchableRegionSelect({
               <button
                 key={option.code}
                 type="button"
+                data-testid={`region-option-${option.code}`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectOption(option.code)}
                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Division, Tournament, TournamentSponsor, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
+import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight } from 'lucide-react';
@@ -24,6 +25,7 @@ import { BRAND } from '@/constants/brand';
 import { getSportLogo } from '@/constants/sports';
 import { socketClient } from '@/lib/socket';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import { useDebounce } from '@/hooks/useDebounce';
 import { matchesApi } from '@/features/matches/api';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -98,6 +100,7 @@ const commonTranslate = useTranslations('Common');
   const searchParams = useSearchParams();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [divisionsList, setDivisionsList] = useState<Division[]>([]);
+  const [initialDivisionId] = useState(() => searchParams.get('divisionId'));
   const selectedDivision: Tournament | null = (() => {
     if (!tournament || !selectedDivisionId) {
       return tournament;
@@ -133,9 +136,14 @@ const commonTranslate = useTranslations('Common');
   const [liveMatchesCount, setLiveMatchesCount] = useState(0);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
+  const [isRegistrationStatusLoading, setIsRegistrationStatusLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const contentDetailRef = useRef<HTMLDivElement>(null);
+  const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
+  const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
 
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
 
@@ -154,8 +162,39 @@ const commonTranslate = useTranslations('Common');
     };
   }, [tournamentId]);
 
-  // Check live matches count and set default tab to 'live' if matches are ongoing
   useEffect(() => {
+    let active = true;
+    const loadRegistrationStatus = async () => {
+      if (!user?.id || !activeTournament?.id || isOwner) {
+        if (active) setMyRegistration(null);
+        return;
+      }
+
+      if (active) setIsRegistrationStatusLoading(true);
+      try {
+        const response = await tournamentsApi.getMyRegistration(
+          activeTournament.id,
+          selectedDivisionId || undefined,
+        );
+        if (active) setMyRegistration(response.data ?? null);
+      } catch {
+        if (active) setMyRegistration(null);
+      } finally {
+        if (active) setIsRegistrationStatusLoading(false);
+      }
+    };
+
+    void loadRegistrationStatus();
+    return () => {
+      active = false;
+    };
+  }, [activeTournament?.id, isOwner, selectedDivisionId, user?.id]);
+
+  // Check live matches count and set default tab to 'live' if matches are ongoing.
+  // Do not run this extra request while Schedule owns the same division-scoped feed.
+  useEffect(() => {
+    if (activeTab === 'matches') return;
+    const controller = new AbortController();
     let active = true;
     const checkLive = async () => {
       try {
@@ -165,7 +204,7 @@ const commonTranslate = useTranslations('Common');
           limit: 100,
         };
         if (selectedDivisionId) params.division_id = selectedDivisionId;
-        const res = await matchesApi.getMatches(params);
+        const res = await matchesApi.getMatches(params, controller.signal);
         const data = Array.isArray(res) ? res : (res.data || []);
         if (active) {
           const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
@@ -176,14 +215,15 @@ const commonTranslate = useTranslations('Common');
           }
         }
       } catch {
-        // silent fallback
+        // Abort and transient match-feed errors use the silent fallback.
       }
     };
-    checkLive();
+    void checkLive();
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [tournamentId, selectedDivisionId, hasInitializedTab]);
+  }, [activeTab, tournamentId, selectedDivisionId, hasInitializedTab]);
 
   // Handle socket live match updates for live badge
   useEffect(() => {
@@ -198,8 +238,8 @@ const commonTranslate = useTranslations('Common');
       } catch {
         return;
       }
-      if (updatedMatch?.tournamentId !== tournamentId) return;
-      // Refresh live count
+      if (updatedMatch?.tournamentId !== tournamentId || activeTab === 'matches') return;
+      // Refresh live count only when another tab needs the badge.
       const params: Record<string, string | number> = {
         tournament_id: tournamentId,
         status: 'ONGOING',
@@ -221,13 +261,21 @@ const commonTranslate = useTranslations('Common');
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [tournamentId, selectedDivisionId]);
+  }, [activeTab, tournamentId, selectedDivisionId]);
+
+  useEffect(() => {
+    if (!debouncedDivisionId || debouncedDivisionId === selectedDivisionId) return;
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set('divisionId', debouncedDivisionId);
+    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    Promise.resolve().then(() => setSelectedDivisionId(debouncedDivisionId));
+  }, [debouncedDivisionId, router, searchParams, selectedDivisionId, tournamentId]);
 
   const handleDivisionSelect = (divisionId: string) => {
-    setSelectedDivisionId(divisionId);
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set('divisionId', divisionId);
-    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    setPendingDivisionId(divisionId);
+    window.requestAnimationFrame(() => {
+      contentDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   const handleShareClick = async () => {
@@ -300,7 +348,7 @@ const commonTranslate = useTranslations('Common');
     return () => {
       isMounted = false;
     };
-  }, [tournamentId, tournament]);
+  }, [tournamentId, tournament, translate]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -313,12 +361,16 @@ const commonTranslate = useTranslations('Common');
         return;
       }
       if (payload?.tournamentId !== tournamentId) return;
-      tournamentsApi.getTournamentById(tournamentId)
-        .then((response) => {
-          if (response.data) setTournament(response.data);
+      Promise.all([
+        tournamentsApi.getTournamentById(tournamentId),
+        user?.id ? tournamentsApi.getMyRegistration(tournamentId, selectedDivisionId || undefined) : Promise.resolve(null),
+      ])
+        .then(([tournamentResponse, registrationResponse]) => {
+          if (tournamentResponse.data) setTournament(tournamentResponse.data);
+          if (registrationResponse?.data) setMyRegistration(registrationResponse.data);
         })
         .catch(() => {
-          // Keep the last confirmed snapshot; the 15-second API refresh remains the fallback.
+          // Keep the last confirmed snapshot; the bounded API refresh remains the fallback.
         });
     };
 
@@ -332,7 +384,7 @@ const commonTranslate = useTranslations('Common');
       socket.off('registration:update', handleRegistrationUpdate);
       socket.emit('leaveTournament', tournamentId);
     };
-  }, [tournamentId]);
+  }, [selectedDivisionId, tournamentId, user?.id]);
 
   useEffect(() => {
     if (!user?.id || !tournament?.id) return;
@@ -367,40 +419,39 @@ const commonTranslate = useTranslations('Common');
 
   useEffect(() => {
     const loadParentAndDivisions = async () => {
-      if (!tournament?.id) {
-        return;
-      }
+      if (!tournament?.id) return;
       try {
         const divisionsRes = await divisionsApi.getDivisions(tournament.id);
-        const requestedDivisionId = searchParams.get('divisionId');
-        if (divisionsRes.data && divisionsRes.data.length > 0) {
-          const divisionsWithCount = divisionsRes.data.map(d => {
-            const original = tournament?.divisions?.find(td => td.id === d.id);
-            return { ...d, _count: original?._count || d._count };
-          });
-          setDivisionsList(divisionsWithCount);
-          const preferredDivision = requestedDivisionId
-            ? divisionsRes.data.find((division) => division.id === requestedDivisionId)
-            : null;
-          const nextDivisionId = preferredDivision?.id ?? divisionsRes.data[0].id;
-          Promise.resolve().then(() => {
-            setSelectedDivisionId((currentDivisionId) =>
-              currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
-            );
-          });
-        } else {
-          Promise.resolve().then(() => {
-            setSelectedDivisionId((currentDivisionId) =>
-              currentDivisionId === '' ? currentDivisionId : '',
-            );
-          });
-        }
+        const divisionsWithCount = (divisionsRes.data ?? []).map((division) => {
+          const original = tournament.divisions?.find((item) => item.id === division.id);
+          return { ...division, _count: original?._count || division._count };
+        });
+        setDivisionsList(divisionsWithCount);
+        const preferredDivision = initialDivisionId
+          ? divisionsWithCount.find((division) => division.id === initialDivisionId)
+          : null;
+        const nextDivisionId = preferredDivision?.id ?? divisionsWithCount[0]?.id ?? '';
+        Promise.resolve().then(() => {
+          setSelectedDivisionId((currentDivisionId) =>
+            currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
+          );
+        });
       } catch (err: unknown) {
         console.error('Failed to load parent/divisions context:', err);
       }
     };
-    loadParentAndDivisions();
-  }, [searchParams, tournament?.id]);
+    void loadParentAndDivisions();
+  }, [initialDivisionId, tournament?.id, tournament?.divisions]);
+
+  useEffect(() => {
+    const requestedDivisionId = searchParams.get('divisionId');
+    if (!requestedDivisionId || !divisionsList.some((division) => division.id === requestedDivisionId)) return;
+    Promise.resolve().then(() => {
+      setSelectedDivisionId((currentDivisionId) =>
+        currentDivisionId === requestedDivisionId ? currentDivisionId : requestedDivisionId,
+      );
+    });
+  }, [divisionsList, searchParams]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -409,7 +460,9 @@ const commonTranslate = useTranslations('Common');
       return;
     }
     if (requestedTab === 'sponsors' && publicSponsors.length === 0) {
-      if (activeTab === 'sponsors') setActiveTab('overview');
+      if (activeTab === 'sponsors') {
+        Promise.resolve().then(() => setActiveTab('overview'));
+      }
       return;
     }
 
@@ -457,9 +510,12 @@ const commonTranslate = useTranslations('Common');
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
   let registrationButtonLabel = registrationModeUi.ctaLabel;
-  let isRegistrationButtonDisabled = false;
+  let isRegistrationButtonDisabled = isRegistrationStatusLoading;
 
-  if (isRegistrationOpen) {
+  if (myRegistration?.registered) {
+    registrationButtonLabel = translate('alreadyRegistered');
+    isRegistrationButtonDisabled = true;
+  } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
       registrationButtonLabel = translate('registrationLocked');
       isRegistrationButtonDisabled = true;
@@ -733,51 +789,54 @@ const commonTranslate = useTranslations('Common');
 
             {/* Tab Content */}
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
-              {/* Compact one-content-at-a-time selector */}
-              {divisionsList.length > 0 && (
-                <section className="mb-5 border-b border-slate-100 pb-5" aria-labelledby="competition-content-title">
-                  <div className="flex flex-col gap-1">
-                    <h3 id="competition-content-title" className="text-sm font-bold text-slate-900">
-                      {translate('competitionContentTitle')}
-                    </h3>
-                    <p className="text-[11px] font-medium text-slate-400">
-                      {translate('competitionContentDescription')}
-                    </p>
-                  </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            {/* Compact vertical content rows for division-specific tabs only */}
+              {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
+                <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
+                  <div className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
                     {divisionsList.map((division) => {
                       const isActive = division.id === selectedDivisionId;
                       const participantCount = division._count?.participants ?? 0;
                       const matchCount = division._count?.matches ?? 0;
+                      const count = activeTab === 'matches' ? matchCount : participantCount;
+                      const CountIcon = activeTab === 'matches' ? Calendar : Users;
                       return (
                         <button
                           key={division.id}
                           type="button"
                           aria-current={isActive ? 'true' : undefined}
                           onClick={() => handleDivisionSelect(division.id)}
-                          className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors ${
+                          className={`group flex min-h-[68px] w-full items-center gap-3 px-3.5 py-3.5 text-left transition-colors sm:px-4 ${
                             isActive
-                              ? 'border-blue-300 bg-blue-50/70 text-slate-900 shadow-sm'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-slate-50'
+                              ? 'bg-blue-50/70 text-slate-950'
+                              : 'bg-white text-slate-800 hover:bg-slate-50'
                           }`}
                         >
-                          <span className="min-w-0">
-                            <span className="block truncate text-xs font-bold">{division.name}</span>
-                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-semibold text-slate-400">
-                              <span>{translate('participantsCount')}: {participantCount}</span>
-                              <span aria-hidden="true">•</span>
-                              <span>{matchCount} {translate('matchesLabel')}</span>
-                            </span>
+                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+                            isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                          }`}>
+                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
                           </span>
-                          <ChevronRight className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-300'}`} aria-hidden="true" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
+                          </span>
+                          <span
+                            aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
+                            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
+                            isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {count}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
-                </section>
+                </div>
               )}
 
+              <div ref={contentDetailRef} id="selected-division-content" className="scroll-mt-24">
               {selectedDivision ? (
+
                 <>
                   {activeTab === 'live' && (
                     <LiveMatchesTab
@@ -793,7 +852,7 @@ const commonTranslate = useTranslations('Common');
                       }}
                     />
                   )}
-                  {activeTab === 'overview' && <OverviewTab key={selectedDivisionId || 'all'} tournament={selectedDivision} />}
+                  {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
                   {activeTab === 'teams' && (
                     <TeamsTab
                       key={selectedDivisionId || 'all'}
@@ -822,10 +881,12 @@ const commonTranslate = useTranslations('Common');
                   {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
 
                 </>
-              ) : (
+                            ) : (
                 <p className="text-center text-slate-400 italic py-12">{translate("rankingDataUnavailable")}</p>
               )}
+              </div>
             </div>
+
           </div>
 
           {/* Right Area - Registration & Info Card (takes 1 col) */}
@@ -1113,7 +1174,11 @@ const commonTranslate = useTranslations('Common');
               {/* Action Button */}
               {!isOwner && !isTournamentDraft(activeTournament.status) && (
                   <div className="mt-1 block w-full">
-                    {isClubLiteTournament(activeTournament) ? (
+                    {isRegistrationButtonDisabled ? (
+                      <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
+                        {registrationButtonLabel}
+                      </Button>
+                    ) : isClubLiteTournament(activeTournament) ? (
                       activeTournament.inviteCode ? (
                         <Link
                           href={`/lite/tournaments/join/${activeTournament.inviteCode}`}
@@ -1128,17 +1193,13 @@ const commonTranslate = useTranslations('Common');
                           {translate('joinLinkUnavailable')}
                         </Button>
                       )
-                    ) : isRegistrationButtonDisabled ? (
-                    <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
-                      {registrationButtonLabel}
-                    </Button>
-                  ) : (
-                    <Link href={registerHref} className="block w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md cursor-pointer text-sm">
-                        {registrationButtonLabel}
-                      </Button>
-                    </Link>
-                  )}
+                    ) : (
+                      <Link href={registerHref} className="block w-full">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md cursor-pointer text-sm">
+                          {registrationButtonLabel}
+                        </Button>
+                      </Link>
+                    )}
                 </div>
               )}
 

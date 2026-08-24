@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { DollarSign, Gift, Info, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -58,13 +58,26 @@ export function FinanceTab({
   const isEntryFeeInputDisabled = isRegistrationLockedForFinance || !allowEntryFees;
 
   // Payout form state
+  const [entryFeeDraft, setEntryFeeDraft] = useState('');
+  const [isEntryFeeFocused, setIsEntryFeeFocused] = useState(false);
   const [bankName, setBankName] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
   const [amountRequested, setAmountRequested] = useState(netOrganizerEarnings);
   const [isPayoutLoading, setIsPayoutLoading] = useState(false);
 
-  const canPayout = (isTournamentCompleted(tournament.status) || isTournamentInProgress(tournament.status)) && !!handleRequestPayout;
+    const canPayout = (isTournamentCompleted(tournament.status) || isTournamentInProgress(tournament.status)) && !!handleRequestPayout;
+  const formatEntryFee = (value: number) => (Number.isFinite(value) && value > 0 ? value.toLocaleString(numberLocale) : '');
+
+  useEffect(() => {
+    if (!isEntryFeeFocused) setEntryFeeDraft(formatEntryFee(entryFee));
+  }, [entryFee, isEntryFeeFocused, numberLocale]);
+
+  const handleEntryFeeChange = (rawValue: string) => {
+    const digitsOnly = rawValue.replace(/[^0-9]/g, '');
+    setEntryFeeDraft(digitsOnly);
+    setEntryFee(digitsOnly ? Number(digitsOnly) : 0);
+  };
 
   const handleSubmitPayout = async () => {
     if (!bankName.trim()) { toast.error(translate('bankNameRequired')); return; }
@@ -123,9 +136,18 @@ export function FinanceTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Input
               label={translate('entryFeeLabel')}
-              type="number"
-              value={entryFee}
-              onChange={(e) => setEntryFee(Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={isEntryFeeFocused ? entryFeeDraft : formatEntryFee(entryFee)}
+              onFocus={() => {
+                setIsEntryFeeFocused(true);
+                setEntryFeeDraft(entryFee > 0 ? String(entryFee) : '');
+              }}
+              onBlur={() => {
+                setIsEntryFeeFocused(false);
+                setEntryFeeDraft(formatEntryFee(entryFee));
+              }}
+              onChange={(e) => handleEntryFeeChange(e.target.value)}
               disabled={isEntryFeeInputDisabled}
             />
             <div className="flex flex-col gap-1.5">

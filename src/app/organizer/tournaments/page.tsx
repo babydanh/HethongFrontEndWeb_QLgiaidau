@@ -20,6 +20,7 @@ import { BRAND } from '@/constants/brand';
 interface ParentWithDivisions {
   id: string;
   name: string;
+  createdAt?: string | null;
   description?: string | null;
   bannerUrl?: string | null;
   logoUrl?: string | null;
@@ -121,6 +122,7 @@ export default function MyTournamentsPage() {
             pseudoParents.push({
               id: t.id,
               name: t.name,
+              createdAt: t.createdAt,
               description: t.description,
               bannerUrl: t.bannerUrl,
               logoUrl: t.logoUrl,
@@ -135,8 +137,15 @@ export default function MyTournamentsPage() {
           parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
         }
 
-        parentsRef.current = parentsWithDivisions;
-        setParents(parentsWithDivisions);
+        const sortedParents = [...parentsWithDivisions].sort((a, b) => {
+          const aDate = a.createdAt ?? a.divisions.find((division) => division.createdAt)?.createdAt;
+          const bDate = b.createdAt ?? b.divisions.find((division) => division.createdAt)?.createdAt;
+          const aTime = aDate ? new Date(aDate).getTime() : Number.NEGATIVE_INFINITY;
+          const bTime = bDate ? new Date(bDate).getTime() : Number.NEGATIVE_INFINITY;
+          return bTime - aTime;
+        });
+        parentsRef.current = sortedParents;
+        setParents(sortedParents);
         } catch {
         // Keep the last successful cards visible during transient 429/network errors.
         if (parentsRef.current.length === 0) toast.error(translate('loadError'));
@@ -250,7 +259,18 @@ export default function MyTournamentsPage() {
             {parents.map((parent) => {
               const divisions = parent.divisions || [];
               const firstDivision = divisions[0];
-              const totalParticipants = divisions.reduce((acc: number, div: Tournament) => acc + (div._summary?.participantCount || 0), 0);
+              const participantCounts = divisions.map((div: Tournament) => {
+                const summaryCount = div._summary?.participantCount;
+                if (typeof summaryCount === 'number' && Number.isFinite(summaryCount)) return summaryCount;
+                const count = div._count?.participants;
+                return typeof count === 'number' && Number.isFinite(count) ? count : null;
+              });
+              const totalParticipants = participantCounts.some((count) => count === null)
+                ? null
+                : participantCounts.reduce((acc: number, count) => acc + (count ?? 0), 0);
+              const participantCountLabel = totalParticipants === null
+                ? translate('participantCountUnavailable')
+                : translate('participantCount', { count: totalParticipants });
               const managementTournamentId = parent.isStandalone ? parent.id : (firstDivision?.id || parent.id);
               const isClubLite = isClubLiteTournament(parent) || isClubLiteTournament(firstDivision);
               const publicHref = `/tournaments/${managementTournamentId}`;
@@ -266,7 +286,7 @@ export default function MyTournamentsPage() {
                 >
                   {/* Visual Header */}
                   <div className="relative h-44 bg-slate-100 overflow-hidden group">
-                    <Link href={publicHref} target="_blank" className="block w-full h-full">
+                    <Link href={manageHref} className="block w-full h-full">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner()}
@@ -340,9 +360,19 @@ export default function MyTournamentsPage() {
                   {/* Content */}
                   <div className="p-4 md:p-5 flex-grow flex flex-col justify-between">
                     <div>
-                      <h3 className="text-base md:text-lg font-bold text-slate-900 line-clamp-1 mb-2 md:mb-3" title={parent.name}>
-                        {parent.name}
-                      </h3>
+                      <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
+                        <h3 className="text-base md:text-lg font-bold text-slate-900 line-clamp-1" title={parent.name}>
+                          {parent.name}
+                        </h3>
+                        <Link
+                          href={publicHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="shrink-0 text-[10px] font-bold text-slate-500 hover:text-blue-700 underline underline-offset-2"
+                        >
+                          {translate('viewPublic')}
+                        </Link>
+                      </div>
 
                       {/* Division Tags */}
                       <div className="flex flex-wrap gap-1.5 mb-3 md:mb-4">
@@ -395,7 +425,7 @@ export default function MyTournamentsPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="truncate">{translate('participantCount', { count: totalParticipants })}</span>
+                        <span className="truncate">{participantCountLabel}</span>
                       </div>
                     </div>
                   </div>

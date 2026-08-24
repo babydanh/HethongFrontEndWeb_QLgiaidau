@@ -3060,6 +3060,7 @@
     "breadcrumbTournaments": "Giải đấu",
     "backToTournaments": "Quay lại danh sách giải đấu",
     "registrationLocked": "Đã khóa đăng ký",
+    "alreadyRegistered": "Đã đăng ký",
     "registrationExpired": "Hết hạn đăng ký",
     "registrationClosed": "Đã đóng đăng ký",
     "inProgress": "Đang diễn ra",
@@ -6741,7 +6742,9 @@
     "bracketGroup": "Vòng bảng",
     "notScheduled": "Chưa xếp lịch",
     "participantCount": "{count} VĐV",
+    "participantCountUnavailable": "Chưa xác định số VĐV",
     "manage": "Quản lý",
+    "viewPublic": "Xem công khai",
     "operations": "Vận hành",
     "noRounds": "Chưa có vòng đấu"
   },

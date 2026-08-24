@@ -79,11 +79,8 @@ export function BasicInfoTab({
   setLogoUrl,
   bannerUrl,
   setBannerUrl,
-  hideFeaturedCardText,
-  setHideFeaturedCardText,
   newGalleryUrl,
   setNewGalleryUrl,
-  isAddingImage,
   setIsAddingImage,
   prizeDescription,
   setPrizeDescription,
@@ -94,20 +91,6 @@ export function BasicInfoTab({
   handleDeleteTournament,
   handleSaveBasicInfo,
   fetchTournamentData,
-  divisions,
-  selectedDivisionId,
-  isLimitEnabled,
-  setIsLimitEnabled,
-  maxParticipants,
-  setMaxParticipants,
-  matchType,
-  setMatchType,
-  setsToWin,
-  setSetsToWin,
-  pointsPerSet,
-  setPointsPerSet,
-  winByTwo,
-  setWinByTwo,
 }: BasicInfoTabProps) {
   const translate = useTranslations('OrganizerBasicInfo');
   const [newContactType, setNewContactType] = React.useState('facebook');
@@ -130,7 +113,7 @@ export function BasicInfoTab({
     }
     setContactInfo({
       ...contactInfo,
-      [finalKey]: newContactValue.trim()
+      [finalKey]: newContactValue.trim(),
     });
     setNewContactValue('');
     setNewContactLabel('');
@@ -142,21 +125,6 @@ export function BasicInfoTab({
     delete next[key];
     setContactInfo(next);
     toast.success(translate('contactRemoved'));
-  };
-  
-  const handleAddGalleryImage = async () => {
-    if (!newGalleryUrl.trim()) return;
-    try {
-      setIsAddingImage(true);
-      await tournamentsApi.addTournamentGalleryImage(id, newGalleryUrl.trim());
-      toast.success(translate('galleryImageAdded'));
-      setNewGalleryUrl('');
-      fetchTournamentData();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setIsAddingImage(false);
-    }
   };
 
   const handleRemoveGalleryImage = async (index: number) => {
@@ -182,6 +150,7 @@ export function BasicInfoTab({
         <div className="flex flex-row md:flex-col gap-1 md:gap-1.5 overflow-x-auto md:overflow-visible pb-2 md:pb-0 border-b md:border-b-0 md:border-r border-slate-200 md:pr-4">
           <button
             type="button"
+            data-testid="tab-basic-general"
             onClick={() => setBasicSubTab('general')}
             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'general'
@@ -194,6 +163,7 @@ export function BasicInfoTab({
           </button>
           <button
             type="button"
+            data-testid="tab-basic-branding"
             onClick={() => setBasicSubTab('branding')}
             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'branding'
@@ -206,6 +176,7 @@ export function BasicInfoTab({
           </button>
           <button
             type="button"
+            data-testid="tab-basic-prizes"
             onClick={() => setBasicSubTab('prizes')}
             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'prizes'
@@ -218,6 +189,7 @@ export function BasicInfoTab({
           </button>
           <button
             type="button"
+            data-testid="tab-basic-contact"
             onClick={() => setBasicSubTab('contact')}
             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'contact'
@@ -253,6 +225,7 @@ export function BasicInfoTab({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Input
+                  data-testid="manage-tournament-name-input"
                   label={translate('tournamentName')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -265,7 +238,7 @@ export function BasicInfoTab({
                     onChange={(e) => setCategoryId(e.target.value)}
                     className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11"
                   >
-                    {categories.map(cat => (
+                    {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
@@ -280,8 +253,6 @@ export function BasicInfoTab({
                   placeholder={translate('descriptionPlaceholder')}
                 />
               </div>
-
-
             </div>
           )}
 
@@ -355,111 +326,19 @@ export function BasicInfoTab({
                       placeholder={translate('bannerPlaceholder')}
                       className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 transition-colors duration-200"
                     />
-                    <label className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-lg cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-colors select-none shrink-0 h-11 shadow-sm">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          try {
-                            toast.loading(translate('uploadingBanner'), { id: 'banner-upload' });
-                            const res = await uploadApi.uploadImage(file);
-                            if (res && res.url) {
-                              setBannerUrl(res.url);
-                              await tournamentsApi.updateTournament(id, { bannerUrl: res.url });
-                              await tournamentsApi.addTournamentGalleryImage(id, res.url);
-                              toast.success(translate('bannerUploaded'), { id: 'banner-upload' });
-                              fetchTournamentData();
-                            }
-                          } catch (err) {
-                            toast.error(getErrorMessage(err), { id: 'banner-upload' });
-                          }
-                        }}
-                      />
-                      {translate('chooseFile')}
-                    </label>
                   </div>
-                  <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
-                    {translate('bannerGuidance')}
-                  </p>
-                  {bannerUrl ? (
-                    <div className="relative aspect-[21/9] w-full rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white mt-2">
-                      <img src={bannerUrl} alt={translate('bannerPreview')} className="w-full h-full object-cover" />
-                      <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-sm">
-                        {translate('bannerPreview')}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="aspect-[21/9] w-full rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
-                      <span>{translate('noBanner')}</span>
-                    </div>
-                  )}
                 </div>
 
-                {/* Album ảnh */}
-                <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/70 p-4 transition-colors hover:bg-blue-50">
-                  <input
-                    type="checkbox"
-                    checked={hideFeaturedCardText}
-                    onChange={(e) => setHideFeaturedCardText(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="space-y-1">
-                    <span className="block text-sm font-bold text-slate-850">
-                      {translate('hideBannerText')}
-                    </span>
-                    <span className="block text-xs font-semibold leading-relaxed text-slate-500">
-                      {translate('hideBannerTextDescription')}
-                    </span>
-                  </span>
-                </label>
-
-                <div className="space-y-4 border-t pt-5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block font-semibold">{translate('galleryTitle')}</label>
-                  
+                {/* Gallery */}
+                <div className="flex flex-col gap-2 border-t pt-5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{translate('tournamentGallery')}</label>
                   <div className="flex gap-2">
-                    <Input
-                      placeholder={translate('galleryPlaceholder')}
+                    <input
                       value={newGalleryUrl}
                       onChange={(e) => setNewGalleryUrl(e.target.value)}
-                      className="flex-grow text-slate-800"
+                      placeholder={translate('galleryPlaceholder')}
+                      className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 transition-colors duration-200"
                     />
-                    <label className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-lg cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-colors select-none shrink-0 h-11 shadow-sm mt-1">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          try {
-                            setIsAddingImage(true);
-                            toast.loading(translate('uploadingToCloudinary'), { id: 'gallery-upload' });
-                            const res = await uploadApi.uploadImage(file);
-                            if (res && res.url) {
-                              await tournamentsApi.addTournamentGalleryImage(id, res.url);
-                              toast.success(translate('galleryUploaded'), { id: 'gallery-upload' });
-                              fetchTournamentData();
-                            }
-                          } catch (err) {
-                            toast.error(getErrorMessage(err), { id: 'gallery-upload' });
-                          } finally {
-                            setIsAddingImage(false);
-                          }
-                        }}
-                        disabled={isAddingImage}
-                      />
-                      {translate('chooseFile')}
-                    </label>
-                    <Button
-                      onClick={handleAddGalleryImage}
-                      disabled={isAddingImage || !newGalleryUrl.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs shrink-0 shadow-sm mt-1 h-11"
-                    >
-                      {isAddingImage ? translate('adding') : translate('addGalleryUrl')}
-                    </Button>
                   </div>
 
                   {tournament.galleryImages && tournament.galleryImages.length > 0 ? (
@@ -642,6 +521,7 @@ export function BasicInfoTab({
           )}
         </div>
         <Button
+          data-testid="save-basic-info-btn"
           onClick={handleSaveBasicInfo}
           disabled={isSavingConfig}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-md shadow-blue-500/10"

@@ -3067,6 +3067,7 @@
     "breadcrumbTournaments": "Tournaments",
     "backToTournaments": "Back to tournaments",
     "registrationLocked": "Registration locked",
+    "alreadyRegistered": "Registered",
     "registrationExpired": "Registration expired",
     "registrationClosed": "Registration closed",
     "inProgress": "In progress",
@@ -6748,7 +6749,9 @@
     "bracketGroup": "Group stage",
     "notScheduled": "Not scheduled",
     "participantCount": "{count} participants",
+    "participantCountUnavailable": "Participant count unavailable",
     "manage": "Manage",
+    "viewPublic": "View public",
     "operations": "Operations",
     "noRounds": "No rounds yet"
   },

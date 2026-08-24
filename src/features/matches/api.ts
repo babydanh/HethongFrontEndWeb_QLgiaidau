@@ -14,7 +14,8 @@ interface PaginationMeta {
 }
 
 export const matchesApi = {
-  getMatches: (params?: Record<string, unknown>) => api.get<{ data: Match[]; meta: PaginationMeta }>('/matches', { params }),
+  getMatches: (params?: Record<string, unknown>, signal?: AbortSignal) =>
+    api.get<{ data: Match[]; meta: PaginationMeta }>('/matches', { params, signal }),
   getMatchById: (id: string) => api.get<{ data: Match }>(`/matches/${id}`).then(res => res.data),
   updateScore: (
     id: string,

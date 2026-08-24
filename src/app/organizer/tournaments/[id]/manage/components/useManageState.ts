@@ -1490,10 +1490,16 @@ export function useManageState(id: string) {
       const t = await fetchTournamentData();
       if (t?.id) {
         try {
-          const [vRes, cRes, fRes, pList] = await Promise.all([venuesApi.getVenues(), categoriesApi.getCategories(), tournamentsApi.getFeesConfig(), regionsApi.getProvinces()]);
-          if (vRes.data) setVenues(vRes.data);
-          if (cRes.data) setCategories(cRes.data);
-          if (fRes.data) setFeesConfig(fRes.data);
+          const [venuesResult, categoriesResult, feesResult, provincesResult] = await Promise.allSettled([
+            venuesApi.getVenues(),
+            categoriesApi.getCategories(),
+            tournamentsApi.getFeesConfig(),
+            regionsApi.getProvinces(),
+          ]);
+          if (venuesResult.status === 'fulfilled' && venuesResult.value.data) setVenues(venuesResult.value.data);
+          if (categoriesResult.status === 'fulfilled' && categoriesResult.value.data) setCategories(categoriesResult.value.data);
+          if (feesResult.status === 'fulfilled' && feesResult.value.data) setFeesConfig(feesResult.value.data);
+          const pList = provincesResult.status === 'fulfilled' ? provincesResult.value : [];
           setProvinces(pList);
 
           // Quick/AI creation stores region labels in tournamentConfig.location.

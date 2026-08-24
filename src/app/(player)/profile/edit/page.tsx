@@ -623,8 +623,18 @@ export default function EditProfilePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <Input
                       label={translate('phoneLabel')}
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
                       placeholder="0912345678"
                       {...profileForm.register('phone')}
+                      onChange={(event) => {
+                        const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 11);
+                        profileForm.setValue('phone', digitsOnly, {
+                          shouldDirty: true,
+                          shouldValidate: profileForm.formState.isSubmitted,
+                        });
+                      }}
                       error={profileForm.formState.errors.phone?.message}
                     />
                     <DatePicker

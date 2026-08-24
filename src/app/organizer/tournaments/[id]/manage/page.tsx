@@ -228,7 +228,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               {s.draftStatus === 'saved' && <span className="text-[10px] font-semibold text-emerald-600">{translate('status.draftSaved')}</span>}
               {s.draftStatus === 'restored' && <span className="text-[10px] font-semibold text-amber-600">{translate('status.draftRestored')}</span>}
             </div>
-            <h1 className="text-xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
+            <h1 data-testid="tournament-title" className="text-xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
             <p className="text-slate-500 font-medium text-xs md:text-sm flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               {translate('status.startDate')} {s.tournament.startDate ? formatDate(s.tournament.startDate) : translate('status.notSet')}
@@ -373,10 +373,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         <div className="overflow-x-auto mb-6 bg-white rounded-lg border border-slate-200 shadow-sm hide-scrollbar">
           <div className="flex md:grid md:grid-cols-7 gap-1.5 p-1.5 min-w-max md:min-w-0">
             {TABS.map(({ key, label, icon: Icon }) => (
-              <button key={key} onClick={() => s.setActiveTab(key)}
+              <button
+                key={key}
+                data-testid={`tab-${key}`}
+                onClick={() => s.setActiveTab(key)}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   s.activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-                }`}>
+                }`}
+              >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{label}</span>
                 {key === 'permissions' && pendingRefereeCount > 0 ? (

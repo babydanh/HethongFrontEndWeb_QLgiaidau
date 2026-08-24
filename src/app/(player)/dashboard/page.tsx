@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from 'next/navigation';
+
 import {
   Activity,
   Calendar,
@@ -41,7 +41,7 @@ import {
 } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { matchesApi, Match } from '@/features/matches/api';
-import { communitiesApi } from '@/features/communities/api';
+
 import { sortFollowedTournaments } from '@/utils/tournament-follow';
 import { getMatchLocationLabel } from '@/utils/tournament-location';
 import {
@@ -72,7 +72,9 @@ function getMatchStatusLabel(status: string, translate: (key: string) => string)
 export default function DashboardPage() {
   const translate = useTranslations("PlayerDashboard");
   const locale = useLocale();
-  const router = useRouter();
+
+
+
   const { user } = useAuthStore();
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [workspace, setWorkspace] = useState<TournamentWorkspace | null>(null);
@@ -86,8 +88,9 @@ export default function DashboardPage() {
   const [footballTeamRankings, setFootballTeamRankings] = useState<FootballTeamRanking[]>([]);
   const [sportFilter, setSportFilter] = useState<string>('');
   const [eloCategoryId, setEloCategoryId] = useState<string>('');
-  const [isLiteLoading, setIsLiteLoading] = useState(false);
-  const [showNoClubModal, setShowNoClubModal] = useState(false);
+
+
+
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'referee'>('overview');
   const [tournFilter, setTournFilter] = useState<'all' | 'registered' | 'organized' | 'followed'>('all');
 
@@ -95,23 +98,11 @@ export default function DashboardPage() {
     user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')
   );
 
-  const handleCreateLiteClick = async () => {
-    setIsLiteLoading(true);
-    try {
-      const commRes = await communitiesApi.getMyCommunities();
-      const myData = commRes?.data;
-      const allMine = [...(myData?.created || []), ...(myData?.joined || [])];
-      if (allMine.length === 0) {
-        setShowNoClubModal(true);
-      } else {
-        router.push(`/communities/${allMine[0].id}/create-lite`);
-      }
-    } catch {
-      setShowNoClubModal(true);
-    } finally {
-      setIsLiteLoading(false);
-    }
-  };
+
+
+
+
+
 
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -347,23 +338,14 @@ export default function DashboardPage() {
                 </Button>
               </Link>
             </>
-          ) : (
-            <>
-              <Link href="/tournaments">
-                <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
-                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> {translate("findTournaments")}
-                </Button>
-              </Link>
-              <Button
-                onClick={() => void handleCreateLiteClick()}
-                disabled={isLiteLoading}
-                className="font-bold text-xs h-9 bg-blue-600 hover:bg-blue-700"
-              >
-                {isLiteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
-                {translate("quickCreateLite")}
+                    ) : (
+            <Link href="/tournaments">
+              <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
+                <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> {translate("findTournaments")}
               </Button>
-            </>
+            </Link>
           )}
+
         </div>
       </div>
 
@@ -594,7 +576,7 @@ export default function DashboardPage() {
                           };
 
                           const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
-                          const stageName = upcomingMatch.group?.stage?.name 
+                          const stageName = upcomingMatch.group?.stage?.name
                             ? localizeTerm(upcomingMatch.group.stage.name)
                             : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : '');
 
@@ -912,20 +894,6 @@ export default function DashboardPage() {
                 </>
               ) : null}
 
-              <button
-                type="button"
-                onClick={() => void handleCreateLiteClick()}
-                disabled={isLiteLoading}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-emerald-50 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-emerald-200 cursor-pointer disabled:opacity-50"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                    {isLiteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  </div>
-                <span>{translate("quickCreateTournament")}</span>
-                </div>
-                <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">CLB</span>
-              </button>
 
               <Link href="/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-purple-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-purple-200">
                 <div className="flex items-center gap-2.5">

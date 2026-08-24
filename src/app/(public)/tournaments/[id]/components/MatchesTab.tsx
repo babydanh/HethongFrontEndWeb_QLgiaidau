@@ -1,19 +1,18 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
-import { Tournament, Division, BracketMatch, divisionsApi } from '@/features/tournaments/api';
+import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
 
-import { Calendar, Play, Trophy, MapPin, Info, Search } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
 import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo, type RoundLabelTranslations } from '@/utils/match-round-label';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
-import { getDivisionMatchLabel } from '@/utils/tournament-display';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
 import { getMatchLocationLabel } from '@/utils/tournament-location';
 
@@ -28,7 +27,6 @@ type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
-  const displayTranslate = useTranslations('TournamentDisplay');
   const { openUserProfile } = useUserProfileModalStore();
   const roundLabelTranslations = useMemo<RoundLabelTranslations>(() => ({
     roundGrandFinal: matchTranslate('roundGrandFinal'),
@@ -45,52 +43,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   }), [matchTranslate]);
   const effectiveTournamentId = tournamentId ?? tournament.id;
-  const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
-  const inlineDivision = divisionId
-    ? tournament.divisions?.find((division) => division.id === divisionId)
-    : null;
+  const requestControllerRef = useRef<AbortController | null>(null);
 
+  // Cancel an in-flight page when the selected division changes or this tab unmounts.
   useEffect(() => {
-    let cancelled = false;
-    if (!divisionId) {
-      void Promise.resolve().then(() => {
-        if (!cancelled) setDisplayDivision(null);
-      });
-      return () => { cancelled = true; };
-    }
+    return () => {
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+    };
+  }, [divisionId, effectiveTournamentId]);
 
-    // Tournament detail already includes the selected division in normal public responses.
-    // Reuse it to avoid an extra request that can trigger the production proxy throttle.
-    if (inlineDivision) {
-      void Promise.resolve().then(() => {
-        if (!cancelled) setDisplayDivision(inlineDivision as unknown as Division);
-      });
-      return () => { cancelled = true; };
-    }
-
-    void divisionsApi.getDivisions(effectiveTournamentId)
-      .then((response) => {
-        if (!cancelled) setDisplayDivision(response.data?.find((division) => division.id === divisionId) ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setDisplayDivision(null);
-      });
-    return () => { cancelled = true; };
-  }, [divisionId, effectiveTournamentId, inlineDivision]);
-
-  const displayMatchLabel = getDivisionMatchLabel(
-    divisionId ? displayDivision?.matchType : tournament.matchType,
-    divisionId ? displayDivision?.genderRestriction : tournament.genderRestriction,
-    {
-      maleGender: displayTranslate('maleGender'),
-      femaleGender: displayTranslate('femaleGender'),
-      mixedGender: displayTranslate('mixedGender'),
-      singlesFormat: displayTranslate('singlesFormat'),
-      doublesFormat: displayTranslate('doublesFormat'),
-      mixedDoublesFormat: displayTranslate('mixedDoublesFormat'),
-    },
-  );
-  
   // Pagination Hook
   const {
     data: matches,
@@ -105,6 +67,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     resetAndFetch,
   } = useCursorPagination<BracketMatch>(
     async (cursor) => {
+      requestControllerRef.current?.abort();
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
       const matchParams: Record<string, string | number> = {
         tournament_id: effectiveTournamentId,
         status: '', // Overrides default status filter to get all matches
@@ -113,11 +78,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (divisionId) matchParams.division_id = divisionId;
       if (cursor) matchParams.cursor = cursor;
       
-      const res = await matchesApi.getMatches(matchParams);
-      return res as unknown as {
-        data: BracketMatch[];
-        meta: { nextCursor?: string | null; hasMore?: boolean };
-      };
+      try {
+        const res = await matchesApi.getMatches(matchParams, controller.signal);
+        return res as unknown as {
+          data: BracketMatch[];
+          meta: { nextCursor?: string | null; hasMore?: boolean };
+        };
+      } finally {
+        if (requestControllerRef.current === controller) {
+          requestControllerRef.current = null;
+        }
+      }
     }
   );
   
@@ -127,6 +98,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasDetectedRound, setHasDetectedRound] = useState(false);
 
   // Find bracket size for the current division or tournament
   const getBracketSize = () => {
@@ -142,37 +114,38 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
   // Initial load & reset filters on division change
   useEffect(() => {
-    setSelectedStageKey('ALL');
-    setSelectedLeg('ALL');
-    setSelectedRoundKey('ALL');
-    setStatusFilter('ALL');
-    setSearchQuery('');
-    setHasDetectedRound(false);
-    resetAndFetch();
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      setSelectedStageKey('ALL');
+      setSelectedLeg('ALL');
+      setSelectedRoundKey('ALL');
+      setStatusFilter('ALL');
+      setSearchQuery('');
+      setHasDetectedRound(false);
+      void resetAndFetch();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [divisionId, effectiveTournamentId, resetAndFetch]);
 
   // Auto-detect best round to display on first load
-  const [hasDetectedRound, setHasDetectedRound] = useState(false);
   useEffect(() => {
     if (matches.length > 0 && !hasDetectedRound) {
-      // This effect intentionally initializes the first visible round from fetched matches.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHasDetectedRound(true);
       const ongoingMatch = matches.find(m => m.status === 'ONGOING');
-      if (ongoingMatch && ongoingMatch.roundNumber) {
-        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations);
-        const activeOption = options.find(option => option.roundNumber === ongoingMatch.roundNumber);
-        setSelectedRoundKey(activeOption?.key ?? 'ALL');
-        return;
-      }
       const scheduledMatches = matches.filter(m => m.status === 'SCHEDULED');
-      if (scheduledMatches.length > 0) {
-        const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
-        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations);
-        const activeOption = options.find(option => option.roundNumber === minRound);
-        setSelectedRoundKey(activeOption?.key ?? 'ALL');
-        return;
-      }
+      const activeRoundKey = ongoingMatch?.roundNumber
+        ? buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations)
+            .find(option => option.roundNumber === ongoingMatch.roundNumber)?.key
+        : scheduledMatches.length > 0
+          ? buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations)
+              .find(option => option.roundNumber === Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]))?.key
+          : undefined;
+      Promise.resolve().then(() => {
+        setHasDetectedRound(true);
+        setSelectedRoundKey(activeRoundKey ?? 'ALL');
+      });
     }
   }, [matches, hasDetectedRound, tournament.format, bracketSize, roundLabelTranslations]);
 

@@ -662,6 +662,18 @@ export default function ProfilePage() {
                 );
               })}
 
+              {eligiblePublicRanks.length === 0 && latestEloHistory ? (
+                <EloTierBadge
+                  elo={latestEloHistory.newElo}
+                  categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
+                  size="md"
+                />
+              ) : eligiblePublicRanks.length === 0 ? (
+                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
+                  {translate("unranked")}
+                </span>
+              ) : null}
+
               {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}

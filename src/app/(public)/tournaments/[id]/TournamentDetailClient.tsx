@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } from '@/features/tournaments/api';
+import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight } from 'lucide-react';
@@ -99,14 +100,17 @@ const commonTranslate = useTranslations('Common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
+  const [openDivisionId, setOpenDivisionId] = useState<string>('');
+  const [renderedDivisionId, setRenderedDivisionId] = useState<string>('');
   const [divisionsList, setDivisionsList] = useState<Division[]>([]);
   const [initialDivisionId] = useState(() => searchParams.get('divisionId'));
+  const visibleDivisionId = openDivisionId || selectedDivisionId;
   const selectedDivision: Tournament | null = (() => {
-    if (!tournament || !selectedDivisionId) {
+    if (!tournament || !visibleDivisionId) {
       return tournament;
     }
 
-    const division = divisionsList.find((item) => item.id === selectedDivisionId);
+    const division = divisionsList.find((item) => item.id === visibleDivisionId);
     if (!division) {
       return tournament;
     }
@@ -133,7 +137,12 @@ const commonTranslate = useTranslations('Common');
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
   const { openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
-  const [liveMatchesCount, setLiveMatchesCount] = useState(0);
+  const [liveCountsByDivision, setLiveCountsByDivision] = useState<Record<string, number>>({});
+  const liveRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveRefreshInFlightRef = useRef(false);
+  const hasAutoOpenedLiveRef = useRef(false);
+  const hasUserNavigatedRef = useRef(false);
+  const liveMatchesCount = Object.values(liveCountsByDivision).reduce((total, count) => total + count, 0);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
@@ -145,8 +154,6 @@ const commonTranslate = useTranslations('Common');
   const shouldScrollToDivisionRef = useRef(false);
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
-
-  const [hasInitializedTab, setHasInitializedTab] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -191,98 +198,136 @@ const commonTranslate = useTranslations('Common');
     };
   }, [activeTournament?.id, isOwner, selectedDivisionId, user?.id]);
 
-  // Check live matches count and set default tab to 'live' if matches are ongoing.
-  // Do not run this extra request while Schedule owns the same division-scoped feed.
-  useEffect(() => {
-    if (activeTab === 'matches') return;
-    const controller = new AbortController();
-    let active = true;
-    const checkLive = async () => {
-      try {
-        const params: Record<string, string | number> = {
-          tournament_id: tournamentId,
-          status: 'ONGOING',
-          limit: 100,
-        };
-        if (selectedDivisionId) params.division_id = selectedDivisionId;
-        const res = await matchesApi.getMatches(params, controller.signal);
-        const data = Array.isArray(res) ? res : (res.data || []);
-        if (active) {
-          const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
-          setLiveMatchesCount(count);
-          if (!hasInitializedTab && count > 0) {
-            setActiveTab('live');
-            setHasInitializedTab(true);
-          }
-        }
-      } catch {
-        // Abort and transient match-feed errors use the silent fallback.
+  const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
+    if (liveRefreshInFlightRef.current) return;
+    liveRefreshInFlightRef.current = true;
+    try {
+      const response = await matchesApi.getMatches(
+        { tournament_id: tournamentId, status: 'ONGOING', limit: 100 },
+        signal,
+      );
+      const data = Array.isArray(response) ? response : (response.data ?? []);
+      const ongoing = data.filter((match: Match) => match.status === 'ONGOING');
+      const nextCounts: Record<string, number> = {};
+      for (const match of ongoing) {
+        if (!match.divisionId) continue;
+        nextCounts[match.divisionId] = (nextCounts[match.divisionId] ?? 0) + 1;
       }
-    };
-    void checkLive();
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [activeTab, tournamentId, selectedDivisionId, hasInitializedTab]);
+      setLiveCountsByDivision(nextCounts);
+    } catch {
+      // Abort and transient match-feed errors keep the last confirmed snapshot.
+    } finally {
+      liveRefreshInFlightRef.current = false;
+    }
+  }, [tournamentId]);
 
-  // Handle socket live match updates for live badge
+  // Reconcile once immediately, then periodically. Socket updates only schedule
+  // one bounded refresh so rapid score/status events cannot create request storms.
   useEffect(() => {
+    const controller = new AbortController();
     const socket = socketClient.getMatchSocket();
     const joinTournament = () => socket.emit('joinTournament', tournamentId);
-    const handleMatchUpdate = (rawMatch: { status?: string; tournamentId?: string } | string) => {
-      let updatedMatch: { status?: string; tournamentId?: string };
+    const scheduleLiveRefresh = () => {
+      if (liveRefreshTimerRef.current) clearTimeout(liveRefreshTimerRef.current);
+      liveRefreshTimerRef.current = setTimeout(() => {
+        liveRefreshTimerRef.current = null;
+        void refreshLiveCounts(controller.signal);
+      }, 180);
+    };
+    const handleMatchUpdate = (rawMatch: { tournamentId?: string } | string) => {
+      let updatedMatch: { tournamentId?: string };
       try {
         updatedMatch = typeof rawMatch === 'string'
-          ? JSON.parse(rawMatch) as { status?: string; tournamentId?: string }
+          ? JSON.parse(rawMatch) as { tournamentId?: string }
           : rawMatch;
       } catch {
         return;
       }
-      if (updatedMatch?.tournamentId !== tournamentId || activeTab === 'matches') return;
-      // Refresh live count only when another tab needs the badge.
-      const params: Record<string, string | number> = {
-        tournament_id: tournamentId,
-        status: 'ONGOING',
-        limit: 100,
-      };
-      if (selectedDivisionId) params.division_id = selectedDivisionId;
-      matchesApi.getMatches(params).then((res) => {
-        const data = Array.isArray(res) ? res : (res.data || []);
-        const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
-        setLiveMatchesCount(count);
-      }).catch(() => {});
+      if (updatedMatch?.tournamentId === tournamentId) scheduleLiveRefresh();
     };
 
+    void refreshLiveCounts(controller.signal);
+    const pollId = window.setInterval(() => {
+      void refreshLiveCounts(controller.signal);
+    }, 30000);
     socket.on('connect', joinTournament);
     socket.on('match:update', handleMatchUpdate);
     if (socket.connected) joinTournament();
 
     return () => {
+      controller.abort();
+      window.clearInterval(pollId);
+      if (liveRefreshTimerRef.current) {
+        clearTimeout(liveRefreshTimerRef.current);
+        liveRefreshTimerRef.current = null;
+      }
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [activeTab, tournamentId, selectedDivisionId]);
+  }, [refreshLiveCounts, tournamentId]);
 
   useEffect(() => {
-    if (!debouncedDivisionId || debouncedDivisionId === selectedDivisionId) return;
+    if (hasAutoOpenedLiveRef.current || hasUserNavigatedRef.current) return;
+    const requestedTab = searchParams.get('tab');
+    if (requestedTab && requestedTab !== 'live') return;
+    const liveDivisionId = initialDivisionId
+      ? (liveCountsByDivision[initialDivisionId] > 0 ? initialDivisionId : undefined)
+      : Object.entries(liveCountsByDivision).find(
+          ([divisionId, count]) => count > 0 && divisionsList.some((division) => division.id === divisionId),
+        )?.[0];
+    if (!liveDivisionId) return;
+
+    hasAutoOpenedLiveRef.current = true;
+    Promise.resolve().then(() => {
+      setActiveTab('live');
+      setSelectedDivisionId(liveDivisionId);
+      setOpenDivisionId(liveDivisionId);
+      setRenderedDivisionId(liveDivisionId);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set('divisionId', liveDivisionId);
+      nextParams.set('tab', 'live');
+      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    });
+  }, [divisionsList, initialDivisionId, liveCountsByDivision, router, searchParams, tournamentId]);
+
+  useEffect(() => {
+    if (activeTab !== 'live' || liveMatchesCount > 0) return;
+    Promise.resolve().then(() => setActiveTab('overview'));
+  }, [activeTab, liveMatchesCount]);
+
+  useEffect(() => {
+    if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set('divisionId', debouncedDivisionId);
     router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-    Promise.resolve().then(() => setSelectedDivisionId(debouncedDivisionId));
-  }, [debouncedDivisionId, router, searchParams, selectedDivisionId, tournamentId]);
+  }, [debouncedDivisionId, router, searchParams, tournamentId]);
 
   useEffect(() => {
-    if (!shouldScrollToDivisionRef.current || !selectedDivisionId) return;
+    if (!shouldScrollToDivisionRef.current || !openDivisionId) return;
     shouldScrollToDivisionRef.current = false;
-    const frameId = window.requestAnimationFrame(() => {
-      contentDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    return () => window.cancelAnimationFrame(frameId);
-  }, [activeTab, selectedDivisionId]);
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const delay = prefersReducedMotion ? 0 : 180;
+    const timeoutId = window.setTimeout(() => {
+      contentDetailRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'nearest',
+      });
+    }, delay);
+    return () => window.clearTimeout(timeoutId);
+  }, [activeTab, openDivisionId]);
 
   const handleDivisionSelect = (divisionId: string) => {
+    hasUserNavigatedRef.current = true;
+    if (openDivisionId === divisionId) {
+      shouldScrollToDivisionRef.current = false;
+      setPendingDivisionId(null);
+      setOpenDivisionId('');
+      return;
+    }
     shouldScrollToDivisionRef.current = true;
+    setSelectedDivisionId(divisionId);
+    setRenderedDivisionId(divisionId);
+    setOpenDivisionId(divisionId);
     setPendingDivisionId(divisionId);
   };
 
@@ -443,6 +488,10 @@ const commonTranslate = useTranslations('Common');
           setSelectedDivisionId((currentDivisionId) =>
             currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
           );
+          if (nextDivisionId) {
+            setOpenDivisionId(nextDivisionId);
+            setRenderedDivisionId(nextDivisionId);
+          }
         });
       } catch (err: unknown) {
         console.error('Failed to load parent/divisions context:', err);
@@ -458,6 +507,8 @@ const commonTranslate = useTranslations('Common');
       setSelectedDivisionId((currentDivisionId) =>
         currentDivisionId === requestedDivisionId ? currentDivisionId : requestedDivisionId,
       );
+      setOpenDivisionId(requestedDivisionId);
+      setRenderedDivisionId(requestedDivisionId);
     });
   }, [divisionsList, searchParams]);
 
@@ -766,19 +817,22 @@ const commonTranslate = useTranslations('Common');
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      hasUserNavigatedRef.current = true;
+                      setActiveTab(tab.id);
+                    }}
                     className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive
                           ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80 animate-pulse'
+                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80'
                         : isActive
                           ? 'bg-blue-600 text-white shadow-sm'
                           : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
-                      <span className="w-2 h-2 rounded-full bg-current animate-ping shrink-0" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-current motion-safe:animate-ping motion-reduce:animate-none" />
                     )}
                     <span>{tab.label}</span>
                     {tab.badge != null && (
@@ -802,7 +856,9 @@ const commonTranslate = useTranslations('Common');
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
                   <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                     {divisionsList.map((division) => {
-                      const isActive = division.id === selectedDivisionId;
+                      const isActive = division.id === openDivisionId;
+                      const shouldRenderContent = division.id === renderedDivisionId;
+                      const liveCount = liveCountsByDivision[division.id] ?? 0;
                       const participantCount = division._count?.participants ?? 0;
                       const matchCount = division._count?.matches ?? 0;
                       const count = activeTab === 'matches' ? matchCount : participantCount;
@@ -825,68 +881,79 @@ const commonTranslate = useTranslations('Common');
                             }`}>
                               <ChevronRight className={`h-5 w-5 transition-transform ${isActive ? 'rotate-90' : ''}`} aria-hidden="true" />
                             </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
-                            </span>
-                            <span
-                              aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
-                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
-                                isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
+                              </span>
+                              {liveCount > 0 && (
+                                <span
+                                  aria-label={translate('divisionLiveCount', { count: liveCount })}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-black text-rose-700 sm:text-xs"
+                                >
+                                  <span className="h-1.5 w-1.5 rounded-full bg-rose-600 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+                                  <span>{liveCount}</span>
+                                </span>
+                              )}
+                              <span
+                                aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
+                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
+                                  isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                {count}
+                              </span>
+                            </button>
+                            <div
+                              className={`grid transition-[grid-template-rows,opacity] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+                                isActive ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                               }`}
                             >
-                              <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                              {count}
-                            </span>
-                          </button>
-                          {isActive && (
-                            <div ref={contentDetailRef} id="selected-division-content" className="scroll-mt-24 border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5">
-                              {selectedDivision ? (
+                              <div className="min-h-0 overflow-hidden">
+                                {shouldRenderContent && (
+                                  <div ref={isActive ? contentDetailRef : undefined} id={isActive ? 'selected-division-content' : undefined} className="scroll-mt-24 border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5">
+                              {selectedDivision && shouldRenderContent ? (
                                 <>
                                   {activeTab === 'live' && (
                                     <LiveMatchesTab
-                                      key={selectedDivisionId || 'all'}
+                                      key={visibleDivisionId || 'all'}
                                       tournament={selectedDivision}
                                       tournamentId={tournament.id}
-                                      divisionId={selectedDivisionId || undefined}
-                                      onLiveCountChange={(count) => {
-                                        setLiveMatchesCount(count);
-                                        if (count === 0 && activeTab === 'live') {
-                                          setActiveTab('overview');
-                                        }
-                                      }}
+                                      divisionId={visibleDivisionId || undefined}
                                     />
                                   )}
                                   {activeTab === 'teams' && (
                                     <TeamsTab
-                                      key={selectedDivisionId || 'all'}
+                                      key={visibleDivisionId || 'all'}
                                       tournament={selectedDivision}
                                       tournamentId={tournament.id}
-                                      divisionId={selectedDivisionId || undefined}
+                                      divisionId={visibleDivisionId || undefined}
                                       participantId={searchParams.get('participantId') || undefined}
                                     />
                                   )}
                                   {activeTab === 'bracket' && (
                                     <BracketTab
-                                      key={selectedDivisionId || 'all'}
+                                      key={visibleDivisionId || 'all'}
                                       tournament={selectedDivision}
                                       tournamentId={tournament.id}
-                                      divisionId={selectedDivisionId || undefined}
+                                      divisionId={visibleDivisionId || undefined}
                                     />
                                   )}
                                   {activeTab === 'matches' && (
                                     <MatchesTab
-                                      key={selectedDivisionId || 'all'}
+                                      key={visibleDivisionId || 'all'}
                                       tournament={selectedDivision}
                                       tournamentId={tournament.id}
-                                      divisionId={selectedDivisionId || undefined}
+                                      divisionId={visibleDivisionId || undefined}
                                     />
                                   )}
                                 </>
                               ) : (
                                 <p className="py-8 text-center italic text-slate-400">{translate('rankingDataUnavailable')}</p>
                               )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
                         </div>
                       );
                     })}

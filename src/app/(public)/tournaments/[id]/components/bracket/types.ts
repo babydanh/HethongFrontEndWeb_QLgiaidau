@@ -7,7 +7,7 @@
 
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
-import type { SportRuleKind } from '@/types/tournament';
+import type { BracketStage, SportRuleKind } from '@/types/tournament';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LAYOUT CONSTANTS
@@ -58,8 +58,34 @@ export interface BracketTabProps {
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   dragHandlers?: BracketDragHandlers;
-  /** Changes when the owner has persisted a bracket edit and the view must refetch canonical matches. */
+  /** Owner-provided canonical snapshot for editor views; avoids a second bracket GET after a mutation. */
+  bracketSnapshot?: { stages: BracketStage[] } | null;
+  /** Changes when an external owner action requests a canonical bracket refresh. */
   refreshKey?: string | number;
+}
+
+export function mergeBracketMatches(
+  bracket: { stages: BracketStage[] } | null | undefined,
+  updatedMatches: BracketMatch[],
+): { stages: BracketStage[] } | null | undefined {
+  if (!bracket || updatedMatches.length === 0) return bracket;
+
+  const updatedById = new Map(updatedMatches.map((match) => [match.id, match]));
+  let changed = false;
+  const stages = bracket.stages.map((stage) => ({
+    ...stage,
+    groups: (stage.groups ?? []).map((group) => ({
+      ...group,
+      matches: group.matches.map((match) => {
+        const updated = updatedById.get(match.id);
+        if (!updated) return match;
+        changed = true;
+        return { ...match, ...updated };
+      }),
+    })),
+  }));
+
+  return changed ? { ...bracket, stages } : bracket;
 }
 
 export interface MatchPos {

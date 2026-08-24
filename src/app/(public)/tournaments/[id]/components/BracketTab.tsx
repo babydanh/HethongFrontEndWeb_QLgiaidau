@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Tournament, Division, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
@@ -333,6 +333,7 @@ export default function BracketTab({
   fallbackSportRuleKind,
   knockoutOnly = false,
   dragHandlers,
+  bracketSnapshot,
   refreshKey,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
@@ -340,15 +341,24 @@ export default function BracketTab({
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const effectiveSportRuleKind =
     fallbackSportRuleKind ?? getSportRuleKind(tournament.sportRules);
-  const [stages, setStages] = useState<BracketStage[]>([]);
-  const [activeStageId, setActiveStageId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const hasOwnerSnapshot = bracketSnapshot !== undefined;
+  const [stages, setStages] = useState<BracketStage[]>(() =>
+    bracketSnapshot?.stages ?? [],
+  );
+  const [activeStageId, setActiveStageId] = useState<string | null>(
+    bracketSnapshot?.stages[0]?.id ?? null,
+  );
+  const [isLoading, setIsLoading] = useState(!hasOwnerSnapshot);
+
   const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
   const [result, setResult] = useState<TournamentResult | null>(null);
   const [resultError, setResultError] = useState(false);
   const [displayDivision, setDisplayDivision] = useState<Division | null>(null);
   const [matchUpdateVersion, setMatchUpdateVersion] = useState(0);
-  const bracketLoadedRef = useRef(false);
+  const [appliedOwnerSnapshot, setAppliedOwnerSnapshot] = useState<typeof bracketSnapshot>(bracketSnapshot);
+  const bracketLoadedRef = useRef(hasOwnerSnapshot);
+  const lastRefreshKeyRef = useRef(refreshKey);
+  const lastMatchUpdateVersionRef = useRef(0);
 
   // Organizer bracket pages pass the parent tournament together with a
   // divisionId. Never render the parent's genderRestriction in that case:
@@ -414,37 +424,68 @@ export default function BracketTab({
     };
   }, [divisionId, effectiveTournamentId]);
 
+  const applyStages = useCallback((fetchedStages: BracketStage[]) => {
+    const nextStages = knockoutOnly
+      ? fetchedStages.filter(isKnockoutStage)
+      : fetchedStages;
+    setStages(nextStages);
+    setActiveStageId((currentStageId) =>
+      nextStages.some((stage) => stage.id === currentStageId)
+        ? currentStageId
+        : nextStages[0]?.id ?? null,
+    );
+    bracketLoadedRef.current = true;
+    setIsLoading(false);
+  }, [knockoutOnly]);
+
+  const fetchBracket = useCallback(async () => {
+    if (!bracketLoadedRef.current) setIsLoading(true);
+    try {
+      const res = await tournamentsApi.getTournamentBracket(
+        effectiveTournamentId,
+        divisionId,
+      );
+      applyStages(res.data?.stages ?? []);
+    } catch (err) {
+      console.error(
+        'Failed to fetch bracket:',
+        { tournamentId: effectiveTournamentId, divisionId },
+        err,
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applyStages, divisionId, effectiveTournamentId]);
+
   useEffect(() => {
-    const fetchBracket = async () => {
-      if (!bracketLoadedRef.current) setIsLoading(true);
-      try {
-        const res = await tournamentsApi.getTournamentBracket(
-          effectiveTournamentId,
-          divisionId,
-        );
-        const fetchedStages = res.data?.stages ?? [];
-        const nextStages = knockoutOnly
-          ? fetchedStages.filter(isKnockoutStage)
-          : fetchedStages;
-        setStages(nextStages);
-        setActiveStageId((currentStageId) =>
-          nextStages.some((stage) => stage.id === currentStageId)
-            ? currentStageId
-            : nextStages[0]?.id ?? null,
-        );
-        bracketLoadedRef.current = true;
-      } catch (err) {
-        console.error(
-          'Failed to fetch bracket:',
-          { tournamentId: effectiveTournamentId, divisionId },
-          err,
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchBracket();
-  }, [divisionId, effectiveTournamentId, knockoutOnly, refreshKey, matchUpdateVersion]);
+    if (hasOwnerSnapshot && appliedOwnerSnapshot !== bracketSnapshot) {
+      const snapshot = bracketSnapshot;
+      let cancelled = false;
+      void Promise.resolve().then(() => {
+        if (!cancelled) {
+          setAppliedOwnerSnapshot(snapshot);
+          applyStages(snapshot?.stages ?? []);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (!hasOwnerSnapshot) {
+      void Promise.resolve().then(() => fetchBracket());
+    }
+  }, [appliedOwnerSnapshot, applyStages, bracketSnapshot, fetchBracket, hasOwnerSnapshot]);
+
+  useEffect(() => {
+    const refreshRequested = lastRefreshKeyRef.current !== refreshKey;
+    const matchUpdateRequested = lastMatchUpdateVersionRef.current !== matchUpdateVersion;
+    lastRefreshKeyRef.current = refreshKey;
+    lastMatchUpdateVersionRef.current = matchUpdateVersion;
+
+    if (!refreshRequested && !matchUpdateRequested) return;
+    void Promise.resolve().then(() => fetchBracket());
+  }, [fetchBracket, matchUpdateVersion, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -475,7 +516,10 @@ export default function BracketTab({
     };
   }, [divisionId, effectiveTournamentId]);
 
-  const activeStage = stages.find((s) => s.id === activeStageId);
+  const renderedStages = hasOwnerSnapshot && appliedOwnerSnapshot !== bracketSnapshot
+    ? (knockoutOnly ? (bracketSnapshot?.stages ?? []).filter(isKnockoutStage) : bracketSnapshot?.stages ?? [])
+    : stages;
+  const activeStage = renderedStages.find((s) => s.id === activeStageId);
   const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage));
   const effectiveViewMode = activeStageSupportsFullView ? viewMode : 'paged';
 
@@ -492,7 +536,7 @@ export default function BracketTab({
   }
 
   // ── Empty ──
-  if (!stages.length) {
+  if (!renderedStages.length) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
@@ -600,9 +644,9 @@ export default function BracketTab({
       ))}
 
       {/* Stage tabs */}
-      {stages.length > 1 && (
+      {renderedStages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {stages.map((s) => (
+          {renderedStages.map((s) => (
             <button
               key={s.id}
               onClick={() => setActiveStageId(s.id)}

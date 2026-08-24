@@ -50,6 +50,7 @@ export interface Match {
   id: string;
   groupId: string;
   tournamentId: string;
+  divisionId?: string | null;
   status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
   roundNumber: number;
   matchOrder: number;

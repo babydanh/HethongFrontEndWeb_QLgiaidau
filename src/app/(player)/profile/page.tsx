@@ -33,8 +33,11 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
-import { PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
+import { getShortTierCode, PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
 import { categoriesApi, Category } from '@/features/categories/api';
+import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
+import { getRankStyle } from '@/utils/rank-style';
+import { getSportLogo } from '@/constants/sports';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 
@@ -421,7 +424,7 @@ export default function ProfilePage() {
   const matchesCursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const matchesCursorUserRef = useRef<string | null>(null);
   const eligiblePublicRanks = (userRankings?.publicRanks || [])
-    .filter((rank) => rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true);
+    .filter(isPublicRankingEligible);
   const latestEloHistory = [...eloHistory]
     .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0] || null;
   const featuredRank = eligiblePublicRanks
@@ -672,11 +675,21 @@ export default function ProfilePage() {
                 }
                 if (latestEloHistory) {
                   const historyCategoryName = categories.find((category) => category.id === latestEloHistory.categoryId)?.name;
+                  const historyTierName = getRankStyle(latestEloHistory.newElo, undefined, historyCategoryName).name;
+                  const historyTierCode = getShortTierCode(historyTierName, latestEloHistory.newElo);
+                  const historySportLogo = getSportLogo(historyCategoryName);
                   return (
                     <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
-                      {historyCategoryName && <span className="text-[10px] font-bold text-slate-500 uppercase">{historyCategoryName}:</span>}
-                      <EloTierBadge elo={latestEloHistory.newElo} categoryName={historyCategoryName} size="sm" />
-                      <span className="text-[10px] font-semibold text-slate-500">{translate("eloRecordedNotRanked")}</span>
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-extrabold tracking-wide text-slate-700"
+                        title={`${historyCategoryName || translate('eloStats')}: ${historyTierName} (${historyTierCode}), ${latestEloHistory.newElo} ELO • ${translate('eloRecordedNotRanked')}`}
+                        aria-label={`${historyCategoryName || translate('eloStats')}: ${historyTierName}, ${historyTierCode}, ${latestEloHistory.newElo} ELO • ${translate('eloRecordedNotRanked')}`}
+                      >
+                        {historySportLogo ? (
+                          <Image src={historySportLogo} alt="" width={14} height={14} unoptimized className="object-contain" />
+                        ) : null}
+                        <span>{historyTierCode}</span>
+                      </span>
                     </div>
                   );
                 }
@@ -1405,7 +1418,12 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 flex-wrap">
                               <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
                               <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
-                              <EloTierBadge elo={rank.eloPoints} size="sm" />
+                              <EloTierBadge
+                                elo={rank.eloPoints}
+                                tierName={getCanonicalTierName(rank)}
+                                categoryName={rank.categoryName}
+                                size="sm"
+                              />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 text-center text-xs">
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">

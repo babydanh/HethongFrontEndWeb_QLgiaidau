@@ -7,6 +7,7 @@ import { getSportLogo } from '@/constants/sports';
 import type { PlayerRanking } from '@/types/ranking';
 import type { Category } from '@/types/category';
 import { getRankStyle } from '@/utils/rank-style';
+import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import { cn } from '@/utils/cn';
 
 interface PlayerSportTierBadgeBarProps {
@@ -107,15 +108,16 @@ export function PlayerSportTierBadgeBar({
         r.categoryName?.toLowerCase() === category.name?.toLowerCase(),
     );
     const activeSportRank = sportRanks
-      .filter((r) => r.matchesPlayed > 0 || r.adminLeaderboardEligible === true)
+      .filter(isPublicRankingEligible)
       .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
 
-    const isRanked = Boolean(activeSportRank && (activeSportRank.matchesPlayed > 0 || activeSportRank.adminLeaderboardEligible === true));
+    const isRanked = isPublicRankingEligible(activeSportRank);
+    const canonicalTierName = isRanked ? getCanonicalTierName(activeSportRank) : null;
     const rankStyle = isRanked
-      ? getRankStyle(activeSportRank?.eloPoints, activeSportRank?.tier?.name || activeSportRank?.tierName, category.name)
+      ? getRankStyle(activeSportRank?.eloPoints, canonicalTierName, category.name)
       : null;
     const shortCode = isRanked
-      ? getShortTierCode(activeSportRank?.tier?.name || activeSportRank?.tierName, activeSportRank?.eloPoints)
+      ? getShortTierCode(canonicalTierName, activeSportRank?.eloPoints)
       : '--';
     const logoUrl = getSportLogo(category.name);
 
@@ -175,6 +177,11 @@ export function PlayerSportTierBadgeBar({
               title={
                 isRanked
                   ? `${category.name}: ${activeSportRank?.eloPoints} ELO (${rankStyle?.name || shortCode}) • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
+                  : `${category.name}: ${translate('unranked')}`
+              }
+              aria-label={
+                isRanked
+                  ? `${category.name}: ${rankStyle?.name || shortCode}, ${activeSportRank?.eloPoints} ELO, ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
                   : `${category.name}: ${translate('unranked')}`
               }
               className={cn(

@@ -110,6 +110,8 @@ export interface Tournament {
   maxParticipants?: number;
   entryFee?: number;
   platformFeePercentage?: string;
+  platformFeeThreshold?: string;
+  platformFeeFixedAmount?: string;
   platformFeePerPlayer?: number;
   tournamentType?: 'CLUB' | 'PUBLIC';
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';

@@ -29,7 +29,7 @@ import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking, FootballTeamRanking, EloHistoryLog } from '@/features/rankings/api';
-import { getBestRankForCategory } from '@/features/rankings/elo-display';
+import { getBestRankForCategory, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
   footballTeamsApi,
@@ -184,7 +184,7 @@ export default function DashboardPage() {
 
   const publicRanks = userRankings?.publicRanks || [];
   const strongestRank = [...publicRanks]
-    .filter((rank) => rank.matchesPlayed > 0)
+    .filter(isPublicRankingEligible)
     .sort((a, b) => b.eloPoints - a.eloPoints || b.matchesPlayed - a.matchesPlayed)[0];
   const strongestActiveCategoryId = strongestRank
     && categories.some((category) => category.id === strongestRank.categoryId)

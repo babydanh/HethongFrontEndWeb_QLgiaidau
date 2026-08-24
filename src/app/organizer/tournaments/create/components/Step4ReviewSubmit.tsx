@@ -28,6 +28,8 @@ export default function Step4ReviewSubmit() {
     pctPublicRanked: 5,
     pctPublicUnranked: 5,
     pctClub: 0,
+    platformFeeThreshold: 100000,
+    platformFeeFixedAmount: 5000,
     allowEntryFees: true,
   });
   const submittingRef = useRef(false);
@@ -239,8 +241,11 @@ export default function Step4ReviewSubmit() {
       // Auto-share tournament card into Club Chat if created for a community
       if (formData.communityId) {
         try {
-          const clubRoomRes: any = await api.get(`/chat/rooms?type=CLUB&communityId=${formData.communityId}`);
-          const clubRoom = clubRoomRes.data?.data || clubRoomRes.data;
+          const clubRoomRes = await api.get<{
+            data?: { id?: string };
+            id?: string;
+          }>(`/chat/rooms?type=CLUB&communityId=${formData.communityId}`);
+          const clubRoom = clubRoomRes.data.data ?? clubRoomRes.data;
           if (clubRoom?.id) {
             await inboxApi.sendMessage(
               clubRoom.id,

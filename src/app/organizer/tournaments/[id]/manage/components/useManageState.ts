@@ -158,7 +158,6 @@ export function useManageState(id: string) {
 
   // ── Pricing ──
   const [entryFee, setEntryFee] = useState(0);
-  const [platformFeePerPlayer, setPlatformFeePerPlayer] = useState(10000);
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [isLimitEnabled, setIsLimitEnabled] = useState(true);
   const [matchType, setMatchType] = useState('DOUBLES');
@@ -225,7 +224,13 @@ export function useManageState(id: string) {
   // ── Lock modal ──
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
-  const [lockSummary, setLockSummary] = useState<{totalParticipants:number;totalPlayers:number;platformFeePerPlayer:number;totalPlatformFee:number;platformFeeRuleLabel:string}|null>(null);
+  const [lockSummary, setLockSummary] = useState<{
+    totalParticipants: number;
+    totalPlayers: number;
+    platformFeePerPlayer: number;
+    totalPlatformFee: number;
+    platformFeeRuleType: 'FREE' | 'PERCENTAGE' | 'FIXED';
+  } | null>(null);
 
   // ── Phase 2 Open modal ──
   const [isOpening, setIsOpening] = useState(false);
@@ -1030,10 +1035,10 @@ export function useManageState(id: string) {
   const handlePayPlatformFee = async () => {
     setIsPayingPlatformFee(true);
     try {
-      const totalPlayers = participants.reduce((s,p) => s + (p.members?.length||0), 0);
-      const pf = getPlatformFeeBreakdown(entryFee, tournament?.platformFeePercentage);
-      const amount = totalPlayers * pf.feePerPlayer;
-      const res = await paymentsApi.createPaymentLink({ tournamentId: id, amount, purpose: 'PLATFORM_FEE' });
+      const res = await paymentsApi.createPaymentLink({
+        tournamentId: id,
+        purpose: 'PLATFORM_FEE',
+      });
       if (res.data?.paymentUrl) { window.open(res.data.paymentUrl, '_blank'); toast.success('Đã mở liên kết thanh toán.'); }
       else toast.error('Không có liên kết thanh toán.');
     } catch (err) { toast.error(getErrorMessage(err)); }
@@ -1054,8 +1059,25 @@ export function useManageState(id: string) {
     if (participants.length < 2) { toast.error('Cần ít nhất 2 đội để chốt'); return; }
     setHasConfigBeforeLock(!!divisions.find(d=>d.id===selectedDivisionId)?.roundConfig?.setsToWin);
     const totalPlayers = participants.reduce((s,p) => s + (p.members?.length||0), 0);
-    const pf = getPlatformFeeBreakdown(entryFee, tournament.platformFeePercentage);
-    setLockSummary({ totalParticipants: participants.length, totalPlayers, platformFeePerPlayer: pf.feePerPlayer, totalPlatformFee: totalPlayers * pf.feePerPlayer, platformFeeRuleLabel: pf.ruleLabel });
+    const pf = getPlatformFeeBreakdown(
+      entryFee,
+      tournament.platformFeePercentage,
+      {
+        thresholdAmount: tournament.platformFeeThreshold,
+        fixedAmount: tournament.platformFeeFixedAmount,
+      },
+    );
+    const totalPlatformFee = participants.reduce((sum, participant) => {
+      const playerCount = Math.max(1, participant.members?.length || 0);
+      return sum + Math.min(entryFee, pf.feePerPlayer * playerCount);
+    }, 0);
+    setLockSummary({
+      totalParticipants: participants.length,
+      totalPlayers,
+      platformFeePerPlayer: pf.feePerPlayer,
+      totalPlatformFee,
+      platformFeeRuleType: pf.ruleType,
+    });
     setIsLockModalOpen(true);
   };
 
@@ -1674,7 +1696,7 @@ export function useManageState(id: string) {
     provinces, setProvinces, wards, setWards,
     provinceCode, setProvinceCode, wardCode, setWardCode,
     startDate, setStartDate, endDate, setEndDate, registrationStartDate, setRegistrationStartDate, registrationEndDate, setRegistrationEndDate,
-    entryFee, setEntryFee, platformFeePerPlayer, setPlatformFeePerPlayer,
+    entryFee, setEntryFee,
     maxParticipants, setMaxParticipants, isLimitEnabled, setIsLimitEnabled, sportRuleKind, setSportRuleKind,
     matchType, setMatchType, setsToWin, setSetsToWin, pointsPerSet, setPointsPerSet, winByTwo, setWinByTwo,
     maxDeucePoints, setMaxDeucePoints, superTiebreakEnabled, setSuperTiebreakEnabled,

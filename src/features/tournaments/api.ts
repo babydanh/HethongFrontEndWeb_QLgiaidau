@@ -215,6 +215,8 @@ export interface TournamentFeesConfig {
   pctPublicRanked: number;
   pctPublicUnranked: number;
   pctClub: number;
+  platformFeeThreshold: number;
+  platformFeeFixedAmount: number;
   allowEntryFees: boolean;
 }
 

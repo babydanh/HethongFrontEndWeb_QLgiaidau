@@ -142,6 +142,7 @@ const commonTranslate = useTranslations('Common');
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const contentDetailRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToDivisionRef = useRef(false);
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
 
@@ -271,11 +272,18 @@ const commonTranslate = useTranslations('Common');
     Promise.resolve().then(() => setSelectedDivisionId(debouncedDivisionId));
   }, [debouncedDivisionId, router, searchParams, selectedDivisionId, tournamentId]);
 
-  const handleDivisionSelect = (divisionId: string) => {
-    setPendingDivisionId(divisionId);
-    window.requestAnimationFrame(() => {
+  useEffect(() => {
+    if (!shouldScrollToDivisionRef.current || !selectedDivisionId) return;
+    shouldScrollToDivisionRef.current = false;
+    const frameId = window.requestAnimationFrame(() => {
       contentDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeTab, selectedDivisionId]);
+
+  const handleDivisionSelect = (divisionId: string) => {
+    shouldScrollToDivisionRef.current = true;
+    setPendingDivisionId(divisionId);
   };
 
   const handleShareClick = async () => {
@@ -789,10 +797,10 @@ const commonTranslate = useTranslations('Common');
 
             {/* Tab Content */}
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
-                            {/* Compact vertical content rows for division-specific tabs only */}
+                                          {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
-                  <div className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                     {divisionsList.map((division) => {
                       const isActive = division.id === selectedDivisionId;
                       const participantCount = division._count?.participants ?? 0;
@@ -800,91 +808,95 @@ const commonTranslate = useTranslations('Common');
                       const count = activeTab === 'matches' ? matchCount : participantCount;
                       const CountIcon = activeTab === 'matches' ? Calendar : Users;
                       return (
-                        <button
-                          key={division.id}
-                          type="button"
-                          aria-current={isActive ? 'true' : undefined}
-                          onClick={() => handleDivisionSelect(division.id)}
-                          className={`group flex min-h-[68px] w-full items-center gap-3 px-3.5 py-3.5 text-left transition-colors sm:px-4 ${
-                            isActive
-                              ? 'bg-blue-50/70 text-slate-950'
-                              : 'bg-white text-slate-800 hover:bg-slate-50'
-                          }`}
-                        >
-                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-                            isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
-                          }`}>
-                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
-                          </span>
-                          <span
-                            aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
-                            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
-                            isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                            {count}
-                          </span>
-                        </button>
+                        <div key={division.id} className="border-b border-slate-100 last:border-b-0">
+                          <button
+                            type="button"
+                            aria-current={isActive ? 'true' : undefined}
+                            aria-expanded={isActive}
+                            onClick={() => handleDivisionSelect(division.id)}
+                            className={`group flex min-h-[68px] w-full items-center gap-3 px-3.5 py-3.5 text-left transition-colors sm:px-4 ${
+                              isActive
+                                ? 'bg-blue-50/70 text-slate-950'
+                                : 'bg-white text-slate-800 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+                              isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                            }`}>
+                              <ChevronRight className={`h-5 w-5 transition-transform ${isActive ? 'rotate-90' : ''}`} aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
+                            </span>
+                            <span
+                              aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
+                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
+                                isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                              {count}
+                            </span>
+                          </button>
+                          {isActive && (
+                            <div ref={contentDetailRef} id="selected-division-content" className="scroll-mt-24 border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5">
+                              {selectedDivision ? (
+                                <>
+                                  {activeTab === 'live' && (
+                                    <LiveMatchesTab
+                                      key={selectedDivisionId || 'all'}
+                                      tournament={selectedDivision}
+                                      tournamentId={tournament.id}
+                                      divisionId={selectedDivisionId || undefined}
+                                      onLiveCountChange={(count) => {
+                                        setLiveMatchesCount(count);
+                                        if (count === 0 && activeTab === 'live') {
+                                          setActiveTab('overview');
+                                        }
+                                      }}
+                                    />
+                                  )}
+                                  {activeTab === 'teams' && (
+                                    <TeamsTab
+                                      key={selectedDivisionId || 'all'}
+                                      tournament={selectedDivision}
+                                      tournamentId={tournament.id}
+                                      divisionId={selectedDivisionId || undefined}
+                                      participantId={searchParams.get('participantId') || undefined}
+                                    />
+                                  )}
+                                  {activeTab === 'bracket' && (
+                                    <BracketTab
+                                      key={selectedDivisionId || 'all'}
+                                      tournament={selectedDivision}
+                                      tournamentId={tournament.id}
+                                      divisionId={selectedDivisionId || undefined}
+                                    />
+                                  )}
+                                  {activeTab === 'matches' && (
+                                    <MatchesTab
+                                      key={selectedDivisionId || 'all'}
+                                      tournament={selectedDivision}
+                                      tournamentId={tournament.id}
+                                      divisionId={selectedDivisionId || undefined}
+                                    />
+                                  )}
+                                </>
+                              ) : (
+                                <p className="py-8 text-center italic text-slate-400">{translate('rankingDataUnavailable')}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
                 </div>
               )}
 
-              <div ref={contentDetailRef} id="selected-division-content" className="scroll-mt-24">
-              {selectedDivision ? (
+              {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
+              {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
 
-                <>
-                  {activeTab === 'live' && (
-                    <LiveMatchesTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                      onLiveCountChange={(count) => {
-                        setLiveMatchesCount(count);
-                        if (count === 0 && activeTab === 'live') {
-                          setActiveTab('overview');
-                        }
-                      }}
-                    />
-                  )}
-                  {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
-                  {activeTab === 'teams' && (
-                    <TeamsTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                      participantId={searchParams.get('participantId') || undefined}
-                    />
-                  )}
-                  {activeTab === 'bracket' && (
-                    <BracketTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                    />
-                  )}
-                                    {activeTab === 'matches' && (
-                    <MatchesTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                    />
-                  )}
-                  {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
-
-                </>
-                            ) : (
-                <p className="text-center text-slate-400 italic py-12">{translate("rankingDataUnavailable")}</p>
-              )}
-              </div>
             </div>
 
           </div>

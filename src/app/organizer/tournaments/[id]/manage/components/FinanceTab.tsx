@@ -47,8 +47,26 @@ export function FinanceTab({
   const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const totalPlayers = participants.reduce((sum, p) => sum + (p.members?.length || 0), 0);
   const totalExpectedFee = entryFee * participants.length;
-  const platformFee = getPlatformFeeBreakdown(entryFee, tournament.platformFeePercentage);
-  const totalPlatformFee = totalPlayers * platformFee.feePerPlayer;
+  const platformFee = getPlatformFeeBreakdown(
+    entryFee,
+    tournament.platformFeePercentage,
+    {
+      thresholdAmount: tournament.platformFeeThreshold,
+      fixedAmount: tournament.platformFeeFixedAmount,
+    },
+  );
+  const totalPlatformFee = participants.reduce((sum, participant) => {
+    const playerCount = Math.max(1, participant.members?.length || 0);
+    return sum + Math.min(entryFee, platformFee.feePerPlayer * playerCount);
+  }, 0);
+  const formatMoney = (value: number) => value.toLocaleString(numberLocale);
+  const platformFeeRuleDescription = platformFee.ruleType === 'FREE'
+    ? translate('platformFeeFreeDescription')
+    : translate('platformFeeRuleDescription', {
+        threshold: formatMoney(platformFee.thresholdAmount),
+        fixedAmount: formatMoney(platformFee.fixedAmount),
+        percentage: platformFee.percentage,
+      });
   const netOrganizerEarnings = Math.max(0, totalExpectedFee - totalPlatformFee);
   const isRegistrationLockedForFinance =
     isTournamentOpenForRegistration(tournament.status) ||
@@ -102,6 +120,9 @@ export function FinanceTab({
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">{translate('title')}</h2>
+      <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm leading-relaxed text-blue-900">
+        <span className="font-semibold">{translate('feeScopeDescription')}</span>
+      </div>
 
       {!allowEntryFees && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
@@ -153,9 +174,7 @@ export function FinanceTab({
                 {platformFee.feePerPlayer.toLocaleString(numberLocale)} VNĐ / {translate('playerUnit')}
               </Badge>
               <p className="text-xs text-slate-500 font-medium">
-                {platformFee.percentage === 0
-                  ? translate('platformFeeFreeDescription')
-                  : translate('platformFeeRuleDescription', { percentage: platformFee.percentage })}
+                {platformFeeRuleDescription}
               </p>
             </div>
           </div>
@@ -193,7 +212,7 @@ export function FinanceTab({
                   {totalPlatformFee.toLocaleString(numberLocale)} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">
-                  {platformFee.ruleLabel} ({translate('athleteCount', { count: totalPlayers })})
+                  {platformFeeRuleDescription} ({translate('athleteCount', { count: totalPlayers })})
                 </p>
               </div>
 

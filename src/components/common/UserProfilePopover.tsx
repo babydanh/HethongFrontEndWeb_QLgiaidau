@@ -118,7 +118,9 @@ export default function UserProfilePopover({
           joinedAt: publicData.createdAt || prev?.joinedAt || user.joinedAt,
         }));
       })
-      .catch(() => {});
+      .catch(() => {
+        // Privacy is fail-closed when the public profile cannot be loaded.
+      });
 
     // 2. Fetch community member role, streak, and tags if inside a community
     if (communityId) {
@@ -266,7 +268,7 @@ export default function UserProfilePopover({
     ?? profileData.ranks?.[0]
     ?? null;
   const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
-  const canMessage = !isSelf && (profileData.allowStrangerMessages !== false || Boolean(communityId && profileData.role));
+  const canMessage = !isSelf && profileData.allowStrangerMessages === true;
   const profileRanks = (profileData.ranks ?? []).filter((rank) => rank.matchesPlayed > 0).slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
@@ -654,7 +656,7 @@ export default function UserProfilePopover({
 
         {/* Quick Action Buttons */}
         <div className="mt-3.5 flex gap-2 pt-2.5 border-t border-slate-100">
-          {!isSelf && (
+          {!isSelf && canMessage && (
             <button
               type="button"
               disabled={isOpeningChat || !canMessage}

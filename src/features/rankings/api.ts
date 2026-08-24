@@ -17,7 +17,7 @@ export interface FootballTeamRanking {
   tierName?: string | null;
 }
 
-export type AdminRankingScope = 'PUBLIC' | 'COMMUNITY';
+export type AdminRankingScope = 'PUBLIC';
 export type AdminRankingStatus = 'VISIBLE' | 'HIDDEN' | 'BANNED';
 export type AdminEloOperation = 'ADD' | 'SUBTRACT' | 'SET' | 'RESET' | 'HIDE' | 'BAN' | 'RESTORE';
 
@@ -29,7 +29,6 @@ export interface AdminRankingContext {
   avatarUrl: string | null;
   categoryId: string;
   scope: AdminRankingScope;
-  communityId: string | null;
   matchType: string;
   genderRestriction: string | null;
   eloPoints: number;
@@ -47,7 +46,6 @@ export interface AdminEloOperationPayload {
   userId: string;
   categoryId: string;
   scope: AdminRankingScope;
-  communityId?: string;
   matchType: string;
   genderRestriction?: string;
   operation: AdminEloOperation;
@@ -89,7 +87,6 @@ export interface AdminRankingContextQuery {
   search?: string;
   categoryId?: string;
   scope?: AdminRankingScope;
-  communityId?: string;
   matchType?: string;
   genderRestriction?: string;
   status?: AdminRankingStatus;
@@ -130,8 +127,6 @@ export interface AdminEloPlayerPage {
 export interface AdminEloPlayerContextDetail {
   contextId: string;
   scope: AdminRankingScope;
-  communityId: string | null;
-  communityName: string | null;
   categoryId: string;
   matchType: string;
   genderRestriction: string | null;
@@ -152,7 +147,6 @@ export interface AdminEloRecentOperation {
   id: string;
   operation: AdminEloOperation;
   scope: AdminRankingScope;
-  communityId: string | null;
   matchType: string;
   previousElo: number | null;
   newElo: number | null;
@@ -198,7 +192,7 @@ export const rankingsApi = {
     api.get<{ data: FootballTeamRanking[]; meta: { nextCursor?: string | null; hasMore?: boolean } }>('/rankings/football-teams', { params }),
   listAdminContexts: (params: AdminRankingContextQuery = {}) =>
     api.get<ApiEnvelope<AdminRankingContextPage>>('/rankings/admin/contexts', { params }),
-  listAdminPlayers: (params: { limit?: number; categoryId: string; search?: string; scope?: AdminRankingScope; communityId?: string; matchType?: string; status?: AdminRankingStatus; cursor?: string | null }) =>
+  listAdminPlayers: (params: { limit?: number; categoryId: string; search?: string; scope?: AdminRankingScope; matchType?: string; status?: AdminRankingStatus; cursor?: string | null }) =>
     api.get<ApiEnvelope<AdminEloPlayerPage>>('/rankings/admin/players', { params }),
   getAdminPlayerDetail: (userId: string, categoryId: string) =>
     api.get<ApiEnvelope<AdminEloPlayerDetail>>(`/rankings/admin/players/${userId}/detail`, { params: { categoryId } }),

@@ -575,6 +575,18 @@ export default function UnifiedChatWidget() {
       const requestId = ++directChatRequestRef.current;
       try {
         setLoading(true);
+        const policy = await chatApi.getDirectMessagePolicy(targetUserId);
+        if (requestId !== directChatRequestRef.current) return;
+        if (!policy.canMessage) {
+          const policyMessage = policy.reasonCode === 'STRANGER_MESSAGES_DISABLED'
+            ? translate('chatStrangerMessagesDisabled')
+            : policy.reasonCode === 'BLOCKED'
+              ? translate('blockedUserCannotMessage')
+              : translate('openConversationFailed');
+          toast.error(policyMessage);
+          return;
+        }
+
         const response = await chatApi.createDirectRoom(targetUserId);
         if (requestId !== directChatRequestRef.current) return;
         const room = {
@@ -589,12 +601,15 @@ export default function UnifiedChatWidget() {
         const typedError = err as { response?: { status?: number; data?: { message?: string | string[] } } };
         const errorData = typedError.response?.data;
         const rawMsg = Array.isArray(errorData?.message) ? errorData.message[0] : errorData?.message;
+        const errorCode = (errorData as { code?: string; reasonCode?: string } | undefined)?.code
+          ?? (errorData as { code?: string; reasonCode?: string } | undefined)?.reasonCode;
         const normalizedMessage = typeof rawMsg === 'string' ? rawMsg.toLowerCase() : '';
+        const isStrangerPolicyError = errorCode === 'STRANGER_MESSAGES_DISABLED'
+          || normalizedMessage.includes('stranger')
+          || normalizedMessage.includes('người lạ')
+          || normalizedMessage.includes('không nhận tin nhắn');
         let finalMsg = rawMsg;
-        if (
-          typedError.response?.status === 403 &&
-          (normalizedMessage.includes('stranger') || normalizedMessage.includes('người lạ') || normalizedMessage.includes('không nhận tin nhắn'))
-        ) {
+        if (isStrangerPolicyError) {
           finalMsg = translate('chatStrangerMessagesDisabled');
         } else if (rawMsg === 'Direct room must have exactly 2 members') {
           finalMsg = translate('directChatMembersError');

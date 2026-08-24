@@ -36,6 +36,8 @@ export const chatApi = {
   markRead: (roomId: string) => api.put(`/chat/rooms/${roomId}/read`),
   getUnreadCount: (roomId: string) => api.get<{ data: { count: number } }>(`/chat/rooms/${roomId}/unread`).then(res => res.data.count),
   getBlockedUsers: () => api.get<{ data: Array<{ blockedId: string }> }>('/chat/blocks').then((res) => res.data),
+  getDirectMessagePolicy: (userId: string) =>
+    api.get<ApiResponse<{ canMessage: boolean; reasonCode: string | null }>>(`/chat/direct-policy/${userId}`).then(res => res.data),
   createDirectRoom: (userId: string) =>
     api.post<ApiResponse<ChatConversation>>('/chat/rooms', {
       type: 'DIRECT',

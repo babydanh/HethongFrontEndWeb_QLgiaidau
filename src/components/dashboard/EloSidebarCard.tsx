@@ -6,7 +6,7 @@ import type { PlayerRanking } from '@/features/rankings/api';
 import { getEloProgressInfo, type EloProgressToNextLabel } from '@/features/rankings/elo-display';
 import { getRankStyle } from '@/utils/rank-style';
 
-const ELO_PER_STREAK_WIN = 15;
+
 
 interface Props {
   eloPoints: number;
@@ -15,6 +15,7 @@ interface Props {
   winRate: number;
   tierName: string;
   activeRank?: PlayerRanking | null;
+  recentEloDelta?: number | null;
   sportLabel?: string;
   sportOptions?: Array<{ id: string; name: string }>;
   selectedSportId?: string;
@@ -28,6 +29,7 @@ export default function EloSidebarCard({
   winRate,
   tierName,
   activeRank,
+  recentEloDelta = null,
   sportLabel,
   sportOptions = [],
   selectedSportId = '',
@@ -41,10 +43,16 @@ export default function EloSidebarCard({
       eloTranslate('progressToNext', { remaining, nextName })),
     progressPeak: eloTranslate('progressPeak'),
   };
-  const streak = activeRank?.winStreak ?? 0;
-  const recentDelta = streak * ELO_PER_STREAK_WIN;
-  const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
-  const trendColor = recentDelta > 0 ? 'text-emerald-600' : recentDelta < 0 ? 'text-rose-500' : 'text-slate-400';
+  const TrendIcon = recentEloDelta !== null && recentEloDelta > 0
+    ? TrendingUp
+    : recentEloDelta !== null && recentEloDelta < 0
+      ? TrendingDown
+      : Minus;
+  const trendColor = recentEloDelta !== null && recentEloDelta > 0
+    ? 'text-emerald-600'
+    : recentEloDelta !== null && recentEloDelta < 0
+      ? 'text-rose-500'
+      : 'text-slate-400';
   const tierColor = getRankStyle(eloPoints, tierName, activeRank?.categoryName).badgeClass;
   const tierBorder = tierColor.split(' ').find((token) => token.startsWith('border-')) || 'border-slate-200';
   const hasRank = matchesPlayed > 0;
@@ -72,10 +80,10 @@ export default function EloSidebarCard({
 
       <div className="flex items-end gap-3 mb-1">
         <span className="text-4xl font-bold text-slate-900 tabular-nums tracking-tight">{eloPoints}</span>
-        {recentDelta !== 0 && (
+        {recentEloDelta !== null && (
           <span className={`flex items-center gap-0.5 text-xs font-semibold mb-1.5 ${trendColor}`}>
             <TrendIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
-            {recentDelta > 0 ? '+' : ''}{recentDelta}
+            {recentEloDelta > 0 ? '+' : ''}{recentEloDelta}
           </span>
         )}
       </div>

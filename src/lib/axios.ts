@@ -77,6 +77,19 @@ function isPublicSnapshotRequest(config: AxiosRequestConfig): boolean {
   return path === '/tournaments/public' || path === '/communities' || path.startsWith('/rankings');
 }
 
+function isDirectMessagingRequest(config: AxiosRequestConfig | undefined): boolean {
+  if (!config) return false;
+  const path = (config.url ?? '').split('?')[0];
+  if (path.startsWith('/chat/direct-policy/')) return true;
+  if (config.method?.toUpperCase() !== 'POST' || path !== '/chat/rooms') return false;
+  try {
+    const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+    return payload?.type === 'DIRECT';
+  } catch {
+    return false;
+  }
+}
+
 function isSharedGetEligible(config: AxiosRequestConfig): boolean {
   if (config.method?.toUpperCase() !== 'GET') return false;
   const meta = getRequestMeta(config);
@@ -339,7 +352,7 @@ api.interceptors.response.use(
     // Do not turn a transient backend failure into a toast storm. Screens keep
     // their last successful snapshot and decide when the next reconciliation
     // is safe, instead of every caller retrying the same request here.
-    if (error.response?.status >= 500) {
+    if (error.response?.status >= 500 && !isDirectMessagingRequest(originalRequest)) {
       const now = Date.now();
       if (now - lastServerErrorToastAt >= SERVER_ERROR_TOAST_COOLDOWN_MS) {
         lastServerErrorToastAt = now;

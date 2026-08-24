@@ -28,7 +28,7 @@ import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { rankingsApi, PlayerRanking, FootballTeamRanking } from '@/features/rankings/api';
+import { rankingsApi, PlayerRanking, FootballTeamRanking, EloHistoryLog } from '@/features/rankings/api';
 import { getBestRankForCategory } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
@@ -46,10 +46,6 @@ import { sortFollowedTournaments } from '@/utils/tournament-follow';
 import { getMatchLocationLabel } from '@/utils/tournament-location';
 import {
   getTournamentStatusClassName,
-  getTournamentStatusLabel,
-  isTournamentCompleted,
-  isTournamentInProgress,
-  isTournamentOpenForRegistration,
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
 import { cn } from '@/utils/cn';
@@ -82,6 +78,7 @@ export default function DashboardPage() {
   const [workspace, setWorkspace] = useState<TournamentWorkspace | null>(null);
   const [upcomingMatch, setUpcomingMatch] = useState<Match | null>(null);
   const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
+  const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
   const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
@@ -127,16 +124,19 @@ export default function DashboardPage() {
         const followedResPromise = tournamentsApi.getFollowedTournaments().catch(() => null);
         const footballTeamsResPromise = footballTeamsApi.listMine().catch(() => null);
         const categoriesResPromise = categoriesApi.getCategories().catch(() => null);
-        const [ranksRes, workspaceRes, matchesRes, followedRes, categoriesRes, footballTeamsRes] = await Promise.all([
+        const eloHistoryResPromise = rankingsApi.getUserEloHistory(user.id, { limit: 15 }).catch(() => ({ data: [] as EloHistoryLog[] }));
+        const [ranksRes, workspaceRes, matchesRes, followedRes, categoriesRes, footballTeamsRes, eloHistoryRes] = await Promise.all([
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
           matchesApi.getMatches({ userId: user.id, limit: 15 }),
           followedResPromise,
           categoriesResPromise,
           footballTeamsResPromise,
+          eloHistoryResPromise,
         ]);
 
         setUserRankings(ranksRes);
+        setEloHistory(Array.isArray(eloHistoryRes?.data) ? eloHistoryRes.data : []);
         setWorkspace(workspaceRes.data || null);
         setFollowedTournaments(sortFollowedTournaments(Array.isArray(followedRes?.data) ? followedRes.data : []));
         const mine = Array.isArray(footballTeamsRes?.data) ? footballTeamsRes.data : [];
@@ -208,6 +208,15 @@ export default function DashboardPage() {
   const activeRank = selectedEloCategoryId
     ? getBestRankForCategory(publicRanks, selectedEloCategoryId)
     : getBestRankForCategory(publicRanks);
+  const activeEloHistory = [...eloHistory]
+    .filter((item) => !selectedEloCategoryId || item.categoryId === selectedEloCategoryId)
+    .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+  const eloHistoryByMatchId = new Map(
+    [...eloHistory]
+      .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))
+      .filter((item) => item.matchId || item.match?.id)
+      .map((item) => [item.matchId || item.match?.id, item]),
+  );
   const eloPoints = activeRank ? activeRank.eloPoints : 1000;
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
@@ -638,16 +647,21 @@ export default function DashboardPage() {
                         : m.participant2?.members?.some((member) => member.userId === user?.id)
                           ? m.participant2.id
                           : null;
-                      const isWin = Boolean(m.winnerId && userParticipantId === m.winnerId);
-                      const eloDelta = isWin ? '+15' : '-10';
+                      const historyItem = eloHistoryByMatchId.get(m.id);
+                      const result = historyItem?.match?.result
+                        ?? (m.winnerId ? (userParticipantId === m.winnerId ? 'WIN' : 'LOSS') : 'DRAW');
+                      const isWin = result === 'WIN';
+                      const isLoss = result === 'LOSS';
+                      const eloDelta = historyItem?.changedPoints ?? null;
                       return (
                         <div key={m.id} className="flex items-center justify-between p-3.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-all">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className={cn(
                               'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs',
-                              isWin ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                                                            isWin ? 'bg-emerald-100 text-emerald-700' : isLoss ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'
                             )}>
-                              {isWin ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                              {isWin ? <TrendingUp className="w-4 h-4" /> : isLoss ? <TrendingDown className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
+
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-slate-900 truncate">
@@ -660,12 +674,18 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="flex items-center gap-3 shrink-0">
-                            <span className={cn(
-                              'px-2 py-0.5 rounded text-[11px] font-extrabold tabular-nums',
-                              isWin ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
-                            )}>
-                              {eloDelta} ELO
-                            </span>
+                            {eloDelta !== null ? (
+                              <span className={cn(
+                                'px-2 py-0.5 rounded text-[11px] font-extrabold tabular-nums',
+                                eloDelta > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : eloDelta < 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-50 text-slate-600 border border-slate-200'
+                              )}>
+                                {eloDelta > 0 ? '+' : ''}{eloDelta} ELO
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold text-slate-400 border border-slate-200">
+                                {translate("eloNotUpdated")}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
@@ -842,7 +862,8 @@ export default function DashboardPage() {
             matchesPlayed={matchesPlayed}
             winRate={winRate}
             tierName={tierName}
-            activeRank={activeRank}
+                        activeRank={activeRank}
+            recentEloDelta={activeEloHistory[0]?.changedPoints ?? null}
             sportLabel={activeRank?.matchType === 'SINGLES' ? translate("singlesShort") : activeRank?.matchType === 'DOUBLES' ? translate("doublesShort") : activeRank?.matchType === 'MIXED_DOUBLES' ? translate("mixedDoublesShort") : undefined}
             sportOptions={categories.map((category) => ({ id: category.id, name: category.name }))}
             selectedSportId={selectedEloCategoryId}

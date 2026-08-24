@@ -305,21 +305,21 @@ export default function ProfilePage() {
         setIsLoading(true);
         const [data, communitiesRes, workspaceRes, categoriesRes] = await Promise.all([
           usersApi.getProfile(),
-          communitiesApi.getMyCommunities(),
-          tournamentsApi.getMyWorkspace(),
+          communitiesApi.getMyCommunities().catch(() => null),
+          tournamentsApi.getMyWorkspace().catch(() => null),
           categoriesApi.getCategories().catch(() => null),
         ]);
         if (isMounted) {
           setProfileData(data);
-          setCreatedCommunities(communitiesRes.data?.created || []);
-          setJoinedCommunities(communitiesRes.data?.joined || []);
-          setParticipatingTournaments(workspaceRes.data?.participatingTournaments || []);
-          setOrganizedTournaments(workspaceRes.data?.organizedTournaments || []);
-          setCoOrganizerTournaments(workspaceRes.data?.coOrganizerTournaments || []);
-          setRefereeTournaments(workspaceRes.data?.refereeTournaments || workspaceRes.data?.refereeInvites || []);
+          setCreatedCommunities(communitiesRes?.data?.created || []);
+          setJoinedCommunities(communitiesRes?.data?.joined || []);
+          setParticipatingTournaments(workspaceRes?.data?.participatingTournaments || []);
+          setOrganizedTournaments(workspaceRes?.data?.organizedTournaments || []);
+          setCoOrganizerTournaments(workspaceRes?.data?.coOrganizerTournaments || []);
+          setRefereeTournaments(workspaceRes?.data?.refereeTournaments || workspaceRes?.data?.refereeInvites || []);
           setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
 
-          // Sync roles/details with useAuthStore so header displays updated roles immediately
+          // Sync roles/details with useAuthStore so header displays updated roles immediately.
           if (data) {
             useAuthStore.getState().setUser({
               ...data,
@@ -327,12 +327,16 @@ export default function ProfilePage() {
             });
           }
 
+          // Verification tickets are secondary data. Do not block the profile shell,
+          // matches tab, or ELO history while this endpoint is slow or unavailable.
           const userRoles = data?.roles || [];
           if (!userRoles.includes('ORGANIZER') && !userRoles.includes('ADMIN')) {
-            const res = await api.get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my');
-            if (isMounted) {
-              setTickets(res.data || []);
-            }
+            void api
+              .get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my')
+              .then((res) => {
+                if (isMounted) setTickets(res.data || []);
+              })
+              .catch(() => undefined);
           }
         }
       } catch (error) {
@@ -418,8 +422,11 @@ export default function ProfilePage() {
   const matchesCursorUserRef = useRef<string | null>(null);
   const eligiblePublicRanks = (userRankings?.publicRanks || [])
     .filter((rank) => rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true);
+  const latestEloHistory = [...eloHistory]
+    .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0] || null;
   const featuredRank = eligiblePublicRanks
     .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
+  const featuredElo = featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? null;
 
   useEffect(() => {
     if (!displayUser?.id) return;
@@ -525,7 +532,7 @@ export default function ProfilePage() {
   }, [displayUser?.id, participatingTournaments]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
 
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
@@ -564,13 +571,13 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="px-6 md:px-10 pb-8 relative">
+        <div className="px-6 md:px-8 pb-6 relative">
           {/* Avatar & Actions */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
             <RankAvatar
               src={displayUser?.avatarUrl}
               name={displayUser?.fullName}
-              elo={featuredRank?.eloPoints}
+              elo={featuredElo ?? undefined}
               tierName={featuredRank?.tier?.name || featuredRank?.tierName}
               categoryName={featuredRank?.categoryName}
               matchesPlayed={featuredRank?.matchesPlayed || 0}
@@ -663,6 +670,16 @@ export default function ProfilePage() {
                     </div>
                   ));
                 }
+                if (latestEloHistory) {
+                  const historyCategoryName = categories.find((category) => category.id === latestEloHistory.categoryId)?.name;
+                  return (
+                    <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
+                      {historyCategoryName && <span className="text-[10px] font-bold text-slate-500 uppercase">{historyCategoryName}:</span>}
+                      <EloTierBadge elo={latestEloHistory.newElo} categoryName={historyCategoryName} size="sm" />
+                      <span className="text-[10px] font-semibold text-slate-500">{translate("eloRecordedNotRanked")}</span>
+                    </div>
+                  );
+                }
                 return (
                   <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
                     {translate("unranked")}
@@ -677,7 +694,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="mt-8 flex overflow-x-auto gap-2 border-b border-slate-100 no-scrollbar relative z-10">
+          <div className="mt-6 flex overflow-x-auto gap-1 border-b border-slate-100 no-scrollbar relative z-10">
             {([
               { id: 'overview', label: translate("overview") },
               { id: 'tournaments', label: translate("following") },
@@ -689,7 +706,7 @@ export default function ProfilePage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 font-bold text-sm whitespace-nowrap transition-colors border-b-2 -mb-[1.5px] ${
+                className={`px-4 py-3 font-bold text-xs whitespace-nowrap transition-colors border-b-2 -mb-[1.5px] ${
                   activeTab === tab.id
                     ? 'text-blue-650 border-blue-650 bg-blue-50/5'
                     : 'text-slate-500 border-transparent hover:text-slate-900'
@@ -720,10 +737,10 @@ export default function ProfilePage() {
       )}
 
       <div className="min-h-[400px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          <div className="md:col-span-1 flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+          <div className="md:col-span-1 flex flex-col gap-5">
               {/* Giới thiệu */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("about")}</h3>
                 {isLoading ? (
                   <div className="space-y-2">
@@ -742,7 +759,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Thông tin chi tiết */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("details")}</h3>
                 {isLoading ? (
                   <div className="space-y-4">
@@ -776,7 +793,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Tài khoản hoàn tiền */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("bankWallet")}</h3>
                   <Link href="/profile/edit" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
@@ -817,7 +834,7 @@ export default function ProfilePage() {
 
               {/* {translate("requestOrganizerRole")} (Organizer) */}
               {!isLoading && (
-                <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("roleOrganizer")}</h3>
                   {(profileData?.roles || user?.roles || []).includes('ORGANIZER') ||
                    (profileData?.roles || user?.roles || []).includes('ADMIN') ? (
@@ -878,12 +895,12 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className="md:col-span-2 space-y-6">
+            <div className="md:col-span-2 space-y-5">
               {activeTab === 'overview' && (
                 <>
                   {/* Câu lạc bộ của tôi */}
               {/* Câu lạc bộ của tôi */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <div className="flex justify-between items-center mb-6">
                       <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("myClubs")}</h3>
                   <Link href="/communities/create">
@@ -997,7 +1014,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 font-medium text-lg">{translate("activityEmpty")}</p>
                 <p className="text-slate-400 text-sm mt-1">{translate("activityHint")}</p>
@@ -1201,7 +1218,7 @@ export default function ProfilePage() {
 
         {activeTab === 'achievements' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-5 h-5 text-blue-600" />
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("achievementsTitle")}</h3>
@@ -1256,16 +1273,20 @@ export default function ProfilePage() {
               <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {matches.map((match) => {
                   const isCompleted = match.status === 'COMPLETED';
-                  const isP1 = match.participant1?.teamName?.toLowerCase() === displayUser?.fullName?.toLowerCase();
+                  const profileUserId = displayUser?.id;
+                  const isP1 = Boolean(profileUserId && match.participant1?.members?.some((member) => member.userId === profileUserId));
+                  const isP2 = Boolean(profileUserId && match.participant2?.members?.some((member) => member.userId === profileUserId));
 
-                  const isWinner = isCompleted && match.winnerId && (
+                  const isWinner = isCompleted && Boolean(match.winnerId) && (
                     (match.winnerId === match.participant1Id && isP1) ||
-                    (match.winnerId === match.participant2Id && !isP1)
+                    (match.winnerId === match.participant2Id && isP2)
                   );
 
                   const opponentName = isP1
                     ? match.participant2?.teamName || translate("opponentUnknown")
-                    : match.participant1?.teamName || translate("opponentUnknown");
+                    : isP2
+                      ? match.participant1?.teamName || translate("opponentUnknown")
+                      : translate("opponentUnknown");
 
                   return (
                     <div
@@ -1414,7 +1435,7 @@ export default function ProfilePage() {
                 </div>
 
                 {eloHistory.length > 0 && (
-                  <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                     <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">{translate("eloHistoryTitle")}</h3>
                     <div className="h-80 w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1461,7 +1482,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("eloHistorySectionTitle")}</h3>
                   {eloHistory.length > 0 ? (
                     <div className="flex flex-col gap-4">

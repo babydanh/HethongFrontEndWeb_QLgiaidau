@@ -24,7 +24,6 @@ import {
   type AdminEloPlayerDetail,
   type AdminEloPlayerSummary,
   type AdminRankingContext,
-  type AdminRankingScope,
   type AdminRankingStatus,
 } from '@/features/rankings/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -33,19 +32,15 @@ import { getErrorMessage } from '@/utils/error';
 const PAGE_LIMIT = 30;
 
 type FilterState = {
-  scope: AdminRankingScope;
   search: string;
   status: AdminRankingStatus | '';
-  communityId: string;
   categoryId: string;
   matchType: string;
 };
 
 const INITIAL_QUERY: FilterState = {
-  scope: 'PUBLIC',
   search: '',
   status: '',
-  communityId: '',
   categoryId: '',
   matchType: '',
 };
@@ -95,7 +90,6 @@ const toAdminContext = (player: AdminEloPlayerDetail, context: AdminEloPlayerCon
   avatarUrl: player.user.avatarUrl,
   categoryId: context.categoryId,
   scope: context.scope,
-  communityId: context.communityId,
   matchType: context.matchType,
   genderRestriction: context.genderRestriction,
   eloPoints: context.eloPoints,
@@ -115,10 +109,8 @@ export default function AdminEloPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<AdminEloPlayerSummary[]>([]);
   const [query, setQuery] = useState<FilterState>(INITIAL_QUERY);
-  const [scope, setScope] = useState<AdminRankingScope>(INITIAL_QUERY.scope);
   const [search, setSearch] = useState(INITIAL_QUERY.search);
   const [status, setStatus] = useState<AdminRankingStatus | ''>(INITIAL_QUERY.status);
-  const [communityId, setCommunityId] = useState(INITIAL_QUERY.communityId);
   const [categoryId, setCategoryId] = useState(INITIAL_QUERY.categoryId);
   const [matchType, setMatchType] = useState(INITIAL_QUERY.matchType);
   const [loading, setLoading] = useState(true);
@@ -174,10 +166,9 @@ export default function AdminEloPage() {
       const result = await rankingsApi.listAdminPlayers({
         limit: PAGE_LIMIT,
         categoryId: nextQuery.categoryId,
-        scope: nextQuery.scope,
+        scope: 'PUBLIC',
         search: nextQuery.search || undefined,
         status: nextQuery.status || undefined,
-        communityId: nextQuery.communityId.trim() || undefined,
         matchType: nextQuery.matchType || undefined,
         cursor: cursor || undefined,
       });
@@ -235,10 +226,8 @@ export default function AdminEloPage() {
 
   const applyFilters = () => {
     const nextQuery: FilterState = {
-      scope,
       search: search.trim(),
       status,
-      communityId: communityId.trim(),
       categoryId: categoryId.trim(),
       matchType,
     };
@@ -307,8 +296,7 @@ export default function AdminEloPage() {
     const payloadDraft = {
       userId: selected.userId,
       categoryId: selected.categoryId,
-      scope: selected.scope,
-      ...(selected.communityId ? { communityId: selected.communityId } : {}),
+      scope: 'PUBLIC' as const,
       matchType: selected.matchType,
       ...(selected.genderRestriction ? { genderRestriction: selected.genderRestriction } : {}),
       operation,
@@ -393,9 +381,8 @@ export default function AdminEloPage() {
 
       <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
         <label className="md:col-span-2"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={translate('searchPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('scope')}</span><select value={scope} onChange={(event) => setScope(event.target.value as AdminRankingScope)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="PUBLIC">{translate('publicScope')}</option><option value="COMMUNITY">{translate('communityScope')}</option></select></label>
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><div className="font-semibold">{translate('publicScope')}</div><div className="mt-1 text-xs">{translate('publicOnlyAdminNotice')}</div></div>
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => setStatus(event.target.value as AdminRankingStatus | '')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>
-        {scope === 'COMMUNITY' && <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('communityId')}</span><input value={communityId} onChange={(event) => setCommunityId(event.target.value)} placeholder={translate('communityIdPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => setMatchType(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allMatchTypes')}</option><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
         <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={applyFilters} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
@@ -411,7 +398,7 @@ export default function AdminEloPage() {
               {!loading && playerGroups.map((player) => (
                 <tr key={player.userId} className="align-top">
                   <td className="px-4 py-4"><div className="flex items-center gap-3"><div className="h-9 w-9 overflow-hidden rounded-full bg-slate-100">{player.avatarUrl && <Image src={player.avatarUrl} alt="" width={36} height={36} unoptimized className="h-full w-full object-cover" />}</div><div><div className="font-semibold text-slate-900">{player.fullName}</div><div className="text-xs text-slate-500">{player.email}</div></div></div></td>
-                  <td className="px-4 py-4 text-slate-600"><div className="font-semibold text-slate-900">{player.contextCount} {translate('rankingProfiles')}</div><div className="mt-1 flex flex-wrap gap-1 text-xs"><span className="rounded bg-slate-100 px-2 py-1">{translate('publicScope')}: {player.publicContextCount}</span><span className="rounded bg-slate-100 px-2 py-1">{translate('communityScope')}: {player.communityContextCount}</span></div></td>
+                  <td className="px-4 py-4 text-slate-600"><div className="font-semibold text-slate-900">{player.contextCount} {translate('rankingProfiles')}</div><div className="mt-1 flex flex-wrap gap-1 text-xs"><span className="rounded bg-slate-100 px-2 py-1">{translate('publicScope')}: {player.publicContextCount}</span></div></td>
                   <td className="px-4 py-4"><div className="font-bold text-slate-900">{player.highestElo ?? '—'} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{player.lastUpdatedAt ? new Date(player.lastUpdatedAt).toLocaleString(locale) : '—'}</div></td>
                   <td className="px-4 py-4"><div className="flex flex-wrap gap-1 text-xs"><span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">{translate('visible')}: {player.visibleContextCount}</span><span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">{translate('hidden')}: {player.hiddenContextCount}</span><span className="rounded-full bg-red-100 px-2 py-1 text-red-700">{translate('banned')}: {player.bannedContextCount}</span></div><div className="mt-2 text-xs text-slate-500">{translate('eligibleContexts')}: {player.eligibleContextCount} · {translate('ineligibleContexts')}: {player.ineligibleContextCount}</div></td>
                   <td className="px-4 py-4"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('managePlayer')}</Button></td>
@@ -444,7 +431,7 @@ export default function AdminEloPage() {
               {playerDetail.contexts.map((context) => (
                 <article key={context.contextId} className="rounded-xl border border-slate-200 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div><h3 className="font-semibold text-slate-900">{context.scope === 'PUBLIC' ? translate('publicScope') : translate('communityScope')} · {translate(getMatchTypeLabelKey(context.matchType))}</h3><p className="text-xs text-slate-500">{context.genderRestriction || translate('allGenders')}{context.communityName ? ` · ${context.communityName}` : ''}</p></div>
+                    <div><h3 className="font-semibold text-slate-900">{translate('publicScope')} · {translate(getMatchTypeLabelKey(context.matchType))}</h3><p className="text-xs text-slate-500">{context.genderRestriction || translate('allGenders')}</p></div>
                     <div className="flex flex-wrap justify-end gap-1"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${context.status === 'BANNED' ? 'bg-red-100 text-red-700' : context.status === 'HIDDEN' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{context.status === 'BANNED' ? translate('banned') : context.status === 'HIDDEN' ? translate('hidden') : translate('visible')}</span><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${context.leaderboardEligible ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'}`}>{context.leaderboardEligible ? translate('leaderboardEligible') : translate('needsMatch')}</span>{context.adminBootstrapEligible && <span className="inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-700">{translate('adminBootstrapEligible')}</span>}</div>
                   </div>
                   <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-4"><div><span className="block text-xs text-slate-500">{translate('currentElo')}</span><strong>{context.eloPoints} {translate('eloUnit')}</strong></div><div><span className="block text-xs text-slate-500">{translate('peakElo')}</span><strong>{context.peakElo} {translate('eloUnit')}</strong></div><div><span className="block text-xs text-slate-500">{translate('matches')}</span><strong>{context.matchesWon}/{context.matchesPlayed}</strong></div><div><span className="block text-xs text-slate-500">{translate('tier')}</span><strong>{context.tierName || '—'}</strong></div></div><div className="mt-2 text-xs text-slate-500">{translate('updated')}: {new Date(context.updatedAt).toLocaleString(locale)}{context.statusExpiresAt ? ` · ${translate('expiresAt')}: ${new Date(context.statusExpiresAt).toLocaleString(locale)}` : ''}</div>

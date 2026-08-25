@@ -146,13 +146,13 @@ function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
 
     const roomTime = Date.parse(room.updatedAt);
     const existingTime = Date.parse(existing.updatedAt);
+    const unreadCount = existing.id === room.id
+      ? Math.max(existing.unreadCount, room.unreadCount)
+      : existing.unreadCount + room.unreadCount;
     if (roomTime >= existingTime) {
-      byConversation.set(key, {
-        ...room,
-        unreadCount: Math.max(existing.unreadCount, room.unreadCount),
-      });
-    } else if (existing.unreadCount < room.unreadCount) {
-      byConversation.set(key, { ...existing, unreadCount: room.unreadCount });
+      byConversation.set(key, { ...room, unreadCount });
+    } else {
+      byConversation.set(key, { ...existing, unreadCount });
     }
   }
   return Array.from(byConversation.values()).sort(

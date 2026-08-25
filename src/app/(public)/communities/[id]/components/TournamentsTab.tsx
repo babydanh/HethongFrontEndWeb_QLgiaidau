@@ -6,12 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   Trophy,
   Calendar,
-  DollarSign,
   Loader2,
   Trash2,
-  RotateCw,
   MapPin,
-  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -385,19 +382,29 @@ export default function TournamentsTab({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {groupedTournaments.map((t) => {
             const representative = t.divisions[0];
             const sportLogo = getSportLogo(t.category?.name);
             const locationLabel = t.venue?.name || t.city || t.locationAddress;
+            const divisionCount = t.divisions.length;
+            const hasMultipleDivisions = divisionCount > 1;
+
+            const divisionLabels = t.divisions.map((d) =>
+              getFormatLabel(d.matchType, d.genderRestriction),
+            );
+            const uniqueLabels = Array.from(new Set(divisionLabels)).filter(
+              Boolean,
+            );
 
             return (
               <div
                 key={t.id}
                 onClick={() => router.push(`/tournaments/${representative.id}`)}
-                className="group cursor-pointer overflow-hidden bg-white border border-slate-200 hover:border-blue-500/80 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
               >
-                <div className="relative aspect-[2.4/1] w-full bg-slate-100 overflow-hidden">
+                {/* Compact Card Banner */}
+                <div className="relative h-36 w-full bg-slate-900 overflow-hidden shrink-0">
                   <img
                     src={t.bannerUrl || BRAND.assets.defaultFallback}
                     alt={t.name}
@@ -407,180 +414,113 @@ export default function TournamentsTab({
                       event.currentTarget.classList.remove("object-cover");
                       event.currentTarget.classList.add(
                         "object-contain",
-                        "p-6",
-                        "bg-gradient-to-br",
-                        "from-slate-50",
-                        "via-blue-50",
-                        "to-indigo-100",
+                        "p-4",
+                        "bg-slate-900",
                       );
                     }}
-                    className={`absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 ${t.bannerUrl ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"}`}
+                    className={`absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 ${
+                      t.bannerUrl
+                        ? "object-cover"
+                        : "object-contain p-4 bg-slate-900"
+                    }`}
                   />
-                  <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/65 to-transparent" />
-                  <div className="absolute left-4 bottom-3 flex items-center gap-2.5 max-w-[85%]">
-                    <div className="h-11 w-11 shrink-0 rounded-xl border-2 border-white bg-white shadow-md overflow-hidden flex items-center justify-center">
-                      <img
-                        src={t.logoUrl || BRAND.assets.defaultFallback}
-                        alt={`${t.name} logo`}
-                        onError={(event) => {
-                          event.currentTarget.onerror = null;
-                          event.currentTarget.src =
-                            BRAND.assets.defaultFallback;
-                        }}
-                        className="h-full w-full object-contain p-1"
-                      />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+
+                  {/* Top Badges */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5 z-10">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {getStatusBadge(t.status)}
+                      {getTypeBadge(t.tournamentType)}
                     </div>
-                    <span className="truncate text-sm font-bold text-white drop-shadow-sm">
-                      {t.name}
-                    </span>
+                    {isOwnerOrMod && (
+                      <button
+                        onClick={(e) =>
+                          handleDeleteTournament(t.id, Boolean(t.parent), e)
+                        }
+                        className="p-1.5 bg-black/40 hover:bg-rose-600 text-white/90 hover:text-white rounded-lg backdrop-blur-md transition-all active:scale-95 shadow-sm"
+                        title={translate("communityTournamentDeleteTitle")}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Bottom Chips on Banner */}
+                  <div className="absolute left-3 bottom-2.5 right-3 flex items-center justify-between gap-2 z-10">
+                    {t.category?.name && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 text-white backdrop-blur-md border border-white/15 shadow-sm">
+                        {sportLogo ? (
+                          <img
+                            src={sportLogo}
+                            alt=""
+                            className="w-3 h-3 object-contain"
+                          />
+                        ) : null}
+                        {t.category.name}
+                      </span>
+                    )}
+
+                    {hasMultipleDivisions && (
+                      <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-bold backdrop-blur-md shadow-sm ml-auto">
+                        {translate("divisionCount", { count: divisionCount })}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="p-5 flex flex-col justify-between flex-1">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex flex-col gap-1.5 w-full">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {getTypeBadge(t.tournamentType)}
-                          {getStatusBadge(t.status)}
+                {/* Card Content Body */}
+                <div className="p-4 flex flex-col justify-between flex-1 gap-3">
+                  <div>
+                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-1">
+                      {t.name}
+                    </h3>
 
-                          {/* Lite vs Advanced Badge */}
-                          {t.divisions.some((d) => isLiteTournament(d)) ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                              {translate("quickCreateLite")}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                              {translate("communityTournamentAdvancedLabel")}
-                            </span>
-                          )}
-
-                          {/* Ranked or Unranked Badge */}
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
-                              t.isRanked
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-slate-50 text-slate-600 border-slate-200"
-                            }`}
-                          >
-                            {t.isRanked
-                              ? translate("eloCounted")
-                              : translate("eloNotCounted")}
-                          </span>
-
-                          {/* Series / Parent Badge */}
-                          {t.parent && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                              {translate("seriesLabel")}
-                            </span>
-                          )}
-
-                          {/* Sport Category Badge */}
-                          {t.category?.name && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                              {sportLogo ? (
-                                <img
-                                  src={sportLogo}
-                                  alt=""
-                                  className="w-3 h-3 object-contain"
-                                />
-                              ) : null}
-                              {t.category.name}
-                            </span>
-                          )}
-
-                          {t.divisions.some((d) => {
-                            const cfg = d.tournamentConfig;
-                            return Boolean(
-                              cfg?.recurring?.enabled ||
-                              cfg?.recurring?.frequency,
-                            );
-                          }) && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                              <RotateCw className="w-2.5 h-2.5" />{" "}
-                              {translate("recurring")}
-                            </span>
-                          )}
-
-                          {isOwnerOrMod && (
-                            <button
-                              onClick={(e) =>
-                                handleDeleteTournament(
-                                  t.id,
-                                  Boolean(t.parent),
-                                  e,
-                                )
-                              }
-
-                              className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all active:scale-95 ml-1"
-                              title={translate(
-                                "communityTournamentDeleteTitle",
-                              )}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                        <span className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[9px] font-bold uppercase tracking-wider">
-                          {t.divisions.length}{" "}
-                          {translate("divisionCount", {
-                            count: t.divisions.length,
-                          })}
+                    {/* Format / Division tags */}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                      {uniqueLabels.slice(0, 2).map((label, idx) => (
+                        <span
+                          key={idx}
+                          className="bg-slate-100/80 px-2 py-0.5 rounded text-slate-600 text-[10px] font-semibold border border-slate-200/70"
+                        >
+                          {label}
                         </span>
-                      </div>
-                      {t.description && (
-                        <p className="text-xs text-slate-500 line-clamp-2 mt-1">
-                          {t.description}
-                        </p>
+                      ))}
+                      {uniqueLabels.length > 2 && (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          +{uniqueLabels.length - 2}
+                        </span>
+                      )}
+
+                      {t.isRanked && (
+                        <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                          {translate("eloCounted")}
+                        </span>
+                      )}
+
+                      {t.divisions.some((d) => isLiteTournament(d)) && (
+                        <span className="bg-amber-50 text-amber-800 border border-amber-300/80 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                          {translate("quickCreateLite")}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Division Tags */}
-                  <div className="flex flex-wrap gap-1 mb-3 mt-2">
-                    {t.divisions.map((div) => {
-                      const label = getFormatLabel(
-                        div.matchType,
-                        div.genderRestriction,
-                      );
-                      return (
-                        <span
-                          key={div.id}
-                          className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-600 text-[9px] border border-slate-200 font-bold"
-                        >
-                          {label}
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  {/* Note for Lite Tournaments */}
-                  {t.divisions.some((d) => isLiteTournament(d)) && (
-                    <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium">
-                      <span>
-                        <strong>
-                          {translate("communityTournamentLiteNote")}
-                        </strong>
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="space-y-2.5 text-xs text-slate-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span>
+                  {/* Info Meta */}
+                  <div className="space-y-1.5 text-xs text-slate-500 border-t border-slate-100 pt-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">
                         {t.startDate
-                          ? formatDate(t.startDate)
-                          : translate("dateNotSet")}{" "}
-                        -{" "}
-                        {t.endDate
-                          ? formatDate(t.endDate)
+                          ? `${formatDate(t.startDate)}${
+                              t.endDate ? ` - ${formatDate(t.endDate)}` : ""
+                            }`
                           : translate("dateNotSet")}
                       </span>
                     </div>
+
                     {locationLabel && (
                       <div className="flex items-center gap-2 min-w-0">
-                        <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span
                           className="truncate"
                           title={t.locationAddress || locationLabel}
@@ -589,32 +529,22 @@ export default function TournamentsTab({
                         </span>
                       </div>
                     )}
-                    {t.maxParticipants !== undefined && (
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span>
-                          {translate("summaryMaxParticipants")}{" "}
-                          {t.maxParticipants}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-slate-400 shrink-0" />
-
-                      <span className="font-semibold text-slate-800">
-                        {translate("entryFeeLabel")}:{" "}
-                        {t.entryFee && t.entryFee > 0
-                          ? `${t.entryFee.toLocaleString(locale === "vi" ? "vi-VN" : "en-US")} ${translate("currencyVnd")}`
-                          : translate("free")}
-                      </span>
-                    </div>
                   </div>
-                </div>
 
-                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
-                  <span className="text-xs font-bold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 transition-colors">
-                    {translate("viewDetails")} →
-                  </span>
+                  {/* Footer Strip */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                    <span className="font-bold text-slate-900">
+                      {t.entryFee && t.entryFee > 0
+                        ? `${t.entryFee.toLocaleString(
+                            locale === "vi" ? "vi-VN" : "en-US",
+                          )} ${translate("currencyVnd")}`
+                        : translate("free")}
+                    </span>
+
+                    <span className="text-xs font-bold text-blue-600 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all flex items-center gap-1">
+                      {translate("viewDetails")} →
+                    </span>
+                  </div>
                 </div>
               </div>
             );

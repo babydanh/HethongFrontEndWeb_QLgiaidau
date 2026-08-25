@@ -5327,6 +5327,7 @@
     "feeLockReasonRegistrationClosed": "Registration is closed (participants and draw are finalized), entry fees cannot be modified.",
     "feeLockReasonInProgress": "Tournament is currently in progress, entry fees are locked for settlement.",
     "feeLockReasonCompleted": "Tournament is completed, financial records are finalized.",
+    "feeLockReasonCancelled": "Tournament has been cancelled, entry fees cannot be modified.",
     "feeEditableHint": "You can freely enter the entry fee and click 'Save financial settings' to apply to this division."
   },
   "OrganizerPermissions": {

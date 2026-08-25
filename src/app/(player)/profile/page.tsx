@@ -1476,13 +1476,23 @@ export default function ProfilePage() {
                     <div className="h-80 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
-                          data={[...eloHistory].reverse().map((item, index) => ({
-                            name: translate("matchLabel", { number: index + 1 }),
-                            'ELO': item.newElo,
-                            date: formatDate(item.createdAt, 'dd/MM/yyyy'),
-                            reason: item.reason || (item.changedPoints > 0 ? translate("win") : translate("loss")),
-                            tournament: item.match?.tournamentName || translate("tournamentFallback")
-                          }))}
+                          data={[...eloHistory].reverse().map((item, index) => {
+                            const norm = item.reason?.toUpperCase().trim() || '';
+                            let reasonLabel = item.changedPoints > 0 ? translate("win") : translate("loss");
+                            if (norm === 'ADMIN_ADD') reasonLabel = translate("adminAdd");
+                            else if (norm === 'ADMIN_SUBTRACT') reasonLabel = translate("adminSubtract");
+                            else if (norm === 'ADMIN_SET') reasonLabel = translate("adminSet");
+                            else if (norm.startsWith('ADMIN_')) reasonLabel = translate("adminEloAdjustment");
+                            else if (norm === 'INACTIVITY_DECAY') reasonLabel = translate("eloInactivityDecay");
+
+                            return {
+                              name: translate("matchLabel", { number: index + 1 }),
+                              'ELO': item.newElo,
+                              date: formatDate(item.createdAt, 'dd/MM/yyyy'),
+                              reason: reasonLabel,
+                              tournament: item.match?.tournamentName || (norm.startsWith('ADMIN_') ? translate("adminEloAdjustment") : translate("tournamentFallback"))
+                            };
+                          })}
                           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -1497,7 +1507,7 @@ export default function ProfilePage() {
                                     <p className="font-bold">{data.date}</p>
                                     <p className="text-blue-400 mt-1 font-bold">ELO: {data.ELO}</p>
                                     <p className="text-slate-400 mt-0.5">{data.reason}</p>
-                                    <p className="text-slate-505 text-[10px] mt-0.5">{data.tournament}</p>
+                                    <p className="text-slate-500 text-[10px] mt-0.5">{data.tournament}</p>
                                   </div>
                                 );
                               }
@@ -1525,11 +1535,17 @@ export default function ProfilePage() {
                       {eloHistory.map((item) => {
                         const isGain = item.changedPoints >= 0;
                         const normalizedReason = item.reason?.toUpperCase() ?? '';
-                        const historyLabel = normalizedReason.startsWith('ADMIN_')
-                          ? translate("adminEloAdjustment")
-                          : normalizedReason === 'INACTIVITY_DECAY'
-                            ? translate("eloInactivityDecay")
-                            : item.match?.tournamentName || translate("rankedMatchFallback");
+                        const historyLabel = normalizedReason === 'ADMIN_ADD'
+                          ? translate("adminAdd")
+                          : normalizedReason === 'ADMIN_SUBTRACT'
+                            ? translate("adminSubtract")
+                            : normalizedReason === 'ADMIN_SET'
+                              ? translate("adminSet")
+                              : normalizedReason.startsWith('ADMIN_')
+                                ? translate("adminEloAdjustment")
+                                : normalizedReason === 'INACTIVITY_DECAY'
+                                  ? translate("eloInactivityDecay")
+                                  : item.match?.tournamentName || translate("rankedMatchFallback");
                         return (
                           <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
                             <div>

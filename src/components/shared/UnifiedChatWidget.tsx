@@ -403,6 +403,21 @@ export default function UnifiedChatWidget() {
   }, [selection]);
 
   useEffect(() => {
+    if (!userId) return;
+    const active = selectionRef.current;
+    if (active.kind !== 'ROOM') return;
+    const belongsToCurrentUser = active.room.participants?.some((participant) => participant.id === userId) ?? false;
+    if (!belongsToCurrentUser) {
+      setSelection({ kind: 'AI' });
+      setMessages([]);
+      setNextCursor(null);
+      setHasMoreMessages(false);
+    }
+  }, [userId]);
+
+
+
+  useEffect(() => {
     if (typeof window !== 'undefined' && aiMessages.length > 0) {
       try {
         localStorage.setItem('sporto_ai_chat_messages', JSON.stringify(aiMessages));
@@ -420,9 +435,11 @@ export default function UnifiedChatWidget() {
         const currentSelection = selectionRef.current;
         const currentActiveRoom =
           currentSelection.kind === 'ROOM' ? currentSelection.room : null;
-        if (currentActiveRoom && !fetched.some((r) => r.id === currentActiveRoom.id)) {
+        const activeRoomBelongsToCurrentUser = currentActiveRoom?.participants?.some((participant) => participant.id === userId) ?? false;
+        if (currentActiveRoom && activeRoomBelongsToCurrentUser && !fetched.some((r) => r.id === currentActiveRoom.id)) {
           return [currentActiveRoom, ...fetched];
         }
+
         return fetched.map((room) => (
           room.id === currentActiveRoom?.id
             ? { ...room, unreadCount: currentActiveRoom.unreadCount }
@@ -444,7 +461,20 @@ export default function UnifiedChatWidget() {
     }
   }, [isAuthenticated, userId]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const socket = socketClient.refreshChatAuthentication();
+    const handleRoomCreated = (payload: { roomId?: string }) => {
+      if (payload?.roomId) void refreshRooms();
+    };
+    socket.on('chat:room:created', handleRoomCreated);
+    return () => {
+      socket.off('chat:room:created', handleRoomCreated);
+    };
+  }, [isAuthenticated, refreshRooms]);
+
   const searchMatches = useMemo(() => {
+
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     if (selection.kind === 'ROOM') {

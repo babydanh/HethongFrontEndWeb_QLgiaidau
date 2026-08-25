@@ -659,13 +659,23 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
-                        data={[...eloHistory].reverse().map((item, index) => ({
-                          name: `${translate('matchNumber', { number: index + 1 })}`,
-                          'ELO': item.newElo,
-                          date: formatDate(item.createdAt, 'dd/MM/yyyy'),
-                          reason: item.reason || translate(item.changedPoints > 0 ? 'win' : 'loss'),
-                          tournament: item.match?.tournamentName || translate('tournament')
-                        }))}
+                        data={[...eloHistory].reverse().map((item, index) => {
+                          const norm = item.reason?.toUpperCase().trim() || '';
+                          let reasonLabel = item.changedPoints > 0 ? translate('win') : translate('loss');
+                          if (norm === 'ADMIN_ADD') reasonLabel = translate('adminAdd');
+                          else if (norm === 'ADMIN_SUBTRACT') reasonLabel = translate('adminSubtract');
+                          else if (norm === 'ADMIN_SET') reasonLabel = translate('adminSet');
+                          else if (norm.startsWith('ADMIN_')) reasonLabel = translate('adminEloAdjustment');
+                          else if (norm === 'INACTIVITY_DECAY') reasonLabel = translate('inactivityDecay');
+
+                          return {
+                            name: `${translate('matchNumber', { number: index + 1 })}`,
+                            'ELO': item.newElo,
+                            date: formatDate(item.createdAt, 'dd/MM/yyyy'),
+                            reason: reasonLabel,
+                            tournament: item.match?.tournamentName || (norm.startsWith('ADMIN_') ? translate('adminEloAdjustment') : translate('tournament'))
+                          };
+                        })}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -706,28 +716,62 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 {eloHistory.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     {eloHistory.map((item) => {
+                      const norm = item.reason?.toUpperCase().trim() || '';
+                      const isAdmin = norm.startsWith('ADMIN_') || norm === 'INACTIVITY_DECAY' || !item.match;
                       const result = getHistoryResult(item);
                       const score = getHistoryScore(item);
                       const isWin = result === 'WIN';
                       const isLoss = result === 'LOSS';
-                      const isGain = item.changedPoints > 0;
+                      const isGain = item.changedPoints >= 0;
+
+                      let itemTitle = item.match?.tournamentName || translate('rankingMatch');
+                      let badgeLabel = isWin ? translate('win') : isLoss ? translate('loss') : translate('drawResult');
+                      let badgeClass = isWin ? 'bg-blue-50 text-blue-700' : isLoss ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600';
+
+                      if (norm === 'ADMIN_ADD') {
+                        itemTitle = translate('adminAdd');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-blue-50 text-blue-700';
+                      } else if (norm === 'ADMIN_SUBTRACT') {
+                        itemTitle = translate('adminSubtract');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-rose-50 text-rose-700';
+                      } else if (norm === 'ADMIN_SET') {
+                        itemTitle = translate('adminSet');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-purple-50 text-purple-700';
+                      } else if (norm.startsWith('ADMIN_')) {
+                        itemTitle = translate('adminEloAdjustment');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-amber-50 text-amber-700';
+                      } else if (norm === 'INACTIVITY_DECAY') {
+                        itemTitle = translate('inactivityDecay');
+                        badgeLabel = translate('inactivityDecay');
+                        badgeClass = 'bg-slate-100 text-slate-600';
+                      }
+
                       return (
                         <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 last:border-b-0">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase ${
-                                  isWin ? 'bg-blue-50 text-blue-700' : isLoss ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
-                                }`}>
-                                  {isWin ? translate('win') : isLoss ? translate('loss') : translate('drawResult')}
+                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase ${badgeClass}`}>
+                                  {badgeLabel}
                                 </span>
-                                <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate('rankingMatch')}</p>
+                                <p className="text-sm font-bold text-slate-800 line-clamp-1">{itemTitle}</p>
                               </div>
-                              <p className="text-xs text-slate-400 mt-1">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')} · {translate('officialMatch')}</p>
-                              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-600">
-                                <span><strong>{translate('opponent')}:</strong> {item.match?.opponent?.name || translate('unknownOpponent')}</span>
-                                {score && <span><strong>{translate('score')}:</strong> {score}</span>}
-                              </div>
+                              <p className="text-xs text-slate-400 mt-1">
+                                {formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}
+                                {!isAdmin && ` · ${translate('officialMatch')}`}
+                              </p>
+                              {!isAdmin && (item.match?.opponent?.name || score) && (
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-600">
+                                  {item.match?.opponent?.name && (
+                                    <span><strong>{translate('opponent')}:</strong> {item.match.opponent.name}</span>
+                                  )}
+                                  {score && <span><strong>{translate('score')}:</strong> {score}</span>}
+                                </div>
+                              )}
                             </div>
                             <div className="grid grid-cols-3 gap-2 min-w-[230px] text-center">
                               <div className="rounded-lg bg-white border border-slate-100 px-2 py-2">
@@ -759,9 +803,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
           </div>
         )}
-          </div>
-        </div>
       </div>
     </div>
+  </div>
+</div>
   );
 }

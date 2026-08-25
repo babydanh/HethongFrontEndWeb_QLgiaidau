@@ -36,7 +36,9 @@ export interface InboxMessagesPage {
 export type InboxRoomsResponse = InboxRoom[] | { data: InboxRoom[] };
 
 export const inboxApi = {
-  getRooms: () => api.get<InboxRoomsResponse>('/chat/rooms'),
+  getRooms: (): Promise<InboxRoomsResponse> => api.get<InboxRoomsResponse>('/chat/rooms', {
+    headers: { 'Cache-Control': 'no-cache' },
+  }),
   getMessages: (roomId: string, cursor?: string) =>
     api.get<InboxMessagesPage>(`/chat/rooms/${roomId}/messages`, {
       params: { limit: 30, ...(cursor ? { cursor } : {}) },

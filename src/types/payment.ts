@@ -124,6 +124,8 @@ export interface LegacyCreatePaymentDto {
 
 export interface CreatePaymentLinkResponse {
   paymentId: string;
+  orderCode?: number;
+  reused?: boolean;
   paymentUrl?: string;
   checkoutUrl?: string;
   qrCode?: string;

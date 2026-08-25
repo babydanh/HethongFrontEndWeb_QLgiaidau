@@ -31,7 +31,9 @@ export default function CheckoutClient() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrCodeData, setQrCodeData] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
+  const [orderCode, setOrderCode] = useState<number | null>(null);
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
+  const [registrationFee, setRegistrationFee] = useState<number | null>(null);
   const [qrOpenedAt, setQrOpenedAt] = useState<number | null>(null);
 
   useEffect(() => {
@@ -69,7 +71,29 @@ export default function CheckoutClient() {
           const participant = pRes.data.find((p: TournamentParticipant) => p.id === participantId);
           if (participant) {
             setTeamName(participant.teamName);
+            const snapshotFee = Number(participant.entryFeeAtRegistration);
+            if (participant.entryFeeAtRegistration != null && Number.isFinite(snapshotFee)) {
+              setRegistrationFee(snapshotFee);
+            }
           }
+        }
+
+        try {
+          const registrationRes = await tournamentsApi.getMyRegistration(
+            tournamentId,
+            divisionId || undefined,
+          );
+          const snapshotFee = Number(
+            registrationRes.data?.participant?.entryFeeAtRegistration,
+          );
+          if (
+            registrationRes.data?.participant?.entryFeeAtRegistration != null &&
+            Number.isFinite(snapshotFee)
+          ) {
+            setRegistrationFee(snapshotFee);
+          }
+        } catch {
+          // The participant list remains a sufficient fallback for display data.
         }
       } catch (error) {
         toast.error(getErrorMessage(error));
@@ -132,13 +156,6 @@ export default function CheckoutClient() {
   const handlePayment = async () => {
     if (!tournament || !tournamentId || !participantId) return;
 
-    const payableAmount = Number(division?.entryFee ?? tournament.entryFee) || 0;
-    if (payableAmount <= 0) {
-      toast.success(translate('freeRegistration'));
-      router.replace(`/tournaments/${tournamentId}`);
-      return;
-    }
-
     try {
       setSubmitting(true);
       const res = await paymentsApi.createPaymentLink({
@@ -159,6 +176,11 @@ export default function CheckoutClient() {
         throw new Error(translate('confirmedAmountMissing'));
       }
       setConfirmedAmount(backendAmount);
+      setOrderCode(payment.orderCode ?? null);
+
+      if (payment.reused) {
+        toast.success(translate('reusedPayment'));
+      }
 
       if (payment.qrCode) {
         setQrCodeData(payment.qrCode);
@@ -202,7 +224,7 @@ export default function CheckoutClient() {
     );
   }
 
-  const entryFeeVal = Number(division?.entryFee ?? tournament.entryFee) || 0;
+  const entryFeeVal = registrationFee ?? (Number(division?.entryFee ?? tournament.entryFee) || 0);
 
   return (
     <div className="bg-slate-50 min-h-screen py-12 px-4 md:px-8">
@@ -316,6 +338,15 @@ export default function CheckoutClient() {
                     <span className="text-slate-500 font-medium">{translate('paymentContent')}</span>
                     <span className="text-slate-900 font-bold max-w-[200px] truncate">{tournament.name}</span>
                   </div>
+                  {orderCode !== null && (
+                    <div className="border-t border-slate-200 pt-2">
+                      <div className="flex justify-between gap-3 text-xs">
+                        <span className="text-slate-500 font-medium">{translate('paymentCodeLabel')}</span>
+                        <span className="font-mono font-bold tracking-wide text-slate-900">{orderCode}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500">{translate('paymentCodeHint')}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">

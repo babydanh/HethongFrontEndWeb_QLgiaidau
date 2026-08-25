@@ -576,12 +576,17 @@ const commonTranslate = useTranslations('Common');
   const hasAdvancedRegistrationForm = activeTournament.tournamentConfig?.registrationForm?.status === 'PUBLISHED';
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
-  let registrationButtonLabel = registrationModeUi.ctaLabel;
+    let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = isRegistrationStatusLoading;
+  const canResumePayment =
+    myRegistration?.registered === true && myRegistration.paymentEligible === true;
 
   if (myRegistration?.registered) {
-    registrationButtonLabel = translate('alreadyRegistered');
-    isRegistrationButtonDisabled = true;
+    registrationButtonLabel = canResumePayment
+      ? translate('continuePayment')
+      : translate('alreadyRegistered');
+    isRegistrationButtonDisabled = !canResumePayment;
+
   } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
       registrationButtonLabel = translate('registrationLocked');
@@ -778,9 +783,31 @@ const commonTranslate = useTranslations('Common');
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200'
                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
                 } font-bold w-full md:w-auto shadow-sm h-10 text-xs md:text-sm`}
-                onClick={() => {
+                                onClick={() => {
                   if (isRegistrationButtonDisabled) return;
+                  if (canResumePayment) {
+                    const resumeParticipantId = myRegistration.participant?.id;
+                    if (!resumeParticipantId) {
+                      toast.error(translate('paymentResumeUnavailable'));
+                      return;
+                    }
+                    const checkoutParams = new URLSearchParams({
+                      participantId: resumeParticipantId,
+                      tournamentId,
+                    });
+                    const resumeDivisionId =
+                      myRegistration.participant?.tournamentDivisionId || selectedDivisionId;
+                    if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
+                    if (inviteCode) checkoutParams.set('invite', inviteCode);
+                    if (inviteParticipantId && teamInviteToken) {
+                      checkoutParams.set('pid', inviteParticipantId);
+                      checkoutParams.set('token', teamInviteToken);
+                    }
+                    router.push(`/payments/checkout?${checkoutParams.toString()}`);
+                    return;
+                  }
                   if (isClubLiteTournament(activeTournament)) {
+
                     if (activeTournament.inviteCode) {
                       router.push(`/lite/tournaments/join/${activeTournament.inviteCode}`);
                     } else {

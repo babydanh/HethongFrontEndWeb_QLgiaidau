@@ -691,9 +691,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
 
 
-  const isLocked = tournament.isRegistrationLocked;
+    const isLocked = tournament.isRegistrationLocked;
   const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
+  const hasExistingRegistration = Boolean(isRegistered && participant);
   // Cho phép đăng ký sớm nếu đang là DRAFT nhưng có inviteCode trùng khớp
+
   const isDraftInviteOnly = isTournamentDraft(tournament.status) && inviteCode && tournament.inviteCode === inviteCode;
   const isNotOpen =
     !isTournamentOpenForRegistration(tournament.status) &&
@@ -727,7 +729,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     );
   }
 
-  if (isLocked || isExpired || isNotOpen) {
+    // Lock/expiry closes new submissions only. An existing participant must still
+  // be able to open the page to pay an unpaid registration or finish a team.
+  if ((isLocked || isExpired || isNotOpen) && !hasExistingRegistration) {
+
     let title = tournamentTranslate('registrationClosed');
     let message = tournamentTranslate('registrationClosed');
     if (isLocked) {

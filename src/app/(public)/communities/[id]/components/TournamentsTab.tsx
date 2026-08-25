@@ -157,117 +157,6 @@ export default function TournamentsTab({
     return t.status === activeFilter;
   });
 
-  // Group divisions under parentId
-  const groupedTournaments = (() => {
-    const groups: Record<string, Tournament[]> = {};
-    const standalones: Tournament[] = [];
-
-    filteredTournaments.forEach((t) => {
-      if (t.parentId) {
-        if (!groups[t.parentId]) {
-          groups[t.parentId] = [];
-        }
-        groups[t.parentId].push(t);
-      } else {
-        standalones.push(t);
-      }
-    });
-
-    interface GroupedItem {
-      id: string;
-      name: string;
-      description?: string;
-      startDate?: string;
-      endDate?: string;
-      entryFee?: number;
-      tournamentType?: "CLUB" | "PUBLIC";
-      status: Tournament["status"];
-      bannerUrl?: string | null;
-      logoUrl?: string | null;
-      category?: Tournament["category"];
-      venue?: Tournament["venue"];
-      city?: string | null;
-      locationAddress?: string;
-      maxParticipants?: number;
-      isRanked?: boolean;
-      parent?: Tournament["parent"];
-      divisions: Tournament[];
-    }
-
-    const result: GroupedItem[] = [];
-
-    Object.entries(groups).forEach(([parentId, divs]) => {
-      // Sort divisions so representation is consistent
-      divs.sort(
-        (a, b) =>
-          new Date(a.createdAt || 0).getTime() -
-          new Date(b.createdAt || 0).getTime(),
-      );
-      const representative = divs[0];
-
-      // Determine overall status
-      let overallStatus: Tournament["status"] = representative.status;
-      if (divs.some((d) => isTournamentInProgress(d.status))) {
-        overallStatus = "ONGOING";
-      } else if (divs.some((d) => isTournamentOpenForRegistration(d.status))) {
-        overallStatus = "REGISTRATION_OPEN";
-      } else if (divs.every((d) => isTournamentCompleted(d.status))) {
-        overallStatus = "COMPLETED";
-      }
-
-      result.push({
-        id: parentId,
-        name: representative.parent?.name || representative.name,
-        description:
-          representative.parent?.description || representative.description,
-
-        startDate: representative.startDate,
-        endDate: representative.endDate,
-        entryFee: Number(representative.entryFee),
-        tournamentType: representative.tournamentType,
-        status: overallStatus,
-        bannerUrl:
-          representative.bannerUrl || representative.parent?.bannerUrl || null,
-        logoUrl:
-          representative.logoUrl || representative.parent?.logoUrl || null,
-        category: representative.category,
-        venue: representative.venue,
-        city: representative.city,
-        locationAddress: representative.locationAddress,
-        maxParticipants: representative.maxParticipants,
-        isRanked: representative.isRanked,
-        parent: representative.parent,
-        divisions: divs,
-      });
-    });
-
-    standalones.forEach((t) => {
-      result.push({
-        id: t.id,
-        name: t.parent?.name || t.name,
-        description: t.parent?.description || t.description,
-
-        startDate: t.startDate,
-        endDate: t.endDate,
-        entryFee: Number(t.entryFee),
-        tournamentType: t.tournamentType,
-        status: t.status,
-        bannerUrl: t.bannerUrl || t.parent?.bannerUrl || null,
-        logoUrl: t.logoUrl || t.parent?.logoUrl || null,
-        category: t.category,
-        venue: t.venue,
-        city: t.city,
-        locationAddress: t.locationAddress,
-        maxParticipants: t.maxParticipants,
-        isRanked: t.isRanked,
-        parent: t.parent,
-        divisions: [t],
-      });
-    });
-
-    return result;
-  })();
-
   const getFormatLabel = (
     matchType?: string,
     genderRestriction?: string | null,
@@ -371,7 +260,7 @@ export default function TournamentsTab({
             {translate("loadingTournaments")}
           </p>
         </div>
-      ) : groupedTournaments.length === 0 ? (
+      ) : filteredTournaments.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-700 font-medium text-lg">
@@ -383,24 +272,18 @@ export default function TournamentsTab({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {groupedTournaments.map((t) => {
-            const representative = t.divisions[0];
+          {filteredTournaments.map((t) => {
             const sportLogo = getSportLogo(t.category?.name);
             const locationLabel = t.venue?.name || t.city || t.locationAddress;
-            const divisionCount = t.divisions.length;
-            const hasMultipleDivisions = divisionCount > 1;
-
-            const divisionLabels = t.divisions.map((d) =>
-              getFormatLabel(d.matchType, d.genderRestriction),
-            );
-            const uniqueLabels = Array.from(new Set(divisionLabels)).filter(
-              Boolean,
+            const formatLabel = getFormatLabel(
+              t.matchType,
+              t.genderRestriction,
             );
 
             return (
               <div
                 key={t.id}
-                onClick={() => router.push(`/tournaments/${representative.id}`)}
+                onClick={() => router.push(`/tournaments/${t.id}`)}
                 className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
               >
                 {/* Compact Card Banner */}
@@ -459,12 +342,6 @@ export default function TournamentsTab({
                         {t.category.name}
                       </span>
                     )}
-
-                    {hasMultipleDivisions && (
-                      <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-bold backdrop-blur-md shadow-sm ml-auto">
-                        {translate("divisionCount", { count: divisionCount })}
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -477,17 +354,9 @@ export default function TournamentsTab({
 
                     {/* Format / Division tags */}
                     <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                      {uniqueLabels.slice(0, 2).map((label, idx) => (
-                        <span
-                          key={idx}
-                          className="bg-slate-100/80 px-2 py-0.5 rounded text-slate-600 text-[10px] font-semibold border border-slate-200/70"
-                        >
-                          {label}
-                        </span>
-                      ))}
-                      {uniqueLabels.length > 2 && (
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          +{uniqueLabels.length - 2}
+                      {formatLabel && (
+                        <span className="bg-slate-100/80 px-2 py-0.5 rounded text-slate-600 text-[10px] font-semibold border border-slate-200/70">
+                          {formatLabel}
                         </span>
                       )}
 
@@ -497,7 +366,7 @@ export default function TournamentsTab({
                         </span>
                       )}
 
-                      {t.divisions.some((d) => isLiteTournament(d)) && (
+                      {isLiteTournament(t) && (
                         <span className="bg-amber-50 text-amber-800 border border-amber-300/80 px-1.5 py-0.5 rounded text-[10px] font-bold">
                           {translate("quickCreateLite")}
                         </span>

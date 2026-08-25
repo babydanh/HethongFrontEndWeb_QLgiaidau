@@ -244,14 +244,17 @@ export default function ProfilePage() {
   const achievementLabels = { champion: translate("achievementChampion"), runnerUp: translate("achievementRunnerUp"), thirdPlace: translate("achievementThirdPlace") };
     const { user, hasHydrated } = useAuthStore();
 
-  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [profileData, setProfileData] = useState<UserProfile | null>(() => {
+    const u = useAuthStore.getState().user;
+    return u ? (u as unknown as UserProfile) : null;
+  });
   const [createdCommunities, setCreatedCommunities] = useState<Community[]>([]);
   const [joinedCommunities, setJoinedCommunities] = useState<Community[]>([]);
   const [participatingTournaments, setParticipatingTournaments] = useState<Tournament[]>([]);
   const [organizedTournaments, setOrganizedTournaments] = useState<Tournament[]>([]);
   const [coOrganizerTournaments, setCoOrganizerTournaments] = useState<Tournament[]>([]);
   const [refereeTournaments, setRefereeTournaments] = useState<WorkspaceRefereeInvite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !useAuthStore.getState().user?.id);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
     if (typeof window !== 'undefined') {
@@ -333,11 +336,16 @@ export default function ProfilePage() {
 
     let isMounted = true;
 
+    if (user && (!profileData || profileData.id !== user.id)) {
+      setProfileData(user as unknown as UserProfile);
+      setIsLoading(false);
+    }
+
     const fetchProfile = async () => {
-      // A persisted user is already safe to render as the first shell. Keep the
-      // refresh request in the background instead of blanking the profile until
-      // the network responds.
-      setIsLoading(!user?.id);
+      // A persisted user is already safe to render as the first shell.
+      if (!user?.id && !profileData?.id) {
+        setIsLoading(true);
+      }
       try {
         // The profile is the only request that gates the header shell. Secondary
         // requests start after it succeeds so a slow/unauthorized auxiliary API

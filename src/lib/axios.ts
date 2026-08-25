@@ -311,16 +311,32 @@ api.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => api(originalRequest))
+          .then(() => {
+            originalRequest._retry = true;
+            return api(originalRequest);
+          })
           .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
+      const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY;
+      const authHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
+      };
+
       try {
         // Because of withCredentials: true, the browser will automatically send the refreshToken cookie
-        await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
+        await axios.post(
+          `${api.defaults.baseURL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true,
+            headers: authHeaders,
+          },
+        );
         processQueue(null);
 
         // Retry the original request. Browser will now send the newly set accessToken cookie
@@ -330,7 +346,14 @@ api.interceptors.response.use(
         // Refresh token failed -> Session is completely dead. Clear auth store state immediately.
         useAuthStore.getState().logout();
         try {
-          await axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true });
+          await axios.post(
+            `${api.defaults.baseURL}/auth/logout`,
+            {},
+            {
+              withCredentials: true,
+              headers: authHeaders,
+            },
+          );
         } catch (e) {
           console.error('Failed to clear cookies:', e);
         }

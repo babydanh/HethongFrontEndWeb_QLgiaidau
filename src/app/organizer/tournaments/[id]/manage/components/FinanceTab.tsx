@@ -68,8 +68,9 @@ export function FinanceTab({
         percentage: platformFee.percentage,
       });
   const netOrganizerEarnings = Math.max(0, totalExpectedFee - totalPlatformFee);
+  const hasRegisteredParticipants = participants.length > 0;
   const isRegistrationLockedForFinance =
-    isTournamentOpenForRegistration(tournament.status) ||
+    (hasRegisteredParticipants && isTournamentOpenForRegistration(tournament.status)) ||
     isTournamentRegistrationClosed(tournament.status) ||
     isTournamentInProgress(tournament.status) ||
     isTournamentCompleted(tournament.status);

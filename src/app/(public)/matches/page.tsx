@@ -497,44 +497,21 @@ export default function MatchesListPage() {
     fetchMatches();
   }, [filterKey, page, matchesRefreshTick]);
 
-  // Fetch cheer counts for all visible matches
+  // The backend match projection already normalizes cheerCount to zero.
+  // Keep this surface to one bounded list request instead of one cheer request per card.
   useEffect(() => {
-    if (matches.length === 0) return;
-    const ids = matches.map(m => m.id);
-    const loadCheerCounts = async () => {
-      try {
-        const counts: Record<string, number> = {};
-        // Use cheerCount from match data if available, or fetch individually
-        for (const match of matches) {
-          if (typeof match.cheerCount === 'number') {
-            counts[match.id] = match.cheerCount;
-          } else {
-            try {
-              const res = await matchesApi.getCheerCount(match.id);
-              counts[match.id] = res.cheerCount;
-            } catch {
-              counts[match.id] = 0;
-            }
-          }
-        }
-        setCheerCounts(counts);
-      } catch {
-        // silent
-      }
-    };
-    loadCheerCounts();
+    const counts: Record<string, number> = {};
+    matches.forEach((match) => {
+      counts[match.id] = typeof match.cheerCount === 'number' ? match.cheerCount : 0;
+    });
+    setCheerCounts(counts);
   }, [matches]);
 
   // Tìm category name từ selectedCategoryId để filter client-side
   const selectedCategoryName = useMemo(() => {
     if (!selectedCategoryId) return null;
     const cat = categories.find(c => c.id === selectedCategoryId);
-    const name = cat?.name?.toLowerCase() || null;
-    console.log('🐛 [sport-filter] selectedCategoryId:', selectedCategoryId, '→ name:', name);
-    if (!cat) {
-      console.log('🐛 [sport-filter] categories available:', categories.map(c => ({ id: c.id, name: c.name, slug: c.slug })));
-    }
-    return name;
+    return cat?.name?.toLowerCase() || null;
   }, [selectedCategoryId, categories]);
 
   // Ngưỡng 30 ngày, chỉ tính 1 lần khi deps thay đổi
@@ -545,34 +522,6 @@ export default function MatchesListPage() {
   }, []);
 
   const filteredMatches = useMemo(() => {
-    // 🐛 DEBUG: Log category filter state
-    if (selectedCategoryName) {
-      console.log('🐛 [sport-filter] ========================');
-      console.log('🐛 [sport-filter] selectedCategoryName:', selectedCategoryName);
-      console.log('🐛 [sport-filter] total matches:', matches.length);
-      matches.forEach((match, idx) => {
-        const matchCatName = (match.tournament?.category?.name || match.tournament?.categoryName || '').toLowerCase();
-        const matchCat = match.tournament?.category;
-        const matchCatNameFallback = match.tournament?.categoryName;
-        const matchCatSlug = match.tournament?.categorySlug;
-        const tournamentId = match.tournamentId?.slice(0, 8);
-        const status = match.status;
-        const passesFilter = matchCatName === selectedCategoryName;
-        console.log(
-          `🐛 [sport-filter] match[${idx}] (${tournamentId}) status=${status}` +
-          ` | cat.name=${matchCat?.name}` +
-          ` | catName=${matchCatNameFallback}` +
-          ` | catSlug=${matchCatSlug}` +
-          ` | matchCatName="${matchCatName}"` +
-          ` | passes=${passesFilter}`
-        );
-        if (!passesFilter) {
-          console.log('   🐛 FULL tournament:', JSON.stringify(match.tournament, null, 2));
-        }
-      });
-      console.log('🐛 [sport-filter] ========================');
-    }
-
     return matches.filter(match => {
       // Bỏ qua giải đã bị hủy hoặc bản nháp
       if (match.tournament?.status === 'CANCELLED' || match.tournament?.status === 'DRAFT' || match.tournament?.status === 'PENDING_DELETE') {

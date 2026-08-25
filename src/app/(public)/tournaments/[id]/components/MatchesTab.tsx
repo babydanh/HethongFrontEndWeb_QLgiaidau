@@ -24,6 +24,19 @@ interface Props {
 
 type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
+type MatchViewMetadata = {
+  stageKey: string;
+  groupKey: string | null;
+  leg: number;
+  roundNumber: number;
+  roundLabel: string;
+  searchText: string;
+};
+
+function getMatchGroupKey(match: BracketMatch): string | null {
+  return match.groupId?.trim() || match.group?.name?.trim() || null;
+}
+
 function normalizeStageValue(value?: string | null): string {
   return (value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
 }
@@ -110,8 +123,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('roundNumber', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('roundNumber', { number: round }),
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   }), [matchTranslate]);
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const requestControllerRef = useRef<AbortController | null>(null);
@@ -263,6 +276,37 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     [tournament.format],
   );
 
+  // Derive round/group/search metadata once per match snapshot. The previous
+  // filter path recalculated round-robin inference for every option and every
+  // filter pass, which became expensive as the list grew.
+  const matchViewMetadata = useMemo(() => {
+    const metadata = new Map<string, MatchViewMetadata>();
+    matches.forEach((match) => {
+      const participantNames = [
+        match.participant1?.teamName ?? '',
+        ...(match.participant1?.members?.map((member) => member.fullName ?? '') ?? []),
+        match.participant2?.teamName ?? '',
+        ...(match.participant2?.members?.map((member) => member.fullName ?? '') ?? []),
+      ];
+      metadata.set(match.id, {
+        stageKey: getMatchStageKey(match),
+        groupKey: getMatchGroupKey(match),
+        leg: getPersistedOrRoundRobinLeg(match, matches, tournament.format),
+        roundNumber: match.roundNumber,
+        roundLabel: getMatchRoundLabel({
+          match,
+          matches,
+          tournamentFormat: tournament.format,
+          bracketSize,
+          includePhasePrefix: false,
+          translations: roundLabelTranslations,
+        }),
+        searchText: participantNames.join(' ').toLowerCase(),
+      });
+    });
+    return metadata;
+  }, [matches, tournament.format, bracketSize, roundLabelTranslations, getMatchStageKey]);
+
   const stageOptions = useMemo(() => {
     const byStage = new Map<string, number>();
     matches.forEach((match) => {
@@ -276,7 +320,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     const byGroup = new Map<string, { name: string; count: number }>();
     matches.forEach((match) => {
       if (getMatchStageKey(match) !== 'GROUP_STAGE') return;
-      const groupId = match.groupId || match.group?.name;
+      const groupId = getMatchGroupKey(match);
       const groupName = match.group?.name?.trim();
       if (!groupId || !groupName) return;
       const current = byGroup.get(groupId);
@@ -288,30 +332,23 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   }, [matches, getMatchStageKey]);
 
   const legOptions = useMemo(
-    () => Array.from(new Set(matches.map((match) => getPersistedOrRoundRobinLeg(match, matches, tournament.format))))
-      .filter((leg): leg is number => leg > 0)
+    () => Array.from(new Set(Array.from(matchViewMetadata.values()).map((metadata) => metadata.leg)))
+      .filter((leg) => leg > 0)
       .sort((a, b) => a - b),
-    [matches, tournament.format],
+    [matchViewMetadata],
   );
 
   // Extract unique stage-aware rounds from current matches.
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations), [matches, tournament.format, bracketSize, roundLabelTranslations]);
   const visibleRoundOptions = useMemo(
-    () => roundOptions.filter((option) => matches.some((match) => {
-      const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
-      const sameLeg = selectedLeg === 'ALL' || getPersistedOrRoundRobinLeg(match, matches, tournament.format) === selectedLeg;
-      const sameRound = match.roundNumber === option.roundNumber;
-      const sameLabel = getMatchRoundLabel({
-        match,
-        matches,
-        tournamentFormat: tournament.format,
-        bracketSize,
-        includePhasePrefix: false,
-        translations: roundLabelTranslations,
-      }) === option.label;
+    () => roundOptions.filter((option) => Array.from(matchViewMetadata.values()).some((metadata) => {
+      const sameStage = selectedStageKey === 'ALL' || metadata.stageKey === selectedStageKey;
+      const sameLeg = selectedLeg === 'ALL' || metadata.leg === selectedLeg;
+      const sameRound = metadata.roundNumber === option.roundNumber;
+      const sameLabel = metadata.roundLabel === option.label;
       return sameStage && sameLeg && sameRound && sameLabel;
     })),
-    [matches, roundOptions, selectedStageKey, selectedLeg, tournament.format, bracketSize, roundLabelTranslations, getMatchStageKey],
+    [matchViewMetadata, roundOptions, selectedStageKey, selectedLeg],
   );
 
   // Translate Stage Name helper
@@ -357,23 +394,28 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // Filter matches based on selected states
   const filteredMatches = useMemo(() => {
     return matches.filter(m => {
-      // 1. Filter by stage
-      if (selectedStageKey !== 'ALL' && getMatchStageKey(m) !== selectedStageKey) return false;
+      const metadata = matchViewMetadata.get(m.id);
+      if (!metadata) return false;
 
-      // 2. Filter by persisted bảng đấu identity
-      if (selectedGroupId !== 'ALL' && (m.groupId || m.group?.name) !== selectedGroupId) return false;
+      // 1. Filter by stage
+      if (selectedStageKey !== 'ALL' && metadata.stageKey !== selectedStageKey) return false;
+
+      // 2. Filter by stable bảng đấu identity
+      if (selectedGroupId !== 'ALL' && metadata.groupKey !== selectedGroupId) return false;
 
       // 3. Filter by configured leg
-      if (selectedLeg !== 'ALL' && getPersistedOrRoundRobinLeg(m, matches, tournament.format) !== selectedLeg) return false;
+      if (selectedLeg !== 'ALL' && metadata.leg !== selectedLeg) return false;
 
       // 4. Filter by internal round within the selected leg/stage
       if (selectedRoundKey !== 'ALL') {
         const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
         if (!selectedOption) return false;
 
-        const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false, translations: roundLabelTranslations });
-        const matchLeg = getPersistedOrRoundRobinLeg(m, matches, tournament.format);
-        if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label || (selectedOption.leg != null && matchLeg !== selectedOption.leg)) {
+        if (
+          metadata.roundNumber !== selectedOption.roundNumber ||
+          metadata.roundLabel !== selectedOption.label ||
+          (selectedOption.leg != null && metadata.leg !== selectedOption.leg)
+        ) {
           return false;
         }
       }
@@ -386,24 +428,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         
-        const getNames = (p: BracketMatch['participant1']) => {
-          if (!p) return [];
-          const names = [p.teamName || ''];
-          if (p.members && Array.isArray(p.members)) {
-            p.members.forEach((mem) => {
-              if (mem.fullName) names.push(mem.fullName);
-            });
-          }
-          return names.map(n => n.toLowerCase());
-        };
-
-        const p1Names = getNames(m.participant1);
-        const p2Names = getNames(m.participant2);
-
-        const matchesP1 = p1Names.some(name => name.includes(query));
-        const matchesP2 = p2Names.some(name => name.includes(query));
-
-        if (!matchesP1 && !matchesP2) {
+        if (!metadata.searchText.includes(query)) {
           return false;
         }
       }
@@ -420,7 +445,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
       return a.matchOrder - b.matchOrder;
     });
-  }, [matches, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize, roundLabelTranslations, getMatchStageKey]);
+  }, [matches, matchViewMetadata, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery]);
 
   const matchPageCount = Math.max(1, Math.ceil(filteredMatches.length / MATCHES_PER_VIEW));
   const currentMatchPage = Math.min(matchPage, matchPageCount);

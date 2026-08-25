@@ -39,6 +39,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { RankAvatar } from '@/components/ui/RankAvatar';
+import { rankingsApi } from '@/features/rankings/api';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
@@ -60,6 +61,33 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [pendingNotificationAction, setPendingNotificationAction] = useState<string | null>(null);
+  const [userRank, setUserRank] = useState<{ elo: number; tierName?: string; categoryName?: string } | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setUserRank(null);
+      return;
+    }
+    let isMounted = true;
+    rankingsApi
+      .getUserRankings(user.id)
+      .then((res) => {
+        if (!isMounted) return;
+        const ranks = res?.publicRanks || [];
+        const best = ranks.sort((a, b) => b.eloPoints - a.eloPoints)[0];
+        if (best) {
+          setUserRank({
+            elo: best.eloPoints,
+            tierName: best.tierName || best.tier?.name,
+            categoryName: best.categoryName,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   const {
     notifications,
@@ -550,6 +578,9 @@ export function Header() {
                 <RankAvatar
                   src={user?.avatarUrl}
                   name={user?.fullName}
+                  elo={userRank?.elo}
+                  tierName={userRank?.tierName}
+                  categoryName={userRank?.categoryName}
                   size="sm"
                   ringClassName="ring-2 shadow-xs hover:scale-105 transition-transform"
                 />

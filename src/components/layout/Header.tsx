@@ -38,6 +38,7 @@ import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
+import { RankAvatar } from '@/components/ui/RankAvatar';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
@@ -546,18 +547,12 @@ export function Header() {
                 aria-label={t('accountMenuAria')}
                 aria-expanded={isDropdownOpen}
               >
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-semibold uppercase text-blue-600 transition-all hover:ring-2 hover:ring-blue-600 hover:ring-offset-2">
-                  {user?.avatarUrl ? (
-                    <span
-                      role="img"
-                      aria-label={t('avatarAria')}
-                      className="h-full w-full bg-cover bg-center"
-                      style={{ backgroundImage: `url("${user.avatarUrl}")` }}
-                    />
-                  ) : (
-                    user?.fullName?.charAt(0) || 'U'
-                  )}
-                </div>
+                <RankAvatar
+                  src={user?.avatarUrl}
+                  name={user?.fullName}
+                  size="sm"
+                  ringClassName="ring-2 shadow-xs hover:scale-105 transition-transform"
+                />
               </button>
 
               <AnimatePresence>

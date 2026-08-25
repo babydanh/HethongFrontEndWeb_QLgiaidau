@@ -1282,11 +1282,31 @@ export default function UnifiedChatWidget() {
       toast.error(translate('blockedUserCannotMessage'));
       return;
     }
-    if (isOtherStrangerRestricted) {
+        if (isOtherStrangerRestricted) {
       toast.error(translate('chatStrangerMessagesDisabled'));
       return;
     }
+
+    if (selection.room.type === 'DIRECT' && otherParticipant?.id) {
+      try {
+        const policy = await chatApi.getDirectMessagePolicy(otherParticipant.id);
+        if (!policy.canMessage) {
+          toast.error(
+            policy.reasonCode === 'BLOCKED'
+              ? translate('blockedUserCannotMessage')
+              : translate('chatStrangerMessagesDisabled'),
+          );
+          await refreshRooms();
+          return;
+        }
+      } catch {
+        toast.error(translate('chatStrangerMessagesDisabled'));
+        return;
+      }
+    }
+
     const currentReply = replyingTo;
+
     const filesToUpload = [...selectedFiles];
 
     setSending(true);

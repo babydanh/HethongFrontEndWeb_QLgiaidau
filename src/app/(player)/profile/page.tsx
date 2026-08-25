@@ -336,11 +336,6 @@ export default function ProfilePage() {
 
     let isMounted = true;
 
-    if (user && (!profileData || profileData.id !== user.id)) {
-      setProfileData(user as unknown as UserProfile);
-      setIsLoading(false);
-    }
-
     const fetchProfile = async () => {
       // A persisted user is already safe to render as the first shell.
       if (!user?.id && !profileData?.id) {
@@ -724,28 +719,6 @@ export default function ProfilePage() {
                   </span>
                 );
               })}
-
-              {eligiblePublicRanks.length > 0 ? (
-                eligiblePublicRanks.map((rank) => (
-                  <EloTierBadge
-                    key={`${rank.categoryId}-${rank.matchType}`}
-                    elo={rank.eloPoints}
-                    tierName={rank.tierName || rank.tier?.name || undefined}
-                    categoryName={rank.categoryName}
-                    size="sm"
-                  />
-                ))
-              ) : latestEloHistory ? (
-                <EloTierBadge
-                  elo={latestEloHistory.newElo}
-                  categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
-                  size="sm"
-                />
-              ) : (
-                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                  {translate("unranked")}
-                </span>
-              )}
 
               {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">

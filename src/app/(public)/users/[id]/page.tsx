@@ -362,25 +362,6 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   {translate('verified')}
                 </span>
               )}
-              {!hideEloSection && (() => {
-                const activeRanks = displayedRanks.filter(isPublicRankingEligible);
-                if (activeRanks.length > 0) {
-                  return activeRanks.map((rank) => (
-                    <EloTierBadge
-                      key={`${rank.categoryId}-${rank.matchType}`}
-                      elo={rank.eloPoints}
-                      tierName={rank.tierName || undefined}
-                      categoryName={rank.categoryName}
-                      size="sm"
-                    />
-                  ));
-                }
-                return (
-                  <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                    {translate('unranked')}
-                  </span>
-                );
-              })()}
               {profile.achievements?.length ? (
                 <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} {translate('achievementsLabel')}

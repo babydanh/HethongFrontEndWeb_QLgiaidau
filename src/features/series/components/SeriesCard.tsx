@@ -16,19 +16,19 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
   const statusConfigs: Record<SeriesStatus, { text: string; classes: string }> = {
     DRAFT: {
       text: '📝 ' + translate('statusDraft'),
-      classes: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20'
+      classes: 'bg-slate-700 text-white font-bold shadow-2xs'
     },
     ACTIVE: {
       text: '🟢 ' + translate('statusActive'),
-      classes: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+      classes: 'bg-emerald-600 text-white font-bold shadow-2xs'
     },
     COMPLETED: {
       text: '✅ ' + translate('statusCompleted'),
-      classes: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20'
+      classes: 'bg-slate-800 text-white font-bold shadow-2xs'
     },
     CANCELLED: {
       text: '❌ ' + translate('statusCancelled'),
-      classes: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+      classes: 'bg-rose-600 text-white font-bold shadow-2xs'
     }
   };
 

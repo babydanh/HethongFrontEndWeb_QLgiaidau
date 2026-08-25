@@ -29,27 +29,27 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
     const configs: Record<string, { text: string; classes: string }> = {
       COMPLETED: {
         text: translate('status.completed'),
-        classes: 'bg-slate-100 text-slate-600 border-slate-200'
+        classes: 'bg-slate-800 text-white shadow-2xs'
       },
       REGISTRATION_OPEN: {
         text: translate('status.registrationOpen'),
-        classes: 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse'
+        classes: 'bg-emerald-600 text-white shadow-2xs animate-pulse'
       },
       REGISTRATION_CLOSED: {
         text: translate('status.registrationClosed'),
-        classes: 'bg-rose-50 text-rose-700 border-slate-200'
+        classes: 'bg-slate-700 text-white shadow-2xs'
       },
       IN_PROGRESS: {
         text: translate('status.inProgress'),
-        classes: 'bg-blue-50 text-blue-700 border-blue-200'
+        classes: 'bg-rose-600 text-white shadow-2xs'
       },
       ONGOING: {
         text: translate('status.inProgress'),
-        classes: 'bg-blue-50 text-blue-700 border-blue-200'
+        classes: 'bg-rose-600 text-white shadow-2xs'
       },
       UPCOMING: {
         text: translate('status.upcoming'),
-        classes: 'bg-slate-50 text-slate-500 border-slate-200'
+        classes: 'bg-blue-600 text-white shadow-2xs'
       }
     };
 

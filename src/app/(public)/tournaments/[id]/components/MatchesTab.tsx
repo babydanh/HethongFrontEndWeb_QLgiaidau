@@ -420,7 +420,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
       return a.matchOrder - b.matchOrder;
     });
-  }, [matches, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize, getMatchStageKey]);
+  }, [matches, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize, roundLabelTranslations, getMatchStageKey]);
 
   const matchPageCount = Math.max(1, Math.ceil(filteredMatches.length / MATCHES_PER_VIEW));
   const currentMatchPage = Math.min(matchPage, matchPageCount);

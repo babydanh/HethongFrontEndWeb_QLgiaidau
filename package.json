@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "i18n:check": "node scripts/check-i18n-messages.mjs"
+    "i18n:check": "node scripts/check-i18n-messages.mjs",
+    "test:e2e": "node --env-file-if-exists=.env.playwright node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

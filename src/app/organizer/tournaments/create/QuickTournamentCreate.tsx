@@ -913,12 +913,14 @@ export default function QuickTournamentCreate() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
+                    name="registrationStart"
 					label={translate('registrationStartLabel')}                    value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
                   <DateTimePicker
+                    name="startDate"
 					label={translate('startDateLabel')}                    value={startDate || ''}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
@@ -927,6 +929,7 @@ export default function QuickTournamentCreate() {
                   <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                     <div className="grid gap-4 sm:grid-cols-2">
                   <DateTimePicker
+                        name="registrationEnd"
                         label={translate('registrationEndLabel')}
                         value={registrationEnd || ''}
                         onChange={handleRegistrationEndChange}
@@ -935,6 +938,7 @@ export default function QuickTournamentCreate() {
                       />
 
                       <DateTimePicker
+                        name="endDate"
                         label={translate('endDateLabel')}
                         value={endDate || ''}
                         onChange={(val) => setValue('endDate', val, { shouldValidate: true })}

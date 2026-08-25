@@ -580,13 +580,15 @@ const commonTranslate = useTranslations('Common');
   let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = isRegistrationStatusLoading;
   const isRegisteredUser = myRegistration?.registered === true;
-  const isPaidUser = myRegistration?.participant?.isPaid === true;
-  const hasFee = Number(activeTournament.entryFee ?? 0) > 0 || (selectedDivision != null && Number(selectedDivision.entryFee ?? 0) > 0);
-  const isUnpaidUser = isRegisteredUser && !isPaidUser && hasFee;
-  const canResumePayment = isUnpaidUser || (isRegisteredUser && myRegistration?.paymentEligible === true);
+  // Backend is the source of truth: only COMPLETE, unpaid registrations with a
+  // valid positive fee may enter checkout. This prevents PENDING_PARTNER,
+  // PENDING_APPROVAL, WAITLISTED and football draft rosters from opening a
+  // checkout page that the payment guard must reject.
+  const canResumePayment = isRegisteredUser && myRegistration?.paymentEligible === true;
+  const isUnpaidUser = canResumePayment;
 
   if (isRegisteredUser) {
-    if (isUnpaidUser || canResumePayment) {
+    if (canResumePayment) {
       registrationButtonLabel = '💳 ' + (translate('continuePayment') || 'Thanh toán ngay');
       isRegistrationButtonDisabled = false;
     } else {
@@ -1342,7 +1344,7 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                       <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
                         {registrationButtonLabel}
                       </Button>
-                    ) : (isUnpaidUser || canResumePayment) ? (
+                    ) : canResumePayment ? (
                       <Button
                         onClick={() => {
                           const resumeParticipantId = myRegistration?.participant?.id;

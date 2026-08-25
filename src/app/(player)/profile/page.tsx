@@ -586,7 +586,7 @@ export default function ProfilePage() {
   }, [loadedProfileUserId, participatingTournaments]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
 
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">

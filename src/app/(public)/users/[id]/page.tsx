@@ -44,6 +44,7 @@ interface PublicProfile {
   avatarUrl: string | null;
   coverUrl: string | null;
   gender: string | null;
+  dateOfBirth?: string | null;
   bio: string | null;
   isVerified: boolean;
   role?: string;
@@ -63,6 +64,7 @@ interface Match {
   id: string;
   roundNumber: number;
   status: string;
+  isBye?: boolean;
   participant1: {
     id: string;
     teamName: string;
@@ -88,18 +90,34 @@ interface Match {
   } | null;
 }
 
-function isMockInvolvedMatch(match: Match): boolean {
-  const isMockParticipant = (participant: Match['participant1']) =>
-    participant?.isMock === true || participant?.members?.some((member) => member.isMock === true) === true;
-  return isMockParticipant(match.participant1) || isMockParticipant(match.participant2);
-}
+const hasUserInParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+  userId: string,
+) => Boolean(participant?.members?.some((member) => member.userId === userId));
 
-function hasUserInMatch(match: Match, userId: string): boolean {
-  return Boolean(
-    match.participant1?.members?.some((member) => member.userId === userId) ||
-    match.participant2?.members?.some((member) => member.userId === userId),
-  );
-}
+const isMockParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => Boolean(
+  participant?.isMock === true
+  || participant?.members?.some((member) => member.isMock === true),
+);
+
+const isPlaceholderParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => {
+  const teamName = participant?.teamName?.trim().toLowerCase();
+  return !teamName || ['tbd', 'chờ xác định', 'chua xac dinh', 'đang chờ', 'dang cho'].includes(teamName);
+};
+
+const isRenderableProfileMatch = (match: Match, userId: string): boolean => {
+  const isP1 = hasUserInParticipant(match.participant1, userId);
+  const isP2 = hasUserInParticipant(match.participant2, userId);
+  if (!isP1 && !isP2) return false;
+  if (match.isBye || isMockParticipant(match.participant1) || isMockParticipant(match.participant2)) return false;
+
+  const opponent = isP1 ? match.participant2 : match.participant1;
+  return !isPlaceholderParticipant(opponent);
+};
 
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('PublicProfile');
@@ -158,7 +176,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
         setProfile(profileResult.value.data);
         const publicMatches = matchesResult.status === 'fulfilled' ? matchesResult.value.data || [] : [];
-        setMatches(publicMatches.filter((match) => hasUserInMatch(match, id) && !isMockInvolvedMatch(match)));
+        setMatches(publicMatches.filter((match) => isRenderableProfileMatch(match, id)));
 
         setEloHistory(eloHistoryResult.status === 'fulfilled' ? eloHistoryResult.value?.data || [] : []);
       } catch (err: unknown) {
@@ -206,9 +224,13 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     return translate(matchType === 'SINGLES' ? 'singles' : 'doubles');
   };
 
-  const getGenderLabel = (gender: string | null) => {
+  const getGenderLabel = (gender: string | null | undefined) => {
     if (!gender) return translate('notUpdated');
-    return translate(gender === 'MALE' ? 'male' : gender === 'FEMALE' ? 'female' : 'other');
+    const normalized = gender.trim().toUpperCase();
+    if (normalized === 'MALE' || normalized === 'NAM') return translate('male');
+    if (normalized === 'FEMALE' || normalized === 'NU' || normalized === 'NỮ') return translate('female');
+    if (normalized === 'OTHER' || normalized === 'KHÁC' || normalized === 'KHAC') return translate('other');
+    return gender;
   };
 
   const displayedRanks = [...(profile.ranks || []), ...(profile.pairRanks || [])];
@@ -398,6 +420,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
               <div className="flex flex-col gap-4 text-sm">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
+                  <span className="text-slate-500 font-medium">{translate('dateOfBirth')}</span>
+                  <span className="text-slate-900 font-semibold">
+                    {profile.dateOfBirth
+                      ? `${new Date(profile.dateOfBirth).getDate().toString().padStart(2, '0')}/${(new Date(profile.dateOfBirth).getMonth() + 1).toString().padStart(2, '0')}/${new Date(profile.dateOfBirth).getFullYear()}`
+                      : translate('notUpdated')}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
                   <span className="text-slate-500 font-medium">{translate('gender')}</span>
                   <span className="text-slate-900 font-semibold">{getGenderLabel(profile.gender)}</span>
                 </div>

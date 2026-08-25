@@ -9,7 +9,7 @@ import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, CreditCard } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/utils/format';
+import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';

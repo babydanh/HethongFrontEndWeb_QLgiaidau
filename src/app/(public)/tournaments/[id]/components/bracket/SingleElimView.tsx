@@ -237,11 +237,13 @@ export function SingleElimView({
               return (
                 <div
                   key={match.id}
-                  className="absolute"
+                                    className="absolute motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-reduce:transition-none"
                   style={{
-                    left: pos.x,
-                    top: pos.y - cardH / 2,
+                    transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0)`,
+                    width: CARD_W,
+                    willChange: 'transform',
                   }}
+
                 >
                   <MatchCard
                     match={match}

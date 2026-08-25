@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { getSportLogo } from '@/constants/sports';
 import type { PlayerRanking } from '@/types/ranking';
 import type { Category } from '@/types/category';
 import { getRankStyle } from '@/utils/rank-style';
+import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import { cn } from '@/utils/cn';
+import { getSportAccentColor } from '@/constants/sports';
+import { getTierBadgeStyle, SportBadgeIcon, getTierTheme } from '@/components/ui/RankEmblem';
 
 interface PlayerSportTierBadgeBarProps {
   userRankings?: PlayerRanking[] | null;
@@ -68,23 +69,6 @@ export function getShortTierCode(tierName?: string | null, elo?: number | null):
   return '--';
 }
 
-const getTierColorClass = (shortCode: string): string => {
-  if (shortCode === 'TS') return 'text-amber-500 font-black drop-shadow-[0_0_4px_rgba(245,158,11,0.4)]';
-  if (shortCode === 'HTA') return 'text-rose-600 font-extrabold';
-  if (shortCode === 'LTA') return 'text-rose-500 font-bold';
-  if (shortCode === 'HTB') return 'text-blue-600 font-extrabold';
-  if (shortCode === 'LTB') return 'text-blue-500 font-bold';
-  if (shortCode === 'HTC') return 'text-emerald-600 font-extrabold';
-  if (shortCode === 'LTC') return 'text-emerald-500 font-bold';
-  if (shortCode === 'HTD') return 'text-slate-600 font-bold';
-  if (shortCode === 'LTD') return 'text-slate-500 font-semibold';
-  if (shortCode === 'PRO') return 'text-amber-500 font-black';
-  if (shortCode === 'ADV') return 'text-emerald-600 font-bold';
-  if (shortCode === 'INT') return 'text-blue-600 font-bold';
-  if (shortCode === 'BEG') return 'text-slate-500 font-semibold';
-  return 'text-slate-400';
-};
-
 export function PlayerSportTierBadgeBar({
   userRankings = [],
   categories = [],
@@ -107,25 +91,23 @@ export function PlayerSportTierBadgeBar({
         r.categoryName?.toLowerCase() === category.name?.toLowerCase(),
     );
     const activeSportRank = sportRanks
-      .filter((r) => r.matchesPlayed > 0 || r.adminLeaderboardEligible === true)
+      .filter(isPublicRankingEligible)
       .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
 
-    const isRanked = Boolean(activeSportRank && (activeSportRank.matchesPlayed > 0 || activeSportRank.adminLeaderboardEligible === true));
+    const isRanked = isPublicRankingEligible(activeSportRank);
+    const canonicalTierName = isRanked ? getCanonicalTierName(activeSportRank) : null;
     const rankStyle = isRanked
-      ? getRankStyle(activeSportRank?.eloPoints, activeSportRank?.tier?.name || activeSportRank?.tierName, category.name)
+      ? getRankStyle(activeSportRank?.eloPoints, canonicalTierName, category.name)
       : null;
     const shortCode = isRanked
-      ? getShortTierCode(activeSportRank?.tier?.name || activeSportRank?.tierName, activeSportRank?.eloPoints)
+      ? getShortTierCode(canonicalTierName, activeSportRank?.eloPoints)
       : '--';
-    const logoUrl = getSportLogo(category.name);
-
     return {
       category,
       activeSportRank,
       isRanked,
       rankStyle,
       shortCode,
-      logoUrl,
     };
   });
 
@@ -167,57 +149,45 @@ export function PlayerSportTierBadgeBar({
       )}
 
       {/* Sport Tiers Badges */}
-      <div className="flex items-center gap-2 min-w-0">
-        {displaySports.map(({ category, activeSportRank, isRanked, rankStyle, shortCode, logoUrl }) => {
+      <div className="flex items-center gap-2.5 min-w-0">
+        {displaySports.map(({ category, activeSportRank, isRanked, rankStyle, shortCode }) => {
+          const theme = getTierTheme(rankStyle?.name || shortCode, activeSportRank?.eloPoints, shortCode);
+          const tierBadgeStyle = getTierBadgeStyle(theme, shortCode);
+          const sportAccent = getSportAccentColor(category.name);
           return (
             <div
               key={category.id}
               title={
                 isRanked
-                  ? `${category.name}: ${activeSportRank?.eloPoints} ELO (${rankStyle?.name || shortCode}) • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
+                  ? `${category.name}: ${rankStyle?.name || shortCode} • ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
+                  : `${category.name}: ${translate('unranked')}`
+              }
+              aria-label={
+                isRanked
+                  ? `${category.name}: ${rankStyle?.name || shortCode}, ${translate('matchesCount', { matches: activeSportRank?.matchesPlayed ?? 0 })}`
                   : `${category.name}: ${translate('unranked')}`
               }
               className={cn(
-                'group relative flex items-center gap-1 transition-transform hover:scale-105 cursor-pointer',
+                'group relative flex items-center gap-1.5 rounded-full border px-1.5 py-1 transition-transform hover:scale-105 cursor-pointer',
                 !isRanked && 'opacity-40 hover:opacity-75',
               )}
+              style={{
+                backgroundColor: tierBadgeStyle.backgroundColor,
+                borderColor: `${sportAccent}99`,
+              }}
             >
-              {/* Sport Icon Circle */}
-              <div
-                className={cn(
-                  'relative rounded-full flex items-center justify-center border transition-all',
-                  isSmall ? 'w-5 h-5' : 'w-6 h-6',
-                  isRanked
-                    ? isDark
-                      ? `${rankStyle?.ringClass || 'ring-blue-500'} bg-slate-800 border-slate-700`
-                      : 'bg-slate-50 border-slate-200'
-                    : isDark
-                      ? 'bg-slate-800/50 border-slate-700/50'
-                      : 'bg-slate-100 border-slate-200',
-                )}
-              >
-                {logoUrl ? (
-                  <Image
-                    src={logoUrl}
-                    alt={category.name}
-                    width={isSmall ? 12 : 14}
-                    height={isSmall ? 12 : 14}
-                    unoptimized
-                    className="object-contain"
-                  />
-                ) : (
-                  <span className="text-[8px] font-bold text-slate-500">
-                    {category.name.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <SportBadgeIcon
+                sportName={category.name}
+                sizePx={isSmall ? 22 : 26}
+              />
 
-              {/* Short Tier Label */}
+              {/* Short Tier Label with 3D gradient */}
               <span
-                className={cn(
-                  'text-[10px] tracking-tight leading-none',
-                  isRanked ? getTierColorClass(shortCode) : 'text-slate-400 font-medium',
-                )}
+                className={cn('text-[11px] font-black uppercase tracking-tight leading-none')}
+                style={{
+                  color: isRanked ? tierBadgeStyle.textColor : '#94a3b8',
+                  fontWeight: tierBadgeStyle.isHigh ? 900 : 800,
+                }}
               >
                 {shortCode}
               </span>

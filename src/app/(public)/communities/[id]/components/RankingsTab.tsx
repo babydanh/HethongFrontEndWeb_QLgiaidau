@@ -7,7 +7,7 @@ import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking, FootballTeamRanking } from '@/features/rankings/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getRankRingClass } from '@/components/ui/RankAvatar';
-import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
+import { getCanonicalTierName, getEloMatchTypeLabel } from '@/features/rankings/elo-display';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 
@@ -372,7 +372,13 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
                       <span className={`${isCenter ? 'text-sm' : 'text-xs'} font-bold ${mc.color}`}>
                         {p.eloPoints} ELO
                       </span>
-                      <EloTierBadge elo={p.eloPoints} tierName={p.tier?.name} size="sm" className="mt-1 scale-[0.85] origin-center" />
+                      <EloTierBadge
+                        elo={p.eloPoints}
+                        tierName={getCanonicalTierName(p)}
+                        categoryName={p.categoryName || activeCategory?.name}
+                        size="sm"
+                        className="mt-1 scale-[0.85] origin-center"
+                      />
                     </div>
                     <div className={`w-full ${mc.bg} rounded-t-lg border ${mc.border} flex items-center justify-center ${isCenter ? 'h-28 bg-amber-100/70 border-2 shadow-sm' : 'h-24'}`}>
                       <span className={`text-2xl font-black ${mc.color}/60 ${isCenter ? 'text-3xl text-amber-500' : ''}`}>{rankLabel}</span>
@@ -398,7 +404,13 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
                     {rankingAvatars(player, 'w-8 h-8')}
                     <div className="flex-1 min-w-0 flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-800 truncate">{rankingName(player)}</span>
-                      <EloTierBadge elo={player.eloPoints} tierName={player.tier?.name} size="sm" className="shrink-0 scale-[0.85] origin-left" />
+                      <EloTierBadge
+                        elo={player.eloPoints}
+                        tierName={getCanonicalTierName(player)}
+                        categoryName={player.categoryName || activeCategory?.name}
+                        size="sm"
+                        className="shrink-0 scale-[0.85] origin-left"
+                      />
                     </div>
                     <span className="text-[10px] font-semibold text-slate-400 w-10 text-right shrink-0">{winRate}%</span>
                     <span className="text-[10px] font-bold text-slate-600 w-12 text-right shrink-0">

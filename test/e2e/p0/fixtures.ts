@@ -3,7 +3,7 @@ import { expect, type Page, type APIRequestContext, type TestInfo } from '@playw
 export const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001';
 export const apiBaseURL = process.env.PLAYWRIGHT_API_URL ?? 'http://localhost:3000/api/v1';
 
-export const organizerEmail = process.env.PLAYWRIGHT_ORGANIZER_EMAIL ?? 'tester1@gmail.com';
+export const organizerEmail = process.env.PLAYWRIGHT_ORGANIZER_EMAIL ?? 'admin1@gmail.com';
 export const organizerPassword = process.env.PLAYWRIGHT_ORGANIZER_PASSWORD ?? '123456';
 
 export const playerEmail = process.env.PLAYWRIGHT_PLAYER_EMAIL ?? 'player_test@sporto.vn';
@@ -27,7 +27,7 @@ export async function ensurePlayerAccount(request: APIRequestContext) {
         'Content-Type': 'application/json',
       },
     });
-  } catch (_e) {
+  } catch {
     // 409 Conflict or network error is expected if user already exists
   }
 }
@@ -50,7 +50,7 @@ export async function getOrFetchTournamentId(request: APIRequestContext): Promis
         return list[0].id;
       }
     }
-  } catch (_e) {}
+  } catch {}
 
   try {
     const res = await request.get(`${apiBaseURL}/tournaments?limit=5`);
@@ -61,7 +61,7 @@ export async function getOrFetchTournamentId(request: APIRequestContext): Promis
         return list[0].id;
       }
     }
-  } catch (_e) {}
+  } catch {}
 
   return undefined;
 }
@@ -72,8 +72,29 @@ export async function requireEnv(testInfo: TestInfo, values: Record<string, stri
   if (missing.length) testInfo.skip(true, `Provide local Playwright env: ${missing.join(', ')}`);
 }
 
+export async function logout(page: Page) {
+  await page.context().clearCookies();
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
+  });
+}
+
 export async function login(page: Page, email: string, password: string) {
+  // Clear any existing auth session first so /login does not auto-redirect
+  await page.context().clearCookies();
   await page.goto(`${baseURL}/login`);
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
+  });
+  if (!page.url().includes('/login')) {
+    await page.goto(`${baseURL}/login`);
+  }
   await page.getByTestId('login-email-input').fill(email);
   await page.getByTestId('login-password-input').fill(password);
   await page.getByTestId('login-submit-btn').click();
@@ -85,3 +106,4 @@ export async function openTournament(page: Page, id: string) {
   await page.goto(`${baseURL}/tournaments/${id}`);
   await expect(page).toHaveURL(new RegExp(`/tournaments/${id}`));
 }
+

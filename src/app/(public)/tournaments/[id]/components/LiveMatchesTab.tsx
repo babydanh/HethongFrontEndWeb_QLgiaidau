@@ -14,7 +14,6 @@ interface LiveMatchesTabProps {
   tournament: Tournament;
   tournamentId: string;
   divisionId?: string;
-  onLiveCountChange?: (count: number) => void;
 }
 
 const ITEMS_PER_PAGE = 6;
@@ -90,7 +89,6 @@ function getParticipantDisplayName(participant: Match['participant1'], waitingLa
 export default function LiveMatchesTab({
   tournamentId,
   divisionId,
-  onLiveCountChange,
 }: LiveMatchesTabProps) {
   const translate = useTranslations('TournamentDetail');
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
@@ -113,7 +111,6 @@ export default function LiveMatchesTab({
         if (active) {
           const ongoing = (data as Match[]).filter((m) => m.status === 'ONGOING');
           setLiveMatches(ongoing);
-          onLiveCountChange?.(ongoing.length);
         }
       } catch (err) {
         console.error('Failed to fetch live matches:', err);
@@ -125,7 +122,7 @@ export default function LiveMatchesTab({
     return () => {
       active = false;
     };
-  }, [tournamentId, divisionId, onLiveCountChange]);
+  }, [tournamentId, divisionId]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -141,6 +138,7 @@ export default function LiveMatchesTab({
       }
 
       if (!updatedMatch?.id || updatedMatch.tournamentId !== tournamentId) return;
+      if (divisionId && updatedMatch.divisionId !== divisionId) return;
 
       setLiveMatches((current) => {
         let next: Match[];
@@ -154,7 +152,6 @@ export default function LiveMatchesTab({
             next = [updatedMatch, ...current];
           }
         }
-        onLiveCountChange?.(next.length);
         return next;
       });
     };
@@ -164,11 +161,10 @@ export default function LiveMatchesTab({
     if (socket.connected) joinTournament();
 
     return () => {
-      socket.emit('leaveTournament', tournamentId);
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [tournamentId, onLiveCountChange]);
+  }, [tournamentId, divisionId]);
 
   const filteredMatches = liveMatches.filter((m) => {
     if (!searchQuery.trim()) return true;
@@ -190,7 +186,7 @@ export default function LiveMatchesTab({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-rose-50/60 border border-rose-200/80 rounded-xl p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/20 shrink-0">
-            <Radio className="w-5 h-5 animate-pulse" />
+            <Radio className="w-5 h-5 motion-safe:animate-pulse motion-reduce:animate-none" />
           </div>
           <div>
             <div className="flex items-center gap-2">

@@ -8,6 +8,7 @@ import { rankingsApi, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
+import { getCanonicalTierName } from "@/features/rankings/elo-display";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
@@ -19,6 +20,7 @@ interface LeaderboardSearchResult {
     email?: string;
     eloPoints: number;
     tierName: string;
+    categoryName?: string;
 }
 
 export default function LeaderboardPage() {
@@ -84,12 +86,14 @@ export default function LeaderboardPage() {
                             ...u,
                             eloPoints: matchRank?.eloPoints ?? 1000,
                             tierName: matchRank?.tier?.name || matchRank?.tierName || t("unranked"),
+                            categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
                         };
                     } catch {
                         return {
                             ...u,
                             eloPoints: 1000,
                             tierName: t("unranked"),
+                            categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
                         };
                     }
                 })
@@ -287,13 +291,13 @@ export default function LeaderboardPage() {
                                             </h4>
                                             <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                         </div>
-                                        <div className="text-right shrink-0 flex flex-col items-end">
-                                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                {u.eloPoints}
-                                            </span>
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
-                                                {u.tierName}
-                                            </span>
+                                        <div className="shrink-0">
+                                            <EloTierBadge
+                                                elo={u.eloPoints}
+                                                tierName={u.tierName}
+                                                categoryName={u.categoryName}
+                                                size="sm"
+                                            />
                                         </div>
                                     </button>
                                 ))}
@@ -372,6 +376,14 @@ export default function LeaderboardPage() {
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
                             <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
                         </div>
+                    ) : rankings.length === 0 ? (
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-10 md:p-14 text-center">
+                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                <Info className="h-6 w-6" aria-hidden="true" />
+                            </div>
+                            <h2 className="text-lg font-bold text-slate-900">{t('noEligibleRanksTitle')}</h2>
+                            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t('noEligibleRanksDescription')}</p>
+                        </div>
                     ) : (
                         <>
                             {/* Top 3 Podium Stage (Light Theme) */}
@@ -448,7 +460,13 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[1] ? (
-                                                <EloTierBadge elo={rankings[1].eloPoints} tierName={rankings[1].tier?.name} size="sm" className="mb-3 border-slate-200 bg-white" />
+                                                <EloTierBadge
+                                                  elo={rankings[1].eloPoints}
+                                                  tierName={getCanonicalTierName(rankings[1])}
+                                                  categoryName={rankings[1].categoryName}
+                                                  size="sm"
+                                                  className="mb-3 border-slate-200 bg-white"
+                                                />
                                             ) : (
                                                 <div className="text-[10px] text-[#64748B] font-bold mb-3">--- ELO</div>
                                             )}
@@ -521,7 +539,13 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[0] ? (
-                                                <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-200 bg-white text-amber-700" />
+                                                <EloTierBadge
+                                                  elo={rankings[0].eloPoints}
+                                                  tierName={getCanonicalTierName(rankings[0])}
+                                                  categoryName={rankings[0].categoryName}
+                                                  size="md"
+                                                  className="mb-3 border-amber-200 bg-white text-amber-700"
+                                                />
                                             ) : (
                                                 <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
                                             )}
@@ -594,7 +618,13 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[2] ? (
-                                                <EloTierBadge elo={rankings[2].eloPoints} tierName={rankings[2].tier?.name} size="sm" className="mb-3 border-amber-200 bg-white" />
+                                                <EloTierBadge
+                                                  elo={rankings[2].eloPoints}
+                                                  tierName={getCanonicalTierName(rankings[2])}
+                                                  categoryName={rankings[2].categoryName}
+                                                  size="sm"
+                                                  className="mb-3 border-amber-200 bg-white"
+                                                />
                                             ) : (
                                                 <div className="text-[10px] text-[#C2410C] font-bold mb-3">--- ELO</div>
                                             )}
@@ -669,9 +699,15 @@ export default function LeaderboardPage() {
                                                         {player?.user?.fullName || t("waiting")}
                                                     </span>
                                                     {player ? (
-                                                        <span className="text-[11px] font-bold text-blue-600">{player.eloPoints} ELO</span>
+                                                        <EloTierBadge
+                                                            elo={player.eloPoints}
+                                                            tierName={getCanonicalTierName(player)}
+                                                            categoryName={player.categoryName}
+                                                            size="sm"
+                                                            className="scale-90 origin-center"
+                                                        />
                                                     ) : (
-                                                        <span className="text-[10px] text-slate-400 font-bold">--- ELO</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold">---</span>
                                                     )}
                                                 </button>
                                             );
@@ -807,30 +843,8 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
     // Rankings starting from index 10 (Hạng 11 trở đi)
     const realData = rankings.slice(10, 100);
     
-    // Tạo danh sách 90 phần tử (từ hạng 11 đến 100), nếu thiếu thì điền placeholder t("waiting")
+    // Render only rows returned by the API. Missing positions are not players.
     const listData = [...realData];
-    const targetLength = 90; // 11 to 100 is 90 slots
-    
-    for (let i = listData.length; i < targetLength; i++) {
-        listData.push({
-            id: `placeholder-${i}`,
-            categoryId: "",
-            eloPoints: 0,
-            matchesPlayed: 0,
-            matchesWon: 0,
-            winStreak: 0,
-            updatedAt: new Date().toISOString(),
-            user: {
-                id: `placeholder-user-${i}`,
-                fullName: t("waiting"),
-                avatarUrl: undefined
-            },
-            tier: {
-                id: "",
-                name: "LOW_TIER_D"
-            }
-        });
-    }
 
     // Split into 2 columns
     const mid = Math.ceil(listData.length / 2);
@@ -847,7 +861,6 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                 <th className="py-3 px-3 w-12 text-center">{t("rankHeader")}</th>
                                 <th className="py-3 px-3">{t("player")}</th>
                                 <th className="py-3 px-3">{t("eloRank")}</th>
-                                <th className="py-3 px-3 text-right">ELO</th>
                                 <th className="py-3 px-3 text-right">{t("winRate")}</th>
                             </tr>
                         </thead>
@@ -913,14 +926,13 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                             {isPlaceholder ? (
                                                 <span className="text-[10px] text-slate-400 font-medium">---</span>
                                             ) : (
-                                                <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name} size="sm" className="scale-90 origin-left" />
-                                            )}
-                                        </td>
-                                        <td className="py-2.5 px-3 text-right font-bold text-blue-650">
-                                            {isPlaceholder ? (
-                                                <span className="text-slate-450 font-bold">---</span>
-                                            ) : (
-                                                rank.eloPoints
+                                                <EloTierBadge
+                                                elo={rank.eloPoints}
+                                                tierName={getCanonicalTierName(rank)}
+                                                categoryName={rank.categoryName}
+                                                size="sm"
+                                                className="scale-90 origin-left"
+                                            />
                                             )}
                                         </td>
                                         <td className="py-2.5 px-3 text-right text-emerald-650 font-bold">

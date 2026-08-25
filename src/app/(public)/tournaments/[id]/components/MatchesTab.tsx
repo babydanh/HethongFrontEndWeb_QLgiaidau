@@ -24,6 +24,70 @@ interface Props {
 
 type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
+function normalizeStageValue(value?: string | null): string {
+  return (value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+}
+
+function getScheduleStageKey(match: BracketMatch, tournamentFormat?: Tournament['format']): string {
+  const stage = match.stage ?? match.group?.stage;
+  const type = normalizeStageValue(stage?.type);
+  const name = normalizeStageValue(stage?.name);
+  const format = normalizeStageValue(tournamentFormat);
+
+  if (
+    type === 'ROUND_ROBIN' ||
+    type === 'GROUP' ||
+    type === 'GROUP_STAGE' ||
+    type === 'GROUP_STAGES' ||
+    name.includes('GROUP') ||
+    name.includes('ROUND_ROBIN') ||
+    name.includes('VONG_BANG') ||
+    (!stage && format === 'ROUND_ROBIN')
+  ) {
+    return 'GROUP_STAGE';
+  }
+
+  if (
+    type === 'SINGLE_ELIMINATION' ||
+    type === 'DOUBLE_ELIMINATION' ||
+    type === 'KNOCKOUT' ||
+    type === 'PLAYOFF' ||
+    name.includes('ELIMINATION') ||
+    name.includes('KNOCKOUT') ||
+    name.includes('PLAYOFF') ||
+    (!stage && (format === 'SINGLE_ELIMINATION' || format === 'DOUBLE_ELIMINATION'))
+  ) {
+    return 'KNOCKOUT';
+  }
+
+  return stage?.name?.trim() || 'MAIN_STAGE';
+}
+
+function getPersistedOrRoundRobinLeg(
+  match: BracketMatch,
+  matches: BracketMatch[],
+  tournamentFormat?: Tournament['format'],
+): number {
+  if (typeof match.leg === 'number' && Number.isInteger(match.leg) && match.leg > 0) {
+    return match.leg;
+  }
+
+  const stage = match.stage ?? match.group?.stage;
+  const type = normalizeStageValue(stage?.type);
+  const name = normalizeStageValue(stage?.name);
+  const isRoundRobin =
+    type === 'ROUND_ROBIN' ||
+    type === 'GROUP' ||
+    type === 'GROUP_STAGE' ||
+    type === 'GROUP_STAGES' ||
+    name.includes('GROUP') ||
+    name.includes('ROUND_ROBIN') ||
+    name.includes('VONG_BANG') ||
+    (!stage && normalizeStageValue(tournamentFormat) === 'ROUND_ROBIN');
+
+  return isRoundRobin ? getRoundRobinRoundInfo(match, matches).leg : 1;
+}
+
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
@@ -39,8 +103,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('roundNumber', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('roundNumber', { number: round }),
   }), [matchTranslate]);
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const requestControllerRef = useRef<AbortController | null>(null);
@@ -73,7 +137,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       const matchParams: Record<string, string | number> = {
         tournament_id: effectiveTournamentId,
         status: '', // Overrides default status filter to get all matches
-        limit: 20,
+        // Backend caps cursor pages at 100; loading one full tournament page
+        // keeps stage filters complete for normal brackets without fan-out requests.
+        limit: 100,
       };
       if (divisionId) matchParams.division_id = divisionId;
       if (cursor) matchParams.cursor = cursor;
@@ -179,10 +245,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     };
   }, [effectiveTournamentId, setMatches]);
 
-  const getMatchStageKey = (match: BracketMatch) => {
-    const stageName = match.stage?.name?.trim() || match.group?.stage?.name?.trim();
-    return stageName || 'MAIN_STAGE';
-  };
+  const getMatchStageKey = (match: BracketMatch) => getScheduleStageKey(match, tournament.format);
 
   const stageOptions = useMemo(() => {
     const byStage = new Map<string, number>();
@@ -191,30 +254,33 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       byStage.set(key, (byStage.get(key) ?? 0) + 1);
     });
     return Array.from(byStage.entries()).map(([key, count]) => ({ key, count }));
-  }, [matches]);
+  }, [matches, tournament.format]);
 
   const legOptions = useMemo(
-    () => Array.from(new Set(matches.map((match) => getRoundRobinRoundInfo(match, matches).leg)))
+    () => Array.from(new Set(matches.map((match) => getPersistedOrRoundRobinLeg(match, matches, tournament.format))))
       .filter((leg): leg is number => leg > 0)
       .sort((a, b) => a - b),
-    [matches],
+    [matches, tournament.format],
   );
 
   // Extract unique stage-aware rounds from current matches.
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize, roundLabelTranslations), [matches, tournament.format, bracketSize, roundLabelTranslations]);
   const visibleRoundOptions = useMemo(
-    () => roundOptions.filter((option) => {
-      if (selectedStageKey !== 'ALL' && option.stageKey && !option.stageKey.includes(selectedStageKey.toUpperCase())) {
-        return false;
-      }
-      return matches.some((match) => {
-        const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
-        const sameLeg = selectedLeg === 'ALL' || getRoundRobinRoundInfo(match, matches).leg === selectedLeg;
-        const sameRound = match.roundNumber === option.roundNumber;
-        return sameStage && sameLeg && sameRound;
-      });
-    }),
-    [matches, roundOptions, selectedStageKey, selectedLeg],
+    () => roundOptions.filter((option) => matches.some((match) => {
+      const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
+      const sameLeg = selectedLeg === 'ALL' || getPersistedOrRoundRobinLeg(match, matches, tournament.format) === selectedLeg;
+      const sameRound = match.roundNumber === option.roundNumber;
+      const sameLabel = getMatchRoundLabel({
+        match,
+        matches,
+        tournamentFormat: tournament.format,
+        bracketSize,
+        includePhasePrefix: false,
+        translations: roundLabelTranslations,
+      }) === option.label;
+      return sameStage && sameLeg && sameRound && sameLabel;
+    })),
+    [matches, roundOptions, selectedStageKey, selectedLeg, tournament.format, bracketSize, roundLabelTranslations],
   );
 
   // Translate Stage Name helper
@@ -251,6 +317,12 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     return map[rawName] || rawName;
   };
 
+  const getStageFilterLabel = (stageKey: string) => {
+    if (stageKey === 'GROUP_STAGE') return translate('stageGroup');
+    if (stageKey === 'KNOCKOUT') return translate('stageElimination');
+    return getStageVietnameseName(stageKey);
+  };
+
   // Filter matches based on selected states
   const filteredMatches = useMemo(() => {
     return matches.filter(m => {
@@ -258,7 +330,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (selectedStageKey !== 'ALL' && getMatchStageKey(m) !== selectedStageKey) return false;
 
       // 2. Filter by configured leg
-      if (selectedLeg !== 'ALL' && getRoundRobinRoundInfo(m, matches).leg !== selectedLeg) return false;
+      if (selectedLeg !== 'ALL' && getPersistedOrRoundRobinLeg(m, matches, tournament.format) !== selectedLeg) return false;
 
       // 3. Filter by internal round within the selected leg/stage
       if (selectedRoundKey !== 'ALL') {
@@ -266,7 +338,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         if (!selectedOption) return false;
 
         const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false, translations: roundLabelTranslations });
-        const matchLeg = getRoundRobinRoundInfo(m, matches).leg;
+        const matchLeg = getPersistedOrRoundRobinLeg(m, matches, tournament.format);
         if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label || (selectedOption.leg != null && matchLeg !== selectedOption.leg)) {
           return false;
         }
@@ -491,7 +563,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     }}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
                   >
-                    {getStageVietnameseName(stage.key)} <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>({stage.count})</span>
+                    {getStageFilterLabel(stage.key)} <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>({stage.count})</span>
                   </button>
                 );
               })}
@@ -533,7 +605,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           {/* Row 2: Internal round filter */}
           {visibleRoundOptions.length > 0 && (
             <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
-              <p className="text-[11px] font-medium text-slate-400">{matchTranslate('roundFilterHint')}</p>
               {tournament.format === 'DOUBLE_ELIMINATION' || visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') ? (
                 <>
                   {/* Winners Row */}
@@ -706,7 +777,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       {roundLabel}
                     </span>
                     {(() => {
-                      const stageName = getStageVietnameseName(match.group?.stage?.name);
+                      const stageName = getStageVietnameseName(
+                        match.stage?.name ?? match.group?.stage?.name,
+                      );
                       const shouldShow =
                         stageName &&
                         !roundLabel.toLowerCase().includes(stageName.toLowerCase()) &&

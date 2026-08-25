@@ -31,6 +31,7 @@ import {
   getRanksForCategory,
   getRankTierName,
   getRankWinRate,
+  isPublicRankingEligible,
 } from '@/features/rankings/elo-display';
 import { isNetworkError } from '@/utils/error';
 import { isTournamentCancelled, isTournamentCompleted, isTournamentInProgress } from '@/utils/tournament-status';
@@ -1053,7 +1054,7 @@ export default function HomePage() {
   const eloPoints = activeRankInfo?.eloPoints ?? prominentRank?.eloPoints ?? 1000;
   const displayTier = getRankTierName(activeRankInfo);
   const matchesPlayed = activeRankInfo?.matchesPlayed ?? 0;
-  const hasPlayedRankedMatch = matchesPlayed > 0;
+  const hasPublicRank = isPublicRankingEligible(activeRankInfo);
   const activeElo = activeRankInfo?.eloPoints ?? 0;
   const matchesWon = activeRankInfo?.matchesWon ?? 0;
   const winRate = getRankWinRate(activeRankInfo);
@@ -1584,7 +1585,7 @@ export default function HomePage() {
                  <RankAvatar
                    src={user?.avatarUrl}
                    name={user?.fullName}
-                   elo={hasPlayedRankedMatch ? activeElo : null}
+                   elo={hasPublicRank ? activeElo : null}
                    tierName={displayTier}
                    matchesPlayed={matchesPlayed}
                    size="md"

@@ -19,6 +19,7 @@ import { cn } from '@/utils/cn';
 import { getSportLogo } from '@/constants/sports';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import type { BracketMatch, LivestreamCamera } from '@/features/tournaments/api';
+import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 
 const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
   DRAFT: 'statusDraft',
@@ -577,6 +578,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                     handleOpenScheduling={handleBracketOpenScheduling}
           handleOpenRoundModal={bracketManager.handleOpenRoundModal}
           refetchDivisionData={bracketManager.refetchDivisionData}
+          onBracketPersisted={(updatedMatches) => bracketManager.setBracket((current) => mergeBracketMatches(current, updatedMatches) ?? current)}
 
           isLimitEnabled={bracketManager.isLimitEnabled}
           setIsLimitEnabled={bracketManager.setIsLimitEnabled}

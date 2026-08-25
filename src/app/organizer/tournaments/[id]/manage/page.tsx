@@ -17,6 +17,7 @@ import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
 import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
+import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
 import { LivestreamTab } from './components/LivestreamTab';
@@ -477,6 +478,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
               handleOpenScheduling={s.handleOpenScheduling} handleOpenRoundModal={s.handleOpenRoundModal}
               refetchDivisionData={s.refetchDivisionData}
+              onBracketPersisted={(updatedMatches) => s.setBracket((current) => mergeBracketMatches(current, updatedMatches) ?? current)}
               isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
               maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
               matchType={s.matchType} setMatchType={s.setMatchType}
@@ -729,7 +731,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         label={translate('lockModal.courtFeePerPlayer')}
                         value={`${s.lockSummary.platformFeePerPlayer.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}₫${translate('lockModal.perPerson')}`}
                       />
-                      <SummaryRow label={translate('lockModal.feeRule')} value={s.lockSummary.platformFeeRuleLabel === 'Miễn phí lệ phí dịch vụ (0đ / người)' ? translate('lockModal.freeServiceFee') : s.lockSummary.platformFeeRuleLabel.startsWith('Cố định') ? translate('lockModal.fixedFeeRule') : s.lockSummary.platformFeeRuleLabel.replace('% lệ phí / người', translate('lockModal.percentFeeRule', { percentage: s.lockSummary.platformFeeRuleLabel.split('%')[0] }).replace('{percentage}', s.lockSummary.platformFeeRuleLabel.split('%')[0]))} />
+                      <SummaryRow
+                        label={translate('lockModal.feeRule')}
+                        value={
+                          s.lockSummary.platformFeeRuleType === 'FREE'
+                            ? translate('lockModal.freeServiceFee')
+                            : s.lockSummary.platformFeeRuleType === 'FIXED'
+                              ? translate('lockModal.fixedFeeRule')
+                              : translate('lockModal.percentFeeRule', {
+                                  percentage: s.tournament?.platformFeePercentage ?? 0,
+                                })
+                        }
+                      />
                       <SummaryRow
                         label={translate('lockModal.totalCourtFee')}
                         value={`${s.lockSummary.totalPlatformFee.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}₫`}

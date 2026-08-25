@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
   test.setTimeout(120_000);
 
-  const userEmail = 'tester1@gmail.com';
+  const userEmail = 'admin1@gmail.com';
   const userPassword = '123456';
   const tournamentName = `Test Quick Tournament ${Date.now()}`;
   const editedTournamentName = `Edited Quick Tournament ${Date.now()}`;
@@ -56,7 +56,7 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
     await sleep();
 
     // Select Nội dung thi đấu (e.g. MALE_DOUBLES)
-    await page.getByTestId('format-option-MALE_DOUBLES').click();
+    await page.getByTestId('format-option-MALE_SINGLES').click();
     await sleep();
 
     // Submit the form
@@ -141,7 +141,8 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
     }
 
     // Điền danh sách VĐV ảo (ô Textarea nhận danh sách nhiều dòng)
-    await page.getByPlaceholder(/Mỗi dòng là 1 tên VĐV/i).fill('Vận động viên 1\nVận động viên 2\nVận động viên 3\nVận động viên 4');
+    await page.getByPlaceholder(/Mỗi dòng là 1 tên VĐV/i)
+      .fill('Vận động viên 1\nVận động viên 2\nVận động viên 3\nVận động viên 4\nVận động viên 5\nVận động viên 6\nVận động viên 7');
     await sleep();
 
     // Click vào nút "Sinh VĐV ảo"

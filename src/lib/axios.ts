@@ -167,23 +167,62 @@ export const getBaseUrl = () => {
   if (typeof window === 'undefined') {
     return process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
   }
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  // Always prioritize explicit env var for dev/test environments
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  const isLocalhost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.');
+
   if (isLocalhost) {
     return `${window.location.protocol}//${window.location.hostname}:3000/api/v1`;
   }
+
   // Production: API is proxied through OLS on the same domain
   return `${window.location.origin}/api/v1`;
 };
+
+// Runtime app key (loaded from server endpoint to bypass build-time inlining)
+let runtimeAppApiKey: string | null = process.env.NEXT_PUBLIC_APP_API_KEY || null;
+let appKeyLoadPromise: Promise<void> | null = null;
+
+function loadAppApiKey(): Promise<void> {
+  if (runtimeAppApiKey) return Promise.resolve();
+  if (appKeyLoadPromise) return appKeyLoadPromise;
+
+  if (typeof window === 'undefined') {
+    runtimeAppApiKey = process.env.NEXT_PUBLIC_APP_API_KEY || process.env.APP_API_KEY || null;
+    return Promise.resolve();
+  }
+
+  appKeyLoadPromise = fetch('/api/config')
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data && typeof data.appApiKey === 'string') {
+        runtimeAppApiKey = data.appApiKey;
+      }
+    })
+    .catch(() => {
+      // ignore network errors on config fetch
+    });
+
+  return appKeyLoadPromise;
+}
+
+// Eagerly start loading on module init in browser
+if (typeof window !== 'undefined') {
+  loadAppApiKey();
+}
 
 export const api = axios.create({
   baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
-    ...(process.env.NEXT_PUBLIC_APP_API_KEY
-      ? { 'x-app-key': process.env.NEXT_PUBLIC_APP_API_KEY }
-      : {}),
   },
   withCredentials: true,
   // Match feeds can involve several joins and Redis fallback under load.
@@ -193,10 +232,11 @@ export const api = axios.create({
 
 // Request interceptor — gắn CSRF token và x-app-key cho requests
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     config.headers = config.headers ?? {};
 
-    const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY;
+    await loadAppApiKey();
+    const appApiKey = runtimeAppApiKey;
     if (appApiKey && !config.headers['x-app-key']) {
       config.headers['x-app-key'] = appApiKey;
     }
@@ -395,4 +435,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-

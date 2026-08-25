@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } from '@/features/tournaments/api';
+import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight } from 'lucide-react';
@@ -76,8 +78,28 @@ const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'sponsors',
 ];
 
+function createDivisionTournament(tournament: Tournament, division: Division): Tournament {
+  return {
+    ...tournament,
+    id: tournament.id,
+    name: division.name || tournament.name,
+    matchType: division.matchType,
+    genderRestriction: division.genderRestriction ?? null,
+    format: division.bracketType ?? tournament.format,
+    prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
+    status: tournament.status,
+    maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
+    entryFee: division.entryFee ?? tournament.entryFee,
+    _count: {
+      ...(tournament._count || { matches: 0, participants: 0 }),
+      participants: division._count?.participants ?? 0,
+    },
+  };
+}
+
 export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const reduceMotion = useReducedMotion();
   const registrationTranslate = useTranslations('RegistrationMode');
 const commonTranslate = useTranslations('Common');
   const locale = useLocale();
@@ -99,41 +121,29 @@ const commonTranslate = useTranslations('Common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
+  const [openDivisionId, setOpenDivisionId] = useState<string>('');
   const [divisionsList, setDivisionsList] = useState<Division[]>([]);
   const [initialDivisionId] = useState(() => searchParams.get('divisionId'));
+  const visibleDivisionId = openDivisionId || selectedDivisionId;
   const selectedDivision: Tournament | null = (() => {
-    if (!tournament || !selectedDivisionId) {
+    if (!tournament || !visibleDivisionId) {
       return tournament;
     }
 
-    const division = divisionsList.find((item) => item.id === selectedDivisionId);
-    if (!division) {
-      return tournament;
-    }
-
-    return {
-      ...tournament,
-      id: tournament.id,
-      name: division.name || tournament.name,
-      matchType: division.matchType,
-      genderRestriction: division.genderRestriction ?? null,
-      format: division.bracketType ?? tournament.format,
-      prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
-      status: tournament.status,
-      maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
-      entryFee: division.entryFee ?? tournament.entryFee,
-      _count: {
-        ...(tournament._count || { matches: 0, participants: 0 }),
-        participants: division._count?.participants ?? 0,
-      },
-    };
+    const division = divisionsList.find((item) => item.id === visibleDivisionId);
+    return division ? createDivisionTournament(tournament, division) : tournament;
   })();
   const activeTournament = selectedDivision ?? tournament;
 
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
   const { openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
-  const [liveMatchesCount, setLiveMatchesCount] = useState(0);
+  const [liveCountsByDivision, setLiveCountsByDivision] = useState<Record<string, number>>({});
+  const liveRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveRefreshInFlightRef = useRef(false);
+  const hasAutoOpenedLiveRef = useRef(false);
+  const hasUserNavigatedRef = useRef(false);
+  const liveMatchesCount = Object.values(liveCountsByDivision).reduce((total, count) => total + count, 0);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
@@ -142,10 +152,10 @@ const commonTranslate = useTranslations('Common');
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const contentDetailRef = useRef<HTMLDivElement>(null);
+  const divisionRowRefs = useRef(new Map<string, HTMLDivElement>());
+  const shouldScrollToDivisionRef = useRef(false);
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
-
-  const [hasInitializedTab, setHasInitializedTab] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -190,91 +200,138 @@ const commonTranslate = useTranslations('Common');
     };
   }, [activeTournament?.id, isOwner, selectedDivisionId, user?.id]);
 
-  // Check live matches count and set default tab to 'live' if matches are ongoing.
-  // Do not run this extra request while Schedule owns the same division-scoped feed.
-  useEffect(() => {
-    if (activeTab === 'matches') return;
-    const controller = new AbortController();
-    let active = true;
-    const checkLive = async () => {
-      try {
-        const params: Record<string, string | number> = {
-          tournament_id: tournamentId,
-          status: 'ONGOING',
-          limit: 100,
-        };
-        if (selectedDivisionId) params.division_id = selectedDivisionId;
-        const res = await matchesApi.getMatches(params, controller.signal);
-        const data = Array.isArray(res) ? res : (res.data || []);
-        if (active) {
-          const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
-          setLiveMatchesCount(count);
-          if (!hasInitializedTab && count > 0) {
-            setActiveTab('live');
-            setHasInitializedTab(true);
-          }
-        }
-      } catch {
-        // Abort and transient match-feed errors use the silent fallback.
+  const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
+    if (liveRefreshInFlightRef.current) return;
+    liveRefreshInFlightRef.current = true;
+    try {
+      const response = await matchesApi.getMatches(
+        { tournament_id: tournamentId, status: 'ONGOING', limit: 100 },
+        signal,
+      );
+      const data = Array.isArray(response) ? response : (response.data ?? []);
+      const ongoing = data.filter((match: Match) => match.status === 'ONGOING');
+      const nextCounts: Record<string, number> = {};
+      for (const match of ongoing) {
+        if (!match.divisionId) continue;
+        nextCounts[match.divisionId] = (nextCounts[match.divisionId] ?? 0) + 1;
       }
-    };
-    void checkLive();
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [activeTab, tournamentId, selectedDivisionId, hasInitializedTab]);
+      setLiveCountsByDivision(nextCounts);
+    } catch {
+      // Abort and transient match-feed errors keep the last confirmed snapshot.
+    } finally {
+      liveRefreshInFlightRef.current = false;
+    }
+  }, [tournamentId]);
 
-  // Handle socket live match updates for live badge
+  // Reconcile once immediately, then periodically. Socket updates only schedule
+  // one bounded refresh so rapid score/status events cannot create request storms.
   useEffect(() => {
+    const controller = new AbortController();
     const socket = socketClient.getMatchSocket();
     const joinTournament = () => socket.emit('joinTournament', tournamentId);
-    const handleMatchUpdate = (rawMatch: { status?: string; tournamentId?: string } | string) => {
-      let updatedMatch: { status?: string; tournamentId?: string };
+    const scheduleLiveRefresh = () => {
+      if (liveRefreshTimerRef.current) clearTimeout(liveRefreshTimerRef.current);
+      liveRefreshTimerRef.current = setTimeout(() => {
+        liveRefreshTimerRef.current = null;
+        void refreshLiveCounts(controller.signal);
+      }, 180);
+    };
+    const handleMatchUpdate = (rawMatch: { tournamentId?: string } | string) => {
+      let updatedMatch: { tournamentId?: string };
       try {
         updatedMatch = typeof rawMatch === 'string'
-          ? JSON.parse(rawMatch) as { status?: string; tournamentId?: string }
+          ? JSON.parse(rawMatch) as { tournamentId?: string }
           : rawMatch;
       } catch {
         return;
       }
-      if (updatedMatch?.tournamentId !== tournamentId || activeTab === 'matches') return;
-      // Refresh live count only when another tab needs the badge.
-      const params: Record<string, string | number> = {
-        tournament_id: tournamentId,
-        status: 'ONGOING',
-        limit: 100,
-      };
-      if (selectedDivisionId) params.division_id = selectedDivisionId;
-      matchesApi.getMatches(params).then((res) => {
-        const data = Array.isArray(res) ? res : (res.data || []);
-        const count = (data as { status: string }[]).filter((m) => m.status === 'ONGOING').length;
-        setLiveMatchesCount(count);
-      }).catch(() => {});
+      if (updatedMatch?.tournamentId === tournamentId) scheduleLiveRefresh();
     };
 
+    void refreshLiveCounts(controller.signal);
+    const pollId = window.setInterval(() => {
+      void refreshLiveCounts(controller.signal);
+    }, 30000);
     socket.on('connect', joinTournament);
     socket.on('match:update', handleMatchUpdate);
     if (socket.connected) joinTournament();
 
     return () => {
+      controller.abort();
+      window.clearInterval(pollId);
+      if (liveRefreshTimerRef.current) {
+        clearTimeout(liveRefreshTimerRef.current);
+        liveRefreshTimerRef.current = null;
+      }
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [activeTab, tournamentId, selectedDivisionId]);
+  }, [refreshLiveCounts, tournamentId]);
 
   useEffect(() => {
-    if (!debouncedDivisionId || debouncedDivisionId === selectedDivisionId) return;
+    if (hasAutoOpenedLiveRef.current || hasUserNavigatedRef.current) return;
+    const requestedTab = searchParams.get('tab');
+    if (requestedTab && requestedTab !== 'live') return;
+    const liveDivisionId = initialDivisionId
+      ? (liveCountsByDivision[initialDivisionId] > 0 ? initialDivisionId : undefined)
+      : Object.entries(liveCountsByDivision).find(
+          ([divisionId, count]) => count > 0 && divisionsList.some((division) => division.id === divisionId),
+        )?.[0];
+    if (!liveDivisionId) return;
+
+    hasAutoOpenedLiveRef.current = true;
+    Promise.resolve().then(() => {
+      setActiveTab('live');
+      setSelectedDivisionId(liveDivisionId);
+      setOpenDivisionId(liveDivisionId);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set('divisionId', liveDivisionId);
+      nextParams.set('tab', 'live');
+      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    });
+  }, [divisionsList, initialDivisionId, liveCountsByDivision, router, searchParams, tournamentId]);
+
+  useEffect(() => {
+    if (activeTab !== 'live' || liveMatchesCount > 0) return;
+    Promise.resolve().then(() => setActiveTab('overview'));
+  }, [activeTab, liveMatchesCount]);
+
+  useEffect(() => {
+    if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set('divisionId', debouncedDivisionId);
     router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-    Promise.resolve().then(() => setSelectedDivisionId(debouncedDivisionId));
-  }, [debouncedDivisionId, router, searchParams, selectedDivisionId, tournamentId]);
+  }, [debouncedDivisionId, router, searchParams, tournamentId]);
+
+  const scrollToDivisionRow = (divisionId: string) => {
+    const row = divisionRowRefs.current.get(divisionId);
+    if (!row) return;
+    const headerOffset = 96;
+    const rect = row.getBoundingClientRect();
+    const isOutside = rect.top < headerOffset || rect.top > window.innerHeight - 180;
+    if (isOutside) {
+      const targetY = window.scrollY + rect.top - headerOffset;
+      window.scrollTo({
+        top: Math.max(0, targetY),
+        behavior: 'smooth',
+      });
+    }
+  };
 
   const handleDivisionSelect = (divisionId: string) => {
+    hasUserNavigatedRef.current = true;
+    if (openDivisionId === divisionId) {
+      setPendingDivisionId(null);
+      setOpenDivisionId('');
+      return;
+    }
+    setSelectedDivisionId(divisionId);
+    setOpenDivisionId(divisionId);
     setPendingDivisionId(divisionId);
-    window.requestAnimationFrame(() => {
-      contentDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Smoothly ensure the selected division header is in optimal viewport position
+    requestAnimationFrame(() => {
+      scrollToDivisionRow(divisionId);
     });
   };
 
@@ -435,6 +492,9 @@ const commonTranslate = useTranslations('Common');
           setSelectedDivisionId((currentDivisionId) =>
             currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
           );
+          if (nextDivisionId) {
+            setOpenDivisionId(nextDivisionId);
+          }
         });
       } catch (err: unknown) {
         console.error('Failed to load parent/divisions context:', err);
@@ -450,6 +510,7 @@ const commonTranslate = useTranslations('Common');
       setSelectedDivisionId((currentDivisionId) =>
         currentDivisionId === requestedDivisionId ? currentDivisionId : requestedDivisionId,
       );
+      setOpenDivisionId(requestedDivisionId);
     });
   }, [divisionsList, searchParams]);
 
@@ -758,19 +819,22 @@ const commonTranslate = useTranslations('Common');
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      hasUserNavigatedRef.current = true;
+                      setActiveTab(tab.id);
+                    }}
                     className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive
                           ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80 animate-pulse'
+                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80'
                         : isActive
                           ? 'bg-blue-600 text-white shadow-sm'
                           : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
-                      <span className="w-2 h-2 rounded-full bg-current animate-ping shrink-0" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-current motion-safe:animate-ping motion-reduce:animate-none" />
                     )}
                     <span>{tab.label}</span>
                     {tab.badge != null && (
@@ -789,102 +853,126 @@ const commonTranslate = useTranslations('Common');
 
             {/* Tab Content */}
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
-                            {/* Compact vertical content rows for division-specific tabs only */}
+                                          {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
-                  <div className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                     {divisionsList.map((division) => {
-                      const isActive = division.id === selectedDivisionId;
+                      const isActive = division.id === openDivisionId;
+                      const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
+                      const liveCount = liveCountsByDivision[division.id] ?? 0;
                       const participantCount = division._count?.participants ?? 0;
-                      const matchCount = division._count?.matches ?? 0;
-                      const count = activeTab === 'matches' ? matchCount : participantCount;
-                      const CountIcon = activeTab === 'matches' ? Calendar : Users;
+                      const maxParticipants = division.maxParticipants ?? 0;
+                      const participantCapacity = maxParticipants > 0
+                        ? `${participantCount} / ${maxParticipants}`
+                        : `${participantCount}`;
                       return (
-                        <button
+                        <div
                           key={division.id}
-                          type="button"
-                          aria-current={isActive ? 'true' : undefined}
-                          onClick={() => handleDivisionSelect(division.id)}
-                          className={`group flex min-h-[68px] w-full items-center gap-3 px-3.5 py-3.5 text-left transition-colors sm:px-4 ${
-                            isActive
-                              ? 'bg-blue-50/70 text-slate-950'
-                              : 'bg-white text-slate-800 hover:bg-slate-50'
-                          }`}
+                          ref={(node) => {
+                            if (node) divisionRowRefs.current.set(division.id, node);
+                            else divisionRowRefs.current.delete(division.id);
+                          }}
+                          className="border-b border-slate-100 last:border-b-0"
                         >
-                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-                            isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
-                          }`}>
-                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
-                          </span>
-                          <span
-                            aria-label={`${activeTab === 'matches' ? translate('matchesLabel') : translate('participantsCount')}: ${count}`}
-                            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm ${
-                            isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            <CountIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                            {count}
-                          </span>
-                        </button>
+                          <button
+                            type="button"
+                            aria-current={isActive ? 'true' : undefined}
+                            aria-expanded={isActive}
+                            onClick={() => handleDivisionSelect(division.id)}
+                            className={`group flex min-h-[68px] w-full items-center gap-3 px-3.5 py-3.5 text-left transition-colors sm:px-4 ${
+                              isActive
+                                ? 'bg-blue-50/70 text-slate-950'
+                                : 'bg-white text-slate-800 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
+                              isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                            }`}>
+                              <ChevronRight className={`h-5 w-5 transition-transform duration-300 ease-out ${isActive ? 'rotate-90 text-blue-600' : 'text-slate-400'}`} aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
+                            </span>
+                            {liveCount > 0 && (
+                              <span
+                                aria-label={translate('divisionLiveCount', { count: liveCount })}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-black text-rose-700 sm:text-xs"
+                              >
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-600 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+                                <span>{liveCount}</span>
+                              </span>
+                            )}
+                            <span
+                              aria-label={`${translate('participantsCount')}: ${participantCapacity}`}
+                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm transition-colors ${
+                                isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                              {participantCapacity}
+                            </span>
+                          </button>
+
+                          <div
+                            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                              isActive ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+                            }`}
+                          >
+                            <div className="overflow-hidden">
+                              {isActive && divisionTournament && (
+                                <div
+                                  ref={contentDetailRef}
+                                  id="selected-division-content"
+                                  className="border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5"
+                                >
+                                  {activeTab === 'live' && (
+                                    <LiveMatchesTab
+                                      key={division.id}
+                                      tournament={divisionTournament}
+                                      tournamentId={tournament.id}
+                                      divisionId={division.id}
+                                    />
+                                  )}
+                                  {activeTab === 'teams' && (
+                                    <TeamsTab
+                                      key={division.id}
+                                      tournament={divisionTournament}
+                                      tournamentId={tournament.id}
+                                      divisionId={division.id}
+                                      participantId={searchParams.get('participantId') || undefined}
+                                    />
+                                  )}
+                                  {activeTab === 'bracket' && (
+                                    <BracketTab
+                                      key={division.id}
+                                      tournament={divisionTournament}
+                                      tournamentId={tournament.id}
+                                      divisionId={division.id}
+                                    />
+                                  )}
+                                  {activeTab === 'matches' && (
+                                    <MatchesTab
+                                      key={division.id}
+                                      tournament={divisionTournament}
+                                      tournamentId={tournament.id}
+                                      divisionId={division.id}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
               )}
 
-              <div ref={contentDetailRef} id="selected-division-content" className="scroll-mt-24">
-              {selectedDivision ? (
+              {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
+              {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
 
-                <>
-                  {activeTab === 'live' && (
-                    <LiveMatchesTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                      onLiveCountChange={(count) => {
-                        setLiveMatchesCount(count);
-                        if (count === 0 && activeTab === 'live') {
-                          setActiveTab('overview');
-                        }
-                      }}
-                    />
-                  )}
-                  {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
-                  {activeTab === 'teams' && (
-                    <TeamsTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                      participantId={searchParams.get('participantId') || undefined}
-                    />
-                  )}
-                  {activeTab === 'bracket' && (
-                    <BracketTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                    />
-                  )}
-                                    {activeTab === 'matches' && (
-                    <MatchesTab
-                      key={selectedDivisionId || 'all'}
-                      tournament={selectedDivision}
-                      tournamentId={tournament.id}
-                      divisionId={selectedDivisionId || undefined}
-                    />
-                  )}
-                  {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
-
-                </>
-                            ) : (
-                <p className="text-center text-slate-400 italic py-12">{translate("rankingDataUnavailable")}</p>
-              )}
-              </div>
             </div>
 
           </div>

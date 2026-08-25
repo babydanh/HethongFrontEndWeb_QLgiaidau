@@ -28,7 +28,7 @@ export async function fetchTournamentWithRetry(url: string, init?: RequestInit) 
 export const getTournament = cache(async (id: string) => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+  const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
 
   try {
     const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}`, {

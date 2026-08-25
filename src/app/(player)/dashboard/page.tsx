@@ -29,7 +29,7 @@ import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking, FootballTeamRanking, EloHistoryLog } from '@/features/rankings/api';
-import { getBestRankForCategory } from '@/features/rankings/elo-display';
+import { getBestRankForCategory, getRankTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
   footballTeamsApi,
@@ -67,6 +67,14 @@ function getMatchStatusLabel(status: string, translate: (key: string) => string)
   if (status === 'COMPLETED') return translate("statusCompleted");
   if (status === 'SCHEDULED') return translate("statusScheduled");
   return status;
+}
+
+function isMockParticipant(participant?: Match['participant1'] | null): boolean {
+  return participant?.isMock === true || participant?.members?.some((member) => member.isMock === true) === true;
+}
+
+function isMockInvolvedMatch(match: Match): boolean {
+  return isMockParticipant(match.participant1) || isMockParticipant(match.participant2);
 }
 
 export default function DashboardPage() {
@@ -151,8 +159,9 @@ export default function DashboardPage() {
 
         if (matchesRes?.data) {
           const matches = matchesRes.data;
-          const nextMatch = matches.find((m: Match) => m.status === 'SCHEDULED' || m.status === 'ONGOING');
-          const pastMatches = matches.filter((m: Match) => m.status === 'COMPLETED');
+          const personalMatches = matches.filter((match: Match) => !isMockInvolvedMatch(match));
+          const nextMatch = personalMatches.find((m: Match) => m.status === 'SCHEDULED' || m.status === 'ONGOING');
+          const pastMatches = personalMatches.filter((m: Match) => m.status === 'COMPLETED');
           setUpcomingMatch(nextMatch || null);
           setCompletedMatches(pastMatches);
         } else {
@@ -184,7 +193,7 @@ export default function DashboardPage() {
 
   const publicRanks = userRankings?.publicRanks || [];
   const strongestRank = [...publicRanks]
-    .filter((rank) => rank.matchesPlayed > 0)
+    .filter(isPublicRankingEligible)
     .sort((a, b) => b.eloPoints - a.eloPoints || b.matchesPlayed - a.matchesPlayed)[0];
   const strongestActiveCategoryId = strongestRank
     && categories.some((category) => category.id === strongestRank.categoryId)
@@ -212,7 +221,7 @@ export default function DashboardPage() {
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || activeRank?.tierName || translate("unranked")) : translate("unranked");
+  const tierName = activeRank ? getRankTierName(activeRank) : translate("unranked");
 
   const bestFootballTeam = [...footballTeams].sort((a, b) => {
     const eloDelta = (b.rank?.eloPoints ?? 1000) - (a.rank?.eloPoints ?? 1000);

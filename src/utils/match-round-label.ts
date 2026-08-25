@@ -82,6 +82,7 @@ const isGroupOrRoundRobinStage = (stage?: RoundLabelStage | null, tournamentForm
   return (
     type === 'ROUND_ROBIN' ||
     type === 'GROUP_STAGE' ||
+    type === 'GROUP_STAGES' ||
     name.includes('GROUP') ||
     name.includes('ROUND_ROBIN') ||
     name.includes('VONG_BANG') ||
@@ -98,6 +99,7 @@ const isKnockoutStage = (stage?: RoundLabelStage | null, tournamentFormat?: Tour
     type === 'SINGLE_ELIMINATION' ||
     type === 'DOUBLE_ELIMINATION' ||
     type === 'KNOCKOUT' ||
+    type === 'PLAYOFF' ||
     name.includes('KNOCKOUT') ||
     name.includes('ELIMINATION') ||
     name.includes('PLAYOFF') ||

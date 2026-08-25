@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
-import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign } from 'lucide-react';
+import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign, ShieldCheck } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 
@@ -16,15 +16,50 @@ interface SystemConfig {
 }
 
 const DEFAULT_ENTRY_FEE_POLICY_KEY = 'ALLOW_TOURNAMENT_ENTRY_FEES';
+const PAYMENT_SANDBOX_CONFIG_KEY = 'PAYMENT_SANDBOX_ENABLED';
+const PLATFORM_FEE_THRESHOLD_KEY = 'PLATFORM_FEE_LOW_ENTRY_THRESHOLD';
+const PLATFORM_FEE_FIXED_AMOUNT_KEY = 'PLATFORM_FEE_LOW_ENTRY_FIXED_AMOUNT';
+const FEE_RULE_CONFIG_KEYS = [
+  PLATFORM_FEE_THRESHOLD_KEY,
+  PLATFORM_FEE_FIXED_AMOUNT_KEY,
+] as const;
 
 export default function ConfigsPage() {
   const translate = useTranslations('AdminConfigs');
-  const defaultEntryFeePolicy: SystemConfig = {
+  const locale = useLocale();
+  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const formatVndConfig = (value: string) => {
+    const parsed = Number(value);
+    return Number.isSafeInteger(parsed) && parsed >= 0
+      ? parsed.toLocaleString(numberLocale)
+      : value;
+  };
+  const defaultEntryFeePolicy = useMemo<SystemConfig>(() => ({
     key: DEFAULT_ENTRY_FEE_POLICY_KEY,
     value: 'true',
     description: translate('entryFeePolicyDescription'),
     updatedAt: '',
-  };
+  }), [translate]);
+  const defaultSandboxConfig = useMemo<SystemConfig>(() => ({
+    key: PAYMENT_SANDBOX_CONFIG_KEY,
+    value: 'false',
+    description: translate('sandboxDescription'),
+    updatedAt: '',
+  }), [translate]);
+  const defaultPlatformFeeConfigs = useMemo<Record<(typeof FEE_RULE_CONFIG_KEYS)[number], SystemConfig>>(() => ({
+    [PLATFORM_FEE_THRESHOLD_KEY]: {
+      key: PLATFORM_FEE_THRESHOLD_KEY,
+      value: '100000',
+      description: translate('platformFeeThresholdDescription'),
+      updatedAt: '',
+    },
+    [PLATFORM_FEE_FIXED_AMOUNT_KEY]: {
+      key: PLATFORM_FEE_FIXED_AMOUNT_KEY,
+      value: '5000',
+      description: translate('platformFeeFixedAmountDescription'),
+      updatedAt: '',
+    },
+  }), [translate]);
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConfig, setSelectedConfig] = useState<SystemConfig | null>(null);
@@ -35,38 +70,68 @@ export default function ConfigsPage() {
   const entryFeePolicy =
     configs.find((config) => config.key === DEFAULT_ENTRY_FEE_POLICY_KEY) ??
     defaultEntryFeePolicy;
+  const sandboxConfig =
+    configs.find((config) => config.key === PAYMENT_SANDBOX_CONFIG_KEY) ??
+    defaultSandboxConfig;
+  const platformFeeThresholdConfig =
+    configs.find((config) => config.key === PLATFORM_FEE_THRESHOLD_KEY) ??
+    defaultPlatformFeeConfigs[PLATFORM_FEE_THRESHOLD_KEY];
+  const platformFeeFixedAmountConfig =
+    configs.find((config) => config.key === PLATFORM_FEE_FIXED_AMOUNT_KEY) ??
+    defaultPlatformFeeConfigs[PLATFORM_FEE_FIXED_AMOUNT_KEY];
+  const getConfigScope = (key: string) => {
+    if (key.startsWith('TOURNAMENT_PUBLISH_FEE_')) return translate('scopePublishFee');
+    if (key.startsWith('PLATFORM_FEE_PERCENTAGE_')) return translate('scopePlatformFee');
+    if (FEE_RULE_CONFIG_KEYS.includes(key as (typeof FEE_RULE_CONFIG_KEYS)[number])) {
+      return translate('scopeFeeRule');
+    }
+    return translate('scopeSystem');
+  };
 
-  async function fetchConfigs() {
+  const fetchConfigs = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get<ApiResponse<SystemConfig[]>>('/admin/configs');
       const loadedConfigs = response.data || [];
 
-      if (loadedConfigs.some((config) => config.key === DEFAULT_ENTRY_FEE_POLICY_KEY)) {
-        setConfigs(loadedConfigs);
-      } else {
-        const feesResponse = await tournamentsApi.getFeesConfig().catch(() => null);
-        setConfigs([
-          ...loadedConfigs,
-          {
-            ...defaultEntryFeePolicy,
-            value: feesResponse?.data?.allowEntryFees === false ? 'false' : 'true',
-          },
-        ]);
-      }
+      const feesResponse = loadedConfigs.some((config) => config.key === DEFAULT_ENTRY_FEE_POLICY_KEY)
+        ? null
+        : await tournamentsApi.getFeesConfig().catch(() => null);
+      const withEntryFeePolicy = loadedConfigs.some((config) => config.key === DEFAULT_ENTRY_FEE_POLICY_KEY)
+        ? loadedConfigs
+        : [
+            ...loadedConfigs,
+            {
+              ...defaultEntryFeePolicy,
+              value: feesResponse?.data?.allowEntryFees === false ? 'false' : 'true',
+            },
+          ];
+      const withSandbox = withEntryFeePolicy.some(
+        (config) => config.key === PAYMENT_SANDBOX_CONFIG_KEY,
+      )
+        ? withEntryFeePolicy
+        : [...withEntryFeePolicy, defaultSandboxConfig];
+      const withFeeRules = FEE_RULE_CONFIG_KEYS.reduce<SystemConfig[]>(
+        (currentConfigs, key) =>
+          currentConfigs.some((config) => config.key === key)
+            ? currentConfigs
+            : [...currentConfigs, defaultPlatformFeeConfigs[key]],
+        withSandbox,
+      );
+      setConfigs(withFeeRules);
     } catch (error: unknown) {
       console.error(error);
       toast.error(translate('loadError'));
     } finally {
       setLoading(false);
     }
-  }
+  }, [defaultEntryFeePolicy, defaultSandboxConfig, defaultPlatformFeeConfigs, translate]);
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetchConfigs();
+      void fetchConfigs();
     });
-  }, []);
+  }, [fetchConfigs]);
 
   const handleEdit = (config: SystemConfig) => {
     setSelectedConfig(config);
@@ -119,6 +184,30 @@ export default function ConfigsPage() {
       setProcessing(false);
     }
   };
+
+  const handleToggleSandbox = async () => {
+    if (processing) return;
+    setProcessing(true);
+    try {
+      const nextValue = sandboxConfig.value.toLowerCase() === 'true' ? 'false' : 'true';
+      await api.put<ApiResponse<SystemConfig>>(`/admin/configs/${sandboxConfig.key}`, {
+        value: nextValue,
+        description: sandboxConfig.description,
+      });
+      toast.success(
+        nextValue === 'true'
+          ? translate('sandboxEnabledToast')
+          : translate('sandboxDisabledToast'),
+      );
+      await fetchConfigs();
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error(translate('sandboxUpdateError'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -178,6 +267,71 @@ export default function ConfigsPage() {
           </div>
       </section>
 
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 bg-slate-50/80 p-6">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-slate-800 p-3 text-white shadow-sm">
+              <BadgeDollarSign className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-600">{translate('platformFeeRuleTitle')}</p>
+              <h3 className="mt-1 text-lg font-bold text-slate-900">{translate('platformFeeRuleHeading')}</h3>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">{translate('platformFeeRuleDescription')}</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-4 p-6 md:grid-cols-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{translate('platformFeeThresholdLabel')}</p>
+            <p className="mt-2 text-xl font-bold text-slate-900">{formatVndConfig(platformFeeThresholdConfig.value)} ₫</p>
+            <p className="mt-1 text-xs text-slate-500">{translate('platformFeeThresholdHint')}</p>
+            <button type="button" onClick={() => handleEdit(platformFeeThresholdConfig)} className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100">
+              {translate('editRule')}
+            </button>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{translate('platformFeeFixedAmountLabel')}</p>
+            <p className="mt-2 text-xl font-bold text-slate-900">{formatVndConfig(platformFeeFixedAmountConfig.value)} ₫</p>
+            <p className="mt-1 text-xs text-slate-500">{translate('platformFeeFixedAmountHint')}</p>
+            <button type="button" onClick={() => handleEdit(platformFeeFixedAmountConfig)} className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100">
+              {translate('editRule')}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-5 bg-amber-50/70 p-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-amber-500 p-3 text-white shadow-sm">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-700">{translate('sandboxTitle')}</p>
+              <h3 className="mt-1 text-lg font-bold text-slate-900">{translate('sandboxHeading')}</h3>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-700">{translate('sandboxDescription')}</p>
+              <p className="mt-2 text-xs font-semibold text-amber-800">{translate('sandboxWarning')}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={sandboxConfig.value.toLowerCase() === 'true'}
+            aria-label={translate('sandboxHeading')}
+            onClick={handleToggleSandbox}
+            disabled={processing}
+            className={`flex min-w-40 items-center justify-between gap-4 rounded-full px-4 py-3 text-sm font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+              sandboxConfig.value.toLowerCase() === 'true'
+                ? 'bg-amber-600 text-white'
+                : 'bg-slate-200 text-slate-700'
+            }`}
+          >
+            <span>{sandboxConfig.value.toLowerCase() === 'true' ? translate('enabled') : translate('disabled')}</span>
+            <span className={`h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${sandboxConfig.value.toLowerCase() === 'true' ? 'translate-x-1' : '-translate-x-1'}`} />
+          </button>
+        </div>
+      </section>
+
       {/* Main configurations card */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -196,15 +350,17 @@ export default function ConfigsPage() {
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
                   <th className="p-4 pl-6 w-1/4">{translate('tableKey')}</th>
                   <th className="p-4 w-1/4">{translate('tableValue')}</th>
-                  <th className="p-4 w-2/5">{translate('tableDescription')}</th>
+                  <th className="p-4 w-1/6">{translate('tableScope')}</th>
+                  <th className="p-4 w-1/3">{translate('tableDescription')}</th>
                   <th className="p-4 pr-6 text-right w-12">{translate('tableActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {configs.filter((config) => config.key !== DEFAULT_ENTRY_FEE_POLICY_KEY).map((config) => (
+                {configs.filter((config) => ![DEFAULT_ENTRY_FEE_POLICY_KEY, PAYMENT_SANDBOX_CONFIG_KEY, ...FEE_RULE_CONFIG_KEYS].includes(config.key)).map((config) => (
                   <tr key={config.key} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6 font-mono text-blue-600 font-semibold">{config.key}</td>
                     <td className="p-4 font-semibold text-slate-800">{config.value}</td>
+                    <td className="p-4 text-xs font-semibold text-slate-600">{getConfigScope(config.key)}</td>
                     <td className="p-4 text-xs text-slate-500 leading-relaxed">{config.description || translate('noDescription')}</td>
                     <td className="p-4 pr-6 text-right">
                       <button

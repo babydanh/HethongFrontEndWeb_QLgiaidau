@@ -1,6 +1,7 @@
 'use client';
 
-import { use, useEffect, useState, useCallback, useRef } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
+
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -18,6 +19,7 @@ import {
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
+import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import type {
   BracketDragHandlers,
   BracketDragSource,
@@ -102,11 +104,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [selectedMatchType, setSelectedMatchType] = useState<MatchTypeDB>(MatchTypeDB.SINGLES);
   const [matchTypeSaving, setMatchTypeSaving] = useState(false);
   const [bracket, setBracket] = useState<{ stages: BracketStage[] } | null>(null);
-  const [bracketRefreshKey, setBracketRefreshKey] = useState(0);
   const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
   const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
   const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
-  const bracketScrollYRef = useRef<number | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const liteDivisionId = tournament?.divisions?.[0]?.id;
 
@@ -350,25 +350,24 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
           toSlot: target.slot,
         };
 
-    bracketScrollYRef.current = typeof window === 'undefined' ? null : window.scrollY;
     setParticipantOverrides(nextOverrides);
     setIsSavingBracketSlots(true);
     try {
-      await tournamentsApi.updateBracketSlots(id, liteDivisionId!, [operation]);
-      await fetchBracket(liteDivisionId);
-      setParticipantOverrides({});
-      setBracketRefreshKey((current) => current + 1);
+      const response = await tournamentsApi.updateBracketSlots(id, liteDivisionId!, [operation]);
+      const canonicalMatches = response.data.matches ?? [];
+      if (canonicalMatches.length > 0) {
+        setBracket((current) => mergeBracketMatches(current, canonicalMatches) ?? current);
+        setParticipantOverrides({});
+      } else {
+        await fetchBracket(liteDivisionId);
+        setParticipantOverrides({});
+      }
       toast.success(bracketTranslate('bracketSlotsSaved'));
     } catch (error) {
       setParticipantOverrides(previousOverrides);
       toast.error(getErrorMessage(error) || bracketTranslate('bracketSlotsSaveFailed'));
     } finally {
       setIsSavingBracketSlots(false);
-      const savedScrollY = bracketScrollYRef.current;
-      bracketScrollYRef.current = null;
-      if (savedScrollY !== null && typeof window !== 'undefined') {
-        requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
-      }
     }
   };
 
@@ -484,7 +483,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       await tournamentsApi.generateLiteBracket(id, liteDivisionId);
       await fetchBracket(liteDivisionId);
       setParticipantOverrides({});
-      setBracketRefreshKey((current) => current + 1);
       toast.success(translate('bracketCreatedSuccess'));
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -514,7 +512,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       await tournamentsApi.resetLiteBracket(id, liteDivisionId);
       await fetchBracket(liteDivisionId);
       setParticipantOverrides({});
-      setBracketRefreshKey((current) => current + 1);
       toast.success(translate('resetBracketSuccess'));
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -1140,7 +1137,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       tournamentId={id}
                       divisionId={liteDivisionId}
                       dragHandlers={bracketDragHandlers}
-                      refreshKey={bracketRefreshKey}
+                      bracketSnapshot={bracket}
                     />
                     <DragOverlay>
                       {activeDragSource ? (
@@ -1155,7 +1152,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     tournament={tournament}
                     tournamentId={id}
                     divisionId={liteDivisionId}
-                    refreshKey={bracketRefreshKey}
+                    bracketSnapshot={bracket}
                   />
                 )
               )}

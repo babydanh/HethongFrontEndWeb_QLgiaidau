@@ -10,7 +10,7 @@ import { stripHtmlAndNormalize } from '@/utils/string';
 export const revalidate = 3600;
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sporto.asia';
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+const apiUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
 const MIN_TOURNAMENTS_FOR_INDEXABLE_PAGE = 2;
 const MAX_PUBLIC_TOURNAMENTS = 5000;
 const PUBLIC_STATUSES = new Set([

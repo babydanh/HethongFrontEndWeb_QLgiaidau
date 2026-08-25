@@ -330,12 +330,11 @@ export function PagedSingleElimView({
               return (
                 <div
                   key={match.id}
-                  className="absolute"
+                  className="absolute motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-reduce:transition-none"
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0px)`,
                     width: CARD_W,
                     willChange: 'transform',
-                    transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
                   }}
                 >
                   <MatchCard

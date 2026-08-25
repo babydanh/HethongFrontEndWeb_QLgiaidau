@@ -35,6 +35,8 @@ import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
 import { PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
 import { categoriesApi, Category } from '@/features/categories/api';
+import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
+
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 
@@ -421,7 +423,7 @@ export default function ProfilePage() {
   const matchesCursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const matchesCursorUserRef = useRef<string | null>(null);
   const eligiblePublicRanks = (userRankings?.publicRanks || [])
-    .filter((rank) => rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true);
+    .filter(isPublicRankingEligible);
   const latestEloHistory = [...eloHistory]
     .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0] || null;
   const featuredRank = eligiblePublicRanks
@@ -619,7 +621,7 @@ export default function ProfilePage() {
                   )}
                 </h1>
 
-                {/* Gamified Multi-Sport Tier Badge Bar: Trắng sáng, gọn gàng kế tên xác minh, chỉ hiện khi đã có rank */}
+                {/* Gamified Multi-Sport Tier Badge Bar */}
                 <PlayerSportTierBadgeBar
                   userRankings={userRankings?.publicRanks}
                   categories={categories}
@@ -659,33 +661,19 @@ export default function ProfilePage() {
                   </span>
                 );
               })}
-              {(() => {
-                                const activeRanks = eligiblePublicRanks;
 
-                if (activeRanks.length > 0) {
-                  return activeRanks.map((rank) => (
-                    <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">{rank.categoryName}:</span>
-                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name || rank.tierName} categoryName={rank.categoryName} size="sm" />
-                    </div>
-                  ));
-                }
-                if (latestEloHistory) {
-                  const historyCategoryName = categories.find((category) => category.id === latestEloHistory.categoryId)?.name;
-                  return (
-                    <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
-                      {historyCategoryName && <span className="text-[10px] font-bold text-slate-500 uppercase">{historyCategoryName}:</span>}
-                      <EloTierBadge elo={latestEloHistory.newElo} categoryName={historyCategoryName} size="sm" />
-                      <span className="text-[10px] font-semibold text-slate-500">{translate("eloRecordedNotRanked")}</span>
-                    </div>
-                  );
-                }
-                return (
-                  <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                    {translate("unranked")}
-                  </span>
-                );
-              })()}
+              {eligiblePublicRanks.length === 0 && latestEloHistory ? (
+                <EloTierBadge
+                  elo={latestEloHistory.newElo}
+                  categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
+                  size="md"
+                />
+              ) : eligiblePublicRanks.length === 0 ? (
+                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
+                  {translate("unranked")}
+                </span>
+              ) : null}
+
               {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
@@ -1405,7 +1393,12 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 flex-wrap">
                               <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
                               <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
-                              <EloTierBadge elo={rank.eloPoints} size="sm" />
+                              <EloTierBadge
+                                elo={rank.eloPoints}
+                                tierName={getCanonicalTierName(rank)}
+                                categoryName={rank.categoryName}
+                                size="sm"
+                              />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 text-center text-xs">
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">

@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { cn } from '@/utils/cn';
 
 interface Props {
   tournament: Tournament;
@@ -66,6 +67,11 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+  const isTeamSport = Boolean(tournament.tournamentConfig?.teamSize);
+  const isExpandableFormat =
+    isTeamSport ||
+    tournament.matchType === 'DOUBLES' ||
+    tournament.matchType === 'MIXED_DOUBLES';
 
   useEffect(() => {
 
@@ -126,40 +132,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           </div>
         </div>
       )}
-      <div className="flex flex-col gap-3">
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">
-            {translate("teamsTitle")}
-          </h3>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            {translate("publicRosterNote")}
-          </p>
-        </div>
-        
-        {/* Standardized progress bar matching right card */}
-        {tournament.maxParticipants && tournament.maxParticipants > 0 ? (
-          <div className="w-full max-w-sm mt-1">
-            <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-              <span className="text-slate-500 uppercase tracking-wider">{translate("rosterCountLabel")}</span>
-              <span className="text-slate-800">{participants.length} / {tournament.maxParticipants}</span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  (participants.length / tournament.maxParticipants) * 100 >= 90 ? 'bg-rose-500' : (participants.length / tournament.maxParticipants) * 100 >= 70 ? 'bg-amber-500' : 'bg-blue-650'
-                }`}
-                style={{ width: `${Math.min(100, (participants.length / tournament.maxParticipants) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-between items-center text-xs mb-1.5 font-bold w-full max-w-sm mt-1">
-            <span className="text-slate-500 uppercase tracking-wider">{translate("rosterCountLabel")}</span>
-            <span className="text-slate-800">{participants.length} / ∞</span>
-          </div>
-        )}
-      </div>
-      
       {/* Search Input Bar */}
       <div className="relative w-full max-w-md">
         <input
@@ -203,8 +175,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
               <tbody>
                                 {visibleParticipants.map((team, index) => {
 
-                  const isExpanded = expandedTeamId === team.id;
-                  
                   const members = team.members && team.members.length > 0
                     ? team.members
                     : (team.teamName || '').split(/\s*[\/&]\s*/).filter(Boolean).map((name, i) => {
@@ -221,20 +191,46 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           elo: undefined,
                         };
                       });
+                  const isExpandable = isExpandableFormat || members.length > 1;
+                  const inlineSingleMember = members[0];
+                  const inlineSingleName =
+                    inlineSingleMember?.fullName?.trim() ||
+                    team.teamName?.trim() ||
+                    team.registeredBy?.fullName?.trim() ||
+                    translate('teamMember');
+                  const inlineSingleAvatar =
+                    inlineSingleMember?.avatarUrl || team.registeredBy?.avatarUrl || null;
+                  const isExpanded = isExpandable && expandedTeamId === team.id;
 
                   return (
                     <React.Fragment key={team.id}>
-                      <tr 
-                        onClick={() => toggleExpand(team.id)}
-                        className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      <tr
+                        onClick={isExpandable ? () => toggleExpand(team.id) : undefined}
+                        className={cn(
+                          'bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors',
+                          isExpandable && 'cursor-pointer',
+                        )}
                       >
                                                 <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{(currentPage - 1) * pageSize + index + 1}</td>
 
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
-                            <span>{team.teamName}</span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5 leading-normal sm:gap-2">
+                            {!isExpandable ? (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500" aria-hidden="true">
+                                  {inlineSingleAvatar ? (
+                                    <img src={inlineSingleAvatar} alt="" className="h-full w-full object-cover" />
+                                  ) : (
+                                    inlineSingleName.charAt(0).toUpperCase()
+                                  )}
+                                </span>
+                                <span className="min-w-0 truncate" title={inlineSingleName}>{inlineSingleName}</span>
+                              </div>
+                            ) : (
+                              <span>{team.teamName}</span>
+                            )}
                             {team.seed !== null && (
-<span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700 sm:text-[10px]">
                                 {translate('seedLabel', { number: team.seed })}
                               </span>
                             )}
@@ -250,15 +246,27 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                               {translate("paymentPending")}
                             </span>
                           )}
-                        </td>
-                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
-                          <button className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px]">
-                            {isExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
-                          </button>
+                        </td>                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
+                          {isExpandable ? (
+                            <button
+                              type="button"
+                              aria-label={translate('detailsHeader')}
+                              aria-expanded={isExpanded}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleExpand(team.id);
+                              }}
+                              className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px] transition-colors"
+                            >
+                              <ChevronDown className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200", isExpanded && "rotate-180 text-blue-600")} />
+                            </button>
+                          ) : (
+                            <User className="ml-auto h-4 w-4 text-slate-400" aria-hidden="true" />
+                          )}
                         </td>
                       </tr>
-                      {isExpanded && (
-                        <tr className="bg-slate-50/50">
+                      {isExpandable && isExpanded && (
+                        <tr className="bg-slate-50/50 animate-in fade-in duration-200">
                           <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
                             <div className="flex flex-col gap-4">
                               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">

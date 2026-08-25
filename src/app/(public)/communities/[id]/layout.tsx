@@ -11,7 +11,7 @@ interface CommunityPageProps {
 export async function generateMetadata({ params }: CommunityPageProps): Promise<Metadata> {
   const translate = await getTranslations('Common');
   const { id } = await params;
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const apiBaseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
   const canonical = `/communities/${id}`;
 
   try {

@@ -181,7 +181,8 @@ export const MatchCard = memo(function MatchCard({
       aria-disabled={live}
       style={{ width: CARD_W, height: actualCardH }}
       className={
-        'rounded-md overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow bg-white select-none ' +
+                'rounded-md overflow-hidden border flex flex-col shadow-sm transition-[box-shadow,border-color,opacity] duration-150 hover:shadow bg-white select-none ' +
+
         (selected
           ? 'border-amber-500 ring-2 ring-amber-400 shadow-md'
           : live
@@ -260,7 +261,8 @@ const RowSide = memo(function RowSide({
     disabled: !dragHandlers?.enabled || locked,
     data: { target: { type: 'slot', matchId, slot } },
   });
-  const { attributes, listeners, setNodeRef: setDragNodeRef } = useDraggable({
+    const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
+
     id: `bracket-participant:${matchId}:${slot}`,
     disabled: !dragEnabled,
     data: p ? { source: { type: 'slot', matchId, slot, participant: p } } : undefined,
@@ -286,7 +288,8 @@ const RowSide = memo(function RowSide({
             {...listeners}
             aria-label={translate('bracketDragParticipant')}
             title={translate('bracketDragParticipant')}
-            className="cursor-grab touch-none rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing"
+                        className={`cursor-grab touch-none rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing transition-opacity duration-100 ${isDragging ? 'opacity-0' : 'opacity-100'}`}
+
             onClick={(event) => event.stopPropagation()}
           >
             ⋮⋮

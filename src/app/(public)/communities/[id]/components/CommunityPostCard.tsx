@@ -56,6 +56,14 @@ export default function CommunityPostCard({
   const commentInputRef = useRef<HTMLInputElement>(null);
 
   const commentCount = overrideCommentCount ?? (post.commentCount ?? 0);
+  const tournamentStatus = post.tournament?.status?.toUpperCase();
+  const shouldShowTournamentBracket =
+    post.type === 'TOURNAMENT_BRACKET' ||
+    Boolean(post.tournament?.hasBracket) ||
+    tournamentStatus === 'ONGOING' ||
+    tournamentStatus === 'IN_PROGRESS' ||
+    tournamentStatus === 'COMPLETED' ||
+    tournamentStatus === 'FINISHED';
 
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
@@ -475,16 +483,21 @@ export default function CommunityPostCard({
         )}
 
         {/* Post Content */}
-        {post.content && (
+        {post.type === 'TOURNAMENT_BRACKET' ? (
+          <div className="mt-3.5 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-3.5 py-3 text-sm font-semibold text-blue-800">
+            <Trophy className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+            <span>{translate('tournamentBracketUpdated')}</span>
+          </div>
+        ) : post.content ? (
           <div className="mt-3.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
             {renderRichContent(post.content)}
           </div>
-        )}
+        ) : null}
 
 
         {/* Tournament Bracket / Preview / Poll Area */}
         {post.tournamentId ? (
-          post.poll && (post.tournament?.status === 'REGISTRATION_OPEN' || post.tournament?.status === 'UPCOMING' || !post.tournament?.status) ? (
+          !shouldShowTournamentBracket && post.poll && (tournamentStatus === 'REGISTRATION_OPEN' || tournamentStatus === 'UPCOMING' || !tournamentStatus) ? (
             <>
               {/* Registration / Pre-Tournament Summary Card */}
               <div className="mt-3.5 overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md">

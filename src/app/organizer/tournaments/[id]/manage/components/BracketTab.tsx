@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -47,6 +47,7 @@ interface BracketTabProps {
   handleOpenScheduling: (match: BracketMatch) => void;
   handleOpenRoundModal?: (stage: BracketStage, roundNumber: number) => void;
   refetchDivisionData?: () => Promise<void>;
+  onBracketPersisted?: (matches: BracketMatch[]) => void;
 
   // Cấu hình mặc định props
   isLimitEnabled: boolean;
@@ -141,6 +142,7 @@ export function BracketTab({
   handleOpenScheduling,
   handleOpenRoundModal,
   refetchDivisionData,
+  onBracketPersisted,
 
   isLimitEnabled,
   setIsLimitEnabled,
@@ -333,9 +335,7 @@ export function BracketTab({
   const [trayParticipants, setTrayParticipants] = useState<BracketParticipant[]>([]);
   const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
   const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
-  const [bracketRefreshKey, setBracketRefreshKey] = useState(0);
   const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
-  const bracketScrollYRef = useRef<number | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
 
@@ -371,8 +371,6 @@ export function BracketTab({
 
   const handleBracketParticipantDrop = async (source: BracketDragSource, target: BracketDropTarget): Promise<void> => {
     if (!selectedDivisionId || isSavingBracketSlots) return;
-    bracketScrollYRef.current = typeof window === 'undefined' ? null : window.scrollY;
-
     if (source.type === 'slot' && source.matchId) {
       const sourceMatch = findBracketMatch(source.matchId);
       if (sourceMatch && isBracketMatchDragLocked(sourceMatch)) return;
@@ -446,10 +444,15 @@ export function BracketTab({
     setTrayParticipants(nextTray);
     setIsSavingBracketSlots(true);
     try {
-      await tournamentsApi.updateBracketSlots(tournament.id, selectedDivisionId, [operation]);
-      await refetchDivisionData?.();
-      setParticipantOverrides({});
-      setBracketRefreshKey((current) => current + 1);
+      const response = await tournamentsApi.updateBracketSlots(tournament.id, selectedDivisionId, [operation]);
+      const canonicalMatches = response.data.matches ?? [];
+      if (canonicalMatches.length > 0) {
+        onBracketPersisted?.(canonicalMatches);
+        setParticipantOverrides({});
+      } else {
+        await refetchDivisionData?.();
+        setParticipantOverrides({});
+      }
       toast.success(translate('bracketSlotsSaved'));
     } catch (error) {
       setParticipantOverrides(previousOverrides);
@@ -457,14 +460,6 @@ export function BracketTab({
       toast.error(getErrorMessage(error) || translate('bracketSlotsSaveFailed'));
     } finally {
       setIsSavingBracketSlots(false);
-      const savedScrollY = bracketScrollYRef.current;
-      bracketScrollYRef.current = null;
-      if (savedScrollY !== null && typeof window !== 'undefined') {
-        requestAnimationFrame(() => {
-          window.scrollTo(0, savedScrollY);
-          requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
-        });
-      }
     }
   };
 
@@ -1343,7 +1338,7 @@ export function BracketTab({
                 onSelectMatch={onSelectMatch}
                 knockoutOnly
                 dragHandlers={bracketDragHandlers}
-                refreshKey={bracketRefreshKey}
+                bracketSnapshot={bracket}
               />
               <DragOverlay dropAnimation={null}>
                 {activeDragSource ? (

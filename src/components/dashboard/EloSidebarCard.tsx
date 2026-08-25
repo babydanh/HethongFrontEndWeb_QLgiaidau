@@ -3,7 +3,7 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlayerRanking } from '@/features/rankings/api';
-import { getEloProgressInfo, type EloProgressToNextLabel } from '@/features/rankings/elo-display';
+import { getEloProgressInfo, isPublicRankingEligible, type EloProgressToNextLabel } from '@/features/rankings/elo-display';
 import { getRankStyle } from '@/utils/rank-style';
 
 
@@ -55,7 +55,7 @@ export default function EloSidebarCard({
       : 'text-slate-400';
   const tierColor = getRankStyle(eloPoints, tierName, activeRank?.categoryName).badgeClass;
   const tierBorder = tierColor.split(' ').find((token) => token.startsWith('border-')) || 'border-slate-200';
-  const hasRank = matchesPlayed > 0;
+  const hasRank = Boolean(activeRank && isPublicRankingEligible(activeRank));
   const progress = getEloProgressInfo(eloPoints, undefined, eloLabels);
 
   return (
@@ -79,8 +79,12 @@ export default function EloSidebarCard({
       </div>
 
       <div className="flex items-end gap-3 mb-1">
-        <span className="text-4xl font-bold text-slate-900 tabular-nums tracking-tight">{eloPoints}</span>
-        {recentEloDelta !== null && (
+        {hasRank ? (
+          <span className="text-4xl font-bold text-slate-900 tabular-nums tracking-tight">{eloPoints}</span>
+        ) : (
+          <span className="text-2xl font-bold text-slate-500 tracking-tight">{tierName}</span>
+        )}
+        {hasRank && recentEloDelta !== null && (
           <span className={`flex items-center gap-0.5 text-xs font-semibold mb-1.5 ${trendColor}`}>
             <TrendIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
             {recentEloDelta > 0 ? '+' : ''}{recentEloDelta}

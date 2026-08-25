@@ -3741,7 +3741,9 @@
     },
     "viewTournamentDetails": "View tournament details",
     "teamsPerGroupHint": "Teams are distributed evenly based on the participant list or content limit.",
-    "groupCapacityWarning": "The current configuration holds {configured} teams, while {eligible} eligible teams are available. When saved, the system will automatically increase the teams per group to make room; the content limit (for example, 64) only limits registration, not the number of teams placed into groups."
+    "groupCapacityWarning": "The current configuration holds {configured} teams, while {eligible} eligible teams are available. When saved, the system will automatically increase the teams per group to make room; the content limit (for example, 64) only limits registration, not the number of teams placed into groups.",
+    "reportPageCount": "Page {page}",
+    "pageCount": "Page {page} / {totalPages}"
   },
   "LiveMatch": {
     "unknown": "Unknown",

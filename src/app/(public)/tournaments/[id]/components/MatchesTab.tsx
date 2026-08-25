@@ -1028,7 +1028,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             {matchTranslate('previousPage')}
           </button>
           <span className="min-w-20 text-center text-xs font-bold text-slate-500">
-            {matchTranslate('reportPageCount', { page: currentMatchPage })}
+            {matchTranslate('pageCount', { page: currentMatchPage, totalPages: matchPageCount })}
           </span>
           <button
             type="button"

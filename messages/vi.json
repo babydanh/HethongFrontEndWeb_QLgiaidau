@@ -3741,7 +3741,9 @@
     },
     "viewTournamentDetails": "Xem chi tiết giải đấu",
     "teamsPerGroupHint": "Số đội/bảng tự chia đều theo danh sách hoặc giới hạn nội dung.",
-    "groupCapacityWarning": "Cấu hình hiện chứa {configured} đội, trong khi có {eligible} đội hợp lệ. Khi lưu, hệ thống sẽ tự tăng số đội mỗi bảng để đủ chỗ; giới hạn tối đa của nội dung (ví dụ 64) chỉ là giới hạn đăng ký, không phải số đội đã xếp vào bảng."
+    "groupCapacityWarning": "Cấu hình hiện chứa {configured} đội, trong khi có {eligible} đội hợp lệ. Khi lưu, hệ thống sẽ tự tăng số đội mỗi bảng để đủ chỗ; giới hạn tối đa của nội dung (ví dụ 64) chỉ là giới hạn đăng ký, không phải số đội đã xếp vào bảng.",
+    "reportPageCount": "Trang {page}",
+    "pageCount": "Trang {page} / {totalPages}"
   },
   "LiveMatch": {
     "unknown": "Chưa xác định",

@@ -99,20 +99,33 @@ export default function CommunityPostCard({
       communitiesApi.getMembers(post.communityId, { limit: 100 })
         .then((res) => {
           if (!mounted) return;
-          const raw = res.data;
-          const list = Array.isArray(raw)
-            ? raw
-            : Array.isArray((raw as any)?.data)
-            ? (raw as any).data
+          interface MemberItem {
+            userId?: string;
+            role?: string;
+            tags?: string[];
+            member?: {
+              userId?: string;
+              role?: string;
+              tags?: string[];
+            };
+            user?: {
+              id?: string;
+            };
+          }
+
+          const raw = res.data as unknown;
+          const list: MemberItem[] = Array.isArray(raw)
+            ? (raw as MemberItem[])
+            : typeof raw === "object" && raw !== null && "data" in raw && Array.isArray((raw as { data: unknown }).data)
+            ? ((raw as { data: MemberItem[] }).data)
             : [];
           const found = list.find(
-            (m: any) => m.user?.id === authorId || m.member?.userId === authorId || m.userId === authorId,
+            (m) => m.user?.id === authorId || m.member?.userId === authorId || m.userId === authorId,
           );
           if (found) {
-            const rawFound = found as any;
             setAuthorMemberInfo({
-              role: found.member?.role || rawFound.role,
-              tags: found.member?.tags || rawFound.tags || [],
+              role: found.member?.role || found.role,
+              tags: found.member?.tags || found.tags || [],
             });
           }
         })

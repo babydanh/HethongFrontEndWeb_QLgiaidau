@@ -20,7 +20,7 @@ interface SeriesPayload {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sporto.asia';
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 async function fetchSeries(slug: string): Promise<SeriesSummary | null> {
   try {

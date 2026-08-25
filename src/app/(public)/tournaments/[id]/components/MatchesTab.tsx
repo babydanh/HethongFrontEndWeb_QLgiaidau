@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
@@ -85,7 +85,14 @@ function getPersistedOrRoundRobinLeg(
     name.includes('VONG_BANG') ||
     (!stage && normalizeStageValue(tournamentFormat) === 'ROUND_ROBIN');
 
-  return isRoundRobin ? getRoundRobinRoundInfo(match, matches).leg : 1;
+  if (!isRoundRobin) return 1;
+
+  const configuredLegs = Number(
+    stage?.roundConfig?.roundsToPlay ?? stage?.roundConfig?.rounds_to_play,
+  );
+  if (Number.isInteger(configuredLegs) && configuredLegs === 1) return 1;
+
+  return getRoundRobinRoundInfo(match, matches).leg;
 }
 
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
@@ -160,11 +167,15 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   
   // States for filtering
   const [selectedStageKey, setSelectedStageKey] = useState<string | 'ALL'>('ALL');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | 'ALL'>('ALL');
   const [selectedLeg, setSelectedLeg] = useState<number | 'ALL'>('ALL');
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [matchPage, setMatchPage] = useState(1);
   const [hasDetectedRound, setHasDetectedRound] = useState(false);
+
+  const MATCHES_PER_VIEW = 20;
 
   // Find bracket size for the current division or tournament
   const getBracketSize = () => {
@@ -184,10 +195,12 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     Promise.resolve().then(() => {
       if (cancelled) return;
       setSelectedStageKey('ALL');
+      setSelectedGroupId('ALL');
       setSelectedLeg('ALL');
       setSelectedRoundKey('ALL');
       setStatusFilter('ALL');
       setSearchQuery('');
+      setMatchPage(1);
       setHasDetectedRound(false);
       void resetAndFetch();
     });
@@ -245,7 +258,10 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     };
   }, [effectiveTournamentId, setMatches]);
 
-  const getMatchStageKey = (match: BracketMatch) => getScheduleStageKey(match, tournament.format);
+  const getMatchStageKey = useCallback(
+    (match: BracketMatch) => getScheduleStageKey(match, tournament.format),
+    [tournament.format],
+  );
 
   const stageOptions = useMemo(() => {
     const byStage = new Map<string, number>();
@@ -254,7 +270,22 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       byStage.set(key, (byStage.get(key) ?? 0) + 1);
     });
     return Array.from(byStage.entries()).map(([key, count]) => ({ key, count }));
-  }, [matches, tournament.format]);
+  }, [matches, getMatchStageKey]);
+
+  const groupOptions = useMemo(() => {
+    const byGroup = new Map<string, { name: string; count: number }>();
+    matches.forEach((match) => {
+      if (getMatchStageKey(match) !== 'GROUP_STAGE') return;
+      const groupId = match.groupId || match.group?.name;
+      const groupName = match.group?.name?.trim();
+      if (!groupId || !groupName) return;
+      const current = byGroup.get(groupId);
+      byGroup.set(groupId, { name: groupName, count: (current?.count ?? 0) + 1 });
+    });
+    return Array.from(byGroup.entries())
+      .map(([id, value]) => ({ id, ...value }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [matches, getMatchStageKey]);
 
   const legOptions = useMemo(
     () => Array.from(new Set(matches.map((match) => getPersistedOrRoundRobinLeg(match, matches, tournament.format))))
@@ -280,7 +311,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }) === option.label;
       return sameStage && sameLeg && sameRound && sameLabel;
     })),
-    [matches, roundOptions, selectedStageKey, selectedLeg, tournament.format, bracketSize, roundLabelTranslations],
+    [matches, roundOptions, selectedStageKey, selectedLeg, tournament.format, bracketSize, roundLabelTranslations, getMatchStageKey],
   );
 
   // Translate Stage Name helper
@@ -329,10 +360,13 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       // 1. Filter by stage
       if (selectedStageKey !== 'ALL' && getMatchStageKey(m) !== selectedStageKey) return false;
 
-      // 2. Filter by configured leg
+      // 2. Filter by persisted bảng đấu identity
+      if (selectedGroupId !== 'ALL' && (m.groupId || m.group?.name) !== selectedGroupId) return false;
+
+      // 3. Filter by configured leg
       if (selectedLeg !== 'ALL' && getPersistedOrRoundRobinLeg(m, matches, tournament.format) !== selectedLeg) return false;
 
-      // 3. Filter by internal round within the selected leg/stage
+      // 4. Filter by internal round within the selected leg/stage
       if (selectedRoundKey !== 'ALL') {
         const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
         if (!selectedOption) return false;
@@ -386,7 +420,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
       return a.matchOrder - b.matchOrder;
     });
-  }, [matches, roundOptions, selectedStageKey, selectedLeg, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize]);
+  }, [matches, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize, getMatchStageKey]);
+
+  const matchPageCount = Math.max(1, Math.ceil(filteredMatches.length / MATCHES_PER_VIEW));
+  const currentMatchPage = Math.min(matchPage, matchPageCount);
+  const visibleMatches = useMemo(
+    () => filteredMatches.slice((currentMatchPage - 1) * MATCHES_PER_VIEW, currentMatchPage * MATCHES_PER_VIEW),
+    [filteredMatches, currentMatchPage],
+  );
 
   const localizedLoadError = isHttpStatusError(error, 429)
     ? (() => {
@@ -543,6 +584,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 type="button"
                 onClick={() => {
                   setSelectedStageKey('ALL');
+                  setSelectedGroupId('ALL');
                   setSelectedLeg('ALL');
                   setSelectedRoundKey('ALL');
                 }}
@@ -558,12 +600,39 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     key={stage.key}
                     onClick={() => {
                       setSelectedStageKey(stage.key);
+                      setSelectedGroupId('ALL');
                       setSelectedLeg('ALL');
                       setSelectedRoundKey('ALL');
                     }}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
                   >
                     {getStageFilterLabel(stage.key)} <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>({stage.count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {groupOptions.length > 1 && (selectedStageKey === 'GROUP_STAGE' || !stageOptions.some((stage) => stage.key === 'KNOCKOUT')) && (
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('groupsLabel')}:</span>
+              <button
+                type="button"
+                onClick={() => setSelectedGroupId('ALL')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${selectedGroupId === 'ALL' ? 'bg-slate-900 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+              >
+                {matchTranslate('allGroups')} ({groupOptions.reduce((total, group) => total + group.count, 0)})
+              </button>
+              {groupOptions.map((group) => {
+                const isActive = selectedGroupId === group.id;
+                return (
+                  <button
+                    type="button"
+                    key={group.id}
+                    onClick={() => setSelectedGroupId(group.id)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${isActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'}`}
+                  >
+                    {group.name} ({group.count})
                   </button>
                 );
               })}
@@ -735,7 +804,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       {/* Render Matches List */}
       {filteredMatches.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredMatches.map((match) => {
+          {visibleMatches.map((match) => {
             const sets = extractMatchScores(match.scoreDetails);
             const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
             const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
@@ -923,7 +992,31 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         </div>
       )}
 
-      {matches.length > 0 && (
+      {filteredMatches.length > MATCHES_PER_VIEW && (
+        <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
+          <button
+            type="button"
+            onClick={() => setMatchPage((current) => Math.max(1, current - 1))}
+            disabled={currentMatchPage <= 1}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {matchTranslate('previousPage')}
+          </button>
+          <span className="min-w-20 text-center text-xs font-bold text-slate-500">
+            {matchTranslate('reportPageCount', { page: currentMatchPage })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setMatchPage((current) => Math.min(matchPageCount, current + 1))}
+            disabled={currentMatchPage >= matchPageCount}
+            className="rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {matchTranslate('nextPage')}
+          </button>
+        </div>
+      )}
+
+      {matches.length > 0 && (hasMore || canGoPrevious) && (
         <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
           <button
             type="button"

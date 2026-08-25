@@ -32,8 +32,6 @@ export default function CommunityTournamentBracketWidget({
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    setError(null);
 
     tournamentsApi
       .getTournamentById(tournamentId)
@@ -41,11 +39,12 @@ export default function CommunityTournamentBracketWidget({
         if (!mounted) return;
         if (res.data) {
           setTournament(res.data);
+          setError(null);
         } else {
           setError(translate('communityBracketLoadMissing'));
         }
       })
-      .catch((err) => {
+      .catch(() => {
         if (!mounted) return;
         setError(translate('communityBracketLoadFailed'));
       })

@@ -1481,10 +1481,16 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-4">
                       {eloHistory.map((item) => {
                         const isGain = item.changedPoints >= 0;
+                        const normalizedReason = item.reason?.toUpperCase() ?? '';
+                        const historyLabel = normalizedReason.startsWith('ADMIN_')
+                          ? translate("adminEloAdjustment")
+                          : normalizedReason === 'INACTIVITY_DECAY'
+                            ? translate("eloInactivityDecay")
+                            : item.match?.tournamentName || translate("rankedMatchFallback");
                         return (
                           <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
                             <div>
-                              <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate("rankedMatchFallback")}</p>
+                              <p className="text-sm font-bold text-slate-800 line-clamp-1">{historyLabel}</p>
                               <p className="text-xs text-slate-400 mt-0.5">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}</p>
                             </div>
                             <div className="flex items-center gap-3 text-right">

@@ -23,7 +23,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const pid = typeof resolvedSearchParams.pid === 'string' ? resolvedSearchParams.pid : null;
   const token = typeof resolvedSearchParams.token === 'string' ? resolvedSearchParams.token : null;
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
   const [tournament, participantsData] = await Promise.all([
     getTournament(id),

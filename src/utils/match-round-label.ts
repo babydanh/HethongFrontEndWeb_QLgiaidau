@@ -363,6 +363,10 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
   const optionMap = new Map<string, RoundFilterOption>();
 
   matches.forEach((match) => {
+    // Round-robin roundNumber is an internal scheduler order, not a user-facing
+    // competition round. Group matches are selected by bảng đấu/leg instead.
+    if (isGroupOrRoundRobinStage(getStage(match), tournamentFormat)) return;
+
     // Generate label without phase prefix for grouping, but keep layout clean
     const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize, includePhasePrefix: false, translations });
     // Determine bracket branch

@@ -11,6 +11,7 @@ import {
   Trash2,
   RotateCw,
   MapPin,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -403,6 +404,15 @@ export default function TournamentsTab({
                     onError={(event) => {
                       event.currentTarget.onerror = null;
                       event.currentTarget.src = BRAND.assets.defaultFallback;
+                      event.currentTarget.classList.remove("object-cover");
+                      event.currentTarget.classList.add(
+                        "object-contain",
+                        "p-6",
+                        "bg-gradient-to-br",
+                        "from-slate-50",
+                        "via-blue-50",
+                        "to-indigo-100",
+                      );
                     }}
                     className={`absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 ${t.bannerUrl ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"}`}
                   />
@@ -576,6 +586,15 @@ export default function TournamentsTab({
                           title={t.locationAddress || locationLabel}
                         >
                           {locationLabel}
+                        </span>
+                      </div>
+                    )}
+                    {t.maxParticipants !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>
+                          {translate("summaryMaxParticipants")}{" "}
+                          {t.maxParticipants}
                         </span>
                       </div>
                     )}

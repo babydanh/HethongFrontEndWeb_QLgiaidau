@@ -498,8 +498,7 @@ export default function BracketTab({
   // ── Empty ──
   if (!renderedStages.length) {
     return (
-            <div className="space-y-3">
-
+      <div className="space-y-3">
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-lg">
           <Trophy className="w-12 h-12 text-slate-200 mb-3" />
           <h4 className="font-bold text-slate-600 mb-1">{translate("bracketEmptyTitle")}</h4>
@@ -538,32 +537,6 @@ export default function BracketTab({
           {translate('resultsLoadError')}
         </div>
       )}
-            {/* View mode switcher: keep the diagram content below this compact toolbar. */}
-      <div className="flex justify-end border-b border-slate-100 pb-3">
-        {activeStageSupportsFullView && <div className="grid w-full max-w-sm grid-cols-2 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner sm:w-auto">
-
-          <button
-            onClick={() => setViewMode('paged')}
-            className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all cursor-pointer sm:px-3 sm:py-1.5 sm:text-xs ${
-              viewMode === 'paged'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-            }`}
-          >
-            <LayoutGrid className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{translate('pagedView')}</span>
-          </button>
-          <button
-            onClick={() => setViewMode('full')}
-            className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all cursor-pointer sm:px-3 sm:py-1.5 sm:text-xs ${
-              viewMode === 'full'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-            }`}
-          >
-            <Maximize2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{translate('fullView')}</span>
-          </button>
-        </div>}
-      </div>
 
       {(onScheduleMatch || dragHandlers?.enabled) && (dragHandlers?.enabled ? (
         <OrganizerBracketTray dragHandlers={dragHandlers} translate={translate} />
@@ -604,15 +577,44 @@ export default function BracketTab({
 
       {/* Active stage content */}
       {activeStage && (
-        <div className="flex flex-col gap-8">
-          {/* Stage header */}
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">
-              {stageNameLabel(activeStage.name, translate)}
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold mt-0.5">
-              {translate("formatLabel")}: {stageTypeLabel(activeStage.type, translate)}
-            </p>
+        <div className="flex flex-col gap-6">
+          {/* Stage header with inline View Mode Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">
+                {stageNameLabel(activeStage.name, translate)}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                {translate("formatLabel")}: {stageTypeLabel(activeStage.type, translate)}
+              </p>
+            </div>
+
+            {activeStageSupportsFullView && (
+              <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner self-start sm:self-auto">
+                <button
+                  onClick={() => setViewMode('paged')}
+                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
+                    viewMode === 'paged'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{translate('pagedView')}</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('full')}
+                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
+                    viewMode === 'full'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <Maximize2 className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{translate('fullView')}</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {activeStage.type === 'DOUBLE_ELIMINATION' ? (

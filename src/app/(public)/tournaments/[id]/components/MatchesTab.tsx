@@ -46,6 +46,9 @@ function getScheduleStageKey(match: BracketMatch, tournamentFormat?: Tournament[
   const type = normalizeStageValue(stage?.type);
   const name = normalizeStageValue(stage?.name);
   const format = normalizeStageValue(tournamentFormat);
+  const hasPersistedGroup = Boolean(
+    match.groupId?.trim() || match.group?.id?.trim() || match.group?.name?.trim(),
+  );
 
   if (
     type === 'ROUND_ROBIN' ||
@@ -55,7 +58,7 @@ function getScheduleStageKey(match: BracketMatch, tournamentFormat?: Tournament[
     name.includes('GROUP') ||
     name.includes('ROUND_ROBIN') ||
     name.includes('VONG_BANG') ||
-    (!stage && format === 'ROUND_ROBIN')
+    (!stage && (format === 'ROUND_ROBIN' || format === 'GROUP_STAGE_KNOCKOUT') && hasPersistedGroup)
   ) {
     return 'GROUP_STAGE';
   }
@@ -74,6 +77,14 @@ function getScheduleStageKey(match: BracketMatch, tournamentFormat?: Tournament[
   }
 
   return stage?.name?.trim() || 'MAIN_STAGE';
+}
+
+function getConfiguredStageKeys(format?: Tournament['format']): string[] {
+  const normalizedFormat = normalizeStageValue(format);
+  if (normalizedFormat === 'GROUP_STAGE_KNOCKOUT') return ['GROUP_STAGE', 'KNOCKOUT'];
+  if (normalizedFormat === 'ROUND_ROBIN') return ['GROUP_STAGE'];
+  if (normalizedFormat === 'SINGLE_ELIMINATION' || normalizedFormat === 'DOUBLE_ELIMINATION') return ['KNOCKOUT'];
+  return [];
 }
 
 function getPersistedOrRoundRobinLeg(
@@ -308,13 +319,15 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   }, [matches, tournament.format, bracketSize, roundLabelTranslations, getMatchStageKey]);
 
   const stageOptions = useMemo(() => {
-    const byStage = new Map<string, number>();
+    const byStage = new Map<string, number>(
+      getConfiguredStageKeys(tournament.format).map((key) => [key, 0]),
+    );
     matches.forEach((match) => {
       const key = getMatchStageKey(match);
       byStage.set(key, (byStage.get(key) ?? 0) + 1);
     });
     return Array.from(byStage.entries()).map(([key, count]) => ({ key, count }));
-  }, [matches, getMatchStageKey]);
+  }, [matches, tournament.format, getMatchStageKey]);
 
   const groupOptions = useMemo(() => {
     const byGroup = new Map<string, { name: string; count: number }>();
@@ -638,7 +651,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             </div>
           )}
 
-          {groupOptions.length > 1 && (selectedStageKey === 'GROUP_STAGE' || !stageOptions.some((stage) => stage.key === 'KNOCKOUT')) && (
+          {groupOptions.length > 0 && (selectedStageKey === 'GROUP_STAGE' || !stageOptions.some((stage) => stage.key === 'KNOCKOUT')) && (
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0">{matchTranslate('groupsLabel')}:</span>
               <button
@@ -876,6 +889,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       );
                       const shouldShow =
                         stageName &&
+                        getMatchStageKey(match) !== 'GROUP_STAGE' &&
                         !roundLabel.toLowerCase().includes(stageName.toLowerCase()) &&
                         stageName !== translate('stageDefault');
                       return shouldShow ? (

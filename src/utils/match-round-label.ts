@@ -320,10 +320,9 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
     const groupName = isGenericGroup ? null : rawGroupName;
 
     const roundInfo = getRoundRobinRoundInfo(match, matches);
-    const allMatches = matches ?? [];
-    const roundLabel = roundInfo.leg > 1 || allMatches.some((candidate) => getRoundRobinRoundInfo(candidate, allMatches).leg > 1)
-      ? translations.roundRobinLeg(roundInfo.leg, roundInfo.roundWithinLeg)
-      : translations.roundRobinMatchday(roundInfo.roundWithinLeg);
+    // Round-robin roundNumber is only the scheduler's pairing order. The only
+    // user-facing competition scope here is the configured/persisted leg.
+    const roundLabel = translations.legSuffix(roundInfo.leg);
 
     if (!includePhasePrefix) {
       return roundLabel;

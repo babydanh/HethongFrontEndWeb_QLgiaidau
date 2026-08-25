@@ -277,7 +277,7 @@ export default function UserProfilePopover({
     : null;
   const primaryRank = eligibleHighlightRank ?? eligibleRanks[0] ?? null;
   const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
-  const canMessage = !isSelf && profileData.allowStrangerMessages === true;
+  const canMessage = !isSelf;
   const profileRanks = eligibleRanks.slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);

@@ -80,14 +80,16 @@ function isPublicSnapshotRequest(config: AxiosRequestConfig): boolean {
 function isDirectMessagingRequest(config: AxiosRequestConfig | undefined): boolean {
   if (!config) return false;
   const path = (config.url ?? '').split('?')[0];
-  if (path.startsWith('/chat/direct-policy/')) return true;
-  if (config.method?.toUpperCase() !== 'POST' || path !== '/chat/rooms') return false;
-  try {
-    const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
-    return payload?.type === 'DIRECT';
-  } catch {
-    return false;
+  if (path.includes('/chat/direct-policy/') || path.includes('/chat/blocks')) return true;
+  if (config.method?.toUpperCase() === 'POST' && path.includes('/chat/rooms')) {
+    try {
+      const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+      return payload?.type === 'DIRECT';
+    } catch {
+      return false;
+    }
   }
+  return false;
 }
 
 function isSharedGetEligible(config: AxiosRequestConfig): boolean {

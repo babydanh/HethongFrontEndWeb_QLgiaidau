@@ -103,6 +103,30 @@ const hasUserInParticipant = (
   userId: string,
 ) => Boolean(participant?.members?.some((member) => member.userId === userId));
 
+const isMockParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => Boolean(
+  participant?.isMock === true
+  || participant?.members?.some((member) => member.isMock === true),
+);
+
+const isPlaceholderParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => {
+  const teamName = participant?.teamName?.trim().toLowerCase();
+  return !teamName || ['tbd', 'chờ xác định', 'chua xac dinh', 'đang chờ', 'dang cho'].includes(teamName);
+};
+
+const isRenderableProfileMatch = (match: Match, userId: string): boolean => {
+  const isP1 = hasUserInParticipant(match.participant1, userId);
+  const isP2 = hasUserInParticipant(match.participant2, userId);
+  if (!isP1 && !isP2) return false;
+  if (match.isBye || isMockParticipant(match.participant1) || isMockParticipant(match.participant2)) return false;
+
+  const opponent = isP1 ? match.participant2 : match.participant1;
+  return !isPlaceholderParticipant(opponent);
+};
+
 const deriveTournamentPlacement = (
   tournament: Tournament,
   stages: BracketStage[],
@@ -472,7 +496,10 @@ export default function ProfilePage() {
           setFollowedTournaments(sortFollowedTournaments(followedRes?.data || []));
 
           if (matchesRes?.data) {
-            setMatches(matchesRes.data);
+            const visibleMatches = matchesRes.data.filter((match) =>
+              isRenderableProfileMatch(match, loadedProfileUserId),
+            );
+            setMatches(visibleMatches);
             setMatchesTotalPages(matchesRes.meta?.totalPages || 1);
             matchesCursorByPageRef.current[matchesPage + 1] = matchesRes.meta?.nextCursor ?? null;
           } else {

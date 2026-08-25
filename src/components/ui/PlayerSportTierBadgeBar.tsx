@@ -168,25 +168,27 @@ export function PlayerSportTierBadgeBar({
                   : `${category.name}: ${translate('unranked')}`
               }
               className={cn(
-                'group relative flex items-center gap-1.5 rounded-full border px-1.5 py-1 transition-transform hover:scale-105 cursor-pointer',
+                'group relative flex items-center gap-1.5 rounded-full border px-2 py-0.5 transition-all hover:scale-105 cursor-pointer shadow-xs',
                 !isRanked && 'opacity-40 hover:opacity-75',
               )}
               style={{
-                backgroundColor: tierBadgeStyle.backgroundColor,
-                borderColor: `${sportAccent}99`,
+                backgroundColor: '#090d16',
+                borderColor: isRanked ? (theme.coreFillStart || `${sportAccent}cc`) : '#334155',
+                boxShadow: isRanked ? `0 0 6px ${theme.glowColor}` : undefined,
               }}
             >
               <SportBadgeIcon
                 sportName={category.name}
-                sizePx={isSmall ? 22 : 26}
+                sizePx={isSmall ? 20 : 24}
               />
 
-              {/* Short Tier Label with 3D gradient */}
+              {/* Short Tier Label with Elo color */}
               <span
                 className={cn('text-[11px] font-black uppercase tracking-tight leading-none')}
                 style={{
-                  color: isRanked ? tierBadgeStyle.textColor : '#94a3b8',
+                  color: isRanked ? (theme.ringOuter || tierBadgeStyle.textColor) : '#94a3b8',
                   fontWeight: tierBadgeStyle.isHigh ? 900 : 800,
+                  textShadow: isRanked ? `0 0 6px ${theme.glowColor}` : undefined,
                 }}
               >
                 {shortCode}

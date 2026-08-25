@@ -251,9 +251,9 @@ export function getTierBadgeStyle(theme: TierThemeConfig, code: string) {
   const isHigh = isHighTierCode(code);
   return {
     isHigh,
-    backgroundColor: `${theme.coreFillStart}${isHigh ? '22' : '10'}`,
-    borderColor: `${theme.ringInner}${isHigh ? '99' : '55'}`,
-    textColor: isHigh ? theme.coreFillEnd : theme.textColor,
+    backgroundColor: '#090d16',
+    borderColor: theme.coreFillStart || theme.ringInner,
+    textColor: theme.ringOuter || theme.textColor,
   };
 }
 
@@ -370,8 +370,8 @@ export function SportBadgeIcon({
       style={{
         width: sizePx,
         height: sizePx,
-        backgroundColor: `${accentColor}16`,
-        borderColor: `${accentColor}55`,
+        backgroundColor: '#0f172a',
+        borderColor: `${accentColor}88`,
       }}
       aria-hidden="true"
     >

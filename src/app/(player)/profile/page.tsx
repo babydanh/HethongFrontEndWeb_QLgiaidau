@@ -33,7 +33,7 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
-import { PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
+
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 
@@ -673,15 +673,6 @@ export default function ProfilePage() {
                   )}
                 </h1>
 
-                {/* Gamified Multi-Sport Tier Badge Bar */}
-                <PlayerSportTierBadgeBar
-                  userRankings={userRankings?.publicRanks}
-                  categories={categories}
-                  region="VN"
-                  variant="light"
-                  onlyRanked={true}
-                  size="sm"
-                />
               </div>
 
               <p className="text-slate-500 font-semibold mt-0.5">

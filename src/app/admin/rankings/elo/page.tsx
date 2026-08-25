@@ -122,6 +122,26 @@ const createAdminContextDraft = (player: AdminEloPlayerDetail, categoryId: strin
   statusExpiresAt: null,
 });
 
+const createAdminContextDraftFromSummary = (player: AdminEloPlayerSummary, categoryId: string): AdminRankingContext => ({
+  contextId: '',
+  userId: player.userId,
+  email: player.email,
+  fullName: player.fullName,
+  avatarUrl: player.avatarUrl,
+  categoryId,
+  scope: 'PUBLIC',
+  matchType: 'SINGLES',
+  genderRestriction: null,
+  eloPoints: 1000,
+  matchesPlayed: 0,
+  matchesWon: 0,
+  winStreak: 0,
+  peakElo: 1000,
+  updatedAt: new Date().toISOString(),
+  status: 'VISIBLE',
+  statusExpiresAt: null,
+});
+
 export default function AdminEloPage() {
   const translate = useTranslations('AdminElo');
   const locale = useLocale();
@@ -271,6 +291,20 @@ export default function AdminEloPage() {
     closePlayerDetail();
     setNewContextCategoryId(categoryId);
     setSelected(draft);
+    setOperation('ADD');
+    setValue('');
+    setReason('');
+    setExpiresAt('');
+    setOperationKey(null);
+    setOperationPayloadSignature(null);
+  };
+
+  const openNewContextFromSummary = (player: AdminEloPlayerSummary) => {
+    const category = activeCategories.find((item) => item.id !== query.categoryId);
+    if (!category) return;
+    closePlayerDetail();
+    setNewContextCategoryId(category.id);
+    setSelected(createAdminContextDraftFromSummary(player, category.id));
     setOperation('ADD');
     setValue('');
     setReason('');
@@ -441,7 +475,7 @@ export default function AdminEloPage() {
                   <td className="px-4 py-4 text-slate-600"><div className="font-semibold text-slate-900">{player.contextCount} {translate('rankingProfiles')}</div><div className="mt-1 flex flex-wrap gap-1 text-xs"><span className="rounded bg-slate-100 px-2 py-1">{translate('publicScope')}: {player.publicContextCount}</span></div></td>
                   <td className="px-4 py-4"><div className="font-bold text-slate-900">{player.highestElo ?? '—'} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{player.lastUpdatedAt ? new Date(player.lastUpdatedAt).toLocaleString(locale) : '—'}</div></td>
                   <td className="px-4 py-4"><div className="flex flex-wrap gap-1 text-xs"><span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">{translate('visible')}: {player.visibleContextCount}</span><span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">{translate('hidden')}: {player.hiddenContextCount}</span><span className="rounded-full bg-red-100 px-2 py-1 text-red-700">{translate('banned')}: {player.bannedContextCount}</span></div><div className="mt-2 text-xs text-slate-500">{translate('eligibleContexts')}: {player.eligibleContextCount} · {translate('ineligibleContexts')}: {player.ineligibleContextCount}</div></td>
-                  <td className="px-4 py-4"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('managePlayer')}</Button></td>
+                  <td className="px-4 py-4"><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('managePlayer')}</Button>{activeCategories.some((category) => category.id !== query.categoryId) && <Button type="button" variant="outline" onClick={() => openNewContextFromSummary(player)} disabled={processing}>{translate('addProfileForPlayer')}</Button>}</div></td>
                 </tr>
               ))}
             </tbody>

@@ -15,6 +15,16 @@ export function getRankRingClass(
   return getRankStyle(elo, tierName, categoryName).ringClass;
 }
 
+export function getRankBorderClass(
+  elo: number | null | undefined,
+  tierName?: string | null,
+  matchesPlayed = 0,
+  categoryName?: string | null,
+): string {
+  if (matchesPlayed <= 0 || elo == null) return 'border-slate-300';
+  return getRankStyle(elo, tierName, categoryName).ringClass.replace(/^ring-/, 'border-');
+}
+
 export interface RankAvatarProps {
   src?: string | null;
   name?: string | null;
@@ -51,8 +61,9 @@ export function RankAvatar({
     <div
       className={cn(
         sizeClass,
-        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-slate-300 bg-slate-100 shadow-sm',
+        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 bg-slate-100 shadow-sm',
         ringClassName,
+        getRankBorderClass(elo, tierName, matchesPlayed, categoryName),
         getRankRingClass(elo, tierName, matchesPlayed, categoryName),
         className,
       )}

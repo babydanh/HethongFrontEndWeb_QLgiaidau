@@ -1259,10 +1259,10 @@ export default function HomePage() {
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
+                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
                                       {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                     </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
+                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
                                       <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>
@@ -1381,10 +1381,10 @@ export default function HomePage() {
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
+                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
                                     {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                   </span>
-                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
+                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
                                     <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
@@ -1467,10 +1467,10 @@ export default function HomePage() {
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
+                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
                                     {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                   </span>
-                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
+                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
                                     <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>

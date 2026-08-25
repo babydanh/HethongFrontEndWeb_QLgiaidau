@@ -479,9 +479,15 @@ const commonTranslate = useTranslations('Common');
       if (!tournament?.id) return;
       try {
         const divisionsRes = await divisionsApi.getDivisions(tournament.id);
-        const divisionsWithCount = (divisionsRes.data ?? []).map((division) => {
+        const divisionsWithCount: Division[] = (divisionsRes.data ?? []).map((division) => {
           const original = tournament.divisions?.find((item) => item.id === division.id);
-          return { ...division, _count: original?._count || division._count };
+          return {
+            ...division,
+            _count: {
+              participants: division._count?.participants ?? original?._count?.participants ?? 0,
+              matches: division._count?.matches ?? original?._count?.matches ?? 0,
+            },
+          };
         });
         setDivisionsList(divisionsWithCount);
         const preferredDivision = initialDivisionId

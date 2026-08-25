@@ -1,4 +1,4 @@
-"use client";
+use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -43,7 +43,7 @@ export default function CommunityPostCard({
 }: CommunityPostCardProps) {
   const translate = useTranslations("Common");
   const locale = useLocale();
-  
+
   const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [overrideCommentCount, setOverrideCommentCount] = useState<number | null>(null);
@@ -58,12 +58,7 @@ export default function CommunityPostCard({
   const commentCount = overrideCommentCount ?? (post.commentCount ?? 0);
   const tournamentStatus = post.tournament?.status?.toUpperCase();
   const shouldShowTournamentBracket =
-    post.type === 'TOURNAMENT_BRACKET' ||
-    Boolean(post.tournament?.hasBracket) ||
-    tournamentStatus === 'ONGOING' ||
-    tournamentStatus === 'IN_PROGRESS' ||
-    tournamentStatus === 'COMPLETED' ||
-    tournamentStatus === 'FINISHED';
+    post.type === 'TOURNAMENT_BRACKET' || Boolean(post.tournament?.hasBracket);
 
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
@@ -173,8 +168,8 @@ export default function CommunityPostCard({
     event.stopPropagation();
     const cleanName = mentionName.replace(/^@/, "").trim();
     const rect = event.currentTarget.getBoundingClientRect();
-    
-    // Nếu mention chính là author
+
+    // Nß║┐u mention ch├¡nh l├á author
     if (cleanName === authorName) {
       setPopoverUser({
         id: post.author.id,
@@ -186,15 +181,15 @@ export default function CommunityPostCard({
       return;
     }
 
-    // Tra cứu thông tin member qua mention
+    // Tra cß╗⌐u th├┤ng tin member qua mention
     setPopoverUser({
-      id: "", // Sẽ được fetch hoặc tra cứu
+      id: "", // Sß║╜ ─æ╞░ß╗úc fetch hoß║╖c tra cß╗⌐u
       fullName: cleanName,
       avatarUrl: null,
     });
     setPopoverAnchorRect(rect);
 
-    // Tìm kiếm profile chính xác qua tên
+    // T├¼m kiß║┐m profile ch├¡nh x├íc qua t├¬n
     communitiesApi
       .getMembers(post.communityId, { search: cleanName, limit: 1 })
       .then((res) => {
@@ -510,7 +505,7 @@ export default function CommunityPostCard({
 
         {/* Tournament Bracket / Preview / Poll Area */}
         {post.tournamentId ? (
-          !shouldShowTournamentBracket && post.poll && (tournamentStatus === 'REGISTRATION_OPEN' || tournamentStatus === 'UPCOMING' || !tournamentStatus) ? (
+          !shouldShowTournamentBracket && (tournamentStatus === 'REGISTRATION_OPEN' || tournamentStatus === 'UPCOMING' || !tournamentStatus) ? (
             <>
               {/* Registration / Pre-Tournament Summary Card */}
               <div className="mt-3.5 overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md">
@@ -561,12 +556,14 @@ export default function CommunityPostCard({
                 </div>
               </div>
 
-              {/* Poll Component (Facebook Style) */}
-              <CommunityPollCard
-                communityId={post.communityId}
-                poll={post.poll}
-                tournamentInviteCode={post.tournament?.inviteCode}
-              />
+              {/* Super Lite only: the positive option is tied to real Lite registration. */}
+              {post.poll && (
+                <CommunityPollCard
+                  communityId={post.communityId}
+                  poll={post.poll}
+                  tournamentInviteCode={post.tournament?.inviteCode}
+                />
+              )}
             </>
           ) : (
             <CommunityTournamentBracketWidget
@@ -754,7 +751,7 @@ export default function CommunityPostCard({
                           <p className="mt-0.5 text-slate-800 leading-relaxed break-words">{comment.body}</p>
                         </div>
 
-                        {/* Actions under comment: Thích, Trả lời, Thời gian, Xóa */}
+                        {/* Actions under comment: Th├¡ch, Trß║ú lß╗¥i, Thß╗¥i gian, X├│a */}
                         <div className="mt-1 flex items-center gap-3 pl-2 text-[11px] font-semibold text-slate-500">
                           <button
                             type="button"
@@ -841,7 +838,7 @@ export default function CommunityPostCard({
               }}
               className="text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer"
             >
-              ✕ {translate('cancelAction')}
+              Γ£ò {translate('cancelAction')}
             </button>
           </div>
         )}

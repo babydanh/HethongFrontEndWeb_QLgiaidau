@@ -220,7 +220,7 @@ export default function TournamentsTab({
               {translate("communityTournamentManageTitle")}
             </Button>
             <Button
-              onClick={() => setIsChoiceModalOpen(true)}
+              onClick={() => router.push(`/communities/${communityId}/create-lite`)}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
             >
               + {translate("communityTournamentCreateButton")}

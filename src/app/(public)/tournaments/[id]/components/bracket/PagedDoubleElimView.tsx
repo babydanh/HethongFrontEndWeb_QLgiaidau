@@ -17,7 +17,7 @@ import type {
   OnScheduleMatch,
   OnSelectBracketMatch,
 } from './types';
-import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
+import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP, MATCH_GAP_Y } from './types';
 import { buildMatchesByRound, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
 
@@ -153,7 +153,7 @@ export function PagedDoubleElimView({
   const getRoundTitle = (r: number) =>
     activeBranch === 'upper' ? getUbLabel(r) : getLbLabel(r);
 
-  const roundGap = COL_GAP + 20;
+  const roundGap = COL_GAP + 28;
 
   // Calculate compact posMap for visible rounds (top-aligned at y = 16px)
   const posMap = useMemo(() => {
@@ -180,9 +180,9 @@ export function PagedDoubleElimView({
               count++;
             }
           });
-          y = count > 0 ? ySum / count : 16 + index * (cardH + 16) + cardH / 2;
+          y = count > 0 ? ySum / count               : 16 + index * (cardH + MATCH_GAP_Y) + cardH / 2;
         } else {
-          const step = (cardH + 16) * Math.pow(1.25, Math.min(vIdx, 2));
+          const step = (cardH + MATCH_GAP_Y) * Math.pow(1.35, Math.min(vIdx, 2));
           y = 16 + index * step + cardH / 2;
         }
         map.set(match.id, { x: colX, y });
@@ -342,7 +342,6 @@ export function PagedDoubleElimView({
           style={{
             width: svgW * zoom,
             height: (totalHeight + 36) * zoom,
-            transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           className="relative"
         >
@@ -352,7 +351,6 @@ export function PagedDoubleElimView({
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
               width: svgW,
-              transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
             className="flex mb-2 flex-shrink-0"
           >
@@ -390,13 +388,12 @@ export function PagedDoubleElimView({
               width: svgW,
               height: totalHeight,
               marginTop: '32px',
-              transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
             className="absolute"
           >
             {/* SVG Connectors with Smooth Fluid Morphing */}
             <svg
-              className="absolute inset-0 pointer-events-none"
+              className="pointer-events-none absolute inset-0 z-0"
               width={svgW}
               height={totalHeight}
             >
@@ -420,9 +417,6 @@ export function PagedDoubleElimView({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     opacity={isBlue ? 0.95 : 0.65}
-                    style={{
-                      transition: 'd 0.35s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease-out, opacity 0.3s ease-out',
-                    }}
                   />
                 );
               })}
@@ -438,12 +432,10 @@ export function PagedDoubleElimView({
               return (
                 <div
                   key={match.id}
-                  className="absolute"
+                  className="absolute isolate z-10"
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0px)`,
                     width: CARD_W,
-                    willChange: 'transform',
-                    transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
                   }}
                 >
                   <MatchCard

@@ -181,7 +181,7 @@ export const MatchCard = memo(function MatchCard({
       aria-disabled={live}
       style={{ width: CARD_W, height: actualCardH }}
       className={
-                'rounded-md overflow-hidden border flex flex-col shadow-sm transition-[box-shadow,border-color,opacity] duration-150 hover:shadow bg-white select-none ' +
+                'rounded-md overflow-hidden border flex flex-col shadow-sm transition-[box-shadow,border-color] duration-150 hover:shadow bg-white select-none ' +
 
         (selected
           ? 'border-amber-500 ring-2 ring-amber-400 shadow-md'
@@ -275,7 +275,7 @@ const RowSide = memo(function RowSide({
         'flex items-center justify-between py-1 transition-colors border-l-[4px] pl-2 pr-2.5 ' +
         (won ? 'bg-blue-50/90 border-blue-600' : 'bg-white border-transparent') +
         (isOver ? ' bg-blue-50 ring-2 ring-inset ring-blue-400' : '') +
-        (locked ? ' cursor-not-allowed opacity-90' : '')
+        (locked ? ' cursor-not-allowed opacity-100' : '')
       }
     >
       {/* Team Info */}

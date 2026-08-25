@@ -948,8 +948,8 @@ const commonTranslate = useTranslations('Common');
                           </button>
 
                           <div
-                            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                              isActive ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                              isActive ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] pointer-events-none'
                             }`}
                           >
                             <div className="overflow-hidden">

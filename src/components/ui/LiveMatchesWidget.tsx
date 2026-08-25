@@ -30,8 +30,6 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   };
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);

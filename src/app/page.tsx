@@ -354,8 +354,7 @@ export default function HomePage() {
       ? translate(`roundOf${round}`)
       : translate('roundNumber', { number: round }),
     legSuffix: (leg) => translate('roundLeg', { number: leg }),
-    roundRobinLeg: (leg, round) => `${translate('roundLeg', { number: leg })} • ${translate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => translate('matchDay', { number: round }),
+    
   };
   // Bóng bàn đang tạm ẩn khỏi các bộ lọc/khám phá công khai. Vẫn giữ
   // support trong luồng quản trị và dữ liệu giải cũ để không làm mất dữ liệu.

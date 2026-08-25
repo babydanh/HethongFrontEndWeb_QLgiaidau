@@ -43,8 +43,9 @@ export interface RoundLabelTranslations {
   playoff: string;
   roundOf: (round: number) => string;
   legSuffix: (leg: number) => string;
-  roundRobinLeg: (leg: number, round: number) => string;
-  roundRobinMatchday: (round: number) => string;
+  roundRobinLeg?: (leg: number, round: number) => string;
+  roundRobinMatchday?: (round: number) => string;
+  roundNumber?: (round: number) => string;
 }
 
 export interface MatchRoundLabelOptions<TMatch extends RoundLabelMatch> {

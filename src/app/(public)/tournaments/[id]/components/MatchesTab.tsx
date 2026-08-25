@@ -134,8 +134,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   }), [matchTranslate]);
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const requestControllerRef = useRef<AbortController | null>(null);

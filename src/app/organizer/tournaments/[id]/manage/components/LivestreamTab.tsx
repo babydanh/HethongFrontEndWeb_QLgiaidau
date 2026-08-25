@@ -135,8 +135,6 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     playoff: matchTranslate("phasePlayoff"),
     roundOf: (round) => matchTranslate("roundOf", { round }),
     legSuffix: (leg) => `${matchTranslate("leg")} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate("leg")} ${leg} • ${matchTranslate("matchDay", { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate("matchDay", { number: round }),
   };
 
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
@@ -932,7 +930,6 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             {readyMatches.map((match) => (
               <option key={match.id} value={match.id}>
                 {getCameraMatchLabel(match)} •{" "}
-                {livestreamTranslate("matchLabel")} {match.matchOrder} •{" "}
                 {match.participant1?.teamName || livestreamTranslate("teamOne")}{" "}
                 vs{" "}
                 {match.participant2?.teamName || livestreamTranslate("teamTwo")}
@@ -985,8 +982,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                 >
                   <div>
                     <p className="text-sm font-bold text-slate-900">
-                      {getCameraMatchLabel(match)} •{" "}
-                      {livestreamTranslate("matchLabel")} {match.matchOrder}
+                      {getCameraMatchLabel(match)}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500">
                       {match.participant1?.teamName ||

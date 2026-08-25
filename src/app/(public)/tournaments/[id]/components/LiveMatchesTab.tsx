@@ -9,6 +9,7 @@ import { extractMatchScores } from '@/features/matches/score-display';
 import { socketClient } from '@/lib/socket';
 import { ChevronLeft, ChevronRight, PlayCircle, Radio, Clock, Search } from 'lucide-react';
 import { formatDateTime } from '@/utils/format';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 
 interface LiveMatchesTabProps {
   tournament: Tournament;
@@ -87,10 +88,24 @@ function getParticipantDisplayName(participant: Match['participant1'], waitingLa
 }
 
 export default function LiveMatchesTab({
+  tournament,
   tournamentId,
   divisionId,
 }: LiveMatchesTabProps) {
   const translate = useTranslations('TournamentDetail');
+  const matchTranslate = useTranslations('Match');
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: matchTranslate('roundGrandFinal'),
+    roundFinal: matchTranslate('roundFinal'),
+    roundSemifinal: matchTranslate('roundSemifinal'),
+    roundQuarterfinal: matchTranslate('roundQuarterfinal'),
+    roundGroupStage: matchTranslate('roundGroupStage'),
+    winnersBracket: matchTranslate('winnersBracket'),
+    losersBracket: matchTranslate('losersBracket'),
+    playoff: matchTranslate('phasePlayoff'),
+    roundOf: (round) => matchTranslate('roundOf', { round }),
+    legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
+  };
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,6 +244,19 @@ export default function LiveMatchesTab({
             const activeSetScoreText = activeSet
               ? `${activeSet.team1Score} - ${activeSet.team2Score}`
               : `${match.p1SetsWon ?? 0} - ${match.p2SetsWon ?? 0}`;
+            const isRoundRobinMatch = tournament.format === 'ROUND_ROBIN' || Boolean(match.group?.name);
+            const matchContextLabel = isRoundRobinMatch
+              ? (typeof match.leg === 'number' && match.leg > 0
+                  ? `${matchTranslate('leg')} ${match.leg}`
+                  : null)
+              : getMatchRoundLabel({
+                  match,
+                  matches: liveMatches,
+                  tournamentFormat: tournament.format,
+                  bracketSize: undefined,
+                  includePhasePrefix: false,
+                  translations: roundLabelTranslations,
+                });
 
             return (
               <Link
@@ -246,9 +274,11 @@ export default function LiveMatchesTab({
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />
                       {translate('liveLabel')}
                     </span>
-                    <span className="text-xs font-extrabold text-slate-800">
-                      {translate('liveMatchesTabMatchNumber', { number: match.matchOrder ?? 1 })}
-                    </span>
+                    {matchContextLabel && (
+                      <span className="text-xs font-extrabold text-slate-800">
+                        {matchContextLabel}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 text-right">
@@ -257,15 +287,11 @@ export default function LiveMatchesTab({
                         {match.courtName || match.tournament?.venueName}
                       </span>
                     )}
-                    {match.group?.name ? (
+                    {match.group?.name && (
                       <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                         {match.group.name}
                       </span>
-                    ) : match.roundNumber ? (
-                      <span className="text-xs font-medium text-slate-500">
-                        {translate('liveMatchesTabRoundNumber', { round: match.roundNumber })}
-                      </span>
-                    ) : null}
+                    )}
                   </div>
                 </div>
 

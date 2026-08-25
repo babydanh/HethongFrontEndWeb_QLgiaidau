@@ -1462,8 +1462,6 @@ export default function LiveMatchPage({ params }: Props) {
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   };
 
   const friendlyRoundName = match

@@ -108,8 +108,6 @@ export function OpsMatches({
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   };
   const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ALL');
   const [selectedScheduleMatch, setSelectedScheduleMatch] = useState<Match | null>(null);
@@ -300,14 +298,19 @@ export function OpsMatches({
     const scoreSummary = matchSets.length > 0
       ? `${scorePresentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon} • ${matchSets.length} ${scorePresentation.sequenceLabel}`
       : `${scorePresentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon}`;
-    const roundLabel = getMatchRoundLabel({
+        const roundLabel = getMatchRoundLabel({
       match,
       matches,
       tournamentFormat: match.stage?.type,
       translations: roundLabelTranslations,
     });
+    const isRoundRobinMatch = match.stage?.type === 'ROUND_ROBIN' || match.stage?.type === 'GROUP_STAGE' || Boolean(match.group?.name);
+    const matchHeaderLabel = isRoundRobinMatch
+      ? roundLabel
+      : `${roundLabel} • ${translate('matchNumber', { number: match.matchOrder })}`;
 
     return (
+
       <div
         key={match.id}
         id={`ops-match-card-${match.id}`}
@@ -323,7 +326,7 @@ export function OpsMatches({
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
               {match.bracketBranch && BRANCH_LABEL_KEYS[match.bracketBranch]
                 ? translate(BRANCH_LABEL_KEYS[match.bracketBranch])
-                : match.bracketBranch || translate('branchMain')} • {roundLabel} • {translate('matchNumber', { number: match.matchOrder })}
+                : match.bracketBranch || translate('branchMain')} • {matchHeaderLabel}
             </p>
             <p className="text-sm font-bold text-slate-900">
               {match.participant1?.teamName || translate('tbd')} {translate('versus')} {match.participant2?.teamName || translate('tbd')}

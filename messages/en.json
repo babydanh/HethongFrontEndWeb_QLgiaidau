@@ -5295,7 +5295,12 @@
     "withdrawalAmount": "Withdrawal amount (VNĐ)",
     "sending": "Sending...",
     "sendWithdrawal": "Send withdrawal request",
-    "withdrawalUnavailable": "Withdrawals are available only when the tournament is in progress or completed."
+    "withdrawalUnavailable": "Withdrawals are available only when the tournament is in progress or completed.",
+    "feeLockReasonGlobal": "System admin has temporarily disabled entry fees platform-wide.",
+    "feeLockReasonRegistrationClosed": "Registration is closed (participants and draw are finalized), entry fees cannot be modified.",
+    "feeLockReasonInProgress": "Tournament is currently in progress, entry fees are locked for settlement.",
+    "feeLockReasonCompleted": "Tournament is completed, financial records are finalized.",
+    "feeEditableHint": "You can freely enter the entry fee and click 'Save financial settings' to apply to this division."
   },
   "OrganizerPermissions": {
     "statusInvited": "Awaiting response",

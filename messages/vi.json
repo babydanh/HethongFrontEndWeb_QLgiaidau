@@ -5295,7 +5295,12 @@
     "withdrawalAmount": "Số tiền rút (VNĐ)",
     "sending": "Đang gửi...",
     "sendWithdrawal": "Gửi yêu cầu rút tiền",
-    "withdrawalUnavailable": "Cổng rút tiền chỉ mở khi giải đấu đang thi đấu hoặc đã kết thúc."
+    "withdrawalUnavailable": "Cổng rút tiền chỉ mở khi giải đấu đang thi đấu hoặc đã kết thúc.",
+    "feeLockReasonGlobal": "Admin hệ thống đang tạm tắt tính năng thu lệ phí trên toàn sàn.",
+    "feeLockReasonRegistrationClosed": "Giải đấu đã đóng cổng đăng ký (danh sách VĐV và nhánh đấu đã chốt), không thể đổi lệ phí.",
+    "feeLockReasonInProgress": "Giải đấu đang diễn ra thi đấu, mức lệ phí được khóa cố định để quyết toán.",
+    "feeLockReasonCompleted": "Giải đấu đã kết thúc, bảng tài chính đã được chốt hoàn tất.",
+    "feeEditableHint": "Bạn có thể tự do nhập số tiền lệ phí và nhấn 'Lưu cài đặt tài chính' để áp dụng cho nội dung thi đấu này."
   },
   "OrganizerPermissions": {
     "statusInvited": "Chờ phản hồi",

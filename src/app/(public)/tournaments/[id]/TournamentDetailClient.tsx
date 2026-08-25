@@ -693,21 +693,21 @@ const commonTranslate = useTranslations('Common');
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {activeTournament.category?.name && (
-                  <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200 shadow-sm flex items-center gap-1.5">
+                  <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-600 text-white shadow-2xs flex items-center gap-1.5">
                     {(() => {
                       const logo = getSportLogo(activeTournament.category?.name);
                       return logo ? (
-                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain" />
+                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150" />
                       ) : null;
                     })()}
                     {activeTournament.category.name}
                   </span>
                 )}
-                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md border shadow-sm ${getTournamentStatusClassName(activeTournament.status)}`}>
+                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${getTournamentStatusClassName(activeTournament.status)}`}>
                   {getTournamentStatusLabel(activeTournament.status, statusLabels).toUpperCase()}
                 </span>
-                <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-sm flex items-center gap-1">
-                  <Trophy className="w-3 h-3 text-blue-500" />
+                <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-900 text-white shadow-2xs flex items-center gap-1">
+                  <Trophy className="w-3 h-3 text-amber-400" />
                   {(() => {
                     const fmt = (activeTournament.format ?? '').replace('.', '_').replace(' ', '_').toUpperCase();
                     if (fmt === 'SINGLE_ELIMINATION') return translate('format.singleElimination');
@@ -717,10 +717,10 @@ const commonTranslate = useTranslations('Common');
                     return fmt;
                   })()}
                 </span>
-                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md border shadow-sm ${
+                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${
                   activeTournament.isRanked
-                    ? 'bg-amber-50 text-amber-700 border-amber-300'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-emerald-600 text-white'
                 }`}>
                   {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : `🎾 ${translate('casualBadge')}`}
                 </span>

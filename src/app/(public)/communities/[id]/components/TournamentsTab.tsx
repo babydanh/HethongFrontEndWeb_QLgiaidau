@@ -126,13 +126,13 @@ export default function TournamentsTab({
   const getTypeBadge = (type: Tournament["tournamentType"]) => {
     if (type === "CLUB") {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-600 text-white shadow-2xs">
           {translate("communityClubOnlyBadge")}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white shadow-2xs">
         {translate("communityOpenBadge")}
       </span>
     );
@@ -361,13 +361,13 @@ export default function TournamentsTab({
                       )}
 
                       {t.isRanked && (
-                        <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        <span className="bg-sky-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold shadow-2xs">
                           {translate("eloCounted")}
                         </span>
                       )}
 
                       {isLiteTournament(t) && (
-                        <span className="bg-amber-50 text-amber-800 border border-amber-300/80 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        <span className="bg-amber-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold shadow-2xs">
                           {translate("quickCreateLite")}
                         </span>
                       )}

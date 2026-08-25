@@ -804,10 +804,10 @@ export default function TournamentsListPage() {
                         <span className="text-slate-300">•</span>
 
                         {/* Ranked or Unranked Badge */}
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold shadow-2xs ${
                           tournament.isRanked
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-slate-50 text-slate-600 border border-slate-200'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-700 text-white'
                         }`}>
                           {tournament.isRanked ? translate('rankedBadgeLabel') : translate('recreationalBadgeLabel')}
                         </span>
@@ -816,7 +816,7 @@ export default function TournamentsListPage() {
                         {tournament.parentId && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-bold border border-blue-200">
+                            <span className="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[8px] font-bold shadow-2xs">
                               {translate("seriesLabel")}
                             </span>
                           </>

@@ -626,10 +626,10 @@ export default function ProfilePage() {
             <RankAvatar
               src={displayUser?.avatarUrl}
               name={displayUser?.fullName}
-              elo={featuredElo ?? undefined}
-              tierName={featuredRank?.tier?.name || featuredRank?.tierName}
-              categoryName={featuredRank?.categoryName}
-              matchesPlayed={featuredRank?.matchesPlayed || 0}
+              elo={featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? undefined}
+              tierName={featuredRank?.tierName || featuredRank?.tier?.name || undefined}
+              categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
+              matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
               size="lg"
               ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
             />

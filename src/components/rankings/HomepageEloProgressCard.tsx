@@ -2,7 +2,7 @@
 import { useTranslations } from 'next-intl';
 
 import React from 'react';
-import { Shield, ShieldCheck, ShieldOff } from 'lucide-react';
+import { SolidShieldEmblem } from '@/components/ui/SolidShieldEmblem';
 
 import type { PlayerRanking } from '@/types/ranking';
 import { cn } from '@/utils/cn';
@@ -45,6 +45,9 @@ export default function HomepageEloProgressCard({
     shieldActive: eloTranslate('shieldActive'),
     shieldBroken: eloTranslate('shieldBroken'),
     onboardingCopy: eloTranslate('onboardingCopy'),
+    SINGLES: eloTranslate('matchTypeSingles'),
+    DOUBLES: eloTranslate('matchTypeDoubles'),
+    MIXED_DOUBLES: eloTranslate('matchTypeMixedDoubles'),
   };
   if (!isAuthenticated) return null;
 
@@ -54,20 +57,12 @@ export default function HomepageEloProgressCard({
   const rankProgress = getRankProgressInfo(eloPoints, activeRankInfo?.categoryName);
   const hasNoRanks = !activeRankInfo || !isPublicRankingEligible(activeRankInfo);
 
-  const ShieldIcon = shieldStatus.state === 'active'
-    ? ShieldCheck
-    : shieldStatus.state === 'broken'
-      ? ShieldOff
-      : Shield;
-
   // Keep onboarding visuals only when there is no public-eligible rank.
   const displayPercent = hasNoRanks ? 0 : progressInfo.percent;
   const fillColor = hasNoRanks
     ? 'bg-gradient-to-r from-slate-300 to-slate-400'
     : rankProgress.current.progressClass;
-  const trackColor = hasNoRanks
-    ? 'bg-slate-100'
-    : 'bg-slate-100';
+  const trackColor = 'bg-slate-100';
 
   const rankLabel = hasNoRanks
     ? eloTranslate('unranked')
@@ -102,14 +97,13 @@ export default function HomepageEloProgressCard({
         </span>
       </div>
 
-      {/* Progress bar + Shield icon */}
+      {/* Progress bar + Solid Filled Shield Emblem */}
       <div className="flex items-center gap-2">
-        <ShieldIcon className={cn(
-          'w-4 h-4 shrink-0',
-          shieldStatus.state === 'active' && 'text-blue-600',
-          shieldStatus.state === 'broken' && 'text-blue-600',
-          shieldStatus.state === 'onboarding' && 'text-slate-400',
-        )} />
+        <SolidShieldEmblem
+          state={shieldStatus.state}
+          size={20}
+          title={shieldStatus.copy}
+        />
         <div className="flex-1 flex items-center gap-2">
           <div className={cn("flex-1 h-3 rounded-full overflow-hidden relative", trackColor)}>
             <div
@@ -157,4 +151,3 @@ export default function HomepageEloProgressCard({
     </div>
   );
 }
-

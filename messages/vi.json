@@ -3926,7 +3926,13 @@
     "shieldProtectionLabel": "Bảo vệ điểm khi thua trận",
     "shieldRecoveryLabel": "Hồi khiên sau chuỗi thắng",
     "categoryLabel": "Hạng mục: {name}",
-    "ranked": "Đã xếp hạng"
+    "ranked": "Đã xếp hạng",
+    "matchTypeSingles": "Đơn",
+    "matchTypeDoubles": "Đôi",
+    "matchTypeMixedDoubles": "Đôi nam nữ",
+    "SINGLES": "Đơn",
+    "DOUBLES": "Đôi",
+    "MIXED_DOUBLES": "Đôi nam nữ"
   },
   "AdminTournaments": {
     "countdownOpen": "Đang mở đăng ký",

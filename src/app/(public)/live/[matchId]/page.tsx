@@ -1469,8 +1469,11 @@ export default function LiveMatchPage({ params }: Props) {
   const friendlyRoundName = match
     ? getMatchRoundLabel({
         match,
-        tournamentFormat: match.tournament?.tournamentConfig?.mode || match.tournament?.format || match.stage?.type,
-        bracketSize: match.tournament?.maxParticipants ?? null,
+        // The public match projection does not include tournament format or
+        // bracket size. Use the authoritative stage type; do not treat the
+        // tournament UI mode (LITE/ADVANCED) as a bracket format.
+        tournamentFormat: match.stage?.type ?? match.group?.stage?.type,
+        bracketSize: null,
         translations: roundLabelTranslations,
       })
     : '';

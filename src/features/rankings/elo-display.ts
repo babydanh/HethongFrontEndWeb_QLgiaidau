@@ -31,25 +31,33 @@ export type EloDisplayLabels = {
   shieldActive?: string;
   shieldBroken?: string;
   onboardingCopy?: string;
+  SINGLES?: string;
+  DOUBLES?: string;
+  MIXED_DOUBLES?: string;
 };
 
-const MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
-  SINGLES: 'Singles',
-  DOUBLES: 'Doubles',
-  MIXED_DOUBLES: 'Mixed doubles',
+const DEFAULT_MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
+  SINGLES: 'Đơn',
+  DOUBLES: 'Đôi',
+  MIXED_DOUBLES: 'Đôi nam nữ',
 };
 
 /** Human-readable label for a match type. */
-export const getEloMatchTypeLabel = (matchType?: string | null, labels?: EloMatchTypeLabels): string => {
+export const getEloMatchTypeLabel = (
+  matchType?: string | null,
+  labels?: EloMatchTypeLabels | Record<string, unknown>,
+): string => {
   if (matchType === 'SINGLES' || matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES') {
-    return labels?.[matchType] ?? MATCH_TYPE_LABELS[matchType];
+    const rawMatch = labels?.[matchType] ?? (labels as Record<string, string>)?.[`matchType${matchType === 'SINGLES' ? 'Singles' : matchType === 'DOUBLES' ? 'Doubles' : 'MixedDoubles'}`];
+    if (typeof rawMatch === 'string') return rawMatch;
+    return DEFAULT_MATCH_TYPE_LABELS[matchType];
   }
-  return labels?.categoryFallback ?? 'Overview';
+  return (labels?.categoryFallback as string) ?? 'Tổng quan';
 };
 
 /** Display name combining category and match type. */
 export const getRankDisplayName = (rank: PlayerRanking): string => {
-  const categoryName = rank.categoryName || 'Sport';
+  const categoryName = rank.categoryName || 'Môn thể thao';
   const matchTypeLabel = getEloMatchTypeLabel(rank.matchType);
   return `${categoryName} • ${matchTypeLabel}`;
 };

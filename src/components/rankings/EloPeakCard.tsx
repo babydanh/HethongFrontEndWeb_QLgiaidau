@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 
 import { getEloTier } from '@/components/ui/EloTierBadge';
-import { Shield, ShieldCheck, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import { SolidShieldEmblem } from '@/components/ui/SolidShieldEmblem';
 import { cn } from '@/utils/cn';
 import { getTierBgColor } from '@/utils/elo';
 import { getRankProgressInfo } from '@/utils/rank-style';
@@ -98,22 +99,21 @@ export default function EloPeakCard({
           className={cn(
             'flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold border',
             hasShield
-              ? 'bg-blue-50 text-blue-700 border-blue-200'
-              : 'bg-rose-50 text-rose-500 border-slate-200'
+              ? 'bg-emerald-50/70 text-emerald-800 border-emerald-200'
+              : 'bg-rose-50/70 text-rose-700 border-rose-200'
           )}
         >
-          {hasShield ? (
-            <>
-              <ShieldCheck className="w-4 h-4 text-blue-500" />
-              <span>🛡️ {translate('shieldLabel')}:  <span className="text-emerald-700">{translate('shieldActiveLabel')}</span></span>
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4 text-rose-400" />
-              <span>🛡️ {translate('shieldLabel')}:  <span className="text-rose-500">{translate('shieldBrokenLabel')}</span></span>
-            </>
-          )}
-          <span className="text-[9px] font-medium ml-auto opacity-70">
+          <SolidShieldEmblem
+            state={hasShield ? 'active' : 'broken'}
+            size={18}
+          />
+          <span>
+            {translate('shieldLabel')}:{' '}
+            <span className={hasShield ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'}>
+              {hasShield ? translate('shieldActiveLabel') : translate('shieldBrokenLabel')}
+            </span>
+          </span>
+          <span className="text-[9px] font-medium ml-auto opacity-80">
             {hasShield
               ? `${translate('shieldProtectionLabel')} ${progressTier.minElo}`
               : translate('shieldRecoveryLabel')}
@@ -130,4 +130,3 @@ export default function EloPeakCard({
     </div>
   );
 }
-

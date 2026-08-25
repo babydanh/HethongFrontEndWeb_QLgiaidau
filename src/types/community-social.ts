@@ -74,6 +74,7 @@ export interface CommunityPostTournament {
   endDate?: string | null;
   status?: string | null;
   bannerUrl?: string | null;
+  logoUrl?: string | null;
   maxParticipants?: number | null;
   inviteCode?: string | null;
   hasBracket?: boolean;
@@ -163,6 +164,21 @@ export interface ChatRoom {
   name?: string | null;
 }
 
+export interface ChatMessageMetadata {
+  question?: string;
+  options?: Array<{ id: string; text: string; voterIds?: string[] }>;
+  allowMultiple?: boolean;
+  allowAddOptions?: boolean;
+  tournamentId?: string;
+  bannerUrl?: string;
+  title?: string;
+  sportType?: string;
+  totalTeams?: number;
+  registeredTeams?: number;
+  startDate?: string;
+  [key: string]: unknown;
+}
+
 export interface ChatMessage {
   id: string;
   roomId: string;
@@ -177,7 +193,7 @@ export interface ChatMessage {
   replyToId?: string | null;
   replyTo?: { id: string; senderName: string; text: string } | null;
   type?: 'TEXT' | 'POLL' | 'TOURNAMENT_SHARE' | 'LINK_PREVIEW' | string;
-  metadata?: any;
+  metadata?: ChatMessageMetadata;
   reactions?: string[];
   createdAt: string;
 }

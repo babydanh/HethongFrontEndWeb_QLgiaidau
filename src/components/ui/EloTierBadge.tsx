@@ -47,15 +47,16 @@ export function EloTierBadge({
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-1 border shadow-xs transition-all select-none',
-        'bg-white',
+        'inline-flex items-center rounded-full px-2 py-0.5 border shadow-xs transition-all select-none',
+        'bg-[#090d16]',
         size === 'sm' ? 'gap-1 text-[11px]' : size === 'md' ? 'gap-1.5 text-xs' : 'gap-2 text-sm',
         className,
       )}
       style={{
-        backgroundColor: tierBadgeStyle.backgroundColor,
-        borderColor: `${getSportAccentColor(categoryName)}99`,
+        backgroundColor: '#090d16',
+        borderColor: tierBadgeStyle.borderColor,
         color: tierBadgeStyle.textColor,
+        boxShadow: `0 0 6px ${tier.theme.glowColor || 'rgba(0,0,0,0.3)'}`,
       }}
       title={`${categoryName ? `${categoryName}: ` : ''}${tier.name} (${tier.shortCode})`}
       {...props}
@@ -66,6 +67,7 @@ export function EloTierBadge({
         style={{
           color: tierBadgeStyle.textColor,
           fontWeight: tierBadgeStyle.isHigh ? 900 : 800,
+          textShadow: `0 0 6px ${tier.theme.glowColor}`,
         }}
       >
         {showFullName ? tier.name : tier.shortCode}

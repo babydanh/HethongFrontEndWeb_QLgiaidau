@@ -52,6 +52,8 @@ export interface Match {
   tournamentId: string;
   divisionId?: string | null;
   status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
+  /** Persisted encounter leg; roundNumber remains the scheduler round/matchday. */
+  leg?: number | null;
   roundNumber: number;
   matchOrder: number;
   bracketBranch: string;

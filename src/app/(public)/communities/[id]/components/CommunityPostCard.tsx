@@ -99,20 +99,33 @@ export default function CommunityPostCard({
       communitiesApi.getMembers(post.communityId, { limit: 100 })
         .then((res) => {
           if (!mounted) return;
-          const raw = res.data;
-          const list = Array.isArray(raw)
-            ? raw
-            : Array.isArray((raw as any)?.data)
-            ? (raw as any).data
+          interface MemberItem {
+            userId?: string;
+            role?: string;
+            tags?: string[];
+            member?: {
+              userId?: string;
+              role?: string;
+              tags?: string[];
+            };
+            user?: {
+              id?: string;
+            };
+          }
+
+          const raw = res.data as unknown;
+          const list: MemberItem[] = Array.isArray(raw)
+            ? (raw as MemberItem[])
+            : typeof raw === "object" && raw !== null && "data" in raw && Array.isArray((raw as { data: unknown }).data)
+            ? ((raw as { data: MemberItem[] }).data)
             : [];
           const found = list.find(
-            (m: any) => m.user?.id === authorId || m.member?.userId === authorId || m.userId === authorId,
+            (m) => m.user?.id === authorId || m.member?.userId === authorId || m.userId === authorId,
           );
           if (found) {
-            const rawFound = found as any;
             setAuthorMemberInfo({
-              role: found.member?.role || rawFound.role,
-              tags: found.member?.tags || rawFound.tags || [],
+              role: found.member?.role || found.role,
+              tags: found.member?.tags || found.tags || [],
             });
           }
         })
@@ -503,8 +516,16 @@ export default function CommunityPostCard({
               <div className="mt-3.5 overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-                      <Trophy className="h-6 w-6" />
+                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={post.tournament?.logoUrl || '/sporto_v1_with_text.svg'}
+                        alt={post.tournament?.name || 'Tournament'}
+                        className="h-full w-full object-contain rounded-full"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                        }}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">

@@ -102,6 +102,46 @@ const toAdminContext = (player: AdminEloPlayerDetail, context: AdminEloPlayerCon
   statusExpiresAt: context.statusExpiresAt,
 });
 
+const createAdminContextDraft = (player: AdminEloPlayerDetail, categoryId: string): AdminRankingContext => ({
+  contextId: '',
+  userId: player.user.id,
+  email: player.user.email,
+  fullName: player.user.fullName,
+  avatarUrl: player.user.avatarUrl,
+  categoryId,
+  scope: 'PUBLIC',
+  matchType: 'SINGLES',
+  genderRestriction: null,
+  eloPoints: 1000,
+  matchesPlayed: 0,
+  matchesWon: 0,
+  winStreak: 0,
+  peakElo: 1000,
+  updatedAt: new Date().toISOString(),
+  status: 'VISIBLE',
+  statusExpiresAt: null,
+});
+
+const createAdminContextDraftFromSummary = (player: AdminEloPlayerSummary, categoryId: string): AdminRankingContext => ({
+  contextId: '',
+  userId: player.userId,
+  email: player.email,
+  fullName: player.fullName,
+  avatarUrl: player.avatarUrl,
+  categoryId,
+  scope: 'PUBLIC',
+  matchType: 'SINGLES',
+  genderRestriction: null,
+  eloPoints: 1000,
+  matchesPlayed: 0,
+  matchesWon: 0,
+  winStreak: 0,
+  peakElo: 1000,
+  updatedAt: new Date().toISOString(),
+  status: 'VISIBLE',
+  statusExpiresAt: null,
+});
+
 export default function AdminEloPage() {
   const translate = useTranslations('AdminElo');
   const locale = useLocale();
@@ -128,6 +168,7 @@ export default function AdminEloPage() {
   const [expiresAt, setExpiresAt] = useState('');
   const [operationKey, setOperationKey] = useState<string | null>(null);
   const [operationPayloadSignature, setOperationPayloadSignature] = useState<string | null>(null);
+  const [newContextCategoryId, setNewContextCategoryId] = useState('');
   const [historyContext, setHistoryContext] = useState<AdminRankingContext | null>(null);
   const [history, setHistory] = useState<AdminEloOperationHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -144,6 +185,8 @@ export default function AdminEloPage() {
     [activeCategories, query.categoryId],
   );
   const playerGroups = Array.isArray(players) ? players : [];
+  const currentDetailCategoryId = playerDetail?.category.id ?? query.categoryId;
+  const newProfileCategories = activeCategories.filter((category) => category.id !== currentDetailCategoryId);
 
   const loadContexts = useCallback(async ({ nextQuery, cursor = null, append = false }: { nextQuery: FilterState; cursor?: string | null; append?: boolean }) => {
     if (!nextQuery.categoryId) {
@@ -224,12 +267,13 @@ export default function AdminEloPage() {
     };
   }, [loadContexts, translate]);
 
-  const applyFilters = () => {
+  const applyFilters = (overrides: Partial<FilterState> = {}) => {
     const nextQuery: FilterState = {
       search: search.trim(),
       status,
       categoryId: categoryId.trim(),
       matchType,
+      ...overrides,
     };
     setQuery(nextQuery);
     void loadContexts({ nextQuery });
@@ -240,6 +284,34 @@ export default function AdminEloPage() {
     setSelectedPlayer(null);
     setPlayerDetail(null);
     setPlayerDetailLoading(false);
+  };
+
+  const openNewContextOperation = (categoryId: string) => {
+    if (!playerDetail || !categoryId) return;
+    const draft = createAdminContextDraft(playerDetail, categoryId);
+    closePlayerDetail();
+    setNewContextCategoryId(categoryId);
+    setSelected(draft);
+    setOperation('ADD');
+    setValue('');
+    setReason('');
+    setExpiresAt('');
+    setOperationKey(null);
+    setOperationPayloadSignature(null);
+  };
+
+  const openNewContextFromSummary = (player: AdminEloPlayerSummary) => {
+    const category = activeCategories.find((item) => item.id !== query.categoryId);
+    if (!category) return;
+    closePlayerDetail();
+    setNewContextCategoryId(category.id);
+    setSelected(createAdminContextDraftFromSummary(player, category.id));
+    setOperation('ADD');
+    setValue('');
+    setReason('');
+    setExpiresAt('');
+    setOperationKey(null);
+    setOperationPayloadSignature(null);
   };
 
   const openPlayerDetail = async (player: AdminEloPlayerSummary) => {
@@ -262,6 +334,7 @@ export default function AdminEloPage() {
 
   const openOperation = (context: AdminRankingContext) => {
     closePlayerDetail();
+    setNewContextCategoryId('');
     setSelected(context);
     setOperation('ADD');
     setValue('');
@@ -274,6 +347,7 @@ export default function AdminEloPage() {
   const closeOperation = () => {
     if (processing) return;
     setSelected(null);
+    setNewContextCategoryId('');
     setOperationKey(null);
     setOperationPayloadSignature(null);
   };
@@ -319,6 +393,7 @@ export default function AdminEloPage() {
       await rankingsApi.applyAdminOperation(payload);
       toast.success(translate('operationSuccess'));
       setSelected(null);
+      setNewContextCategoryId('');
       setOperationKey(null);
       await loadContexts({ nextQuery: query });
     } catch (error: unknown) {
@@ -382,10 +457,10 @@ export default function AdminEloPage() {
       <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
         <label className="md:col-span-2"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={translate('searchPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
         <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><div className="font-semibold">{translate('publicScope')}</div><div className="mt-1 text-xs">{translate('publicOnlyAdminNotice')}</div></div>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => setStatus(event.target.value as AdminRankingStatus | '')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => setMatchType(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allMatchTypes')}</option><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
-        <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={applyFilters} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
+        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => { const nextStatus = event.target.value as AdminRankingStatus | ''; setStatus(nextStatus); applyFilters({ status: nextStatus }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>
+        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; setCategoryId(nextCategoryId); applyFilters({ categoryId: nextCategoryId }); }} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allMatchTypes')}</option><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
+        <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={() => applyFilters()} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -401,7 +476,7 @@ export default function AdminEloPage() {
                   <td className="px-4 py-4 text-slate-600"><div className="font-semibold text-slate-900">{player.contextCount} {translate('rankingProfiles')}</div><div className="mt-1 flex flex-wrap gap-1 text-xs"><span className="rounded bg-slate-100 px-2 py-1">{translate('publicScope')}: {player.publicContextCount}</span></div></td>
                   <td className="px-4 py-4"><div className="font-bold text-slate-900">{player.highestElo ?? '—'} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{player.lastUpdatedAt ? new Date(player.lastUpdatedAt).toLocaleString(locale) : '—'}</div></td>
                   <td className="px-4 py-4"><div className="flex flex-wrap gap-1 text-xs"><span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">{translate('visible')}: {player.visibleContextCount}</span><span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">{translate('hidden')}: {player.hiddenContextCount}</span><span className="rounded-full bg-red-100 px-2 py-1 text-red-700">{translate('banned')}: {player.bannedContextCount}</span></div><div className="mt-2 text-xs text-slate-500">{translate('eligibleContexts')}: {player.eligibleContextCount} · {translate('ineligibleContexts')}: {player.ineligibleContextCount}</div></td>
-                  <td className="px-4 py-4"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('managePlayer')}</Button></td>
+                  <td className="px-4 py-4"><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => openPlayerDetail(player)} disabled={processing}>{translate('managePlayer')}</Button>{activeCategories.some((category) => category.id !== query.categoryId) && <Button type="button" variant="outline" onClick={() => openNewContextFromSummary(player)} disabled={processing}>{translate('addProfileForPlayer')}</Button>}</div></td>
                 </tr>
               ))}
             </tbody>
@@ -426,7 +501,21 @@ export default function AdminEloPage() {
               <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('visible')}</div><strong className="text-lg text-emerald-700">{selectedPlayer.visibleContextCount}</strong></div>
               <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{translate('excluded')}</div><strong className="text-lg text-red-700">{selectedPlayer.hiddenContextCount + selectedPlayer.bannedContextCount}</strong></div>
             </div>
-            <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{translate('manualEloDoesNotQualify')}</p><p className="text-sm text-slate-600">{translate('selectProfileToManage')}</p>
+            <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{translate('manualEloDoesNotQualify')}</p>
+            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-700">{translate('addProfileForAnotherCategoryHint')}</p>
+              <select
+                aria-label={translate('addProfileForCategory')}
+                value=""
+                onChange={(event) => openNewContextOperation(event.target.value)}
+                disabled={newProfileCategories.length === 0 || processing}
+                className="h-9 min-w-48 rounded-lg border border-blue-200 bg-white px-2 text-sm"
+              >
+                <option value="">{translate('addProfileForCategory')}</option>
+                {newProfileCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
+            </div>
+            <p className="text-sm text-slate-600">{translate('selectProfileToManage')}</p>
             <div className="space-y-3">
               {playerDetail.contexts.map((context) => (
                 <article key={context.contextId} className="rounded-xl border border-slate-200 p-4">
@@ -449,11 +538,15 @@ export default function AdminEloPage() {
         <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <ModalHeader>
             <ModalTitle>{translate('preview')}</ModalTitle>
-            <ModalDescription>{selected ? `${selected.fullName} · ${selected.eloPoints} ${translate('eloUnit')}` : ''}</ModalDescription>
+            <ModalDescription>{selected ? `${selected.fullName} · ${activeCategories.find((category) => category.id === selected.categoryId)?.name ?? translate('selectCategory')} · ${selected.eloPoints} ${translate('eloUnit')}` : ''}</ModalDescription>
           </ModalHeader>
           {selected && <div className="space-y-4">
-            <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{translate('operationGuide')}</p>
-            <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('operation')}</span><select value={operation} onChange={(event) => { setOperation(event.target.value as AdminEloOperation); setExpiresAt(''); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="ADD">{translate('add')}</option><option value="SUBTRACT">{translate('subtract')}</option><option value="SET">{translate('set')}</option><option value="RESET">{translate('reset')}</option><option value="HIDE">{translate('hide')}</option><option value="BAN">{translate('ban')}</option><option value="RESTORE">{translate('restore')}</option></select></label>
+            <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{translate(newContextCategoryId ? 'createContextGuide' : 'operationGuide')}</p>
+            {newContextCategoryId && <>
+              <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('addProfileForCategory')}</span><select value={selected.categoryId} onChange={(event) => { const categoryId = event.target.value; setNewContextCategoryId(categoryId); setSelected((current) => current && current.contextId === '' ? { ...current, categoryId } : current); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm">{newProfileCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"><span className="block text-xs font-semibold text-slate-500">{translate('matchType')}</span><strong className="text-slate-900">{translate('singles')}</strong></div>
+            </>}
+            <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('operation')}</span><select value={operation} disabled={Boolean(newContextCategoryId)} onChange={(event) => { setOperation(event.target.value as AdminEloOperation); setExpiresAt(''); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="ADD">{translate('add')}</option>{!newContextCategoryId && <><option value="SUBTRACT">{translate('subtract')}</option><option value="SET">{translate('set')}</option><option value="RESET">{translate('reset')}</option><option value="HIDE">{translate('hide')}</option><option value="BAN">{translate('ban')}</option><option value="RESTORE">{translate('restore')}</option></>}</select></label>
             {isRatingOperation(operation) && operation !== 'RESET' && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate(operation === 'SET' ? 'targetElo' : 'adjustmentPoints')}</span><input type="number" min={1} max={10000} step={1} value={value} onChange={(event) => setValue(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
             {['HIDE', 'BAN'].includes(operation) && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('expiry')}</span><input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
             <div className="rounded-lg bg-slate-50 p-3 text-sm"><div className="flex justify-between"><span>{translate('currentElo')}</span><strong>{selected.eloPoints}</strong></div><div className="mt-1 flex justify-between"><span>{translate('newElo')}</span><strong>{previewElo(selected, operation, Number(value) || 0)}</strong></div>{['HIDE', 'BAN'].includes(operation) && <p className="mt-2 flex gap-2 text-xs text-amber-800"><ShieldAlert className="h-4 w-4 shrink-0" />{translate('excludeWarning')}</p>}{operation === 'RESET' && <p className="mt-2 text-xs text-amber-800">{translate('resetWarning')}</p>}</div>

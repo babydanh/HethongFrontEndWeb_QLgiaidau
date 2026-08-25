@@ -69,7 +69,6 @@ export function FinanceTab({
       });
   const netOrganizerEarnings = Math.max(0, totalExpectedFee - totalPlatformFee);
   const isRegistrationLockedForFinance =
-    isTournamentOpenForRegistration(tournament.status) ||
     isTournamentRegistrationClosed(tournament.status) ||
     isTournamentInProgress(tournament.status) ||
     isTournamentCompleted(tournament.status);

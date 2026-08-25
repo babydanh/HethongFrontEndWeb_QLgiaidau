@@ -43,8 +43,9 @@ export interface RoundLabelTranslations {
   playoff: string;
   roundOf: (round: number) => string;
   legSuffix: (leg: number) => string;
-  roundRobinLeg: (leg: number, round: number) => string;
-  roundRobinMatchday: (round: number) => string;
+  roundRobinLeg?: (leg: number, round: number) => string;
+  roundRobinMatchday?: (round: number) => string;
+  roundNumber?: (round: number) => string;
 }
 
 export interface MatchRoundLabelOptions<TMatch extends RoundLabelMatch> {
@@ -320,10 +321,9 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
     const groupName = isGenericGroup ? null : rawGroupName;
 
     const roundInfo = getRoundRobinRoundInfo(match, matches);
-    const allMatches = matches ?? [];
-    const roundLabel = roundInfo.leg > 1 || allMatches.some((candidate) => getRoundRobinRoundInfo(candidate, allMatches).leg > 1)
-      ? translations.roundRobinLeg(roundInfo.leg, roundInfo.roundWithinLeg)
-      : translations.roundRobinMatchday(roundInfo.roundWithinLeg);
+    // Round-robin roundNumber is only the scheduler's pairing order. The only
+    // user-facing competition scope here is the configured/persisted leg.
+    const roundLabel = translations.legSuffix(roundInfo.leg);
 
     if (!includePhasePrefix) {
       return roundLabel;
@@ -363,6 +363,10 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
   const optionMap = new Map<string, RoundFilterOption>();
 
   matches.forEach((match) => {
+    // Round-robin roundNumber is an internal scheduler order, not a user-facing
+    // competition round. Group matches are selected by bảng đấu/leg instead.
+    if (isGroupOrRoundRobinStage(getStage(match), tournamentFormat)) return;
+
     // Generate label without phase prefix for grouping, but keep layout clean
     const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize, includePhasePrefix: false, translations });
     // Determine bracket branch

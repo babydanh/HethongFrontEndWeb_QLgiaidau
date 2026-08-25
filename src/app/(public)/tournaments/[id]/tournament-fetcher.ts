@@ -34,6 +34,7 @@ export const getTournament = cache(async (id: string) => {
     const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}`, {
       headers: {
         'Content-Type': 'application/json',
+        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
     });

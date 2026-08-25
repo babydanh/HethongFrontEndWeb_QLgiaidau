@@ -1111,7 +1111,7 @@ export default function UnifiedChatWidget() {
           allowMultiple?: boolean;
           [key: string]: unknown;
         };
-        const options = (meta.options || []).map((opt) => {
+        const options: PollOption[] = (meta.options || []).map((opt) => {
           let voterIds: string[] = opt.voterIds ?? [];
           const isVoted = voterIds.includes(user.id);
           if (opt.id === optionId) {
@@ -1119,9 +1119,9 @@ export default function UnifiedChatWidget() {
           } else if (!meta.allowMultiple && !isVoted) {
             voterIds = voterIds.filter((id) => id !== user.id);
           }
-          return { ...opt, voterIds };
+          return { id: opt.id, text: opt.text ?? '', voterIds };
         });
-        return { ...m, metadata: { ...meta, options } };
+        return { ...m, metadata: { ...meta, options } } as DisplayMessage;
       }),
     );
     try {

@@ -214,6 +214,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     const translate = useTranslations('Common');
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
+    const [draft, setDraft] = React.useState('');
 
     const handleWrapperClick = () => {
       if (disabled) return;
@@ -251,6 +252,25 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       return `${yearObj}-${monthObj}-${dayObj}`;
     };
 
+    React.useEffect(() => {
+      setDraft(value ? formatDate(value) : '');
+    }, [value]);
+
+    const parseManualValue = (input: string) => {
+      const match = input.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!match) return null;
+      const [, day, month, year] = match;
+      const date = new Date(Number(year), Number(month) - 1, Number(day));
+      if (
+        date.getFullYear() !== Number(year) ||
+        date.getMonth() !== Number(month) - 1 ||
+        date.getDate() !== Number(day)
+      ) {
+        return null;
+      }
+      return `${year}-${month}-${day}`;
+    };
+
     return (
       <div className="w-full relative flex flex-col gap-1.5">
         {label && (
@@ -267,10 +287,22 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           )}
         >
           <input
-            value={formatDate(value)}
+            value={draft}
             disabled={disabled}
-            readOnly
+            inputMode="numeric"
             placeholder={translate('datePlaceholder')}
+            onChange={(event) => {
+              const nextDraft = event.target.value.replace(/[^0-9/]/g, '').slice(0, 10);
+              setDraft(nextDraft);
+              const parsed = parseManualValue(nextDraft);
+              if (parsed) onChange(parsed);
+              else if (nextDraft.trim() === '') onChange('');
+            }}
+            onBlur={() => {
+              if (draft && !parseManualValue(draft)) {
+                setDraft(value ? formatDate(value) : '');
+              }
+            }}
             className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed"
           />
           <button type="button" aria-label={translate('openDatePicker')} disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">

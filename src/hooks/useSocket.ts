@@ -290,7 +290,7 @@ const markAllNotificationsAsRead = async (scope: NotificationScope) => {
 };
 
 export function useSocket(scope: NotificationScope = 'player') {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, isSessionReady, user } = useAuthStore();
   const state = useSyncExternalStore(
     (listener) => subscribeToNotificationStore(scope, listener),
     () => getNotificationSnapshot(scope),
@@ -306,7 +306,7 @@ export function useSocket(scope: NotificationScope = 'player') {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isSessionReady || !isAuthenticated || !user?.id) {
       Promise.resolve().then(() => {
         disconnectNotificationSocketImmediately();
         socketClient.setNotificationAuthToken(null);
@@ -319,7 +319,7 @@ export function useSocket(scope: NotificationScope = 'player') {
       void fetchNotifications(scope);
       bindNotificationSocket(user.id);
     });
-  }, [isAuthenticated, user?.id, scope]);
+  }, [isSessionReady, isAuthenticated, user?.id, scope]);
 
   return {
     notifications: state.items,

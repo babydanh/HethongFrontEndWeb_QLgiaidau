@@ -484,6 +484,16 @@ export default function BracketTab({
   const activeStage = renderedStages.find((s) => s.id === activeStageId);
   const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage));
   const effectiveViewMode = activeStageSupportsFullView ? viewMode : 'paged';
+  const shouldShowStageTabs =
+    renderedStages.length > 1 &&
+    renderedStages.some((s, _, arr) =>
+      arr.some(
+        (other) =>
+          other.id !== s.id &&
+          (other.type !== s.type ||
+            stageNameLabel(other.name, translate) !== stageNameLabel(s.name, translate)),
+      ),
+    );
 
   // ── Loading ──
   if (isLoading) {
@@ -558,8 +568,8 @@ export default function BracketTab({
         </section>
       ))}
 
-      {/* Stage tabs */}
-      {renderedStages.length > 1 && (
+      {/* Stage tabs (only shown when there are genuinely distinct stages, e.g., Group Stage vs Knockout, or differently named brackets) */}
+      {shouldShowStageTabs && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {renderedStages.map((s) => (
             <button

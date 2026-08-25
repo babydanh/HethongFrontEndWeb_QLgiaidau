@@ -207,6 +207,19 @@ export function PagedDoubleElimView({
   const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
 
   const currentRound = activeBranchRounds[activeRoundIndex] ?? activeBranchRounds[0];
+  const viewportRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll horizontally when active round changes to ensure active column (e.g. Finals) is never cut off
+  React.useEffect(() => {
+    if (!viewportRef.current) return;
+    const activeVisibleIdx = visibleRounds.indexOf(activeBranchRounds[activeRoundIndex]);
+    if (activeVisibleIdx >= 0) {
+      const colX = activeVisibleIdx * (CARD_W + roundGap) * zoom;
+      const containerW = viewportRef.current.clientWidth;
+      const targetScroll = Math.max(0, colX - (containerW - CARD_W * zoom) / 2);
+      viewportRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    }
+  }, [activeRoundIndex, visibleRounds, zoom, roundGap, activeBranchRounds]);
 
   return (
     <div
@@ -320,7 +333,8 @@ export function PagedDoubleElimView({
 
       {/* GPU-Accelerated Adaptive Tree Viewport */}
       <div
-        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner no-scrollbar sm:p-4 ${
+        ref={viewportRef}
+        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
           isFullscreen ? 'flex-1 max-h-none' : ''
         }`}
       >

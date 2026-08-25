@@ -32,8 +32,6 @@ export default function CommunityTournamentBracketWidget({
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    setError(null);
 
     tournamentsApi
       .getTournamentById(tournamentId)
@@ -41,11 +39,12 @@ export default function CommunityTournamentBracketWidget({
         if (!mounted) return;
         if (res.data) {
           setTournament(res.data);
+          setError(null);
         } else {
           setError(translate('communityBracketLoadMissing'));
         }
       })
-      .catch((err) => {
+      .catch(() => {
         if (!mounted) return;
         setError(translate('communityBracketLoadFailed'));
       })
@@ -67,7 +66,7 @@ export default function CommunityTournamentBracketWidget({
       <div className="mt-3.5 overflow-hidden rounded-2xl border border-blue-100 bg-slate-50/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-200 animate-pulse" />
+            <div className="h-10 w-10 rounded-full bg-blue-200 animate-pulse" />
             <div className="space-y-1.5">
               <div className="h-3 w-24 bg-blue-200 animate-pulse rounded" />
               <div className="h-4 w-48 bg-slate-200 animate-pulse rounded" />
@@ -88,8 +87,13 @@ export default function CommunityTournamentBracketWidget({
       <div className="mt-3.5 overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-              <Trophy className="h-5 w-5" />
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/sporto_v1_with_text.svg"
+                alt="SportO"
+                className="h-full w-full object-contain rounded-full"
+              />
             </div>
             <div>
               <h4 className="text-sm font-bold text-slate-900">
@@ -118,8 +122,16 @@ export default function CommunityTournamentBracketWidget({
         {/* Header Ribbon */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-100 bg-white/80 backdrop-blur-xs">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
-              <Trophy className="h-5 w-5" />
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={tournament.logoUrl || '/sporto_v1_with_text.svg'}
+                alt={tournament.name}
+                className="h-full w-full object-contain rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                }}
+              />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">

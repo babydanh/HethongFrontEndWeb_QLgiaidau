@@ -44,8 +44,10 @@ export default function LeaderboardPage() {
 
     const [provinces, setProvinces] = useState<Region[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
-    const [selectedMatchType, setSelectedMatchType] = useState<string>('SINGLES');
-    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('MALE');
+    // Start broad so real public standings are not hidden by an implicit
+    // Singles/Male filter. Operators can narrow the list explicitly.
+    const [selectedMatchType, setSelectedMatchType] = useState<string>('');
+    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('');
 
     // ELO User Search States
     const [searchQuery, setSearchQuery] = useState("");
@@ -79,8 +81,8 @@ export default function LeaderboardPage() {
                         const publicRanks = data.publicRanks || [];
                         const matchRank = publicRanks.find((r) =>
                             r.categoryId === activeCategoryId &&
-                            r.matchType === selectedMatchType &&
-                            r.genderRestriction === selectedGenderFilter
+                            (!selectedMatchType || r.matchType === selectedMatchType) &&
+                            (!selectedGenderFilter || r.genderRestriction === selectedGenderFilter)
                         );
                         return {
                             ...u,
@@ -317,10 +319,11 @@ export default function LeaderboardPage() {
                                 onChange={(e) => {
                                     const matchType = e.target.value;
                                     setSelectedMatchType(matchType);
-                                    setSelectedGenderFilter(matchType === 'MIXED_DOUBLES' ? 'MIXED' : 'MALE');
+                                    setSelectedGenderFilter(matchType === 'MIXED_DOUBLES' ? 'MIXED' : '');
                                 }}
                                 className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                             >
+                                <option value="">{t("allMatchTypes")}</option>
                                 <option value="SINGLES">{t("singles")}</option>
                                 <option value="DOUBLES">{t("doubles")}</option>
                                 <option value="MIXED_DOUBLES">{t("mixedDoubles")}</option>
@@ -339,6 +342,7 @@ export default function LeaderboardPage() {
                                     onChange={(e) => setSelectedGenderFilter(e.target.value)}
                                     className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                                 >
+                                    <option value="">{t("allGenders")}</option>
                                     <option value="MALE">{t("male")}</option>
                                     <option value="FEMALE">{t("female")}</option>
                                 </select>

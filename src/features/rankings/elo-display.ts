@@ -31,25 +31,33 @@ export type EloDisplayLabels = {
   shieldActive?: string;
   shieldBroken?: string;
   onboardingCopy?: string;
+  SINGLES?: string;
+  DOUBLES?: string;
+  MIXED_DOUBLES?: string;
 };
 
-const MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
-  SINGLES: 'Singles',
-  DOUBLES: 'Doubles',
-  MIXED_DOUBLES: 'Mixed doubles',
+const DEFAULT_MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
+  SINGLES: 'Đơn',
+  DOUBLES: 'Đôi',
+  MIXED_DOUBLES: 'Đôi nam nữ',
 };
 
 /** Human-readable label for a match type. */
-export const getEloMatchTypeLabel = (matchType?: string | null, labels?: EloMatchTypeLabels): string => {
+export const getEloMatchTypeLabel = (
+  matchType?: string | null,
+  labels?: EloMatchTypeLabels | Record<string, unknown>,
+): string => {
   if (matchType === 'SINGLES' || matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES') {
-    return labels?.[matchType] ?? MATCH_TYPE_LABELS[matchType];
+    const rawMatch = labels?.[matchType] ?? (labels as Record<string, string>)?.[`matchType${matchType === 'SINGLES' ? 'Singles' : matchType === 'DOUBLES' ? 'Doubles' : 'MixedDoubles'}`];
+    if (typeof rawMatch === 'string') return rawMatch;
+    return DEFAULT_MATCH_TYPE_LABELS[matchType];
   }
-  return labels?.categoryFallback ?? 'Overview';
+  return (labels?.categoryFallback as string) ?? 'Tổng quan';
 };
 
 /** Display name combining category and match type. */
 export const getRankDisplayName = (rank: PlayerRanking): string => {
-  const categoryName = rank.categoryName || 'Sport';
+  const categoryName = rank.categoryName || 'Môn thể thao';
   const matchTypeLabel = getEloMatchTypeLabel(rank.matchType);
   return `${categoryName} • ${matchTypeLabel}`;
 };
@@ -66,10 +74,42 @@ export const isPublicRankingEligible = (
   rank: Pick<PlayerRanking, 'matchesPlayed' | 'adminLeaderboardEligible'> | null | undefined,
 ): boolean => Boolean(rank && (rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true));
 
-/** Human-readable tier name from a public/eligible rank record. */
+const GENERIC_TIER_NAMES = new Set(['ranked', 'unranked']);
+
+const TIER_TRANSLATION_KEYS: Record<string, string> = {
+  'Low Tier D': 'tierLowD',
+  'High Tier D': 'tierHighD',
+  'Low Tier C': 'tierLowC',
+  'High Tier C': 'tierHighC',
+  'Low Tier B': 'tierLowB',
+  'High Tier B': 'tierHighB',
+  'Low Tier A': 'tierLowA',
+  'High Tier A': 'tierHighA',
+  'Tier S': 'tierS',
+};
+
+const getCanonicalBackendTierName = (rank: PlayerRanking): string | null => {
+  const candidate = rank.tier?.name?.trim() || rank.tierName?.trim() || null;
+  return candidate && !GENERIC_TIER_NAMES.has(candidate.toLowerCase()) ? candidate : null;
+};
+
+/** Human-readable canonical tier from a public/eligible rank record. */
 export const getRankTierName = (rank: PlayerRanking | null | undefined): string => {
   if (!rank || !isPublicRankingEligible(rank)) return 'Unranked';
-  return rank.tier?.name || rank.tierName || 'Ranked';
+  return getCanonicalBackendTierName(rank)
+    || getRankStyle(rank.eloPoints, undefined, rank.categoryName).name;
+};
+
+export type EloTierLabelTranslator = (key: string) => string;
+
+/** Localize a canonical tier key while keeping the raw tier name for styling. */
+export const getLocalizedRankTierName = (
+  rank: PlayerRanking | null | undefined,
+  translate?: EloTierLabelTranslator,
+): string => {
+  const tierName = getRankTierName(rank);
+  const translationKey = TIER_TRANSLATION_KEYS[tierName];
+  return translate && translationKey ? translate(translationKey) : tierName;
 };
 
 /** Win rate as a rounded percentage. */
@@ -78,11 +118,9 @@ export const getRankWinRate = (rank: PlayerRanking | null | undefined): number =
   return Math.round((rank.matchesWon / rank.matchesPlayed) * 100);
 };
 
-/** Resolve a rank's tier label without losing sport/category context. */
-export const getCanonicalTierName = (rank: PlayerRanking | null | undefined): string => {
-  if (!rank) return 'Unranked';
-  return rank.tier?.name || rank.tierName || getRankStyle(rank.eloPoints, undefined, rank.categoryName).name;
-};
+/** Resolve a rank's canonical tier label without preserving generic backend status text. */
+export const getCanonicalTierName = (rank: PlayerRanking | null | undefined): string =>
+  getRankTierName(rank);
 
 /* ------------------------------------------------------------------ */
 /*  Rank selection                                                     */

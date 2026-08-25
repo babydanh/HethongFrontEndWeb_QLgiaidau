@@ -6,7 +6,7 @@ import { cn } from '@/utils/cn';
 import { getShortTierCode } from '@/components/ui/PlayerSportTierBadgeBar';
 import { getSportAccentColor, getSportLogo } from '@/constants/sports';
 
-export type RankTierCode = 'TS' | 'HTA' | 'LTA' | 'HTB' | 'LTB' | 'HTC' | 'LTC' | 'HTD' | 'LTD' | 'PRO' | 'ADV' | 'INT' | 'BEG' | '--';
+export type RankTierCode = 'TS' | 'HTA' | 'LTA' | 'HTB' | 'LTB' | 'HTC' | 'LTC' | 'HTD' | 'LTD' | '--';
 
 export interface TierThemeConfig {
   code: RankTierCode;
@@ -106,30 +106,30 @@ export const TIER_THEMES: Record<string, TierThemeConfig> = {
   HTC: {
     code: 'HTC',
     name: 'High Tier C',
-    ringOuter: '#A7F3D0',
+    ringOuter: '#34D399',
     ringInner: '#059669',
     coreFillStart: '#059669',
     coreFillEnd: '#064E3B',
-    glowColor: 'rgba(5, 150, 105, 0.4)',
+    glowColor: 'rgba(5, 150, 105, 0.45)',
     accentStroke: '#ECFDF5',
     textGradient: 'linear-gradient(180deg, #D1FAE5 0%, #34D399 50%, #059669 100%)',
     text3DShadow: '0 2px 0 #064E3B, 0 3px 6px rgba(0,0,0,0.5)',
-    textColor: '#059669',
+    textColor: '#10B981',
     badgeBg: 'bg-emerald-950/20',
     badgeBorder: 'border-emerald-500/30',
   },
   LTC: {
     code: 'LTC',
     name: 'Low Tier C',
-    ringOuter: '#C7D2FE',
+    ringOuter: '#6EE7B7',
     ringInner: '#10B981',
     coreFillStart: '#10B981',
     coreFillEnd: '#047857',
-    glowColor: 'rgba(16, 185, 129, 0.35)',
+    glowColor: 'rgba(16, 185, 129, 0.45)',
     accentStroke: '#F0FDF4',
-    textGradient: 'linear-gradient(180deg, #E0E7FF 0%, #6EE7B7 50%, #10B981 100%)',
+    textGradient: 'linear-gradient(180deg, #A7F3D0 0%, #34D399 50%, #10B981 100%)',
     text3DShadow: '0 2px 0 #047857, 0 3px 6px rgba(0,0,0,0.5)',
-    textColor: '#10B981',
+    textColor: '#34D399',
     badgeBg: 'bg-emerald-950/15',
     badgeBorder: 'border-emerald-400/30',
   },
@@ -141,11 +141,11 @@ export const TIER_THEMES: Record<string, TierThemeConfig> = {
     ringInner: '#64748B',
     coreFillStart: '#64748B',
     coreFillEnd: '#334155',
-    glowColor: 'rgba(100, 116, 139, 0.3)',
+    glowColor: 'rgba(148, 163, 184, 0.35)',
     accentStroke: '#F8FAFC',
     textGradient: 'linear-gradient(180deg, #F8FAFC 0%, #CBD5E1 50%, #64748B 100%)',
     text3DShadow: '0 2px 0 #1E293B, 0 3px 5px rgba(0,0,0,0.4)',
-    textColor: '#64748B',
+    textColor: '#94A3B8',
     badgeBg: 'bg-slate-900/20',
     badgeBorder: 'border-slate-400/30',
   },
@@ -156,71 +156,11 @@ export const TIER_THEMES: Record<string, TierThemeConfig> = {
     ringInner: '#64748B',
     coreFillStart: '#64748B',
     coreFillEnd: '#334155',
-    glowColor: 'rgba(100, 116, 139, 0.3)',
+    glowColor: 'rgba(148, 163, 184, 0.35)',
     accentStroke: '#F8FAFC',
     textGradient: 'linear-gradient(180deg, #F1F5F9 0%, #CBD5E1 50%, #64748B 100%)',
     text3DShadow: '0 2px 0 #1E293B, 0 3px 5px rgba(0,0,0,0.4)',
-    textColor: '#64748B',
-    badgeBg: 'bg-slate-900/20',
-    badgeBorder: 'border-slate-400/30',
-  },
-  PRO: {
-    code: 'PRO',
-    name: 'Pro',
-    ringOuter: '#FFE259',
-    ringInner: '#FFA751',
-    coreFillStart: '#F59E0B',
-    coreFillEnd: '#B45309',
-    glowColor: 'rgba(245, 158, 11, 0.45)',
-    accentStroke: '#FFFBEB',
-    textGradient: 'linear-gradient(180deg, #FFF59D 0%, #FFD54F 50%, #FF8F00 100%)',
-    text3DShadow: '0 2px 0 #B45309, 0 3px 6px rgba(0,0,0,0.5)',
-    textColor: '#F59E0B',
-    badgeBg: 'bg-amber-950/20',
-    badgeBorder: 'border-amber-500/30',
-  },
-  ADV: {
-    code: 'ADV',
-    name: 'Advanced',
-    ringOuter: '#A7F3D0',
-    ringInner: '#059669',
-    coreFillStart: '#059669',
-    coreFillEnd: '#064E3B',
-    glowColor: 'rgba(5, 150, 105, 0.4)',
-    accentStroke: '#ECFDF5',
-    textGradient: 'linear-gradient(180deg, #D1FAE5 0%, #34D399 50%, #059669 100%)',
-    text3DShadow: '0 2px 0 #064E3B, 0 3px 6px rgba(0,0,0,0.5)',
-    textColor: '#059669',
-    badgeBg: 'bg-emerald-950/20',
-    badgeBorder: 'border-emerald-500/30',
-  },
-  INT: {
-    code: 'INT',
-    name: 'Intermediate',
-    ringOuter: '#93C5FD',
-    ringInner: '#2563EB',
-    coreFillStart: '#2563EB',
-    coreFillEnd: '#1E3A8A',
-    glowColor: 'rgba(37, 99, 235, 0.4)',
-    accentStroke: '#EFF6FF',
-    textGradient: 'linear-gradient(180deg, #BFDBFE 0%, #60A5FA 50%, #2563EB 100%)',
-    text3DShadow: '0 2px 0 #1E3A8A, 0 3px 6px rgba(0,0,0,0.5)',
-    textColor: '#2563EB',
-    badgeBg: 'bg-blue-950/20',
-    badgeBorder: 'border-blue-500/30',
-  },
-  BEG: {
-    code: 'BEG',
-    name: 'Beginner',
-    ringOuter: '#E2E8F0',
-    ringInner: '#64748B',
-    coreFillStart: '#64748B',
-    coreFillEnd: '#334155',
-    glowColor: 'rgba(100, 116, 139, 0.3)',
-    accentStroke: '#F8FAFC',
-    textGradient: 'linear-gradient(180deg, #F1F5F9 0%, #CBD5E1 50%, #64748B 100%)',
-    text3DShadow: '0 2px 0 #1E293B, 0 3px 5px rgba(0,0,0,0.4)',
-    textColor: '#64748B',
+    textColor: '#94A3B8',
     badgeBg: 'bg-slate-900/20',
     badgeBorder: 'border-slate-400/30',
   },
@@ -244,16 +184,16 @@ export function getTierTheme(tierName?: string | null, elo?: number | null, expl
 
 export function isHighTierCode(code?: string | null): boolean {
   const normalized = code?.toUpperCase() || '';
-  return normalized === 'TS' || normalized.startsWith('HT') || ['PRO', 'ADV', 'INT'].includes(normalized);
+  return normalized === 'TS' || normalized.startsWith('HT');
 }
 
 export function getTierBadgeStyle(theme: TierThemeConfig, code: string) {
   const isHigh = isHighTierCode(code);
   return {
     isHigh,
-    backgroundColor: `${theme.coreFillStart}${isHigh ? '22' : '10'}`,
-    borderColor: `${theme.ringInner}${isHigh ? '99' : '55'}`,
-    textColor: isHigh ? theme.coreFillEnd : theme.textColor,
+    backgroundColor: '#090d16',
+    borderColor: theme.coreFillStart || theme.ringInner,
+    textColor: theme.ringOuter || theme.textColor,
   };
 }
 
@@ -366,12 +306,13 @@ export function SportBadgeIcon({
 
   return (
     <span
-      className="inline-flex items-center justify-center shrink-0 rounded-full border"
+      className="inline-flex items-center justify-center shrink-0 rounded-full border shadow-2xs relative overflow-hidden"
       style={{
         width: sizePx,
         height: sizePx,
-        backgroundColor: `${accentColor}16`,
-        borderColor: `${accentColor}55`,
+        backgroundColor: '#1e293b',
+        borderColor: `${accentColor}aa`,
+        boxShadow: `0 0 6px ${accentColor}33`,
       }}
       aria-hidden="true"
     >
@@ -379,10 +320,10 @@ export function SportBadgeIcon({
         <Image
           src={sportLogo}
           alt=""
-          width={Math.round(sizePx * 0.58)}
-          height={Math.round(sizePx * 0.58)}
+          width={Math.round(sizePx * 0.68)}
+          height={Math.round(sizePx * 0.68)}
           unoptimized
-          className="object-contain"
+          className="object-contain filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] brightness-125 contrast-125"
         />
       ) : (
         <span className="text-[10px] font-black" style={{ color: accentColor }}>

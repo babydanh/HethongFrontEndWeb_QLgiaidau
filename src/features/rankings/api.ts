@@ -185,7 +185,10 @@ interface UserRankResponse {
 export const rankingsApi = {
   getRankings: (params?: Record<string, unknown>) => api.get<PaginatedRankings>('/rankings', { params }),
   updateElo: (data: { matchId: string }) => api.post('/rankings/update-elo', data),
-  getUserRankings: (userId: string) => api.get<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] }>(`/rankings/user/${userId}`),
+  getUserRankings: (userId: string) =>
+    api
+      .get<ApiEnvelope<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] }>>(`/rankings/user/${userId}`)
+      .then((response) => response.data),
   getUserEloHistory: (userId: string, params?: Record<string, unknown>) => api.get<{ data: EloHistoryLog[]; meta: { page: number; limit: number } }>(`/rankings/user/${userId}/history`, { params }),
   getUserRank: (userId: string, categoryId: string) => api.get<UserRankResponse>(`/rankings/user/${userId}/rank/${categoryId}`),
   getFootballTeamRankings: (params: { categoryId: string; communityId?: string; limit?: number; cursor?: string }) =>

@@ -8,7 +8,7 @@ import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import Link from 'next/link';
 import { isNetworkError } from '@/utils/error';
-import { getMatchRoundLabel, type RoundLabelTranslations, type TournamentFormatForRoundLabel } from '@/utils/match-round-label';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 
 interface Props {
@@ -30,8 +30,6 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   };
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -143,15 +141,11 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
       <div className="flex flex-col gap-3 relative z-10">
         {matches.map((match) => {
           const sets = extractMatchScores(match.scoreDetails);
-          const tournamentInfo = match.tournament as {
-            format?: TournamentFormatForRoundLabel;
-            maxParticipants?: number | null;
-          } | null | undefined;
           const roundLabel = getMatchRoundLabel({
             match,
             matches,
-            tournamentFormat: tournamentInfo?.format,
-            bracketSize: tournamentInfo?.maxParticipants ?? null,
+            tournamentFormat: match.stage?.type ?? match.group?.stage?.type,
+            bracketSize: null,
             translations: roundLabelTranslations,
           });
           return (

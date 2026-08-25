@@ -17,14 +17,17 @@ export default function RootLayoutClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, isAuthenticated, setUser, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, setUser, logout } = useAuthStore();
   const hasFetchedRef = useRef(false);
   const fetchedUserIdRef = useRef<string | null>(null);
 
   // Sync user profile once per authenticated user, not on every route change
   useEffect(() => {
     const isGuestRoute = ['/login', '/register', '/auth'].some((route) => pathname.startsWith(route));
-    if (isGuestRoute || !isAuthenticated || !user?.id) {
+    // The profile page owns its own profile request. Avoid a duplicate protected
+    // request there, and never start auth-dependent traffic before persistence
+    // hydration has completed.
+    if (!hasHydrated || pathname.startsWith('/profile') || isGuestRoute || !isAuthenticated || !user?.id) {
       hasFetchedRef.current = false;
       fetchedUserIdRef.current = null;
       return;
@@ -69,7 +72,7 @@ export default function RootLayoutClient({
           console.error('Failed to sync user profile globally', error);
         }
       });
-  }, [pathname, isAuthenticated, setUser, logout, user?.id]);
+  }, [pathname, hasHydrated, isAuthenticated, setUser, logout, user?.id]);
   
   // Exclude admin, moderation & auth paths from header/footer
   const hideHeaderFooter = pathname.startsWith('/admin') || pathname.startsWith('/moderation');

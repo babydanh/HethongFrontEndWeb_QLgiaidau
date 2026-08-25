@@ -383,7 +383,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
             {translate('previousPage')}
           </button>
           <span className="min-w-20 text-center text-xs font-bold text-slate-500">
-            {translate('reportPageCount', { page: currentPage })}
+            {translate('pageCount', { page: currentPage, totalPages })}
           </span>
           <button
             type="button"

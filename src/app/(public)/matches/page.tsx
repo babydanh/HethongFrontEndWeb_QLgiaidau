@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useLocale, useTranslations } from 'next-intl';
 import { Search, ChevronDown, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -304,9 +305,10 @@ export default function MatchesListPage() {
   const [activeShareUrl, setActiveShareUrl] = useState('');
   const [activeShareTitle, setActiveShareTitle] = useState('');
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const filterKey = [
-    searchTerm,
+    debouncedSearchTerm,
     selectedCategoryId,
     selectedStatus,
     selectedContent,
@@ -466,7 +468,7 @@ export default function MatchesListPage() {
           publicOnly: true,
           isPublicOnly: true,
           ...(cursor ? { cursor } : {}),
-          search: searchTerm || undefined,
+          search: debouncedSearchTerm || undefined,
                     categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
           matchType,
@@ -497,44 +499,17 @@ export default function MatchesListPage() {
     fetchMatches();
   }, [filterKey, page, matchesRefreshTick]);
 
-  // Fetch cheer counts for all visible matches
-  useEffect(() => {
-    if (matches.length === 0) return;
-    const ids = matches.map(m => m.id);
-    const loadCheerCounts = async () => {
-      try {
-        const counts: Record<string, number> = {};
-        // Use cheerCount from match data if available, or fetch individually
-        for (const match of matches) {
-          if (typeof match.cheerCount === 'number') {
-            counts[match.id] = match.cheerCount;
-          } else {
-            try {
-              const res = await matchesApi.getCheerCount(match.id);
-              counts[match.id] = res.cheerCount;
-            } catch {
-              counts[match.id] = 0;
-            }
-          }
-        }
-        setCheerCounts(counts);
-      } catch {
-        // silent
-      }
-    };
-    loadCheerCounts();
-  }, [matches]);
+    // The backend match projection already normalizes cheerCount to zero.
+  // Counts are rendered from the match projection; local state is only for
+  // immediate updates after the user sends a cheer.
+
+
 
   // Tìm category name từ selectedCategoryId để filter client-side
   const selectedCategoryName = useMemo(() => {
     if (!selectedCategoryId) return null;
     const cat = categories.find(c => c.id === selectedCategoryId);
-    const name = cat?.name?.toLowerCase() || null;
-    console.log('🐛 [sport-filter] selectedCategoryId:', selectedCategoryId, '→ name:', name);
-    if (!cat) {
-      console.log('🐛 [sport-filter] categories available:', categories.map(c => ({ id: c.id, name: c.name, slug: c.slug })));
-    }
-    return name;
+    return cat?.name?.toLowerCase() || null;
   }, [selectedCategoryId, categories]);
 
   // Ngưỡng 30 ngày, chỉ tính 1 lần khi deps thay đổi
@@ -545,34 +520,6 @@ export default function MatchesListPage() {
   }, []);
 
   const filteredMatches = useMemo(() => {
-    // 🐛 DEBUG: Log category filter state
-    if (selectedCategoryName) {
-      console.log('🐛 [sport-filter] ========================');
-      console.log('🐛 [sport-filter] selectedCategoryName:', selectedCategoryName);
-      console.log('🐛 [sport-filter] total matches:', matches.length);
-      matches.forEach((match, idx) => {
-        const matchCatName = (match.tournament?.category?.name || match.tournament?.categoryName || '').toLowerCase();
-        const matchCat = match.tournament?.category;
-        const matchCatNameFallback = match.tournament?.categoryName;
-        const matchCatSlug = match.tournament?.categorySlug;
-        const tournamentId = match.tournamentId?.slice(0, 8);
-        const status = match.status;
-        const passesFilter = matchCatName === selectedCategoryName;
-        console.log(
-          `🐛 [sport-filter] match[${idx}] (${tournamentId}) status=${status}` +
-          ` | cat.name=${matchCat?.name}` +
-          ` | catName=${matchCatNameFallback}` +
-          ` | catSlug=${matchCatSlug}` +
-          ` | matchCatName="${matchCatName}"` +
-          ` | passes=${passesFilter}`
-        );
-        if (!passesFilter) {
-          console.log('   🐛 FULL tournament:', JSON.stringify(match.tournament, null, 2));
-        }
-      });
-      console.log('🐛 [sport-filter] ========================');
-    }
-
     return matches.filter(match => {
       // Bỏ qua giải đã bị hủy hoặc bản nháp
       if (match.tournament?.status === 'CANCELLED' || match.tournament?.status === 'DRAFT' || match.tournament?.status === 'PENDING_DELETE') {
@@ -1416,12 +1363,12 @@ export default function MatchesListPage() {
                                 toast.error(translate('cheerFailed'));
                               }
                             }}
-                            title={`${translate('cheerLabel')} (${cheerCounts[match.id] || 0})`}
+                            title={`${translate('cheerLabel')} (${cheerCounts[match.id] ?? match.cheerCount ?? 0})`}
                             className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
                           >
                             <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
                             <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
-                              {translate('cheerLabel')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] || 0})</span>
+                              {translate('cheerLabel')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] ?? match.cheerCount ?? 0})</span>
                             </span>
                           </button>
 

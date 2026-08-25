@@ -33,7 +33,7 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
-import { PlayerSportTierBadgeBar } from '@/components/ui/PlayerSportTierBadgeBar';
+
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 
@@ -98,10 +98,38 @@ const getAchievementMeta = (rank: AchievementRank, labels: { champion: string; r
   }
 };
 
+type ParticipantWithUserMembers = {
+  members?: ReadonlyArray<{ userId?: string }> | null;
+} | null | undefined;
+
 const hasUserInParticipant = (
-  participant: BracketMatch['participant1'] | BracketMatch['participant2'],
+  participant: ParticipantWithUserMembers,
   userId: string,
 ) => Boolean(participant?.members?.some((member) => member.userId === userId));
+
+const isMockParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => Boolean(
+  participant?.isMock === true
+  || participant?.members?.some((member) => member.isMock === true),
+);
+
+const isPlaceholderParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => {
+  const teamName = participant?.teamName?.trim().toLowerCase();
+  return !teamName || ['tbd', 'chờ xác định', 'chua xac dinh', 'đang chờ', 'dang cho'].includes(teamName);
+};
+
+const isRenderableProfileMatch = (match: Match, userId: string): boolean => {
+  const isP1 = hasUserInParticipant(match.participant1, userId);
+  const isP2 = hasUserInParticipant(match.participant2, userId);
+  if (!isP1 && !isP2) return false;
+  if (match.isBye || isMockParticipant(match.participant1) || isMockParticipant(match.participant2)) return false;
+
+  const opponent = isP1 ? match.participant2 : match.participant1;
+  return !isPlaceholderParticipant(opponent);
+};
 
 const deriveTournamentPlacement = (
   tournament: Tournament,
@@ -214,15 +242,19 @@ const deriveTournamentPlacement = (
 export default function ProfilePage() {
   const translate = useTranslations("Profile");
   const achievementLabels = { champion: translate("achievementChampion"), runnerUp: translate("achievementRunnerUp"), thirdPlace: translate("achievementThirdPlace") };
-  const { user } = useAuthStore();
-  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+    const { user, hasHydrated } = useAuthStore();
+
+  const [profileData, setProfileData] = useState<UserProfile | null>(() => {
+    const u = useAuthStore.getState().user;
+    return u ? (u as unknown as UserProfile) : null;
+  });
   const [createdCommunities, setCreatedCommunities] = useState<Community[]>([]);
   const [joinedCommunities, setJoinedCommunities] = useState<Community[]>([]);
   const [participatingTournaments, setParticipatingTournaments] = useState<Tournament[]>([]);
   const [organizedTournaments, setOrganizedTournaments] = useState<Tournament[]>([]);
   const [coOrganizerTournaments, setCoOrganizerTournaments] = useState<Tournament[]>([]);
   const [refereeTournaments, setRefereeTournaments] = useState<WorkspaceRefereeInvite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !useAuthStore.getState().user?.id);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
     if (typeof window !== 'undefined') {
@@ -300,19 +332,54 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     let isMounted = true;
 
+    if (user && (!profileData || profileData.id !== user.id)) {
+      setProfileData(user as unknown as UserProfile);
+      setIsLoading(false);
+    }
+
     const fetchProfile = async () => {
-      try {
+      // A persisted user is already safe to render as the first shell.
+      if (!user?.id && !profileData?.id) {
         setIsLoading(true);
-        const [data, communitiesRes, workspaceRes, categoriesRes] = await Promise.all([
-          usersApi.getProfile(),
+      }
+      try {
+        // The profile is the only request that gates the header shell. Secondary
+        // requests start after it succeeds so a slow/unauthorized auxiliary API
+        // cannot keep the first visit in a full-page skeleton.
+        const data = await usersApi.getProfile();
+        if (!isMounted) return;
+
+        setProfileData(data);
+        setIsLoading(false);
+
+        // Sync roles/details with useAuthStore so header displays updated roles immediately.
+        if (data) {
+          useAuthStore.getState().setUser({
+            ...data,
+            roles: data.roles || [],
+          });
+        }
+
+        const userRoles = data?.roles || [];
+        if (!userRoles.includes('ORGANIZER') && !userRoles.includes('ADMIN')) {
+          void api
+            .get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my')
+            .then((res) => {
+              if (isMounted) setTickets(res.data || []);
+            })
+            .catch(() => undefined);
+        }
+
+        void Promise.all([
           communitiesApi.getMyCommunities().catch(() => null),
           tournamentsApi.getMyWorkspace().catch(() => null),
           categoriesApi.getCategories().catch(() => null),
-        ]);
-        if (isMounted) {
-          setProfileData(data);
+        ]).then(([communitiesRes, workspaceRes, categoriesRes]) => {
+          if (!isMounted) return;
           setCreatedCommunities(communitiesRes?.data?.created || []);
           setJoinedCommunities(communitiesRes?.data?.joined || []);
           setParticipatingTournaments(workspaceRes?.data?.participatingTournaments || []);
@@ -320,42 +387,19 @@ export default function ProfilePage() {
           setCoOrganizerTournaments(workspaceRes?.data?.coOrganizerTournaments || []);
           setRefereeTournaments(workspaceRes?.data?.refereeTournaments || workspaceRes?.data?.refereeInvites || []);
           setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
-
-          // Sync roles/details with useAuthStore so header displays updated roles immediately.
-          if (data) {
-            useAuthStore.getState().setUser({
-              ...data,
-              roles: data.roles || [],
-            });
-          }
-
-          // Verification tickets are secondary data. Do not block the profile shell,
-          // matches tab, or ELO history while this endpoint is slow or unavailable.
-          const userRoles = data?.roles || [];
-          if (!userRoles.includes('ORGANIZER') && !userRoles.includes('ADMIN')) {
-            void api
-              .get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my')
-              .then((res) => {
-                if (isMounted) setTickets(res.data || []);
-              })
-              .catch(() => undefined);
-          }
-        }
+        });
       } catch (error) {
-        console.error("Failed to fetch profile", error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        console.error('Failed to fetch profile', error);
+        if (isMounted) setIsLoading(false);
       }
     };
 
-    fetchProfile();
+    void fetchProfile();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hasHydrated, user?.id]);
 
   const handleUploadEvidence = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -411,6 +455,7 @@ export default function ProfilePage() {
   };
 
   const displayUser = profileData || user;
+  const loadedProfileUserId = profileData?.id;
 
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
@@ -431,10 +476,11 @@ export default function ProfilePage() {
   const featuredElo = featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? null;
 
   useEffect(() => {
-    if (!displayUser?.id) return;
+        if (!loadedProfileUserId) return;
 
-    if (matchesCursorUserRef.current !== displayUser.id) {
-      matchesCursorUserRef.current = displayUser.id;
+    if (matchesCursorUserRef.current !== loadedProfileUserId) {
+      matchesCursorUserRef.current = loadedProfileUserId;
+
       matchesCursorByPageRef.current = { 1: null };
     }
 
@@ -443,11 +489,12 @@ export default function ProfilePage() {
       try {
         setIsLoadingTab(true);
         const [ranksRes, historyRes, followedRes, matchesRes] = await Promise.all([
-          rankingsApi.getUserRankings(displayUser.id),
-          rankingsApi.getUserEloHistory(displayUser.id),
+                    rankingsApi.getUserRankings(loadedProfileUserId),
+          rankingsApi.getUserEloHistory(loadedProfileUserId),
           tournamentsApi.getFollowedTournaments(),
           matchesApi.getMatches({
-            userId: displayUser.id,
+            userId: loadedProfileUserId,
+
             limit: 10,
             ...(matchesCursorByPageRef.current[matchesPage]
               ? { cursor: matchesCursorByPageRef.current[matchesPage] }
@@ -461,7 +508,10 @@ export default function ProfilePage() {
           setFollowedTournaments(sortFollowedTournaments(followedRes?.data || []));
 
           if (matchesRes?.data) {
-            setMatches(matchesRes.data);
+            const visibleMatches = matchesRes.data.filter((match) =>
+              isRenderableProfileMatch(match, loadedProfileUserId),
+            );
+            setMatches(visibleMatches);
             setMatchesTotalPages(matchesRes.meta?.totalPages || 1);
             matchesCursorByPageRef.current[matchesPage + 1] = matchesRes.meta?.nextCursor ?? null;
           } else {
@@ -483,12 +533,13 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [displayUser?.id, matchesPage]);
+  }, [loadedProfileUserId, matchesPage]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchAchievements = async () => {
-      if (!displayUser?.id || participatingTournaments.length === 0) {
+            if (!loadedProfileUserId || participatingTournaments.length === 0) {
+
         if (isMounted) setAchievements([]);
         return;
       }
@@ -502,7 +553,8 @@ export default function ProfilePage() {
           completedRankedTournaments.map(async (tournament) => {
             try {
               const response = await tournamentsApi.getTournamentBracket(tournament.id);
-              return deriveTournamentPlacement(tournament, response.data.stages || [], displayUser.id, achievementLabels);
+                            return deriveTournamentPlacement(tournament, response.data.stages || [], loadedProfileUserId, achievementLabels);
+
             } catch (error) {
               console.error('Failed to load bracket for achievement', tournament.id, error);
               return null;
@@ -531,7 +583,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [displayUser?.id, participatingTournaments]);
+  }, [loadedProfileUserId, participatingTournaments]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
@@ -621,15 +673,6 @@ export default function ProfilePage() {
                   )}
                 </h1>
 
-                {/* Gamified Multi-Sport Tier Badge Bar */}
-                <PlayerSportTierBadgeBar
-                  userRankings={userRankings?.publicRanks}
-                  categories={categories}
-                  region="VN"
-                  variant="light"
-                  onlyRanked={true}
-                  size="sm"
-                />
               </div>
 
               <p className="text-slate-500 font-semibold mt-0.5">
@@ -1481,10 +1524,16 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-4">
                       {eloHistory.map((item) => {
                         const isGain = item.changedPoints >= 0;
+                        const normalizedReason = item.reason?.toUpperCase() ?? '';
+                        const historyLabel = normalizedReason.startsWith('ADMIN_')
+                          ? translate("adminEloAdjustment")
+                          : normalizedReason === 'INACTIVITY_DECAY'
+                            ? translate("eloInactivityDecay")
+                            : item.match?.tournamentName || translate("rankedMatchFallback");
                         return (
                           <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
                             <div>
-                              <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate("rankedMatchFallback")}</p>
+                              <p className="text-sm font-bold text-slate-800 line-clamp-1">{historyLabel}</p>
                               <p className="text-xs text-slate-400 mt-0.5">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}</p>
                             </div>
                             <div className="flex items-center gap-3 text-right">

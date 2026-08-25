@@ -80,14 +80,16 @@ function isPublicSnapshotRequest(config: AxiosRequestConfig): boolean {
 function isDirectMessagingRequest(config: AxiosRequestConfig | undefined): boolean {
   if (!config) return false;
   const path = (config.url ?? '').split('?')[0];
-  if (path.startsWith('/chat/direct-policy/')) return true;
-  if (config.method?.toUpperCase() !== 'POST' || path !== '/chat/rooms') return false;
-  try {
-    const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
-    return payload?.type === 'DIRECT';
-  } catch {
-    return false;
+  if (path.includes('/chat/direct-policy/') || path.includes('/chat/blocks')) return true;
+  if (config.method?.toUpperCase() === 'POST' && path.includes('/chat/rooms')) {
+    try {
+      const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+      return payload?.type === 'DIRECT';
+    } catch {
+      return false;
+    }
   }
+  return false;
 }
 
 function isSharedGetEligible(config: AxiosRequestConfig): boolean {
@@ -345,16 +347,32 @@ api.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => api(originalRequest))
+          .then(() => {
+            originalRequest._retry = true;
+            return api(originalRequest);
+          })
           .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
+      const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY;
+      const authHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
+      };
+
       try {
         // Because of withCredentials: true, the browser will automatically send the refreshToken cookie
-        await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
+        await axios.post(
+          `${api.defaults.baseURL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true,
+            headers: authHeaders,
+          },
+        );
         processQueue(null);
 
         // Retry the original request. Browser will now send the newly set accessToken cookie
@@ -364,7 +382,14 @@ api.interceptors.response.use(
         // Refresh token failed -> Session is completely dead. Clear auth store state immediately.
         useAuthStore.getState().logout();
         try {
-          await axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true });
+          await axios.post(
+            `${api.defaults.baseURL}/auth/logout`,
+            {},
+            {
+              withCredentials: true,
+              headers: authHeaders,
+            },
+          );
         } catch (e) {
           console.error('Failed to clear cookies:', e);
         }

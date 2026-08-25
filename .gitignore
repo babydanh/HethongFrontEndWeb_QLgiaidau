@@ -48,6 +48,7 @@ next-env.d.ts
 graphify-out/
 .claude/
 .hermes/
+.lint-temp*/
 
 # Firebase & Secrets (Do NOT commit to git)
 secrets/

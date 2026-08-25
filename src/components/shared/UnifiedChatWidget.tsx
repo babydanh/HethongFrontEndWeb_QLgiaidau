@@ -2799,15 +2799,24 @@ export default function UnifiedChatWidget() {
                                 const otherLastRead = selectedRoom ? (roomReadStates[selectedRoom.id]?.[otherParticipant?.id || ''] || otherParticipant?.lastReadAt) : null;
                                 const isSeen = otherLastRead ? new Date(otherLastRead).getTime() >= new Date(message.createdAt).getTime() : false;
 
-                                if (isSeen && otherParticipant?.avatarUrl) {
+                                if (isSeen && otherParticipant) {
                                   return (
                                     <div className="mt-1 flex items-center justify-end gap-1 px-1" title={translate('seenBy', { name: otherParticipant.fullName || '' })}>
                                       <span className="text-[9px] text-slate-400 font-medium">{translate('seen')}</span>
-                                      <img
-                                        src={otherParticipant.avatarUrl}
-                                        alt={otherParticipant.fullName || translate('seen')}
-                                        className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
-                                      />
+                                      {otherParticipant.avatarUrl ? (
+                                        <img
+                                          src={otherParticipant.avatarUrl}
+                                          alt={otherParticipant.fullName || translate('seen')}
+                                          className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
+                                        />
+                                      ) : (
+                                        <span
+                                          aria-hidden="true"
+                                          className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-100 text-[8px] font-bold text-blue-700"
+                                        >
+                                          {(otherParticipant.fullName || '?').trim().charAt(0).toUpperCase()}
+                                        </span>
+                                      )}
                                     </div>
                                   );
                                 }

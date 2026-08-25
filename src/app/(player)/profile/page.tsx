@@ -660,16 +660,36 @@ export default function ProfilePage() {
           <div className="space-y-3">
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+                <h1 className="text-3xl font-bold text-slate-900 flex flex-wrap items-center gap-2.5 tracking-tight">
                   {isLoading ? (
                     <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
                   ) : (
                     displayUser?.fullName || translate("anonymousUser")
                   )}
-                  {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
-                    <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                  {displayUser?.roles?.includes('ADMIN') && (
+                    <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
                       <ShieldCheck className="w-5 h-5 text-blue-600" />
                     </span>
+                  )}
+                  {displayUser?.isVerified && (
+                    <span title={translate("verified")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
+                      <ShieldCheck className="w-5 h-5 text-blue-600" />
+                    </span>
+                  )}
+                  {featuredRank && (
+                    <EloTierBadge
+                      elo={featuredRank.eloPoints}
+                      tierName={featuredRank.tierName || featuredRank.tier?.name || undefined}
+                      categoryName={featuredRank.categoryName}
+                      size="md"
+                    />
+                  )}
+                  {!featuredRank && latestEloHistory && (
+                    <EloTierBadge
+                      elo={latestEloHistory.newElo}
+                      categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
+                      size="md"
+                    />
                   )}
                 </h1>
 
@@ -685,7 +705,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {Array.from(new Set((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined || user?.roles || [])).map((role: string) => {
+              {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
                 let roleLabel = role;
                 let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 if (role === 'PLAYER') {
@@ -705,17 +725,27 @@ export default function ProfilePage() {
                 );
               })}
 
-              {eligiblePublicRanks.length === 0 && latestEloHistory ? (
+              {eligiblePublicRanks.length > 0 ? (
+                eligiblePublicRanks.map((rank) => (
+                  <EloTierBadge
+                    key={`${rank.categoryId}-${rank.matchType}`}
+                    elo={rank.eloPoints}
+                    tierName={rank.tierName || rank.tier?.name || undefined}
+                    categoryName={rank.categoryName}
+                    size="sm"
+                  />
+                ))
+              ) : latestEloHistory ? (
                 <EloTierBadge
                   elo={latestEloHistory.newElo}
                   categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
-                  size="md"
+                  size="sm"
                 />
-              ) : eligiblePublicRanks.length === 0 ? (
+              ) : (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
                   {translate("unranked")}
                 </span>
-              ) : null}
+              )}
 
               {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">

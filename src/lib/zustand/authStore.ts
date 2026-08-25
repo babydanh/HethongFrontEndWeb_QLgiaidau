@@ -8,6 +8,7 @@ export interface User {
   avatarUrl?: string | null;
   coverUrl?: string | null;
   roles: string[];
+  role?: string;
   phoneNumber?: string | null;
   dateOfBirth?: string | null;
   gender?: string | null;
@@ -17,6 +18,7 @@ export interface User {
   provinceCode?: string | null;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
+  isVerified?: boolean;
   isGenderLocked?: boolean;
   allowStrangerMessages?: boolean;
   bankName?: string | null;

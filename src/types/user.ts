@@ -18,6 +18,7 @@ export interface UserProfile {
   updatedAt: string;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
+  isVerified?: boolean;
   isGenderLocked?: boolean;
   allowStrangerMessages?: boolean;
   bankName?: string | null;

@@ -314,13 +314,29 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           {/* Info */}
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+              <h1 className="text-3xl font-bold text-slate-900 flex flex-wrap items-center gap-2.5 tracking-tight">
                 {profile.fullName}
                 {profile.isVerified && (
-                  <span title={translate('verifiedMember')} className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                  <span title={translate('verifiedMember')} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
                     <ShieldCheck className="w-5 h-5 text-blue-600" />
                   </span>
                 )}
+                {(() => {
+                  const featuredRank = displayedRanks
+                    .filter(isPublicRankingEligible)
+                    .sort((a, b) => b.eloPoints - a.eloPoints)[0];
+                  if (featuredRank) {
+                    return (
+                      <EloTierBadge
+                        elo={featuredRank.eloPoints}
+                        tierName={featuredRank.tierName || undefined}
+                        categoryName={featuredRank.categoryName}
+                        size="md"
+                      />
+                    );
+                  }
+                  return null;
+                })()}
               </h1>
             </div>
 

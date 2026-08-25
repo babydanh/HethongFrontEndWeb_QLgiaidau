@@ -116,6 +116,23 @@ export function FinanceTab({
     }
   };
 
+  const getEntryFeeLockReason = () => {
+    if (!allowEntryFees) {
+      return translate('feeLockReasonGlobal');
+    }
+    if (isTournamentRegistrationClosed(tournament.status)) {
+      return translate('feeLockReasonRegistrationClosed');
+    }
+    if (isTournamentInProgress(tournament.status)) {
+      return translate('feeLockReasonInProgress');
+    }
+    if (isTournamentCompleted(tournament.status)) {
+      return translate('feeLockReasonCompleted');
+    }
+    return null;
+  };
+  const lockReason = getEntryFeeLockReason();
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">{translate('title')}</h2>
@@ -151,22 +168,35 @@ export function FinanceTab({
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input
-              label={translate('entryFeeLabel')}
-              type="text"
-              inputMode="numeric"
-              value={isEntryFeeFocused ? entryFeeDraft : formatEntryFee(entryFee)}
-              onFocus={() => {
-                setIsEntryFeeFocused(true);
-                setEntryFeeDraft(entryFee > 0 ? String(entryFee) : '');
-              }}
-              onBlur={() => {
-                setIsEntryFeeFocused(false);
-                setEntryFeeDraft(formatEntryFee(entryFee));
-              }}
-              onChange={(e) => handleEntryFeeChange(e.target.value)}
-              disabled={isEntryFeeInputDisabled}
-            />
+            <div className="flex flex-col gap-2">
+              <Input
+                label={translate('entryFeeLabel')}
+                type="text"
+                inputMode="numeric"
+                value={isEntryFeeFocused ? entryFeeDraft : formatEntryFee(entryFee)}
+                onFocus={() => {
+                  setIsEntryFeeFocused(true);
+                  setEntryFeeDraft(entryFee > 0 ? String(entryFee) : '');
+                }}
+                onBlur={() => {
+                  setIsEntryFeeFocused(false);
+                  setEntryFeeDraft(formatEntryFee(entryFee));
+                }}
+                onChange={(e) => handleEntryFeeChange(e.target.value)}
+                disabled={isEntryFeeInputDisabled}
+              />
+              {lockReason ? (
+                <div className="flex items-start gap-2 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <Lock className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                  <span>{lockReason}</span>
+                </div>
+              ) : (
+                <p className="text-xs text-emerald-700 font-medium flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                  {translate('feeEditableHint')}
+                </p>
+              )}
+            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">{translate('platformFeePerPlayerLabel')}</label>
               <Badge className="py-2.5 bg-slate-50 border-slate-200 text-slate-700 justify-center font-bold text-sm">

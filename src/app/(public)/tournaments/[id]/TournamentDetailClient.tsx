@@ -8,7 +8,8 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } 
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, CreditCard } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
@@ -576,17 +577,22 @@ const commonTranslate = useTranslations('Common');
   const hasAdvancedRegistrationForm = activeTournament.tournamentConfig?.registrationForm?.status === 'PUBLISHED';
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
-    let registrationButtonLabel = registrationModeUi.ctaLabel;
+  let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = isRegistrationStatusLoading;
-  const canResumePayment =
-    myRegistration?.registered === true && myRegistration.paymentEligible === true;
+  const isRegisteredUser = myRegistration?.registered === true;
+  const isPaidUser = myRegistration?.participant?.isPaid === true;
+  const hasFee = Number(activeTournament.entryFee ?? 0) > 0 || (selectedDivision != null && Number(selectedDivision.entryFee ?? 0) > 0);
+  const isUnpaidUser = isRegisteredUser && !isPaidUser && hasFee;
+  const canResumePayment = isUnpaidUser || (isRegisteredUser && myRegistration?.paymentEligible === true);
 
-  if (myRegistration?.registered) {
-    registrationButtonLabel = canResumePayment
-      ? translate('continuePayment')
-      : translate('alreadyRegistered');
-    isRegistrationButtonDisabled = !canResumePayment;
-
+  if (isRegisteredUser) {
+    if (isUnpaidUser || canResumePayment) {
+      registrationButtonLabel = '💳 ' + (translate('continuePayment') || 'Thanh toán ngay');
+      isRegistrationButtonDisabled = false;
+    } else {
+      registrationButtonLabel = translate('alreadyRegistered') || 'Đã đăng ký';
+      isRegistrationButtonDisabled = true;
+    }
   } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
       registrationButtonLabel = translate('registrationLocked');
@@ -845,6 +851,43 @@ const commonTranslate = useTranslations('Common');
 
           {/* Left Area - Tabs & Content (takes 3 cols) */}
           <div className="lg:col-span-3 space-y-6 min-w-0 max-w-full overflow-hidden">
+            {/* Unpaid Payment Banner for registered users */}
+            {isRegisteredUser && isUnpaidUser && (
+              <div className="rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 p-5 text-white shadow-lg border border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-inner">
+                    <CreditCard className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-base text-white">Bạn đã đăng ký nhưng chưa hoàn tất nộp lệ phí thi đấu</p>
+                    <p className="text-xs text-amber-100 font-medium mt-0.5">
+                      Lệ phí: <span className="font-bold text-white text-sm">{formatCurrency(Number(activeTournament.entryFee ?? 0))}</span>. Vui lòng nộp lệ phí sớm để giữ suất thi đấu chính thức.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    const resumeParticipantId = myRegistration?.participant?.id;
+                    if (resumeParticipantId) {
+                      const checkoutParams = new URLSearchParams({
+                        participantId: resumeParticipantId,
+                        tournamentId,
+                      });
+                      const resumeDivisionId =
+                        myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
+                      if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
+                      router.push(`/payments/checkout?${checkoutParams.toString()}`);
+                    } else {
+                      router.push(registerHref);
+                    }
+                  }}
+                  className="w-full sm:w-auto bg-white hover:bg-slate-100 text-amber-950 font-black text-sm px-5 py-2.5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-105 shrink-0"
+                >
+                  💳 Thanh toán ngay
+                </Button>
+              </div>
+            )}
+
             {/* Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => {
@@ -1298,6 +1341,28 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                     {isRegistrationButtonDisabled ? (
                       <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
                         {registrationButtonLabel}
+                      </Button>
+                    ) : (isUnpaidUser || canResumePayment) ? (
+                      <Button
+                        onClick={() => {
+                          const resumeParticipantId = myRegistration?.participant?.id;
+                          if (resumeParticipantId) {
+                            const checkoutParams = new URLSearchParams({
+                              participantId: resumeParticipantId,
+                              tournamentId,
+                            });
+                            const resumeDivisionId =
+                              myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
+                            if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
+                            if (inviteCode) checkoutParams.set('invite', inviteCode);
+                            router.push(`/payments/checkout?${checkoutParams.toString()}`);
+                          } else {
+                            router.push(registerHref);
+                          }
+                        }}
+                        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-2.5 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
+                      >
+                        💳 {translate('continuePayment') || 'Thanh toán ngay'}
                       </Button>
                     ) : isClubLiteTournament(activeTournament) ? (
                       activeTournament.inviteCode ? (

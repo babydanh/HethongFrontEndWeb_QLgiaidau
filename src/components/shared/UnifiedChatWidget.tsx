@@ -160,15 +160,22 @@ function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
   );
 }
 
-function roomTitle(room: InboxRoom, labels: { club: string; conversation: string }): string {
+function roomTitle(
+  room: InboxRoom,
+  labels: { club: string; conversation: string },
+  currentUserId?: string,
+): string {
+  if (room.type === 'DIRECT') {
+    const other = currentUserId
+      ? room.participants?.find((participant) => participant.id !== currentUserId)
+      : undefined;
+    return other?.fullName?.trim() || labels.conversation;
+  }
   if (room.name) return room.name;
   if (room.clubName) return room.clubName;
   if (room.communityName) return room.communityName;
-  const other = room.participants?.find((participant) => participant.fullName);
-  return (
-    other?.fullName ||
-    (room.type === 'CLUB' ? labels.club : labels.conversation)
-  );
+  const participant = room.participants?.find((item) => item.fullName);
+  return participant?.fullName || (room.type === 'CLUB' ? labels.club : labels.conversation);
 }
 
 function getRoomAvatar(room: InboxRoom, currentUserId?: string): string | null {
@@ -318,7 +325,7 @@ export default function UnifiedChatWidget() {
       ? translate('aiAssistant')
       : selection.kind === 'SUPPORT'
         ? translate('support')
-        : roomTitle(selectedRoom!, roomLabels);
+        : roomTitle(selectedRoom!, roomLabels, user?.id);
 
   const selectedRoomAvatar = selectedRoom
     ? getRoomAvatar(selectedRoom, user?.id)
@@ -1669,7 +1676,7 @@ export default function UnifiedChatWidget() {
                       )));
                       setIsMobileRoomOpen(true);
                     }}
-                    aria-label={`${roomTitle(room, roomLabels)}${room.unreadCount > 0 ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
+                    aria-label={`${roomTitle(room, roomLabels, user?.id)}${room.unreadCount > 0 ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${
                       isSelected
                         ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
@@ -1689,14 +1696,15 @@ export default function UnifiedChatWidget() {
                         {avatar ? (
                           <img
                             src={avatar}
-                            alt={roomTitle(room, roomLabels)}
+                            alt={roomTitle(room, roomLabels, user?.id)}
+
                             className="h-full w-full object-cover"
                           />
                         ) : isClub ? (
                           <MessageCircle className="h-4 w-4" />
                         ) : (
                           <span className="text-xs font-bold">
-                            {roomTitle(room, roomLabels).charAt(0).toUpperCase()}
+                            {roomTitle(room, roomLabels, user?.id).charAt(0).toUpperCase()}
                           </span>
                         )}
                       </span>
@@ -1704,7 +1712,7 @@ export default function UnifiedChatWidget() {
                     <span className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <strong className="block truncate text-xs font-semibold">
-                          {roomTitle(room, roomLabels)}
+{roomTitle(room, roomLabels, user?.id)}
                         </strong>
                         {isClub && (
                           <span className="rounded bg-blue-200/80 px-1 py-0.2 text-[9px] font-bold text-blue-800 shrink-0">

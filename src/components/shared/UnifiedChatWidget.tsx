@@ -464,12 +464,14 @@ export default function UnifiedChatWidget() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const socket = socketClient.refreshChatAuthentication();
-    const handleRoomCreated = (payload: { roomId?: string }) => {
+    const handleRoomActivity = (payload: { roomId?: string }) => {
       if (payload?.roomId) void refreshRooms();
     };
-    socket.on('chat:room:created', handleRoomCreated);
+    socket.on('chat:room:created', handleRoomActivity);
+    socket.on('chat:room:updated', handleRoomActivity);
     return () => {
-      socket.off('chat:room:created', handleRoomCreated);
+      socket.off('chat:room:created', handleRoomActivity);
+      socket.off('chat:room:updated', handleRoomActivity);
     };
   }, [isAuthenticated, refreshRooms]);
 
@@ -1282,7 +1284,7 @@ export default function UnifiedChatWidget() {
       toast.error(translate('blockedUserCannotMessage'));
       return;
     }
-        if (isOtherStrangerRestricted) {
+    if (isOtherStrangerRestricted) {
       toast.error(translate('chatStrangerMessagesDisabled'));
       return;
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useLocale, useTranslations } from 'next-intl';
 import { Search, ChevronDown, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -304,9 +305,10 @@ export default function MatchesListPage() {
   const [activeShareUrl, setActiveShareUrl] = useState('');
   const [activeShareTitle, setActiveShareTitle] = useState('');
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const filterKey = [
-    searchTerm,
+    debouncedSearchTerm,
     selectedCategoryId,
     selectedStatus,
     selectedContent,
@@ -466,7 +468,7 @@ export default function MatchesListPage() {
           publicOnly: true,
           isPublicOnly: true,
           ...(cursor ? { cursor } : {}),
-          search: searchTerm || undefined,
+          search: debouncedSearchTerm || undefined,
                     categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
           matchType,

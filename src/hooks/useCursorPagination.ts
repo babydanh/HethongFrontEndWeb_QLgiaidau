@@ -28,6 +28,8 @@ export function useCursorPagination<T extends { id?: string }>(
   const [canGoPrevious, setCanGoPrevious] = useState(false);
 
   const fetchLock = useRef(false);
+  const pendingLoadRef = useRef<{ cursor: string | null; targetPage: number } | null>(null);
+  const loadPageRef = useRef<((cursor: string | null, targetPage: number) => Promise<void>) | null>(null);
   const fetchFnRef = useRef(fetchFn);
   const currentPageRef = useRef<CursorPageState>({
     cursor: null,
@@ -41,7 +43,10 @@ export function useCursorPagination<T extends { id?: string }>(
   }, [fetchFn]);
 
   const loadPage = useCallback(async (cursor: string | null, targetPage: number) => {
-    if (fetchLock.current) return;
+    if (fetchLock.current) {
+      pendingLoadRef.current = { cursor, targetPage };
+      return;
+    }
 
     fetchLock.current = true;
     setIsLoading(true);
@@ -69,8 +74,20 @@ export function useCursorPagination<T extends { id?: string }>(
     } finally {
       setIsLoading(false);
       fetchLock.current = false;
+      const pendingLoad = pendingLoadRef.current;
+      pendingLoadRef.current = null;
+      if (pendingLoad) {
+        void loadPageRef.current?.(pendingLoad.cursor, pendingLoad.targetPage);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    loadPageRef.current = loadPage;
+    return () => {
+      if (loadPageRef.current === loadPage) loadPageRef.current = null;
+    };
+  }, [loadPage]);
 
   const fetchNextPage = useCallback(async () => {
     if (!currentPageRef.current.hasMore || !currentPageRef.current.nextCursor) return;
@@ -88,6 +105,7 @@ export function useCursorPagination<T extends { id?: string }>(
   }, [loadPage, page]);
 
   const resetAndFetch = useCallback(() => {
+    pendingLoadRef.current = null;
     pageCursorsRef.current = [null];
     currentPageRef.current = { cursor: null, nextCursor: null, hasMore: true };
     setData([]);

@@ -167,12 +167,18 @@ export const getBaseUrl = () => {
   if (typeof window === 'undefined') {
     return process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
   }
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isLocalhost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.');
+
   if (isLocalhost) {
     return `${window.location.protocol}//${window.location.hostname}:3000/api/v1`;
   }
+
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   // Production: API is proxied through OLS on the same domain
   return `${window.location.origin}/api/v1`;
 };

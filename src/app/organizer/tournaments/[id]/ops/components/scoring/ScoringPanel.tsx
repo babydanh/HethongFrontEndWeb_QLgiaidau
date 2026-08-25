@@ -391,7 +391,7 @@ export function ScoringPanel({
         </div>
       ) : null}
 
-      {scoreWarnings.length > 0 ? (
+      {!isLiteMode && scoreWarnings.length > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
           <p className="font-bold">{scoringTranslate('warningTitle')}</p>
           <div className="mt-2 space-y-1 text-xs font-semibold text-amber-800">

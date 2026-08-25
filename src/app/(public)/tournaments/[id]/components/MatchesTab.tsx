@@ -137,7 +137,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       const matchParams: Record<string, string | number> = {
         tournament_id: effectiveTournamentId,
         status: '', // Overrides default status filter to get all matches
-        limit: 20,
+        // Backend caps cursor pages at 100; loading one full tournament page
+        // keeps stage filters complete for normal brackets without fan-out requests.
+        limit: 100,
       };
       if (divisionId) matchParams.division_id = divisionId;
       if (cursor) matchParams.cursor = cursor;
@@ -603,7 +605,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           {/* Row 2: Internal round filter */}
           {visibleRoundOptions.length > 0 && (
             <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
-              <p className="text-[11px] font-medium text-slate-400">{matchTranslate('roundFilterHint')}</p>
               {tournament.format === 'DOUBLE_ELIMINATION' || visibleRoundOptions.some((ro) => ro.branch === 'LOSERS') ? (
                 <>
                   {/* Winners Row */}

@@ -497,15 +497,11 @@ export default function MatchesListPage() {
     fetchMatches();
   }, [filterKey, page, matchesRefreshTick]);
 
-  // The backend match projection already normalizes cheerCount to zero.
-  // Keep this surface to one bounded list request instead of one cheer request per card.
-  useEffect(() => {
-    const counts: Record<string, number> = {};
-    matches.forEach((match) => {
-      counts[match.id] = typeof match.cheerCount === 'number' ? match.cheerCount : 0;
-    });
-    setCheerCounts(counts);
-  }, [matches]);
+    // The backend match projection already normalizes cheerCount to zero.
+  // Counts are rendered from the match projection; local state is only for
+  // immediate updates after the user sends a cheer.
+
+
 
   // Tìm category name từ selectedCategoryId để filter client-side
   const selectedCategoryName = useMemo(() => {
@@ -1365,12 +1361,12 @@ export default function MatchesListPage() {
                                 toast.error(translate('cheerFailed'));
                               }
                             }}
-                            title={`${translate('cheerLabel')} (${cheerCounts[match.id] || 0})`}
+                            title={`${translate('cheerLabel')} (${cheerCounts[match.id] ?? match.cheerCount ?? 0})`}
                             className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
                           >
                             <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
                             <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
-                              {translate('cheerLabel')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] || 0})</span>
+                              {translate('cheerLabel')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] ?? match.cheerCount ?? 0})</span>
                             </span>
                           </button>
 

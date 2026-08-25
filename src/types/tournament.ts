@@ -371,6 +371,7 @@ export interface BracketMatch {
     roundConfig?: StageRoundConfig | null;
   } | null;
   group?: {
+    id?: string | null;
     name: string;
     stage?: {
       name: string;

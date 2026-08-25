@@ -34,7 +34,7 @@ type MatchViewMetadata = {
 };
 
 function getMatchGroupKey(match: BracketMatch): string | null {
-  return match.groupId?.trim() || match.group?.name?.trim() || null;
+  return match.groupId?.trim() || match.group?.id?.trim() || match.group?.name?.trim() || null;
 }
 
 function normalizeStageValue(value?: string | null): string {

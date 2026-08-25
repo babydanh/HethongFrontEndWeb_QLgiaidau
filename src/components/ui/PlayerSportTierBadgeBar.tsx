@@ -167,8 +167,8 @@ export function PlayerSportTierBadgeBar({
               )}
               style={{
                 backgroundColor: '#090d16',
-                borderColor: isRanked ? (theme.coreFillStart || `${sportAccent}cc`) : '#334155',
-                boxShadow: isRanked ? `0 0 6px ${theme.glowColor}` : undefined,
+                borderColor: isRanked ? (theme.textColor || theme.coreFillStart || `${sportAccent}cc`) : '#334155',
+                boxShadow: isRanked ? `0 0 8px ${theme.glowColor}, inset 0 0 6px ${theme.glowColor}22` : undefined,
               }}
             >
               <SportBadgeIcon
@@ -180,9 +180,9 @@ export function PlayerSportTierBadgeBar({
               <span
                 className={cn('text-[11px] font-black uppercase tracking-tight leading-none')}
                 style={{
-                  color: isRanked ? (theme.ringOuter || tierBadgeStyle.textColor) : '#94a3b8',
+                  color: isRanked ? (theme.textColor || theme.ringOuter || tierBadgeStyle.textColor) : '#94a3b8',
                   fontWeight: tierBadgeStyle.isHigh ? 900 : 800,
-                  textShadow: isRanked ? `0 0 6px ${theme.glowColor}` : undefined,
+                  textShadow: isRanked ? `0 0 8px ${theme.glowColor}` : undefined,
                 }}
               >
                 {shortCode}

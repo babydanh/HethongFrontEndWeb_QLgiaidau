@@ -95,23 +95,40 @@ export default function MyTournamentsPage() {
           for (const t of standaloneTournaments) {
             let divisionsList = divisionCacheRef.current.get(t.id) ?? [];
             if (divisionsList.length === 0) {
-              try {
-                const divRes = await divisionsApi.getDivisions(t.id);
-                if (Array.isArray(divRes.data) && divRes.data.length > 0) {
-                  divisionsList = divRes.data.map((div) => ({
+              if (Array.isArray(t.divisions) && t.divisions.length > 0) {
+                divisionsList = t.divisions.map((div) => {
+                  const d = div as Record<string, any>;
+                  return {
                     ...div,
                     tournamentConfig: {
-                      bracketType: div.bracketType || undefined,
-                      roundConfig: div.roundConfig || undefined,
+                      bracketType: d.bracketType || undefined,
+                      roundConfig: d.roundConfig || undefined,
                     },
-                    format: div.bracketType || '',
+                    format: d.bracketType || '',
                     currency: 'VND',
                     organizerId: t.organizerId || '',
-                  })) as unknown as Tournament[];
-                  divisionCacheRef.current.set(t.id, divisionsList);
+                  };
+                }) as unknown as Tournament[];
+                divisionCacheRef.current.set(t.id, divisionsList);
+              } else {
+                try {
+                  const divRes = await divisionsApi.getDivisions(t.id);
+                  if (Array.isArray(divRes.data) && divRes.data.length > 0) {
+                    divisionsList = divRes.data.map((div) => ({
+                      ...div,
+                      tournamentConfig: {
+                        bracketType: div.bracketType || undefined,
+                        roundConfig: div.roundConfig || undefined,
+                      },
+                      format: div.bracketType || '',
+                      currency: 'VND',
+                      organizerId: t.organizerId || '',
+                    })) as unknown as Tournament[];
+                    divisionCacheRef.current.set(t.id, divisionsList);
+                  }
+                } catch {
+                  console.error(`Failed to fetch divisions for tournament ${t.id}`);
                 }
-              } catch {
-                console.error(`Failed to fetch divisions for tournament ${t.id}`);
               }
             }
 

@@ -242,7 +242,7 @@ export function DoubleElimView({
 
       <div
         {...panHandlers}
-        className={`pb-6 max-h-[80vh] no-scrollbar ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto'}`}
+        className={`pb-6 max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto'}`}
         style={panEnabled ? { touchAction: 'none', overscrollBehavior: 'contain' } : undefined}
       >
         <div

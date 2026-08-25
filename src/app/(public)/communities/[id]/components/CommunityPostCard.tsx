@@ -503,8 +503,16 @@ export default function CommunityPostCard({
               <div className="mt-3.5 overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-                      <Trophy className="h-6 w-6" />
+                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={post.tournament?.logoUrl || '/sporto_v1_with_text.svg'}
+                        alt={post.tournament?.name || 'Tournament'}
+                        className="h-full w-full object-contain rounded-full"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                        }}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">

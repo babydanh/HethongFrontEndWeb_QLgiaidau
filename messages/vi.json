@@ -5735,7 +5735,8 @@
     "status": "Trạng thái",
     "details": "Chi tiết",
     "deletedTournament": "Giải đấu đã bị xóa",
-    "viewInvoice": "Xem hóa đơn"
+    "viewInvoice": "Xem hóa đơn",
+    "continuePayment": "Tiếp tục thanh toán"
   },
   "PaymentCheckout": {
     "missingInfo": "Thiếu thông tin giải đấu hoặc lượt đăng ký.",

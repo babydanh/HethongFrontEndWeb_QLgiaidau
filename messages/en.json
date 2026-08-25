@@ -5735,7 +5735,8 @@
     "status": "Status",
     "details": "Details",
     "deletedTournament": "Tournament deleted",
-    "viewInvoice": "View invoice"
+    "viewInvoice": "View invoice",
+    "continuePayment": "Continue payment"
   },
   "PaymentCheckout": {
     "missingInfo": "Tournament or registration information is missing.",

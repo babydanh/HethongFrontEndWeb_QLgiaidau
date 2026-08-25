@@ -27,6 +27,7 @@ export interface Payment {
   userId: string;
   tournamentId: string;
   participantId?: string | null;
+  divisionId?: string | null;
   amount: string;
   platformFeeAmount?: string;
   purpose?: PaymentPurpose;

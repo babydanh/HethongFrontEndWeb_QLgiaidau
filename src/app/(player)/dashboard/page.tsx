@@ -25,6 +25,7 @@ import FootballTeamEloCard from '@/components/dashboard/FootballTeamEloCard';
 import RoleSummaryCard from '@/components/dashboard/RoleSummaryCard';
 import TournamentListSection, { AvatarCircle } from '@/components/dashboard/TournamentListSection';
 import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
+import { RankAvatar } from '@/components/ui/RankAvatar';
 
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -321,13 +322,17 @@ export default function DashboardPage() {
       {/* Header Banner - Role-aware Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden shrink-0">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xl font-bold text-blue-600 uppercase">{user?.fullName?.charAt(0) || 'U'}</span>
-            )}
-          </div>
+          <RankAvatar
+            src={user?.avatarUrl}
+            name={user?.fullName}
+            elo={activeRank?.eloPoints}
+            tierName={activeRank?.tierName}
+            categoryName={activeRank?.categoryName}
+            matchesPlayed={activeRank?.matchesPlayed ?? 0}
+            size="md"
+            className="h-14 w-14 shadow-sm"
+            ringClassName="ring-2"
+          />
           <div>
             <h1 className="text-xl font-bold text-slate-900">{translate("dashboardTitle", { name: user?.fullName?.split(' ').pop() || translate("you") })}</h1>
             <p className="text-xs text-slate-500 mt-1">

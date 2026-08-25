@@ -7,8 +7,8 @@ import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
-import { EloTierBadge } from "@/components/ui/EloTierBadge";
 import { getCanonicalTierName } from "@/features/rankings/elo-display";
+import { getRankBorderColor } from "@/components/ui/RankAvatar";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
@@ -23,10 +23,42 @@ interface LeaderboardSearchResult {
     categoryName?: string;
 }
 
+type StandingEloSize = 'sm' | 'md';
+
+function StandingElo({
+  ranking,
+  sportLabel,
+  size = 'sm',
+}: {
+  ranking: PlayerRanking;
+  sportLabel: string;
+  size?: StandingEloSize;
+}) {
+  return (
+    <div
+      className={`inline-flex flex-col items-center rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 shadow-xs ${size === 'md' ? 'min-w-24' : 'min-w-20'}`}
+      title={`${sportLabel}: ${ranking.eloPoints} ELO`}
+    >
+      <span className="max-w-28 truncate text-[8px] font-bold uppercase tracking-wide text-slate-500">{sportLabel}</span>
+      <span className={`${size === 'md' ? 'text-sm' : 'text-xs'} font-black leading-tight text-slate-900`}>{ranking.eloPoints} ELO</span>
+    </div>
+  );
+}
+
+function getStandingBorderColor(ranking: PlayerRanking | undefined, fallback: string): string {
+  if (!ranking) return fallback;
+  return getRankBorderColor(
+    ranking.eloPoints,
+    getCanonicalTierName(ranking),
+    ranking.matchesPlayed,
+    ranking.categoryName,
+  );
+}
+
 export default function LeaderboardPage() {
   const t = useTranslations("Leaderboard");
 
-  const getCategoryLabel = (category: Category) => {
+    const getCategoryLabel = (category: Category) => {
     switch (category.slug) {
       case "badminton": return t("sportBadminton");
       case "table_tennis": return t("sportTableTennis");
@@ -36,6 +68,12 @@ export default function LeaderboardPage() {
       default: return category.name;
     }
   };
+
+  const getStandingSportLabel = (ranking: PlayerRanking) => {
+    const category = categories.find((item) => item.id === ranking.categoryId);
+    return category ? getCategoryLabel(category) : ranking.categoryName || t('sportFallback');
+  };
+
     const { openUserProfile } = useUserProfileModalStore();
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -293,13 +331,9 @@ export default function LeaderboardPage() {
                                             </h4>
                                             <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                         </div>
-                                        <div className="shrink-0">
-                                            <EloTierBadge
-                                                elo={u.eloPoints}
-                                                tierName={u.tierName}
-                                                categoryName={u.categoryName}
-                                                size="sm"
-                                            />
+                                        <div className="shrink-0 text-right">
+                                            <div className="text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')}</div>
+                                            <div className="text-xs font-black text-slate-800">{u.eloPoints} ELO</div>
                                         </div>
                                     </button>
                                 ))}
@@ -433,7 +467,7 @@ export default function LeaderboardPage() {
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="flex items-center -space-x-4 relative z-10 my-1">
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#94A3B8] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0">
+                                                        <div className="w-16 h-16 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[1], '#94A3B8') }}>
                                                             {rankings[1]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                             ) : (
@@ -441,12 +475,12 @@ export default function LeaderboardPage() {
                                                             )}
                                                         </div>
                                                         {/* Partner avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#94A3B8] relative overflow-hidden bg-[#F1F5F9] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0">
+                                                        <div className="w-16 h-16 rounded-full border-[3px] relative overflow-hidden bg-[#F1F5F9] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[1], '#94A3B8') }}>
                                                             <span className="text-[#64748B] font-extrabold text-lg">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-[3px] border-[#94A3B8] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                    <div className="w-20 h-20 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center" style={{ borderColor: getStandingBorderColor(rankings[1], '#94A3B8') }}>
                                                         {rankings[1]?.user?.avatarUrl ? (
                                                             <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                         ) : (
@@ -464,13 +498,7 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[1] ? (
-                                                <EloTierBadge
-                                                  elo={rankings[1].eloPoints}
-                                                  tierName={getCanonicalTierName(rankings[1])}
-                                                  categoryName={rankings[1].categoryName}
-                                                  size="sm"
-                                                  className="mb-3 border-slate-200 bg-white"
-                                                />
+                                                <StandingElo ranking={rankings[1]} sportLabel={getStandingSportLabel(rankings[1])} />
                                             ) : (
                                                 <div className="text-[10px] text-[#64748B] font-bold mb-3">--- ELO</div>
                                             )}
@@ -512,7 +540,7 @@ export default function LeaderboardPage() {
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="flex items-center -space-x-5 relative z-10 my-1">
                                                         {/* Primary avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-300 p-0.5 relative overflow-hidden bg-white shadow-sm flex items-center justify-center z-20 shrink-0">
+                                                        <div className="w-20 h-20 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-sm flex items-center justify-center z-20 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[0], '#fbbf24') }}>
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
@@ -520,12 +548,12 @@ export default function LeaderboardPage() {
                                                             )}
                                                         </div>
                                                         {/* Partner avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-300 relative overflow-hidden bg-amber-50/90 shadow-sm flex items-center justify-center z-10 pl-4 shrink-0">
+                                                        <div className="w-20 h-20 rounded-full border-[3px] relative overflow-hidden bg-amber-50/90 shadow-sm flex items-center justify-center z-10 pl-4 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[0], '#fbbf24') }}>
                                                             <span className="text-amber-500 font-extrabold text-xl">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-24 h-24 rounded-full border-[3px] border-amber-400 p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                    <div className="w-24 h-24 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center" style={{ borderColor: getStandingBorderColor(rankings[0], '#fbbf24') }}>
                                                         {rankings[0]?.user?.avatarUrl ? (
                                                             <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                         ) : (
@@ -543,13 +571,7 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[0] ? (
-                                                <EloTierBadge
-                                                  elo={rankings[0].eloPoints}
-                                                  tierName={getCanonicalTierName(rankings[0])}
-                                                  categoryName={rankings[0].categoryName}
-                                                  size="md"
-                                                  className="mb-3 border-amber-200 bg-white text-amber-700"
-                                                />
+                                                <StandingElo ranking={rankings[0]} sportLabel={getStandingSportLabel(rankings[0])} size="md" />
                                             ) : (
                                                 <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
                                             )}
@@ -591,7 +613,7 @@ export default function LeaderboardPage() {
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="flex items-center -space-x-4 relative z-10 my-1">
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#C2410C] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0">
+                                                        <div className="w-16 h-16 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[2], '#C2410C') }}>
                                                             {rankings[2]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                             ) : (
@@ -599,12 +621,12 @@ export default function LeaderboardPage() {
                                                             )}
                                                         </div>
                                                         {/* Partner avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#C2410C] relative overflow-hidden bg-[#FFF7ED] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0">
+                                                        <div className="w-16 h-16 rounded-full border-[3px] relative overflow-hidden bg-[#FFF7ED] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[2], '#C2410C') }}>
                                                             <span className="text-[#C2410C] font-extrabold text-lg">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-[3px] border-[#C2410C] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                    <div className="w-20 h-20 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center" style={{ borderColor: getStandingBorderColor(rankings[2], '#C2410C') }}>
                                                         {rankings[2]?.user?.avatarUrl ? (
                                                             <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                         ) : (
@@ -622,13 +644,7 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[2] ? (
-                                                <EloTierBadge
-                                                  elo={rankings[2].eloPoints}
-                                                  tierName={getCanonicalTierName(rankings[2])}
-                                                  categoryName={rankings[2].categoryName}
-                                                  size="sm"
-                                                  className="mb-3 border-amber-200 bg-white"
-                                                />
+                                                <StandingElo ranking={rankings[2]} sportLabel={getStandingSportLabel(rankings[2])} />
                                             ) : (
                                                 <div className="text-[10px] text-[#C2410C] font-bold mb-3">--- ELO</div>
                                             )}
@@ -676,19 +692,19 @@ export default function LeaderboardPage() {
                                                     {/* Stacked Avatar for Doubles Ranks 4-10 */}
                                                     {selectedMatchType.includes('DOUBLES') ? (
                                                         <div className="flex items-center -space-x-3 mb-2">
-                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs">
+                                                            <div className="w-8 h-8 rounded-full border-2 relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
                                                                 {player?.user?.avatarUrl ? (
                                                                     <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
                                                                 ) : (
                                                                     <span className="text-slate-400 font-bold text-[10px]">?</span>
                                                                 )}
                                                             </div>
-                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1.5 shadow-xs">
+                                                            <div className="w-8 h-8 rounded-full border-2 relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1.5 shadow-xs" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
                                                                 <span className="text-slate-400 font-bold text-[10px]">?</span>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="w-12 h-12 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center mb-2">
+                                                        <div className="w-12 h-12 rounded-full border-2 relative overflow-hidden bg-slate-50 flex items-center justify-center mb-2" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
                                                             {player?.user?.avatarUrl ? (
                                                                 <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
                                                             ) : (
@@ -703,13 +719,7 @@ export default function LeaderboardPage() {
                                                         {player?.user?.fullName || t("waiting")}
                                                     </span>
                                                     {player ? (
-                                                        <EloTierBadge
-                                                            elo={player.eloPoints}
-                                                            tierName={getCanonicalTierName(player)}
-                                                            categoryName={player.categoryName}
-                                                            size="sm"
-                                                            className="scale-90 origin-center"
-                                                        />
+                                                        <StandingElo ranking={player} sportLabel={getStandingSportLabel(player)} />
                                                     ) : (
                                                         <span className="text-[10px] text-slate-400 font-bold">---</span>
                                                     )}
@@ -903,19 +913,19 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                 {/* Stacked Avatar for Doubles in table list */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="flex items-center -space-x-2.5 flex-shrink-0">
-                                                        <div className="w-6 h-6 rounded-full border border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs">
+                                                        <div className="w-6 h-6 rounded-full border relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
                                                             {rank.user?.avatarUrl ? (
                                                                 <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                             ) : (
                                                                 <span className="text-slate-400 font-bold text-[9px]">?</span>
                                                             )}
                                                         </div>
-                                                        <div className="w-6 h-6 rounded-full border border-slate-200 relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1 shadow-xs">
+                                                        <div className="w-6 h-6 rounded-full border relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1 shadow-xs" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
                                                             <span className="text-slate-400 font-bold text-[9px]">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-7 h-7 rounded-full object-cover relative overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
+                                                    <div className="w-7 h-7 rounded-full object-cover relative overflow-hidden bg-slate-100 flex-shrink-0 border" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
                                                         {rank.user?.avatarUrl ? (
                                                             <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                         ) : (
@@ -934,13 +944,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                             {isPlaceholder ? (
                                                 <span className="text-[10px] text-slate-400 font-medium">---</span>
                                             ) : (
-                                                <EloTierBadge
-                                                elo={rank.eloPoints}
-                                                tierName={getCanonicalTierName(rank)}
-                                                categoryName={rank.categoryName}
-                                                size="sm"
-                                                className="scale-90 origin-left"
-                                            />
+                                                <StandingElo ranking={rank} sportLabel={rank.categoryName || t('sportFallback')} />
                                             )}
                                         </td>
                                         <td className="py-2.5 px-3 text-right text-emerald-650 font-bold">

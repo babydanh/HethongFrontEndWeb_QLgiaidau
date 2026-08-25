@@ -15,14 +15,28 @@ export function getRankRingClass(
   return getRankStyle(elo, tierName, categoryName).ringClass;
 }
 
-export function getRankBorderClass(
+const RANK_BORDER_COLORS: Record<string, string> = {
+  'ring-slate-300': '#cbd5e1',
+  'ring-slate-400': '#94a3b8',
+  'ring-slate-500': '#64748b',
+  'ring-emerald-300': '#6ee7b7',
+  'ring-emerald-500': '#10b981',
+  'ring-blue-300': '#93c5fd',
+  'ring-blue-500': '#3b82f6',
+  'ring-rose-300': '#fda4af',
+  'ring-rose-500': '#f43f5e',
+  'ring-amber-400': '#fbbf24',
+};
+
+export function getRankBorderColor(
   elo: number | null | undefined,
   tierName?: string | null,
   matchesPlayed = 0,
   categoryName?: string | null,
 ): string {
-  if (matchesPlayed <= 0 || elo == null) return 'border-slate-300';
-  return getRankStyle(elo, tierName, categoryName).ringClass.replace(/^ring-/, 'border-');
+  if (matchesPlayed <= 0 || elo == null) return RANK_BORDER_COLORS['ring-slate-300'];
+  const ringClass = getRankStyle(elo, tierName, categoryName).ringClass;
+  return RANK_BORDER_COLORS[ringClass] ?? RANK_BORDER_COLORS['ring-slate-300'];
 }
 
 export interface RankAvatarProps {
@@ -63,11 +77,12 @@ export function RankAvatar({
         sizeClass,
         'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 bg-slate-100 shadow-sm',
         ringClassName,
-        getRankBorderClass(elo, tierName, matchesPlayed, categoryName),
         getRankRingClass(elo, tierName, matchesPlayed, categoryName),
         className,
+
       )}
       title={title || rankTitle}
+      style={{ borderColor: getRankBorderColor(elo, tierName, matchesPlayed, categoryName) }}
     >
       {src ? (
         <img src={src} alt={name || 'Avatar'} referrerPolicy="no-referrer" className="h-full w-full object-cover" />

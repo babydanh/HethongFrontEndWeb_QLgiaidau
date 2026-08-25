@@ -254,7 +254,7 @@ export default function UserProfilePopover({
     if (!role) return null;
     switch (role) {
       case "ADMIN":
-        return { label: "Admin", color: "bg-purple-50 text-purple-700 border-purple-200" };
+        return { label: translate('systemAdminRole'), color: "bg-purple-50 text-purple-700 border-purple-200" };
       case "ORGANIZER":
         return { label: translate('organizerRole'), color: "bg-indigo-50 text-indigo-700 border-indigo-200" };
       case "REFEREE":
@@ -507,13 +507,17 @@ export default function UserProfilePopover({
                 <div key={`${rank.categoryName}-${rank.matchType}`} className="min-w-0 text-center">
                   <div className="truncate text-[9px] font-semibold uppercase text-slate-400">{rank.categoryName || 'ELO'}</div>
                   <div className="text-xs font-bold text-slate-800">{rank.eloPoints}</div>
-                  <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} {translate('winsShort')}</div>
+                  {rank.matchesPlayed > 0 && (
+                    <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} {translate('winsShort')}</div>
+                  )}
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-center text-[10px] text-slate-500">
-              {translate('matchSummary', { matches: totalMatches, wins: totalWins, losses: Math.max(0, totalMatches - totalWins) })}
-            </p>
+            {totalMatches > 0 && (
+              <p className="mt-1 text-center text-[10px] text-slate-500">
+                {translate('matchSummary', { matches: totalMatches, wins: totalWins, losses: Math.max(0, totalMatches - totalWins) })}
+              </p>
+            )}
           </>
         ) : (
           <div className="mt-2.5 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs">

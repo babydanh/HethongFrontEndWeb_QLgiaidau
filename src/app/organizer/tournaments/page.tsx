@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
+import { tournamentsApi, divisionsApi, Division } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
 import Link from 'next/link';
@@ -97,7 +97,7 @@ export default function MyTournamentsPage() {
             if (divisionsList.length === 0) {
               if (Array.isArray(t.divisions) && t.divisions.length > 0) {
                 divisionsList = t.divisions.map((div) => {
-                  const d = div as Record<string, any>;
+                  const d = div as Partial<Division>;
                   return {
                     ...div,
                     tournamentConfig: {

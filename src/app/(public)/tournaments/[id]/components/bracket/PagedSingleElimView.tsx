@@ -143,14 +143,6 @@ export function PagedSingleElimView({
     },
   };
 
-  if (!rounds.length) {
-    return (
-      <div className="py-12 text-center text-slate-400 italic text-sm">
-        {bracketTranslate('noMatches')}
-      </div>
-    );
-  }
-
   const currentRound = rounds[activeRoundIndex] ?? rounds[0];
   const viewportRef = React.useRef<HTMLDivElement>(null);
 
@@ -165,6 +157,14 @@ export function PagedSingleElimView({
       viewportRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
     }
   }, [activeRoundIndex, visibleRounds, zoom, roundGap, rounds]);
+
+  if (!rounds.length) {
+    return (
+      <div className="py-12 text-center text-slate-400 italic text-sm">
+        {bracketTranslate('noMatches')}
+      </div>
+    );
+  }
 
   return (
     <div

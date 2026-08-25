@@ -192,7 +192,7 @@ export function PagedDoubleElimView({
     });
 
     return map;
-  }, [visibleRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap, CARD_W]);
+  }, [visibleRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap]);
 
   // Calculate dynamic bounding height to fit matches tightly
   const totalHeight = useMemo(() => {

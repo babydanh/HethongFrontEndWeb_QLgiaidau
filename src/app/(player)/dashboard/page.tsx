@@ -29,7 +29,7 @@ import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking, FootballTeamRanking, EloHistoryLog } from '@/features/rankings/api';
-import { getBestRankForCategory, getRankTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
+import { getBestRankForCategory, getLocalizedRankTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
   footballTeamsApi,
@@ -79,6 +79,7 @@ function isMockInvolvedMatch(match: Match): boolean {
 
 export default function DashboardPage() {
   const translate = useTranslations("PlayerDashboard");
+  const eloTranslate = useTranslations("EloDisplay");
   const locale = useLocale();
 
 
@@ -221,7 +222,9 @@ export default function DashboardPage() {
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const tierName = activeRank ? getRankTierName(activeRank) : translate("unranked");
+  const tierName = activeRank
+    ? getLocalizedRankTierName(activeRank, eloTranslate)
+    : translate("unranked");
 
   const bestFootballTeam = [...footballTeams].sort((a, b) => {
     const eloDelta = (b.rank?.eloPoints ?? 1000) - (a.rank?.eloPoints ?? 1000);

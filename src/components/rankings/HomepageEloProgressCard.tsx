@@ -9,7 +9,7 @@ import { cn } from '@/utils/cn';
 import { getEloTier } from '@/components/ui/EloTierBadge';
 import {
   getEloMatchTypeLabel,
-  getRankTierName,
+  getLocalizedRankTierName,
   getEloProgressInfo,
   isPublicRankingEligible,
   getShieldStatus,
@@ -69,7 +69,9 @@ export default function HomepageEloProgressCard({
     ? 'bg-slate-100'
     : 'bg-slate-100';
 
-  const rankLabel = hasNoRanks ? eloTranslate('unranked') : getRankTierName(activeRankInfo);
+  const rankLabel = hasNoRanks
+    ? eloTranslate('unranked')
+    : getLocalizedRankTierName(activeRankInfo, eloTranslate);
 
   return (
     <div className="bg-white rounded-lg border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-4 flex flex-col gap-3 relative overflow-hidden">

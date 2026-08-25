@@ -1438,76 +1438,92 @@ export default function LiveMatchPage({ params }: Props) {
     <div className="min-h-screen bg-slate-50 pt-10 pb-20 px-4">
       <div className="max-w-6xl mx-auto">
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Tournament Logo & Name */}
-            <Link href={`/tournaments/${match.tournamentId}`} className="flex items-center gap-2 bg-white border border-slate-200 hover:border-blue-300 px-3 py-1 rounded-full shadow-2xs transition-all group">
-              {match.tournament?.logoUrl ? (
-                <img src={match.tournament.logoUrl} alt={match.tournament.name} className="w-5 h-5 object-cover rounded-full" />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
-                  <Trophy className="w-3 h-3 text-amber-300" />
-                </div>
-              )}
-              <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors max-w-[180px] truncate">
-                {match.tournament?.name || matchTranslate('tournamentFallback')}
-              </span>
-            </Link>
+        {/* Modern Clean Header (Zero Repetition & High Hierarchy) */}
+        <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/90 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col gap-2.5 min-w-0">
+            {/* Top row: Tournament Context & Stage */}
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <Link
+                href={`/tournaments/${match.tournamentId}`}
+                className="inline-flex items-center gap-1.5 font-bold text-slate-900 hover:text-blue-600 transition-colors group truncate"
+              >
+                {match.tournament?.logoUrl ? (
+                  <img src={match.tournament.logoUrl} alt="" className="w-5 h-5 object-cover rounded-full shrink-0" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                    <Trophy className="w-3 h-3 text-amber-300" />
+                  </div>
+                )}
+                <span className="truncate max-w-[260px] md:max-w-[400px]">{match.tournament?.name || matchTranslate('tournamentFallback')}</span>
+              </Link>
 
-            {match.tournament?.categoryName && (
-              <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-                {match.tournament.categoryName}
-              </span>
-            )}
+              <span className="text-slate-300">•</span>
 
-            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              match.status === 'ONGOING'
-                ? 'bg-rose-50 text-rose-600 border border-rose-100'
-                : match.status === 'COMPLETED'
-                ? 'bg-slate-100 text-slate-700 border border-slate-200'
-                : 'bg-blue-50 text-blue-700 border border-blue-100'
-            }`}>
-              {match.status === 'ONGOING' && (
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              <span className="font-bold text-slate-600 flex items-center gap-1 bg-slate-100/80 px-2.5 py-0.5 rounded-full">
+                <Clock className="w-3 h-3 text-slate-400" />
+                <span>{matchTranslate('roundLabel', { round: match.roundNumber })}</span>
+              </span>
+            </div>
+
+            {/* Bottom row: Live Status, Sport Tag, Court & Viewer Stats */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Status Badge */}
+              <span className={cn(
+                'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider',
+                match.status === 'ONGOING'
+                  ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                  : match.status === 'COMPLETED'
+                  ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                  : 'bg-blue-50 text-blue-700 border border-blue-200'
+              )}>
+                {match.status === 'ONGOING' && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  </span>
+                )}
+                {match.status === 'ONGOING' ? matchTranslate('statusLive') : match.status === 'COMPLETED' ? matchTranslate('statusFinished') : matchTranslate('statusUpcoming')}
+              </span>
+
+              {/* Single Clean Sport Tag */}
+              {(match.tournament?.categoryName || scorePresentation.sportLabel) && (
+                <span className="text-xs font-bold text-slate-700 bg-slate-100/90 border border-slate-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Activity className="w-3 h-3 text-blue-500" />
+                  <span>{match.tournament?.categoryName || scorePresentation.sportLabel}</span>
                 </span>
               )}
-              {match.status === 'ONGOING' ? matchTranslate('statusLive') : match.status === 'COMPLETED' ? matchTranslate('statusFinished') : matchTranslate('statusUpcoming')}
-            </span>
-            <span className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
-              <span>{matchTranslate('roundLabel', { round: match.roundNumber })}</span>
-            </span>
 
-            <span className="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
-              <Eye className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-              <span>{formatCompact(viewerCount)} {matchTranslate('watchingLabel')}</span>
-            </span>
-            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full flex items-center gap-1">
-              <Activity className="w-3.5 h-3.5 text-blue-500" />
-              <span>{matchTranslate('sportPrefix', { sport: scorePresentation.sportLabel })}</span>
-            </span>
-            {(match.courtName || match.tournament?.venueName) && (
-              <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1 max-w-[320px] truncate" title={
-                match.courtAddress
-                  ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
-                  : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
-              }>
-                <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                <span className="truncate">
-                  {match.courtName ? `${matchTranslate('courtLabel')} ${match.courtName}` : `${matchTranslate('courtLabel')} ${match.tournament?.venueName}`}
-                  {(match.courtAddress || match.tournament?.venueAddress) ? ` (${match.courtAddress || match.tournament?.venueAddress})` : ''}
+              {/* Court / Venue */}
+              {(match.courtName || match.tournament?.venueName) && (
+                <span
+                  className="text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1 max-w-[280px] md:max-w-[340px] truncate"
+                  title={
+                    match.courtAddress
+                      ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
+                      : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
+                  }
+                >
+                  <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                  <span className="truncate">
+                    {match.courtName ? `${matchTranslate('courtLabel')} ${match.courtName}` : match.tournament?.venueName}
+                  </span>
                 </span>
+              )}
+
+              {/* Viewers Counter */}
+              <span className="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full">
+                <Eye className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+                <span>{formatCompact(viewerCount)} {matchTranslate('watchingLabel')}</span>
               </span>
-            )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 shrink-0 self-start md:self-center">
             <Button
               onClick={() => setIsShareModalOpen(true)}
               variant="outline"
-              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-lg transition-all"
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-2xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-xl transition-all"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>{matchTranslate('share')}</span>
@@ -1516,14 +1532,14 @@ export default function LiveMatchPage({ params }: Props) {
               targetType="MATCH"
               targetId={match.id}
               targetLabel={translate('roundMatchShareLabel', { round: match.roundNumber })}
-              className="h-9 text-xs px-3.5 rounded-lg shadow-xs"
+              className="h-9 text-xs px-3.5 rounded-xl shadow-2xs"
             />
             <Link
               href={`/tournaments/${match.tournamentId}`}
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 hover:border-blue-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-lg shadow-xs shrink-0"
+              className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50/80 transition-all bg-blue-50 border border-blue-200/80 px-3.5 h-9 rounded-xl shadow-2xs shrink-0"
             >
-              <Trophy className="w-3.5 h-3.5 text-blue-500" />
-              <span>{match.tournament?.name || matchTranslate('backToTournament')}</span>
+              <Trophy className="w-3.5 h-3.5 text-blue-600" />
+              <span>{matchTranslate('backToTournament')}</span>
             </Link>
           </div>
         </div>

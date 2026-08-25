@@ -35,7 +35,7 @@ export function OfficialScoreModal({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent className="h-[96dvh] max-h-[96dvh] w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-2xl sm:h-[92dvh] sm:max-h-[92dvh] sm:w-[95vw] sm:max-w-7xl sm:rounded-[28px]">
         <div className="grid h-full min-h-0 min-w-0 max-w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[340px_minmax(0,1fr)] lg:grid-rows-1">
-          <div className="flex max-h-[18dvh] min-w-0 max-w-full flex-col overflow-y-auto overflow-x-hidden border-b border-slate-800 bg-slate-950 p-2.5 text-white sm:max-h-[24dvh] sm:p-3 lg:max-h-none lg:overflow-visible lg:border-b-0 lg:border-r lg:border-slate-850 lg:p-6">
+          <div className="flex max-h-[18dvh] min-w-0 max-w-full flex-col overflow-y-auto overflow-x-hidden border-b border-slate-800 bg-slate-950 p-2.5 text-white sm:max-h-[24dvh] sm:p-3 lg:max-h-none lg:overflow-visible lg:border-b-0 lg:p-6">
             <div className="flex items-center gap-3">
                 <div className="hidden h-12 w-12 items-center justify-center rounded-lg bg-blue-600/20 text-blue-400 sm:flex">
                 <Shield className="h-6 w-6" />

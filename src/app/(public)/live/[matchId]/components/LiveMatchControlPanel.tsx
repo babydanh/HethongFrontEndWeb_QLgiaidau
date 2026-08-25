@@ -120,6 +120,7 @@ export function LiveMatchControlPanel({
 }: LiveMatchControlPanelProps) {
   const translate = useTranslations('Common');
   const [confirmWinner, setConfirmWinner] = useState<1 | 2 | null>(null);
+  const [confirmFinishSequence, setConfirmFinishSequence] = useState(false);
   const [activeTab, setActiveTab] = useState<'score' | 'penalty'>('score');
 
   const handleCompleteMatch = (team: 1 | 2) => {
@@ -426,7 +427,8 @@ export function LiveMatchControlPanel({
               </div>
             ) : <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
               <button
-                onClick={onFinishSet}
+                type="button"
+                onClick={() => setConfirmFinishSequence(true)}
                 disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-3 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
               >
@@ -566,6 +568,67 @@ export function LiveMatchControlPanel({
               }}
             >
               {isFootball ? translate('footballResultAction') : isLiteMatch ? translate('teamWins', { team: confirmWinner === 1 ? team1Name : team2Name }) : translate('overrideWinnerAction')}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal
+        open={confirmFinishSequence}
+        onOpenChange={(open) => {
+          if (!open && !isSubmitting) {
+            setConfirmFinishSequence(false);
+          }
+        }}
+      >
+        <ModalContent className="max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+          <ModalHeader className="text-left">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                <Check className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <ModalTitle className="text-lg font-bold text-slate-900">
+                  {scorePresentation.completeActionLabel}
+                </ModalTitle>
+                <ModalDescription className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
+                  {translate('confirmFinishCurrentSequence', {
+                    label: scorePresentation.sequenceLabel,
+                    sequence: activeSetIndex + 1,
+                    score1: currentSet.team1Score,
+                    score2: currentSet.team2Score,
+                  })}
+                </ModalDescription>
+              </div>
+            </div>
+          </ModalHeader>
+
+          <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-900">
+            {scorePresentation.sequenceLabel} {activeSetIndex + 1}: {currentSet.team1Score} - {currentSet.team2Score}
+          </div>
+
+          <ModalFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-slate-200 text-slate-700 sm:w-auto"
+              disabled={isSubmitting}
+              onClick={() => setConfirmFinishSequence(false)}
+            >
+              {translate('cancelActionShort')}
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 font-bold text-white hover:bg-blue-700 sm:w-auto"
+              onClick={() => {
+                setConfirmFinishSequence(false);
+                onFinishSet();
+              }}
+            >
+              {translate('confirm')}
             </Button>
           </ModalFooter>
         </ModalContent>

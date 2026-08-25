@@ -102,7 +102,9 @@ export function PagedSingleElimView({
               count++;
             }
           });
-          y = count > 0 ? ySum / count               : 16 + index * (cardH + MATCH_GAP_Y) + cardH / 2;
+          y = count > 0
+            ? ySum / count
+            : 16 + index * (cardH + MATCH_GAP_Y) + cardH / 2;
         } else {
           const step = (cardH + MATCH_GAP_Y) * Math.pow(1.35, Math.min(vIdx, 2));
           y = 16 + index * step + cardH / 2;

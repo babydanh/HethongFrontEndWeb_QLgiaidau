@@ -238,11 +238,11 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         </td>
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
                           {team.isPaid ? (
-                            <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
+                            <span className="bg-emerald-600 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap shadow-2xs">
                               {translate("paymentPaid")}
                             </span>
                           ) : (
-                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
+                            <span className="bg-amber-600 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap shadow-2xs">
                               {translate("paymentPending")}
                             </span>
                           )}

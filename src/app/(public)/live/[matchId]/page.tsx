@@ -32,7 +32,7 @@ import { useLiveMatch } from '@/hooks/useLiveMatch';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { socketClient } from '@/lib/socket';
 import type { MatchPenaltyRecord, MatchScore, PickleballSideOutState, TennisLivePointState } from '@/types/match';
-import { getErrorMessage, getRetryAfterSeconds } from '@/utils/error';
+import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatCompact } from '@/utils/format';
@@ -732,6 +732,14 @@ export default function LiveMatchPage({ params }: Props) {
     );
 
 
+  const clearPendingScoreSync = () => {
+    pendingScorePayloadRef.current = null;
+    if (scoreSyncTimerRef.current) {
+      clearTimeout(scoreSyncTimerRef.current);
+      scoreSyncTimerRef.current = null;
+    }
+  };
+
   const flushScoreSync = async () => {
     if (scoreSyncInFlightRef.current || !pendingScorePayloadRef.current) return;
 
@@ -749,12 +757,11 @@ export default function LiveMatchPage({ params }: Props) {
           toast.success(matchTranslate('liveScoreSynced'), { id: `score-sync-${matchId}` });
         } catch (err: unknown) {
           console.error(err);
-          // 409 (NOTE-7/D3): another device changed the score first — do not blind
-          // retry; ask the user to refresh, then let the snapshot reconcile.
+          // Do not keep a rejected optimistic score or replay the queued tap.
+          // This prevents Lite constraint failures from becoming repeated toasts
+          // while the UI incorrectly continues to show the score as saved.
+          clearPendingScoreSync();
           if (isConflict409(err)) {
-            // 409 (NOTE-7/D3): another device changed the score first — do not
-            // blind retry; refetch the server snapshot and let the user continue
-            // from the freshest state.
             const fresh = await matchesApi.getMatchById(matchId);
             applyServerSnapshot(fresh);
             toast(matchTranslate('scoreChangedOnOtherDevice'), {
@@ -762,7 +769,19 @@ export default function LiveMatchPage({ params }: Props) {
               id: `score-sync-${matchId}`,
             });
           } else {
-            toast.error(getErrorMessage(err, matchTranslate('liveScoreSyncFailed'), formatRateLimitMessage(err)), { id: `score-sync-${matchId}` });
+            try {
+              const fresh = await matchesApi.getMatchById(matchId);
+              applyServerSnapshot(fresh);
+            } catch {
+              optimisticScoresRef.current = extractMatchScores(match?.scoreDetails);
+              setScores(optimisticScoresRef.current);
+            }
+
+            const isValidationError = isHttpStatusError(err, 400) || isHttpStatusError(err, 422);
+            const message = isLiteMatch && isValidationError
+              ? matchTranslate('liveScoreSyncFailed')
+              : getErrorMessage(err, matchTranslate('liveScoreSyncFailed'), formatRateLimitMessage(err));
+            toast.error(message, { id: `score-sync-${matchId}` });
           }
         } finally {
       scoreSyncInFlightRef.current = false;

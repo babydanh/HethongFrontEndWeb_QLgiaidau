@@ -6,11 +6,11 @@
     --color-background: #ffffff; /* pure white background */
     --color-foreground: #0f172a; /* slate-900 */
 
-    --color-primary: #3ab5f6; /* VNSport logo cyan */
+    --color-primary: #002e7c; /* SportO Primary Navy #002e7c */
     --color-primary-foreground: #ffffff;
-    --color-primary-light: #e8f7ff; /* primary tint */
+    --color-primary-light: #eff4fc; /* primary tint */
 
-    --color-secondary: #3ab5f6; /* VNSport logo cyan — exact pick from logo */
+    --color-secondary: #3ab5f6; /* SportO Cyan Accent */
 
     --color-card: #ffffff;
     --color-card-foreground: #0f172a;
@@ -18,12 +18,12 @@
     --color-muted: #475569; /* slate-600 */
     --color-muted-foreground: #64748b; /* slate-500 */
 
-    --color-accent: #dbeafe; /* blue-100 */
-    --color-accent-foreground: #07549a; /* logo dark blue */
+    --color-accent: #d6e2f7; /* blue-100 */
+    --color-accent-foreground: #002e7c; /* logo navy */
 
     --color-border: #e2e8f0; /* slate-200 */
     --color-input: #e2e8f0; /* slate-200 */
-    --color-ring: #3ab5f6; /* primary focus ring */
+    --color-ring: #002e7c; /* primary focus ring */
 
     --color-success: #16a34a; /* green-600 */
     --color-warning: #d97706; /* amber-600 */
@@ -41,7 +41,7 @@
     --ds-text-muted: #64748b;
     --ds-border: #e2e8f0;
     --ds-border-subtle: #f1f5f9;
-    --ds-ring: #3ab5f6;
+    --ds-ring: #002e7c;
     --ds-radius: 0.5rem;
     --ds-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
     --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);

@@ -156,13 +156,6 @@ export default function LiveMatchPage({ params }: Props) {
   const [overrideReason, setOverrideReason] = useState('');
   const activeTournamentMode = match?.tournament?.tournamentConfig?.mode ?? null;
 
-  useEffect(() => {
-    // A mode switch is a new rule context. Never carry an Advanced override
-    // decision or its audit reason into the next mode.
-    setOverrideEnabled(false);
-    setOverrideReason('');
-  }, [activeTournamentMode]);
-
   // Bóng đá: kết quả luân lưu khi trận hòa ở knockout
   const [shootoutGoals, setShootoutGoals] = useState<{ p1Goals: number; p2Goals: number }>({ p1Goals: 0, p2Goals: 0 });
   const [footballScore, setFootballScore] = useState<FootballScoreState>(DEFAULT_FOOTBALL_SCORE);
@@ -562,7 +555,10 @@ export default function LiveMatchPage({ params }: Props) {
   const currentSet = scores[activeSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
   const resolvedRules = resolveMatchSportRules(match);
-  const isLiteMatch = match?.tournament?.tournamentConfig?.mode === 'LITE';
+  // Use the normalized rule view as the single UI mode source. This keeps the
+  // warning banner and quick-finalization behavior aligned even for legacy
+  // match payloads where tournamentConfig.mode is omitted.
+  const isLiteMatch = resolvedRules.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind, tournamentDetailTranslate);
   const scoreGuidance = isLiteMatch
     ? {
@@ -988,36 +984,28 @@ export default function LiveMatchPage({ params }: Props) {
 
     try {
       await flushPendingScoreSync();
-      // If moving to ONGOING and scores is empty, initialize the first set
-      let scoreUpdatePayload = undefined;
-      if (newStatus === 'ONGOING' && scores.length === 0) {
-        const initialScores = [{ team1Score: 0, team2Score: 0, isFinished: false }];
-        const nextSetsWon = deriveSetsWon(initialScores);
-        const nextTennisState = isTennis
-          ? createTennisLivePointState(initialScores[0], { enableTiebreak: !isLiteMatch })
-          : null;
-        scoreUpdatePayload = {
-          p1SetsWon: nextSetsWon.p1SetsWon,
-          p2SetsWon: nextSetsWon.p2SetsWon,
-          scoreDetails: buildScoreDetailsPayload(
-            initialScores,
-            sideOutState,
-            nextTennisState,
-          ),
-        };
-        setScores(initialScores);
-        if (isTennis) {
-          setOptimisticTennisPointState(nextTennisState);
-        }
-      }
 
-      if (scoreUpdatePayload) {
-        await updateScoreWithRevision(scoreUpdatePayload);
-      }
-
+      // A scheduled match must be activated before the first score mutation.
+      // The previous order sent a zero-score PATCH while the match was still
+      // SCHEDULED; the 400 left a local first-set seed behind, so the second
+      // click followed a different branch and appeared to work.
       const res = await matchesApi.updateStatus(matchId, { status: newStatus });
+      const nextMatch = mergeMatchUpdate(res);
+      const serverScores = extractMatchScores(res.scoreDetails);
+      const nextScores = serverScores.length > 0
+        ? serverScores
+        : optimisticScoresRef.current.length > 0
+          ? optimisticScoresRef.current
+          : newStatus === 'ONGOING'
+            ? [{ team1Score: 0, team2Score: 0, isFinished: false }]
+            : [];
+
+      // Keep the display-only first set local until the operator records a
+      // real point/set. The status response remains the canonical match.
+      optimisticScoresRef.current = nextScores;
       startTransition(() => {
-        setMatch(mergeMatchUpdate(res));
+        setMatch(nextMatch);
+        setScores(nextScores);
       });
       toast.success(
         newStatus === 'ONGOING'
@@ -2311,6 +2299,7 @@ export default function LiveMatchPage({ params }: Props) {
         </div>
 
         <OfficialScoreModal
+          key={`official-score-${matchId}-${activeTournamentMode ?? 'default'}`}
           open={isOfficialScoreModalOpen}
           onOpenChange={setIsOfficialScoreModalOpen}
           canControlLiveMatch={canControlLiveMatch}

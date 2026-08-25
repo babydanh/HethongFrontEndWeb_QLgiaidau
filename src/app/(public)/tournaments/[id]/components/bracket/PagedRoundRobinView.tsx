@@ -38,20 +38,6 @@ export function PagedRoundRobinView({
   const translate = useTranslations('TournamentDetail');
   const [subView, setSubView] = useState<'matrix' | 'table'>('matrix');
   const [activeLeg, setActiveLeg] = useState(1);
-  const participantCount = useMemo(() => {
-    const ids = new Set<string>();
-    matches.forEach((match) => {
-      if (match.participant1?.id) ids.add(match.participant1.id);
-      if (match.participant2?.id) ids.add(match.participant2.id);
-    });
-    return ids.size;
-  }, [matches]);
-
-  const roundsPerLeg = useMemo(() => {
-    const slotCount = participantCount % 2 === 0 ? participantCount : participantCount + 1;
-    return Math.max(1, slotCount - 1);
-  }, [participantCount]);
-
   const legCount = useMemo(() => {
     const persistedLegs = matches
       .map((match) => match.leg)

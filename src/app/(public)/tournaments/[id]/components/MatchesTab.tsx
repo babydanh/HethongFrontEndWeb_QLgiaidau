@@ -28,18 +28,21 @@ function normalizeStageValue(value?: string | null): string {
   return (value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
 }
 
-function getScheduleStageKey(match: BracketMatch): string {
+function getScheduleStageKey(match: BracketMatch, tournamentFormat?: Tournament['format']): string {
   const stage = match.stage ?? match.group?.stage;
   const type = normalizeStageValue(stage?.type);
   const name = normalizeStageValue(stage?.name);
+  const format = normalizeStageValue(tournamentFormat);
 
   if (
     type === 'ROUND_ROBIN' ||
     type === 'GROUP' ||
     type === 'GROUP_STAGE' ||
+    type === 'GROUP_STAGES' ||
     name.includes('GROUP') ||
     name.includes('ROUND_ROBIN') ||
-    name.includes('VONG_BANG')
+    name.includes('VONG_BANG') ||
+    (!stage && format === 'ROUND_ROBIN')
   ) {
     return 'GROUP_STAGE';
   }
@@ -48,9 +51,11 @@ function getScheduleStageKey(match: BracketMatch): string {
     type === 'SINGLE_ELIMINATION' ||
     type === 'DOUBLE_ELIMINATION' ||
     type === 'KNOCKOUT' ||
+    type === 'PLAYOFF' ||
     name.includes('ELIMINATION') ||
     name.includes('KNOCKOUT') ||
-    name.includes('PLAYOFF')
+    name.includes('PLAYOFF') ||
+    (!stage && (format === 'SINGLE_ELIMINATION' || format === 'DOUBLE_ELIMINATION'))
   ) {
     return 'KNOCKOUT';
   }
@@ -58,7 +63,11 @@ function getScheduleStageKey(match: BracketMatch): string {
   return stage?.name?.trim() || 'MAIN_STAGE';
 }
 
-function getPersistedOrRoundRobinLeg(match: BracketMatch, matches: BracketMatch[]): number {
+function getPersistedOrRoundRobinLeg(
+  match: BracketMatch,
+  matches: BracketMatch[],
+  tournamentFormat?: Tournament['format'],
+): number {
   if (typeof match.leg === 'number' && Number.isInteger(match.leg) && match.leg > 0) {
     return match.leg;
   }
@@ -70,9 +79,11 @@ function getPersistedOrRoundRobinLeg(match: BracketMatch, matches: BracketMatch[
     type === 'ROUND_ROBIN' ||
     type === 'GROUP' ||
     type === 'GROUP_STAGE' ||
+    type === 'GROUP_STAGES' ||
     name.includes('GROUP') ||
     name.includes('ROUND_ROBIN') ||
-    name.includes('VONG_BANG');
+    name.includes('VONG_BANG') ||
+    (!stage && normalizeStageValue(tournamentFormat) === 'ROUND_ROBIN');
 
   return isRoundRobin ? getRoundRobinRoundInfo(match, matches).leg : 1;
 }
@@ -232,7 +243,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     };
   }, [effectiveTournamentId, setMatches]);
 
-  const getMatchStageKey = (match: BracketMatch) => getScheduleStageKey(match);
+  const getMatchStageKey = (match: BracketMatch) => getScheduleStageKey(match, tournament.format);
 
   const stageOptions = useMemo(() => {
     const byStage = new Map<string, number>();
@@ -241,13 +252,13 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       byStage.set(key, (byStage.get(key) ?? 0) + 1);
     });
     return Array.from(byStage.entries()).map(([key, count]) => ({ key, count }));
-  }, [matches]);
+  }, [matches, tournament.format]);
 
   const legOptions = useMemo(
-    () => Array.from(new Set(matches.map((match) => getPersistedOrRoundRobinLeg(match, matches))))
+    () => Array.from(new Set(matches.map((match) => getPersistedOrRoundRobinLeg(match, matches, tournament.format))))
       .filter((leg): leg is number => leg > 0)
       .sort((a, b) => a - b),
-    [matches],
+    [matches, tournament.format],
   );
 
   // Extract unique stage-aware rounds from current matches.
@@ -255,7 +266,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const visibleRoundOptions = useMemo(
     () => roundOptions.filter((option) => matches.some((match) => {
       const sameStage = selectedStageKey === 'ALL' || getMatchStageKey(match) === selectedStageKey;
-      const sameLeg = selectedLeg === 'ALL' || getPersistedOrRoundRobinLeg(match, matches) === selectedLeg;
+      const sameLeg = selectedLeg === 'ALL' || getPersistedOrRoundRobinLeg(match, matches, tournament.format) === selectedLeg;
       const sameRound = match.roundNumber === option.roundNumber;
       const sameLabel = getMatchRoundLabel({
         match,
@@ -317,7 +328,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (selectedStageKey !== 'ALL' && getMatchStageKey(m) !== selectedStageKey) return false;
 
       // 2. Filter by configured leg
-      if (selectedLeg !== 'ALL' && getRoundRobinRoundInfo(m, matches).leg !== selectedLeg) return false;
+      if (selectedLeg !== 'ALL' && getPersistedOrRoundRobinLeg(m, matches, tournament.format) !== selectedLeg) return false;
 
       // 3. Filter by internal round within the selected leg/stage
       if (selectedRoundKey !== 'ALL') {
@@ -325,7 +336,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         if (!selectedOption) return false;
 
         const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false, translations: roundLabelTranslations });
-        const matchLeg = getPersistedOrRoundRobinLeg(m, matches);
+        const matchLeg = getPersistedOrRoundRobinLeg(m, matches, tournament.format);
         if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label || (selectedOption.leg != null && matchLeg !== selectedOption.leg)) {
           return false;
         }

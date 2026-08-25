@@ -18,6 +18,7 @@ interface Props {
   throughRound?: number | null;
   roundConfig?: Record<string, unknown> | null;
   roundInfoMatches?: BracketMatch[];
+  headerAction?: React.ReactNode;
 }
 
 export function GroupCrossMatrixView({ 
@@ -29,6 +30,7 @@ export function GroupCrossMatrixView({
   throughRound = null,
   roundConfig = null,
   roundInfoMatches,
+  headerAction,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const displayGroupName = groupName ?? translate('defaultGroupName');
@@ -90,33 +92,37 @@ export function GroupCrossMatrixView({
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <div className="font-bold text-sm text-slate-800">
+      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
+          <span className="w-1.5 h-4 bg-blue-600 rounded-full inline-block" />
           {displayGroupName}
         </div>
-        {onLegChange && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onLegChange(Math.max(activeLeg - 1, 1))}
-              disabled={activeLeg <= 1}
-              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
-              {translate('legProgress', { current: activeLeg, total: legCount })}
-            </span>
-            <button
-              type="button"
-              onClick={() => onLegChange(Math.min(activeLeg + 1, legCount))}
-              disabled={activeLeg >= legCount}
-              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {onLegChange && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onLegChange(Math.max(activeLeg - 1, 1))}
+                disabled={activeLeg <= 1}
+                className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
+                {translate('legProgress', { current: activeLeg, total: legCount })}
+              </span>
+              <button
+                type="button"
+                onClick={() => onLegChange(Math.min(activeLeg + 1, legCount))}
+                disabled={activeLeg >= legCount}
+                className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {headerAction}
+        </div>
       </div>
 
       <div className="overflow-x-auto">

@@ -12,6 +12,7 @@ import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
 
 interface Props {
   matches: BracketMatch[];
+  groupName?: string;
   onScheduleMatch?: OnScheduleMatch;
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
@@ -24,6 +25,7 @@ interface Props {
 
 export function PagedRoundRobinView({
   matches,
+  groupName,
   onScheduleMatch,
   selectedMatchId,
   onSelectMatch,
@@ -55,9 +57,14 @@ export function PagedRoundRobinView({
       .map((match) => match.leg)
       .filter((leg): leg is number => typeof leg === 'number' && Number.isInteger(leg) && leg > 0);
     const configuredLegs = Number(roundConfig?.roundsToPlay ?? roundConfig?.rounds_to_play ?? 0);
-    const maxRoundNumber = Math.max(0, ...matches.map((match) => match.roundNumber));
-    return Math.max(1, configuredLegs, ...persistedLegs, Math.ceil(maxRoundNumber / roundsPerLeg));
-  }, [matches, roundConfig, roundsPerLeg]);
+
+    // Do not infer extra legs from roundNumber. A single-leg group stage can
+    // legitimately have several internal rounds; only persisted legs or the
+    // stage setting may expose a second leg.
+    if (configuredLegs > 0) return Math.max(1, Math.trunc(configuredLegs));
+    if (persistedLegs.length > 0) return Math.max(1, ...persistedLegs);
+    return 1;
+  }, [matches, roundConfig]);
 
   // Use a derived clamped leg to prevent out-of-bounds rendering
   const currentLeg = Math.min(Math.max(activeLeg, 1), legCount);
@@ -71,37 +78,39 @@ export function PagedRoundRobinView({
   };
 
   const viewButtons = (exclude: 'matrix' | 'table') => (
-    <div className="flex flex-wrap justify-end gap-2">
+    <div className="flex items-center gap-1.5">
       {exclude !== 'matrix' && (
         <button
           type="button"
           onClick={() => setSubView('matrix')}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-100/80 hover:text-blue-600 transition-colors cursor-pointer"
         >
-          <TableProperties className="h-4 w-4 text-sky-600" /> {translate('crossTable')}
+          <TableProperties className="h-3.5 w-3.5 text-sky-600" />
+          <span>{translate('crossTable')}</span>
         </button>
       )}
       {exclude !== 'table' && (
         <button
           type="button"
           onClick={() => setSubView('table')}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-100/80 hover:text-blue-600 transition-colors cursor-pointer"
         >
-          <TableProperties className="h-4 w-4 text-emerald-600" /> {translate('standingsTable')}
+          <TableProperties className="h-3.5 w-3.5 text-emerald-600" />
+          <span>{translate('standingsTable')}</span>
         </button>
       )}
     </div>
   );
 
   const legSelector = legCount > 1 ? (
-    <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1" aria-label={translate('selectGroupLeg')}>
+    <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100/70 p-0.5" aria-label={translate('selectGroupLeg')}>
       {Array.from({ length: legCount }, (_, index) => index + 1).map((leg) => (
         <button
           key={leg}
           type="button"
           onClick={() => changeLeg(leg)}
           aria-pressed={currentLeg === leg}
-          className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${currentLeg === leg ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'}`}
+          className={`rounded-md px-2 py-1 text-[11px] font-bold transition-colors cursor-pointer ${currentLeg === leg ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'}`}
         >
           {translate('legLabel', { number: leg })}
         </button>
@@ -109,57 +118,35 @@ export function PagedRoundRobinView({
     </div>
   ) : null;
 
+  const headerActions = (type: 'matrix' | 'table') => (
+    <div className="flex items-center gap-2">
+      {legSelector}
+      {viewButtons(type)}
+    </div>
+  );
+
   if (subView === 'matrix') {
     return (
-      <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs font-semibold text-slate-500">
-            {legCount > 1 ? translate('resultsAcrossLegs', { count: legCount }) : translate('resultsSummary')}
-          </p>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {legSelector}
-            {viewButtons('matrix')}
-          </div>
-        </div>
-        {/* Cross matrix for the complete selected leg. */}
+      <div className="animate-in fade-in duration-200">
         <GroupCrossMatrixView
           matches={legMatches}
-          groupName={translate('crossTable')}
+          groupName={groupName}
           activeLeg={currentLeg}
           legCount={legCount}
           throughRound={null}
           roundConfig={roundConfig as Record<string, unknown> | null | undefined}
           roundInfoMatches={matches}
-        />
-        {/* Match list — every pairing in the selected leg, without internal round pagination. */}
-        <RoundRobinView
-          matches={legMatches}
-          onScheduleMatch={onScheduleMatch}
-          selectedMatchId={selectedMatchId}
-          onSelectMatch={onSelectMatch}
-          tournamentId={tournamentId}
-          stageId={stageId}
-          fallbackSportRuleKind={fallbackSportRuleKind}
-          roundConfig={roundConfig}
-          tiebreakerMode={tiebreakerMode}
-          hideStandings={true}
-          activeLeg={currentLeg}
+          headerAction={headerActions('matrix')}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-slate-500">{translate('resultsAcrossLegs', { count: legCount })}</p>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {legSelector}
-          {viewButtons('table')}
-        </div>
-      </div>
+    <div className="animate-in fade-in duration-200">
       <RoundRobinView
         matches={legMatches}
+        groupName={groupName}
         activeLeg={currentLeg}
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
@@ -169,6 +156,8 @@ export function PagedRoundRobinView({
         fallbackSportRuleKind={fallbackSportRuleKind}
         roundConfig={roundConfig}
         tiebreakerMode={tiebreakerMode}
+        hideSchedule={true}
+        headerAction={headerActions('table')}
       />
     </div>
   );

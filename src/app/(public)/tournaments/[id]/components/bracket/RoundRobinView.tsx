@@ -33,6 +33,7 @@ import toast from 'react-hot-toast';
 
 interface Props {
   matches: BracketMatch[];
+  groupName?: string;
   tiebreakerMode?: 'split' | 'playoff';
   onScheduleMatch?: OnScheduleMatch;
   selectedMatchId?: string | null;
@@ -42,13 +43,15 @@ interface Props {
   fallbackSportRuleKind?: SportRuleKind;
   roundConfig?: StageRoundConfig | null;
   hideStandings?: boolean;
-    /** The selected leg. Internal scheduler rounds are intentionally not exposed here. */
+  hideSchedule?: boolean;
+  headerAction?: React.ReactNode;
+  /** The selected leg. Internal scheduler rounds are intentionally not exposed here. */
   activeLeg?: number;
-
 }
 
 export function RoundRobinView({
   matches,
+  groupName,
   tiebreakerMode = 'split',
   onScheduleMatch,
   selectedMatchId,
@@ -58,6 +61,8 @@ export function RoundRobinView({
   fallbackSportRuleKind,
   roundConfig,
   hideStandings = false,
+  hideSchedule = false,
+  headerAction,
   activeLeg = 1,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
@@ -91,22 +96,30 @@ export function RoundRobinView({
 
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {!hideStandings && (
-      <div>
-        <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-blue-500" /> {translate("standingsTitle")}
-          <button
-            onClick={() => setShowInfo(!showInfo)}
-            className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-300 hover:bg-slate-400 text-white transition-colors cursor-pointer flex-shrink-0"
-            title={translate("standingsInfoTitle")}
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-          </button>
-        </h5>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
+            <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-blue-600 rounded-full inline-block" />
+              <span>{groupName || translate("standingsTitle")}</span>
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-300 hover:bg-slate-400 text-white transition-colors cursor-pointer flex-shrink-0"
+                title={translate("standingsInfoTitle")}
+              >
+                <HelpCircle className="w-3 h-3" />
+              </button>
+            </div>
+            {headerAction && (
+              <div className="flex items-center gap-2">
+                {headerAction}
+              </div>
+            )}
+          </div>
 
         {showInfo && (
-          <div className="relative mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 pr-8 text-xs text-blue-900 leading-relaxed">
+          <div className="relative m-4 bg-blue-50 border border-blue-200 rounded-lg p-4 pr-8 text-xs text-blue-900 leading-relaxed">
             <button
               onClick={() => setShowInfo(false)}
               className="absolute top-2 right-2 text-blue-400 hover:text-blue-700 cursor-pointer"
@@ -331,110 +344,114 @@ export function RoundRobinView({
           </div>
         )}
       </div>
-      )}      {/* All pairings for the selected leg are shown together. */}
-      <div>
-        <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-slate-400" /> {translate('matchSchedule')}
-          <span className="text-[10px] text-slate-400 font-semibold normal-case">
-            ({translate('matchCount', { count: matches.filter(m => !m.isBye).length })})
-          </span>
-        </h5>
+    )}
 
-        {scheduleMatches.length === 0 ? (
-          <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
-            {translate("noMatches")}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {scheduleMatches.length > 0 && (
-              <div key="selected-leg-schedule" className="flex flex-col gap-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-700 bg-slate-200/80 px-2.5 py-1 rounded-md">
-                      {activeLeg ? translate('legLabel', { number: activeLeg }) : translate('matchSchedule')}
-                    </span>
-                    <div className="h-px flex-1 bg-slate-200" />
-                  </div>
+      {/* All pairings for the selected leg are shown together. */}
+      {!hideSchedule && (
+          <div>
+            <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-400" /> {translate('matchSchedule')}
+              <span className="text-[10px] text-slate-400 font-semibold normal-case">
+                ({translate('matchCount', { count: matches.filter(m => !m.isBye).length })})
+              </span>
+            </h5>
 
-                  <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    {scheduleMatches
-                      .sort((a, b) => a.matchOrder - b.matchOrder)
-                      .map((m) => {
-                        const done = m.status === 'COMPLETED';
-                        const live = m.status === 'ONGOING';
-                        return (
-                          <div
-                            key={m.id}
-                            data-bracket-match-id={m.id}
-                            onClick={() => onSelectMatch?.(m)}
-                            className={
-                              'flex min-h-[148px] cursor-pointer flex-col rounded-lg border p-3.5 text-xs font-semibold shadow-sm transition-all ' +
-                              (selectedMatchId === m.id
-                                ? 'border-amber-400 ring-4 ring-amber-100 bg-amber-50/60'
-                                : live
-                                  ? 'border-blue-300 bg-blue-50/50'
-                                  : done
-                                    ? 'border-emerald-100 bg-emerald-50/20'
-                                    : 'border-slate-200/80 bg-white')
-                            }
-                          >
-                            <div className="mb-1.5 flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded">
-                                {translate('matchNumber', { number: m.matchOrder })}
-                              </span>
-                              {live && (
-                                <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse">
-                                  <Play className="w-2 h-2 fill-blue-600" /> {translate('liveLabel')}
+            {scheduleMatches.length === 0 ? (
+              <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
+                {translate("noMatches")}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {scheduleMatches.length > 0 && (
+                  <div key="selected-leg-schedule" className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 bg-slate-200/80 px-2.5 py-1 rounded-md">
+                        {activeLeg ? translate('legLabel', { number: activeLeg }) : translate('matchSchedule')}
+                      </span>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+
+                    <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {scheduleMatches
+                        .sort((a, b) => a.matchOrder - b.matchOrder)
+                        .map((m) => {
+                          const done = m.status === 'COMPLETED';
+                          const live = m.status === 'ONGOING';
+                          return (
+                            <div
+                              key={m.id}
+                              data-bracket-match-id={m.id}
+                              onClick={() => onSelectMatch?.(m)}
+                              className={
+                                'flex min-h-[148px] cursor-pointer flex-col rounded-lg border p-3.5 text-xs font-semibold shadow-sm transition-all ' +
+                                (selectedMatchId === m.id
+                                  ? 'border-amber-400 ring-4 ring-amber-100 bg-amber-50/60'
+                                  : live
+                                    ? 'border-blue-300 bg-blue-50/50'
+                                    : done
+                                      ? 'border-emerald-100 bg-emerald-50/20'
+                                      : 'border-slate-200/80 bg-white')
+                              }
+                            >
+                              <div className="mb-1.5 flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded">
+                                  {translate('matchNumber', { number: m.matchOrder })}
                                 </span>
-                              )}
+                                {live && (
+                                  <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse">
+                                    <Play className="w-2 h-2 fill-blue-600" /> {translate('liveLabel')}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="space-y-2.5">
+                                <div className="flex min-h-[34px] items-center justify-between gap-2">
+                                  <ParticipantIdentity
+                                    participant={m.participant1}
+                                    fallback={translate('pendingParticipant')}
+                                    compact
+                                  />
+                                  <span className={'shrink-0 font-bold text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>
+                                    {done || live ? m.p1SetsWon : '-'}
+                                  </span>
+                                </div>
+                                <div className="flex min-h-[34px] items-center justify-between gap-2">
+                                  <ParticipantIdentity
+                                    participant={m.participant2}
+                                    fallback={translate('pendingParticipant')}
+                                    compact
+                                  />
+                                  <span className={'shrink-0 font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>
+                                    {done || live ? m.p2SetsWon : '-'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-1 flex-col justify-end gap-1.5">
+                                <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
+                                  <Clock className="w-2 h-2 flex-shrink-0" />
+                                  <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : translate('schedulePending')}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
+                                  <Info className="w-2 h-2 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : translate('unscheduledCourt')}
+                                  </span>
+                                </div>
+                                {onScheduleMatch && !done && m.participant1 && m.participant2 && (
+                                  <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">
+                                    {translate("scheduleVenueTime")}
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <div className="space-y-2.5">
-                              <div className="flex min-h-[34px] items-center justify-between gap-2">
-                                <ParticipantIdentity
-                                  participant={m.participant1}
-                                  fallback={translate('pendingParticipant')}
-                                  compact
-                                />
-                                <span className={'shrink-0 font-bold text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>
-                                  {done || live ? m.p1SetsWon : '-'}
-                                </span>
-                              </div>
-                              <div className="flex min-h-[34px] items-center justify-between gap-2">
-                                <ParticipantIdentity
-                                  participant={m.participant2}
-                                  fallback={translate('pendingParticipant')}
-                                  compact
-                                />
-                                <span className={'shrink-0 font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>
-                                  {done || live ? m.p2SetsWon : '-'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-1 flex-col justify-end gap-1.5">
-                              <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
-                                <Clock className="w-2 h-2 flex-shrink-0" />
-                                <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : translate('schedulePending')}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
-                                <Info className="w-2 h-2 flex-shrink-0" />
-                                <span className="truncate">
-                                  {m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : translate('unscheduledCourt')}
-                                </span>
-                              </div>
-                              {onScheduleMatch && !done && m.participant1 && m.participant2 && (
-                                <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">
-                                  {translate("scheduleVenueTime")}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                    </div>
                   </div>
-                </div>
+                )}
+              </div>
             )}
           </div>
         )}
       </div>
-    </div>
-  );
+    );
 }

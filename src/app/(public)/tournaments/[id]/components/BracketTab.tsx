@@ -189,7 +189,6 @@ function GroupView({
   translate,
   dragHandlers,
 }: {
-
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
   onScheduleMatch?: OnScheduleMatch;
@@ -229,8 +228,10 @@ function GroupView({
   }
 
   if (stageType === 'ROUND_ROBIN' || stageType === 'GROUP_STAGE' || stageType === 'GROUP') {
+    const formattedGroupName = group.name || translate('groupName', { letter: 'A' });
     return viewMode === 'paged' ? (
       <PagedRoundRobinView
+        groupName={formattedGroupName}
         matches={matches}
         tiebreakerMode={tiebreakerMode}
         onScheduleMatch={onScheduleMatch}
@@ -243,6 +244,7 @@ function GroupView({
       />
     ) : (
       <RoundRobinView
+        groupName={formattedGroupName}
         matches={matches}
         tiebreakerMode={tiebreakerMode}
         onScheduleMatch={onScheduleMatch}
@@ -673,7 +675,7 @@ export default function BracketTab({
           ) : (
             activeStage.groups.map((group, groupIndex) => (
               <div key={group.id}>
-                {activeStage.groups.length > 1 && (
+                {activeStage.groups.length > 1 && !['ROUND_ROBIN', 'GROUP_STAGE', 'GROUP'].includes(activeStage.type) && (
                   <h4 className="font-bold text-slate-700 text-sm border-l-4 border-blue-500 pl-3 mb-4">
                     {group.name || translate('groupName', { letter: String.fromCharCode(65 + groupIndex) })}
                   </h4>

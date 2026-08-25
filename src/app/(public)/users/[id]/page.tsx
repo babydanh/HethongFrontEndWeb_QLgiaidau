@@ -343,33 +343,33 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER']))).map((role: string) => {
                 let roleLabel = translate('player');
-                let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
+                let roleColor = 'bg-blue-600 text-white shadow-2xs';
                 if (role === 'ORGANIZER') {
                   roleLabel = translate('organizer');
-                  roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
+                  roleColor = 'bg-indigo-600 text-white shadow-2xs';
                 } else if (role === 'ADMIN') {
                   roleLabel = translate('admin');
-                  roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
+                  roleColor = 'bg-purple-600 text-white shadow-2xs';
                 }
                 return (
-                  <span key={role} className={`px-3.5 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
+                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
                     {roleLabel}
                   </span>
                 );
               })}
               {profile.isVerified && (
-                <span className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-[#dcfce7] text-[#166534] uppercase tracking-wider">
+                <span className="px-3 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white uppercase tracking-wider shadow-2xs">
                   {translate('verified')}
                 </span>
               )}
               {profile.achievements?.length ? (
-                <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} {translate('achievementsLabel')}
+                <span className="bg-slate-900 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> {profile.achievements.length} {translate('achievementsLabel')}
                 </span>
               ) : null}
               {profile.createdAt && (
-                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}
+                <span className="bg-slate-800 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-white/80" /> {translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>

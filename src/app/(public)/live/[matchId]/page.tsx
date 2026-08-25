@@ -1477,6 +1477,7 @@ export default function LiveMatchPage({ params }: Props) {
 
   const part1 = participants.find((p) => p.id === match.participant1Id || p.id === match.participant1?.id);
   const part2 = participants.find((p) => p.id === match.participant2Id || p.id === match.participant2?.id);
+  const targetTournamentId = match.tournament?.id || match.tournamentId;
 
   return (
     <div className="min-h-screen bg-slate-50 pt-10 pb-20 px-4">
@@ -1488,7 +1489,7 @@ export default function LiveMatchPage({ params }: Props) {
             {/* Top row: Tournament Context & Stage */}
             <div className="flex items-center gap-2 flex-wrap text-xs">
               <Link
-                href={`/tournaments/${match.tournamentId}`}
+                href={targetTournamentId ? `/tournaments/${targetTournamentId}` : '#'}
                 className="inline-flex items-center gap-1.5 font-bold text-slate-900 hover:text-blue-600 transition-colors group truncate"
               >
                 {match.tournament?.logoUrl ? (
@@ -1582,7 +1583,7 @@ export default function LiveMatchPage({ params }: Props) {
               className="h-9 w-9 rounded-xl shadow-2xs"
             />
             <Link
-              href={`/tournaments/${match.tournamentId}`}
+              href={targetTournamentId ? `/tournaments/${targetTournamentId}` : '#'}
               title={match.tournament?.name || matchTranslate('backToTournament')}
               aria-label={match.tournament?.name || matchTranslate('backToTournament')}
               className="flex items-center justify-center text-blue-600 hover:bg-blue-100/80 transition-all bg-blue-50 border border-blue-200/80 h-9 w-9 rounded-xl shadow-2xs shrink-0"

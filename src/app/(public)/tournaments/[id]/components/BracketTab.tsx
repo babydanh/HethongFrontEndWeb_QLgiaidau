@@ -561,19 +561,24 @@ export default function BracketTab({
       {/* Stage tabs */}
       {renderedStages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {renderedStages.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setActiveStageId(s.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
-                activeStageId === s.id
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {stageNameLabel(s.name, translate)}
-            </button>
-          ))}
+          {renderedStages.map((s, idx) => {
+            const rawLabel = stageNameLabel(s.name, translate);
+            const hasDuplicateLabel = renderedStages.filter((other) => stageNameLabel(other.name, translate) === rawLabel).length > 1;
+            const displayLabel = hasDuplicateLabel ? `${rawLabel} #${idx + 1}` : rawLabel;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveStageId(s.id)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+                  activeStageId === s.id
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {displayLabel}
+              </button>
+            );
+          })}
         </div>
       )}
 

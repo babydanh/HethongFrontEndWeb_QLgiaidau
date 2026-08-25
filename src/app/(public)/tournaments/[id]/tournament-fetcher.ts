@@ -28,12 +28,14 @@ export async function fetchTournamentWithRetry(url: string, init?: RequestInit) 
 export const getTournament = cache(async (id: string) => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY || 'sporto-secret-key-2026-VNDC';
 
   try {
     const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}`, {
       headers: {
         'Content-Type': 'application/json',
+        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
     });

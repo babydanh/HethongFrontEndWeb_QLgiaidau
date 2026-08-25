@@ -850,6 +850,10 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
     // Render only rows returned by the API. Missing positions are not players.
     const listData = [...realData];
 
+    if (listData.length === 0) {
+        return null;
+    }
+
     // Split into 2 columns
     const mid = Math.ceil(listData.length / 2);
     const leftColumnData = listData.slice(0, mid);

@@ -29,6 +29,7 @@ export const getTournament = cache(async (id: string) => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
   const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+  const appApiKey = process.env.NEXT_PUBLIC_APP_KEY || process.env.APP_KEY || '';
 
   try {
     const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}`, {

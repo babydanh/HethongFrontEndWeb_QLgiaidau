@@ -214,7 +214,8 @@ const deriveTournamentPlacement = (
 export default function ProfilePage() {
   const translate = useTranslations("Profile");
   const achievementLabels = { champion: translate("achievementChampion"), runnerUp: translate("achievementRunnerUp"), thirdPlace: translate("achievementThirdPlace") };
-  const { user } = useAuthStore();
+    const { user, hasHydrated } = useAuthStore();
+
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [createdCommunities, setCreatedCommunities] = useState<Community[]>([]);
   const [joinedCommunities, setJoinedCommunities] = useState<Community[]>([]);
@@ -300,19 +301,49 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     let isMounted = true;
 
     const fetchProfile = async () => {
+      // A persisted user is already safe to render as the first shell. Keep the
+      // refresh request in the background instead of blanking the profile until
+      // the network responds.
+      setIsLoading(!user?.id);
       try {
-        setIsLoading(true);
-        const [data, communitiesRes, workspaceRes, categoriesRes] = await Promise.all([
-          usersApi.getProfile(),
+        // The profile is the only request that gates the header shell. Secondary
+        // requests start after it succeeds so a slow/unauthorized auxiliary API
+        // cannot keep the first visit in a full-page skeleton.
+        const data = await usersApi.getProfile();
+        if (!isMounted) return;
+
+        setProfileData(data);
+        setIsLoading(false);
+
+        // Sync roles/details with useAuthStore so header displays updated roles immediately.
+        if (data) {
+          useAuthStore.getState().setUser({
+            ...data,
+            roles: data.roles || [],
+          });
+        }
+
+        const userRoles = data?.roles || [];
+        if (!userRoles.includes('ORGANIZER') && !userRoles.includes('ADMIN')) {
+          void api
+            .get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my')
+            .then((res) => {
+              if (isMounted) setTickets(res.data || []);
+            })
+            .catch(() => undefined);
+        }
+
+        void Promise.all([
           communitiesApi.getMyCommunities().catch(() => null),
           tournamentsApi.getMyWorkspace().catch(() => null),
           categoriesApi.getCategories().catch(() => null),
-        ]);
-        if (isMounted) {
-          setProfileData(data);
+        ]).then(([communitiesRes, workspaceRes, categoriesRes]) => {
+          if (!isMounted) return;
           setCreatedCommunities(communitiesRes?.data?.created || []);
           setJoinedCommunities(communitiesRes?.data?.joined || []);
           setParticipatingTournaments(workspaceRes?.data?.participatingTournaments || []);
@@ -320,42 +351,19 @@ export default function ProfilePage() {
           setCoOrganizerTournaments(workspaceRes?.data?.coOrganizerTournaments || []);
           setRefereeTournaments(workspaceRes?.data?.refereeTournaments || workspaceRes?.data?.refereeInvites || []);
           setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
-
-          // Sync roles/details with useAuthStore so header displays updated roles immediately.
-          if (data) {
-            useAuthStore.getState().setUser({
-              ...data,
-              roles: data.roles || [],
-            });
-          }
-
-          // Verification tickets are secondary data. Do not block the profile shell,
-          // matches tab, or ELO history while this endpoint is slow or unavailable.
-          const userRoles = data?.roles || [];
-          if (!userRoles.includes('ORGANIZER') && !userRoles.includes('ADMIN')) {
-            void api
-              .get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my')
-              .then((res) => {
-                if (isMounted) setTickets(res.data || []);
-              })
-              .catch(() => undefined);
-          }
-        }
+        });
       } catch (error) {
-        console.error("Failed to fetch profile", error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        console.error('Failed to fetch profile', error);
+        if (isMounted) setIsLoading(false);
       }
     };
 
-    fetchProfile();
+    void fetchProfile();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hasHydrated, user?.id]);
 
   const handleUploadEvidence = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -411,6 +419,7 @@ export default function ProfilePage() {
   };
 
   const displayUser = profileData || user;
+  const loadedProfileUserId = profileData?.id;
 
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
@@ -431,10 +440,11 @@ export default function ProfilePage() {
   const featuredElo = featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? null;
 
   useEffect(() => {
-    if (!displayUser?.id) return;
+        if (!loadedProfileUserId) return;
 
-    if (matchesCursorUserRef.current !== displayUser.id) {
-      matchesCursorUserRef.current = displayUser.id;
+    if (matchesCursorUserRef.current !== loadedProfileUserId) {
+      matchesCursorUserRef.current = loadedProfileUserId;
+
       matchesCursorByPageRef.current = { 1: null };
     }
 
@@ -443,11 +453,12 @@ export default function ProfilePage() {
       try {
         setIsLoadingTab(true);
         const [ranksRes, historyRes, followedRes, matchesRes] = await Promise.all([
-          rankingsApi.getUserRankings(displayUser.id),
-          rankingsApi.getUserEloHistory(displayUser.id),
+                    rankingsApi.getUserRankings(loadedProfileUserId),
+          rankingsApi.getUserEloHistory(loadedProfileUserId),
           tournamentsApi.getFollowedTournaments(),
           matchesApi.getMatches({
-            userId: displayUser.id,
+            userId: loadedProfileUserId,
+
             limit: 10,
             ...(matchesCursorByPageRef.current[matchesPage]
               ? { cursor: matchesCursorByPageRef.current[matchesPage] }
@@ -483,12 +494,13 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [displayUser?.id, matchesPage]);
+  }, [loadedProfileUserId, matchesPage]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchAchievements = async () => {
-      if (!displayUser?.id || participatingTournaments.length === 0) {
+            if (!loadedProfileUserId || participatingTournaments.length === 0) {
+
         if (isMounted) setAchievements([]);
         return;
       }
@@ -502,7 +514,8 @@ export default function ProfilePage() {
           completedRankedTournaments.map(async (tournament) => {
             try {
               const response = await tournamentsApi.getTournamentBracket(tournament.id);
-              return deriveTournamentPlacement(tournament, response.data.stages || [], displayUser.id, achievementLabels);
+                            return deriveTournamentPlacement(tournament, response.data.stages || [], loadedProfileUserId, achievementLabels);
+
             } catch (error) {
               console.error('Failed to load bracket for achievement', tournament.id, error);
               return null;
@@ -531,7 +544,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [displayUser?.id, participatingTournaments]);
+  }, [loadedProfileUserId, participatingTournaments]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">

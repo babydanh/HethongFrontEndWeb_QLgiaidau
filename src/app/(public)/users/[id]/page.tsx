@@ -2,6 +2,8 @@
 
 import { useEffect, useState, use } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight } from 'lucide-react';
@@ -65,13 +67,13 @@ interface Match {
     id: string;
     teamName: string;
     isMock?: boolean;
-    members?: { isMock?: boolean }[];
+    members?: { userId?: string; isMock?: boolean }[];
   } | null;
   participant2: {
     id: string;
     teamName: string;
     isMock?: boolean;
-    members?: { isMock?: boolean }[];
+    members?: { userId?: string; isMock?: boolean }[];
   } | null;
   p1SetsWon: number;
   p2SetsWon: number;
@@ -92,11 +94,19 @@ function isMockInvolvedMatch(match: Match): boolean {
   return isMockParticipant(match.participant1) || isMockParticipant(match.participant2);
 }
 
+function hasUserInMatch(match: Match, userId: string): boolean {
+  return Boolean(
+    match.participant1?.members?.some((member) => member.userId === userId) ||
+    match.participant2?.members?.some((member) => member.userId === userId),
+  );
+}
+
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('PublicProfile');
   const resolvedParams = use(params);
   const id = resolvedParams.id;
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, hasHydrated } = useAuthStore();
 
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -126,7 +136,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   }, [activeTab, hideEloSection]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+    if (user?.id === id) {
+      router.replace('/profile');
+      return;
+    }
+
     const fetchPublicData = async () => {
+
       setIsLoading(true);
       try {
         const [profileResult, matchesResult, eloHistoryResult] = await Promise.allSettled([
@@ -141,7 +158,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
         setProfile(profileResult.value.data);
         const publicMatches = matchesResult.status === 'fulfilled' ? matchesResult.value.data || [] : [];
-        setMatches(publicMatches.filter((match) => !isMockInvolvedMatch(match)));
+        setMatches(publicMatches.filter((match) => hasUserInMatch(match, id) && !isMockInvolvedMatch(match)));
+
         setEloHistory(eloHistoryResult.status === 'fulfilled' ? eloHistoryResult.value?.data || [] : []);
       } catch (err: unknown) {
         console.error('Failed to fetch public profile:', err);
@@ -151,7 +169,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       }
     };
     fetchPublicData();
-  }, [id]);
+  }, [hasHydrated, id, router, user?.id]);
 
   if (isLoading) {
     return (
@@ -402,16 +420,19 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               <div className="w-full flex flex-col gap-4">
                 {matches.map((match) => {
                   const isCompleted = match.status === 'COMPLETED';
-                  const isP1 = match.participant1?.teamName?.toLowerCase() === profile.fullName?.toLowerCase();
+                  const isP1 = Boolean(match.participant1?.members?.some((member) => member.userId === profile.id));
+                  const isP2 = Boolean(match.participant2?.members?.some((member) => member.userId === profile.id));
 
                   const isWinner = isCompleted && match.winnerId && (
                     (match.winnerId === match.participant1?.id && isP1) ||
-                    (match.winnerId === match.participant2?.id && !isP1)
+                    (match.winnerId === match.participant2?.id && isP2)
                   );
 
                   const opponentName = isP1
                     ? match.participant2?.teamName || translate('unknown')
-                    : match.participant1?.teamName || translate('unknown');
+                    : isP2
+                      ? match.participant1?.teamName || translate('unknown')
+                      : translate('unknown');
 
                   return (
                     <div

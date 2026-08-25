@@ -702,27 +702,27 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
                 let roleLabel = role;
-                let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
+                let roleColor = 'bg-blue-600 text-white shadow-2xs';
                 if (role === 'PLAYER') {
                   roleLabel = translate("rolePlayer");
-                  roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
+                  roleColor = 'bg-blue-600 text-white shadow-2xs';
                 } else if (role === 'ORGANIZER') {
                   roleLabel = translate("roleOrganizer");
-                  roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
+                  roleColor = 'bg-indigo-600 text-white shadow-2xs';
                 } else if (role === 'ADMIN') {
                   roleLabel = translate("roleModerator");
-                  roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
+                  roleColor = 'bg-purple-600 text-white shadow-2xs';
                 }
                 return (
-                  <span key={role} className={`px-3.5 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
+                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
                     {roleLabel}
                   </span>
                 );
               })}
 
               {displayUser?.createdAt && (
-                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
+                <span className="bg-slate-800 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-white/80" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>

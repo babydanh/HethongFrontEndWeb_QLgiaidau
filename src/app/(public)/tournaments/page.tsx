@@ -665,8 +665,14 @@ export default function TournamentsListPage() {
           </div>
         )}
                 {/* Quick status filters */}
-        <div className="flex items-center justify-end flex-wrap gap-2 border-t border-slate-100 bg-slate-50/50 px-4 py-2.5" aria-label={translate("quickFilter")}>
-          <div className="flex flex-wrap items-center justify-end gap-1.5 text-xs font-bold ml-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-2.5" aria-label={translate("quickFilter")}>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-900">
+              <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
+              {translate("quickFilter")}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-1.5 text-xs font-bold sm:ml-auto">
             <button
               type="button"
               aria-pressed={selectedStatus === 'COMPLETED'}
@@ -674,7 +680,7 @@ export default function TournamentsListPage() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'COMPLETED'
                   ? 'bg-slate-800 text-white shadow-sm'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                  : 'bg-slate-100 text-slate-800 border border-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
               {recentlyFinishedLabel}
@@ -686,7 +692,7 @@ export default function TournamentsListPage() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'IN_PROGRESS'
                   ? 'bg-rose-600 text-white shadow-sm'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                  : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-600 hover:text-white'
               }`}
             >
               {translate("inProgress")}
@@ -698,7 +704,7 @@ export default function TournamentsListPage() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'REGISTRATION_OPEN'
                   ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-600 hover:text-white'
               }`}
             >
               {translate("registrationOpen")}
@@ -710,7 +716,7 @@ export default function TournamentsListPage() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'UPCOMING'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                  : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-600 hover:text-white'
               }`}
             >
               {translate("upcoming")}
@@ -722,7 +728,7 @@ export default function TournamentsListPage() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'COMPLETED'
                   ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
               {translate("completed")}

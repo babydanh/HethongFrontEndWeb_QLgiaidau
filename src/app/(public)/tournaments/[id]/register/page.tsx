@@ -495,10 +495,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
       const res = await tournamentsApi.register(id, cleanData);
       const participantId = res?.data?.participant?.id;
+      const paymentEligible = res?.data?.paymentEligible === true;
 
       toast.success(translate('registrationSuccess'))
 
-      if (entryFeeVal > 0 && participantId) {
+            if (paymentEligible && participantId) {
+
         const params = new URLSearchParams({
           tournamentId: id,
           participantId,

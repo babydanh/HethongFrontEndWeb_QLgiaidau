@@ -263,8 +263,6 @@ export default function MatchesListPage() {
     playoff: translate('phasePlayoff'),
     roundOf: (round) => translate('roundOf', { round }),
     legSuffix: (leg) => `${translate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${translate('leg')} ${leg} • ${translate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => translate('matchDay', { number: round }),
   };
 
   const getTranslatedSport = (catName?: string | null) => {

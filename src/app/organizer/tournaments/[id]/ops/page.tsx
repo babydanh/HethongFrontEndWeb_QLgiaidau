@@ -45,8 +45,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     playoff: matchTranslate('phasePlayoff'),
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
-    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
-    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
   };
   const resolvedParams = use(params);
   const bracketManager = useManageState(resolvedParams.id);

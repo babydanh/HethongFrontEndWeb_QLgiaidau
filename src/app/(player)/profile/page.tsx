@@ -970,8 +970,13 @@ export default function ProfilePage() {
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
-                                    <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                    <Image
+                                      src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
+                                      alt={community.name}
+                                      fill
+                                      className={community.logoUrl ? "object-cover" : "object-contain p-2"}
+                                    />
                                   </div>
                                   <div className="min-w-0 flex-grow">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1009,8 +1014,13 @@ export default function ProfilePage() {
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
-                                    <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                    <Image
+                                      src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
+                                      alt={community.name}
+                                      fill
+                                      className={community.logoUrl ? "object-cover" : "object-contain p-2"}
+                                    />
                                   </div>
                                   <div className="min-w-0 flex-grow">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">

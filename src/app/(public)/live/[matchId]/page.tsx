@@ -39,6 +39,7 @@ import { formatCompact } from '@/utils/format';
 import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart, Share2, User } from 'lucide-react';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { livestreamApi, tournamentsApi, type MatchPlaybackResponse } from '@/features/tournaments/api';
+import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -1445,10 +1446,34 @@ export default function LiveMatchPage({ params }: Props) {
     } catch (err: unknown) {
       console.error(err);
       toast.error(getErrorMessage(err, translate('commentPostFailed'), formatRateLimitMessage(err)));
-    } finally {
+      } finally {
       setIsCommentSubmitting(false);
     }
   };
+
+  const roundLabelTranslations: RoundLabelTranslations = {
+    roundGrandFinal: matchTranslate('roundGrandFinal'),
+    roundFinal: matchTranslate('roundFinal'),
+    roundSemifinal: matchTranslate('roundSemifinal'),
+    roundQuarterfinal: matchTranslate('roundQuarterfinal'),
+    roundGroupStage: matchTranslate('roundGroupStage'),
+    winnersBracket: matchTranslate('winnersBracket'),
+    losersBracket: matchTranslate('losersBracket'),
+    playoff: matchTranslate('phasePlayoff'),
+    roundOf: (round) => matchTranslate('roundOf', { round }),
+    legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
+    roundRobinLeg: (leg, round) => `${matchTranslate('leg')} ${leg} • ${matchTranslate('matchDay', { number: round })}`,
+    roundRobinMatchday: (round) => matchTranslate('matchDay', { number: round }),
+  };
+
+  const friendlyRoundName = match
+    ? getMatchRoundLabel({
+        match,
+        tournamentFormat: match.tournament?.tournamentConfig?.mode || match.tournament?.format || match.stage?.type,
+        bracketSize: match.tournament?.maxParticipants ?? null,
+        translations: roundLabelTranslations,
+      })
+    : '';
 
   const part1 = participants.find((p) => p.id === match.participant1Id || p.id === match.participant1?.id);
   const part2 = participants.find((p) => p.id === match.participant2Id || p.id === match.participant2?.id);
@@ -1480,7 +1505,7 @@ export default function LiveMatchPage({ params }: Props) {
 
               <span className="font-bold text-slate-600 flex items-center gap-1 bg-slate-100/80 px-2.5 py-0.5 rounded-full">
                 <Clock className="w-3 h-3 text-slate-400" />
-                <span>{matchTranslate('roundLabel', { round: match.roundNumber })}</span>
+                <span>{friendlyRoundName || matchTranslate('roundLabel', { round: match.roundNumber })}</span>
               </span>
             </div>
 
@@ -1537,28 +1562,32 @@ export default function LiveMatchPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Action buttons */}
+          {/* Action buttons (Icon Only) */}
           <div className="flex items-center gap-2 shrink-0 self-start md:self-center">
             <Button
               onClick={() => setIsShareModalOpen(true)}
               variant="outline"
-              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-2xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-xl transition-all"
+              size="icon"
+              title={matchTranslate('share')}
+              aria-label={matchTranslate('share')}
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-2xs h-9 w-9 rounded-xl transition-all"
             >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>{matchTranslate('share')}</span>
+              <Share2 className="w-4 h-4" />
             </Button>
             <ReportViolationButton
+              compact
               targetType="MATCH"
               targetId={match.id}
-              targetLabel={translate('roundMatchShareLabel', { round: match.roundNumber })}
-              className="h-9 text-xs px-3.5 rounded-xl shadow-2xs"
+              targetLabel={friendlyRoundName || translate('roundMatchShareLabel', { round: match.roundNumber })}
+              className="h-9 w-9 rounded-xl shadow-2xs"
             />
             <Link
               href={`/tournaments/${match.tournamentId}`}
-              className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50/80 transition-all bg-blue-50 border border-blue-200/80 px-3.5 h-9 rounded-xl shadow-2xs shrink-0"
+              title={match.tournament?.name || matchTranslate('backToTournament')}
+              aria-label={match.tournament?.name || matchTranslate('backToTournament')}
+              className="flex items-center justify-center text-blue-600 hover:bg-blue-100/80 transition-all bg-blue-50 border border-blue-200/80 h-9 w-9 rounded-xl shadow-2xs shrink-0"
             >
-              <Trophy className="w-3.5 h-3.5 text-blue-600" />
-              <span>{matchTranslate('backToTournament')}</span>
+              <Trophy className="w-4 h-4 text-blue-600" />
             </Link>
           </div>
         </div>

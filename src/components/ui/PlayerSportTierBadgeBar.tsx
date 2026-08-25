@@ -47,12 +47,6 @@ export function getShortTierCode(tierName?: string | null, elo?: number | null):
   if (/High Tier D/i.test(name)) return 'HTD';
   if (/Low Tier D/i.test(name)) return 'LTD';
 
-  // Sport-specific tier abbreviations
-  if (/Pro/i.test(name)) return 'PRO';
-  if (/Advanced/i.test(name)) return 'ADV';
-  if (/Intermediate/i.test(name)) return 'INT';
-  if (/Beginner/i.test(name)) return 'BEG';
-
   // Fallback by elo value
   if (typeof elo === 'number' && Number.isFinite(elo)) {
     if (elo >= 1800) return 'TS';

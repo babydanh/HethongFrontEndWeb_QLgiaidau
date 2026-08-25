@@ -98,8 +98,12 @@ const getAchievementMeta = (rank: AchievementRank, labels: { champion: string; r
   }
 };
 
+type ParticipantWithUserMembers = {
+  members?: ReadonlyArray<{ userId?: string }> | null;
+} | null | undefined;
+
 const hasUserInParticipant = (
-  participant: BracketMatch['participant1'] | BracketMatch['participant2'],
+  participant: ParticipantWithUserMembers,
   userId: string,
 ) => Boolean(participant?.members?.some((member) => member.userId === userId));
 

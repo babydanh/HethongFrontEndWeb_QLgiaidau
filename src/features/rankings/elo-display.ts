@@ -78,10 +78,6 @@ const TIER_TRANSLATION_KEYS: Record<string, string> = {
   'Low Tier A': 'tierLowA',
   'High Tier A': 'tierHighA',
   'Tier S': 'tierS',
-  Beginner: 'tierBeginner',
-  Intermediate: 'tierIntermediate',
-  Advanced: 'tierAdvanced',
-  Pro: 'tierPro',
 };
 
 const getCanonicalBackendTierName = (rank: PlayerRanking): string | null => {

@@ -58,9 +58,17 @@ export const getRankDisplayName = (rank: PlayerRanking): string => {
 /*  Tier name helpers                                                  */
 /* ------------------------------------------------------------------ */
 
-/** Human-readable tier name from a rank record. */
+/**
+ * Public leaderboard eligibility is a data fact, not something inferred from ELO history.
+ * Keep this rule in one frontend helper so profile and compact badges agree.
+ */
+export const isPublicRankingEligible = (
+  rank: Pick<PlayerRanking, 'matchesPlayed' | 'adminLeaderboardEligible'> | null | undefined,
+): boolean => Boolean(rank && (rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true));
+
+/** Human-readable tier name from a public/eligible rank record. */
 export const getRankTierName = (rank: PlayerRanking | null | undefined): string => {
-  if (!rank || rank.matchesPlayed <= 0) return 'Unranked';
+  if (!rank || !isPublicRankingEligible(rank)) return 'Unranked';
   return rank.tier?.name || rank.tierName || 'Ranked';
 };
 
@@ -69,14 +77,6 @@ export const getRankWinRate = (rank: PlayerRanking | null | undefined): number =
   if (!rank || rank.matchesPlayed <= 0) return 0;
   return Math.round((rank.matchesWon / rank.matchesPlayed) * 100);
 };
-
-/**
- * Public leaderboard eligibility is a data fact, not something inferred from ELO history.
- * Keep this rule in one frontend helper so profile and compact badges agree.
- */
-export const isPublicRankingEligible = (
-  rank: Pick<PlayerRanking, 'matchesPlayed' | 'adminLeaderboardEligible'> | null | undefined,
-): boolean => Boolean(rank && (rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true));
 
 /** Resolve a rank's tier label without losing sport/category context. */
 export const getCanonicalTierName = (rank: PlayerRanking | null | undefined): string => {

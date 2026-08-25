@@ -17,6 +17,7 @@ import { RankAvatar } from '@/components/ui/RankAvatar';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { BRAND } from '@/constants/brand';
+import { isPublicRankingEligible } from '@/features/rankings/elo-display';
 
 interface UserRank {
   categoryId: string;
@@ -26,6 +27,7 @@ interface UserRank {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  adminLeaderboardEligible?: boolean;
   currentStreakType?: 'WIN' | 'LOSS' | 'NONE';
   currentStreakCount?: number;
   tierName?: string | null;
@@ -59,8 +61,18 @@ interface Match {
   id: string;
   roundNumber: number;
   status: string;
-  participant1: { id: string; teamName: string } | null;
-  participant2: { id: string; teamName: string } | null;
+  participant1: {
+    id: string;
+    teamName: string;
+    isMock?: boolean;
+    members?: { isMock?: boolean }[];
+  } | null;
+  participant2: {
+    id: string;
+    teamName: string;
+    isMock?: boolean;
+    members?: { isMock?: boolean }[];
+  } | null;
   p1SetsWon: number;
   p2SetsWon: number;
   scoreDetails?: Record<string, unknown> | null;
@@ -72,6 +84,12 @@ interface Match {
       name: string;
     };
   } | null;
+}
+
+function isMockInvolvedMatch(match: Match): boolean {
+  const isMockParticipant = (participant: Match['participant1']) =>
+    participant?.isMock === true || participant?.members?.some((member) => member.isMock === true) === true;
+  return isMockParticipant(match.participant1) || isMockParticipant(match.participant2);
 }
 
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -102,9 +120,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       ] as const;
 
   useEffect(() => {
-    if (hideEloSection && activeTab === 'elo') {
-      setActiveTab('overview');
-    }
+    if (!hideEloSection || activeTab !== 'elo') return;
+    const resetTabTimer = window.setTimeout(() => setActiveTab('overview'), 0);
+    return () => window.clearTimeout(resetTabTimer);
   }, [activeTab, hideEloSection]);
 
   useEffect(() => {
@@ -122,7 +140,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         }
 
         setProfile(profileResult.value.data);
-        setMatches(matchesResult.status === 'fulfilled' ? matchesResult.value.data || [] : []);
+        const publicMatches = matchesResult.status === 'fulfilled' ? matchesResult.value.data || [] : [];
+        setMatches(publicMatches.filter((match) => !isMockInvolvedMatch(match)));
         setEloHistory(eloHistoryResult.status === 'fulfilled' ? eloHistoryResult.value?.data || [] : []);
       } catch (err: unknown) {
         console.error('Failed to fetch public profile:', err);
@@ -235,7 +254,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
             {(() => {
               const featuredRank = displayedRanks
-                .filter((rank) => rank.matchesPlayed > 0)
+                .filter(isPublicRankingEligible)
                 .sort((a, b) => b.eloPoints - a.eloPoints)[0];
               return (
                 <RankAvatar
@@ -288,7 +307,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 </span>
               )}
               {!hideEloSection && (() => {
-                const activeRanks = displayedRanks.filter(r => r.matchesPlayed > 0);
+                const activeRanks = displayedRanks.filter(isPublicRankingEligible);
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
                     <EloTierBadge

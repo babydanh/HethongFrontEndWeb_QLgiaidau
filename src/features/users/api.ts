@@ -5,6 +5,23 @@ export type { UserChangeRequest, UserProfile };
 
 export type SystemRole = 'PLAYER' | 'REFEREE' | 'ORGANIZER' | 'MODERATOR' | 'ADMIN';
 
+export interface PublicProfileRankResponse {
+  categoryId?: string;
+  categoryName?: string | null;
+  matchType?: string | null;
+  genderRestriction?: string | null;
+  eloPoints: number;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak?: number;
+  currentStreakType?: 'WIN' | 'LOSS' | 'NONE';
+  currentStreakCount?: number;
+  adminLeaderboardEligible?: boolean;
+  tierName?: string | null;
+  partnerName?: string | null;
+  source?: 'SINGLES' | 'DOUBLES';
+}
+
 interface PublicProfileResponse {
   id?: string;
   bio?: string | null;
@@ -15,8 +32,9 @@ interface PublicProfileResponse {
   roles?: string[];
   isVerified?: boolean;
   allowStrangerMessages?: boolean;
-  ranks?: unknown[];
-  highlightRank?: unknown;
+  ranks?: PublicProfileRankResponse[];
+  pairRanks?: PublicProfileRankResponse[];
+  highlightRank?: PublicProfileRankResponse | null;
   createdAt?: string;
   data?: PublicProfileResponse;
 }

@@ -11,6 +11,7 @@ import {
   getEloMatchTypeLabel,
   getRankTierName,
   getEloProgressInfo,
+  isPublicRankingEligible,
   getShieldStatus,
   type EloProgressToNextLabel,
 } from '@/features/rankings/elo-display';
@@ -51,7 +52,7 @@ export default function HomepageEloProgressCard({
   const shieldStatus = getShieldStatus(activeRankInfo, eloLabels);
   const progressInfo = getEloProgressInfo(eloPoints, activeRankInfo?.categoryName, eloLabels);
   const rankProgress = getRankProgressInfo(eloPoints, activeRankInfo?.categoryName);
-  const hasNoRanks = !activeRankInfo || activeRankInfo.matchesPlayed <= 0;
+  const hasNoRanks = !activeRankInfo || !isPublicRankingEligible(activeRankInfo);
 
   const ShieldIcon = shieldStatus.state === 'active'
     ? ShieldCheck
@@ -59,7 +60,7 @@ export default function HomepageEloProgressCard({
       ? ShieldOff
       : Shield;
 
-  // Force 0% + gray when user hasn't played any ranked match yet
+  // Keep onboarding visuals only when there is no public-eligible rank.
   const displayPercent = hasNoRanks ? 0 : progressInfo.percent;
   const fillColor = hasNoRanks
     ? 'bg-gradient-to-r from-slate-300 to-slate-400'
@@ -68,7 +69,7 @@ export default function HomepageEloProgressCard({
     ? 'bg-slate-100'
     : 'bg-slate-100';
 
-  const rankLabel = hasNoRanks ? eloTranslate('unranked') : getRankTierName(activeRankInfo!);
+  const rankLabel = hasNoRanks ? eloTranslate('unranked') : getRankTierName(activeRankInfo);
 
   return (
     <div className="bg-white rounded-lg border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-4 flex flex-col gap-3 relative overflow-hidden">

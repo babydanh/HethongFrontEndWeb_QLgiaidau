@@ -10,6 +10,7 @@ import { EloTierBadge } from "@/components/ui/EloTierBadge";
 import { RankAvatar } from "@/components/ui/RankAvatar";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import { getCommunityTagDisplayName } from '@/app/(public)/communities/[id]/components/tag-display';
+import { isPublicRankingEligible } from '@/features/rankings/elo-display';
 import toast from "react-hot-toast";
 
 const MAX_MEMBER_TAGS = 3;
@@ -23,7 +24,13 @@ interface PublicProfileRank {
   tierName?: string | null;
   matchesPlayed: number;
   matchesWon: number;
+  adminLeaderboardEligible?: boolean;
 }
+
+type PublicProfileHighlightRank = Pick<PublicProfileRank, 'eloPoints' | 'tierName' | 'categoryName'> & {
+  matchesPlayed?: number;
+  adminLeaderboardEligible?: boolean;
+};
 
 export interface PopoverUserProfile {
   id: string;
@@ -40,11 +47,7 @@ export interface PopoverUserProfile {
   isVerified?: boolean;
   allowStrangerMessages?: boolean;
   ranks?: PublicProfileRank[];
-  highlightRank?: {
-    eloPoints: number;
-    tierName?: string | null;
-    categoryName?: string | null;
-  } | null;
+  highlightRank?: PublicProfileHighlightRank | null;
 }
 
 interface UserProfilePopoverProps {
@@ -263,13 +266,19 @@ export default function UserProfilePopover({
   };
 
   const sysRoleBadge = getSystemRoleBadge(profileData.systemRole);
-  const primaryRank = profileData.highlightRank
-    ?? (profileData.ranks ?? []).find((rank) => rank.matchesPlayed > 0)
-    ?? profileData.ranks?.[0]
-    ?? null;
+  const eligibleRanks = (profileData.ranks ?? []).filter(isPublicRankingEligible);
+  const eligibleHighlightRank = profileData.highlightRank && typeof profileData.highlightRank.matchesPlayed === 'number'
+    ? isPublicRankingEligible({
+        matchesPlayed: profileData.highlightRank.matchesPlayed,
+        adminLeaderboardEligible: profileData.highlightRank.adminLeaderboardEligible,
+      })
+      ? profileData.highlightRank
+      : null
+    : null;
+  const primaryRank = eligibleHighlightRank ?? eligibleRanks[0] ?? null;
   const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
   const canMessage = !isSelf && profileData.allowStrangerMessages === true;
-  const profileRanks = (profileData.ranks ?? []).filter((rank) => rank.matchesPlayed > 0).slice(0, 3);
+  const profileRanks = eligibleRanks.slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
 
@@ -401,7 +410,7 @@ export default function UserProfilePopover({
               elo={primaryRank?.eloPoints}
               tierName={primaryRank?.tierName}
               categoryName={primaryRank?.categoryName}
-              matchesPlayed={profileData.ranks?.find((rank) => rank.eloPoints === primaryRank?.eloPoints)?.matchesPlayed ?? 0}
+              matchesPlayed={primaryRank?.matchesPlayed ?? 0}
               ringClassName="ring-2"
             />
           </div>
@@ -454,11 +463,11 @@ export default function UserProfilePopover({
             </p>
 
             {/* ELO Tier Badge if present */}
-            {profileData.highlightRank && (
+            {eligibleHighlightRank && (
               <EloTierBadge
-                elo={profileData.highlightRank.eloPoints}
-                tierName={profileData.highlightRank.tierName || undefined}
-                categoryName={profileData.highlightRank.categoryName || undefined}
+                elo={eligibleHighlightRank.eloPoints}
+                tierName={eligibleHighlightRank.tierName || undefined}
+                categoryName={eligibleHighlightRank.categoryName || undefined}
                 size="sm"
               />
             )}

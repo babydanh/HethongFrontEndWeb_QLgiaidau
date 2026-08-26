@@ -5740,6 +5740,7 @@
   },
   "PaymentCheckout": {
     "missingInfo": "Tournament or registration information is missing.",
+    "paymentNotEligible": "This registration is not eligible for payment yet. Complete the team/partner step or wait for organizer approval.",
     "sessionExpired": "The payment session has expired.",
     "paymentSuccess": "Payment successful! The system is updating…",
     "paymentFailed": "Payment failed or has expired.",

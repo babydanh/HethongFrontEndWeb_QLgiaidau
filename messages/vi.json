@@ -5740,6 +5740,7 @@
   },
   "PaymentCheckout": {
     "missingInfo": "Thiếu thông tin giải đấu hoặc lượt đăng ký.",
+    "paymentNotEligible": "Lượt đăng ký chưa đủ điều kiện thanh toán. Vui lòng hoàn tất đội/đồng đội hoặc chờ Ban tổ chức duyệt.",
     "sessionExpired": "Phiên chờ thanh toán đã hết hạn.",
     "paymentSuccess": "Thanh toán thành công! Hệ thống đang cập nhật…",
     "paymentFailed": "Thanh toán không thành công hoặc đã hết hạn.",

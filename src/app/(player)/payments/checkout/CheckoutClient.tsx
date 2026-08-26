@@ -34,6 +34,7 @@ export default function CheckoutClient() {
   const [orderCode, setOrderCode] = useState<number | null>(null);
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
   const [registrationFee, setRegistrationFee] = useState<number | null>(null);
+  const [paymentEligible, setPaymentEligible] = useState<boolean | null>(null);
   const [qrOpenedAt, setQrOpenedAt] = useState<number | null>(null);
 
   useEffect(() => {
@@ -92,8 +93,11 @@ export default function CheckoutClient() {
           ) {
             setRegistrationFee(snapshotFee);
           }
+          setPaymentEligible(registrationRes.data?.paymentEligible === true);
         } catch {
-          // The participant list remains a sufficient fallback for display data.
+          // Do not allow a direct checkout URL to bypass the server eligibility
+          // contract when the registration state cannot be confirmed.
+          setPaymentEligible(false);
         }
       } catch (error) {
         toast.error(getErrorMessage(error));
@@ -155,6 +159,10 @@ export default function CheckoutClient() {
 
   const handlePayment = async () => {
     if (!tournament || !tournamentId || !participantId) return;
+    if (paymentEligible !== true) {
+      toast.error(translate('paymentNotEligible'));
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -294,7 +302,7 @@ export default function CheckoutClient() {
         {/* Action Button */}
         <Button
           onClick={handlePayment}
-          disabled={submitting}
+          disabled={submitting || paymentEligible !== true}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
         >
           {submitting ? (

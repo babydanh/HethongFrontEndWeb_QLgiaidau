@@ -251,6 +251,7 @@ export default function UnifiedChatWidget() {
   });
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
   const roomsRef = useRef<InboxRoom[]>([]);
+  const refreshRequestRef = useRef(0);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
 
   useEffect(() => {
@@ -441,29 +442,33 @@ export default function UnifiedChatWidget() {
 
   const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;
+    const requestId = ++refreshRequestRef.current;
     try {
       const fetched = dedupeRooms(unwrapRooms(await inboxApi.getRooms()), userId);
-      const reconciled = dedupeRooms(
-        [
-          ...fetched,
-          // A refresh response can be partial while a newly-created room is
-          // being indexed. Keep known DIRECT rooms until the server returns
-          // an explicit room deletion/clear contract.
-          ...roomsRef.current.filter((room) => room.type === 'DIRECT'),
-        ],
-        userId,
-      );
-      setRooms(reconciled);
+      if (requestId !== refreshRequestRef.current) return;
+
       const active = selectionRef.current;
-      if (active.kind === 'ROOM') {
-        const hydrated = reconciled.find((room) => room.id === active.room.id);
-        if (hydrated) {
-          setSelection({
-            kind: 'ROOM',
-            room: { ...hydrated, unreadCount: active.room.unreadCount },
-          });
-        }
-      }
+      const selectedDirectRoom =
+        active.kind === 'ROOM' && active.room.type === 'DIRECT'
+          ? [active.room]
+          : [];
+      let reconciled: InboxRoom[] = [];
+      setRooms((currentRooms) => {
+        // Refresh responses can be partial while a newly-created room is
+        // being indexed. Merge against the latest React state (not only a
+        // ref snapshot) so overlapping refreshes cannot erase direct rooms.
+        reconciled = dedupeRooms(
+          [
+            ...fetched,
+            ...selectedDirectRoom,
+            ...currentRooms.filter((room) => room.type === 'DIRECT'),
+          ],
+          userId,
+        );
+        roomsRef.current = reconciled;
+        return reconciled;
+      });
+
     } catch {
       // background refresh
     }

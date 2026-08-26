@@ -202,7 +202,7 @@ function loadAppApiKey(): Promise<void> {
     return Promise.resolve();
   }
 
-  appKeyLoadPromise = fetch('/api/config')
+  appKeyLoadPromise = fetch('/runtime-config')
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
       if (data && typeof data.appApiKey === 'string') {
@@ -357,10 +357,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY;
+      await loadAppApiKey();
+      const authAppApiKey = runtimeAppApiKey;
       const authHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
+        ...(authAppApiKey ? { 'x-app-key': authAppApiKey } : {}),
       };
 
       try {

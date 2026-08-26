@@ -500,13 +500,98 @@ export default function AdminEloPage() {
         <p className="mt-1 max-w-3xl text-sm text-slate-600">{translate('description')}</p>
       </header>
 
-      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
-        <label className="md:col-span-2"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={translate('searchPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
-        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><div className="font-semibold">{translate('publicScope')}</div><div className="mt-1 text-xs">{translate('publicOnlyAdminNotice')}</div><div className="mt-2 border-t border-blue-200 pt-2 text-xs">{translate('pairAdminReadOnlyNotice')}</div><div className="mt-1 text-xs">{translate('footballAdminNotAvailable')}</div></div>
-        {!isFootballCategory && <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => { const nextStatus = event.target.value as AdminRankingStatus | ''; setStatus(nextStatus); applyFilters({ status: nextStatus }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>}
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; const nextCategory = activeCategories.find((category) => category.id === nextCategoryId); const nextMatchType = nextCategory?.slug === 'football' ? 'FOOTBALL' : 'SINGLES'; setCategoryId(nextCategoryId); setMatchType(nextMatchType); applyFilters({ categoryId: nextCategoryId, matchType: nextMatchType }); }} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">{isFootballCategory ? <option value="FOOTBALL">{translate('footballTeam')}</option> : <><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></>}</select></label>
-        <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={() => applyFilters()} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
+      <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 items-end">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+              placeholder={translate('searchPlaceholder')}
+              className="h-9.5 w-full rounded-lg border border-slate-300 px-3 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400"
+            />
+          </div>
+
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span>
+            <select
+              value={categoryId}
+              onChange={(event) => {
+                const nextCategoryId = event.target.value;
+                const nextCategory = activeCategories.find((c) => c.id === nextCategoryId);
+                const nextMatchType = nextCategory?.slug === 'football' ? 'FOOTBALL' : 'SINGLES';
+                setCategoryId(nextCategoryId);
+                setMatchType(nextMatchType);
+                applyFilters({ categoryId: nextCategoryId, matchType: nextMatchType });
+              }}
+              disabled={activeCategories.length === 0}
+              className="h-9.5 w-full rounded-lg border border-slate-300 px-2.5 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">{translate('selectCategory')}</option>
+              {activeCategories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span>
+            <select
+              value={matchType}
+              onChange={(event) => {
+                const nextMatchType = event.target.value;
+                setMatchType(nextMatchType);
+                applyFilters({ matchType: nextMatchType });
+              }}
+              className="h-9.5 w-full rounded-lg border border-slate-300 px-2.5 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              {isFootballCategory ? (
+                <option value="FOOTBALL">{translate('footballTeam')}</option>
+              ) : (
+                <>
+                  <option value="SINGLES">{translate('singles')}</option>
+                  <option value="DOUBLES">{translate('doubles')}</option>
+                  <option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option>
+                </>
+              )}
+            </select>
+          </div>
+
+          {!isFootballCategory && (
+            <div>
+              <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span>
+              <select
+                value={status}
+                onChange={(event) => {
+                  const nextStatus = event.target.value as AdminRankingStatus | '';
+                  setStatus(nextStatus);
+                  applyFilters({ status: nextStatus });
+                }}
+                className="h-9.5 w-full rounded-lg border border-slate-300 px-2.5 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                <option value="">{translate('allStatuses')}</option>
+                <option value="VISIBLE">{translate('visible')}</option>
+                <option value="HIDDEN">{translate('hidden')}</option>
+                <option value="BANNED">{translate('banned')}</option>
+              </select>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => applyFilters()}
+              disabled={loading || loadingMore || !categoryId}
+              className="h-9.5 px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs"
+            >
+              {translate('search')}
+            </Button>
+            {!activeCategories.length && (
+              <span className="text-xs text-amber-600 font-medium">{translate('noActiveCategories')}</span>
+            )}
+          </div>
+        </div>
       </section>
 
       {isFootballCategory ? <AdminFootballTable teams={footballTeams} loading={loading} /> : isPairView ? <AdminPairTable pairs={pairGroups} loading={loading} /> : <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">

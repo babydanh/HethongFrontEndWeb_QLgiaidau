@@ -250,7 +250,12 @@ export default function UnifiedChatWidget() {
     return { kind: 'AI' };
   });
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
+  const roomsRef = useRef<InboxRoom[]>([]);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
+
+  useEffect(() => {
+    roomsRef.current = rooms;
+  }, [rooms]);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>(() => {
     if (typeof window !== 'undefined') {
@@ -438,24 +443,20 @@ export default function UnifiedChatWidget() {
     if (!isAuthenticated) return;
     try {
       const fetched = dedupeRooms(unwrapRooms(await inboxApi.getRooms()), userId);
-      setRooms((current) => {
-        const currentSelection = selectionRef.current;
-        const currentActiveRoom =
-          currentSelection.kind === 'ROOM' ? currentSelection.room : null;
-        const activeRoomBelongsToCurrentUser = currentActiveRoom?.participants?.some((participant) => participant.id === userId) ?? false;
-        if (currentActiveRoom && activeRoomBelongsToCurrentUser && !fetched.some((r) => r.id === currentActiveRoom.id)) {
-          return [currentActiveRoom, ...fetched];
-        }
-
-        return fetched.map((room) => (
-          room.id === currentActiveRoom?.id
-            ? { ...room, unreadCount: currentActiveRoom.unreadCount }
-            : room
-        ));
-      });
+      const reconciled = dedupeRooms(
+        [
+          ...fetched,
+          // A refresh response can be partial while a newly-created room is
+          // being indexed. Keep known DIRECT rooms until the server returns
+          // an explicit room deletion/clear contract.
+          ...roomsRef.current.filter((room) => room.type === 'DIRECT'),
+        ],
+        userId,
+      );
+      setRooms(reconciled);
       const active = selectionRef.current;
       if (active.kind === 'ROOM') {
-        const hydrated = fetched.find((room) => room.id === active.room.id);
+        const hydrated = reconciled.find((room) => room.id === active.room.id);
         if (hydrated) {
           setSelection({
             kind: 'ROOM',

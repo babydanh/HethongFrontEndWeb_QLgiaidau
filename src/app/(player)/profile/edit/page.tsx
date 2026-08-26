@@ -97,17 +97,17 @@ export default function EditProfilePage() {
   const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
 
-  // Quyền riêng tư nhắn tin: bật = chặn người lạ nhắn tin (mặc định tắt).
-  const handleToggleStrangerMessages = async (blockStrangers: boolean) => {
+  // Quyền riêng tư nhắn tin: chỉ bật khi chủ động cho phép người lạ.
+  const handleToggleStrangerMessages = async (allowStrangerMessages: boolean) => {
     try {
       setIsSavingPrivacy(true);
-      const response = await usersApi.updateProfile({ allowStrangerMessages: !blockStrangers });
+      const response = await usersApi.updateProfile({ allowStrangerMessages });
       const responseData = ((response as unknown) as Record<string, unknown>).data || response;
       setUser(responseData as NonNullable<typeof user>);
       toast.success(
-        blockStrangers
-          ? translate('privacyBlocked')
-          : translate('privacyAllowed'),
+        allowStrangerMessages
+          ? translate('privacyAllowed')
+          : translate('privacyBlocked'),
       );
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -954,13 +954,13 @@ export default function EditProfilePage() {
                     <input
                       type="checkbox"
                       className="sr-only peer"
-                      checked={user?.allowStrangerMessages === false}
+                      checked={user?.allowStrangerMessages === true}
                       disabled={isSavingPrivacy}
                       onChange={(e) => void handleToggleStrangerMessages(e.target.checked)}
                     />
                     <span className="relative w-11 h-6 rounded-full bg-slate-200 peer-checked:bg-blue-600 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
                     <span className="text-xs font-semibold text-slate-600">
-                      {isSavingPrivacy ? translate('saving') : user?.allowStrangerMessages === false ? translate('enabled') : translate('disabled')}
+                      {isSavingPrivacy ? translate('saving') : user?.allowStrangerMessages === true ? translate('enabled') : translate('disabled')}
                     </span>
                   </label>
                 </div>

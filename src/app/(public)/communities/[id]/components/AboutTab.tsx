@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
 import { Community } from '@/features/communities/api';
 import { formatDate } from '@/utils/format';
 import { MapPin, Info, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -53,7 +54,9 @@ export default function AboutTab({
                 <div className="space-y-2.5 text-xs">
                   <div className="grid grid-cols-3">
                     <span className="text-slate-500 font-semibold">{translate('location')}:</span>
-                    <span className="col-span-2 text-slate-800">{community.locationAddress || translate('notUpdated')}</span>
+                    <span className="col-span-2 text-slate-800">
+                      {getTournamentLocationLabel({ locationAddress: community.locationAddress }) || translate('notUpdated')}
+                    </span>
                   </div>
                   <div className="grid grid-cols-3">
                     <span className="text-slate-500 font-semibold">{translate('visibility')}:</span>

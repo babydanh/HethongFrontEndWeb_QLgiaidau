@@ -40,6 +40,7 @@ import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSqua
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { livestreamApi, tournamentsApi, type MatchPlaybackResponse } from '@/features/tournaments/api';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
+import { getMatchLocationLabel } from '@/utils/tournament-location';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -1576,11 +1577,16 @@ export default function LiveMatchPage({ params }: Props) {
               {(match.courtName || match.tournament?.venueName) && (
                 <span
                   className="text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1 max-w-[280px] md:max-w-[340px] truncate"
-                  title={
-                    match.courtAddress
-                      ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
-                      : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
-                  }
+                  title={getMatchLocationLabel({
+                    courtName: match.courtName,
+                    courtAddress: match.courtAddress,
+                    tournament: match.tournament
+                      ? {
+                          venueName: match.tournament.venueName,
+                          venueAddress: match.tournament.venueAddress,
+                        }
+                      : null,
+                  })}
                 >
                   <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
                   <span className="truncate">

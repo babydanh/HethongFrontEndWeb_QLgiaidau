@@ -27,13 +27,24 @@ export interface MatchLocationInput {
   } | null;
 }
 
+const normalizeLocationPart = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .replace(/\bthanh\s*pho\b/g, 'tp')
+    .replace(/\btp\.?\b/g, 'tp')
+    .replace(/[.\/_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const uniqueParts = (values: Array<string | null | undefined>): string[] => {
   const parts = values
     .filter((value): value is string => Boolean(value?.trim()))
     .flatMap((value) => value.split(','))
     .map((value) => value.trim())
     .filter(Boolean);
-  return Array.from(new Map(parts.map((value) => [value.toLocaleLowerCase(), value])).values());
+  return Array.from(new Map(parts.map((value) => [normalizeLocationPart(value), value])).values());
 };
 
 export const getTournamentLocationParts = (input: TournamentLocationInput): string[] => {
@@ -63,11 +74,11 @@ export const getTournamentShortLocation = (input: TournamentLocationInput): stri
   const legacyLocation = input.tournamentConfig?.location;
   
   // 1. Ưu tiên cấu trúc hành chính rõ ràng nếu có
-  const structuredParts = [
+  const structuredParts = uniqueParts([
     legacyLocation?.ward,
     legacyLocation?.district,
     legacyLocation?.province || input.city,
-  ].filter((p): p is string => Boolean(p && p.trim()));
+  ]);
 
   if (structuredParts.length >= 2) {
     return structuredParts.join(', ');
@@ -76,10 +87,7 @@ export const getTournamentShortLocation = (input: TournamentLocationInput): stri
   // 2. Phân tích chuỗi địa chỉ đầy đủ (lấy 2 phần cuối: ví dụ Phường ..., TP. Hồ Chí Minh)
   const fullRaw = input.venue?.locationAddress || input.locationAddress || legacyLocation?.display || legacyLocation?.address || input.city || '';
   if (fullRaw) {
-    const rawParts = fullRaw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const rawParts = uniqueParts([fullRaw]);
 
     if (rawParts.length > 2) {
       return rawParts.slice(-2).join(', ');

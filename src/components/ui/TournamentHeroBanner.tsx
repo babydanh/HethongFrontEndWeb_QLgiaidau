@@ -8,6 +8,7 @@ import { Calendar, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 import { BRAND } from '@/constants/brand';
+import { getTournamentShortLocation } from '@/utils/tournament-location';
 
 interface Props {
   tournaments: Tournament[];
@@ -330,9 +331,9 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                     {tournament.status === 'UPCOMING' && tournament.registrationStartDate && (
                       <CountdownTimer targetDate={tournament.registrationStartDate} daysLabel={(days) => translate('daysRemaining', { days })} />
                     )}
-                    {tournament.locationAddress && (
+                    {getTournamentShortLocation(tournament) && (
                       <span className="flex items-center gap-1 line-clamp-1">
-                        <MapPin className="w-3 h-3 inline-block drop-shadow" /> {tournament.locationAddress.split(',').slice(-2).join(',').trim()}
+                        <MapPin className="w-3 h-3 inline-block drop-shadow" /> {getTournamentShortLocation(tournament)}
                       </span>
                     )}
                   </div>

@@ -86,6 +86,7 @@ export function PagedSingleElimView({
       const colX = vIdx * (CARD_W + roundGap);
       const roundMatches = byRound[r] ?? [];
 
+      let previousY = Number.NEGATIVE_INFINITY;
       roundMatches.forEach((match, index) => {
         const feeders = matches.filter(
           (m) => m.nextMatchId === match.id && visibleSet.has(m.roundNumber),
@@ -109,7 +110,13 @@ export function PagedSingleElimView({
           const step = (cardH + MATCH_GAP_Y) * Math.pow(1.35, Math.min(vIdx, 2));
           y = 16 + index * step + cardH / 2;
         }
+
+        const minimumY = Number.isFinite(previousY)
+          ? previousY + cardH + MATCH_GAP_Y
+          : 16 + cardH / 2;
+        y = Math.max(y, minimumY);
         map.set(match.id, { x: colX, y });
+        previousY = y;
       });
     });
 
@@ -344,6 +351,7 @@ export function PagedSingleElimView({
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0px)`,
                     width: CARD_W,
+                    transition: 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms ease-out',
                     willChange: 'transform',
                   }}
                 >

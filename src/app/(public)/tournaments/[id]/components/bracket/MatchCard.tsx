@@ -298,11 +298,6 @@ const RowSide = memo(function RowSide({
           </button>
         )}
 
-        {p?.seed != null && (
-          <span className="text-[8.5px] bg-slate-200 text-slate-700 px-1 rounded font-bold shrink-0">
-            {p.seed}
-          </span>
-        )}
         {p?.logoUrl ? (
           <Image
             src={p.logoUrl}

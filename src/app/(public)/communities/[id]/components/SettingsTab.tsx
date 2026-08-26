@@ -530,6 +530,17 @@ export default function SettingsTab({ community }: { community: Community }) {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Nội quy & Quy định hoạt động CLB
+                </label>
+                <RichTextEditor 
+                  value={rules}
+                  onChange={(data) => setRules(data)}
+                  placeholder="Nhập nội quy, quy chế sinh hoạt, điều kiện tham gia và lưu ý dành cho thành viên..." 
+                />
+              </div>
+
               {/* Logo & Banner Uploads */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 {/* Logo */}

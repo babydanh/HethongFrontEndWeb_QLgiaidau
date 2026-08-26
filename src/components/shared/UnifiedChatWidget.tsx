@@ -250,7 +250,13 @@ export default function UnifiedChatWidget() {
     return { kind: 'AI' };
   });
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
+  const roomsRef = useRef<InboxRoom[]>([]);
+  const refreshRequestRef = useRef(0);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
+
+  useEffect(() => {
+    roomsRef.current = rooms;
+  }, [rooms]);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>(() => {
     if (typeof window !== 'undefined') {
@@ -436,33 +442,33 @@ export default function UnifiedChatWidget() {
 
   const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;
+    const requestId = ++refreshRequestRef.current;
     try {
       const fetched = dedupeRooms(unwrapRooms(await inboxApi.getRooms()), userId);
-      setRooms((current) => {
-        const currentSelection = selectionRef.current;
-        const currentActiveRoom =
-          currentSelection.kind === 'ROOM' ? currentSelection.room : null;
-        const activeRoomBelongsToCurrentUser = currentActiveRoom?.participants?.some((participant) => participant.id === userId) ?? false;
-        if (currentActiveRoom && activeRoomBelongsToCurrentUser && !fetched.some((r) => r.id === currentActiveRoom.id)) {
-          return [currentActiveRoom, ...fetched];
-        }
+      if (requestId !== refreshRequestRef.current) return;
 
-        return fetched.map((room) => (
-          room.id === currentActiveRoom?.id
-            ? { ...room, unreadCount: currentActiveRoom.unreadCount }
-            : room
-        ));
-      });
       const active = selectionRef.current;
-      if (active.kind === 'ROOM') {
-        const hydrated = fetched.find((room) => room.id === active.room.id);
-        if (hydrated) {
-          setSelection({
-            kind: 'ROOM',
-            room: { ...hydrated, unreadCount: active.room.unreadCount },
-          });
-        }
-      }
+      const selectedDirectRoom =
+        active.kind === 'ROOM' && active.room.type === 'DIRECT'
+          ? [active.room]
+          : [];
+      let reconciled: InboxRoom[] = [];
+      setRooms((currentRooms) => {
+        // Refresh responses can be partial while a newly-created room is
+        // being indexed. Merge against the latest React state (not only a
+        // ref snapshot) so overlapping refreshes cannot erase direct rooms.
+        reconciled = dedupeRooms(
+          [
+            ...fetched,
+            ...selectedDirectRoom,
+            ...currentRooms.filter((room) => room.type === 'DIRECT'),
+          ],
+          userId,
+        );
+        roomsRef.current = reconciled;
+        return reconciled;
+      });
+
     } catch {
       // background refresh
     }

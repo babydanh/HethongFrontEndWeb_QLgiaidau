@@ -48,15 +48,15 @@ export function EloTierBadge({
     <div
       className={cn(
         'inline-flex items-center rounded-full px-2 py-0.5 border shadow-xs transition-all select-none',
-        'bg-[#090d16]',
+        'bg-slate-900',
         size === 'sm' ? 'gap-1 text-[11px]' : size === 'md' ? 'gap-1.5 text-xs' : 'gap-2 text-sm',
         className,
       )}
       style={{
-        backgroundColor: '#090d16',
+        backgroundColor: '#0f172a',
         borderColor: tierBadgeStyle.borderColor,
         color: tierBadgeStyle.textColor,
-        boxShadow: `0 0 6px ${tier.theme.glowColor || 'rgba(0,0,0,0.3)'}`,
+        boxShadow: `0 1px 4px rgba(0,0,0,0.15), 0 0 6px ${tier.theme.glowColor || 'rgba(0,0,0,0.2)'}`,
       }}
       title={`${categoryName ? `${categoryName}: ` : ''}${tier.name} (${tier.shortCode})`}
       {...props}

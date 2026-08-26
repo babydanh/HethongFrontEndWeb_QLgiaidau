@@ -853,43 +853,6 @@ const commonTranslate = useTranslations('Common');
 
           {/* Left Area - Tabs & Content (takes 3 cols) */}
           <div className="lg:col-span-3 space-y-6 min-w-0 max-w-full overflow-hidden">
-            {/* Unpaid Payment Banner for registered users */}
-            {isRegisteredUser && isUnpaidUser && (
-              <div className="rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 p-5 text-white shadow-lg border border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-inner">
-                    <CreditCard className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-base text-white">Bạn đã đăng ký nhưng chưa hoàn tất nộp lệ phí thi đấu</p>
-                    <p className="text-xs text-amber-100 font-medium mt-0.5">
-                      Lệ phí: <span className="font-bold text-white text-sm">{formatCurrency(Number(activeTournament.entryFee ?? 0))}</span>. Vui lòng nộp lệ phí sớm để giữ suất thi đấu chính thức.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => {
-                    const resumeParticipantId = myRegistration?.participant?.id;
-                    if (resumeParticipantId) {
-                      const checkoutParams = new URLSearchParams({
-                        participantId: resumeParticipantId,
-                        tournamentId,
-                      });
-                      const resumeDivisionId =
-                        myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
-                      if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                      router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                    } else {
-                      router.push(registerHref);
-                    }
-                  }}
-                  className="w-full sm:w-auto bg-white hover:bg-slate-100 text-amber-950 font-black text-sm px-5 py-2.5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-105 shrink-0"
-                >
-                  💳 Thanh toán ngay
-                </Button>
-              </div>
-            )}
-
             {/* Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => {

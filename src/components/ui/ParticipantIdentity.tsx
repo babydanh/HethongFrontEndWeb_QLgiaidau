@@ -88,7 +88,9 @@ export function ParticipantIdentity({
           .map((member) => formatShortPersonName(member.fullName) || member.fullName)
           .filter(Boolean)
           .join(' / ')
-      : formatShortPersonName(participant?.teamName) || fallback;
+      : members.length === 1 && members[0].fullName
+        ? formatShortPersonName(members[0].fullName) || members[0].fullName
+        : formatShortPersonName(participant?.teamName) || fallback;
 
   const avatarSize = compact ? 'h-6 w-6 text-[9px]' : 'h-7.5 w-7.5 text-[10px]';
 

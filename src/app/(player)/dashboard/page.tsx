@@ -71,10 +71,27 @@ function getMatchStatusLabel(status: string, translate: (key: string) => string)
 }
 
 function isMockParticipant(participant?: Match['participant1'] | null): boolean {
-  return participant?.isMock === true || participant?.members?.some((member) => member.isMock === true) === true;
+  if (!participant) return true;
+  if (participant.isMock === true) return true;
+  if (!participant.members || participant.members.length === 0) return true;
+  if (participant.members.some((member) => member.isMock === true)) return true;
+  const name = participant.teamName?.trim().toLowerCase() || '';
+  if (
+    name.startsWith('vđv ') ||
+    name.startsWith('vdv ') ||
+    name === 'đối thủ' ||
+    name === 'doi thu' ||
+    name.startsWith('placeholder') ||
+    name.startsWith('mock')
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function isMockInvolvedMatch(match: Match): boolean {
+  if (!match.participant1 || !match.participant2) return true;
+  if (match.isBye === true) return true;
   return isMockParticipant(match.participant1) || isMockParticipant(match.participant2);
 }
 
@@ -366,63 +383,63 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Main Tab Switcher - Full width matching banner */}
+      <div className="flex items-center justify-between border border-slate-200 bg-white px-4 rounded-xl shadow-xs">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={cn(
+              'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+              activeTab === 'overview'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <Activity className="w-4 h-4" /> {translate("overviewTab")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tournaments')}
+            className={cn(
+              'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+              activeTab === 'tournaments'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <Trophy className="w-4 h-4" /> {translate("myTournaments")}
+            <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              {registeredCount + totalOrganized}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('referee')}
+            className={cn(
+              'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+              activeTab === 'referee'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <ShieldCheck className="w-4 h-4" /> {translate("refereeAssignmentsTab")}
+            {refereeCount > 0 && (
+              <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                {refereeCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left 2 Columns: Tabbed Interface */}
+        {/* Left 2 Columns: Tabbed Interface Content */}
         <div className="xl:col-span-2 flex flex-col gap-5">
-          {/* Main Tab Switcher */}
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-2 rounded-t-xl">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className={cn(
-                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
-                  activeTab === 'overview'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
-                )}
-              >
-                <Activity className="w-4 h-4" /> {translate("overviewTab")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('tournaments')}
-                className={cn(
-                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
-                  activeTab === 'tournaments'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
-                )}
-              >
-                <Trophy className="w-4 h-4" /> {translate("myTournaments")}
-                <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                  {registeredCount + totalOrganized}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('referee')}
-                className={cn(
-                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
-                  activeTab === 'referee'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
-                )}
-              >
-                <ShieldCheck className="w-4 h-4" /> {translate("refereeAssignmentsTab")}
-                {refereeCount > 0 && (
-                  <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                    {refereeCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               {/* Referee & Team Invites Alert (Only shown if pending invites exist) */}
               {workspace && workspace.refereeInvites.length > 0 && (
                 <section className="bg-amber-50/70 border border-amber-200 rounded-xl p-5 shadow-sm">
@@ -469,15 +486,15 @@ export default function DashboardPage() {
               )}
 
               {/* Next Upcoming Match Hero Card (Light & clean design with full tournament & participant details) */}
-              <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+              <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
+                  <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <Clock3 className="w-4 h-4 text-blue-600" /> {translate("nextMatchTitle")}
                   </h2>
                   {upcomingMatch?.tournament?.name && (
                     <Link
                       href={`/tournaments/${upcomingMatch.tournament.id || upcomingMatch.tournamentId}`}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-700 truncate max-w-[220px] flex items-center gap-1.5"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 truncate max-w-[220px] flex items-center gap-1.5"
                     >
                       <AvatarCircle
                         src={upcomingMatch.tournament.logoUrl || upcomingMatch.tournament.bannerUrl}
@@ -489,212 +506,230 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                  </div>
-                ) : upcomingMatch ? (
-                  <div className="bg-slate-50/80 rounded-xl border border-slate-200/80 p-5 relative overflow-hidden transition-all hover:border-slate-300">
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200/70">
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider",
-                          upcomingMatch.status === 'ONGOING'
-                            ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
-                            : "bg-blue-50 text-blue-600 border border-blue-200"
-                        )}>
-                          {upcomingMatch.status === 'ONGOING' && <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />}
-                          {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
-                        </span>
-                        <span className="text-xs font-bold text-slate-700">
-                          {translate("roundAndMatch", {
-                            round: upcomingMatch.roundNumber ?? 1,
-                            match: upcomingMatch.matchOrder ?? 1,
-                          })}
-                        </span>
-                      </div>
-
-                      {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName || upcomingMatch.scheduledAt) && (
-                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                          {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName) && (
-                            <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-semibold text-[11px]">
-                              {upcomingMatch.courtName || upcomingMatch.tournament?.venueName}
-                            </span>
-                          )}
-                          {upcomingMatch.scheduledAt && (
-                            <span>
-                              {formatDate(upcomingMatch.scheduledAt, locale, true, translate("notUpdated"))}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                <div className="p-5">
+                  {isLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                     </div>
+                  ) : upcomingMatch ? (
+                    (() => {
+                      const isUserP1 = upcomingMatch.participant1?.members?.some((member) => member.userId === user?.id) || upcomingMatch.participant1?.id === user?.id;
+                      const isUserP2 = upcomingMatch.participant2?.members?.some((member) => member.userId === user?.id) || upcomingMatch.participant2?.id === user?.id;
+                      const p1Fallback = isUserP1 ? translate("you") : (isUserP2 ? translate("opponent") : (upcomingMatch.participant1?.teamName || translate("teamAFallback")));
+                      const p2Fallback = isUserP2 ? translate("you") : (isUserP1 ? translate("opponent") : (upcomingMatch.participant2?.teamName || translate("teamBFallback")));
 
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
-                      <div className="flex items-center justify-start min-w-0">
-                        <ParticipantIdentity
-                          participant={
-                            upcomingMatch.participant1
-                              ? {
-                                  ...upcomingMatch.participant1,
-                                  members: upcomingMatch.participant1.members?.map((m) => ({
-                                    userId: m.userId || '',
-                                    fullName: m.fullName ?? null,
-                                    avatarUrl: m.avatarUrl ?? null,
-                                  })),
+                      const localizeTerm = (text?: string | null): string => {
+                        if (!text) return '';
+                        const t = text.trim();
+                        if (/main\s*bracket/i.test(t)) return translate("stageMainBracket");
+                        if (/elimination\s*stage/i.test(t) || /elimination/i.test(t)) return translate("stageElimination");
+                        if (/double\s*elimination/i.test(t)) return translate("stageDoubleElimination");
+                        if (/group\s*stage/i.test(t) || /group/i.test(t)) return translate("stageGroup");
+                        if (/knockout/i.test(t)) return translate("stageKnockout");
+                        if (/playoff/i.test(t)) return translate("stagePlayoff");
+                        if (/winners/i.test(t)) return translate("stageWinners");
+                        if (/losers/i.test(t)) return translate("stageLosers");
+                        return t;
+                      };
+
+                      const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
+                      const stageName = upcomingMatch.group?.stage?.name
+                        ? localizeTerm(upcomingMatch.group.stage.name)
+                        : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : '');
+                      const subtitle = groupName && stageName ? `${groupName} • ${stageName}` : (groupName || stageName || translate("roundFallback"));
+
+                      return (
+                        <Link
+                          href={`/live/${upcomingMatch.id}`}
+                          className="block bg-slate-50/80 rounded-xl border border-slate-200/80 p-5 relative overflow-hidden transition-all hover:border-blue-300 hover:bg-blue-50/20 hover:shadow-xs group"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200/70">
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider",
+                                upcomingMatch.status === 'ONGOING'
+                                  ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
+                                  : "bg-blue-50 text-blue-600 border border-blue-200"
+                              )}>
+                                {upcomingMatch.status === 'ONGOING' && <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />}
+                                {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
+                              </span>
+                              <span className="text-xs font-bold text-slate-700">
+                                {translate("roundAndMatch", {
+                                  round: upcomingMatch.roundNumber ?? 1,
+                                  match: upcomingMatch.matchOrder ?? 1,
+                                })}
+                              </span>
+                            </div>
+
+                            {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName || upcomingMatch.scheduledAt) && (
+                              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName) && (
+                                  <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                                    {upcomingMatch.courtName || upcomingMatch.tournament?.venueName}
+                                  </span>
+                                )}
+                                {upcomingMatch.scheduledAt && (
+                                  <span>
+                                    {formatDate(upcomingMatch.scheduledAt, locale, true, translate("notUpdated"))}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
+                            <div className="flex items-center justify-start min-w-0">
+                              <ParticipantIdentity
+                                participant={
+                                  upcomingMatch.participant1
+                                    ? {
+                                        ...upcomingMatch.participant1,
+                                        members: upcomingMatch.participant1.members?.map((m) => ({
+                                          userId: m.userId || '',
+                                          fullName: m.fullName ?? null,
+                                          avatarUrl: m.avatarUrl ?? null,
+                                        })),
+                                      }
+                                    : undefined
                                 }
-                              : undefined
-                          }
-                          fallback={translate("you")}
-                        />
-                      </div>
+                                fallback={p1Fallback}
+                              />
+                            </div>
 
-                      <div className="flex flex-col items-center justify-center px-2">
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
-                          VS
-                        </span>
-                      </div>
+                            <div className="flex flex-col items-center justify-center px-2">
+                              <span className="text-xs font-black text-slate-400 uppercase tracking-widest bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs group-hover:border-blue-200 group-hover:text-blue-600 transition-colors">
+                                VS
+                              </span>
+                            </div>
 
-                      <div className="flex items-center justify-end min-w-0">
-                        <ParticipantIdentity
-                          participant={
-                            upcomingMatch.participant2
-                              ? {
-                                  ...upcomingMatch.participant2,
-                                  members: upcomingMatch.participant2.members?.map((m) => ({
-                                    userId: m.userId || '',
-                                    fullName: m.fullName ?? null,
-                                    avatarUrl: m.avatarUrl ?? null,
-                                  })),
+                            <div className="flex items-center justify-end min-w-0">
+                              <ParticipantIdentity
+                                participant={
+                                  upcomingMatch.participant2
+                                    ? {
+                                        ...upcomingMatch.participant2,
+                                        members: upcomingMatch.participant2.members?.map((m) => ({
+                                          userId: m.userId || '',
+                                          fullName: m.fullName ?? null,
+                                          avatarUrl: m.avatarUrl ?? null,
+                                        })),
+                                      }
+                                    : undefined
                                 }
-                              : undefined
-                          }
-                          fallback={translate("opponent")}
-                          align="right"
-                        />
+                                fallback={p2Fallback}
+                                align="right"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
+                            <span className="font-semibold text-slate-600 truncate max-w-[260px]">
+                              {subtitle}
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
+                              {translate("viewScore")} <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })()
+                  ) : (
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
+                        <Clock3 className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-800">{translate("noUpcomingMatches")}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{translate("joinTournamentToEarnElo")}</p>
+                      <div className="mt-3.5">
+                        <Link href="/tournaments">
+                          <Button size="sm" className="text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs">
+                            {translate("exploreTournaments")}
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-
-                    <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
-                      <span className="font-semibold text-slate-600 truncate max-w-[260px]">
-                        {(() => {
-                          const localizeTerm = (text?: string | null): string => {
-                            if (!text) return '';
-                            const t = text.trim();
-                            if (/main\s*bracket/i.test(t)) return translate("stageMainBracket");
-                            if (/elimination\s*stage/i.test(t) || /elimination/i.test(t)) return translate("stageElimination");
-                            if (/double\s*elimination/i.test(t)) return translate("stageDoubleElimination");
-                            if (/group\s*stage/i.test(t) || /group/i.test(t)) return translate("stageGroup");
-                            if (/knockout/i.test(t)) return translate("stageKnockout");
-                            if (/playoff/i.test(t)) return translate("stagePlayoff");
-                            if (/winners/i.test(t)) return translate("stageWinners");
-                            if (/losers/i.test(t)) return translate("stageLosers");
-                            return t;
-                          };
-
-                          const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
-                          const stageName = upcomingMatch.group?.stage?.name
-                            ? localizeTerm(upcomingMatch.group.stage.name)
-                            : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : '');
-
-                          if (groupName && stageName) {
-                            return `${groupName} • ${stageName}`;
-                          }
-                          return groupName || stageName || translate("roundFallback");
-                        })()}
-                      </span>
-                      <Link href={`/live/${upcomingMatch.id}`}>
-                        <span className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700">
-                          {translate("viewScore")} <ChevronRight className="w-3.5 h-3.5" />
-                        </span>
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
-                    <p className="text-xs font-semibold text-slate-700">{translate("noUpcomingMatches")}</p>
-                    <p className="text-[11px] text-slate-400 mt-1">{translate("joinTournamentToEarnElo")}</p>
-                    <div className="mt-3">
-                      <Link href="/tournaments">
-                        <Button size="sm" variant="outline" className="text-xs font-bold border-slate-200">
-                          {translate("exploreTournaments")}
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </section>
 
               {/* Recent Match Feed & ELO Delta */}
-              <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
+                  <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <Activity className="w-4 h-4 text-emerald-600" /> {translate("recentFormTitle")}
                   </h2>
-                  <span className="text-xs text-slate-400">{translate("completedMatchesCount", { count: completedMatches.length })}</span>
+                  <span className="text-xs font-normal text-slate-400">
+                    {translate("completedMatchesCount", { count: completedMatches.length })}
+                  </span>
                 </div>
 
-                {isLoading ? (
-                  <div className="flex justify-center py-6">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                  </div>
-                ) : completedMatches.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {completedMatches.slice(0, 4).map((m) => {
-                      const userParticipantId = m.participant1?.members?.some((member) => member.userId === user?.id)
-                        ? m.participant1.id
-                        : m.participant2?.members?.some((member) => member.userId === user?.id)
-                          ? m.participant2.id
-                          : null;
-                      const historyItem = eloHistoryByMatchId.get(m.id);
-                      const result = historyItem?.match?.result
-                        ?? (m.winnerId ? (userParticipantId === m.winnerId ? 'WIN' : 'LOSS') : 'DRAW');
-                      const isWin = result === 'WIN';
-                      const isLoss = result === 'LOSS';
-                      const eloDelta = historyItem?.changedPoints ?? null;
-                      return (
-                        <div key={m.id} className="flex items-center justify-between p-3.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-all">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={cn(
-                              'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs',
-                                                            isWin ? 'bg-emerald-100 text-emerald-700' : isLoss ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'
-                            )}>
-                              {isWin ? <TrendingUp className="w-4 h-4" /> : isLoss ? <TrendingDown className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
-
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-slate-900 truncate">
-                                {m.participant1?.teamName || translate("teamAFallback")} vs {m.participant2?.teamName || translate("teamBFallback")}
-                              </p>
-                              <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                                {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt, locale, false, translate("notUpdated"))}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 shrink-0">
-                            {eloDelta !== null ? (
-                              <span className={cn(
-                                'px-2 py-0.5 rounded text-[11px] font-extrabold tabular-nums',
-                                eloDelta > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : eloDelta < 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-50 text-slate-600 border border-slate-200'
+                <div className="p-5">
+                  {isLoading ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    </div>
+                  ) : completedMatches.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {completedMatches.slice(0, 4).map((m) => {
+                        const userParticipantId = m.participant1?.members?.some((member) => member.userId === user?.id)
+                          ? m.participant1.id
+                          : m.participant2?.members?.some((member) => member.userId === user?.id)
+                            ? m.participant2.id
+                            : null;
+                        const historyItem = eloHistoryByMatchId.get(m.id);
+                        const result = historyItem?.match?.result
+                          ?? (m.winnerId ? (userParticipantId === m.winnerId ? 'WIN' : 'LOSS') : 'DRAW');
+                        const isWin = result === 'WIN';
+                        const isLoss = result === 'LOSS';
+                        const eloDelta = historyItem?.changedPoints ?? null;
+                        return (
+                          <div key={m.id} className="flex items-center justify-between p-3.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-all">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={cn(
+                                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs',
+                                isWin ? 'bg-emerald-100 text-emerald-700' : isLoss ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'
                               )}>
-                                {eloDelta > 0 ? '+' : ''}{eloDelta} ELO
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold text-slate-400 border border-slate-200">
-                                {translate("eloNotUpdated")}
-                              </span>
-                            )}
+                                {isWin ? <TrendingUp className="w-4 h-4" /> : isLoss ? <TrendingDown className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-900 truncate">
+                                  {m.participant1?.teamName || translate("teamAFallback")} vs {m.participant2?.teamName || translate("teamBFallback")}
+                                </p>
+                                <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                                  {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt, locale, false, translate("notUpdated"))}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 shrink-0">
+                              {eloDelta !== null ? (
+                                <span className={cn(
+                                  'px-2 py-0.5 rounded text-[11px] font-extrabold tabular-nums',
+                                  eloDelta > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : eloDelta < 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-50 text-slate-600 border border-slate-200'
+                                )}>
+                                  {eloDelta > 0 ? '+' : ''}{eloDelta} ELO
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold text-slate-400 border border-slate-200">
+                                  {translate("eloNotUpdated")}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                    {translate("noRecentMatches")}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2.5">
+                        <Activity className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-800">{translate("noRecentMatches")}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{translate("joinTournamentToEarnElo")}</p>
+                    </div>
+                  )}
+                </div>
               </section>
             </div>
           )}
@@ -771,7 +806,7 @@ export default function DashboardPage() {
                 actionLabel={translate("findNewTournament")}
                 tournaments={getFilteredTournaments()}
                 roleLabels={participantRoleLabels}
-                    emptyLabel={translate("noMatchingTournaments")}
+                emptyLabel={translate("noMatchingTournaments")}
                 matchTypeMap={matchTypeMap}
                 partners={partnerMap}
               />
@@ -782,9 +817,10 @@ export default function DashboardPage() {
           {activeTab === 'referee' && (
             <div className="flex flex-col gap-4">
               <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
-                  <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Clock3 className="w-4 h-4 text-rose-500" /> {translate("refereeWorkTitle")} ({workspace?.refereeMatches.length || 0})
+                <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                  <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" /> {translate("refereeWorkTitle")}
+                    <span className="text-xs font-normal text-slate-400">({workspace?.refereeMatches.length || 0})</span>
                   </h2>
                 </div>
                 <div className="p-5">
@@ -793,41 +829,32 @@ export default function DashboardPage() {
                       <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                     </div>
                   ) : workspace && workspace.refereeMatches.length > 0 ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col divide-y divide-slate-100">
                       {workspace.refereeMatches.map((match: WorkspaceRefereeMatch) => (
-                        <div key={match.id} className="rounded-lg border border-slate-200 p-4 bg-white hover:border-blue-200 transition-all">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="mb-2 flex items-center gap-3">
-                                <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={36} />
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="font-bold text-slate-900 text-sm">{match.tournamentName}</h3>
-                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">{translate("referee")}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-xs font-semibold text-slate-700 mt-1">
-                                {match.participant1Name || translate("unknownParticipant")} vs {match.participant2Name || translate("unknownParticipant")}
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || translate("competitionSport")}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("roundAndMatch", { round: match.roundNumber, match: match.matchOrder })}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("courtLabel", { name: getMatchLocationLabel({
-                                  courtName: match.courtName,
-                                  city: match.city,
-                                  tournament: { venueName: match.venueName, venueAddress: match.venueAddress },
-                                }) || translate("unassigned") })}</span>
+                        <div key={match.id} className="py-3.5 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="mb-1 flex items-center gap-2.5">
+                              <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={28} />
+                              <div className="min-w-0 flex items-center gap-2">
+                                <h3 className="font-bold text-slate-900 text-xs truncate">{match.tournamentName}</h3>
+                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">{translate("referee")}</span>
                               </div>
                             </div>
-                            <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
+                            <p className="text-xs font-semibold text-slate-800">
+                              {match.participant1Name || translate("unknownParticipant")} vs {match.participant2Name || translate("unknownParticipant")}
+                            </p>
+                            <div className="mt-1.5 flex flex-wrap gap-1.5 text-[10px] text-slate-500">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || translate("competitionSport")}</span>
+                              <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
+                              <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("roundAndMatch", { round: match.roundNumber, match: match.matchOrder })}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getTournamentStatusClassName(match.status)}`}>
                               {getMatchStatusLabel(match.status, translate)}
                             </span>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
                             <Link href={`/live/${match.id}`}>
-                              <Button size="sm" className="h-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
+                              <Button size="sm" className="h-7 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3">
                                 {translate("liveScoring")}
                               </Button>
                             </Link>
@@ -836,8 +863,11 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
-                      {translate("noRefereeAssignments")}
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-2.5">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-800">{translate("noRefereeAssignments")}</p>
                     </div>
                   )}
                 </div>

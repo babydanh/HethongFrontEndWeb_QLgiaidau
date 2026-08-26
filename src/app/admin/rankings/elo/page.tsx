@@ -20,6 +20,8 @@ import {
   type AdminEloOperation,
   type AdminEloOperationHistoryItem,
   type AdminEloOperationPayload,
+  type FootballTeamRanking,
+  type AdminEloPairSummary,
   type AdminEloPlayerContextDetail,
   type AdminEloPlayerDetail,
   type AdminEloPlayerSummary,
@@ -42,7 +44,8 @@ const INITIAL_QUERY: FilterState = {
   search: '',
   status: '',
   categoryId: '',
-  matchType: '',
+  // Admin operations currently target PUBLIC user_ranks only; pair/team ELO has a separate grain.
+  matchType: 'SINGLES',
 };
 
 const RATING_OPERATIONS: AdminEloOperation[] = ['ADD', 'SUBTRACT', 'SET', 'RESET'];
@@ -148,6 +151,8 @@ export default function AdminEloPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<AdminEloPlayerSummary[]>([]);
+  const [pairs, setPairs] = useState<AdminEloPairSummary[]>([]);
+  const [footballTeams, setFootballTeams] = useState<FootballTeamRanking[]>([]);
   const [query, setQuery] = useState<FilterState>(INITIAL_QUERY);
   const [search, setSearch] = useState(INITIAL_QUERY.search);
   const [status, setStatus] = useState<AdminRankingStatus | ''>(INITIAL_QUERY.status);
@@ -185,12 +190,16 @@ export default function AdminEloPage() {
     [activeCategories, query.categoryId],
   );
   const playerGroups = Array.isArray(players) ? players : [];
+  const pairGroups = Array.isArray(pairs) ? pairs : [];
+  const isFootballCategory = selectedCategory?.slug === 'football';
+  const isPairView = !isFootballCategory && (query.matchType === 'DOUBLES' || query.matchType === 'MIXED_DOUBLES');
   const currentDetailCategoryId = playerDetail?.category.id ?? query.categoryId;
   const newProfileCategories = activeCategories.filter((category) => category.id !== currentDetailCategoryId);
 
   const loadContexts = useCallback(async ({ nextQuery, cursor = null, append = false }: { nextQuery: FilterState; cursor?: string | null; append?: boolean }) => {
     if (!nextQuery.categoryId) {
       setPlayers([]);
+      setPairs([]);
       setLoading(false);
       setLoadingMore(false);
       setNextCursor(null);
@@ -206,6 +215,40 @@ export default function AdminEloPage() {
       setHasMore(false);
     }
     try {
+      if (nextQuery.matchType === 'FOOTBALL') {
+        const result = await rankingsApi.getFootballTeamRankings({
+          categoryId: nextQuery.categoryId,
+          limit: PAGE_LIMIT,
+        });
+        if (requestId !== requestSequence.current) return;
+        setFootballTeams(Array.isArray(result?.data) ? result.data : []);
+        setPlayers([]);
+        setPairs([]);
+        setNextCursor(null);
+        setHasMore(false);
+        return;
+      }
+      setFootballTeams([]);
+      if (nextQuery.matchType === 'DOUBLES' || nextQuery.matchType === 'MIXED_DOUBLES') {
+        const result = await rankingsApi.listAdminPairs({
+          limit: PAGE_LIMIT,
+          categoryId: nextQuery.categoryId,
+          scope: 'PUBLIC',
+          search: nextQuery.search || undefined,
+          matchType: nextQuery.matchType,
+          cursor: cursor || undefined,
+        });
+        if (requestId !== requestSequence.current) return;
+        const page = result?.data;
+        const incomingList = Array.isArray(page?.data) ? page.data : [];
+        setPairs((current) => append
+          ? [...current, ...incomingList.filter((item) => !current.some((existing) => existing.pairId === item.pairId))]
+          : incomingList);
+        setPlayers([]);
+        setNextCursor(page?.meta?.nextCursor ?? null);
+        setHasMore(Boolean(page?.meta?.hasMore));
+        return;
+      }
       const result = await rankingsApi.listAdminPlayers({
         limit: PAGE_LIMIT,
         categoryId: nextQuery.categoryId,
@@ -218,6 +261,7 @@ export default function AdminEloPage() {
       if (requestId !== requestSequence.current) return;
       const page = result?.data;
       const incomingList = Array.isArray(page?.data) ? page.data : Array.isArray(page) ? page : [];
+      setPairs([]);
       setPlayers((current) => {
         const currentList = Array.isArray(current) ? current : [];
         return append
@@ -244,8 +288,10 @@ export default function AdminEloPage() {
         const rawCategories = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
         const active = rawCategories.filter((category) => category?.isActive);
         setCategories(active);
-        const nextQuery = active[0] ? { ...INITIAL_QUERY, categoryId: active[0].id } : INITIAL_QUERY;
+        const initialMatchType = active[0]?.slug === 'football' ? 'FOOTBALL' : 'SINGLES';
+        const nextQuery = active[0] ? { ...INITIAL_QUERY, matchType: initialMatchType, categoryId: active[0].id } : INITIAL_QUERY;
         setCategoryId(nextQuery.categoryId);
+        setMatchType(nextQuery.matchType);
         setQuery(nextQuery);
         if (active[0]) void loadContexts({ nextQuery });
         else {
@@ -454,16 +500,101 @@ export default function AdminEloPage() {
         <p className="mt-1 max-w-3xl text-sm text-slate-600">{translate('description')}</p>
       </header>
 
-      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
-        <label className="md:col-span-2"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={translate('searchPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
-        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><div className="font-semibold">{translate('publicScope')}</div><div className="mt-1 text-xs">{translate('publicOnlyAdminNotice')}</div></div>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => { const nextStatus = event.target.value as AdminRankingStatus | ''; setStatus(nextStatus); applyFilters({ status: nextStatus }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; setCategoryId(nextCategoryId); applyFilters({ categoryId: nextCategoryId }); }} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allMatchTypes')}</option><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
-        <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={() => applyFilters()} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
+      <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 items-end">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+              placeholder={translate('searchPlaceholder')}
+              className="h-9.5 w-full rounded-lg border border-slate-300 px-3 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400"
+            />
+          </div>
+
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span>
+            <select
+              value={categoryId}
+              onChange={(event) => {
+                const nextCategoryId = event.target.value;
+                const nextCategory = activeCategories.find((c) => c.id === nextCategoryId);
+                const nextMatchType = nextCategory?.slug === 'football' ? 'FOOTBALL' : 'SINGLES';
+                setCategoryId(nextCategoryId);
+                setMatchType(nextMatchType);
+                applyFilters({ categoryId: nextCategoryId, matchType: nextMatchType });
+              }}
+              disabled={activeCategories.length === 0}
+              className="h-9.5 w-full rounded-lg border border-slate-300 px-2.5 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">{translate('selectCategory')}</option>
+              {activeCategories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span>
+            <select
+              value={matchType}
+              onChange={(event) => {
+                const nextMatchType = event.target.value;
+                setMatchType(nextMatchType);
+                applyFilters({ matchType: nextMatchType });
+              }}
+              className="h-9.5 w-full rounded-lg border border-slate-300 px-2.5 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              {isFootballCategory ? (
+                <option value="FOOTBALL">{translate('footballTeam')}</option>
+              ) : (
+                <>
+                  <option value="SINGLES">{translate('singles')}</option>
+                  <option value="DOUBLES">{translate('doubles')}</option>
+                  <option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option>
+                </>
+              )}
+            </select>
+          </div>
+
+          {!isFootballCategory && (
+            <div>
+              <span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span>
+              <select
+                value={status}
+                onChange={(event) => {
+                  const nextStatus = event.target.value as AdminRankingStatus | '';
+                  setStatus(nextStatus);
+                  applyFilters({ status: nextStatus });
+                }}
+                className="h-9.5 w-full rounded-lg border border-slate-300 px-2.5 text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                <option value="">{translate('allStatuses')}</option>
+                <option value="VISIBLE">{translate('visible')}</option>
+                <option value="HIDDEN">{translate('hidden')}</option>
+                <option value="BANNED">{translate('banned')}</option>
+              </select>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => applyFilters()}
+              disabled={loading || loadingMore || !categoryId}
+              className="h-9.5 px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs"
+            >
+              {translate('search')}
+            </Button>
+            {!activeCategories.length && (
+              <span className="text-xs text-amber-600 font-medium">{translate('noActiveCategories')}</span>
+            )}
+          </div>
+        </div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      {isFootballCategory ? <AdminFootballTable teams={footballTeams} loading={loading} /> : isPairView ? <AdminPairTable pairs={pairGroups} loading={loading} /> : <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-[760px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{translate('player')}</th><th className="px-4 py-3">{translate('rankingProfiles')}</th><th className="px-4 py-3">{translate('highestElo')}</th><th className="px-4 py-3">{translate('status')}</th><th className="px-4 py-3">{translate('actions')}</th></tr></thead>
@@ -482,9 +613,9 @@ export default function AdminEloPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
 
-      {!loading && hasMore && <div className="flex justify-center"><Button type="button" variant="outline" disabled={loadingMore || !nextCursor} onClick={() => void loadContexts({ nextQuery: query, cursor: nextCursor, append: true })}>{loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{translate('loadMoreUsers')}</Button></div>}
+      {!loading && hasMore && <div className="flex justify-center"><Button type="button" variant="outline" disabled={loadingMore || !nextCursor} onClick={() => void loadContexts({ nextQuery: query, cursor: nextCursor, append: true })}>{loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{translate(isPairView ? 'loadMorePairs' : 'loadMoreUsers')}</Button></div>}
 
       <Modal open={selectedPlayer !== null} onOpenChange={(open) => { if (!open) closePlayerDetail(); }}>
         <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
@@ -570,5 +701,104 @@ export default function AdminEloPage() {
         </ModalContent>
       </Modal>
     </div>
+  );
+}
+
+
+function AdminPairTable({ pairs, loading }: { pairs: AdminEloPairSummary[]; loading: boolean }) {
+  const translate = useTranslations('AdminElo');
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-4 py-3 text-sm text-slate-600">
+        {translate('pairAdminReadOnlyNotice')}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[900px] w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3">{translate('pair')}</th>
+              <th className="px-4 py-3">{translate('matchType')}</th>
+              <th className="px-4 py-3">{translate('rating')}</th>
+              <th className="px-4 py-3">{translate('matches')}</th>
+              <th className="px-4 py-3">{translate('updated')}</th>
+              <th className="px-4 py-3">{translate('actions')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>}
+            {!loading && pairs.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">{translate('noPairs')}</td></tr>}
+            {!loading && pairs.map((pair) => (
+              <tr key={pair.pairId} className="align-top">
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {[pair.user1, pair.user2].map((member) => (
+                        <div key={member.id} className="h-9 w-9 overflow-hidden rounded-full border-2 border-white bg-slate-100">
+                          {member.avatarUrl && <Image src={member.avatarUrl} alt="" width={36} height={36} unoptimized className="h-full w-full object-cover" />}
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900">{pair.user1.fullName || pair.user1.email} / {pair.user2.fullName || pair.user2.email}</div>
+                      <div className="text-xs text-slate-500">{pair.categoryName}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-slate-700">{translate(getMatchTypeLabelKey(pair.matchType))}</td>
+                <td className="px-4 py-4"><div className="font-bold text-slate-900">{pair.eloPoints} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{translate('peakElo')}: {pair.peakElo}</div></td>
+                <td className="px-4 py-4 text-slate-700">{pair.matchesWon}/{pair.matchesPlayed}</td>
+                <td className="px-4 py-4 text-xs text-slate-500">{new Date(pair.updatedAt).toLocaleString()}</td>
+                <td className="px-4 py-4 text-xs font-semibold text-slate-500">{translate('readOnly')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+
+function AdminFootballTable({ teams, loading }: { teams: FootballTeamRanking[]; loading: boolean }) {
+  const translate = useTranslations('AdminElo');
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-4 py-3 text-sm text-slate-600">
+        {translate('footballAdminReadOnlyNotice')}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[760px] w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3">{translate('footballTeam')}</th>
+              <th className="px-4 py-3">{translate('rating')}</th>
+              <th className="px-4 py-3">{translate('matches')}</th>
+              <th className="px-4 py-3">{translate('winRate')}</th>
+              <th className="px-4 py-3">{translate('actions')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>}
+            {!loading && teams.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">{translate('noFootballTeams')}</td></tr>}
+            {!loading && teams.map((team) => (
+              <tr key={team.id} className="align-top">
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
+                      {team.logoUrl ? <Image src={team.logoUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">{team.teamName.slice(0, 2).toUpperCase()}</span>}
+                    </div>
+                    <span className="font-semibold text-slate-900">{team.teamName}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-4"><div className="font-bold text-slate-900">{team.eloPoints} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{translate('peakElo')}: {team.peakElo ?? team.eloPoints}</div></td>
+                <td className="px-4 py-4 text-slate-700">{team.matchesWon}/{team.matchesPlayed}</td>
+                <td className="px-4 py-4 text-slate-700">{team.matchesPlayed > 0 ? `${Math.round((team.matchesWon / team.matchesPlayed) * 100)}%` : '—'}</td>
+                <td className="px-4 py-4 text-xs font-semibold text-slate-500">{translate('readOnly')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

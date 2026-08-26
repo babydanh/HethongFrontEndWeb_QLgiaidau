@@ -4,7 +4,7 @@ import type { SportRuleKind } from '@/types/tournament';
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Activity, AlertCircle, Check, Play, Trophy } from 'lucide-react';
+import { AlertCircle, Check, Play, Trophy } from 'lucide-react';
 import { formatTennisPointDisplay } from '@/features/matches/live-score-state';
 import type {
   Match,
@@ -53,6 +53,7 @@ export interface LiveMatchControlPanelProps {
   penalties: MatchPenaltyRecord[];
   scoreWarnings: ScoreRuleWarning[];
   isLiteMatch: boolean;
+  isSingleSetMatch: boolean;
   overrideEnabled: boolean;
   overrideReason: string;
   onOverrideEnabledChange: (enabled: boolean) => void;
@@ -64,7 +65,6 @@ export interface LiveMatchControlPanelProps {
   onSetServingTeam: (team: 1 | 2) => void;
   onSideOut: () => void;
   onAddPenalty: (team: 1 | 2 | null, kind: string, label: string, note?: string) => void;
-  // BÃ³ng Ä‘Ã¡: luÃ¢n lÆ°u phÃ¢n Ä‘á»‹nh khi hÃ²a knockout
   isFootball?: boolean;
   shootoutGoals?: { p1Goals: number; p2Goals: number };
   onShootoutGoalsChange?: (goals: { p1Goals: number; p2Goals: number }) => void;
@@ -87,7 +87,7 @@ export function LiveMatchControlPanel({
   scores,
   activeSetIndex,
   scorePresentation,
-  scoreGuidance,
+  scoreGuidance: _scoreGuidance,
   sportKind,
   isPickleballSideOut,
   sideOutState,
@@ -96,6 +96,7 @@ export function LiveMatchControlPanel({
   penalties,
   scoreWarnings,
   isLiteMatch,
+  isSingleSetMatch,
   overrideEnabled,
   overrideReason,
   onOverrideEnabledChange,
@@ -141,16 +142,19 @@ export function LiveMatchControlPanel({
   const currentPointTeam2 = tennisPointState ? formatTennisPointDisplay(tennisPointState.team2Point) : String(currentSet.team2Score);
   const isBadminton = sportKind === 'BADMINTON';
   const isTableTennis = sportKind === 'TABLE_TENNIS';
+
   return (
-    <>
-      <div className="sticky top-0 z-20 -mx-1 min-w-0 border-b border-slate-200 bg-white/95 px-1 py-2 backdrop-blur">
-        <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
+    <div className="flex flex-col flex-1 min-h-full justify-between space-y-4">
+      {/* Top Controls: Tabs & Set Progress */}
+      <div className="space-y-3">
+        {/* Tabs */}
+        <div className="flex rounded-xl bg-slate-100 p-1">
           <button
             type="button"
             onClick={() => setActiveTab('score')}
             className={cn(
-              'flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-bold transition-colors',
-              activeTab === 'score' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800',
+              'flex-1 rounded-lg py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer',
+              activeTab === 'score' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900',
             )}
           >
             {translate("scoreAction")}
@@ -159,404 +163,342 @@ export function LiveMatchControlPanel({
             type="button"
             onClick={() => setActiveTab('penalty')}
             className={cn(
-              'flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-bold transition-colors',
-              activeTab === 'penalty' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-500 hover:text-slate-800',
+              'flex-1 rounded-lg py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer',
+              activeTab === 'penalty' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900',
             )}
           >
             {translate("foulAction")}
           </button>
         </div>
+
+        {activeTab === 'penalty' ? null : (
+          <>
+            {isPickleballSideOut ? (
+              <PickleballOfficialPanel
+                team1Name={team1Name}
+                team2Name={team2Name}
+                servingTeamName={servingTeamName}
+                serverNumber={sideOutState.serverNumber}
+                isSubmitting={isSubmitting}
+                servingTeam={sideOutState.servingTeam}
+                onSetServingTeam={onSetServingTeam}
+                onSideOut={onSideOut}
+              />
+            ) : null}
+
+            {!isFootball && !isLiteMatch && scoreWarnings.length > 0 ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900">
+                <span className="font-bold">⚠️ {translate("ruleWarning")}</span>
+                <div className="mt-1 space-y-0.5">
+                  {scoreWarnings.map((warning) => (
+                    <p key={warning.id}>• {warning.message}</p>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Set Progress Header */}
+            {!isFootball ? (
+              <div className="rounded-xl bg-white p-3 shadow-xs border border-slate-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{translate("setProgressTitle")}:</span>
+                    <span className="text-sm font-black text-slate-900">
+                      Set {activeSetIndex + 1} ({currentSet.team1Score} - {currentSet.team2Score})
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5 overflow-x-auto">
+                    {scores.map((set, index) => (
+                      <span
+                        key={`set-pill-${index}`}
+                        className={cn(
+                          'rounded-lg px-2.5 py-1 text-xs font-extrabold tabular-nums',
+                          index === activeSetIndex && !set.isFinished
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : set.isFinished
+                              ? 'bg-slate-100 text-slate-700'
+                              : 'bg-slate-50 text-slate-400',
+                        )}
+                      >
+                        Set {index + 1}: {set.team1Score}-{set.team2Score}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {!isFootball && !isLiteMatch ? (
+              <div className="rounded-xl border border-slate-100 bg-white p-3 shadow-xs">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{translate("refereeMode")}: </span>
+                    <span className="text-xs font-bold text-slate-900">
+                      {overrideEnabled ? translate('overrideEnabledLabel') : translate('defaultRulesLabel')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onOverrideEnabledChange(!overrideEnabled)}
+                    className={cn(
+                      'rounded-lg px-3 py-1 text-xs font-bold transition-colors cursor-pointer',
+                      overrideEnabled
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-amber-50 text-amber-800 hover:bg-amber-100',
+                    )}
+                  >
+                    {overrideEnabled ? translate('overrideToggleOn') : translate('overrideToggleOff')}
+                  </button>
+                </div>
+
+                {overrideEnabled ? (
+                  <div className="mt-2.5 space-y-1">
+                    <label className="text-[11px] font-bold uppercase text-amber-800">
+                      {translate('overrideReasonRequired')}
+                    </label>
+                    <input
+                      type="text"
+                      value={overrideReason}
+                      onChange={(event) => onOverrideReasonChange(event.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder={translate('overrideReasonPlaceholder')}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
 
+      {/* Middle Scoring Section - Expands Vertically to Fill Height */}
       {activeTab === 'penalty' ? (
-        <PenaltyPanel
-          team1Name={team1Name}
-          team2Name={team2Name}
-          sportKind={sportKind}
-          penalties={penalties}
-          isSubmitting={isSubmitting}
-          onAddPenalty={onAddPenalty}
-        />
+        <div className="flex-1 flex flex-col justify-center">
+          <PenaltyPanel
+            team1Name={team1Name}
+            team2Name={team2Name}
+            sportKind={sportKind}
+            penalties={penalties}
+            isSubmitting={isSubmitting}
+            onAddPenalty={onAddPenalty}
+          />
+        </div>
       ) : (
-        <>
-      {isPickleballSideOut ? (
-        <PickleballOfficialPanel
-          team1Name={team1Name}
-          team2Name={team2Name}
-          servingTeamName={servingTeamName}
-          serverNumber={sideOutState.serverNumber}
-          isSubmitting={isSubmitting}
-          servingTeam={sideOutState.servingTeam}
-          onSetServingTeam={onSetServingTeam}
-          onSideOut={onSideOut}
-        />
-      ) : null}
-         {!isFootball && !isLiteMatch && scoreWarnings.length > 0 ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-          <span className="font-bold">⚠️ {translate("ruleWarning")}</span>
-          <div className="mt-1 space-y-0.5">
-            {scoreWarnings.map((warning) => (
-              <p key={warning.id}>• {warning.message}</p>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {!isFootball ? <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
-        {scoreGuidance.targetSummary}
-        <span className="ml-1 opacity-75">| {scoreGuidance.examples.join(', ')}</span>
-      </div> : null}
-
-      {!isFootball ? <div className="rounded-lg border border-slate-200 bg-white p-3">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate("setProgressTitle")}</p>
-            <p className="mt-1 text-sm font-bold text-slate-900">
-              {translate('currentSetLabel', { set: activeSetIndex + 1, score1: currentSet.team1Score, score2: currentSet.team2Score })}
-            </p>
-          </div>
-          <p className="text-xs font-semibold text-slate-500">
-            {scores.filter((set) => set.isFinished).length} {translate('setsCompleted', { count: scores.filter((set) => set.isFinished).length })}
-          </p>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {scores.map((set, index) => (
-            <div
-              key={`set-log-${index}`}
-              className={cn(
-                'min-w-[150px] flex-1 rounded-lg border px-3 py-2',
-                index === activeSetIndex && !set.isFinished
-                  ? 'border-blue-300 bg-blue-50'
-                  : 'border-slate-200 bg-slate-50',
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold text-slate-700">Set {index + 1}</span>
-                <span
-                  className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-                    set.scoreOverride?.reason
-                      ? 'bg-amber-100 text-amber-800'
-                      : set.isFinished
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-blue-100 text-blue-700',
-                  )}
-                >
-                   {set.scoreOverride?.reason ? translate('overrideStatus') : set.isFinished ? translate('setClosedStatus') : translate('setInProgressStatus')}
-                </span>
-              </div>
-              <p className="mt-1 text-base font-bold text-slate-950">
-                {set.team1Score} - {set.team2Score}
-              </p>
-              {set.scoreOverride?.reason ? (
-                <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-amber-800" title={set.scoreOverride.reason}>
-                  {set.scoreOverride.reason}
-                </p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </div> : null}
-
-      {!isFootball && !isLiteMatch ? <div className="rounded-lg border border-slate-200 bg-white p-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate("refereeMode")}</p>
-            <p className="mt-2 text-sm font-bold text-slate-900">
-              {overrideEnabled ? translate('overrideEnabledLabel') : translate('defaultRulesLabel')}
-            </p>
-            <p className="mt-1 text-xs font-medium text-slate-500">
-              {translate('overrideAuditNote')}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onOverrideEnabledChange(!overrideEnabled)}
-            className={cn(
-              'rounded-lg border px-4 py-2 text-xs font-bold transition-colors',
-              overrideEnabled
-                ? 'border-amber-500 bg-amber-500 text-white'
-                : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100',
-            )}
-          >
-            {overrideEnabled ? translate('overrideToggleOn') : translate('overrideToggleOff')}
-          </button>
-        </div>
-
-        {overrideEnabled ? (
-          <div className="mt-4 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
-              {translate('overrideReasonRequired')}
-            </label>
-            <textarea
-              value={overrideReason}
-              onChange={(event) => onOverrideReasonChange(event.target.value)}
-              className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
-              placeholder={translate('overrideReasonPlaceholder')}
-            />
-            <p className="text-xs font-medium text-amber-700">
-              {translate('overrideAuditNote')}
-            </p>
-          </div>
-        ) : null}
-      </div> : null}
-
-      <div className="min-w-0 rounded-xl border border-slate-100 bg-white p-3 shadow-lg sm:p-4 md:p-5">
-        <div className="mb-4 flex items-center gap-3 border-b border-slate-100 pb-3">
-          <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
-            <Activity className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">{translate("matchControlTitle")}</h3>
-            <p className="text-xs text-slate-500">{translate('liveControlDescription')}</p>
-          </div>
-        </div>
-
-        {match.status === 'SCHEDULED' ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-            <AlertCircle className="mb-2 h-12 w-12 text-blue-500" />
-            <h4 className="mb-1 font-bold text-slate-800">{translate('scheduledTitle')}</h4>
-            {!match.participant1Id || !match.participant2Id ? (
-              <>
-                <p className="mb-6 max-w-sm rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs font-bold text-blue-600">
+        <div className="flex-1 flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-5 shadow-xs min-h-0 space-y-4">
+          {match.status === 'SCHEDULED' ? (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-2xl bg-slate-50 p-8 text-center min-h-[240px]">
+              <AlertCircle className="mb-2 h-14 w-14 text-blue-500" />
+              <h4 className="mb-1 text-lg font-bold text-slate-800">{translate('scheduledTitle')}</h4>
+              {!match.participant1Id || !match.participant2Id ? (
+                <p className="mt-2 text-sm font-bold text-blue-600">
                   {translate('waitingForParticipants')}
                 </p>
-                <button
-                  disabled
-                  className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-200 px-6 py-3 font-bold text-slate-400 transition-all"
-                >
-                  <Play className="h-4 w-4 fill-current" /> {translate('startMatch')}
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="mb-6 max-w-sm text-xs text-slate-500">
-                  {translate('activateMatchHint', { sequence: scorePresentation.sequenceLabel })}
-                </p>
+              ) : (
                 <button
                   onClick={onStartMatch}
                   disabled={isSubmitting}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-bold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg disabled:opacity-50"
+                  className="mt-5 flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-3.5 text-base font-extrabold text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
-                  <Play className="h-4 w-4 fill-current" /> {translate('startMatch')}
+                  <Play className="h-5 w-5 fill-current" /> {translate('startMatch')}
                 </button>
-              </>
-            )}
-          </div>
-        ) : null}
+              )}
+            </div>
+          ) : null}
 
-        {match.status === 'ONGOING' ? (
-          <div className="space-y-6">
-            {isFootball && footballScore && onFootballGoal && onFootballUndoGoal && onFootballPhaseChange && onFootballEvent && onFootballMinuteChange && onFootballAddedMinuteChange ? (
-              <FootballOfficialPanel
-                team1Name={team1Name}
-                team2Name={team2Name}
-                score={footballScore}
-                isSubmitting={isSubmitting}
-                onGoal={onFootballGoal}
-                onUndoGoal={onFootballUndoGoal}
-                onPhaseChange={onFootballPhaseChange}
-                onEvent={onFootballEvent}
-                onMinuteChange={onFootballMinuteChange}
-                onAddedMinuteChange={onFootballAddedMinuteChange}
-              />
-            ) : isTennis ? (
-              <TennisOfficialPanel
-                match={match}
-                team1Name={team1Name}
-                team2Name={team2Name}
-                currentSet={currentSet}
-                currentPointTeam1={currentPointTeam1}
-                currentPointTeam2={currentPointTeam2}
-                tennisPointState={tennisPointState}
-                isSubmitting={false}
-                onUpdatePoints={onUpdatePoints}
-              />
-            ) : isBadminton ? (
-              <BadmintonOfficialPanel
-                team1Name={team1Name}
-                team2Name={team2Name}
-                currentPointTeam1={currentPointTeam1}
-                currentPointTeam2={currentPointTeam2}
-                isSubmitting={false}
-                onUpdatePoints={onUpdatePoints}
-              />
-            ) : isTableTennis ? (
-              <TableTennisOfficialPanel
-                team1Name={team1Name}
-                team2Name={team2Name}
-                currentPointTeam1={currentPointTeam1}
-                currentPointTeam2={currentPointTeam2}
-                isSubmitting={false}
-                onUpdatePoints={onUpdatePoints}
-              />
-            ) : (
-              <BadmintonOfficialPanel
-                team1Name={team1Name}
-                team2Name={team2Name}
-                currentPointTeam1={currentPointTeam1}
-                currentPointTeam2={currentPointTeam2}
-                isSubmitting={false}
-                onUpdatePoints={onUpdatePoints}
-              />
-            )}
-
-            {isFootball ? (
-              <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:px-4 md:-mx-5 md:px-5">
-                <p className="text-center text-xs font-semibold text-slate-500">
-                  {translate('footballFinishHint')} {translate('footballShootoutHint')}
-                </p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => handleCompleteMatch(1)}
-                    disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-                  >
-                    <Trophy className="h-4 w-4" /> {translate('confirmWinForTeam', { team: team1Name })}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleCompleteMatch(2)}
-                    disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-                  >
-                    <Trophy className="h-4 w-4" /> {translate('confirmWinForTeam', { team: team2Name })}
-                  </button>
-                </div>
+          {match.status === 'ONGOING' ? (
+            <div className="flex flex-1 flex-col justify-between space-y-5 min-h-0">
+              {/* Main Score Area */}
+              <div className="flex-1 flex flex-col justify-center min-h-0">
+                {isFootball && footballScore && onFootballGoal && onFootballUndoGoal && onFootballPhaseChange && onFootballEvent && onFootballMinuteChange && onFootballAddedMinuteChange ? (
+                  <FootballOfficialPanel
+                    team1Name={team1Name}
+                    team2Name={team2Name}
+                    score={footballScore}
+                    isSubmitting={isSubmitting}
+                    onGoal={onFootballGoal}
+                    onUndoGoal={onFootballUndoGoal}
+                    onPhaseChange={onFootballPhaseChange}
+                    onEvent={onFootballEvent}
+                    onMinuteChange={onFootballMinuteChange}
+                    onAddedMinuteChange={onFootballAddedMinuteChange}
+                  />
+                ) : isTennis ? (
+                  <TennisOfficialPanel
+                    match={match}
+                    team1Name={team1Name}
+                    team2Name={team2Name}
+                    currentSet={currentSet}
+                    currentPointTeam1={currentPointTeam1}
+                    currentPointTeam2={currentPointTeam2}
+                    tennisPointState={tennisPointState}
+                    isSubmitting={false}
+                    onUpdatePoints={onUpdatePoints}
+                  />
+                ) : isBadminton ? (
+                  <BadmintonOfficialPanel
+                    team1Name={team1Name}
+                    team2Name={team2Name}
+                    currentPointTeam1={currentPointTeam1}
+                    currentPointTeam2={currentPointTeam2}
+                    isSubmitting={false}
+                    onUpdatePoints={onUpdatePoints}
+                  />
+                ) : isTableTennis ? (
+                  <TableTennisOfficialPanel
+                    team1Name={team1Name}
+                    team2Name={team2Name}
+                    currentPointTeam1={currentPointTeam1}
+                    currentPointTeam2={currentPointTeam2}
+                    isSubmitting={false}
+                    onUpdatePoints={onUpdatePoints}
+                  />
+                ) : (
+                  <BadmintonOfficialPanel
+                    team1Name={team1Name}
+                    team2Name={team2Name}
+                    currentPointTeam1={currentPointTeam1}
+                    currentPointTeam2={currentPointTeam2}
+                    isSubmitting={false}
+                    onUpdatePoints={onUpdatePoints}
+                  />
+                )}
               </div>
-            ) : <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
-              <button
-                type="button"
-                onClick={() => setConfirmFinishSequence(true)}
-                disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-3 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
-              >
-                <Check className="h-4 w-4 text-blue-500" /> {scorePresentation.completeActionLabel}
-              </button>
 
-              <div className="flex flex-grow flex-col items-end gap-2">
-                <p className="text-right text-[11px] font-semibold text-slate-500">
-                  {isLiteMatch ? translate('liteQuickFinishHint') : translate('overrideWinnerHint')}
-                </p>
-                <div className="flex flex-wrap justify-end gap-2">
-                <button
-                  onClick={() => handleCompleteMatch(1)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                  className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
-                >
-                  <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? translate('teamWins', { team: team1Name }) : translate('teamWinsByOverride', { team: team1Name })}
-                </button>
-                <button
-                  onClick={() => handleCompleteMatch(2)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                  className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
-                >
-                  <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? translate('teamWins', { team: team2Name }) : translate('teamWinsByOverride', { team: team2Name })}
-                </button>
-                </div>
+              {/* Bottom Action Buttons: Big, Prominent, Clear */}
+              <div className="pt-3 border-t border-slate-100">
+                {isSingleSetMatch && !isFootball ? (
+                  <p className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold leading-relaxed text-blue-800">
+                    {translate('singleSetMatchHint')}
+                  </p>
+                ) : null}
+                {isFootball ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCompleteMatch(1)}
+                      disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 px-5 text-sm sm:text-base font-black text-white shadow-md transition-all hover:bg-emerald-700 active:scale-98 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Trophy className="h-5 w-5" /> {team1Name} thắng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCompleteMatch(2)}
+                      disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 px-5 text-sm sm:text-base font-black text-white shadow-md transition-all hover:bg-emerald-700 active:scale-98 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Trophy className="h-5 w-5" /> {team2Name} thắng
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    {!isSingleSetMatch ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmFinishSequence(true)}
+                        disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 px-5 text-sm sm:text-base font-black text-white shadow-md shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-98 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Check className="h-5 w-5 stroke-[2.5]" /> {translate('finishCurrentSet')}
+                      </button>
+                    ) : null}
+
+                    <div className={cn('flex flex-1 gap-2.5', isSingleSetMatch && 'w-full')}>
+                      <button
+                        type="button"
+                        onClick={() => handleCompleteMatch(1)}
+                        disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-3.5 px-3 text-xs sm:text-sm font-black text-white shadow-md transition-all hover:bg-emerald-700 active:scale-98 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Trophy className="h-4 w-4 shrink-0" /> <span className="truncate">{team1Name} thắng</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCompleteMatch(2)}
+                        disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-3.5 px-3 text-xs sm:text-sm font-black text-white shadow-md transition-all hover:bg-emerald-700 active:scale-98 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Trophy className="h-4 w-4 shrink-0" /> <span className="truncate">{team2Name} thắng</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              {isTennis ? (
-                <p className="mt-3 text-center text-xs font-semibold text-slate-500">
-                  {translate('currentGameScore', { score1: currentSet.team1Score, score2: currentSet.team2Score })}
-                </p>
-              ) : null}
-            </div>}
-          </div>
-        ) : null}
+            </div>
+          ) : null}
 
-        {match.status === 'COMPLETED' ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-6 text-center">
-            <Trophy className="mb-2 h-12 w-12 text-blue-500" />
-            <h4 className="mb-1 font-bold text-slate-800">{translate('completedTitle')}</h4>
-            <p className="text-xs text-slate-500">
-              {translate('winnerLabel')}{' '}
-              <span className="font-bold text-blue-600">
-                {match.winnerId === match.participant1Id ? team1Name : team2Name}
-              </span>
-            </p>
-          </div>
-        ) : null}
-      </div>
-        </>
+          {match.status === 'COMPLETED' ? (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-2xl bg-slate-50 p-8 text-center min-h-[200px]">
+              <Trophy className="mb-2 h-14 w-14 text-blue-500" />
+              <h4 className="mb-1 text-lg font-extrabold text-slate-800">{translate('completedTitle')}</h4>
+              <p className="text-sm font-semibold text-slate-600">
+                {translate('winnerLabel')}:{' '}
+                <span className="font-bold text-blue-600">
+                  {match.winnerId === match.participant1Id ? team1Name : team2Name}
+                </span>
+              </p>
+            </div>
+          ) : null}
+        </div>
       )}
 
+      {/* Mini Winner Confirm Modal */}
       <Modal open={confirmWinner !== null} onOpenChange={(open) => !open && setConfirmWinner(null)}>
-        <ModalContent className="max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-          <ModalHeader className="text-center sm:text-left">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 sm:mx-0">
-              <AlertCircle className="h-6 w-6" />
+        <ModalContent className="max-w-sm rounded-2xl border-0 bg-white p-5 shadow-2xl">
+          <ModalHeader className="text-left">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <div>
+                <ModalTitle className="text-base font-extrabold text-slate-900">
+                  Xác nhận chốt thắng trận
+                </ModalTitle>
+                <ModalDescription className="mt-0.5 text-xs font-semibold text-slate-500">
+                  Trao chiến thắng cho: <span className="font-bold text-slate-900">{confirmWinner === 1 ? team1Name : team2Name}</span>
+                </ModalDescription>
+              </div>
             </div>
-            <ModalTitle className="mt-3 text-lg font-bold text-slate-900 sm:mt-4">
-              {isFootball ? translate('footballResultAction') : translate('overrideWinnerAction')}
-            </ModalTitle>
-            <ModalDescription className="mt-2 text-sm font-semibold text-slate-500 leading-relaxed">
-              {translate('confirmMatchWinner', { team: confirmWinner === 1 ? team1Name : team2Name })}
-              <span className="mt-1.5 block text-base font-bold text-slate-900 underline decoration-blue-500 decoration-2 underline-offset-4">
-                {confirmWinner === 1 ? team1Name : team2Name}
-              </span>
-              {isFootball ? (
-                <span className="mt-2 block rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
-                  ⚽ {translate('footballShootoutDescription')}
-                </span>
-              ) : isLiteMatch ? (
-                <span className="mt-2 block rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800">
-                  ⚡ {translate('liteQuickFinishHint')}
-                </span>
-              ) : (
-                <div className="mt-3 space-y-1.5 text-left">
-                  <label className="text-xs font-bold text-slate-700">
-                    {translate('overrideReasonRequired')}:
-                  </label>
-                  <input
-                    type="text"
-                    value={overrideReason}
-                    onChange={(e) => onOverrideReasonChange(e.target.value)}
-                    placeholder={translate('overrideReasonPlaceholder')}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-              )}
-            </ModalDescription>
           </ModalHeader>
 
           {isFootball && (
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-emerald-800">{team1Name} ({translate('shootoutLabel')})</label>
+                <label className="text-xs font-bold text-emerald-800 truncate block">{team1Name}</label>
                 <input
                   type="number"
                   min={0}
                   value={shootoutGoals.p1Goals}
                   onChange={(e) => onShootoutGoalsChange?.({ ...shootoutGoals, p1Goals: Number(e.target.value) })}
-                  className="h-10 w-full rounded-lg border border-emerald-300 bg-white px-3 text-sm"
+                  className="h-9 w-full rounded-lg border border-emerald-300 bg-white px-2.5 text-sm font-bold"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-emerald-800">{team2Name} ({translate('shootoutLabel')})</label>
+                <label className="text-xs font-bold text-emerald-800 truncate block">{team2Name}</label>
                 <input
                   type="number"
                   min={0}
                   value={shootoutGoals.p2Goals}
                   onChange={(e) => onShootoutGoalsChange?.({ ...shootoutGoals, p2Goals: Number(e.target.value) })}
-                  className="h-10 w-full rounded-lg border border-emerald-300 bg-white px-3 text-sm"
+                  className="h-9 w-full rounded-lg border border-emerald-300 bg-white px-2.5 text-sm font-bold"
                 />
               </div>
             </div>
           )}
 
-          <ModalFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <ModalFooter className="mt-5 flex flex-row justify-end gap-2">
             <Button
               variant="outline"
-              className="w-full border-slate-200 text-slate-700 sm:w-auto"
+              size="sm"
+              className="border-slate-200 text-slate-700 text-xs font-bold px-4 py-2"
               onClick={() => setConfirmWinner(null)}
             >
               {translate('cancelActionShort')}
             </Button>
             <Button
-              disabled={isSubmitting || (!isFootball && !isLiteMatch && !overrideReason.trim())}
-              variant={isLiteMatch ? "default" : "warning"}
-              className={cn("w-full font-bold disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto", isLiteMatch && "bg-blue-600 hover:bg-blue-700 text-white")}
+              size="sm"
+              disabled={isSubmitting}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2"
               onClick={() => {
                 if (confirmWinner) {
                   if (!isLiteMatch && !overrideEnabled) {
@@ -567,12 +509,13 @@ export function LiveMatchControlPanel({
                 setConfirmWinner(null);
               }}
             >
-              {isFootball ? translate('footballResultAction') : isLiteMatch ? translate('teamWins', { team: confirmWinner === 1 ? team1Name : team2Name }) : translate('overrideWinnerAction')}
+              Chốt thắng
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
+      {/* Mini Finish Set Modal */}
       <Modal
         open={confirmFinishSequence}
         onOpenChange={(open) => {
@@ -581,37 +524,33 @@ export function LiveMatchControlPanel({
           }
         }}
       >
-        <ModalContent className="max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+        <ModalContent className="max-w-sm rounded-2xl border-0 bg-white p-5 shadow-2xl">
           <ModalHeader className="text-left">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                 <Check className="h-5 w-5" />
               </div>
-              <div className="min-w-0">
-                <ModalTitle className="text-lg font-bold text-slate-900">
-                  {scorePresentation.completeActionLabel}
-                </ModalTitle>
-                <ModalDescription className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
-                  {translate('confirmFinishCurrentSequence', {
-                    label: scorePresentation.sequenceLabel,
-                    sequence: activeSetIndex + 1,
-                    score1: currentSet.team1Score,
-                    score2: currentSet.team2Score,
-                  })}
-                </ModalDescription>
+              <div>
+                  <ModalTitle className="text-base font-extrabold text-slate-900">
+                    {translate('finishCurrentSet')}
+                  </ModalTitle>
+                  <ModalDescription className="mt-0.5 text-xs font-semibold text-slate-500">
+                    {translate('saveCurrentSetScore', {
+                      set: activeSetIndex + 1,
+                      score1: currentSet.team1Score,
+                      score2: currentSet.team2Score,
+                    })}
+                  </ModalDescription>
               </div>
             </div>
           </ModalHeader>
 
-          <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-900">
-            {scorePresentation.sequenceLabel} {activeSetIndex + 1}: {currentSet.team1Score} - {currentSet.team2Score}
-          </div>
-
-          <ModalFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <ModalFooter className="mt-5 flex flex-row justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              className="w-full border-slate-200 text-slate-700 sm:w-auto"
+              size="sm"
+              className="border-slate-200 text-slate-700 text-xs font-bold px-4 py-2"
               disabled={isSubmitting}
               onClick={() => setConfirmFinishSequence(false)}
             >
@@ -619,10 +558,11 @@ export function LiveMatchControlPanel({
             </Button>
             <Button
               type="button"
+              size="sm"
               variant="default"
               isLoading={isSubmitting}
               disabled={isSubmitting}
-              className="w-full bg-blue-600 font-bold text-white hover:bg-blue-700 sm:w-auto"
+              className="bg-blue-600 font-extrabold text-white hover:bg-blue-700 text-xs px-4 py-2"
               onClick={() => {
                 setConfirmFinishSequence(false);
                 onFinishSet();
@@ -633,6 +573,6 @@ export function LiveMatchControlPanel({
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </>
+    </div>
   );
 }

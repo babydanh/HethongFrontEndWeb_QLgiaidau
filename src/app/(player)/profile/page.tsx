@@ -671,21 +671,45 @@ export default function ProfilePage() {
                       <ShieldCheck className="w-5 h-5 text-blue-600" />
                     </span>
                   )}
-                  {featuredRank && (
-                    <EloTierBadge
-                      elo={featuredRank.eloPoints}
-                      tierName={featuredRank.tierName || featuredRank.tier?.name || undefined}
-                      categoryName={featuredRank.categoryName}
-                      size="md"
-                    />
-                  )}
-                  {!featuredRank && latestEloHistory && (
-                    <EloTierBadge
-                      elo={latestEloHistory.newElo}
-                      categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
-                      size="md"
-                    />
-                  )}
+                  {(() => {
+                    const eligible = eligiblePublicRanks
+                      .sort((a, b) => b.eloPoints - a.eloPoints);
+                    const listToRender = eligible.length > 0
+                      ? eligible
+                      : (userRankings?.publicRanks || []).filter((r) => (r.eloPoints || 0) > 0);
+
+                    const seenCategories = new Set<string>();
+                    const distinctRanks = listToRender.filter((r) => {
+                      const cat = (r.categoryName || r.categoryId || '').toLowerCase();
+                      if (seenCategories.has(cat)) return false;
+                      seenCategories.add(cat);
+                      return true;
+                    });
+
+                    if (distinctRanks.length > 0) {
+                      return distinctRanks.map((r, idx) => (
+                        <EloTierBadge
+                          key={`${r.categoryId || r.categoryName}-${r.matchType || idx}`}
+                          elo={r.eloPoints}
+                          tierName={r.tierName || r.tier?.name || undefined}
+                          categoryName={r.categoryName}
+                          size="md"
+                        />
+                      ));
+                    }
+
+                    if (latestEloHistory) {
+                      return (
+                        <EloTierBadge
+                          elo={latestEloHistory.newElo}
+                          categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
+                          size="md"
+                        />
+                      );
+                    }
+
+                    return null;
+                  })()}
                 </h1>
 
               </div>

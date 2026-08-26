@@ -163,12 +163,12 @@ export function getMatchScorePresentation(kind: SportRuleKind, translate?: Score
       sportLabel: sportPresentation.sportLabel || label('sportLabel', 'Pickleball'),
       scoreUnit: label('scoreUnit', 'points'),
       scoreUnitPlural: label('scoreUnit', 'points'),
-      currentScoreLabel: label('currentScoreLabel', 'Current game score'),
-      sequenceLabel: label('sequenceLabel', 'game'),
-      sequenceLabelPlural: label('sequenceLabel', 'game'),
-      summaryLabel: label('summaryLabel', 'Game scores'),
-      completeActionLabel: label('completeActionLabel', 'Finalize current game'),
-      wonSummaryLabel: label('wonSummaryLabel', 'Games won'),
+      currentScoreLabel: label('currentScoreLabel', 'Current set score'),
+      sequenceLabel: label('sequenceLabel', 'set'),
+      sequenceLabelPlural: label('sequenceLabel', 'set'),
+      summaryLabel: label('summaryLabel', 'Set scores'),
+      completeActionLabel: label('completeActionLabel', 'Finalize current set'),
+      wonSummaryLabel: label('wonSummaryLabel', 'Sets won'),
     };
   }
 

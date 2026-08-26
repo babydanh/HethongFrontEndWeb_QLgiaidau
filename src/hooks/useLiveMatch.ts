@@ -58,6 +58,26 @@ function isStaleRevision(previous: Match | null, incoming: Match): boolean {
   return false;
 }
 
+/**
+ * Live socket events can be partial match projections. Preserve the rich
+ * context loaded by the initial GET so an optimistic/status event cannot
+ * briefly replace participant, stage, group, or tournament labels with
+ * unknown placeholders.
+ */
+function mergeMatchContext(previous: Match | null, incoming: Match): Match {
+  if (!previous) return incoming;
+
+  return {
+    ...previous,
+    ...incoming,
+    participant1: incoming.participant1 ?? previous.participant1,
+    participant2: incoming.participant2 ?? previous.participant2,
+    tournament: incoming.tournament ?? previous.tournament,
+    group: incoming.group ?? previous.group,
+    stage: incoming.stage ?? previous.stage,
+  };
+}
+
 export function useLiveMatch(matchId: string) {
   const translate = useTranslations('LiveMatch');
   const [match, setMatch] = useState<Match | null>(null);
@@ -130,12 +150,14 @@ export function useLiveMatch(matchId: string) {
           return;
         }
 
-        setMatch((previous) => {
-          const next = previous && hasSameLiveSnapshot(previous, data) ? previous : data;
+                setMatch((previous) => {
+          const merged = mergeMatchContext(previous, data);
+          const next = previous && hasSameLiveSnapshot(previous, merged) ? previous : merged;
           matchRef.current = next;
           return next;
         });
         const nextScores = extractMatchScores(data.scoreDetails);
+
         setScores((previous) => (
           areScoresEqual(previous, nextScores) ? previous : nextScores
         ));
@@ -199,15 +221,17 @@ export function useLiveMatch(matchId: string) {
         return;
       }
 
-      setMatch((previous) => {
-        if (previous && hasSameLiveSnapshot(previous, updatedMatch)) {
+            setMatch((previous) => {
+        const merged = mergeMatchContext(previous, updatedMatch);
+        if (previous && hasSameLiveSnapshot(previous, merged)) {
           return previous;
         }
-        matchRef.current = updatedMatch;
-        return updatedMatch;
+        matchRef.current = merged;
+        return merged;
       });
 
       if (includeScores) {
+
         const nextScores = extractMatchScores(updatedMatch.scoreDetails);
         setScores((previous) => (areScoresEqual(previous, nextScores) ? previous : nextScores));
       }

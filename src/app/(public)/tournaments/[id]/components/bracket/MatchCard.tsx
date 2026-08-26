@@ -84,7 +84,9 @@ export const MatchCard = memo(function MatchCard({
     ? formatDateTime(match.scheduledAt)
     : rawMatch.scheduledDate
       ? String(rawMatch.scheduledDate)
-      : translate('schedulePending');
+      : done
+        ? matchTranslate('statusFinished')
+        : translate('schedulePending');
 
   const cardInner = (
     <div className="flex flex-col flex-1 h-full justify-between">

@@ -402,7 +402,9 @@ export function useManageState(id: string) {
         : (selected.matchType === 'SINGLES' ? MatchTypeUI.MALE_SINGLES : MatchTypeUI.MALE_DOUBLES));
     setMaxParticipants(selected.maxParticipants || 16);
     setIsLimitEnabled(!!selected.maxParticipants);
-    setEntryFee(selected.entryFee || 0);
+    // A division fee is optional. When it is null/undefined, the tournament
+    // fee remains the authoritative fallback; an explicit 0 still means free.
+    setEntryFee(selected.entryFee ?? tournament?.entryFee ?? 0);
     applyResolvedRuleState(resolvedRules);
     setNumGroups(typeof groupsConfig?.numGroups === 'number' ? groupsConfig.numGroups : 2);
     setTeamsPerGroup(typeof groupsConfig?.teamsPerGroup === 'number' ? groupsConfig.teamsPerGroup : 4);

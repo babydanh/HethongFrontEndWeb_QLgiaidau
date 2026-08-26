@@ -309,6 +309,12 @@ export function OpsMatches({
     const matchHeaderLabel = isRoundRobinMatch
       ? roundLabel
       : `${roundLabel} • ${translate('matchNumber', { number: match.matchOrder })}`;
+    const branchLabel = match.bracketBranch && BRANCH_LABEL_KEYS[match.bracketBranch]
+      ? translate(BRANCH_LABEL_KEYS[match.bracketBranch])
+      : match.bracketBranch || null;
+    const shouldRenderBranchLabel = Boolean(
+      branchLabel && branchLabel !== roundLabel && !roundLabel.startsWith(`${branchLabel} •`),
+    );
 
     return (
 
@@ -325,9 +331,7 @@ export function OpsMatches({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-              {match.bracketBranch && BRANCH_LABEL_KEYS[match.bracketBranch]
-                ? translate(BRANCH_LABEL_KEYS[match.bracketBranch])
-                : match.bracketBranch || translate('branchMain')} • {matchHeaderLabel}
+              {shouldRenderBranchLabel ? `${branchLabel} • ` : ''}{matchHeaderLabel}
             </p>
             <p className="text-sm font-bold text-slate-900">
               {match.participant1?.teamName || translate('tbd')} {translate('versus')} {match.participant2?.teamName || translate('tbd')}

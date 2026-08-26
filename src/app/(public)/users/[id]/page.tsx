@@ -322,18 +322,31 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   </span>
                 )}
                 {(() => {
-                  const featuredRank = displayedRanks
+                  const eligible = displayedRanks
                     .filter(isPublicRankingEligible)
-                    .sort((a, b) => b.eloPoints - a.eloPoints)[0];
-                  if (featuredRank) {
-                    return (
+                    .sort((a, b) => b.eloPoints - a.eloPoints);
+                  const listToRender = eligible.length > 0
+                    ? eligible
+                    : displayedRanks.filter((r) => (r.eloPoints || 0) > 0);
+
+                  const seenCategories = new Set<string>();
+                  const distinctRanks = listToRender.filter((r) => {
+                    const cat = (r.categoryName || r.categoryId || '').toLowerCase();
+                    if (seenCategories.has(cat)) return false;
+                    seenCategories.add(cat);
+                    return true;
+                  });
+
+                  if (distinctRanks.length > 0) {
+                    return distinctRanks.map((rank, idx) => (
                       <EloTierBadge
-                        elo={featuredRank.eloPoints}
-                        tierName={featuredRank.tierName || undefined}
-                        categoryName={featuredRank.categoryName}
+                        key={`${rank.categoryId || rank.categoryName}-${rank.matchType || idx}`}
+                        elo={rank.eloPoints}
+                        tierName={rank.tierName || undefined}
+                        categoryName={rank.categoryName}
                         size="md"
                       />
-                    );
+                    ));
                   }
                   return null;
                 })()}

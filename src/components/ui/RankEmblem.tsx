@@ -306,13 +306,13 @@ export function SportBadgeIcon({
 
   return (
     <span
-      className="inline-flex items-center justify-center shrink-0 rounded-full border shadow-2xs relative overflow-hidden"
+      className="inline-flex items-center justify-center shrink-0 rounded-full border shadow-2xs relative overflow-hidden transition-transform"
       style={{
         width: sizePx,
         height: sizePx,
-        backgroundColor: '#1e293b',
-        borderColor: `${accentColor}aa`,
-        boxShadow: `0 0 6px ${accentColor}33`,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: 'rgba(255, 255, 255, 0.5)',
+        boxShadow: `0 1px 3px rgba(0, 0, 0, 0.25), 0 0 4px ${accentColor}40`,
       }}
       aria-hidden="true"
     >
@@ -320,10 +320,10 @@ export function SportBadgeIcon({
         <Image
           src={sportLogo}
           alt=""
-          width={Math.round(sizePx * 0.68)}
-          height={Math.round(sizePx * 0.68)}
+          width={Math.round(sizePx * 0.72)}
+          height={Math.round(sizePx * 0.72)}
           unoptimized
-          className="object-contain filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] brightness-125 contrast-125"
+          className="object-contain filter drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]"
         />
       ) : (
         <span className="text-[10px] font-black" style={{ color: accentColor }}>

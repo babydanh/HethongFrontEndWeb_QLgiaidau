@@ -101,5 +101,11 @@ export const getMatchLocationParts = (input: MatchLocationInput): string[] =>
     input.city,
   ]);
 
+export const getMatchCourtParts = (input: MatchLocationInput): string[] =>
+  uniqueParts([input.courtName, input.courtAddress]);
+
+export const getMatchCourtLabel = (input: MatchLocationInput): string =>
+  getMatchCourtParts(input).join(', ');
+
 export const getMatchLocationLabel = (input: MatchLocationInput): string =>
   getMatchLocationParts(input).join(', ');

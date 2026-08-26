@@ -145,8 +145,15 @@ function stageTypeLabel(type: string, translate: TranslationFn): string {
 }
 
 function stageNameLabel(name: string, translate: TranslationFn): string {
-  const upperName = (name ?? '').toUpperCase();
-  if (upperName.includes('DOUBLE ELIMINATION STAGE') || upperName.includes('DOUBLE_ELIMINATION')) {
+  const normalizedName = (name ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const upperName = normalizedName;
+  if (upperName.includes('DOUBLE ELIMINATION STAGE') || upperName.includes('DOUBLE ELIMINATION')) {
     return translate('stageDoubleEliminationLong');
   }
   if (upperName.includes('ELIMINATION STAGE') || upperName.includes('VONG LOAI TRUC TIEP')) {
@@ -154,19 +161,19 @@ function stageNameLabel(name: string, translate: TranslationFn): string {
   }
   if (
     upperName.includes('ROUND ROBIN STAGE') ||
-    upperName.includes('ROUND_ROBIN') ||
+    upperName.includes('ROUND ROBIN') ||
     upperName.includes('VONG TRON TINH DIEM')
   ) {
     return translate('stageRoundRobin');
   }
-  if (upperName.includes('VONG BANG') || upperName.includes('GROUP_STAGE') || upperName.includes('GROUP STAGE')) {
+  if (upperName.includes('VONG BANG') || upperName.includes('GROUP STAGE')) {
     return translate('stageGroup');
   }
   if (upperName.includes('VONG PLAYOFFS') || upperName.includes('PLAYOFFS') || upperName.includes('PLAYOFF')) {
     return translate('stagePlayoffs');
   }
-  if (name === 'Winners Bracket' || upperName === 'NHANH THANG') return translate('winnersBracket');
-  if (name === 'Losers Bracket' || upperName === 'NHANH THUA') return translate('losersBracket');
+  if (upperName === 'WINNERS BRACKET' || upperName === 'NHANH THANG') return translate('winnersBracket');
+  if (upperName === 'LOSERS BRACKET' || upperName === 'NHANH THUA') return translate('losersBracket');
   return name;
 }
 

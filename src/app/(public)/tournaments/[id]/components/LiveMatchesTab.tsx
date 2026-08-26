@@ -10,6 +10,7 @@ import { socketClient } from '@/lib/socket';
 import { ChevronLeft, ChevronRight, PlayCircle, Radio, Clock, Search } from 'lucide-react';
 import { formatDateTime } from '@/utils/format';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
+import { getUniqueParticipantMembers } from '@/utils/participant-display';
 
 interface LiveMatchesTabProps {
   tournament: Tournament;
@@ -28,7 +29,9 @@ function ParticipantAvatars({ participant, playerLabel }: { participant: Match['
     );
   }
 
-  const members = participant.members && Array.isArray(participant.members) ? participant.members : [];
+  const members = getUniqueParticipantMembers(
+    participant.members && Array.isArray(participant.members) ? participant.members : [],
+  );
 
   if (members.length >= 2) {
     return (
@@ -75,7 +78,9 @@ function ParticipantAvatars({ participant, playerLabel }: { participant: Match['
 
 function getParticipantDisplayName(participant: Match['participant1'], waitingLabel: string) {
   if (!participant) return waitingLabel;
-  const members = participant.members && Array.isArray(participant.members) ? participant.members : [];
+  const members = getUniqueParticipantMembers(
+    participant.members && Array.isArray(participant.members) ? participant.members : [],
+  );
   if (members.length >= 2) {
     const name1 = members[0]?.fullName?.trim() || '';
     const name2 = members[1]?.fullName?.trim() || '';

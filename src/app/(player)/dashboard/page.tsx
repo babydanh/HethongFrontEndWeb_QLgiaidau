@@ -383,60 +383,60 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Main Tab Switcher - Full width matching banner */}
+      <div className="flex items-center justify-between border border-slate-200 bg-white px-4 rounded-xl shadow-xs">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={cn(
+              'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+              activeTab === 'overview'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <Activity className="w-4 h-4" /> {translate("overviewTab")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tournaments')}
+            className={cn(
+              'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+              activeTab === 'tournaments'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <Trophy className="w-4 h-4" /> {translate("myTournaments")}
+            <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              {registeredCount + totalOrganized}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('referee')}
+            className={cn(
+              'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+              activeTab === 'referee'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            )}
+          >
+            <ShieldCheck className="w-4 h-4" /> {translate("refereeAssignmentsTab")}
+            {refereeCount > 0 && (
+              <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                {refereeCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left 2 Columns: Tabbed Interface */}
+        {/* Left 2 Columns: Tabbed Interface Content */}
         <div className="xl:col-span-2 flex flex-col gap-5">
-          {/* Main Tab Switcher */}
-          <div className="flex items-center justify-between border border-slate-200 bg-white px-3 rounded-xl shadow-xs">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className={cn(
-                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
-                  activeTab === 'overview'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
-                )}
-              >
-                <Activity className="w-4 h-4" /> {translate("overviewTab")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('tournaments')}
-                className={cn(
-                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
-                  activeTab === 'tournaments'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
-                )}
-              >
-                <Trophy className="w-4 h-4" /> {translate("myTournaments")}
-                <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                  {registeredCount + totalOrganized}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('referee')}
-                className={cn(
-                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
-                  activeTab === 'referee'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
-                )}
-              >
-                <ShieldCheck className="w-4 h-4" /> {translate("refereeAssignmentsTab")}
-                {refereeCount > 0 && (
-                  <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                    {refereeCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="flex flex-col gap-4">

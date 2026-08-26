@@ -368,7 +368,7 @@ export function LiveMatchControlPanel({
               <div className="pt-3 border-t border-slate-100">
                 {isSingleSetMatch && !isFootball ? (
                   <p className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold leading-relaxed text-blue-800">
-                    {translate('singleSetMatchHint')}
+                    {translate(isLiteMatch ? 'singleSetMatchHint' : 'strictSingleSetMatchHint')}
                   </p>
                 ) : null}
                 {isFootball ? (
@@ -392,7 +392,7 @@ export function LiveMatchControlPanel({
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    {!isSingleSetMatch ? (
+                    {(!isSingleSetMatch || !isLiteMatch) ? (
                       <button
                         type="button"
                         onClick={() => setConfirmFinishSequence(true)}
@@ -501,9 +501,6 @@ export function LiveMatchControlPanel({
               className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2"
               onClick={() => {
                 if (confirmWinner) {
-                  if (!isLiteMatch && !overrideEnabled) {
-                    onOverrideEnabledChange(true);
-                  }
                   onCompleteMatch(confirmWinner);
                 }
                 setConfirmWinner(null);

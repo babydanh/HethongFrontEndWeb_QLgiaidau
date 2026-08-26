@@ -154,9 +154,25 @@ export default function LiveMatchPage({ params }: Props) {
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
-  const [overrideEnabled, setOverrideEnabled] = useState(false);
-  const [overrideReason, setOverrideReason] = useState('');
+  const [overrideContext, setOverrideContext] = useState({
+    key: '',
+    enabled: false,
+    reason: '',
+  });
   const activeTournamentMode = match?.tournament?.tournamentConfig?.mode ?? null;
+  const overrideContextKey = `${matchId}:${activeTournamentMode ?? 'default'}`;
+  const overrideEnabled = overrideContext.key === overrideContextKey && overrideContext.enabled;
+  const overrideReason = overrideContext.key === overrideContextKey ? overrideContext.reason : '';
+  const setOverrideEnabled = (enabled: boolean) => {
+    setOverrideContext({
+      key: overrideContextKey,
+      enabled,
+      reason: enabled ? overrideReason : '',
+    });
+  };
+  const setOverrideReason = (reason: string) => {
+    setOverrideContext({ key: overrideContextKey, enabled: true, reason });
+  };
 
   // Bóng đá: kết quả luân lưu khi trận hòa ở knockout
   const [shootoutGoals, setShootoutGoals] = useState<{ p1Goals: number; p2Goals: number }>({ p1Goals: 0, p2Goals: 0 });
@@ -175,6 +191,7 @@ export default function LiveMatchPage({ params }: Props) {
   }, [scores]);
 
   useEffect(() => {
+
     return () => {
       if (scoreSyncTimerRef.current) {
         clearTimeout(scoreSyncTimerRef.current);
@@ -673,7 +690,27 @@ export default function LiveMatchPage({ params }: Props) {
     return { ok: true };
   };
 
+  const getStrictWinnerFromScores = (nextScores: typeof scores): 1 | 2 | null => {
+    const finalizedScores = nextScores.map((setItem) => ({ ...setItem, isFinished: true }));
+    const allSetsValid = finalizedScores.every((setItem, index) =>
+      setItem.scoreOverride?.reason?.trim() || validateSetCanFinish(setItem, index).ok,
+    );
+    if (!allSetsValid) {
+      return null;
+    }
+
+    const nextSetsWon = deriveSetsWon(finalizedScores);
+    if (nextSetsWon.p1SetsWon >= resolvedRules.setsToWin && nextSetsWon.p1SetsWon > nextSetsWon.p2SetsWon) {
+      return 1;
+    }
+    if (nextSetsWon.p2SetsWon >= resolvedRules.setsToWin && nextSetsWon.p2SetsWon > nextSetsWon.p1SetsWon) {
+      return 2;
+    }
+    return null;
+  };
+
   const buildScoreDetailsPayload = (
+
     nextScores: typeof scores,
     nextSideOutState: PickleballSideOutState = sideOutState,
     nextTennisPointState: TennisLivePointState | null = tennisPointState,
@@ -1181,14 +1218,19 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     const isFootball = resolvedRules.kind === 'FOOTBALL';
-    if (!isLiteMatch && !isFootball && !overrideEnabled) {
-      toast.error(matchTranslate('exceptionWinnerRequired'));
+    const strictWinner = !isLiteMatch && !isFootball && !overrideEnabled
+      ? getStrictWinnerFromScores(scores)
+      : null;
+    if (!isLiteMatch && !isFootball && !overrideEnabled && strictWinner !== winnerTeam) {
+      toast.error(matchTranslate('strictMatchNotReady'));
       return;
     }
+
     const appliedOverrideReason = isLiteMatch || isFootball ? null : resolveOverrideReason();
-    if (!isLiteMatch && !isFootball && !appliedOverrideReason) {
+    if (!isLiteMatch && !isFootball && overrideEnabled && !appliedOverrideReason) {
       return;
     }
+
     if (!beginLiveMutation()) return;
 
     try {

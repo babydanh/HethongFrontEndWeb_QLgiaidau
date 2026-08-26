@@ -71,10 +71,18 @@ function getRankingDisplayName(ranking: PlayerRanking | undefined, fallback: str
 function RankingMembers({ ranking, size = 'md' }: { ranking: PlayerRanking; size?: 'sm' | 'md' }) {
   const members = getRankingMembers(ranking);
   const dimension = size === 'md' ? 'h-20 w-20' : 'h-8 w-8';
+  const borderColor = getStandingBorderColor(ranking, '#cbd5e1');
   return (
     <div className="flex items-center -space-x-4">
       {members.map((member, index) => (
-        <div key={member.id} className={`${dimension} relative z-20 overflow-hidden rounded-full border-[3px] border-white bg-slate-100 shadow-xs ${index > 0 ? 'z-10' : ''}`}>
+        <div
+          key={member.id}
+          className={`${dimension} relative z-20 overflow-hidden rounded-full border-[3px] bg-slate-100 shadow-sm ${index > 0 ? 'z-10' : ''}`}
+          style={{
+            borderColor: borderColor,
+            boxShadow: `0 0 14px -2px ${borderColor}80`,
+          }}
+        >
           {member.avatarUrl ? <Image src={member.avatarUrl} alt={member.fullName || 'Ranking member'} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-500">{member.fullName?.slice(0, 2) || '?'}</span>}
         </div>
       ))}
@@ -367,7 +375,13 @@ export default function LeaderboardPage() {
                                         }}
                                         className="w-full flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-blue-50/40 hover:border-blue-200 transition-all cursor-pointer group text-left"
                                     >
-                                        <div className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0">
+                                        <div
+                                            className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0 border-2"
+                                            style={{
+                                                borderColor: getRankBorderColor(u.eloPoints, u.tierName, 0, u.categoryName),
+                                                boxShadow: `0 0 8px -2px ${getRankBorderColor(u.eloPoints, u.tierName, 0, u.categoryName)}60`,
+                                            }}
+                                        >
                                             {u.avatarUrl ? (
                                                 <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
                                             ) : (
@@ -519,7 +533,13 @@ export default function LeaderboardPage() {
                                                 </div>
                                                 
                                                 {isPairRanking(rankings[1]) ? <RankingMembers ranking={rankings[1]} /> : (
-                                                    <div className="relative h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-xs">
+                                                    <div
+                                                        className="relative h-20 w-20 overflow-hidden rounded-full border-[3px] bg-white shadow-md transition-all"
+                                                        style={{
+                                                            borderColor: getStandingBorderColor(rankings[1], '#cbd5e1'),
+                                                            boxShadow: rankings[1] ? `0 0 16px -2px ${getStandingBorderColor(rankings[1], '#cbd5e1')}90` : undefined,
+                                                        }}
+                                                    >
                                                         {getPrimaryRankingMember(rankings[1])?.avatarUrl ? <Image src={getPrimaryRankingMember(rankings[1])!.avatarUrl!} alt="Rank 2" fill className="object-cover rounded-full" /> : <span className="flex h-full w-full items-center justify-center text-xl font-bold text-slate-500">?</span>}
                                                     </div>
                                                 )}
@@ -574,7 +594,13 @@ export default function LeaderboardPage() {
                                                 </div>
                                                 
                                                 {isPairRanking(rankings[0]) ? <RankingMembers ranking={rankings[0]} /> : (
-                                                    <div className="relative h-24 w-24 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-xs">
+                                                    <div
+                                                        className="relative h-24 w-24 overflow-hidden rounded-full border-4 bg-white shadow-lg transition-all"
+                                                        style={{
+                                                            borderColor: getStandingBorderColor(rankings[0], '#fbbf24'),
+                                                            boxShadow: rankings[0] ? `0 0 22px -2px ${getStandingBorderColor(rankings[0], '#fbbf24')}B0` : undefined,
+                                                        }}
+                                                    >
                                                         {getPrimaryRankingMember(rankings[0])?.avatarUrl ? <Image src={getPrimaryRankingMember(rankings[0])!.avatarUrl!} alt="Rank 1" fill className="object-cover rounded-full" /> : <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-amber-500">?</span>}
                                                     </div>
                                                 )}
@@ -629,7 +655,13 @@ export default function LeaderboardPage() {
                                                 </div>
                                                 
                                                 {isPairRanking(rankings[2]) ? <RankingMembers ranking={rankings[2]} /> : (
-                                                    <div className="relative h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-xs">
+                                                    <div
+                                                        className="relative h-20 w-20 overflow-hidden rounded-full border-[3px] bg-white shadow-md transition-all"
+                                                        style={{
+                                                            borderColor: getStandingBorderColor(rankings[2], '#cbd5e1'),
+                                                            boxShadow: rankings[2] ? `0 0 16px -2px ${getStandingBorderColor(rankings[2], '#cbd5e1')}90` : undefined,
+                                                        }}
+                                                    >
                                                         {getPrimaryRankingMember(rankings[2])?.avatarUrl ? <Image src={getPrimaryRankingMember(rankings[2])!.avatarUrl!} alt="Rank 3" fill className="object-cover rounded-full" /> : <span className="flex h-full w-full items-center justify-center text-xl font-bold text-orange-700">?</span>}
                                                     </div>
                                                 )}
@@ -691,7 +723,13 @@ export default function LeaderboardPage() {
                                                     </span>
                                                     
                                                     {isPairRanking(player) ? <RankingMembers ranking={player} size="sm" /> : (
-                                                        <div className="relative mb-2 h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-slate-50" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
+                                                        <div
+                                                            className="relative mb-2 h-12 w-12 overflow-hidden rounded-full border-2 bg-slate-50 shadow-xs transition-all"
+                                                            style={{
+                                                                borderColor: getStandingBorderColor(player, '#e2e8f0'),
+                                                                boxShadow: player ? `0 0 10px -2px ${getStandingBorderColor(player, '#e2e8f0')}70` : undefined,
+                                                            }}
+                                                        >
                                                             {getPrimaryRankingMember(player)?.avatarUrl ? <Image src={getPrimaryRankingMember(player)!.avatarUrl!} alt={`Rank ${rankNum}`} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">{player ? (getPrimaryRankingMember(player)?.fullName?.slice(0, 2) || t("initialsFallback")) : '?'}</span>}
                                                         </div>
                                                     )}
@@ -950,7 +988,13 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                 className={`flex items-center gap-2 hover:text-blue-600 transition-colors text-left cursor-pointer ${isPlaceholder ? "pointer-events-none" : ""}`}
                                             >
                                                 {isPairRanking(rank) ? <RankingMembers ranking={rank} size="sm" /> : (
-                                                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border bg-slate-100" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
+                                                    <div
+                                                        className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border-2 bg-slate-100 shadow-xs"
+                                                        style={{
+                                                            borderColor: getStandingBorderColor(rank, '#e2e8f0'),
+                                                            boxShadow: rank ? `0 0 8px -2px ${getStandingBorderColor(rank, '#e2e8f0')}60` : undefined,
+                                                        }}
+                                                    >
                                                         {getPrimaryRankingMember(rank)?.avatarUrl ? <Image src={getPrimaryRankingMember(rank)!.avatarUrl!} alt="Player" fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-[9px] font-bold uppercase text-slate-500">{isPlaceholder ? "?" : (getPrimaryRankingMember(rank)?.fullName?.slice(0, 2) || t("initialsFallback"))}</span>}
                                                     </div>
                                                 )}

@@ -15,6 +15,8 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatDate, formatCurrency } from '@/utils/format';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
+
 import type { TournamentDisplayLabels } from '@/utils/tournament-display';
 import toast from 'react-hot-toast';
 
@@ -239,7 +241,14 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-400 text-xs" />
-                <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
+                <span className="truncate">
+                  {getTournamentLocationLabel({
+                    locationAddress: tournament.locationAddress,
+                    venue: tournament.venue,
+                    city: tournament.city,
+                    tournamentConfig: tournament.tournamentConfig,
+                  }) || translate('notUpdated')}
+                </span>
               </div>
               <div className="flex items-center gap-2 col-span-2">
                 <Trophy className="w-4 h-4 text-amber-400" />

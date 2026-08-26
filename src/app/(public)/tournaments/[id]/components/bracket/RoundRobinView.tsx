@@ -24,6 +24,7 @@ import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { formatDateTime } from '@/utils/format';
+import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { getErrorMessage } from '@/utils/error';
 import { calculateStandings, getConfiguredStandingsScoring, getFootballForm } from './helpers';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
@@ -433,7 +434,10 @@ export function RoundRobinView({
                                 <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                                   <Info className="w-2 h-2 flex-shrink-0" />
                                   <span className="truncate">
-                                    {m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : translate('unscheduledCourt')}
+                                    {getMatchCourtLabel({
+                                      courtName: m.courtName || m.tournament?.venueName,
+                                      courtAddress: m.courtAddress,
+                                    }) || translate('unscheduledCourt')}
                                   </span>
                                 </div>
                                 {onScheduleMatch && !done && m.participant1 && m.participant2 && (

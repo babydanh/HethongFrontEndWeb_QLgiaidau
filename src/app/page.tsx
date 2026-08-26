@@ -24,6 +24,8 @@ import { socketClient } from '@/lib/socket';
 import { BracketMatch } from '@/features/tournaments/api';
 import type { SportRulesEnvelope } from '@/types/tournament';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
+import { getMatchCourtLabel } from '@/utils/tournament-location';
+
 import HomepageEloProgressCard from '@/components/rankings/HomepageEloProgressCard';
 import {
   getBestRankForCategory,
@@ -988,7 +990,10 @@ export default function HomePage() {
               </span>
               <span className="text-slate-300">•</span>
               {match.courtName || match.tournament?.venueName ? (
-                <span className="truncate max-w-[130px] md:max-w-[160px] text-slate-500 text-[10.5px]" title={match.courtAddress ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}` : match.courtName || match.tournament?.venueName || ''}>
+                <span className="truncate max-w-[130px] md:max-w-[160px] text-slate-500 text-[10.5px]" title={getMatchCourtLabel({
+                  courtName: match.courtName || match.tournament?.venueName,
+                  courtAddress: match.courtAddress,
+                })}>
                   {match.courtName || match.tournament?.venueName}
                 </span>
               ) : (

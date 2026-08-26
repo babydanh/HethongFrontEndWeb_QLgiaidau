@@ -25,6 +25,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { isTournamentUpcoming } from '@/utils/tournament-status';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
 
 interface CreatorInfo {
   id: string;
@@ -712,9 +713,12 @@ export default function AdminTournamentsPage() {
                           <span>
                             {detailTournament.venue?.name || translate('unknownValue')}
                             {detailTournament.venue?.locationAddress && (
-                              <span className="block text-xs text-slate-400 font-normal mt-0.5">{detailTournament.venue.locationAddress}</span>
+                              <span className="block text-xs text-slate-400 font-normal mt-0.5">
+                                {getTournamentLocationLabel({ locationAddress: detailTournament.venue.locationAddress })}
+                              </span>
                             )}
                           </span>
+
                         </p>
                       </div>
 

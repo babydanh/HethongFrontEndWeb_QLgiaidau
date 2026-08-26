@@ -18,6 +18,7 @@ import ShareModal from '@/components/common/ShareModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ClubChatLauncher from './components/ClubChatLauncher';
 import { BRAND } from '@/constants/brand';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
 
 // Tabs
 import OverviewTab from './components/OverviewTab';
@@ -61,12 +62,8 @@ export default function CommunityDetailPage() {
     if (!community) return;
 
     const resolveAddress = async () => {
-      const parts: string[] = [];
-      if (community.locationAddress?.trim()) {
-        parts.push(community.locationAddress.trim());
-      }
-
       try {
+
         let wardName = '';
         let districtName = '';
         let provinceName = '';
@@ -85,16 +82,26 @@ export default function CommunityDetailPage() {
           }
         }
 
-        if (wardName) parts.push(wardName);
-        if (districtName) parts.push(districtName);
-        if (provinceName) parts.push(provinceName);
+        const locationLabel = getTournamentLocationLabel({
+          locationAddress: community.locationAddress,
+          tournamentConfig: {
+            location: {
+              ward: wardName,
+              district: districtName,
+              province: provinceName,
+            },
+          },
+        });
 
         if (mounted) {
-          setResolvedLocation(parts.length > 0 ? parts.join(', ') : translate('communityLocationMissing'));
+          setResolvedLocation(locationLabel || translate('communityLocationMissing'));
         }
       } catch {
         if (mounted) {
-          setResolvedLocation(community.locationAddress || translate('communityLocationMissing'));
+          setResolvedLocation(
+            getTournamentLocationLabel({ locationAddress: community.locationAddress })
+              || translate('communityLocationMissing'),
+          );
         }
       }
     };

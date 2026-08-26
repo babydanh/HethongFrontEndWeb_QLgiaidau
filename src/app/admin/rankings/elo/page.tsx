@@ -20,6 +20,7 @@ import {
   type AdminEloOperation,
   type AdminEloOperationHistoryItem,
   type AdminEloOperationPayload,
+  type FootballTeamRanking,
   type AdminEloPairSummary,
   type AdminEloPlayerContextDetail,
   type AdminEloPlayerDetail,
@@ -151,6 +152,7 @@ export default function AdminEloPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<AdminEloPlayerSummary[]>([]);
   const [pairs, setPairs] = useState<AdminEloPairSummary[]>([]);
+  const [footballTeams, setFootballTeams] = useState<FootballTeamRanking[]>([]);
   const [query, setQuery] = useState<FilterState>(INITIAL_QUERY);
   const [search, setSearch] = useState(INITIAL_QUERY.search);
   const [status, setStatus] = useState<AdminRankingStatus | ''>(INITIAL_QUERY.status);
@@ -189,7 +191,8 @@ export default function AdminEloPage() {
   );
   const playerGroups = Array.isArray(players) ? players : [];
   const pairGroups = Array.isArray(pairs) ? pairs : [];
-  const isPairView = query.matchType === 'DOUBLES' || query.matchType === 'MIXED_DOUBLES';
+  const isFootballCategory = selectedCategory?.slug === 'football';
+  const isPairView = !isFootballCategory && (query.matchType === 'DOUBLES' || query.matchType === 'MIXED_DOUBLES');
   const currentDetailCategoryId = playerDetail?.category.id ?? query.categoryId;
   const newProfileCategories = activeCategories.filter((category) => category.id !== currentDetailCategoryId);
 
@@ -212,6 +215,20 @@ export default function AdminEloPage() {
       setHasMore(false);
     }
     try {
+      if (nextQuery.matchType === 'FOOTBALL') {
+        const result = await rankingsApi.getFootballTeamRankings({
+          categoryId: nextQuery.categoryId,
+          limit: PAGE_LIMIT,
+        });
+        if (requestId !== requestSequence.current) return;
+        setFootballTeams(Array.isArray(result?.data) ? result.data : []);
+        setPlayers([]);
+        setPairs([]);
+        setNextCursor(null);
+        setHasMore(false);
+        return;
+      }
+      setFootballTeams([]);
       if (nextQuery.matchType === 'DOUBLES' || nextQuery.matchType === 'MIXED_DOUBLES') {
         const result = await rankingsApi.listAdminPairs({
           limit: PAGE_LIMIT,
@@ -271,8 +288,10 @@ export default function AdminEloPage() {
         const rawCategories = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
         const active = rawCategories.filter((category) => category?.isActive);
         setCategories(active);
-        const nextQuery = active[0] ? { ...INITIAL_QUERY, categoryId: active[0].id } : INITIAL_QUERY;
+        const initialMatchType = active[0]?.slug === 'football' ? 'FOOTBALL' : 'SINGLES';
+        const nextQuery = active[0] ? { ...INITIAL_QUERY, matchType: initialMatchType, categoryId: active[0].id } : INITIAL_QUERY;
         setCategoryId(nextQuery.categoryId);
+        setMatchType(nextQuery.matchType);
         setQuery(nextQuery);
         if (active[0]) void loadContexts({ nextQuery });
         else {
@@ -484,13 +503,13 @@ export default function AdminEloPage() {
       <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
         <label className="md:col-span-2"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('search')}</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={translate('searchPlaceholder')} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>
         <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><div className="font-semibold">{translate('publicScope')}</div><div className="mt-1 text-xs">{translate('publicOnlyAdminNotice')}</div><div className="mt-2 border-t border-blue-200 pt-2 text-xs">{translate('pairAdminReadOnlyNotice')}</div><div className="mt-1 text-xs">{translate('footballAdminNotAvailable')}</div></div>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => { const nextStatus = event.target.value as AdminRankingStatus | ''; setStatus(nextStatus); applyFilters({ status: nextStatus }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; setCategoryId(nextCategoryId); applyFilters({ categoryId: nextCategoryId }); }} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
+        {!isFootballCategory && <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => { const nextStatus = event.target.value as AdminRankingStatus | ''; setStatus(nextStatus); applyFilters({ status: nextStatus }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>}
+        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; const nextCategory = activeCategories.find((category) => category.id === nextCategoryId); const nextMatchType = nextCategory?.slug === 'football' ? 'FOOTBALL' : 'SINGLES'; setCategoryId(nextCategoryId); setMatchType(nextMatchType); applyFilters({ categoryId: nextCategoryId, matchType: nextMatchType }); }} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">{isFootballCategory ? <option value="FOOTBALL">{translate('footballTeam')}</option> : <><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></>}</select></label>
         <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={() => applyFilters()} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
       </section>
 
-      {isPairView ? <AdminPairTable pairs={pairGroups} loading={loading} /> : <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      {isFootballCategory ? <AdminFootballTable teams={footballTeams} loading={loading} /> : isPairView ? <AdminPairTable pairs={pairGroups} loading={loading} /> : <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-[760px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{translate('player')}</th><th className="px-4 py-3">{translate('rankingProfiles')}</th><th className="px-4 py-3">{translate('highestElo')}</th><th className="px-4 py-3">{translate('status')}</th><th className="px-4 py-3">{translate('actions')}</th></tr></thead>
@@ -644,6 +663,51 @@ function AdminPairTable({ pairs, loading }: { pairs: AdminEloPairSummary[]; load
                 <td className="px-4 py-4"><div className="font-bold text-slate-900">{pair.eloPoints} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{translate('peakElo')}: {pair.peakElo}</div></td>
                 <td className="px-4 py-4 text-slate-700">{pair.matchesWon}/{pair.matchesPlayed}</td>
                 <td className="px-4 py-4 text-xs text-slate-500">{new Date(pair.updatedAt).toLocaleString()}</td>
+                <td className="px-4 py-4 text-xs font-semibold text-slate-500">{translate('readOnly')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+
+function AdminFootballTable({ teams, loading }: { teams: FootballTeamRanking[]; loading: boolean }) {
+  const translate = useTranslations('AdminElo');
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-4 py-3 text-sm text-slate-600">
+        {translate('footballAdminReadOnlyNotice')}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[760px] w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3">{translate('footballTeam')}</th>
+              <th className="px-4 py-3">{translate('rating')}</th>
+              <th className="px-4 py-3">{translate('matches')}</th>
+              <th className="px-4 py-3">{translate('winRate')}</th>
+              <th className="px-4 py-3">{translate('actions')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>}
+            {!loading && teams.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">{translate('noFootballTeams')}</td></tr>}
+            {!loading && teams.map((team) => (
+              <tr key={team.id} className="align-top">
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
+                      {team.logoUrl ? <Image src={team.logoUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">{team.teamName.slice(0, 2).toUpperCase()}</span>}
+                    </div>
+                    <span className="font-semibold text-slate-900">{team.teamName}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-4"><div className="font-bold text-slate-900">{team.eloPoints} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{translate('peakElo')}: {team.peakElo ?? team.eloPoints}</div></td>
+                <td className="px-4 py-4 text-slate-700">{team.matchesWon}/{team.matchesPlayed}</td>
+                <td className="px-4 py-4 text-slate-700">{team.matchesPlayed > 0 ? `${Math.round((team.matchesWon / team.matchesPlayed) * 100)}%` : '—'}</td>
                 <td className="px-4 py-4 text-xs font-semibold text-slate-500">{translate('readOnly')}</td>
               </tr>
             ))}

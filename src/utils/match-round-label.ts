@@ -348,7 +348,17 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
     return groupLabel ? `${groupLabel} • ${roundLabel}` : roundLabel;
   }
 
-  const knockoutLabel = getKnockoutRoundLabel(match, matches, bracketSize, translations);
+  const isGroupStageKnockoutFormat = normalizeText(tournamentFormat) === 'GROUP_STAGE_KNOCKOUT';
+  // GSK has a group-size capacity (for example 16) that is not the size of
+  // its knockout tree (for example 2 semifinals + 1 final). Avoid deriving
+  // playoff labels from the division capacity when persisted match semantics
+  // or the current stage snapshot can determine the actual round.
+  const knockoutLabel = getKnockoutRoundLabel(
+    match,
+    matches,
+    isGroupStageKnockoutFormat ? null : bracketSize,
+    translations,
+  );
   return phasePrefix ? `${phasePrefix} • ${knockoutLabel}` : knockoutLabel;
 };
 

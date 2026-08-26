@@ -14,7 +14,7 @@ import { formatDateTime } from '@/utils/format';
 import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo, type RoundLabelTranslations } from '@/utils/match-round-label';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
-import { getMatchLocationLabel } from '@/utils/tournament-location';
+import { getMatchCourtLabel } from '@/utils/tournament-location';
 
 interface Props {
   tournament: Tournament;
@@ -365,35 +365,41 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
     if (!rawName) return translate('stageDefault');
+    const normalizedName = rawName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
     const map: Record<string, string> = {
-            'Elimination Stage': translate('stageElimination'),
-      'Knockout Stage': translate('stageElimination'),
-      'Loại trực tiếp': translate('stageElimination'),
-      'Vòng loại trực tiếp': translate('stageElimination'),
-      'Vòng bảng': translate('stageGroup'),
-      'Group Stage': translate('stageGroup'),
-
-      'Round Robin': translate('stageRoundRobin'),
-      'Vong tron tinh diem': translate('stageRoundRobin'),
-      'Vong loai truc tiep': translate('stageElimination'),
-      'Vong bang': translate('stageGroup'),
-      'Vong Playoffs': translate('stagePlayoffs'),
-      'Nhanh thang': translate('stageWinners'),
-      'Nhanh thua': translate('stageLosers'),
-      'Final Stage': translate('stageFinal'),
-      'Qualification Stage': translate('stageQualification'),
-      'Preliminary Stage': translate('stagePreliminary'),
-      'Main Stage': translate('stageMain'),
-      'Quarter Finals': translate('stageQuarterfinal'),
-      'Quarterfinals': translate('stageQuarterfinal'),
-      'Semi Finals': translate('stageSemifinal'),
-      'Semifinals': translate('stageSemifinal'),
-      'Final': translate('stageFinal'),
-      'Grand Final': translate('stageGrandFinal'),
-      'Winners Bracket': translate('stageWinners'),
-      'Losers Bracket': translate('stageLosers'),
+      'elimination stage': translate('stageElimination'),
+      'knockout stage': translate('stageElimination'),
+      'loai truc tiep': translate('stageElimination'),
+      'vong loai truc tiep': translate('stageElimination'),
+      'vong bang': translate('stageGroup'),
+      'group stage': translate('stageGroup'),
+      'round robin': translate('stageRoundRobin'),
+      'vong tron tinh diem': translate('stageRoundRobin'),
+      'vong playoffs': translate('stagePlayoffs'),
+      'playoffs': translate('stagePlayoffs'),
+      'playoff': translate('stagePlayoffs'),
+      'nhanh thang': translate('stageWinners'),
+      'nhanh thua': translate('stageLosers'),
+      'final stage': translate('stageFinal'),
+      'qualification stage': translate('stageQualification'),
+      'preliminary stage': translate('stagePreliminary'),
+      'main stage': translate('stageMain'),
+      'quarter finals': translate('stageQuarterfinal'),
+      'quarterfinals': translate('stageQuarterfinal'),
+      'semi finals': translate('stageSemifinal'),
+      'semifinals': translate('stageSemifinal'),
+      'final': translate('stageFinal'),
+      'grand final': translate('stageGrandFinal'),
+      'winners bracket': translate('stageWinners'),
+      'losers bracket': translate('stageLosers'),
     };
-    return map[rawName] || rawName;
+    return map[normalizedName] || rawName;
   };
 
   const getStageFilterLabel = (stageKey: string) => {
@@ -997,15 +1003,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       </span>
                     </div>
                     {(() => {
-                      const locationLabel = getMatchLocationLabel(match);
-                      return locationLabel ? (
+                      const courtLabel = getMatchCourtLabel(match);
+                      const locationLabel = courtLabel || matchTranslate('venuePending');
+                      return (
                         <div className="flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                           <span className="truncate max-w-[260px]" title={locationLabel}>
                             {matchTranslate('courtPrefix', { court: locationLabel })}
                           </span>
                         </div>
-                      ) : null;
+                      );
                     })()}
                   </div>
 

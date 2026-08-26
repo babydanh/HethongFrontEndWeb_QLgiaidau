@@ -622,6 +622,7 @@ export default function EditProfilePage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <Input
+                      data-testid="profile-phone-input"
                       label={translate('phoneLabel')}
                       type="tel"
                       inputMode="numeric"
@@ -647,6 +648,7 @@ export default function EditProfilePage() {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-semibold text-slate-700">{translate('genderLabel')}</label>
                       <select
+                        data-testid="profile-gender-select"
                         disabled={user?.isGenderLocked}
                         className={`w-full px-4 py-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all ${
                           user?.isGenderLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-200'
@@ -728,7 +730,7 @@ export default function EditProfilePage() {
                   </div>
 
                   <div className="flex justify-end pt-2 border-t border-slate-100 gap-3">
-                    <Button type="submit" disabled={isSubmittingProfile} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm active:scale-[0.98] transition-all">
+                    <Button data-testid="save-profile-btn" type="submit" disabled={isSubmittingProfile} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm active:scale-[0.98] transition-all">
                       <Save className="w-4 h-4 mr-2" /> {translate('saveChanges')}
                     </Button>
                   </div>

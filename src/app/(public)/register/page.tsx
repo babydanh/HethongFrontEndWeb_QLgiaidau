@@ -224,16 +224,16 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('fullName')}</label>
-                <Input placeholder={t('namePlaceholder')} {...register('fullName')} error={errors.fullName ? t('fullNameMinLength') : undefined} />
+                <Input data-testid="register-fullname-input" placeholder={t('namePlaceholder')} {...register('fullName')} error={errors.fullName ? t('fullNameMinLength') : undefined} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('email')}</label>
-                <Input type="email" placeholder="name@example.com" {...register('email')} error={errors.email ? t('invalidEmail') : undefined} />
+                <Input data-testid="register-email-input" type="email" placeholder="name@example.com" {...register('email')} error={errors.email ? t('invalidEmail') : undefined} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('password')}</label>
                 <div className="relative">
-                  <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-11" {...register('password')} error={errors.password ? t('passwordMinLength') : undefined} />
+                  <Input data-testid="register-password-input" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-11" {...register('password')} error={errors.password ? t('passwordMinLength') : undefined} />
                   <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? t('hidePassword') : t('showPassword')} className="absolute right-3 top-[13px] z-10 text-slate-400 transition-colors hover:text-slate-700">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -242,7 +242,7 @@ export default function RegisterPage() {
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('confirmPassword')}</label>
                 <div className="relative">
-                  <Input type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-11" {...register('confirmPassword')} error={errors.confirmPassword ? t('confirmPasswordMismatch') : undefined} />
+                  <Input data-testid="register-confirm-password-input" type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-11" {...register('confirmPassword')} error={errors.confirmPassword ? t('confirmPasswordMismatch') : undefined} />
                   <button type="button" onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? t('hideConfirmPassword') : t('showConfirmPassword')} className="absolute right-3 top-[13px] z-10 text-slate-400 transition-colors hover:text-slate-700">
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -250,6 +250,7 @@ export default function RegisterPage() {
               </div>
 
               <button
+                data-testid="register-submit-btn"
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 text-white font-bold py-2.5 rounded-lg shadow-sm transition-all cursor-pointer text-sm mt-1"

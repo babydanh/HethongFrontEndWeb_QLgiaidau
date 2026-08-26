@@ -267,9 +267,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     tournament?.divisions?.[0]?.matchType ?? tournament?.matchType ?? ''
   ).toUpperCase();
   const isPairFormat = ['DOUBLES', 'MIXED_DOUBLES'].includes(canonicalMatchType);
-  const bracketEligibleCount = participants.filter(
-    (participant) => participant.teamStatus === 'COMPLETE',
-  ).length;
+  const bracketEligibleCount = isPairFormat
+    ? pairedParticipants.length + Math.floor(pendingParticipants.length / 2)
+    : participants.length;
   const registeredParticipantCount =
     tournament?._summary?.participantCount ??
     tournament?.divisions?.[0]?._count?.participants ??
@@ -480,8 +480,17 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }
     setBracketLoading(true);
     try {
+      if (isPairFormat && pendingParticipants.length >= 2) {
+        try {
+          await tournamentsApi.generateLitePairs(id, { strategy: 'RANDOM' });
+          await fetchParticipants();
+        } catch (_pairErr) {
+          // If already paired or handled by backend, continue to generate bracket
+        }
+      }
       await tournamentsApi.generateLiteBracket(id, liteDivisionId);
       await fetchBracket(liteDivisionId);
+      await fetchParticipants();
       setParticipantOverrides({});
       toast.success(translate('bracketCreatedSuccess'));
     } catch (err) {

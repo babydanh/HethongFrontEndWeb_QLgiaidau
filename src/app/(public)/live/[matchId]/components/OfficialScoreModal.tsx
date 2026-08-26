@@ -122,7 +122,7 @@ export function OfficialScoreModal({
               </div>
             </ModalHeader>
 
-            <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-slate-50/50 p-2 sm:p-4 md:p-5">
+            <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-slate-50/50 p-2 sm:p-4 md:p-5 flex flex-col">
               <LiveMatchControlPanel
                 match={match}
                 team1Name={team1Name}

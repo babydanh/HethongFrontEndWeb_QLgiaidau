@@ -24,9 +24,6 @@ export function BadmintonOfficialPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-        {translate('badmintonLiveDescription')}
-      </div>
       <RallyScoreControls
         team1Name={team1Name}
         team2Name={team2Name}

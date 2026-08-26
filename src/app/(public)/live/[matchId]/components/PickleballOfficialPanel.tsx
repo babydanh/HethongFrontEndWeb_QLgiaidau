@@ -28,18 +28,15 @@ export function PickleballOfficialPanel({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800">
-        {translate('liveSideOutModeDescription')}
-      </div>
-      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 md:grid-cols-[1.2fr_1fr]">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate('servingStatusLabel')}</p>
-          <p className="mt-2 text-sm font-bold text-slate-900">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-600">{translate('servingStatusLabel')}</p>
+          <p className="mt-1 text-sm font-bold text-slate-900">
             {servingTeam == null
               ? translate('noServingTeam')
               : translate('servingCurrent', { team: servingTeamName, number: serverNumber })}
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-500">
+          <p className="mt-0.5 text-xs font-medium text-slate-500">
             {translate('servingStatusHint')}
           </p>
         </div>
@@ -50,9 +47,9 @@ export function PickleballOfficialPanel({
               onClick={() => onSetServingTeam(1)}
               disabled={isSubmitting}
               className={cn(
-                'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
+                'rounded-lg border px-3 py-2 text-xs font-bold transition-all cursor-pointer',
                 servingTeam === 1
-                  ? 'border-blue-600 bg-blue-600 text-white'
+                  ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
               )}
             >
@@ -63,9 +60,9 @@ export function PickleballOfficialPanel({
               onClick={() => onSetServingTeam(2)}
               disabled={isSubmitting}
               className={cn(
-                'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
+                'rounded-lg border px-3 py-2 text-xs font-bold transition-all cursor-pointer',
                 servingTeam === 2
-                  ? 'border-blue-600 bg-blue-600 text-white'
+                  ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
               )}
             >
@@ -76,7 +73,7 @@ export function PickleballOfficialPanel({
             type="button"
             onClick={onSideOut}
             disabled={isSubmitting || servingTeam == null}
-            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-amber-100 disabled:opacity-50"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-200 disabled:opacity-50 cursor-pointer transition-all"
           >
             {translate('sideOutLoss')}
           </button>

@@ -487,15 +487,45 @@ export default function UserProfilePopover({
                 : translate('member')}
             </p>
 
-            {/* ELO Tier Badge if present */}
-            {eligibleHighlightRank && (
-              <EloTierBadge
-                elo={eligibleHighlightRank.eloPoints}
-                tierName={eligibleHighlightRank.tierName || undefined}
-                categoryName={eligibleHighlightRank.categoryName || undefined}
-                size="sm"
-              />
-            )}
+            {/* ELO Tier Badges for each sport */}
+            {(() => {
+              const eligible = eligibleRanks.length > 0
+                ? eligibleRanks
+                : (profileData.ranks || []).filter((r) => (r.eloPoints || 0) > 0);
+
+              const seenCategories = new Set<string>();
+              const distinctRanks = eligible.filter((r) => {
+                const cat = (r.categoryName || '').toLowerCase();
+                if (seenCategories.has(cat)) return false;
+                seenCategories.add(cat);
+                return true;
+              });
+
+              if (distinctRanks.length > 0) {
+                return distinctRanks.map((rank, idx) => (
+                  <EloTierBadge
+                    key={`${rank.categoryName || 'cat'}-${rank.matchType || idx}`}
+                    elo={rank.eloPoints}
+                    tierName={rank.tierName || undefined}
+                    categoryName={rank.categoryName || undefined}
+                    size="sm"
+                  />
+                ));
+              }
+
+              if (eligibleHighlightRank) {
+                return (
+                  <EloTierBadge
+                    elo={eligibleHighlightRank.eloPoints}
+                    tierName={eligibleHighlightRank.tierName || undefined}
+                    categoryName={eligibleHighlightRank.categoryName || undefined}
+                    size="sm"
+                  />
+                );
+              }
+
+              return null;
+            })()}
 
             {/* Streak Badge if available */}
             {profileData.streak?.type && profileData.streak.count > 0 && (

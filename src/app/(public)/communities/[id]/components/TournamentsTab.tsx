@@ -20,6 +20,7 @@ import { getSportLogo } from "@/constants/sports";
 import BRAND from "@/constants/brand";
 
 import { formatDate } from "@/utils/format";
+import { getTournamentLocationLabel } from "@/utils/tournament-location";
 import { Tournament } from "@/types/tournament";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/utils/error";
@@ -274,7 +275,7 @@ export default function TournamentsTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredTournaments.map((t) => {
             const sportLogo = getSportLogo(t.category?.name);
-            const locationLabel = t.venue?.name || t.city || t.locationAddress;
+            const locationLabel = getTournamentLocationLabel(t) || t.venue?.name || t.city || t.locationAddress;
             const formatLabel = getFormatLabel(
               t.matchType,
               t.genderRestriction,
@@ -287,27 +288,34 @@ export default function TournamentsTab({
                 className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
               >
                 {/* Compact Card Banner */}
-                <div className="relative h-36 w-full bg-slate-900 overflow-hidden shrink-0">
-                  <img
-                    src={t.bannerUrl || BRAND.assets.defaultFallback}
-                    alt={t.name}
-                    onError={(event) => {
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = BRAND.assets.defaultFallback;
-                      event.currentTarget.classList.remove("object-cover");
-                      event.currentTarget.classList.add(
-                        "object-contain",
-                        "p-4",
-                        "bg-slate-900",
-                      );
-                    }}
-                    className={`absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 ${
-                      t.bannerUrl
-                        ? "object-cover"
-                        : "object-contain p-4 bg-slate-900"
-                    }`}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                <div className={`relative h-36 w-full ${t.bannerUrl ? "bg-slate-900" : "bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"} overflow-hidden shrink-0`}>
+                  {t.bannerUrl ? (
+                    <img
+                      src={t.bannerUrl}
+                      alt={t.name}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = BRAND.assets.defaultTournamentLogo;
+                        event.currentTarget.classList.remove("object-cover");
+                        event.currentTarget.classList.add(
+                          "object-contain",
+                          "p-6",
+                        );
+                      }}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 transition-transform duration-500 group-hover:scale-105 flex items-center justify-center p-6">
+                      <img
+                        src={BRAND.assets.defaultTournamentLogo}
+                        alt={`${BRAND.name} Logo`}
+                        className="w-40 md:w-48 h-auto object-contain drop-shadow-xs"
+                      />
+                    </div>
+                  )}
+                  {t.bannerUrl && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                  )}
 
                   {/* Top Badges */}
                   <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5 z-10">
@@ -392,7 +400,7 @@ export default function TournamentsTab({
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span
                           className="truncate"
-                          title={t.locationAddress || locationLabel}
+                          title={locationLabel}
                         >
                           {locationLabel}
                         </span>

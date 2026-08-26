@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { categoriesApi, Category } from "@/features/categories/api";
-import { rankingsApi, PlayerRanking } from "@/features/rankings/api";
+import { rankingsApi, type FootballTeamRanking, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
 import { getCanonicalTierName } from "@/features/rankings/elo-display";
@@ -45,6 +45,43 @@ function StandingElo({
   );
 }
 
+type RankingMember = NonNullable<PlayerRanking['user']>;
+
+function getRankingMembers(ranking: PlayerRanking | undefined): RankingMember[] {
+  if (!ranking) return [];
+  if (ranking.user1 || ranking.user2) {
+    return [ranking.user1, ranking.user2].filter((member): member is RankingMember => Boolean(member));
+  }
+  return ranking.user ? [ranking.user] : [];
+}
+
+function isPairRanking(ranking: PlayerRanking | undefined): boolean {
+  return getRankingMembers(ranking).length > 1;
+}
+
+function getPrimaryRankingMember(ranking: PlayerRanking | undefined): RankingMember | undefined {
+  return getRankingMembers(ranking)[0];
+}
+
+function getRankingDisplayName(ranking: PlayerRanking | undefined, fallback: string): string {
+  const members = getRankingMembers(ranking);
+  return members.length > 0 ? members.map((member) => member.fullName || fallback).join(' / ') : fallback;
+}
+
+function RankingMembers({ ranking, size = 'md' }: { ranking: PlayerRanking; size?: 'sm' | 'md' }) {
+  const members = getRankingMembers(ranking);
+  const dimension = size === 'md' ? 'h-20 w-20' : 'h-8 w-8';
+  return (
+    <div className="flex items-center -space-x-4">
+      {members.map((member, index) => (
+        <div key={member.id} className={`${dimension} relative z-20 overflow-hidden rounded-full border-[3px] border-white bg-slate-100 shadow-xs ${index > 0 ? 'z-10' : ''}`}>
+          {member.avatarUrl ? <Image src={member.avatarUrl} alt={member.fullName || 'Ranking member'} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-500">{member.fullName?.slice(0, 2) || '?'}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function getStandingBorderColor(ranking: PlayerRanking | undefined, fallback: string): string {
   if (!ranking) return fallback;
   return getRankBorderColor(
@@ -78,6 +115,7 @@ export default function LeaderboardPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
     const [rankings, setRankings] = useState<PlayerRanking[]>([]);
+    const [footballRankings, setFootballRankings] = useState<FootballTeamRanking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [provinces, setProvinces] = useState<Region[]>([]);
@@ -92,6 +130,8 @@ export default function LeaderboardPage() {
     const [searchResult, setSearchResult] = useState<LeaderboardSearchResult[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState("");
+    const activeCategory = categories.find((category) => category.id === activeCategoryId);
+    const isFootballCategory = activeCategory?.slug === 'football';
 
     const handleSearchUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -203,6 +243,17 @@ export default function LeaderboardPage() {
         const fetchRankings = async () => {
             setIsLoading(true);
             try {
+                if (isFootballCategory) {
+                    const res = await rankingsApi.getFootballTeamRankings({
+                        categoryId: activeCategoryId,
+                        communityId: undefined,
+                        limit: 100,
+                    });
+                    setFootballRankings(Array.isArray(res.data) ? res.data : []);
+                    setRankings([]);
+                    return;
+                }
+                setFootballRankings([]);
                 const params: Record<string, unknown> = {
                     categoryId: activeCategoryId,
                     scope: 'PUBLIC',
@@ -227,7 +278,7 @@ export default function LeaderboardPage() {
             }
         };
         fetchRankings();
-    }, [activeCategoryId, selectedProvinceCode, selectedMatchType, selectedGenderFilter]);
+    }, [activeCategoryId, isFootballCategory, selectedProvinceCode, selectedMatchType, selectedGenderFilter]);
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
@@ -343,7 +394,7 @@ export default function LeaderboardPage() {
                 </div>
 
                 {/* Sub-Filters Row: Match Type, Gender & Province */}
-                <div className="flex flex-wrap items-center gap-3 pt-2.5 border-t border-slate-100">
+                <div className={`flex flex-wrap items-center gap-3 pt-2.5 border-t border-slate-100 ${isFootballCategory ? 'hidden' : ''}`}>
                     {/* Match Type Selector */}
                     <div className="flex items-center gap-1.5 flex-1 min-w-[140px] sm:flex-initial">
                         <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t('typeLabel')}:</label>
@@ -409,7 +460,9 @@ export default function LeaderboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left Column: Podium & List */}
                 <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
-                    {isLoading ? (
+                    {isFootballCategory ? (
+                        <FootballTeamRankingTable rankings={footballRankings} />
+                    ) : isLoading ? (
                         <div className="bg-white rounded-lg border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
                             <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
@@ -433,7 +486,8 @@ export default function LeaderboardPage() {
                                         ✨ {t('hallOfFame')} ✨
                                     </span>
                                     <h2 className="text-xl md:text-2xl font-bold mt-3 text-slate-900 tracking-tight">
-                                        {t('topPlayers')}
+                                                                                {isFootballCategory ? t('teamHeader') : t('topPlayers')}
+
                                     </h2>
                                 </div>
 
@@ -445,13 +499,14 @@ export default function LeaderboardPage() {
                                         <button 
                                             type="button"
                                             onClick={(e) => {
-                                                if (!rankings[1]?.user?.id) return;
+                                                const member = getPrimaryRankingMember(rankings[1]);
+                                                if (!member?.id) return;
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 openUserProfile(
                                                     {
-                                                        id: rankings[1].user.id,
-                                                        fullName: rankings[1].user.fullName || t('athleteFallback'),
-                                                        avatarUrl: rankings[1].user.avatarUrl,
+                                                        id: member.id,
+                                                        fullName: getRankingDisplayName(rankings[1], t('athleteFallback')),
+                                                        avatarUrl: member.avatarUrl,
                                                     },
                                                     rect,
                                                 );
@@ -463,36 +518,17 @@ export default function LeaderboardPage() {
                                                     #2 SECOND
                                                 </div>
                                                 
-                                                {/* Stacked Avatar for Doubles Top 2 */}
-                                                {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="flex items-center -space-x-4 relative z-10 my-1">
-                                                        {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[1], '#94A3B8') }}>
-                                                            {rankings[1]?.user?.avatarUrl ? (
-                                                                <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
-                                                            ) : (
-                                                                <span className="text-[#64748B] font-extrabold text-lg">?</span>
-                                                            )}
-                                                        </div>
-                                                        {/* Partner avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] relative overflow-hidden bg-[#F1F5F9] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[1], '#94A3B8') }}>
-                                                            <span className="text-[#64748B] font-extrabold text-lg">?</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-20 h-20 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center" style={{ borderColor: getStandingBorderColor(rankings[1], '#94A3B8') }}>
-                                                        {rankings[1]?.user?.avatarUrl ? (
-                                                            <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
-                                                        ) : (
-                                                            <span className="text-[#64748B] font-bold text-xl">?</span>
-                                                        )}
+                                                {isPairRanking(rankings[1]) ? <RankingMembers ranking={rankings[1]} /> : (
+                                                    <div className="relative h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-xs">
+                                                        {getPrimaryRankingMember(rankings[1])?.avatarUrl ? <Image src={getPrimaryRankingMember(rankings[1])!.avatarUrl!} alt="Rank 2" fill className="object-cover rounded-full" /> : <span className="flex h-full w-full items-center justify-center text-xl font-bold text-slate-500">?</span>}
                                                     </div>
                                                 )}
                                             </div>
                                             <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
-                                                {rankings[1]?.user?.fullName || t("waiting")}
+                                                                                                {getRankingDisplayName(rankings[1], t("waiting"))}
+
                                             </h3>
-                                            {selectedMatchType.includes('DOUBLES') && rankings[1] && (
+                                                {isPairRanking(rankings[1]) && rankings[1] && (
                                                 <span className="text-[10px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
                                                     {t('teammate')}
                                                 </span>
@@ -518,13 +554,14 @@ export default function LeaderboardPage() {
                                         <button 
                                             type="button"
                                             onClick={(e) => {
-                                                if (!rankings[0]?.user?.id) return;
+                                                const member = getPrimaryRankingMember(rankings[0]);
+                                                if (!member?.id) return;
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 openUserProfile(
                                                     {
-                                                        id: rankings[0].user.id,
-                                                        fullName: rankings[0].user.fullName || t('athleteFallback'),
-                                                        avatarUrl: rankings[0].user.avatarUrl,
+                                                        id: member.id,
+                                                        fullName: getRankingDisplayName(rankings[0], t('athleteFallback')),
+                                                        avatarUrl: member.avatarUrl,
                                                     },
                                                     rect,
                                                 );
@@ -536,36 +573,17 @@ export default function LeaderboardPage() {
                                                     👑 {t('champion')}
                                                 </div>
                                                 
-                                                {/* Stacked Avatar for Doubles Top 1 */}
-                                                {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="flex items-center -space-x-5 relative z-10 my-1">
-                                                        {/* Primary avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-sm flex items-center justify-center z-20 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[0], '#fbbf24') }}>
-                                                            {rankings[0]?.user?.avatarUrl ? (
-                                                                <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
-                                                            ) : (
-                                                                <span className="text-amber-500 font-extrabold text-xl">?</span>
-                                                            )}
-                                                        </div>
-                                                        {/* Partner avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] relative overflow-hidden bg-amber-50/90 shadow-sm flex items-center justify-center z-10 pl-4 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[0], '#fbbf24') }}>
-                                                            <span className="text-amber-500 font-extrabold text-xl">?</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-24 h-24 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center" style={{ borderColor: getStandingBorderColor(rankings[0], '#fbbf24') }}>
-                                                        {rankings[0]?.user?.avatarUrl ? (
-                                                            <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
-                                                        ) : (
-                                                            <span className="text-amber-500 font-bold text-2xl">?</span>
-                                                        )}
+                                                {isPairRanking(rankings[0]) ? <RankingMembers ranking={rankings[0]} /> : (
+                                                    <div className="relative h-24 w-24 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-xs">
+                                                        {getPrimaryRankingMember(rankings[0])?.avatarUrl ? <Image src={getPrimaryRankingMember(rankings[0])!.avatarUrl!} alt="Rank 1" fill className="object-cover rounded-full" /> : <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-amber-500">?</span>}
                                                     </div>
                                                 )}
                                             </div>
                                             <h3 className="font-bold text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-amber-700 transition-colors">
-                                                {rankings[0]?.user?.fullName || t("waiting")}
+                                                                                                {getRankingDisplayName(rankings[0], t("waiting"))}
+
                                             </h3>
-                                            {selectedMatchType.includes('DOUBLES') && rankings[0] && (
+                                            {isPairRanking(rankings[0]) && rankings[0] && (
                                                 <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     {t('teammate')}
                                                 </span>
@@ -591,13 +609,14 @@ export default function LeaderboardPage() {
                                         <button 
                                             type="button"
                                             onClick={(e) => {
-                                                if (!rankings[2]?.user?.id) return;
+                                                const member = getPrimaryRankingMember(rankings[2]);
+                                                if (!member?.id) return;
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 openUserProfile(
                                                     {
-                                                        id: rankings[2].user.id,
-                                                        fullName: rankings[2].user.fullName || t('athleteFallback'),
-                                                        avatarUrl: rankings[2].user.avatarUrl,
+                                                        id: member.id,
+                                                        fullName: getRankingDisplayName(rankings[2], t('athleteFallback')),
+                                                        avatarUrl: member.avatarUrl,
                                                     },
                                                     rect,
                                                 );
@@ -609,36 +628,17 @@ export default function LeaderboardPage() {
                                                     #3 THIRD
                                                 </div>
                                                 
-                                                {/* Stacked Avatar for Doubles Top 3 */}
-                                                {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="flex items-center -space-x-4 relative z-10 my-1">
-                                                        {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[2], '#C2410C') }}>
-                                                            {rankings[2]?.user?.avatarUrl ? (
-                                                                <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
-                                                            ) : (
-                                                                <span className="text-[#C2410C] font-extrabold text-lg">?</span>
-                                                            )}
-                                                        </div>
-                                                        {/* Partner avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] relative overflow-hidden bg-[#FFF7ED] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0" style={{ borderColor: getStandingBorderColor(rankings[2], '#C2410C') }}>
-                                                            <span className="text-[#C2410C] font-extrabold text-lg">?</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-20 h-20 rounded-full border-[3px] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center" style={{ borderColor: getStandingBorderColor(rankings[2], '#C2410C') }}>
-                                                        {rankings[2]?.user?.avatarUrl ? (
-                                                            <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
-                                                        ) : (
-                                                            <span className="text-[#C2410C] font-bold text-xl">?</span>
-                                                        )}
+                                                {isPairRanking(rankings[2]) ? <RankingMembers ranking={rankings[2]} /> : (
+                                                    <div className="relative h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-xs">
+                                                        {getPrimaryRankingMember(rankings[2])?.avatarUrl ? <Image src={getPrimaryRankingMember(rankings[2])!.avatarUrl!} alt="Rank 3" fill className="object-cover rounded-full" /> : <span className="flex h-full w-full items-center justify-center text-xl font-bold text-orange-700">?</span>}
                                                     </div>
                                                 )}
                                             </div>
                                             <h3 className="font-bold text-[#C2410C] text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-amber-800 transition-colors">
-                                                {rankings[2]?.user?.fullName || t("waiting")}
+                                                                                                {getRankingDisplayName(rankings[2], t("waiting"))}
+
                                             </h3>
-                                            {selectedMatchType.includes('DOUBLES') && rankings[2] && (
+                                            {isPairRanking(rankings[2]) && rankings[2] && (
                                                 <span className="text-[10px] text-[#C2410C] font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     {t('teammate')}
                                                 </span>
@@ -670,15 +670,16 @@ export default function LeaderboardPage() {
                                                 <button 
                                                     type="button"
                                                     key={idx} 
-                                                    disabled={!player?.user?.id}
+                                                    disabled={!getPrimaryRankingMember(player)?.id}
                                                     onClick={(e) => {
-                                                        if (!player?.user?.id) return;
+                                                        const member = getPrimaryRankingMember(player);
+                                                        if (!member?.id) return;
                                                         const rect = e.currentTarget.getBoundingClientRect();
                                                         openUserProfile(
                                                             {
-                                                                id: player.user.id,
-                                                                fullName: player.user.fullName || t('athleteFallback'),
-                                                                avatarUrl: player.user.avatarUrl,
+                                                                id: member.id,
+                                                                fullName: getRankingDisplayName(player, t('athleteFallback')),
+                                                                avatarUrl: member.avatarUrl,
                                                             },
                                                             rect,
                                                         );
@@ -689,34 +690,15 @@ export default function LeaderboardPage() {
                                                         #{rankNum}
                                                     </span>
                                                     
-                                                    {/* Stacked Avatar for Doubles Ranks 4-10 */}
-                                                    {selectedMatchType.includes('DOUBLES') ? (
-                                                        <div className="flex items-center -space-x-3 mb-2">
-                                                            <div className="w-8 h-8 rounded-full border-2 relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
-                                                                {player?.user?.avatarUrl ? (
-                                                                    <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
-                                                                ) : (
-                                                                    <span className="text-slate-400 font-bold text-[10px]">?</span>
-                                                                )}
-                                                            </div>
-                                                            <div className="w-8 h-8 rounded-full border-2 relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1.5 shadow-xs" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
-                                                                <span className="text-slate-400 font-bold text-[10px]">?</span>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-12 h-12 rounded-full border-2 relative overflow-hidden bg-slate-50 flex items-center justify-center mb-2" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
-                                                            {player?.user?.avatarUrl ? (
-                                                                <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
-                                                            ) : (
-                                                                <span className="text-slate-400 font-bold text-sm">
-                                                                    {player ? (player.user?.fullName?.substring(0, 2)  || t("initialsFallback")) : '?'}
-                                                                </span>
-                                                            )}
+                                                    {isPairRanking(player) ? <RankingMembers ranking={player} size="sm" /> : (
+                                                        <div className="relative mb-2 h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-slate-50" style={{ borderColor: getStandingBorderColor(player, '#e2e8f0') }}>
+                                                            {getPrimaryRankingMember(player)?.avatarUrl ? <Image src={getPrimaryRankingMember(player)!.avatarUrl!} alt={`Rank ${rankNum}`} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">{player ? (getPrimaryRankingMember(player)?.fullName?.slice(0, 2) || t("initialsFallback")) : '?'}</span>}
                                                         </div>
                                                     )}
                                                     
                                                     <span className="font-bold text-slate-700 text-xs text-center truncate w-full mb-1">
-                                                        {player?.user?.fullName || t("waiting")}
+                                                                                                                {getRankingDisplayName(player, t("waiting"))}
+
                                                     </span>
                                                     {player ? (
                                                         <StandingElo ranking={player} sportLabel={getStandingSportLabel(player)} />
@@ -851,6 +833,62 @@ export default function LeaderboardPage() {
     );
 }
 
+function FootballTeamRankingTable({ rankings }: { rankings: FootballTeamRanking[] }) {
+  const t = useTranslations("Leaderboard");
+  if (rankings.length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">{t('noEligibleRanksTitle')}</h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t('noEligibleRanksDescription')}</p>
+      </div>
+    );
+  }
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h2 className="text-lg font-bold text-slate-900">{t('teamHeader')}</h2>
+        <p className="mt-1 text-xs text-slate-500">{t('footballEloTeamDescription')}</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[680px] w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-5 py-3">{t('rankHeader')}</th>
+              <th className="px-5 py-3">{t('teamHeader')}</th>
+              <th className="px-5 py-3">{t('eloRank')}</th>
+              <th className="px-5 py-3">{t('matches')}</th>
+              <th className="px-5 py-3">{t('wins')}</th>
+              <th className="px-5 py-3 text-right">{t('winRate')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rankings.map((team, index) => {
+              const winRate = team.matchesPlayed > 0 ? Math.round((team.matchesWon / team.matchesPlayed) * 100) : 0;
+              return (
+                <tr key={team.id} className="transition-colors hover:bg-slate-50">
+                  <td className="px-5 py-4 font-bold text-slate-400">#{index + 1}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                        {team.logoUrl ? <Image src={team.logoUrl} alt="" fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-500">{team.teamName.slice(0, 2).toUpperCase()}</span>}
+                      </div>
+                      <span className="font-bold text-slate-900">{team.teamName}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4"><div className="font-black text-slate-900">{team.eloPoints} ELO</div><div className="text-xs text-slate-500">{team.tierName || '—'}</div></td>
+                  <td className="px-5 py-4 text-slate-700">{team.matchesPlayed}</td>
+                  <td className="px-5 py-4 text-slate-700">{team.matchesWon}</td>
+                  <td className="px-5 py-4 text-right font-bold text-emerald-700">{winRate}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRanking[], selectedMatchType: string }) {
   const t = useTranslations("Leaderboard");
     const { openUserProfile } = useUserProfileModalStore();
@@ -893,50 +931,31 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                             #{rankNum}
                                         </td>
                                         <td className="py-2.5 px-3">
-                                            <button
+                                                <button
                                                 type="button"
-                                                disabled={isPlaceholder || !rank.user?.id}
+                                                disabled={isPlaceholder || !getPrimaryRankingMember(rank)?.id}
                                                 onClick={(e) => {
-                                                    if (isPlaceholder || !rank.user?.id) return;
+                                                    const member = getPrimaryRankingMember(rank);
+                                                    if (isPlaceholder || !member?.id) return;
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     openUserProfile(
                                                         {
-                                                            id: rank.user.id,
-                                                            fullName: rank.user.fullName || t('athleteFallback'),
-                                                            avatarUrl: rank.user.avatarUrl,
+                                                            id: member.id,
+                                                            fullName: getRankingDisplayName(rank, t('athleteFallback')),
+                                                            avatarUrl: member.avatarUrl,
                                                         },
                                                         rect,
                                                     );
                                                 }}
                                                 className={`flex items-center gap-2 hover:text-blue-600 transition-colors text-left cursor-pointer ${isPlaceholder ? "pointer-events-none" : ""}`}
                                             >
-                                                {/* Stacked Avatar for Doubles in table list */}
-                                                {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="flex items-center -space-x-2.5 flex-shrink-0">
-                                                        <div className="w-6 h-6 rounded-full border relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
-                                                            {rank.user?.avatarUrl ? (
-                                                                <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
-                                                            ) : (
-                                                                <span className="text-slate-400 font-bold text-[9px]">?</span>
-                                                            )}
-                                                        </div>
-                                                        <div className="w-6 h-6 rounded-full border relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1 shadow-xs" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
-                                                            <span className="text-slate-400 font-bold text-[9px]">?</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-7 h-7 rounded-full object-cover relative overflow-hidden bg-slate-100 flex-shrink-0 border" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
-                                                        {rank.user?.avatarUrl ? (
-                                                            <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold text-[9px] uppercase">
-                                                                {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2)  || t("initialsFallback"))}
-                                                            </div>
-                                                        )}
+                                                {isPairRanking(rank) ? <RankingMembers ranking={rank} size="sm" /> : (
+                                                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border bg-slate-100" style={{ borderColor: getStandingBorderColor(rank, '#e2e8f0') }}>
+                                                        {getPrimaryRankingMember(rank)?.avatarUrl ? <Image src={getPrimaryRankingMember(rank)!.avatarUrl!} alt="Player" fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-[9px] font-bold uppercase text-slate-500">{isPlaceholder ? "?" : (getPrimaryRankingMember(rank)?.fullName?.slice(0, 2) || t("initialsFallback"))}</span>}
                                                     </div>
                                                 )}
                                                 <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
-                                                    {rank.user?.fullName || t("waiting")}
+                                                    {getRankingDisplayName(rank, t("waiting"))}
                                                 </span>
                                             </button>
                                         </td>

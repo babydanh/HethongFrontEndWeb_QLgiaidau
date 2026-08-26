@@ -130,14 +130,18 @@ export function resolveSportRuleView(
   const defaults = buildDefaultSportRules(normalizeKind(merged?.kind) ?? fallbackKind);
   const defaultScoring = asRecord(defaults.scoring) ?? asRecord(defaults);
 
-  const setsToWin = Math.max(
-    1,
-    Math.trunc(
-      readNumber(merged, ['setsToWin', 'sets_to_win']) ??
-      readNumber(defaultScoring, ['setsToWin', 'sets_to_win']) ??
-      2,
-    ),
-  );
+  const rawSetsToWin = readNumber(merged, ['setsToWin', 'sets_to_win']);
+  const rawBestOf = readNumber(merged, ['bestOf', 'best_of']);
+  const defaultSetsToWin = readNumber(defaultScoring, ['setsToWin', 'sets_to_win']);
+  let setsToWin: number;
+  let bestOf: number;
+  if (rawBestOf != null || rawSetsToWin != null) {
+    bestOf = Math.max(1, Math.trunc(rawBestOf ?? (Math.max(1, Math.trunc(rawSetsToWin!)) * 2 - 1)));
+    setsToWin = Math.ceil(bestOf / 2);
+  } else {
+    bestOf = (defaultSetsToWin ?? 2) * 2 - 1;
+    setsToWin = defaultSetsToWin ?? 2;
+  }
   const pointsPerSet = Math.max(
     1,
     Math.trunc(
@@ -191,7 +195,7 @@ export function resolveSportRuleView(
     kind: normalizeKind(merged?.kind) ?? fallbackKind,
     scoringModel,
     setsToWin,
-    bestOf: setsToWin * 2 - 1,
+    bestOf,
     pointsPerSet,
     winByTwo,
     maxPoints,

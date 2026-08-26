@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import {
@@ -33,10 +33,12 @@ const INITIAL_QUERY: ActiveUserQuery = {
   status: 'ALL',
 };
 
-const appendUniqueUsers = (current: AdminUser[], incoming: AdminUser[]): AdminUser[] => {
-  const knownIds = new Set(current.map((user) => user.id));
-  return [...current, ...incoming.filter((user) => !knownIds.has(user.id))];
-};
+interface AdminUserPage {
+  cursor: string | null;
+  users: AdminUser[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
 
 export default function ModerationPage() {
   const translate = useTranslations('AdminModeration');
@@ -51,9 +53,12 @@ export default function ModerationPage() {
   const [processing, setProcessing] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMoreUsers, setHasMoreUsers] = useState(false);
+  const [currentPageNumber, setCurrentPageNumber] = useState(1);
+  const [paginationError, setPaginationError] = useState<string | null>(null);
   const [banUser, setBanUser] = useState<AdminUser | null>(null);
   const [roleUser, setRoleUser] = useState<AdminUser | null>(null);
   const requestSequence = useRef(0);
+  const pageCache = useRef<AdminUserPage[]>([]);
   const activeQuery = useRef<ActiveUserQuery>(INITIAL_QUERY);
   const currentUser = useAuthStore((state) => state.user);
   const canManageSystemRoles = currentUser?.roles?.includes('ADMIN') === true;
@@ -61,20 +66,26 @@ export default function ModerationPage() {
   const loadUsers = useCallback(async ({
     query,
     cursor = null,
-    append = false,
+    pageIndex = 0,
+    reset = false,
   }: {
     query: ActiveUserQuery;
     cursor?: string | null;
-    append?: boolean;
+    pageIndex?: number;
+    reset?: boolean;
   }) => {
     const requestId = ++requestSequence.current;
-    if (append) setLoadingMore(true);
-    else {
+    if (reset || pageIndex === 0) {
+      pageCache.current = [];
       setInitialLoading(true);
       setLoadingMore(false);
+      setCurrentPageNumber(1);
       setNextCursor(null);
       setHasMoreUsers(false);
+    } else {
+      setLoadingMore(true);
     }
+    setPaginationError(null);
 
     try {
       const result = await adminModerationApi.listUsers({
@@ -83,33 +94,77 @@ export default function ModerationPage() {
         cursor,
       });
       if (requestId !== requestSequence.current) return;
-      setUsers((current) =>
-        append ? appendUniqueUsers(current, result.users) : result.users,
-      );
-      setNextCursor(result.nextCursor);
-      setHasMoreUsers(result.hasMore);
+      const page: AdminUserPage = {
+        cursor,
+        users: result.users,
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
+      };
+      pageCache.current = reset
+        ? [page]
+        : [...pageCache.current.slice(0, pageIndex), page];
+      setUsers(page.users);
+      setNextCursor(page.nextCursor);
+      setHasMoreUsers(page.hasMore);
+      setCurrentPageNumber(pageIndex + 1);
     } catch (error: unknown) {
       if (requestId === requestSequence.current) {
-        toast.error(getErrorMessage(error, translate('loadUsersFailed')));
+        const message = getErrorMessage(error, translate('loadUsersFailed'));
+        if (pageIndex > 0) setPaginationError(message);
+        else toast.error(message);
       }
     } finally {
       if (requestId === requestSequence.current) {
-        if (append) setLoadingMore(false);
-        else setInitialLoading(false);
+        if (reset || pageIndex === 0) setInitialLoading(false);
+        else setLoadingMore(false);
       }
     }
-  }, []);
+  }, [translate]);
+
+  const showCachedPage = (pageIndex: number) => {
+    const page = pageCache.current[pageIndex];
+    if (!page) return false;
+    setUsers(page.users);
+    setNextCursor(page.nextCursor);
+    setHasMoreUsers(page.hasMore);
+    setCurrentPageNumber(pageIndex + 1);
+    setPaginationError(null);
+    return true;
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPageNumber <= 1 || loadingMore || initialLoading) return;
+    showCachedPage(currentPageNumber - 2);
+  };
+
+  const goToNextPage = () => {
+    if (!hasMoreUsers || !nextCursor || loadingMore || initialLoading) return;
+    const nextPageIndex = currentPageNumber;
+    if (showCachedPage(nextPageIndex)) return;
+    void loadUsers({
+      query: activeQuery.current,
+      cursor: nextCursor,
+      pageIndex: nextPageIndex,
+    });
+  };
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadUsers({ query: INITIAL_QUERY }));
+    void Promise.resolve().then(() => loadUsers({ query: INITIAL_QUERY, reset: true }));
   }, [loadUsers]);
 
-  const refreshUsers = () =>
-    loadUsers({ query: activeQuery.current });
+  const refreshUsers = () => {
+    const currentPageIndex = currentPageNumber - 1;
+    const currentPage = pageCache.current[currentPageIndex];
+    void loadUsers({
+      query: activeQuery.current,
+      cursor: currentPage?.cursor ?? null,
+      pageIndex: currentPageIndex,
+    });
+  };
 
   const activateQuery = (query: ActiveUserQuery) => {
     activeQuery.current = query;
-    void loadUsers({ query });
+    void loadUsers({ query, reset: true });
   };
 
   const handleRoleFilterChange = (role: AdminUserRoleFilter) => {
@@ -208,22 +263,48 @@ export default function ModerationPage() {
         onManageRoles={setRoleUser}
       />
 
-      {!initialLoading && hasMoreUsers && (
-        <div className="flex justify-center">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void loadUsers({
-              query: activeQuery.current,
-              cursor: nextCursor,
-              append: true,
-            })}
-            disabled={processing || loadingMore || !nextCursor}
-            className="text-xs font-bold"
-          >
-            {loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            {translate('loadMoreUsers')}
-          </Button>
+      {!initialLoading && (currentPageNumber > 1 || hasMoreUsers) && (
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goToPreviousPage}
+              disabled={processing || loadingMore || currentPageNumber <= 1}
+              className="text-xs font-bold"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              {translate('previousPage')}
+            </Button>
+            <span className="min-w-20 text-center text-xs font-semibold text-slate-500">
+              {translate('pageLabel', { page: currentPageNumber })}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goToNextPage}
+              disabled={processing || loadingMore || !hasMoreUsers || !nextCursor}
+              className="text-xs font-bold"
+            >
+              {loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              {translate('nextPage')}
+              {!loadingMore && <ChevronRight className="ml-1 h-4 w-4" />}
+            </Button>
+          </div>
+          {paginationError && (
+            <div role="alert" className="flex flex-wrap items-center justify-center gap-2 text-center text-xs text-rose-600">
+              <span>{paginationError}</span>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goToNextPage}
+                disabled={processing || loadingMore || !nextCursor}
+                className="h-7 px-2 text-[11px] font-bold"
+              >
+                {translate('retryPage')}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

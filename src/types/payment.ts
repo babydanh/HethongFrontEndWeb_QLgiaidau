@@ -27,6 +27,7 @@ export interface Payment {
   userId: string;
   tournamentId: string;
   participantId?: string | null;
+  divisionId?: string | null;
   amount: string;
   platformFeeAmount?: string;
   purpose?: PaymentPurpose;
@@ -124,6 +125,8 @@ export interface LegacyCreatePaymentDto {
 
 export interface CreatePaymentLinkResponse {
   paymentId: string;
+  orderCode?: number;
+  reused?: boolean;
   paymentUrl?: string;
   checkoutUrl?: string;
   qrCode?: string;

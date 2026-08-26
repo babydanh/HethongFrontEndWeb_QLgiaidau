@@ -1065,7 +1065,7 @@ export default function MatchesListPage() {
                     </Link>
                     <div>
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-2xs uppercase tracking-wider">
                           {translate("rankedTournament")} • {getTranslatedSport(group.tournamentCategory)}
                         </span>
                       </div>
@@ -1129,35 +1129,39 @@ export default function MatchesListPage() {
                         <Link href={`/live/${match.id}`} className="block flex-1">
                           {/* Header trận */}
                           <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between`}>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
                             {isLive ? (
                                 <>
-                                  <span className="inline-flex items-center gap-1 text-rose-600 font-bold animate-pulse">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                  <span className="inline-flex items-center gap-1 bg-rose-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-2xs animate-pulse">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
                                     {translate("statusLive")}
                                   </span>
-                                  <span>• {friendlyRoundName}</span>
+                                  <span className="text-slate-800 font-bold">• {friendlyRoundName}</span>
                                 </>
                               ) : isFinished ? (
                                 <>
-                                  <span className="text-slate-400">{translate("statusFinished")}</span>
-                                  <span>• {friendlyRoundName}</span>
+                                  <span className="inline-flex items-center bg-slate-800 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-2xs">
+                                    {translate("statusFinished")}
+                                  </span>
+                                  <span className="text-slate-800 font-bold">• {friendlyRoundName}</span>
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">{translate("statusScheduled")}</span>
+                                  <span className="inline-flex items-center bg-blue-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-2xs">
+                                    {translate("statusScheduled")}
+                                  </span>
                                   {match.scheduledAt ? (
-                                    <span>• {new Date(match.scheduledAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
+                                    <span className="text-slate-800 font-bold">• {new Date(match.scheduledAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                   ) : (
-                                    <span>• {friendlyRoundName}</span>
+                                    <span className="text-slate-800 font-bold">• {friendlyRoundName}</span>
                                   )}
                                 </>
                               )}
                             </span>
 
                             {isLive && typeof match.viewerCount === 'number' && match.viewerCount > 0 && (
-                              <span className="flex items-center gap-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100/60 px-2 py-0.5 rounded-full">
-                                <Eye className="w-3 h-3 text-blue-600 animate-pulse" />
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-white bg-blue-600 shadow-2xs px-2 py-0.5 rounded-full">
+                                <Eye className="w-3 h-3 text-white animate-pulse" />
                                 <span>{match.viewerCount} {translate("watchingNow")}</span>
                               </span>
                             )}

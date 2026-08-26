@@ -4,25 +4,15 @@ test.describe.serial('Register 3 user accounts automation flow', () => {
   test.setTimeout(120_000);
 
   const baseURL = process.env.FRONTEND_URL || 'http://localhost:3001';
-  const timestamp = Date.now();
+  const users = Array.from({ length: 3 }, (_, index) => {
+    const number = index + 11; // Start from 11 to avoid conflicts with existing users
+    return {
+      fullName: `Vận động viên ${number}`,
+      email: `user${number}@gmail.com`,
+      password: 'Password123!',
+    };
+  });
 
-  const users = [
-    {
-      fullName: 'Vận Động Viên 1',
-      email: `user_player1_${timestamp}@sporto.vn`,
-      password: 'Password123!',
-    },
-    {
-      fullName: 'Vận Động Viên 2',
-      email: `user_player2_${timestamp}@sporto.vn`,
-      password: 'Password123!',
-    },
-    {
-      fullName: 'Vận Động Viên 3',
-      email: `user_player3_${timestamp}@sporto.vn`,
-      password: 'Password123!',
-    },
-  ];
 
   const clearSession = async (page: Page) => {
     await page.context().clearCookies();
@@ -31,7 +21,7 @@ test.describe.serial('Register 3 user accounts automation flow', () => {
       try {
         localStorage.clear();
         sessionStorage.clear();
-      } catch {}
+      } catch { }
     });
   };
 

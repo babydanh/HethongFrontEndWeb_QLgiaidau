@@ -303,7 +303,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                 <div className="absolute bottom-4 left-5 right-5 z-20 pointer-events-none max-w-xl flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     {tournament.category?.name && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-300 font-sans [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 shadow-sm">
                         {(() => {
                           const logo = getSportLogo(tournament.category?.name);
                           return logo ? (

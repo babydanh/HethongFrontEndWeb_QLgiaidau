@@ -6,8 +6,8 @@ export const apiBaseURL = process.env.PLAYWRIGHT_API_URL ?? 'http://localhost:30
 export const organizerEmail = process.env.PLAYWRIGHT_ORGANIZER_EMAIL ?? 'admin1@gmail.com';
 export const organizerPassword = process.env.PLAYWRIGHT_ORGANIZER_PASSWORD ?? '123456';
 
-export const playerEmail = process.env.PLAYWRIGHT_PLAYER_EMAIL ?? 'player_test@sporto.vn';
-export const playerPassword = process.env.PLAYWRIGHT_PLAYER_PASSWORD ?? '123456';
+export const playerEmail = process.env.PLAYWRIGHT_PLAYER_EMAIL ?? 'user8@gmail.com';
+export const playerPassword = process.env.PLAYWRIGHT_PLAYER_PASSWORD ?? 'Password123!';
 
 export const tournamentId = process.env.PLAYWRIGHT_TOURNAMENT_ID;
 

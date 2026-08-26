@@ -106,52 +106,54 @@ export function detectProvinceFromAddress(
 }
 
 /**
- * Tìm Phường/Xã từ chuỗi địa chỉ khi đã biết danh sách Wards của tỉnh
+ * Tìm Phường/Xã từ chuỗi địa chỉ khi đã biết danh sách Wards của tỉnh.
+ * Chấp nhận cả nhãn API có tiền tố ("Phường Bảy Hiền") và phần tên rút gọn
+ * người dùng thường nhập trong địa chỉ ("Bảy Hiền" hoặc "bay hien").
  */
 export function detectWardFromAddress(
   rawAddress: string,
-  wards: Region[]
+  wards: Region[],
 ): Region | null {
   if (!rawAddress || !wards || wards.length === 0) return null;
 
   const normalizedAddr = ` ${removeVietnameseTones(rawAddress)} `;
+  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const stripWardPrefix = (value: string) =>
+    value
+      .replace(/^(phuong|xa|thi\s+tran|dac\s+khu)\s+/i, '')
+      .trim();
 
-  // Sắp xếp tên dài trước để ưu tiên so khớp chính xác
+  // Sắp xếp tên dài trước để tránh tên ngắn khớp một phần tên dài.
   const sortedWards = [...wards].sort((a, b) => {
     const lenA = (a.fullName || a.name || '').length;
     const lenB = (b.fullName || b.name || '').length;
     return lenB - lenA;
   });
 
-  // 1. So khớp có tiền tố rõ ràng như "phuong ...", "xa ...", "p. ...", "x. ...", "tt. ..."
-  for (const w of sortedWards) {
-    const normName = removeVietnameseTones(w.name || '');
-    const normFullName = removeVietnameseTones(w.fullName || '');
+  const getWardNames = (ward: Region) => {
+    const candidates = [ward.name, ward.fullName]
+      .map((value) => stripWardPrefix(removeVietnameseTones(value || '')))
+      .filter(Boolean);
+    return [...new Set(candidates)];
+  };
 
-    if (!normName) continue;
+  // 1. So khớp tên kèm tiền tố: phuong, xa, thi tran, dac khu, p., x., tt.
+  for (const ward of sortedWards) {
+    const names = getWardNames(ward);
+    for (const name of names) {
+      const escapedName = escapeRegExp(name);
+      const isNumericName = /^\d+$/.test(name);
+      const prefixPattern = new RegExp(
+        `(?:phuong|xa|thi\\s*tran|dac\\s*khu|p|x|tt)[\\s\\.\\:]+${escapedName}(?:\\s|\\W|$)`,
+        'i',
+      );
+      if (prefixPattern.test(normalizedAddr)) return ward;
 
-    // Pattern có tiền tố: p. 12, phuong 12, p 12, xa tan trieu, x tan trieu, thi tran...
-    const prefixPatterns = [
-      new RegExp(`(?:phuong|xa|thi\\s*tran|p|x|tt)[\\s\\.\\:]+${normName}(?:\\s|\\W|$)`, 'i'),
-      normFullName ? new RegExp(`(^|\\s|\\W)${normFullName}(\\s|\\W|$)`, 'i') : null,
-    ].filter(Boolean) as RegExp[];
-
-    for (const pattern of prefixPatterns) {
-      if (pattern.test(normalizedAddr)) {
-        return w;
+      // Tên số chỉ được nhận khi có tiền tố, tránh nhầm số nhà.
+      if (!isNumericName) {
+        const directPattern = new RegExp(`(^|\\s|\\W)${escapedName}(?=\\s|\\W|$)`, 'i');
+        if (directPattern.test(normalizedAddr)) return ward;
       }
-    }
-  }
-
-  // 2. So khớp trực tiếp tên phường/xã (đối với tên chữ không phải số thuần túy)
-  for (const w of sortedWards) {
-    const normName = removeVietnameseTones(w.name || '');
-    // Bỏ qua các phường chỉ là số (ví dụ: "1", "2") ở bước này để tránh khớp nhầm số nhà
-    if (!normName || /^\d+$/.test(normName) || normName.length < 3) continue;
-
-    const pattern = new RegExp(`(^|\\s|\\W)${normName}(\\s|\\W|$)`, 'i');
-    if (pattern.test(normalizedAddr)) {
-      return w;
     }
   }
 

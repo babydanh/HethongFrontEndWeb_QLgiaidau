@@ -193,14 +193,34 @@ export default function PaymentsPage() {
                             {translate(statusConfig.labelKey)}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-right">
-                          <button
-                            onClick={() => router.push(`/payments/result?paymentId=${p.id}`)}
-                            className="text-blue-600 hover:text-blue-800 text-xs font-bold hover:underline"
-                          >
-                            {translate('viewInvoice')}
-                          </button>
+                                                <td className="py-4 px-6 text-right">
+                          <div className="flex flex-wrap justify-end gap-3">
+                            {p.status === 'PENDING' &&
+                              p.purpose === 'REGISTRATION_FEE' &&
+                              p.participantId && (
+                                <button
+                                  onClick={() => {
+                                    const params = new URLSearchParams({
+                                      participantId: p.participantId as string,
+                                      tournamentId: p.tournamentId,
+                                    });
+                                    if (p.divisionId) params.set('divisionId', p.divisionId);
+                                    router.push(`/payments/checkout?${params.toString()}`);
+                                  }}
+                                  className="text-amber-700 hover:text-amber-900 text-xs font-bold hover:underline"
+                                >
+                                  {translate('continuePayment')}
+                                </button>
+                              )}
+                            <button
+                              onClick={() => router.push(`/payments/result?paymentId=${p.id}`)}
+                              className="text-blue-600 hover:text-blue-800 text-xs font-bold hover:underline"
+                            >
+                              {translate('viewInvoice')}
+                            </button>
+                          </div>
                         </td>
+
                       </tr>
                     );
                   })}

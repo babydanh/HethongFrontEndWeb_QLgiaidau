@@ -823,9 +823,16 @@ export function useManageState(id: string) {
   const handleSaveFinanceConfig = async () => {
     if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
     setIsSavingConfig(true);
-    try { await divisionsApi.updateDivision(selectedDivisionId, { entryFee }); toast.success('Lưu cài đặt tài chính thành công!'); await fetchDivisions(tournament.id); }
-    catch (err) { toast.error(getErrorMessage(err)); }
-    finally { setIsSavingConfig(false); }
+    const cleanEntryFee = typeof entryFee === 'number' && !isNaN(entryFee) && entryFee >= 0 ? Math.floor(entryFee) : 0;
+    try {
+      await divisionsApi.updateDivision(selectedDivisionId, { entryFee: cleanEntryFee });
+      toast.success('Lưu cài đặt tài chính thành công!');
+      await fetchDivisions(tournament.id);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingConfig(false);
+    }
   };
 
   const handleAddReferee = async (e: React.FormEvent) => {

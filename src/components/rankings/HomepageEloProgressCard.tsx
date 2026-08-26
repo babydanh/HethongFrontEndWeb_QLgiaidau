@@ -75,12 +75,12 @@ export default function HomepageEloProgressCard({
         <div>
           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
             {sportName && (
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded uppercase tracking-wider shadow-2xs">
                 {sportName}
               </span>
             )}
             {activeRankInfo?.matchType && (
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-white bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider shadow-2xs">
                 {getEloMatchTypeLabel(activeRankInfo.matchType, eloLabels)}
               </span>
             )}
@@ -89,10 +89,7 @@ export default function HomepageEloProgressCard({
             {rankLabel}
           </h4>
         </div>
-        <span className={cn(
-          'inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full font-bold shadow-sm transition-all duration-300 border border-slate-100',
-          currentTier.color
-        )}>
+        <span className="inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full font-bold shadow-sm transition-all duration-300 bg-emerald-600 text-white border border-emerald-500/30">
           {eloPoints} ELO
         </span>
       </div>

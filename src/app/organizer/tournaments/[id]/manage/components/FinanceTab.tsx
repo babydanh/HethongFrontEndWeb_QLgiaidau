@@ -10,11 +10,12 @@ import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { getErrorMessage } from '@/utils/error';
 import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
 import {
+  isTournamentCancelled,
   isTournamentCompleted,
   isTournamentInProgress,
-  isTournamentOpenForRegistration,
   isTournamentRegistrationClosed,
 } from '@/utils/tournament-status';
+
 import toast from 'react-hot-toast';
 
 interface FinanceTabProps {
@@ -71,7 +72,8 @@ export function FinanceTab({
   const isRegistrationLockedForFinance =
     isTournamentRegistrationClosed(tournament.status) ||
     isTournamentInProgress(tournament.status) ||
-    isTournamentCompleted(tournament.status);
+    isTournamentCompleted(tournament.status) ||
+    isTournamentCancelled(tournament.status);
   const isEntryFeeInputDisabled = isRegistrationLockedForFinance || !allowEntryFees;
 
   // Payout form state
@@ -128,6 +130,9 @@ export function FinanceTab({
     }
     if (isTournamentCompleted(tournament.status)) {
       return translate('feeLockReasonCompleted');
+    }
+    if (isTournamentCancelled(tournament.status)) {
+      return translate('feeLockReasonCancelled');
     }
     return null;
   };

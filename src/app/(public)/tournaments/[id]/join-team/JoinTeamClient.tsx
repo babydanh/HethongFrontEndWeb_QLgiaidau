@@ -181,7 +181,9 @@ export default function JoinTeamClient({ params }: { params: Promise<{ id: strin
     tournament.status !== 'UPCOMING' &&
     tournament.status !== 'DRAFT';
 
-  if (isLocked || isExpired || isNotOpen) {
+  // Lock closes new registrations, but an already-created pending team must
+  // still be able to accept its invite and reach the payment step.
+  if (isExpired || isNotOpen || participant.teamStatus !== 'PENDING_PARTNER') {
     let title = translate('registrationClosed');
     let message = translate('registrationClosedMessage');
     if (isLocked) {

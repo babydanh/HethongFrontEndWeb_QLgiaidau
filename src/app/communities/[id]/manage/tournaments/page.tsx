@@ -298,19 +298,19 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       case 'DRAFT':
         return <Badge className="bg-slate-100 text-slate-700">{translate('communityTournamentDraftHidden')}</Badge>;
       case 'REGISTRATION_OPEN':
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">{translate("communityOpenRegistrationBadge")}</Badge>;
+        return <Badge className="bg-emerald-600 text-white font-bold shadow-2xs border-transparent">{translate("communityOpenRegistrationBadge")}</Badge>;
       case 'REGISTRATION_CLOSED':
-        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">{translate('statusRegistrationClosed')}</Badge>;
+        return <Badge className="bg-slate-700 text-white font-bold shadow-2xs border-transparent">{translate('statusRegistrationClosed')}</Badge>;
       case 'UPCOMING':
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">{translate('statusUpcoming')}</Badge>;
+        return <Badge className="bg-blue-600 text-white font-bold shadow-2xs border-transparent">{translate('statusUpcoming')}</Badge>;
       case 'IN_PROGRESS':
-        return <Badge className="bg-rose-50 text-rose-700 border-slate-200 animate-pulse">{translate('statusInProgress')}</Badge>;
+        return <Badge className="bg-rose-600 text-white font-bold shadow-2xs border-transparent animate-pulse">{translate('statusInProgress')}</Badge>;
       case 'COMPLETED':
-        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">{translate('statusCompleted')}</Badge>;
+        return <Badge className="bg-slate-800 text-white font-bold shadow-2xs border-transparent">{translate('statusCompleted')}</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-rose-50 text-rose-700 border-slate-200">{translate('statusCancelled')}</Badge>;
+        return <Badge className="bg-rose-600 text-white font-bold shadow-2xs border-transparent">{translate('statusCancelled')}</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge className="bg-slate-700 text-white font-bold shadow-2xs border-transparent">{status}</Badge>;
     }
   };
 

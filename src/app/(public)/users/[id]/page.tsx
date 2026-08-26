@@ -44,6 +44,7 @@ interface PublicProfile {
   avatarUrl: string | null;
   coverUrl: string | null;
   gender: string | null;
+  dateOfBirth?: string | null;
   bio: string | null;
   isVerified: boolean;
   role?: string;
@@ -63,6 +64,7 @@ interface Match {
   id: string;
   roundNumber: number;
   status: string;
+  isBye?: boolean;
   participant1: {
     id: string;
     teamName: string;
@@ -88,18 +90,34 @@ interface Match {
   } | null;
 }
 
-function isMockInvolvedMatch(match: Match): boolean {
-  const isMockParticipant = (participant: Match['participant1']) =>
-    participant?.isMock === true || participant?.members?.some((member) => member.isMock === true) === true;
-  return isMockParticipant(match.participant1) || isMockParticipant(match.participant2);
-}
+const hasUserInParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+  userId: string,
+) => Boolean(participant?.members?.some((member) => member.userId === userId));
 
-function hasUserInMatch(match: Match, userId: string): boolean {
-  return Boolean(
-    match.participant1?.members?.some((member) => member.userId === userId) ||
-    match.participant2?.members?.some((member) => member.userId === userId),
-  );
-}
+const isMockParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => Boolean(
+  participant?.isMock === true
+  || participant?.members?.some((member) => member.isMock === true),
+);
+
+const isPlaceholderParticipant = (
+  participant: Match['participant1'] | Match['participant2'] | null | undefined,
+): boolean => {
+  const teamName = participant?.teamName?.trim().toLowerCase();
+  return !teamName || ['tbd', 'chờ xác định', 'chua xac dinh', 'đang chờ', 'dang cho'].includes(teamName);
+};
+
+const isRenderableProfileMatch = (match: Match, userId: string): boolean => {
+  const isP1 = hasUserInParticipant(match.participant1, userId);
+  const isP2 = hasUserInParticipant(match.participant2, userId);
+  if (!isP1 && !isP2) return false;
+  if (match.isBye || isMockParticipant(match.participant1) || isMockParticipant(match.participant2)) return false;
+
+  const opponent = isP1 ? match.participant2 : match.participant1;
+  return !isPlaceholderParticipant(opponent);
+};
 
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('PublicProfile');
@@ -158,7 +176,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
         setProfile(profileResult.value.data);
         const publicMatches = matchesResult.status === 'fulfilled' ? matchesResult.value.data || [] : [];
-        setMatches(publicMatches.filter((match) => hasUserInMatch(match, id) && !isMockInvolvedMatch(match)));
+        setMatches(publicMatches.filter((match) => isRenderableProfileMatch(match, id)));
 
         setEloHistory(eloHistoryResult.status === 'fulfilled' ? eloHistoryResult.value?.data || [] : []);
       } catch (err: unknown) {
@@ -206,9 +224,13 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     return translate(matchType === 'SINGLES' ? 'singles' : 'doubles');
   };
 
-  const getGenderLabel = (gender: string | null) => {
+  const getGenderLabel = (gender: string | null | undefined) => {
     if (!gender) return translate('notUpdated');
-    return translate(gender === 'MALE' ? 'male' : gender === 'FEMALE' ? 'female' : 'other');
+    const normalized = gender.trim().toUpperCase();
+    if (normalized === 'MALE' || normalized === 'NAM') return translate('male');
+    if (normalized === 'FEMALE' || normalized === 'NU' || normalized === 'NỮ') return translate('female');
+    if (normalized === 'OTHER' || normalized === 'KHÁC' || normalized === 'KHAC') return translate('other');
+    return gender;
   };
 
   const displayedRanks = [...(profile.ranks || []), ...(profile.pairRanks || [])];
@@ -292,65 +314,62 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           {/* Info */}
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+              <h1 className="text-3xl font-bold text-slate-900 flex flex-wrap items-center gap-2.5 tracking-tight">
                 {profile.fullName}
                 {profile.isVerified && (
-                  <span title={translate('verifiedMember')} className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                  <span title={translate('verifiedMember')} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
                     <ShieldCheck className="w-5 h-5 text-blue-600" />
                   </span>
                 )}
+                {(() => {
+                  const featuredRank = displayedRanks
+                    .filter(isPublicRankingEligible)
+                    .sort((a, b) => b.eloPoints - a.eloPoints)[0];
+                  if (featuredRank) {
+                    return (
+                      <EloTierBadge
+                        elo={featuredRank.eloPoints}
+                        tierName={featuredRank.tierName || undefined}
+                        categoryName={featuredRank.categoryName}
+                        size="md"
+                      />
+                    );
+                  }
+                  return null;
+                })()}
               </h1>
             </div>
 
       <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER']))).map((role: string) => {
                 let roleLabel = translate('player');
-                let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
+                let roleColor = 'bg-blue-600 text-white shadow-2xs';
                 if (role === 'ORGANIZER') {
                   roleLabel = translate('organizer');
-                  roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
+                  roleColor = 'bg-indigo-600 text-white shadow-2xs';
                 } else if (role === 'ADMIN') {
                   roleLabel = translate('admin');
-                  roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
+                  roleColor = 'bg-purple-600 text-white shadow-2xs';
                 }
                 return (
-                  <span key={role} className={`px-3.5 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
+                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
                     {roleLabel}
                   </span>
                 );
               })}
               {profile.isVerified && (
-                <span className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-[#dcfce7] text-[#166534] uppercase tracking-wider">
+                <span className="px-3 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white uppercase tracking-wider shadow-2xs">
                   {translate('verified')}
                 </span>
               )}
-              {!hideEloSection && (() => {
-                const activeRanks = displayedRanks.filter(isPublicRankingEligible);
-                if (activeRanks.length > 0) {
-                  return activeRanks.map((rank) => (
-                    <EloTierBadge
-                      key={`${rank.categoryId}-${rank.matchType}`}
-                      elo={rank.eloPoints}
-                      tierName={rank.tierName || undefined}
-                      categoryName={rank.categoryName}
-                      size="sm"
-                    />
-                  ));
-                }
-                return (
-                  <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                    {translate('unranked')}
-                  </span>
-                );
-              })()}
               {profile.achievements?.length ? (
-                <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} {translate('achievementsLabel')}
+                <span className="bg-slate-900 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> {profile.achievements.length} {translate('achievementsLabel')}
                 </span>
               ) : null}
               {profile.createdAt && (
-                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}
+                <span className="bg-slate-800 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-white/80" /> {translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>
@@ -398,6 +417,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
               <div className="flex flex-col gap-4 text-sm">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
+                  <span className="text-slate-500 font-medium">{translate('dateOfBirth')}</span>
+                  <span className="text-slate-900 font-semibold">
+                    {profile.dateOfBirth
+                      ? `${new Date(profile.dateOfBirth).getDate().toString().padStart(2, '0')}/${(new Date(profile.dateOfBirth).getMonth() + 1).toString().padStart(2, '0')}/${new Date(profile.dateOfBirth).getFullYear()}`
+                      : translate('notUpdated')}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
                   <span className="text-slate-500 font-medium">{translate('gender')}</span>
                   <span className="text-slate-900 font-semibold">{getGenderLabel(profile.gender)}</span>
                 </div>
@@ -629,13 +656,23 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
-                        data={[...eloHistory].reverse().map((item, index) => ({
-                          name: `${translate('matchNumber', { number: index + 1 })}`,
-                          'ELO': item.newElo,
-                          date: formatDate(item.createdAt, 'dd/MM/yyyy'),
-                          reason: item.reason || translate(item.changedPoints > 0 ? 'win' : 'loss'),
-                          tournament: item.match?.tournamentName || translate('tournament')
-                        }))}
+                        data={[...eloHistory].reverse().map((item, index) => {
+                          const norm = item.reason?.toUpperCase().trim() || '';
+                          let reasonLabel = item.changedPoints > 0 ? translate('win') : translate('loss');
+                          if (norm === 'ADMIN_ADD') reasonLabel = translate('adminAdd');
+                          else if (norm === 'ADMIN_SUBTRACT') reasonLabel = translate('adminSubtract');
+                          else if (norm === 'ADMIN_SET') reasonLabel = translate('adminSet');
+                          else if (norm.startsWith('ADMIN_')) reasonLabel = translate('adminEloAdjustment');
+                          else if (norm === 'INACTIVITY_DECAY') reasonLabel = translate('inactivityDecay');
+
+                          return {
+                            name: `${translate('matchNumber', { number: index + 1 })}`,
+                            'ELO': item.newElo,
+                            date: formatDate(item.createdAt, 'dd/MM/yyyy'),
+                            reason: reasonLabel,
+                            tournament: item.match?.tournamentName || (norm.startsWith('ADMIN_') ? translate('adminEloAdjustment') : translate('tournament'))
+                          };
+                        })}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -676,28 +713,62 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 {eloHistory.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     {eloHistory.map((item) => {
+                      const norm = item.reason?.toUpperCase().trim() || '';
+                      const isAdmin = norm.startsWith('ADMIN_') || norm === 'INACTIVITY_DECAY' || !item.match;
                       const result = getHistoryResult(item);
                       const score = getHistoryScore(item);
                       const isWin = result === 'WIN';
                       const isLoss = result === 'LOSS';
-                      const isGain = item.changedPoints > 0;
+                      const isGain = item.changedPoints >= 0;
+
+                      let itemTitle = item.match?.tournamentName || translate('rankingMatch');
+                      let badgeLabel = isWin ? translate('win') : isLoss ? translate('loss') : translate('drawResult');
+                      let badgeClass = isWin ? 'bg-blue-50 text-blue-700' : isLoss ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600';
+
+                      if (norm === 'ADMIN_ADD') {
+                        itemTitle = translate('adminAdd');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-blue-50 text-blue-700';
+                      } else if (norm === 'ADMIN_SUBTRACT') {
+                        itemTitle = translate('adminSubtract');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-rose-50 text-rose-700';
+                      } else if (norm === 'ADMIN_SET') {
+                        itemTitle = translate('adminSet');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-purple-50 text-purple-700';
+                      } else if (norm.startsWith('ADMIN_')) {
+                        itemTitle = translate('adminEloAdjustment');
+                        badgeLabel = translate('adminAdjustment');
+                        badgeClass = 'bg-amber-50 text-amber-700';
+                      } else if (norm === 'INACTIVITY_DECAY') {
+                        itemTitle = translate('inactivityDecay');
+                        badgeLabel = translate('inactivityDecay');
+                        badgeClass = 'bg-slate-100 text-slate-600';
+                      }
+
                       return (
                         <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 last:border-b-0">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase ${
-                                  isWin ? 'bg-blue-50 text-blue-700' : isLoss ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
-                                }`}>
-                                  {isWin ? translate('win') : isLoss ? translate('loss') : translate('drawResult')}
+                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase ${badgeClass}`}>
+                                  {badgeLabel}
                                 </span>
-                                <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate('rankingMatch')}</p>
+                                <p className="text-sm font-bold text-slate-800 line-clamp-1">{itemTitle}</p>
                               </div>
-                              <p className="text-xs text-slate-400 mt-1">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')} · {translate('officialMatch')}</p>
-                              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-600">
-                                <span><strong>{translate('opponent')}:</strong> {item.match?.opponent?.name || translate('unknownOpponent')}</span>
-                                {score && <span><strong>{translate('score')}:</strong> {score}</span>}
-                              </div>
+                              <p className="text-xs text-slate-400 mt-1">
+                                {formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}
+                                {!isAdmin && ` · ${translate('officialMatch')}`}
+                              </p>
+                              {!isAdmin && (item.match?.opponent?.name || score) && (
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-600">
+                                  {item.match?.opponent?.name && (
+                                    <span><strong>{translate('opponent')}:</strong> {item.match.opponent.name}</span>
+                                  )}
+                                  {score && <span><strong>{translate('score')}:</strong> {score}</span>}
+                                </div>
+                              )}
                             </div>
                             <div className="grid grid-cols-3 gap-2 min-w-[230px] text-center">
                               <div className="rounded-lg bg-white border border-slate-100 px-2 py-2">
@@ -729,9 +800,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
           </div>
         )}
-          </div>
-        </div>
       </div>
     </div>
+  </div>
+</div>
   );
 }

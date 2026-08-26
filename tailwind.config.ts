@@ -19,22 +19,22 @@ const config: Config = {
     },
     extend: {
       colors: {
-        /* ── VNSport brand blue palette — built around logo cyan #3ab5f6 (hue 204°) ── */
+        /* ── SportO brand navy palette — built around logo navy #002e7c ── */
         blue: {
-          50:  "#e8f7ff",
-          100: "#d0eeff",
-          150: "#b8e5ff",
-          200: "#90d8fd",
-          300: "#61c5fa",
-          400: "#3ab5f6",  /* ← VNSport logo cyan */
-          450: "#25abf0",
-          500: "#12a0e8",
-          600: "#3ab5f6",  /* ← primary button = exact logo color */
-          650: "#0d8fd4",
-          700: "#0d8fd4",  /* ← hover: darker logo cyan */
-          800: "#044a72",
-          900: "#033354",
-          950: "#021e33",
+          50:  "#eff4fc",
+          100: "#d6e2f7",
+          150: "#b8cdfa",
+          200: "#80a5e6",
+          300: "#3d6dc9",
+          400: "#1a4fb0",
+          450: "#0b3c94",
+          500: "#003999",
+          600: "#002e7c",  /* ← SportO primary navy #002e7c */
+          650: "#00276a",
+          700: "#002461",  /* ← hover: deeper navy */
+          800: "#001a45",
+          900: "#00112e",
+          950: "#000a1c",
         },
         slate: {
           50:  "#f8fafc",
@@ -56,7 +56,8 @@ const config: Config = {
         "tertiary": "#46566c",
         "secondary-fixed-dim": "#89ceff",
         "secondary-fixed": "#c9e6ff",
-        "primary-container": "#1683d8",
+        "primary-container": "#002e7c",
+        "surface-tint": "#002e7c",
         "error": "#ba1a1a",
         "tertiary-fixed": "#d3e4fe",
         "on-tertiary-container": "#e9f0ff",
@@ -73,7 +74,6 @@ const config: Config = {
         "on-tertiary": "#ffffff",
         "tertiary-fixed-dim": "#b7c8e1",
         "on-secondary-container": "#004666",
-        "surface-tint": "#1683d8",
         "outline-variant": "#c3c6d7",
         "secondary-container": "#39b8fd",
         "outline": "#737686",

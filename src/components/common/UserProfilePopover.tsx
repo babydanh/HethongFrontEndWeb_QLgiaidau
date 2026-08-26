@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from 'next-intl';
 import { X, MessageCircle, User, CheckCircle2, Tag, Plus, Check, Loader2 } from "lucide-react";
 import { usersApi } from "@/features/users/api";
+import { chatApi } from "@/features/chat/api";
 import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/communities/api";
 import { useRouter } from "next/navigation";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
@@ -78,6 +79,30 @@ export default function UserProfilePopover({
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [directMessagePolicy, setDirectMessagePolicy] = useState<{ canMessage: boolean; reasonCode: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !user?.id || !currentUser?.id || currentUser.id === user.id) {
+      setDirectMessagePolicy(null);
+      return;
+    }
+
+    let isMounted = true;
+    setDirectMessagePolicy(null);
+    chatApi
+      .getDirectMessagePolicy(user.id)
+      .then((policy) => {
+        if (isMounted) setDirectMessagePolicy(policy);
+      })
+      .catch(() => {
+        // Fail closed: do not expose a CTA that will immediately fail with 403/500.
+        if (isMounted) setDirectMessagePolicy({ canMessage: false, reasonCode: 'POLICY_CHECK_FAILED' });
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, user?.id, currentUser?.id]);
 
   // Inline Tag Editing State
   const [isEditingTags, setIsEditingTags] = useState(false);
@@ -254,14 +279,14 @@ export default function UserProfilePopover({
     if (!role) return null;
     switch (role) {
       case "ADMIN":
-        return { label: translate('systemAdminRole'), color: "bg-purple-50 text-purple-700 border-purple-200" };
+        return { label: translate('systemAdminRole'), color: "bg-purple-600 text-white font-bold shadow-2xs" };
       case "ORGANIZER":
-        return { label: translate('organizerRole'), color: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+        return { label: translate('organizerRole'), color: "bg-indigo-600 text-white font-bold shadow-2xs" };
       case "REFEREE":
-        return { label: translate('refereeRole'), color: "bg-amber-50 text-amber-700 border-amber-200" };
+        return { label: translate('refereeRole'), color: "bg-amber-600 text-white font-bold shadow-2xs" };
       case "PLAYER":
       default:
-        return { label: translate('athleteRole'), color: "bg-sky-50 text-sky-700 border-sky-200" };
+        return { label: translate('athleteRole'), color: "bg-blue-600 text-white font-bold shadow-2xs" };
     }
   };
 
@@ -277,7 +302,7 @@ export default function UserProfilePopover({
     : null;
   const primaryRank = eligibleHighlightRank ?? eligibleRanks[0] ?? null;
   const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
-  const canMessage = !isSelf;
+  const canMessage = !isSelf && directMessagePolicy?.canMessage === true;
   const profileRanks = eligibleRanks.slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
@@ -681,11 +706,13 @@ export default function UserProfilePopover({
                 }
                 setIsOpeningChat(true);
                 try {
+
                   window.dispatchEvent(
                     new CustomEvent('sporto:open-direct-chat', {
                       detail: { userId: profileData.id },
                     }),
                   );
+                  setIsOpeningChat(false);
                   onClose();
                 } catch {
                   setIsOpeningChat(false);

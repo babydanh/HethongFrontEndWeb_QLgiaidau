@@ -16,31 +16,31 @@ const getCategoryStyles = (name: string) => {
   const normalized = name.toLowerCase();
   if (normalized.includes("pickleball")) {
     return {
-      bg: "bg-blue-50/80 text-blue-700 border-blue-200/30",
-      dot: "bg-blue-500"
+      bg: "bg-blue-600 text-white shadow-2xs",
+      dot: "bg-white"
     };
   }
   if (normalized.includes("tennis")) {
     return {
-      bg: "bg-amber-50/80 text-amber-700 border-amber-200/30",
-      dot: "bg-amber-500"
+      bg: "bg-amber-600 text-white shadow-2xs",
+      dot: "bg-white"
     };
   }
   if (normalized.includes("badminton") || normalized.includes("cầu lông")) {
     return {
-      bg: "bg-blue-50/80 text-blue-700 border-blue-200/30",
-      dot: "bg-blue-500"
+      bg: "bg-blue-600 text-white shadow-2xs",
+      dot: "bg-white"
     };
   }
   if (normalized.includes("table tennis") || normalized.includes("bóng bàn")) {
     return {
-      bg: "bg-rose-50/80 text-rose-700 border-slate-200/30",
-      dot: "bg-rose-500"
+      bg: "bg-rose-600 text-white shadow-2xs",
+      dot: "bg-white"
     };
   }
   return {
-    bg: "bg-slate-50/80 text-slate-700 border-slate-200/40",
-    dot: "bg-slate-500"
+    bg: "bg-slate-800 text-white shadow-2xs",
+    dot: "bg-white"
   };
 };
 
@@ -298,16 +298,14 @@ export default function CommunitiesPage() {
                     </span>
 
                     {/* Join Mode Badge */}
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] sm:text-[9px] font-bold uppercase tracking-wider ${
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[9px] font-bold uppercase tracking-wider shadow-2xs ${
                       community.joinMode === 'INVITE_ONLY'
-                        ? 'bg-rose-50 border-rose-200 text-rose-700'
+                        ? 'bg-rose-600 text-white'
                         : community.joinMode === 'APPROVAL'
-                          ? 'bg-amber-50 border-amber-200 text-amber-700'
-                          : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-emerald-600 text-white'
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
                       {community.joinMode === 'INVITE_ONLY' ? t('inviteOnly') : community.joinMode === 'APPROVAL' ? t('approval') : t('openJoin')}
                     </span>
                   </div>

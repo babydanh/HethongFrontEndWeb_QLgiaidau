@@ -146,13 +146,13 @@ function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
 
     const roomTime = Date.parse(room.updatedAt);
     const existingTime = Date.parse(existing.updatedAt);
+    const unreadCount = existing.id === room.id
+      ? Math.max(existing.unreadCount, room.unreadCount)
+      : existing.unreadCount + room.unreadCount;
     if (roomTime >= existingTime) {
-      byConversation.set(key, {
-        ...room,
-        unreadCount: Math.max(existing.unreadCount, room.unreadCount),
-      });
-    } else if (existing.unreadCount < room.unreadCount) {
-      byConversation.set(key, { ...existing, unreadCount: room.unreadCount });
+      byConversation.set(key, { ...room, unreadCount });
+    } else {
+      byConversation.set(key, { ...existing, unreadCount });
     }
   }
   return Array.from(byConversation.values()).sort(
@@ -160,15 +160,22 @@ function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
   );
 }
 
-function roomTitle(room: InboxRoom, labels: { club: string; conversation: string }): string {
+function roomTitle(
+  room: InboxRoom,
+  labels: { club: string; conversation: string },
+  currentUserId?: string,
+): string {
+  if (room.type === 'DIRECT') {
+    const other = currentUserId
+      ? room.participants?.find((participant) => participant.id !== currentUserId)
+      : undefined;
+    return other?.fullName?.trim() || labels.conversation;
+  }
   if (room.name) return room.name;
   if (room.clubName) return room.clubName;
   if (room.communityName) return room.communityName;
-  const other = room.participants?.find((participant) => participant.fullName);
-  return (
-    other?.fullName ||
-    (room.type === 'CLUB' ? labels.club : labels.conversation)
-  );
+  const participant = room.participants?.find((item) => item.fullName);
+  return participant?.fullName || (room.type === 'CLUB' ? labels.club : labels.conversation);
 }
 
 function getRoomAvatar(room: InboxRoom, currentUserId?: string): string | null {
@@ -318,7 +325,7 @@ export default function UnifiedChatWidget() {
       ? translate('aiAssistant')
       : selection.kind === 'SUPPORT'
         ? translate('support')
-        : roomTitle(selectedRoom!, roomLabels);
+        : roomTitle(selectedRoom!, roomLabels, user?.id);
 
   const selectedRoomAvatar = selectedRoom
     ? getRoomAvatar(selectedRoom, user?.id)
@@ -403,6 +410,21 @@ export default function UnifiedChatWidget() {
   }, [selection]);
 
   useEffect(() => {
+    if (!userId) return;
+    const active = selectionRef.current;
+    if (active.kind !== 'ROOM') return;
+    const belongsToCurrentUser = active.room.participants?.some((participant) => participant.id === userId) ?? false;
+    if (!belongsToCurrentUser) {
+      setSelection({ kind: 'AI' });
+      setMessages([]);
+      setNextCursor(null);
+      setHasMoreMessages(false);
+    }
+  }, [userId]);
+
+
+
+  useEffect(() => {
     if (typeof window !== 'undefined' && aiMessages.length > 0) {
       try {
         localStorage.setItem('sporto_ai_chat_messages', JSON.stringify(aiMessages));
@@ -420,9 +442,11 @@ export default function UnifiedChatWidget() {
         const currentSelection = selectionRef.current;
         const currentActiveRoom =
           currentSelection.kind === 'ROOM' ? currentSelection.room : null;
-        if (currentActiveRoom && !fetched.some((r) => r.id === currentActiveRoom.id)) {
+        const activeRoomBelongsToCurrentUser = currentActiveRoom?.participants?.some((participant) => participant.id === userId) ?? false;
+        if (currentActiveRoom && activeRoomBelongsToCurrentUser && !fetched.some((r) => r.id === currentActiveRoom.id)) {
           return [currentActiveRoom, ...fetched];
         }
+
         return fetched.map((room) => (
           room.id === currentActiveRoom?.id
             ? { ...room, unreadCount: currentActiveRoom.unreadCount }
@@ -444,7 +468,22 @@ export default function UnifiedChatWidget() {
     }
   }, [isAuthenticated, userId]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const socket = socketClient.refreshChatAuthentication();
+    const handleRoomActivity = (payload: { roomId?: string }) => {
+      if (payload?.roomId) void refreshRooms();
+    };
+    socket.on('chat:room:created', handleRoomActivity);
+    socket.on('chat:room:updated', handleRoomActivity);
+    return () => {
+      socket.off('chat:room:created', handleRoomActivity);
+      socket.off('chat:room:updated', handleRoomActivity);
+    };
+  }, [isAuthenticated, refreshRooms]);
+
   const searchMatches = useMemo(() => {
+
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     if (selection.kind === 'ROOM') {
@@ -1256,7 +1295,27 @@ export default function UnifiedChatWidget() {
       toast.error(translate('chatStrangerMessagesDisabled'));
       return;
     }
+
+    if (selection.room.type === 'DIRECT' && otherParticipant?.id) {
+      try {
+        const policy = await chatApi.getDirectMessagePolicy(otherParticipant.id);
+        if (!policy.canMessage) {
+          toast.error(
+            policy.reasonCode === 'BLOCKED'
+              ? translate('blockedUserCannotMessage')
+              : translate('chatStrangerMessagesDisabled'),
+          );
+          await refreshRooms();
+          return;
+        }
+      } catch {
+        toast.error(translate('chatStrangerMessagesDisabled'));
+        return;
+      }
+    }
+
     const currentReply = replyingTo;
+
     const filesToUpload = [...selectedFiles];
 
     setSending(true);
@@ -1617,7 +1676,7 @@ export default function UnifiedChatWidget() {
                       )));
                       setIsMobileRoomOpen(true);
                     }}
-                    aria-label={`${roomTitle(room, roomLabels)}${room.unreadCount > 0 ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
+                    aria-label={`${roomTitle(room, roomLabels, user?.id)}${room.unreadCount > 0 ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${
                       isSelected
                         ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
@@ -1637,14 +1696,15 @@ export default function UnifiedChatWidget() {
                         {avatar ? (
                           <img
                             src={avatar}
-                            alt={roomTitle(room, roomLabels)}
+                            alt={roomTitle(room, roomLabels, user?.id)}
+
                             className="h-full w-full object-cover"
                           />
                         ) : isClub ? (
                           <MessageCircle className="h-4 w-4" />
                         ) : (
                           <span className="text-xs font-bold">
-                            {roomTitle(room, roomLabels).charAt(0).toUpperCase()}
+                            {roomTitle(room, roomLabels, user?.id).charAt(0).toUpperCase()}
                           </span>
                         )}
                       </span>
@@ -1652,7 +1712,7 @@ export default function UnifiedChatWidget() {
                     <span className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <strong className="block truncate text-xs font-semibold">
-                          {roomTitle(room, roomLabels)}
+{roomTitle(room, roomLabels, user?.id)}
                         </strong>
                         {isClub && (
                           <span className="rounded bg-blue-200/80 px-1 py-0.2 text-[9px] font-bold text-blue-800 shrink-0">
@@ -2747,15 +2807,24 @@ export default function UnifiedChatWidget() {
                                 const otherLastRead = selectedRoom ? (roomReadStates[selectedRoom.id]?.[otherParticipant?.id || ''] || otherParticipant?.lastReadAt) : null;
                                 const isSeen = otherLastRead ? new Date(otherLastRead).getTime() >= new Date(message.createdAt).getTime() : false;
 
-                                if (isSeen && otherParticipant?.avatarUrl) {
+                                if (isSeen && otherParticipant) {
                                   return (
                                     <div className="mt-1 flex items-center justify-end gap-1 px-1" title={translate('seenBy', { name: otherParticipant.fullName || '' })}>
                                       <span className="text-[9px] text-slate-400 font-medium">{translate('seen')}</span>
-                                      <img
-                                        src={otherParticipant.avatarUrl}
-                                        alt={otherParticipant.fullName || translate('seen')}
-                                        className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
-                                      />
+                                      {otherParticipant.avatarUrl ? (
+                                        <img
+                                          src={otherParticipant.avatarUrl}
+                                          alt={otherParticipant.fullName || translate('seen')}
+                                          className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
+                                        />
+                                      ) : (
+                                        <span
+                                          aria-hidden="true"
+                                          className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-100 text-[8px] font-bold text-blue-700"
+                                        >
+                                          {(otherParticipant.fullName || '?').trim().charAt(0).toUpperCase()}
+                                        </span>
+                                      )}
                                     </div>
                                   );
                                 }

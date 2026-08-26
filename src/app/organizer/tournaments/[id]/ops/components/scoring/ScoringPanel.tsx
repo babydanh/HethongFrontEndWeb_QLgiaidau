@@ -70,6 +70,7 @@ export const buildScoreDraft = (
 ): ScoreDraft => {
   const resolvedRules = resolveMatchSportRules({
     matchConfig: match.matchConfig,
+    stageRoundConfig: match.stage?.roundConfig ?? match.group?.stage?.roundConfig ?? null,
     tournament: {
       sportRules: tournamentSportRules,
       tournamentConfig: match.tournament?.tournamentConfig,
@@ -121,6 +122,7 @@ export function ScoringPanel({
 
   const resolvedRules = resolveMatchSportRules({
     matchConfig: match.matchConfig,
+    stageRoundConfig: match.stage?.roundConfig ?? match.group?.stage?.roundConfig ?? null,
     tournament: {
       sportRules: tournamentSportRules,
       tournamentConfig: match.tournament?.tournamentConfig,

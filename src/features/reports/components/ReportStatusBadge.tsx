@@ -3,12 +3,12 @@ import { useTranslations } from 'next-intl';
 import type { ReportStatus } from '../types';
 
 const statusClasses: Record<ReportStatus, string> = {
-  SUBMITTED: 'border-blue-200 bg-blue-50 text-blue-700',
-  TRIAGED: 'border-blue-200 bg-blue-50 text-blue-700',
-  UNDER_REVIEW: 'border-amber-200 bg-amber-50 text-amber-800',
-  ESCALATED: 'border-slate-200 bg-rose-50 text-rose-700',
-  RESOLVED: 'border-blue-200 bg-blue-50 text-blue-700',
-  REJECTED: 'border-slate-200 bg-slate-100 text-slate-600',
+  SUBMITTED: 'bg-blue-600 text-white font-bold shadow-2xs',
+  TRIAGED: 'bg-sky-600 text-white font-bold shadow-2xs',
+  UNDER_REVIEW: 'bg-amber-600 text-white font-bold shadow-2xs',
+  ESCALATED: 'bg-rose-600 text-white font-bold shadow-2xs',
+  RESOLVED: 'bg-emerald-600 text-white font-bold shadow-2xs',
+  REJECTED: 'bg-slate-700 text-white font-bold shadow-2xs',
 };
 
 export function ReportStatusBadge({ status }: { status: ReportStatus }) {

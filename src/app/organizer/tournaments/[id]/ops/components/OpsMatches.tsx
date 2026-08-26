@@ -277,6 +277,7 @@ export function OpsMatches({
     const isBlocked = !!matchInsight?.dependencyBlocked || !match.participant1Id || !match.participant2Id;
     const resolvedRules = resolveMatchSportRules({
       matchConfig: match.matchConfig,
+      stageRoundConfig: match.stage?.roundConfig ?? match.group?.stage?.roundConfig ?? null,
       tournament: { sportRules: tournamentSportRules },
     });
     const scorePresentation = getMatchScorePresentation(resolvedRules.kind);

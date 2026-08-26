@@ -12,7 +12,7 @@ test.describe('Edit Profile Flow', () => {
   };
 
   const sleep = async (page: Page, ms = 500) => page.waitForTimeout(ms);
-  const userEmail = 'user_player2_1787645415708@sporto.vn';
+  const userEmail = 'user8@gmail.com';
   const userPassword = 'Password123!';
 
   test.beforeEach(async ({ page }) => {

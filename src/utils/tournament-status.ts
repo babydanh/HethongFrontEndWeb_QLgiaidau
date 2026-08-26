@@ -61,26 +61,26 @@ export const getTournamentStatusLabel = (status?: string | null, labels?: Partia
 export const getTournamentStatusClassName = (status?: string | null) => {
   switch (normalizeTournamentStatus(status)) {
     case 'DRAFT':
-      return 'bg-slate-100 text-slate-600 border-slate-200';
+      return 'bg-slate-700 text-white border-slate-600 shadow-2xs';
     case 'PENDING_APPROVAL':
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'bg-amber-600 text-white border-amber-500 shadow-2xs';
     case 'PENDING_DELETE':
-      return 'bg-rose-50 text-rose-600 border-rose-200';
+      return 'bg-rose-600 text-white border-rose-500 shadow-2xs';
     case 'UPCOMING':
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'bg-blue-600 text-white border-blue-500 shadow-2xs';
     case 'REGISTRATION_OPEN':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-emerald-600 text-white border-emerald-500 shadow-2xs';
     case 'REGISTRATION_CLOSED':
-      return 'bg-slate-100 text-slate-600 border-slate-200';
+      return 'bg-slate-700 text-white border-slate-600 shadow-2xs';
     case 'IN_PROGRESS':
     case 'ONGOING':
-      return 'bg-blue-600 text-white border-blue-700';
+      return 'bg-rose-600 text-white border-rose-700 shadow-2xs';
     case 'COMPLETED':
-      return 'bg-slate-100 text-slate-500 border-slate-200';
+      return 'bg-slate-800 text-white border-slate-700 shadow-2xs';
     case 'CANCELLED':
-      return 'bg-rose-50 text-rose-600 border-rose-200';
+      return 'bg-rose-700 text-white border-rose-600 shadow-2xs';
     default:
-      return 'bg-slate-100 text-slate-600 border-slate-200';
+      return 'bg-slate-700 text-white border-slate-600 shadow-2xs';
   }
 };
 

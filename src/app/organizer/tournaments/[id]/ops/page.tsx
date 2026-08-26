@@ -334,6 +334,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       const customConfigSummary: string[] = [];
       const resolvedRules = resolveMatchSportRules({
         matchConfig: bracketMatch?.matchConfig,
+        stageRoundConfig: bracketMatch?.stage?.roundConfig ?? bracketMatch?.group?.stage?.roundConfig ?? null,
         tournament: {
           sportRules: tournament?.sportRules ?? null,
           tournamentConfig: tournament?.tournamentConfig,

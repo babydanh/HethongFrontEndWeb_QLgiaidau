@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
 import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import { useAuthStore } from '@/lib/zustand/authStore';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
@@ -18,6 +20,8 @@ interface Props {
 
 export default function TeamsTab({ tournament, tournamentId, divisionId, participantId }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const { user } = useAuthStore();
+  const effectiveTournamentId = tournamentId || tournament.id;
   const { openUserProfile } = useUserProfileModalStore();
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -237,15 +241,26 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           </div>
                         </td>
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
-                          {team.isPaid ? (
-                            <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
-                              {translate("paymentPaid")}
-                            </span>
-                          ) : (
-                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
-                              {translate("paymentPending")}
-                            </span>
-                          )}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {team.isPaid ? (
+                              <span className="bg-emerald-600 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap shadow-2xs">
+                                {translate("paymentPaid")}
+                              </span>
+                            ) : (
+                              <span className="bg-amber-600 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap shadow-2xs">
+                                {translate("paymentPending")}
+                              </span>
+                            )}
+                            {!team.isPaid && user?.id && (team.registeredBy?.id === user.id || team.members?.some(m => m.userId === user.id)) && Number(tournament.entryFee ?? 0) > 0 && (
+                              <Link
+                                href={`/payments/checkout?tournamentId=${effectiveTournamentId}&participantId=${team.id}${divisionId ? `&divisionId=${divisionId}` : ''}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-flex items-center gap-1 shadow-sm transition-all hover:scale-105"
+                              >
+                                💳 Nộp phí
+                              </Link>
+                            )}
+                          </div>
                         </td>                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
                           {isExpandable ? (
                             <button

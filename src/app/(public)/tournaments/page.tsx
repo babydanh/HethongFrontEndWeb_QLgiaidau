@@ -665,38 +665,80 @@ export default function TournamentsListPage() {
           </div>
         )}
                 {/* Quick status filters */}
-        <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label={translate("quickFilter")}>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 px-2.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-blue-800">
-              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-2.5" aria-label={translate("quickFilter")}>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-900">
+              <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
               {translate("quickFilter")}
             </span>
-            <span className="text-xs font-medium text-slate-500">{translate("quickFilterHint")}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <button type="button" aria-pressed={selectedStatus === 'COMPLETED'} onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
-              className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-sm' : 'bg-white text-[#4A4E4D] border-slate-200 hover:border-slate-400'}`}>
+          <div className="flex flex-wrap items-center justify-end gap-1.5 text-xs font-bold sm:ml-auto">
+            <button
+              type="button"
+              aria-pressed={selectedStatus === 'COMPLETED'}
+              onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                selectedStatus === 'COMPLETED'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-800 border border-slate-300 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
               {recentlyFinishedLabel}
             </button>
-            <button type="button" aria-pressed={selectedStatus === 'IN_PROGRESS'} onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
-              className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-sm' : 'bg-white text-[#1E56A0] border-blue-200 hover:border-blue-400'}`}>
+            <button
+              type="button"
+              aria-pressed={selectedStatus === 'IN_PROGRESS'}
+              onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                selectedStatus === 'IN_PROGRESS'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-600 hover:text-white'
+              }`}
+            >
               {translate("inProgress")}
             </button>
-            <button type="button" aria-pressed={selectedStatus === 'REGISTRATION_OPEN'} onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
-              className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-[#EFF8E9] text-[#386629] border-emerald-300 font-bold shadow-sm' : 'bg-white text-[#386629] border-emerald-200 hover:border-emerald-400'}`}>
+            <button
+              type="button"
+              aria-pressed={selectedStatus === 'REGISTRATION_OPEN'}
+              onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                selectedStatus === 'REGISTRATION_OPEN'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-600 hover:text-white'
+              }`}
+            >
               {translate("registrationOpen")}
             </button>
-            <button type="button" aria-pressed={selectedStatus === 'UPCOMING'} onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
-              className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-sm' : 'bg-white text-[#995C00] border-amber-200 hover:border-amber-400'}`}>
+            <button
+              type="button"
+              aria-pressed={selectedStatus === 'UPCOMING'}
+              onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                selectedStatus === 'UPCOMING'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-600 hover:text-white'
+              }`}
+            >
               {translate("upcoming")}
             </button>
-            <button type="button" aria-pressed={selectedStatus === 'COMPLETED'} onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
-              className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-sm' : 'bg-white text-[#64748B] border-slate-200 hover:border-slate-400'}`}>
+            <button
+              type="button"
+              aria-pressed={selectedStatus === 'COMPLETED'}
+              onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                selectedStatus === 'COMPLETED'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-900 hover:text-white'
+              }`}
+            >
               {translate("completed")}
             </button>
             {selectedStatus && (
-              <button type="button" onClick={() => { setSelectedStatus(''); setPage(1); }}
-                className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100">
+              <button
+                type="button"
+                onClick={() => { setSelectedStatus(''); setPage(1); }}
+                className="inline-flex items-center gap-1 rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-rose-700 cursor-pointer"
+              >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
                 {translate("clearActiveFilter")}
               </button>
@@ -804,10 +846,10 @@ export default function TournamentsListPage() {
                         <span className="text-slate-300">•</span>
 
                         {/* Ranked or Unranked Badge */}
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold shadow-2xs ${
                           tournament.isRanked
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-slate-50 text-slate-600 border border-slate-200'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-700 text-white'
                         }`}>
                           {tournament.isRanked ? translate('rankedBadgeLabel') : translate('recreationalBadgeLabel')}
                         </span>
@@ -816,7 +858,7 @@ export default function TournamentsListPage() {
                         {tournament.parentId && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-bold border border-blue-200">
+                            <span className="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[8px] font-bold shadow-2xs">
                               {translate("seriesLabel")}
                             </span>
                           </>

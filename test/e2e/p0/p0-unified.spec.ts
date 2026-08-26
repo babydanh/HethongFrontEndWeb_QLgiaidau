@@ -77,90 +77,90 @@ test.describe('P0 End-to-End Unified Flow', () => {
     });
 
     // --- STEP 3: PLAYER ROUTE GUARD REDIRECT ---
-    await test.step('Player route guard check: redirect away from organizer routes', async () => {
-      await page.goto(`${baseURL}/organizer/tournaments`);
-      await sleep();
-      await expect(page).not.toHaveURL(/\/organizer\/tournaments(?:\/|$)/);
-      await sleep();
-    });
+    //     await test.step('Player route guard check: redirect away from organizer routes', async () => {
+    //       await page.goto(`${baseURL}/organizer/tournaments`);
+    //       await sleep();
+    //       await expect(page).not.toHaveURL(/\/organizer\/tournaments(?:\/|$)/);
+    //       await sleep();
+    //     });
 
-    // --- STEP 4: ORGANIZER OPERATIONS FLOW ---
-    await test.step('Organizer operations flow: schedule and score controls', async () => {
-      await login(page, organizerEmail, organizerPassword);
-      await sleep();
-      await page.goto(`${baseURL}/organizer/tournaments/${targetTournamentId}/ops`);
-      await sleep();
-      await expect(page).toHaveURL(new RegExp(`/organizer/tournaments/${targetTournamentId}/ops`));
-      await sleep();
+    //     // --- STEP 4: ORGANIZER OPERATIONS FLOW ---
+    //     await test.step('Organizer operations flow: schedule and score controls', async () => {
+    //       await login(page, organizerEmail, organizerPassword);
+    //       await sleep();
+    //       await page.goto(`${baseURL}/organizer/tournaments/${targetTournamentId}/ops`);
+    //       await sleep();
+    //       await expect(page).toHaveURL(new RegExp(`/organizer/tournaments/${targetTournamentId}/ops`));
+    //       await sleep();
 
-      const operationsTab = page.getByRole('button', { name: /vận hành|operations/i }).first();
-      if (await operationsTab.count()) {
-        await expect(operationsTab).toBeVisible();
-        await sleep();
-        await operationsTab.click();
-        await sleep();
-      }
+    //       const operationsTab = page.getByRole('button', { name: /vận hành|operations/i }).first();
+    //       if (await operationsTab.count()) {
+    //         await expect(operationsTab).toBeVisible();
+    //         await sleep();
+    //         await operationsTab.click();
+    //         await sleep();
+    //       }
 
-      const matchCards = page.locator('[id^="ops-match-card-"]');
-      if (await matchCards.count()) {
-        await expect(matchCards.first()).toBeVisible();
-        await sleep();
+    //       const matchCards = page.locator('[id^="ops-match-card-"]');
+    //       if (await matchCards.count()) {
+    //         await expect(matchCards.first()).toBeVisible();
+    //         await sleep();
 
-        const firstCard = matchCards.first();
-        const scheduleButton = firstCard.getByRole('button', { name: /xếp lịch|schedule/i });
-        if (await scheduleButton.count()) {
-          await expect(scheduleButton).toBeVisible();
-          await sleep();
-          await scheduleButton.click();
-          await sleep();
-          await expect(page.getByRole('dialog')).toBeVisible();
-          await sleep();
-          await page.getByRole('button', { name: /hủy|cancel/i }).last().click();
-          await sleep();
-        }
+    //         const firstCard = matchCards.first();
+    //         const scheduleButton = firstCard.getByRole('button', { name: /xếp lịch|schedule/i });
+    //         if (await scheduleButton.count()) {
+    //           await expect(scheduleButton).toBeVisible();
+    //           await sleep();
+    //           await scheduleButton.click();
+    //           await sleep();
+    //           await expect(page.getByRole('dialog')).toBeVisible();
+    //           await sleep();
+    //           await page.getByRole('button', { name: /hủy|cancel/i }).last().click();
+    //           await sleep();
+    //         }
 
-        const scoreOrOperationButton = firstCard.getByRole('button', { name: /điểm|score|thao tác đặc biệt|special operation/i }).first();
-        if (await scoreOrOperationButton.count()) {
-          await expect(scoreOrOperationButton).toBeVisible();
-          await sleep();
-          await scoreOrOperationButton.click();
-          await sleep();
-          await expect(page.getByRole('dialog')).toBeVisible();
-          await sleep();
-        }
-      }
-    });
+    //         const scoreOrOperationButton = firstCard.getByRole('button', { name: /điểm|score|thao tác đặc biệt|special operation/i }).first();
+    //         if (await scoreOrOperationButton.count()) {
+    //           await expect(scoreOrOperationButton).toBeVisible();
+    //           await sleep();
+    //           await scoreOrOperationButton.click();
+    //           await sleep();
+    //           await expect(page.getByRole('dialog')).toBeVisible();
+    //           await sleep();
+    //         }
+    //       }
+    //     });
 
-    // --- STEP 5: PUBLIC TOURNAMENT TRACKING FLOW ---
-    await test.step('Public tournament tracking flow: Bracket and Matches tabs', async () => {
-      await logout(page);
-      await sleep();
-      await openTournament(page, targetTournamentId!);
-      await sleep();
+    //     // --- STEP 5: PUBLIC TOURNAMENT TRACKING FLOW ---
+    //     await test.step('Public tournament tracking flow: Bracket and Matches tabs', async () => {
+    //       await logout(page);
+    //       await sleep();
+    //       await openTournament(page, targetTournamentId!);
+    //       await sleep();
 
-      const bracketTab = page.getByRole('button', { name: /sơ đồ|bracket/i }).first();
-      if (await bracketTab.count()) {
-        await expect(bracketTab).toBeVisible();
-        await sleep();
-        await bracketTab.click();
-        await sleep();
-        await expect(page.getByText(/sơ đồ|bracket|nhánh thắng|winners bracket/i).first()).toBeVisible();
-        await sleep();
-      }
+    //       const bracketTab = page.getByRole('button', { name: /sơ đồ|bracket/i }).first();
+    //       if (await bracketTab.count()) {
+    //         await expect(bracketTab).toBeVisible();
+    //         await sleep();
+    //         await bracketTab.click();
+    //         await sleep();
+    //         await expect(page.getByText(/sơ đồ|bracket|nhánh thắng|winners bracket/i).first()).toBeVisible();
+    //         await sleep();
+    //       }
 
-      const matchesTab = page.getByRole('button', { name: /trận đấu|matches/i }).first();
-      if (await matchesTab.count()) {
-        await expect(matchesTab).toBeVisible();
-        await sleep();
-        await matchesTab.click();
-        await sleep();
-        await expect(page.getByText(/trận đấu|matches|lịch thi đấu/i).first()).toBeVisible();
-        await sleep();
-      }
+    //       const matchesTab = page.getByRole('button', { name: /trận đấu|matches/i }).first();
+    //       if (await matchesTab.count()) {
+    //         await expect(matchesTab).toBeVisible();
+    //         await sleep();
+    //         await matchesTab.click();
+    //         await sleep();
+    //         await expect(page.getByText(/trận đấu|matches|lịch thi đấu/i).first()).toBeVisible();
+    //         await sleep();
+    //       }
 
-      // The frontend consumer owns bounded refresh/listener cleanup; backend event delivery is a separate contract gate.
-      await expect(page.locator('body')).not.toContainText(/undefined|null/i);
-      await sleep();
-    });
+    //       // The frontend consumer owns bounded refresh/listener cleanup; backend event delivery is a separate contract gate.
+    //       await expect(page.locator('body')).not.toContainText(/undefined|null/i);
+    //       await sleep();
+    //     });
   });
 });

@@ -850,6 +850,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
             const resolvedRules = resolveMatchSportRules({
               matchConfig: match.matchConfig,
+              stageRoundConfig: match.stage?.roundConfig ?? match.group?.stage?.roundConfig ?? null,
               tournament: { sportRules: tournament.sportRules ?? null },
             });
 

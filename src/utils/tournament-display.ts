@@ -103,12 +103,12 @@ export const isParticipantReadyForNextStep = (status?: string | null) =>
   isParticipantApproved(status) || isParticipantPendingApproval(status);
 
 export const getParticipantStatusClassName = (status?: string | null) => {
-  if (isParticipantApproved(status)) return 'border-blue-200 bg-blue-50 text-blue-700';
-  if (isParticipantPendingApproval(status)) return 'border-amber-100 bg-amber-50 text-amber-700';
-  if (isParticipantPendingPartner(status)) return 'border-blue-100 bg-blue-50 text-blue-700';
-  if (isParticipantWaitlisted(status)) return 'border-blue-100 bg-blue-50 text-blue-700';
-  if (status === 'REJECTED') return 'border-amber-100 bg-amber-50 text-amber-700';
-  if (status === 'KICKED' || status === 'DISQUALIFIED') return 'border-rose-100 bg-rose-50 text-rose-700';
-  if (status === 'WITHDRAWN') return 'border-slate-200 bg-slate-100 text-slate-600';
-  return 'border-slate-200 bg-slate-100 text-slate-600';
+  if (isParticipantApproved(status)) return 'bg-emerald-600 text-white font-bold shadow-2xs';
+  if (isParticipantPendingApproval(status)) return 'bg-amber-600 text-white font-bold shadow-2xs';
+  if (isParticipantPendingPartner(status)) return 'bg-blue-600 text-white font-bold shadow-2xs';
+  if (isParticipantWaitlisted(status)) return 'bg-indigo-600 text-white font-bold shadow-2xs';
+  if (status === 'REJECTED') return 'bg-amber-700 text-white font-bold shadow-2xs';
+  if (status === 'KICKED' || status === 'DISQUALIFIED') return 'bg-rose-600 text-white font-bold shadow-2xs';
+  if (status === 'WITHDRAWN') return 'bg-slate-700 text-white font-bold shadow-2xs';
+  return 'bg-slate-700 text-white font-bold shadow-2xs';
 };

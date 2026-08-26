@@ -269,8 +269,10 @@ export interface TournamentParticipant {
   footballTeamLogoUrl?: string | null;
   rosterLockedAt?: string | null;
   seed: number | null;
-  isPaid: boolean;
+    isPaid: boolean;
+  entryFeeAtRegistration?: string | number | null;
   eloPoints?: number;
+
   isWildcard?: boolean;
   tournamentDivisionId?: string | null;
   registeredAt: string;

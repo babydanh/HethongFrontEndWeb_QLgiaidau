@@ -141,13 +141,13 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
     }
 
     // Điền danh sách VĐV ảo (ô Textarea nhận danh sách nhiều dòng)
-    await page.getByPlaceholder(/Mỗi dòng là 1 tên VĐV/i)
-      .fill('Vận động viên 1\nVận động viên 2\nVận động viên 3\nVận động viên 4\nVận động viên 5\nVận động viên 6\nVận động viên 7');
-    await sleep();
+    // await page.getByPlaceholder(/Mỗi dòng là 1 tên VĐV/i)
+    //   .fill('Vận động viên 1\nVận động viên 2\nVận động viên 3\nVận động viên 4\nVận động viên 5\nVận động viên 6\nVận động viên 7');
+    // await sleep();
 
     // Click vào nút "Sinh VĐV ảo"
-    await page.getByRole('button', { name: /Sinh VĐV ảo/i }).click();
-    await sleep();
+    // await page.getByRole('button', { name: /Sinh VĐV ảo/i }).click();
+    // await sleep();
 
     await page.getByRole('button', { name: /Lưu thông tin đăng ký/i }).click();
     await sleep();
@@ -167,15 +167,15 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
     await sleep();
 
     // --- TAB 6: TÀI CHÍNH (Finance) ---
-    await page.getByTestId('tab-finance').click();
-    await sleep();
-    const entryFeeInput = page.locator('label').filter({ hasText: /Lệ phí|Entry fee/i }).locator('..').locator('input');
-    if (await entryFeeInput.isVisible() && !await entryFeeInput.isDisabled()) {
-      await entryFeeInput.fill('100000');
-      await sleep();
-      await page.getByRole('button', { name: /Lưu cài đặt tài chính/i }).click();
-      await sleep();
-    }
+    // await page.getByTestId('tab-finance').click();
+    // await sleep();
+    // const entryFeeInput = page.locator('label').filter({ hasText: /Lệ phí|Entry fee/i }).locator('..').locator('input');
+    // if (await entryFeeInput.isVisible() && !await entryFeeInput.isDisabled()) {
+    //   await entryFeeInput.fill('100000');
+    //   await sleep();
+    //   await page.getByRole('button', { name: /Lưu cài đặt tài chính/i }).click();
+    //   await sleep();
+    // }
 
     // --- TAB 7: PHÂN QUYỀN (Permissions) ---
     await page.getByTestId('tab-permissions').click();

@@ -336,11 +336,6 @@ export default function ProfilePage() {
 
     let isMounted = true;
 
-    if (user && (!profileData || profileData.id !== user.id)) {
-      setProfileData(user as unknown as UserProfile);
-      setIsLoading(false);
-    }
-
     const fetchProfile = async () => {
       // A persisted user is already safe to render as the first shell.
       if (!user?.id && !profileData?.id) {
@@ -586,7 +581,7 @@ export default function ProfilePage() {
   }, [loadedProfileUserId, participatingTournaments]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
 
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
@@ -631,10 +626,10 @@ export default function ProfilePage() {
             <RankAvatar
               src={displayUser?.avatarUrl}
               name={displayUser?.fullName}
-              elo={featuredElo ?? undefined}
-              tierName={featuredRank?.tier?.name || featuredRank?.tierName}
-              categoryName={featuredRank?.categoryName}
-              matchesPlayed={featuredRank?.matchesPlayed || 0}
+              elo={featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? undefined}
+              tierName={featuredRank?.tierName || featuredRank?.tier?.name || undefined}
+              categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
+              matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
               size="lg"
               ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
             />
@@ -660,16 +655,36 @@ export default function ProfilePage() {
           <div className="space-y-3">
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+                <h1 className="text-3xl font-bold text-slate-900 flex flex-wrap items-center gap-2.5 tracking-tight">
                   {isLoading ? (
                     <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
                   ) : (
                     displayUser?.fullName || translate("anonymousUser")
                   )}
-                  {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
-                    <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                  {displayUser?.roles?.includes('ADMIN') && (
+                    <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
                       <ShieldCheck className="w-5 h-5 text-blue-600" />
                     </span>
+                  )}
+                  {displayUser?.isVerified && (
+                    <span title={translate("verified")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
+                      <ShieldCheck className="w-5 h-5 text-blue-600" />
+                    </span>
+                  )}
+                  {featuredRank && (
+                    <EloTierBadge
+                      elo={featuredRank.eloPoints}
+                      tierName={featuredRank.tierName || featuredRank.tier?.name || undefined}
+                      categoryName={featuredRank.categoryName}
+                      size="md"
+                    />
+                  )}
+                  {!featuredRank && latestEloHistory && (
+                    <EloTierBadge
+                      elo={latestEloHistory.newElo}
+                      categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
+                      size="md"
+                    />
                   )}
                 </h1>
 
@@ -685,41 +700,29 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {Array.from(new Set((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined || user?.roles || [])).map((role: string) => {
+              {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
                 let roleLabel = role;
-                let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
+                let roleColor = 'bg-blue-600 text-white shadow-2xs';
                 if (role === 'PLAYER') {
                   roleLabel = translate("rolePlayer");
-                  roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
+                  roleColor = 'bg-blue-600 text-white shadow-2xs';
                 } else if (role === 'ORGANIZER') {
                   roleLabel = translate("roleOrganizer");
-                  roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
+                  roleColor = 'bg-indigo-600 text-white shadow-2xs';
                 } else if (role === 'ADMIN') {
                   roleLabel = translate("roleModerator");
-                  roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
+                  roleColor = 'bg-purple-600 text-white shadow-2xs';
                 }
                 return (
-                  <span key={role} className={`px-3.5 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
+                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
                     {roleLabel}
                   </span>
                 );
               })}
 
-              {eligiblePublicRanks.length === 0 && latestEloHistory ? (
-                <EloTierBadge
-                  elo={latestEloHistory.newElo}
-                  categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
-                  size="md"
-                />
-              ) : eligiblePublicRanks.length === 0 ? (
-                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                  {translate("unranked")}
-                </span>
-              ) : null}
-
               {displayUser?.createdAt && (
-                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
+                <span className="bg-slate-800 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-white/80" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>
@@ -967,8 +970,13 @@ export default function ProfilePage() {
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
-                                    <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                    <Image
+                                      src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
+                                      alt={community.name}
+                                      fill
+                                      className={community.logoUrl ? "object-cover" : "object-contain p-2"}
+                                    />
                                   </div>
                                   <div className="min-w-0 flex-grow">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1006,8 +1014,13 @@ export default function ProfilePage() {
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
-                                    <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                    <Image
+                                      src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
+                                      alt={community.name}
+                                      fill
+                                      className={community.logoUrl ? "object-cover" : "object-contain p-2"}
+                                    />
                                   </div>
                                   <div className="min-w-0 flex-grow">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1476,13 +1489,23 @@ export default function ProfilePage() {
                     <div className="h-80 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
-                          data={[...eloHistory].reverse().map((item, index) => ({
-                            name: translate("matchLabel", { number: index + 1 }),
-                            'ELO': item.newElo,
-                            date: formatDate(item.createdAt, 'dd/MM/yyyy'),
-                            reason: item.reason || (item.changedPoints > 0 ? translate("win") : translate("loss")),
-                            tournament: item.match?.tournamentName || translate("tournamentFallback")
-                          }))}
+                          data={[...eloHistory].reverse().map((item, index) => {
+                            const norm = item.reason?.toUpperCase().trim() || '';
+                            let reasonLabel = item.changedPoints > 0 ? translate("win") : translate("loss");
+                            if (norm === 'ADMIN_ADD') reasonLabel = translate("adminAdd");
+                            else if (norm === 'ADMIN_SUBTRACT') reasonLabel = translate("adminSubtract");
+                            else if (norm === 'ADMIN_SET') reasonLabel = translate("adminSet");
+                            else if (norm.startsWith('ADMIN_')) reasonLabel = translate("adminEloAdjustment");
+                            else if (norm === 'INACTIVITY_DECAY') reasonLabel = translate("eloInactivityDecay");
+
+                            return {
+                              name: translate("matchLabel", { number: index + 1 }),
+                              'ELO': item.newElo,
+                              date: formatDate(item.createdAt, 'dd/MM/yyyy'),
+                              reason: reasonLabel,
+                              tournament: item.match?.tournamentName || (norm.startsWith('ADMIN_') ? translate("adminEloAdjustment") : translate("tournamentFallback"))
+                            };
+                          })}
                           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -1497,7 +1520,7 @@ export default function ProfilePage() {
                                     <p className="font-bold">{data.date}</p>
                                     <p className="text-blue-400 mt-1 font-bold">ELO: {data.ELO}</p>
                                     <p className="text-slate-400 mt-0.5">{data.reason}</p>
-                                    <p className="text-slate-505 text-[10px] mt-0.5">{data.tournament}</p>
+                                    <p className="text-slate-500 text-[10px] mt-0.5">{data.tournament}</p>
                                   </div>
                                 );
                               }
@@ -1525,11 +1548,17 @@ export default function ProfilePage() {
                       {eloHistory.map((item) => {
                         const isGain = item.changedPoints >= 0;
                         const normalizedReason = item.reason?.toUpperCase() ?? '';
-                        const historyLabel = normalizedReason.startsWith('ADMIN_')
-                          ? translate("adminEloAdjustment")
-                          : normalizedReason === 'INACTIVITY_DECAY'
-                            ? translate("eloInactivityDecay")
-                            : item.match?.tournamentName || translate("rankedMatchFallback");
+                        const historyLabel = normalizedReason === 'ADMIN_ADD'
+                          ? translate("adminAdd")
+                          : normalizedReason === 'ADMIN_SUBTRACT'
+                            ? translate("adminSubtract")
+                            : normalizedReason === 'ADMIN_SET'
+                              ? translate("adminSet")
+                              : normalizedReason.startsWith('ADMIN_')
+                                ? translate("adminEloAdjustment")
+                                : normalizedReason === 'INACTIVITY_DECAY'
+                                  ? translate("eloInactivityDecay")
+                                  : item.match?.tournamentName || translate("rankedMatchFallback");
                         return (
                           <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
                             <div>

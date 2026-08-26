@@ -7,7 +7,15 @@ export function resolveBracketMatchRules(
   match: BracketMatch,
   fallbackKind: SportRuleKind = 'BADMINTON',
 ) {
-  return resolveSportRuleView(match.matchConfig, fallbackKind);
+  const stageRoundConfig = match.stage?.roundConfig ?? match.group?.stage?.roundConfig ?? null;
+  const mergedSource = {
+    ...(match.matchConfig ?? {}),
+    ...(stageRoundConfig ?? {}),
+  };
+  return resolveSportRuleView(
+    Object.keys(mergedSource).length > 0 ? mergedSource : match.matchConfig,
+    fallbackKind,
+  );
 }
 
 type BracketTranslate = (key: string, values?: Record<string, string | number>) => string;

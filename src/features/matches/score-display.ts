@@ -7,6 +7,7 @@ import type { SportRuleKind, SportRulesEnvelope } from '@/types/tournament';
 type MatchSportContext = {
   matchConfig?: Match['matchConfig'];
   scoreDetails?: Record<string, unknown> | null;
+  stageRoundConfig?: Record<string, unknown> | null;
   tournament?: {
     name?: string;
     sportRules?: SportRulesEnvelope | null;
@@ -104,8 +105,21 @@ export function resolveMatchSportRules(
       })
     : null;
 
+  const stageRoundConfig = match.stageRoundConfig
+    ?? (match as unknown as Match).stage?.roundConfig
+    ?? (match as unknown as Match).group?.stage?.roundConfig
+    ?? null;
+
+  const mergedSource = {
+    ...(match.tournament?.sportRules ?? {}),
+    ...(stageRoundConfig ?? {}),
+    ...(match.matchConfig ?? {}),
+  };
+
   const resolvedRules = resolveSportRuleView(
-    match.matchConfig ?? match.tournament?.sportRules,
+    Object.keys(mergedSource).length > 0
+      ? mergedSource
+      : match.tournament?.sportRules,
     inferredFromTournament ?? fallbackKind,
   );
   const tournamentMode = match.tournament?.tournamentConfig?.mode;

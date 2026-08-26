@@ -38,6 +38,8 @@ import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
+import { RankAvatar } from '@/components/ui/RankAvatar';
+import { rankingsApi } from '@/features/rankings/api';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
@@ -59,6 +61,33 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [pendingNotificationAction, setPendingNotificationAction] = useState<string | null>(null);
+  const [userRank, setUserRank] = useState<{ elo: number; tierName?: string; categoryName?: string } | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setUserRank(null);
+      return;
+    }
+    let isMounted = true;
+    rankingsApi
+      .getUserRankings(user.id)
+      .then((res) => {
+        if (!isMounted) return;
+        const ranks = res?.publicRanks || [];
+        const best = ranks.sort((a, b) => b.eloPoints - a.eloPoints)[0];
+        if (best) {
+          setUserRank({
+            elo: best.eloPoints,
+            tierName: best.tierName || best.tier?.name,
+            categoryName: best.categoryName,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   const {
     notifications,
@@ -546,18 +575,15 @@ export function Header() {
                 aria-label={t('accountMenuAria')}
                 aria-expanded={isDropdownOpen}
               >
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-semibold uppercase text-blue-600 transition-all hover:ring-2 hover:ring-blue-600 hover:ring-offset-2">
-                  {user?.avatarUrl ? (
-                    <span
-                      role="img"
-                      aria-label={t('avatarAria')}
-                      className="h-full w-full bg-cover bg-center"
-                      style={{ backgroundImage: `url("${user.avatarUrl}")` }}
-                    />
-                  ) : (
-                    user?.fullName?.charAt(0) || 'U'
-                  )}
-                </div>
+                <RankAvatar
+                  src={user?.avatarUrl}
+                  name={user?.fullName}
+                  elo={userRank?.elo}
+                  tierName={userRank?.tierName}
+                  categoryName={userRank?.categoryName}
+                  size="sm"
+                  ringClassName="ring-2 shadow-xs hover:scale-105 transition-transform"
+                />
               </button>
 
               <AnimatePresence>

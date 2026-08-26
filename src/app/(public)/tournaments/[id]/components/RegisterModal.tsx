@@ -56,7 +56,8 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
       const res = await tournamentsApi.register(tournamentId, payload);
       const participantId = res?.data?.participant?.id;
       const payableEntryFee = Number(res?.data?.entryFee ?? entryFee);
-      
+      const paymentEligible = res?.data?.paymentEligible === true;
+
       if (isDoubles && partnerEmailOrPhone.trim()) {
         toast.success(translate('partnerInviteSent'), { duration: 5000 });
       } else {
@@ -64,7 +65,8 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
       }
       onClose();
       
-      if (payableEntryFee > 0 && participantId) {
+            if (paymentEligible && payableEntryFee > 0 && participantId) {
+
         router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${tournamentId}`);
       } else {
         router.refresh();

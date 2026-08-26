@@ -419,10 +419,17 @@ api.interceptors.response.use(
     // their last successful snapshot and decide when the next reconciliation
     // is safe, instead of every caller retrying the same request here.
     if (error.response?.status >= 500 && !isDirectMessagingRequest(originalRequest)) {
-      const now = Date.now();
-      if (now - lastServerErrorToastAt >= SERVER_ERROR_TOAST_COOLDOWN_MS) {
-        lastServerErrorToastAt = now;
-        toast.error(getErrorMessage(error, undefined, undefined, 'staleData'));
+      const url = (originalRequest?.url ?? '').split('?')[0];
+      const isBackgroundPolling =
+        url.includes('/chat/rooms') ||
+        url.includes('/chat/unread') ||
+        url.includes('/notifications');
+      if (!isBackgroundPolling) {
+        const now = Date.now();
+        if (now - lastServerErrorToastAt >= SERVER_ERROR_TOAST_COOLDOWN_MS) {
+          lastServerErrorToastAt = now;
+          toast.error(getErrorMessage(error, undefined, undefined, 'staleData'));
+        }
       }
     }
 

@@ -301,8 +301,10 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
   translations,
 }: MatchRoundLabelOptions<TMatch>) => {
   const stage = getStage(match);
+  const branch = normalizeBranch(match.bracketBranch);
   const isRoundRobin = isGroupOrRoundRobinStage(stage, tournamentFormat);
-  const phasePrefix = includePhasePrefix ? getPhasePrefix(match, tournamentFormat, translations) : null;
+  const isGrandFinal = branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL';
+  const phasePrefix = includePhasePrefix && !isGrandFinal ? getPhasePrefix(match, tournamentFormat, translations) : null;
 
   if (isRoundRobin && !isKnockoutStage(stage, tournamentFormat)) {
     const rawGroupName = match.group?.name?.trim();

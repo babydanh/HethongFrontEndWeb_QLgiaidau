@@ -15,6 +15,7 @@ import { buildRoundFilterOptions, getMatchRoundLabel, getRoundRobinRoundInfo, ty
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
 import { getMatchCourtLabel } from '@/utils/tournament-location';
+import { getUniqueParticipantMembers } from '@/utils/participant-display';
 
 interface Props {
   tournament: Tournament;
@@ -528,13 +529,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         </span>
       );
     }
-    if (participant.members && participant.members.length > 0) {
+    const members = getUniqueParticipantMembers(participant.members);
+    if (members.length > 0) {
       return (
         <span className={`text-sm font-bold flex items-center gap-1.5 flex-wrap ${
           isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
         }`}>
-          {participant.members.map((m, idx) => (
-            <span key={m.userId} className="inline-flex items-center">
+          {members.map((m, idx) => (
+            <span key={m.userId || `${m.fullName || 'member'}-${idx}`} className="inline-flex items-center">
               <button
                 type="button"
                 onClick={(e) => {
@@ -554,7 +556,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               >
                 {m.fullName || matchTranslate('memberFallback')}
               </button>
-              {idx < participant.members!.length - 1 && <span className="text-slate-350 mx-1">/</span>}
+              {idx < members.length - 1 && <span className="text-slate-350 mx-1">/</span>}
             </span>
           ))}
         </span>

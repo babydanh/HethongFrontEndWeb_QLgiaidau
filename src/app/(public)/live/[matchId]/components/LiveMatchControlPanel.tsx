@@ -53,6 +53,7 @@ export interface LiveMatchControlPanelProps {
   penalties: MatchPenaltyRecord[];
   scoreWarnings: ScoreRuleWarning[];
   isLiteMatch: boolean;
+  isSingleSetMatch: boolean;
   overrideEnabled: boolean;
   overrideReason: string;
   onOverrideEnabledChange: (enabled: boolean) => void;
@@ -95,6 +96,7 @@ export function LiveMatchControlPanel({
   penalties,
   scoreWarnings,
   isLiteMatch,
+  isSingleSetMatch,
   overrideEnabled,
   overrideReason,
   onOverrideEnabledChange,
@@ -364,6 +366,11 @@ export function LiveMatchControlPanel({
 
               {/* Bottom Action Buttons: Big, Prominent, Clear */}
               <div className="pt-3 border-t border-slate-100">
+                {isSingleSetMatch && !isFootball ? (
+                  <p className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold leading-relaxed text-blue-800">
+                    {translate('singleSetMatchHint')}
+                  </p>
+                ) : null}
                 {isFootball ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <button
@@ -385,16 +392,18 @@ export function LiveMatchControlPanel({
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setConfirmFinishSequence(true)}
-                      disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 px-5 text-sm sm:text-base font-black text-white shadow-md shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-98 disabled:opacity-50 cursor-pointer"
-                    >
-                      <Check className="h-5 w-5 stroke-[2.5]" /> Chốt set hiện tại
-                    </button>
+                    {!isSingleSetMatch ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmFinishSequence(true)}
+                        disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 px-5 text-sm sm:text-base font-black text-white shadow-md shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-98 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Check className="h-5 w-5 stroke-[2.5]" /> {translate('finishCurrentSet')}
+                      </button>
+                    ) : null}
 
-                    <div className="flex flex-1 gap-2.5">
+                    <div className={cn('flex flex-1 gap-2.5', isSingleSetMatch && 'w-full')}>
                       <button
                         type="button"
                         onClick={() => handleCompleteMatch(1)}
@@ -522,12 +531,16 @@ export function LiveMatchControlPanel({
                 <Check className="h-5 w-5" />
               </div>
               <div>
-                <ModalTitle className="text-base font-extrabold text-slate-900">
-                  Chốt set hiện tại
-                </ModalTitle>
-                <ModalDescription className="mt-0.5 text-xs font-semibold text-slate-500">
-                  Lưu điểm set {activeSetIndex + 1}: <span className="font-bold text-slate-900">{currentSet.team1Score} - {currentSet.team2Score}</span>
-                </ModalDescription>
+                  <ModalTitle className="text-base font-extrabold text-slate-900">
+                    {translate('finishCurrentSet')}
+                  </ModalTitle>
+                  <ModalDescription className="mt-0.5 text-xs font-semibold text-slate-500">
+                    {translate('saveCurrentSetScore', {
+                      set: activeSetIndex + 1,
+                      score1: currentSet.team1Score,
+                      score2: currentSet.team2Score,
+                    })}
+                  </ModalDescription>
               </div>
             </div>
           </ModalHeader>

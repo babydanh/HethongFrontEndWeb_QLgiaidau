@@ -1075,6 +1075,39 @@ export default function LiveMatchPage({ params }: Props) {
 
       const nextSetsWon = deriveSetsWon(newScores);
 
+      // BO1 has no next set. Once the only set is decisive, complete the
+      // match in the same action so the persisted winner can advance the bracket.
+      if (resolvedRules.setsToWin === 1) {
+        if (setObj.team1Score === setObj.team2Score) {
+          toast.error(matchTranslate('bo1WinnerRequired'));
+          return;
+        }
+
+        const winnerId = setObj.team1Score > setObj.team2Score
+          ? match.participant1Id
+          : match.participant2Id;
+        if (!winnerId) {
+          toast.error(matchTranslate('winnerNotFound'));
+          return;
+        }
+
+        setScores(newScores);
+        const completedMatch = await updateScoreWithRevision({
+          p1SetsWon: nextSetsWon.p1SetsWon,
+          p2SetsWon: nextSetsWon.p2SetsWon,
+          scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
+          winnerId,
+          ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
+        });
+        applyServerSnapshot(completedMatch);
+        toast.success(
+          matchTranslate('matchCompletedWinner', {
+            winner: winnerId === match.participant1Id ? team1Name : team2Name,
+          }),
+        );
+        return;
+      }
+
       if (nextSetsWon.p1SetsWon < resolvedRules.setsToWin && nextSetsWon.p2SetsWon < resolvedRules.setsToWin) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
@@ -2386,6 +2419,7 @@ export default function LiveMatchPage({ params }: Props) {
           penalties={penalties}
           scoreWarnings={scoreWarnings}
           isLiteMatch={isLiteMatch}
+          isSingleSetMatch={resolvedRules.setsToWin === 1}
           overrideEnabled={overrideEnabled}
           overrideReason={overrideReason}
           onOverrideEnabledChange={setOverrideEnabled}

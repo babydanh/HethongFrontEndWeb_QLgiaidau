@@ -6,45 +6,46 @@
     --color-background: #ffffff; /* pure white background */
     --color-foreground: #0f172a; /* slate-900 */
 
-    --color-primary: #002e7c; /* SportO Primary Navy #002e7c */
+    --color-primary: #002e7c; /* SportO Primary Logo Navy #002e7c */
     --color-primary-foreground: #ffffff;
     --color-primary-light: #eff4fc; /* primary tint */
 
-    --color-secondary: #3ab5f6; /* SportO Cyan Accent */
+    --color-secondary: #0d6efd; /* Bootstrap 5 Blue Accent */
 
     --color-card: #ffffff;
-    --color-card-foreground: #0f172a;
+    --color-card-foreground: #212529; /* Bootstrap Dark text */
 
-    --color-muted: #475569; /* slate-600 */
-    --color-muted-foreground: #64748b; /* slate-500 */
+    --color-muted: #495057; /* Bootstrap 5 text-secondary */
+    --color-muted-foreground: #6c757d; /* Bootstrap 5 text-muted */
 
     --color-accent: #d6e2f7; /* blue-100 */
     --color-accent-foreground: #002e7c; /* logo navy */
 
-    --color-border: #e2e8f0; /* slate-200 */
-    --color-input: #e2e8f0; /* slate-200 */
+    --color-border: #dee2e6; /* Bootstrap 5 border #dee2e6 */
+    --color-input: #dee2e6; /* Bootstrap 5 border #dee2e6 */
     --color-ring: #002e7c; /* primary focus ring */
 
-    --color-success: #16a34a; /* green-600 */
-    --color-warning: #d97706; /* amber-600 */
-    --color-danger: #dc2626; /* red-600 */
+    --color-success: #198754; /* Bootstrap 5 Success #198754 */
+    --color-warning: #d97706; /* Accessible Amber / Warning */
+    --color-danger: #dc3545; /* Bootstrap 5 Danger #dc3545 */
+    --color-info: #0dcaf0; /* Bootstrap 5 Info #0dcaf0 */
 
     --radius: 0.375rem; /* rounded-md */
 
     /* ── Dashboard design-system tokens ── */
     --ds-surface: #ffffff;
-    --ds-surface-hover: #f8fafc;
-    --ds-surface-subtle: #f1f5f9;
+    --ds-surface-hover: #f8f9fa;
+    --ds-surface-subtle: #f1f3f5;
     --ds-surface-elevated: #ffffff;
-    --ds-text-primary: #0f172a;
-    --ds-text-secondary: #334155;
-    --ds-text-muted: #64748b;
-    --ds-border: #e2e8f0;
-    --ds-border-subtle: #f1f5f9;
+    --ds-text-primary: #212529;
+    --ds-text-secondary: #495057;
+    --ds-text-muted: #6c757d;
+    --ds-border: #dee2e6;
+    --ds-border-subtle: #e9ecef;
     --ds-ring: #002e7c;
-    --ds-radius: 0.5rem;
-    --ds-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
-    --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --ds-radius: 0.375rem;
+    --ds-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
 }
 
 html {

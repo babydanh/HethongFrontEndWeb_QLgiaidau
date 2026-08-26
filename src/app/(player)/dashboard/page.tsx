@@ -512,122 +512,128 @@ export default function DashboardPage() {
                       <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                     </div>
                   ) : upcomingMatch ? (
-                    <div className="bg-slate-50/80 rounded-xl border border-slate-200/80 p-5 relative overflow-hidden transition-all hover:border-slate-300">
-                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200/70">
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider",
-                            upcomingMatch.status === 'ONGOING'
-                              ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
-                              : "bg-blue-50 text-blue-600 border border-blue-200"
-                          )}>
-                            {upcomingMatch.status === 'ONGOING' && <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />}
-                            {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
-                          </span>
-                          <span className="text-xs font-bold text-slate-700">
-                            {translate("roundAndMatch", {
-                              round: upcomingMatch.roundNumber ?? 1,
-                              match: upcomingMatch.matchOrder ?? 1,
-                            })}
-                          </span>
-                        </div>
+                    (() => {
+                      const isUserP1 = upcomingMatch.participant1?.members?.some((member) => member.userId === user?.id) || upcomingMatch.participant1?.id === user?.id;
+                      const isUserP2 = upcomingMatch.participant2?.members?.some((member) => member.userId === user?.id) || upcomingMatch.participant2?.id === user?.id;
+                      const p1Fallback = isUserP1 ? translate("you") : (isUserP2 ? translate("opponent") : (upcomingMatch.participant1?.teamName || translate("teamAFallback")));
+                      const p2Fallback = isUserP2 ? translate("you") : (isUserP1 ? translate("opponent") : (upcomingMatch.participant2?.teamName || translate("teamBFallback")));
 
-                        {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName || upcomingMatch.scheduledAt) && (
-                          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                            {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName) && (
-                              <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-semibold text-[11px]">
-                                {upcomingMatch.courtName || upcomingMatch.tournament?.venueName}
+                      const localizeTerm = (text?: string | null): string => {
+                        if (!text) return '';
+                        const t = text.trim();
+                        if (/main\s*bracket/i.test(t)) return translate("stageMainBracket");
+                        if (/elimination\s*stage/i.test(t) || /elimination/i.test(t)) return translate("stageElimination");
+                        if (/double\s*elimination/i.test(t)) return translate("stageDoubleElimination");
+                        if (/group\s*stage/i.test(t) || /group/i.test(t)) return translate("stageGroup");
+                        if (/knockout/i.test(t)) return translate("stageKnockout");
+                        if (/playoff/i.test(t)) return translate("stagePlayoff");
+                        if (/winners/i.test(t)) return translate("stageWinners");
+                        if (/losers/i.test(t)) return translate("stageLosers");
+                        return t;
+                      };
+
+                      const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
+                      const stageName = upcomingMatch.group?.stage?.name
+                        ? localizeTerm(upcomingMatch.group.stage.name)
+                        : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : '');
+                      const subtitle = groupName && stageName ? `${groupName} • ${stageName}` : (groupName || stageName || translate("roundFallback"));
+
+                      return (
+                        <Link
+                          href={`/live/${upcomingMatch.id}`}
+                          className="block bg-slate-50/80 rounded-xl border border-slate-200/80 p-5 relative overflow-hidden transition-all hover:border-blue-300 hover:bg-blue-50/20 hover:shadow-xs group"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200/70">
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider",
+                                upcomingMatch.status === 'ONGOING'
+                                  ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
+                                  : "bg-blue-50 text-blue-600 border border-blue-200"
+                              )}>
+                                {upcomingMatch.status === 'ONGOING' && <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />}
+                                {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
                               </span>
-                            )}
-                            {upcomingMatch.scheduledAt && (
-                              <span>
-                                {formatDate(upcomingMatch.scheduledAt, locale, true, translate("notUpdated"))}
+                              <span className="text-xs font-bold text-slate-700">
+                                {translate("roundAndMatch", {
+                                  round: upcomingMatch.roundNumber ?? 1,
+                                  match: upcomingMatch.matchOrder ?? 1,
+                                })}
                               </span>
+                            </div>
+
+                            {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName || upcomingMatch.scheduledAt) && (
+                              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                {(upcomingMatch.courtName || upcomingMatch.tournament?.venueName) && (
+                                  <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                                    {upcomingMatch.courtName || upcomingMatch.tournament?.venueName}
+                                  </span>
+                                )}
+                                {upcomingMatch.scheduledAt && (
+                                  <span>
+                                    {formatDate(upcomingMatch.scheduledAt, locale, true, translate("notUpdated"))}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
 
-                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
-                        <div className="flex items-center justify-start min-w-0">
-                          <ParticipantIdentity
-                            participant={
-                              upcomingMatch.participant1
-                                ? {
-                                    ...upcomingMatch.participant1,
-                                    members: upcomingMatch.participant1.members?.map((m) => ({
-                                      userId: m.userId || '',
-                                      fullName: m.fullName ?? null,
-                                      avatarUrl: m.avatarUrl ?? null,
-                                    })),
-                                  }
-                                : undefined
-                            }
-                            fallback={translate("you")}
-                          />
-                        </div>
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
+                            <div className="flex items-center justify-start min-w-0">
+                              <ParticipantIdentity
+                                participant={
+                                  upcomingMatch.participant1
+                                    ? {
+                                        ...upcomingMatch.participant1,
+                                        members: upcomingMatch.participant1.members?.map((m) => ({
+                                          userId: m.userId || '',
+                                          fullName: m.fullName ?? null,
+                                          avatarUrl: m.avatarUrl ?? null,
+                                        })),
+                                      }
+                                    : undefined
+                                }
+                                fallback={p1Fallback}
+                              />
+                            </div>
 
-                        <div className="flex flex-col items-center justify-center px-2">
-                          <span className="text-xs font-black text-slate-400 uppercase tracking-widest bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
-                            VS
-                          </span>
-                        </div>
+                            <div className="flex flex-col items-center justify-center px-2">
+                              <span className="text-xs font-black text-slate-400 uppercase tracking-widest bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs group-hover:border-blue-200 group-hover:text-blue-600 transition-colors">
+                                VS
+                              </span>
+                            </div>
 
-                        <div className="flex items-center justify-end min-w-0">
-                          <ParticipantIdentity
-                            participant={
-                              upcomingMatch.participant2
-                                ? {
-                                    ...upcomingMatch.participant2,
-                                    members: upcomingMatch.participant2.members?.map((m) => ({
-                                      userId: m.userId || '',
-                                      fullName: m.fullName ?? null,
-                                      avatarUrl: m.avatarUrl ?? null,
-                                    })),
-                                  }
-                                : undefined
-                            }
-                            fallback={translate("opponent")}
-                            align="right"
-                          />
-                        </div>
-                      </div>
+                            <div className="flex items-center justify-end min-w-0">
+                              <ParticipantIdentity
+                                participant={
+                                  upcomingMatch.participant2
+                                    ? {
+                                        ...upcomingMatch.participant2,
+                                        members: upcomingMatch.participant2.members?.map((m) => ({
+                                          userId: m.userId || '',
+                                          fullName: m.fullName ?? null,
+                                          avatarUrl: m.avatarUrl ?? null,
+                                        })),
+                                      }
+                                    : undefined
+                                }
+                                fallback={p2Fallback}
+                                align="right"
+                              />
+                            </div>
+                          </div>
 
-                      <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
-                        <span className="font-semibold text-slate-600 truncate max-w-[260px]">
-                          {(() => {
-                            const localizeTerm = (text?: string | null): string => {
-                              if (!text) return '';
-                              const t = text.trim();
-                              if (/main\s*bracket/i.test(t)) return translate("stageMainBracket");
-                              if (/elimination\s*stage/i.test(t) || /elimination/i.test(t)) return translate("stageElimination");
-                              if (/double\s*elimination/i.test(t)) return translate("stageDoubleElimination");
-                              if (/group\s*stage/i.test(t) || /group/i.test(t)) return translate("stageGroup");
-                              if (/knockout/i.test(t)) return translate("stageKnockout");
-                              if (/playoff/i.test(t)) return translate("stagePlayoff");
-                              if (/winners/i.test(t)) return translate("stageWinners");
-                              if (/losers/i.test(t)) return translate("stageLosers");
-                              return t;
-                            };
-
-                            const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
-                            const stageName = upcomingMatch.group?.stage?.name
-                              ? localizeTerm(upcomingMatch.group.stage.name)
-                              : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : '');
-
-                            if (groupName && stageName) {
-                              return `${groupName} • ${stageName}`;
-                            }
-                            return groupName || stageName || translate("roundFallback");
-                          })()}
-                        </span>
-                        <Link href={`/live/${upcomingMatch.id}`}>
-                          <span className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700">
-                            {translate("viewScore")} <ChevronRight className="w-3.5 h-3.5" />
-                          </span>
+                          <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
+                            <span className="font-semibold text-slate-600 truncate max-w-[260px]">
+                              {subtitle}
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
+                              {translate("viewScore")} <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            </span>
+                          </div>
                         </Link>
-                      </div>
-                    </div>
+                      );
+                    })()
                   ) : (
                     <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
                       <p className="text-xs font-semibold text-slate-700">{translate("noUpcomingMatches")}</p>

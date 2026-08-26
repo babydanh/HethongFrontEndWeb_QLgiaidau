@@ -480,29 +480,37 @@ export default function UserProfilePopover({
             )}
           </div>
 
-          <div className="flex items-center flex-wrap gap-2 mt-0.5">
-            <p className="text-xs text-slate-500">
-              {profileData.joinedAt
-                ? translate('joinedSince', { date: new Date(profileData.joinedAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') })
-                : translate('member')}
-            </p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {profileData.joinedAt
+              ? translate('joinedSince', { date: new Date(profileData.joinedAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') })
+              : translate('member')}
+          </p>
 
-            {/* ELO Tier Badges for each sport */}
-            {(() => {
-              const eligible = eligibleRanks.length > 0
-                ? eligibleRanks
-                : (profileData.ranks || []).filter((r) => (r.eloPoints || 0) > 0);
+          {/* ELO Tier Badges for each sport with Smart Overflow */}
+          {(() => {
+            const eligible = eligibleRanks.length > 0
+              ? eligibleRanks
+              : (profileData.ranks || []).filter((r) => (r.eloPoints || 0) > 0);
 
-              const seenCategories = new Set<string>();
-              const distinctRanks = eligible.filter((r) => {
-                const cat = (r.categoryName || '').toLowerCase();
-                if (seenCategories.has(cat)) return false;
-                seenCategories.add(cat);
-                return true;
-              });
+            const seenCategories = new Set<string>();
+            const distinctRanks = eligible.filter((r) => {
+              const cat = (r.categoryName || '').toLowerCase();
+              if (seenCategories.has(cat)) return false;
+              seenCategories.add(cat);
+              return true;
+            });
 
-              if (distinctRanks.length > 0) {
-                return distinctRanks.map((rank, idx) => (
+            if (distinctRanks.length === 0 && !eligibleHighlightRank) return null;
+
+            const maxVisible = 3;
+            const visibleRanks = distinctRanks.slice(0, maxVisible);
+            const hiddenRanks = distinctRanks.slice(maxVisible);
+            const remainingCount = hiddenRanks.length;
+            const hiddenTooltip = hiddenRanks.map(r => `${r.categoryName}: ${r.eloPoints} ELO (${r.tierName || '--'})`).join('\n');
+
+            return (
+              <div className="flex items-center flex-wrap gap-1.5 mt-2">
+                {visibleRanks.map((rank, idx) => (
                   <EloTierBadge
                     key={`${rank.categoryName || 'cat'}-${rank.matchType || idx}`}
                     elo={rank.eloPoints}
@@ -510,41 +518,37 @@ export default function UserProfilePopover({
                     categoryName={rank.categoryName || undefined}
                     size="sm"
                   />
-                ));
-              }
+                ))}
 
-              if (eligibleHighlightRank) {
-                return (
-                  <EloTierBadge
-                    elo={eligibleHighlightRank.eloPoints}
-                    tierName={eligibleHighlightRank.tierName || undefined}
-                    categoryName={eligibleHighlightRank.categoryName || undefined}
-                    size="sm"
-                  />
-                );
-              }
+                {remainingCount > 0 && (
+                  <span
+                    title={hiddenTooltip}
+                    className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 cursor-help hover:bg-slate-200 transition-colors"
+                  >
+                    +{remainingCount}
+                  </span>
+                )}
 
-              return null;
-            })()}
-
-            {/* Streak Badge if available */}
-            {profileData.streak?.type && profileData.streak.count > 0 && (
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${
-                  profileData.streak.type === "WIN"
-                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                    : profileData.streak.type === "LOSS"
-                      ? "bg-rose-50 text-rose-700 border-rose-200"
-                      : "bg-amber-50 text-amber-700 border-amber-200"
-                }`}
-              >
-                {profileData.streak.label ||
-                  (profileData.streak.type === "ELO_UP"
-                    ? `+${profileData.streak.count} ELO`
-                    : translate(profileData.streak.type === "WIN" ? 'winStreak' : 'lossStreak', { count: profileData.streak.count }))}
-              </span>
-            )}
-          </div>
+                {/* Streak Badge if available */}
+                {profileData.streak?.type && profileData.streak.count > 0 && (
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${
+                      profileData.streak.type === "WIN"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : profileData.streak.type === "LOSS"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                    }`}
+                  >
+                    {profileData.streak.label ||
+                      (profileData.streak.type === "ELO_UP"
+                        ? `+${profileData.streak.count} ELO`
+                        : translate(profileData.streak.type === "WIN" ? 'winStreak' : 'lossStreak', { count: profileData.streak.count }))}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Bio if available */}

@@ -388,7 +388,7 @@ export default function DashboardPage() {
         {/* Left 2 Columns: Tabbed Interface */}
         <div className="xl:col-span-2 flex flex-col gap-5">
           {/* Main Tab Switcher */}
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-2 rounded-t-xl">
+          <div className="flex items-center justify-between border border-slate-200 bg-white px-3 rounded-xl shadow-xs">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -635,12 +635,15 @@ export default function DashboardPage() {
                       );
                     })()
                   ) : (
-                    <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
-                      <p className="text-xs font-semibold text-slate-700">{translate("noUpcomingMatches")}</p>
-                      <p className="text-[11px] text-slate-400 mt-1">{translate("joinTournamentToEarnElo")}</p>
-                      <div className="mt-3">
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
+                        <Clock3 className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-800">{translate("noUpcomingMatches")}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{translate("joinTournamentToEarnElo")}</p>
+                      <div className="mt-3.5">
                         <Link href="/tournaments">
-                          <Button size="sm" variant="outline" className="text-xs font-bold border-slate-200">
+                          <Button size="sm" className="text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs">
                             {translate("exploreTournaments")}
                           </Button>
                         </Link>
@@ -718,8 +721,12 @@ export default function DashboardPage() {
                       })}
                     </div>
                   ) : (
-                    <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                      {translate("noRecentMatches")}
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2.5">
+                        <Activity className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-800">{translate("noRecentMatches")}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{translate("joinTournamentToEarnElo")}</p>
                     </div>
                   )}
                 </div>
@@ -799,7 +806,7 @@ export default function DashboardPage() {
                 actionLabel={translate("findNewTournament")}
                 tournaments={getFilteredTournaments()}
                 roleLabels={participantRoleLabels}
-                    emptyLabel={translate("noMatchingTournaments")}
+                emptyLabel={translate("noMatchingTournaments")}
                 matchTypeMap={matchTypeMap}
                 partners={partnerMap}
               />
@@ -812,7 +819,7 @@ export default function DashboardPage() {
               <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
                   <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                    <Clock3 className="w-4 h-4 text-rose-500" /> {translate("refereeWorkTitle")}
+                    <ShieldCheck className="w-4 h-4 text-amber-600" /> {translate("refereeWorkTitle")}
                     <span className="text-xs font-normal text-slate-400">({workspace?.refereeMatches.length || 0})</span>
                   </h2>
                 </div>
@@ -822,41 +829,32 @@ export default function DashboardPage() {
                       <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                     </div>
                   ) : workspace && workspace.refereeMatches.length > 0 ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col divide-y divide-slate-100">
                       {workspace.refereeMatches.map((match: WorkspaceRefereeMatch) => (
-                        <div key={match.id} className="rounded-lg border border-slate-200 p-4 bg-white hover:border-blue-200 transition-all">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="mb-2 flex items-center gap-3">
-                                <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={36} />
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="font-bold text-slate-900 text-sm">{match.tournamentName}</h3>
-                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">{translate("referee")}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-xs font-semibold text-slate-700 mt-1">
-                                {match.participant1Name || translate("unknownParticipant")} vs {match.participant2Name || translate("unknownParticipant")}
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || translate("competitionSport")}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("roundAndMatch", { round: match.roundNumber, match: match.matchOrder })}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("courtLabel", { name: getMatchLocationLabel({
-                                  courtName: match.courtName,
-                                  city: match.city,
-                                  tournament: { venueName: match.venueName, venueAddress: match.venueAddress },
-                                }) || translate("unassigned") })}</span>
+                        <div key={match.id} className="py-3.5 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="mb-1 flex items-center gap-2.5">
+                              <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={28} />
+                              <div className="min-w-0 flex items-center gap-2">
+                                <h3 className="font-bold text-slate-900 text-xs truncate">{match.tournamentName}</h3>
+                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">{translate("referee")}</span>
                               </div>
                             </div>
-                            <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
+                            <p className="text-xs font-semibold text-slate-800">
+                              {match.participant1Name || translate("unknownParticipant")} vs {match.participant2Name || translate("unknownParticipant")}
+                            </p>
+                            <div className="mt-1.5 flex flex-wrap gap-1.5 text-[10px] text-slate-500">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || translate("competitionSport")}</span>
+                              <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
+                              <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("roundAndMatch", { round: match.roundNumber, match: match.matchOrder })}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getTournamentStatusClassName(match.status)}`}>
                               {getMatchStatusLabel(match.status, translate)}
                             </span>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
                             <Link href={`/live/${match.id}`}>
-                              <Button size="sm" className="h-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
+                              <Button size="sm" className="h-7 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3">
                                 {translate("liveScoring")}
                               </Button>
                             </Link>
@@ -865,8 +863,11 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
-                      {translate("noRefereeAssignments")}
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-2.5">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-800">{translate("noRefereeAssignments")}</p>
                     </div>
                   )}
                 </div>

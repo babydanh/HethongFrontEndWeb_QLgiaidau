@@ -124,6 +124,27 @@ export interface AdminEloPlayerPage {
   meta: { limit: number; hasMore: boolean; nextCursor: string | null };
 }
 
+export interface AdminEloPairSummary {
+  pairId: string;
+  user1: { id: string; fullName: string | null; email: string; avatarUrl: string | null };
+  user2: { id: string; fullName: string | null; email: string; avatarUrl: string | null };
+  categoryId: string;
+  categoryName: string;
+  matchType: string;
+  genderRestriction: string | null;
+  eloPoints: number;
+  peakElo: number;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak: number;
+  updatedAt: string;
+}
+
+export interface AdminEloPairPage {
+  data: AdminEloPairSummary[];
+  meta: { limit: number; hasMore: boolean; nextCursor: string | null };
+}
+
 export interface AdminEloPlayerContextDetail {
   contextId: string;
   scope: AdminRankingScope;
@@ -197,6 +218,8 @@ export const rankingsApi = {
     api.get<ApiEnvelope<AdminRankingContextPage>>('/rankings/admin/contexts', { params }),
   listAdminPlayers: (params: { limit?: number; categoryId: string; search?: string; scope?: AdminRankingScope; matchType?: string; status?: AdminRankingStatus; cursor?: string | null }) =>
     api.get<ApiEnvelope<AdminEloPlayerPage>>('/rankings/admin/players', { params }),
+  listAdminPairs: (params: { limit?: number; categoryId: string; search?: string; scope?: AdminRankingScope; matchType?: string; genderRestriction?: string; minElo?: number; maxElo?: number; cursor?: string | null }) =>
+    api.get<ApiEnvelope<AdminEloPairPage>>('/rankings/admin/pairs', { params }),
   getAdminPlayerDetail: (userId: string, categoryId: string) =>
     api.get<ApiEnvelope<AdminEloPlayerDetail>>(`/rankings/admin/players/${userId}/detail`, { params: { categoryId } }),
   applyAdminOperation: (payload: AdminEloOperationPayload) =>

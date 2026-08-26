@@ -20,6 +20,7 @@ import {
   type AdminEloOperation,
   type AdminEloOperationHistoryItem,
   type AdminEloOperationPayload,
+  type AdminEloPairSummary,
   type AdminEloPlayerContextDetail,
   type AdminEloPlayerDetail,
   type AdminEloPlayerSummary,
@@ -149,6 +150,7 @@ export default function AdminEloPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<AdminEloPlayerSummary[]>([]);
+  const [pairs, setPairs] = useState<AdminEloPairSummary[]>([]);
   const [query, setQuery] = useState<FilterState>(INITIAL_QUERY);
   const [search, setSearch] = useState(INITIAL_QUERY.search);
   const [status, setStatus] = useState<AdminRankingStatus | ''>(INITIAL_QUERY.status);
@@ -186,12 +188,15 @@ export default function AdminEloPage() {
     [activeCategories, query.categoryId],
   );
   const playerGroups = Array.isArray(players) ? players : [];
+  const pairGroups = Array.isArray(pairs) ? pairs : [];
+  const isPairView = query.matchType === 'DOUBLES' || query.matchType === 'MIXED_DOUBLES';
   const currentDetailCategoryId = playerDetail?.category.id ?? query.categoryId;
   const newProfileCategories = activeCategories.filter((category) => category.id !== currentDetailCategoryId);
 
   const loadContexts = useCallback(async ({ nextQuery, cursor = null, append = false }: { nextQuery: FilterState; cursor?: string | null; append?: boolean }) => {
     if (!nextQuery.categoryId) {
       setPlayers([]);
+      setPairs([]);
       setLoading(false);
       setLoadingMore(false);
       setNextCursor(null);
@@ -207,6 +212,26 @@ export default function AdminEloPage() {
       setHasMore(false);
     }
     try {
+      if (nextQuery.matchType === 'DOUBLES' || nextQuery.matchType === 'MIXED_DOUBLES') {
+        const result = await rankingsApi.listAdminPairs({
+          limit: PAGE_LIMIT,
+          categoryId: nextQuery.categoryId,
+          scope: 'PUBLIC',
+          search: nextQuery.search || undefined,
+          matchType: nextQuery.matchType,
+          cursor: cursor || undefined,
+        });
+        if (requestId !== requestSequence.current) return;
+        const page = result?.data;
+        const incomingList = Array.isArray(page?.data) ? page.data : [];
+        setPairs((current) => append
+          ? [...current, ...incomingList.filter((item) => !current.some((existing) => existing.pairId === item.pairId))]
+          : incomingList);
+        setPlayers([]);
+        setNextCursor(page?.meta?.nextCursor ?? null);
+        setHasMore(Boolean(page?.meta?.hasMore));
+        return;
+      }
       const result = await rankingsApi.listAdminPlayers({
         limit: PAGE_LIMIT,
         categoryId: nextQuery.categoryId,
@@ -219,6 +244,7 @@ export default function AdminEloPage() {
       if (requestId !== requestSequence.current) return;
       const page = result?.data;
       const incomingList = Array.isArray(page?.data) ? page.data : Array.isArray(page) ? page : [];
+      setPairs([]);
       setPlayers((current) => {
         const currentList = Array.isArray(current) ? current : [];
         return append
@@ -460,11 +486,11 @@ export default function AdminEloPage() {
         <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900"><div className="font-semibold">{translate('publicScope')}</div><div className="mt-1 text-xs">{translate('publicOnlyAdminNotice')}</div><div className="mt-2 border-t border-blue-200 pt-2 text-xs">{translate('pairAdminReadOnlyNotice')}</div><div className="mt-1 text-xs">{translate('footballAdminNotAvailable')}</div></div>
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('status')}</span><select value={status} onChange={(event) => { const nextStatus = event.target.value as AdminRankingStatus | ''; setStatus(nextStatus); applyFilters({ status: nextStatus }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('allStatuses')}</option><option value="VISIBLE">{translate('visible')}</option><option value="HIDDEN">{translate('hidden')}</option><option value="BANNED">{translate('banned')}</option></select></label>
         <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('category')}</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; setCategoryId(nextCategoryId); applyFilters({ categoryId: nextCategoryId }); }} disabled={activeCategories.length === 0} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="">{translate('selectCategory')}</option>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="SINGLES">{translate('singles')}</option></select></label>
+        <label><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('matchType')}</span><select value={matchType} onChange={(event) => { const nextMatchType = event.target.value; setMatchType(nextMatchType); applyFilters({ matchType: nextMatchType }); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="SINGLES">{translate('singles')}</option><option value="DOUBLES">{translate('doubles')}</option><option value="MIXED_DOUBLES">{translate('mixedDoubles')}</option></select></label>
         <div className="flex items-end gap-2 md:col-span-4"><Button type="button" onClick={() => applyFilters()} disabled={loading || loadingMore || !categoryId}>{translate('search')}</Button>{!activeCategories.length && <span className="text-xs text-amber-700">{translate('noActiveCategories')}</span>}</div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      {isPairView ? <AdminPairTable pairs={pairGroups} loading={loading} /> : <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-[760px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{translate('player')}</th><th className="px-4 py-3">{translate('rankingProfiles')}</th><th className="px-4 py-3">{translate('highestElo')}</th><th className="px-4 py-3">{translate('status')}</th><th className="px-4 py-3">{translate('actions')}</th></tr></thead>
@@ -483,9 +509,9 @@ export default function AdminEloPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
 
-      {!loading && hasMore && <div className="flex justify-center"><Button type="button" variant="outline" disabled={loadingMore || !nextCursor} onClick={() => void loadContexts({ nextQuery: query, cursor: nextCursor, append: true })}>{loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{translate('loadMoreUsers')}</Button></div>}
+      {!loading && hasMore && <div className="flex justify-center"><Button type="button" variant="outline" disabled={loadingMore || !nextCursor} onClick={() => void loadContexts({ nextQuery: query, cursor: nextCursor, append: true })}>{loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{translate(isPairView ? 'loadMorePairs' : 'loadMoreUsers')}</Button></div>}
 
       <Modal open={selectedPlayer !== null} onOpenChange={(open) => { if (!open) closePlayerDetail(); }}>
         <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
@@ -571,5 +597,59 @@ export default function AdminEloPage() {
         </ModalContent>
       </Modal>
     </div>
+  );
+}
+
+
+function AdminPairTable({ pairs, loading }: { pairs: AdminEloPairSummary[]; loading: boolean }) {
+  const translate = useTranslations('AdminElo');
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-4 py-3 text-sm text-slate-600">
+        {translate('pairAdminReadOnlyNotice')}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[900px] w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3">{translate('pair')}</th>
+              <th className="px-4 py-3">{translate('matchType')}</th>
+              <th className="px-4 py-3">{translate('rating')}</th>
+              <th className="px-4 py-3">{translate('matches')}</th>
+              <th className="px-4 py-3">{translate('updated')}</th>
+              <th className="px-4 py-3">{translate('actions')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>}
+            {!loading && pairs.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">{translate('noPairs')}</td></tr>}
+            {!loading && pairs.map((pair) => (
+              <tr key={pair.pairId} className="align-top">
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {[pair.user1, pair.user2].map((member) => (
+                        <div key={member.id} className="h-9 w-9 overflow-hidden rounded-full border-2 border-white bg-slate-100">
+                          {member.avatarUrl && <Image src={member.avatarUrl} alt="" width={36} height={36} unoptimized className="h-full w-full object-cover" />}
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900">{pair.user1.fullName || pair.user1.email} / {pair.user2.fullName || pair.user2.email}</div>
+                      <div className="text-xs text-slate-500">{pair.categoryName}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-slate-700">{translate(getMatchTypeLabelKey(pair.matchType))}</td>
+                <td className="px-4 py-4"><div className="font-bold text-slate-900">{pair.eloPoints} {translate('eloUnit')}</div><div className="text-xs text-slate-500">{translate('peakElo')}: {pair.peakElo}</div></td>
+                <td className="px-4 py-4 text-slate-700">{pair.matchesWon}/{pair.matchesPlayed}</td>
+                <td className="px-4 py-4 text-xs text-slate-500">{new Date(pair.updatedAt).toLocaleString()}</td>
+                <td className="px-4 py-4 text-xs font-semibold text-slate-500">{translate('readOnly')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

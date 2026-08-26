@@ -3642,20 +3642,20 @@
       "PICKLEBALL_RALLY": {
         "sportLabel": "Pickleball",
         "scoreUnit": "điểm",
-        "currentScoreLabel": "Điểm game hiện tại",
-        "sequenceLabel": "game",
-        "summaryLabel": "Tỉ số các game",
-        "completeActionLabel": "Chốt game hiện tại",
-        "wonSummaryLabel": "Game thắng"
+        "currentScoreLabel": "Điểm set hiện tại",
+        "sequenceLabel": "set",
+        "summaryLabel": "Tỉ số các set",
+        "completeActionLabel": "Chốt set hiện tại",
+        "wonSummaryLabel": "Set thắng"
       },
       "PICKLEBALL_SIDE_OUT": {
         "sportLabel": "Pickleball",
         "scoreUnit": "điểm",
-        "currentScoreLabel": "Điểm game hiện tại",
-        "sequenceLabel": "game",
-        "summaryLabel": "Tỉ số các game",
-        "completeActionLabel": "Chốt game hiện tại",
-        "wonSummaryLabel": "Game thắng"
+        "currentScoreLabel": "Điểm set hiện tại",
+        "sequenceLabel": "set",
+        "summaryLabel": "Tỉ số các set",
+        "completeActionLabel": "Chốt set hiện tại",
+        "wonSummaryLabel": "Set thắng"
       },
       "TENNIS": {
         "sportLabel": "Tennis",
@@ -7653,6 +7653,10 @@
     "publicOnlyAdminNotice": "Admin toàn hệ thống chỉ được quản lý Elo công khai. Elo cộng đồng thuộc quyền quản lý trong chính câu lạc bộ.",
     "pairAdminReadOnlyNotice": "ELO đôi được lưu theo cặp hai người và hiện chỉ xem; chưa hỗ trợ chỉnh điểm thủ công để tránh lệch pair rank.",
     "footballAdminNotAvailable": "ELO bóng đá được lưu theo đội bóng. Màn quản trị đội bóng chưa mở thao tác chỉnh điểm.",
+    "pair": "Cặp đôi",
+    "noPairs": "Chưa có cặp nào đủ điều kiện xếp hạng. Cặp phải có ít nhất một trận được ghi nhận ELO.",
+    "loadMorePairs": "Tải thêm cặp đôi",
+    "readOnly": "Chỉ xem",
     "communityScope": "Cộng đồng",
     "communityId": "ID cộng đồng",
     "communityIdPlaceholder": "Nhập ID cộng đồng",

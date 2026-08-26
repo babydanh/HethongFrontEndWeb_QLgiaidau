@@ -3642,20 +3642,20 @@
       "PICKLEBALL_RALLY": {
         "sportLabel": "Pickleball",
         "scoreUnit": "points",
-        "currentScoreLabel": "Current game score",
-        "sequenceLabel": "game",
-        "summaryLabel": "Game scores",
-        "completeActionLabel": "Finalize current game",
-        "wonSummaryLabel": "Games won"
+        "currentScoreLabel": "Current set score",
+        "sequenceLabel": "set",
+        "summaryLabel": "Set scores",
+        "completeActionLabel": "Finalize current set",
+        "wonSummaryLabel": "Sets won"
       },
       "PICKLEBALL_SIDE_OUT": {
         "sportLabel": "Pickleball",
         "scoreUnit": "points",
-        "currentScoreLabel": "Current game score",
-        "sequenceLabel": "game",
-        "summaryLabel": "Game scores",
-        "completeActionLabel": "Finalize current game",
-        "wonSummaryLabel": "Games won"
+        "currentScoreLabel": "Current set score",
+        "sequenceLabel": "set",
+        "summaryLabel": "Set scores",
+        "completeActionLabel": "Finalize current set",
+        "wonSummaryLabel": "Sets won"
       },
       "TENNIS": {
         "sportLabel": "Tennis",
@@ -7653,6 +7653,10 @@
     "publicOnlyAdminNotice": "Global Admin can manage Public Elo only. Community Elo is owned and managed within its club.",
     "pairAdminReadOnlyNotice": "Doubles ELO is stored for the two-player pair and is currently view-only; manual edits are disabled to prevent pair-rank drift.",
     "footballAdminNotAvailable": "Football ELO is stored per team. Team management actions are not available yet.",
+    "pair": "Pair",
+    "noPairs": "No pair is eligible for ranking yet. A pair must have at least one match recorded by the ELO system.",
+    "loadMorePairs": "Load more pairs",
+    "readOnly": "View only",
     "communityScope": "Community",
     "communityId": "Community ID",
     "communityIdPlaceholder": "Enter a community ID",

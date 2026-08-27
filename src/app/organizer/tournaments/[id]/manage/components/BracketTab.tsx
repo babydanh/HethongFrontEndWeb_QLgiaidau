@@ -641,7 +641,7 @@ export function BracketTab({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div id="manage-bracket-workspace" className="space-y-6 animate-in fade-in duration-200 transition-all rounded-xl p-1">
 
       {/* 2 Cấp độ Cấu hình bên trong tab Bracket */}
       {selectedDivisionId && (

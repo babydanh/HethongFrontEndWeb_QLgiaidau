@@ -21,6 +21,8 @@ interface CourtSetupProps {
   setNewCourtName: (value: string) => void;
   isSaving: boolean;
   onAdd: () => void;
+  isWorkspaceOpen: boolean;
+  onOpenWorkspace: () => void;
 }
 
 export function CourtSetup({
@@ -30,6 +32,8 @@ export function CourtSetup({
   setNewCourtName,
   isSaving,
   onAdd,
+  isWorkspaceOpen,
+  onOpenWorkspace,
 }: CourtSetupProps) {
   const t = useTranslations('OrganizerManage');
 
@@ -87,16 +91,23 @@ export function CourtSetup({
               {t('status.notSet')}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('matchSchedule.court')}>
-              {courts.map((court) => (
-                <div key={court.id} className="border border-slate-200 px-3 py-3">
-                  <p className="font-semibold text-slate-800">{court.courtName}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {court.status === 'AVAILABLE' ? t('courtAvailable') : court.status === 'MAINTENANCE' ? t('courtMaintenance') : t('courtStatusUnknown')}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('matchSchedule.court')}>
+                {courts.map((court) => (
+                  <div key={court.id} className="border border-slate-200 px-3 py-3">
+                    <p className="font-semibold text-slate-800">{court.courtName}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {court.status === 'AVAILABLE' ? t('courtAvailable') : court.status === 'MAINTENANCE' ? t('courtMaintenance') : t('courtStatusUnknown')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-5 text-slate-500">{t('workspaceOptInHint')}</p>
+                {!isWorkspaceOpen && <Button type="button" onClick={onOpenWorkspace} className="min-h-10 bg-slate-900 text-white hover:bg-slate-700">{t('openWorkspace')}</Button>}
+                {isWorkspaceOpen && <span className="text-xs font-semibold text-emerald-700">{t('workspaceOpen')}</span>}
+              </div>
+            </>
           )}
         </>
       )}

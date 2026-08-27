@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import {
   Modal, ModalContent, ModalHeader, ModalTitle,
 } from '@/components/ui/Modal';
-import { isTournamentCompleted,
+import {
+  isTournamentCompleted,
   isTournamentDraft,
   isTournamentPendingApproval,
   isTournamentInProgress,
@@ -16,6 +17,13 @@ import { isTournamentCompleted,
 import type { Match } from '@/types/match';
 import { exportTournamentResultsExcel } from '@/utils/exportTournament';
 import { useLocale, useTranslations } from 'next-intl';
+
+export interface ChecklistNavigateOptions {
+  tab: 'basic' | 'schedule' | 'registration' | 'bracket' | 'finance' | 'permissions' | 'livestream';
+  basicSubTab?: 'general' | 'branding' | 'prizes' | 'contact' | 'sponsors';
+  elementId?: string;
+  openCreateDivision?: boolean;
+}
 
 interface TournamentStepperProps {
   tournament: Tournament;
@@ -39,14 +47,16 @@ interface TournamentStepperProps {
     allCompleted: boolean;
   } | null;
   participants?: { isPaid: boolean; teamStatus?: string }[];
-    divisions?: { id: string; roundConfig?: unknown }[];
-    matches?: Match[];
-  }
+  divisions?: { id: string; roundConfig?: unknown }[];
+  matches?: Match[];
+  onChecklistNavigate?: (target: ChecklistNavigateOptions) => void;
+}
 
 export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading,
   onOpenTournament, isOpening = false,
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
   participants = [], divisions = [], matches = [],
+  onChecklistNavigate,
   }: TournamentStepperProps) {
   const translate = useTranslations('OrganizerTournamentStepper');
   const locale = useLocale();
@@ -153,12 +163,10 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
             </span>
             <p className="mb-2 font-medium">{translate('publishChecklistDescription')}</p>
             {(() => {
-                // Tự động kiểm tra tiến trình đã điền thông tin của giải đấu theo luật backend mới
                 const hasDescription = tournament.description != null && tournament.description.trim() !== '';
                 const hasDivisions = tournament.divisions && tournament.divisions.length > 0;
                 const hasVenue = (tournament.venueId != null) || (tournament.locationAddress && tournament.locationAddress.trim() !== '');
               
-                // Validate ngày hợp lệ
                 const hasValidDates = tournament.registrationStartDate && 
                                       tournament.registrationEndDate && 
                                       tournament.startDate && 
@@ -169,12 +177,20 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                                    (typeof tournament.contactInfo === 'object') && 
                                    ((tournament.contactInfo as Record<string, string>).email || (tournament.contactInfo as Record<string, string>).phone);
 
-                const canPublish = hasDescription && hasDivisions && hasVenue && hasValidDates && hasContact;
-
                 return (
                 <div className="space-y-3 mt-3">
-                  {/* Mô tả giải đấu */}
-                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                  <div
+                    onClick={() => {
+                      if (!hasDescription) {
+                        onChecklistNavigate?.({ tab: 'basic', basicSubTab: 'general', elementId: 'manage-basic-description-input' });
+                      }
+                    }}
+                    className={`flex items-center justify-between text-xs font-bold p-2 rounded-lg border transition-all ${
+                      hasDescription
+                        ? 'bg-white/40 border-slate-100'
+                        : 'bg-white/95 border-rose-200 hover:bg-rose-50/80 hover:border-rose-300 cursor-pointer shadow-2xs group/checkitem'
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasDescription ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
@@ -186,14 +202,24 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       </span>
                     </div>
                     {!hasDescription && (
-                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        {translate('checklist.notFilled')}
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 group-hover/checkitem:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 shrink-0 transition-colors">
+                        {translate('checklist.notFilled')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
                       </span>
                     )}
                   </div>
 
-                  {/* Bảng thi đấu */}
-                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                  <div
+                    onClick={() => {
+                      if (!hasDivisions) {
+                        onChecklistNavigate?.({ tab: 'basic', elementId: 'manage-divisions-section', openCreateDivision: true });
+                      }
+                    }}
+                    className={`flex items-center justify-between text-xs font-bold p-2 rounded-lg border transition-all ${
+                      hasDivisions
+                        ? 'bg-white/40 border-slate-100'
+                        : 'bg-white/95 border-rose-200 hover:bg-rose-50/80 hover:border-rose-300 cursor-pointer shadow-2xs group/checkitem'
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasDivisions ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
@@ -205,14 +231,24 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       </span>
                     </div>
                     {!hasDivisions && (
-                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        {translate('checklist.missingDivision')}
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 group-hover/checkitem:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 shrink-0 transition-colors">
+                        {translate('checklist.missingDivision')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
                       </span>
                     )}
                   </div>
 
-                  {/* Địa điểm */}
-                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                  <div
+                    onClick={() => {
+                      if (!hasVenue) {
+                        onChecklistNavigate?.({ tab: 'schedule', elementId: 'schedule-venue-section' });
+                      }
+                    }}
+                    className={`flex items-center justify-between text-xs font-bold p-2 rounded-lg border transition-all ${
+                      hasVenue
+                        ? 'bg-white/40 border-slate-100'
+                        : 'bg-white/95 border-rose-200 hover:bg-rose-50/80 hover:border-rose-300 cursor-pointer shadow-2xs group/checkitem'
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasVenue ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
@@ -224,14 +260,24 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       </span>
                     </div>
                     {!hasVenue && (
-                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        {translate('checklist.notFilled')}
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 group-hover/checkitem:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 shrink-0 transition-colors">
+                        {translate('checklist.notFilled')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
                       </span>
                     )}
                   </div>
 
-                  {/* Khung thời gian */}
-                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                  <div
+                    onClick={() => {
+                      if (!hasValidDates) {
+                        onChecklistNavigate?.({ tab: 'schedule', elementId: 'schedule-dates-section' });
+                      }
+                    }}
+                    className={`flex items-center justify-between text-xs font-bold p-2 rounded-lg border transition-all ${
+                      hasValidDates
+                        ? 'bg-white/40 border-slate-100'
+                        : 'bg-white/95 border-rose-200 hover:bg-rose-50/80 hover:border-rose-300 cursor-pointer shadow-2xs group/checkitem'
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasValidDates ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
@@ -243,14 +289,24 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       </span>
                     </div>
                     {!hasValidDates && (
-                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        {translate('checklist.invalidDates')}
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 group-hover/checkitem:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 shrink-0 transition-colors">
+                        {translate('checklist.invalidDates')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
                       </span>
                     )}
                   </div>
 
-                  {/* Thông tin liên hệ */}
-                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                  <div
+                    onClick={() => {
+                      if (!hasContact) {
+                        onChecklistNavigate?.({ tab: 'basic', basicSubTab: 'contact', elementId: 'manage-contact-info-section' });
+                      }
+                    }}
+                    className={`flex items-center justify-between text-xs font-bold p-2 rounded-lg border transition-all ${
+                      hasContact
+                        ? 'bg-white/40 border-slate-100'
+                        : 'bg-white/95 border-rose-200 hover:bg-rose-50/80 hover:border-rose-300 cursor-pointer shadow-2xs group/checkitem'
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasContact ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
@@ -262,8 +318,8 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       </span>
                     </div>
                     {!hasContact && (
-                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
-                        {translate('checklist.notFilled')}
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 group-hover/checkitem:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 shrink-0 transition-colors">
+                        {translate('checklist.notFilled')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
                       </span>
                     )}
                   </div>
@@ -271,7 +327,6 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
               );
             })()}
             
-            {/* Ràng buộc & Khóa thông tin sau khi công bố */}
             <div className="mt-4 pt-3 border-t border-amber-200/60 space-y-1.5 text-[11px] text-amber-900 font-semibold">
               <span className="block text-xs font-bold text-amber-950 uppercase tracking-wider">{translate('publishedConstraints.title')}</span>
               <ul className="list-disc pl-4 space-y-1 text-slate-650 font-medium">
@@ -305,9 +360,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
       )}
 
       <div className={`relative flex flex-col md:flex-row justify-between ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
-        {/* Progress bar background line for desktop */}
         <div className="hidden md:block absolute top-6 left-8 right-8 h-1 bg-slate-100 rounded -z-10" />
-        {/* Active progress line */}
         <div 
           className="hidden md:block absolute top-6 left-8 h-1 bg-blue-600 rounded -z-10 transition-all duration-500"
           style={{ width: `${Math.max(0, (currentStep / (steps.length - 1)) * 100)}%` }}
@@ -319,7 +372,6 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
 
           return (
             <div key={idx} className="flex flex-col items-center flex-1 relative mb-6 md:mb-0">
-              {/* Step Icon Circle */}
               <div 
                 className={`w-12 h-12 rounded-full flex items-center justify-center border-4 border-white shadow-sm mb-3 transition-colors ${
                   isCompleted ? 'bg-emerald-500 text-white' : 
@@ -330,7 +382,6 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                 {isCompleted ? <Check className="w-6 h-6 font-bold" /> : step.icon}
               </div>
               
-              {/* Step Info */}
               <div className="text-center">
                 <div className={`font-bold text-sm ${isActive ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
                   {step.title}
@@ -340,7 +391,6 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                 </div>
               </div>
 
-              {/* Action Button for Active Step */}
               {isActive && step.actionText && (
                 <div className="mt-4">
                   <Button
@@ -358,65 +408,94 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         })}
       </div>
 
-            {/* Step 4 — Completed tournament: show only the export action */}
-            {isTournamentCompleted(tournament.status) && (
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
-                <div>
-                  <p className="text-sm font-bold text-emerald-900">{translate('completedTitle')}</p>
-                  <p className="mt-0.5 text-xs font-medium text-emerald-700">
-                    {translate('completedDescription')}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
-                  disabled={matches.length === 0}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-sm"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  {matches.length === 0 ? translate('noMatches') : translate('exportResults', { count: matches.length })}
-                </Button>
-              </div>
-            )}
+      {/* Step 4 — Completed tournament: show only the export action */}
+      {isTournamentCompleted(tournament.status) && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
+          <div>
+            <p className="text-sm font-bold text-emerald-900">{translate('completedTitle')}</p>
+            <p className="mt-0.5 text-xs font-medium text-emerald-700">
+              {translate('completedDescription')}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
+            disabled={matches.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-sm"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {matches.length === 0 ? translate('noMatches') : translate('exportResults', { count: matches.length })}
+          </Button>
+        </div>
+      )}
 
-            {/* Phase 2 — Tournament opening (inline checklist) */}
+      {/* Phase 2 — Tournament opening (inline checklist) */}
       {currentStep === 1 && !isTournamentDraft(tournament.status) && isRegistrationClosed && (
         <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-4 mt-4 mb-2 text-xs">
           <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
             <Play className="w-4 h-4 text-blue-600" /> {translate('openingChecklistTitle')}
           </h4>
           <div className="space-y-2.5">
-            {phase2Checks.map((check) => (
-              <div key={check.key} className={`flex items-center justify-between text-xs font-bold bg-white/60 p-2.5 rounded-lg border transition-all ${
-                check.pass ? 'border-emerald-100' : 'border-rose-100'
-              }`}>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-all ${
+            {phase2Checks.map((check) => {
+              const phase2Targets: Record<string, ChecklistNavigateOptions> = {
+                regLocked: { tab: 'registration', elementId: 'manage-registration-status-card' },
+                paid: { tab: 'registration', elementId: 'manage-participants-section' },
+                bracket: { tab: 'bracket', elementId: 'manage-bracket-workspace' },
+                minTeams: { tab: 'registration', elementId: 'manage-participants-section' },
+                schedule: { tab: 'schedule', elementId: 'schedule-setup-title' },
+                venue: { tab: 'schedule', elementId: 'schedule-venue-section' },
+              };
+              const target = phase2Targets[check.key];
+
+              return (
+                <div
+                  key={check.key}
+                  onClick={() => {
+                    if (!check.pass && target) {
+                      onChecklistNavigate?.(target);
+                    }
+                  }}
+                  className={`flex items-center justify-between text-xs font-bold p-2.5 rounded-lg border transition-all ${
                     check.pass
-                      ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10'
+                      ? 'border-emerald-100 bg-white/60'
                       : check.mandatory
-                        ? 'border-rose-300 bg-rose-50 text-rose-600'
-                        : 'border-slate-300 bg-slate-50 text-slate-400'
-                  }`}>
-                    {check.pass
-                      ? <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      : <span className="font-bold text-[10px]">✕</span>
-                    }
-                  </span>
-                  <span className={`truncate ${check.pass ? 'text-slate-400 line-through' : check.mandatory ? 'text-slate-700' : 'text-slate-500'}`}>
-                    {check.mandatory
-                      ? <>                        <span className="text-rose-600 mr-1">[{translate('mandatory')}]</span>{check.label}</>
-                      : <>                        <span className="text-slate-400 mr-1">[{translate('flexible')}]</span>{check.label}</>
-                    }
-                  </span>
+                        ? 'border-rose-200 bg-white/95 hover:bg-rose-50/90 hover:border-rose-300 cursor-pointer shadow-2xs group/checkitem'
+                        : 'border-amber-200 bg-white/95 hover:bg-amber-50/90 hover:border-amber-300 cursor-pointer shadow-2xs group/checkitem'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-all ${
+                      check.pass
+                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10'
+                        : check.mandatory
+                          ? 'border-rose-300 bg-rose-50 text-rose-600'
+                          : 'border-slate-300 bg-slate-50 text-slate-400'
+                    }`}>
+                      {check.pass
+                        ? <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        : <span className="font-bold text-[10px]">✕</span>
+                      }
+                    </span>
+                    <span className={`truncate ${check.pass ? 'text-slate-400 line-through' : check.mandatory ? 'text-slate-700' : 'text-slate-500'}`}>
+                      {check.mandatory
+                        ? <>                        <span className="text-rose-600 mr-1">[{translate('mandatory')}]</span>{check.label}</>
+                        : <>                        <span className="text-slate-400 mr-1">[{translate('flexible')}]</span>{check.label}</>
+                      }
+                    </span>
+                  </div>
+                  {!check.pass && check.mandatory && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 group-hover/checkitem:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 shrink-0 ml-2 transition-colors">
+                      {translate('notPassed')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
+                    </span>
+                  )}
+                  {!check.pass && !check.mandatory && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-700 bg-amber-50 group-hover/checkitem:bg-amber-100 px-2 py-0.5 rounded border border-amber-200 shrink-0 ml-2 transition-colors">
+                      {translate('flexible')} <ChevronRight className="w-2.5 h-2.5 inline group-hover/checkitem:translate-x-0.5 transition-transform" />
+                    </span>
+                  )}
                 </div>
-                {!check.pass && check.mandatory && (
-                  <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0 ml-2">
-                    {translate('notPassed')}
-                  </span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

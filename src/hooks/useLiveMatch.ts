@@ -4,6 +4,13 @@ import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 
+function normalizeViewerCount(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.trunc(value));
+}
+
+
+
 function areScoresEqual(left: MatchScore[], right: MatchScore[]) {
   if (left.length !== right.length) {
     return false;
@@ -174,17 +181,33 @@ export function useLiveMatch(matchId: string) {
       void refreshMatchSnapshot();
     }, 12000);
 
-    const handleReconnect = () => {
-      socket.emit('joinMatch', matchId);
+        const emitPresenceJoin = () => {
+      if (document.visibilityState === 'visible') {
+        socket.emit('joinMatch', matchId);
+      }
     };
+
+    const emitPresenceLeave = () => {
+      socket.emit('leaveMatch', matchId);
+    };
+
+    const handleConnect = () => {
+      emitPresenceJoin();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        emitPresenceJoin();
+      } else {
+        emitPresenceLeave();
+      }
+    };
+
+    socket.on('connect', handleConnect);
 
     if (!socket.connected) {
       socket.connect();
     }
-
-    const joinRoom = () => {
-      socket.emit('joinMatch', matchId);
-    };
 
     const handleScoreUpdate = (rawMatch: Match | string) => {
       const updatedMatch = typeof rawMatch === 'string' ? JSON.parse(rawMatch) as Match : rawMatch;
@@ -201,18 +224,22 @@ export function useLiveMatch(matchId: string) {
     };
 
     const handleViewerCount = (rawPayload: { matchId: string; viewerCount: number } | string) => {
-      const payload = typeof rawPayload === 'string'
-        ? JSON.parse(rawPayload) as { matchId: string; viewerCount: number }
-        : rawPayload;
+      let payload: { matchId?: unknown; viewerCount?: unknown };
+      try {
+        payload = typeof rawPayload === 'string'
+          ? JSON.parse(rawPayload) as { matchId?: unknown; viewerCount?: unknown }
+          : rawPayload;
+      } catch {
+        return;
+      }
+
       if (payload.matchId === matchId) {
-        setViewerCount(payload.viewerCount);
+        setViewerCount(normalizeViewerCount(payload.viewerCount));
       }
     };
 
     if (socket.connected) {
-      joinRoom();
-    } else {
-      socket.on('connect', joinRoom);
+      emitPresenceJoin();
     }
 
     const applyIncomingMatch = (updatedMatch: Match, includeScores: boolean) => {
@@ -240,7 +267,6 @@ export function useLiveMatch(matchId: string) {
     socket.on('score:update', handleScoreUpdate);
     socket.on('match:status', handleMatchStatus);
     socket.on('viewer:count', handleViewerCount);
-    socket.on('connect', handleReconnect);
 
     // Lắng nghe sự kiện cổ vũ real-time
     const handleCheerUpdate = (rawPayload: { matchId: string; cheerCount: number } | string) => {
@@ -254,19 +280,24 @@ export function useLiveMatch(matchId: string) {
     socket.on('cheer:update', handleCheerUpdate);
 
     const handleBeforeUnload = () => {
-      socket.emit('leaveMatch', matchId);
+      emitPresenceLeave();
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       isMounted = false;
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      socket.emit('leaveMatch', matchId);
-      socket.off('connect', joinRoom);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      emitPresenceLeave();
+      socket.off('connect', handleConnect);
+
       socket.off('score:update', handleScoreUpdate);
       socket.off('match:status', handleMatchStatus);
       socket.off('viewer:count', handleViewerCount);
-      socket.off('connect', handleReconnect);
+
       socket.off('cheer:update', handleCheerUpdate);
       window.clearInterval(reconciliationTimer);
     };

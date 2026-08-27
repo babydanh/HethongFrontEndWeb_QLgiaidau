@@ -245,7 +245,7 @@ export function BasicInfoTab({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5 border-t pt-5">
+              <div id="manage-basic-description-input" className="flex flex-col gap-1.5 border-t pt-5 transition-all rounded-lg p-2">
                 <RichTextEditor
                   label={translate('tournamentDescription')}
                   value={description}
@@ -387,7 +387,7 @@ export function BasicInfoTab({
           )}
 
           {basicSubTab === 'contact' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div id="manage-contact-info-section" className="space-y-6 animate-in fade-in duration-200 rounded-lg p-2 transition-all">
               <div>
                 <h3 className="font-bold text-slate-850 text-base">{translate('contactTitle')}</h3>
                 <p className="text-xs text-slate-455 mt-0.5 font-semibold">{translate('contactDescription')}</p>

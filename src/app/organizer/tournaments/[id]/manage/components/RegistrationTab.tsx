@@ -470,7 +470,7 @@ export function RegistrationTab({
       <div className="lg:col-span-2 space-y-6 min-w-0">
         
         {/* Publish Status Card */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+        <div id="manage-registration-status-card" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm transition-all">
           <h3 className="font-bold text-slate-900 mb-4 text-lg">{registrationTranslate('publicationStatus')}</h3>
           
           {isTournamentDraft(tournament.status) ? (
@@ -797,7 +797,7 @@ export function RegistrationTab({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5 max-w-full overflow-hidden">
+        <div id="manage-participants-section" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5 max-w-full overflow-hidden transition-all">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-bold text-slate-900 text-lg">{registrationTranslate('approvalHeading')}</h3>

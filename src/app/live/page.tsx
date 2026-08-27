@@ -23,10 +23,6 @@ export default function LiveScorePage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div className="flex items-center gap-4">
                     <h1 className="font-headline-lg text-headline-lg md:font-display md:text-display text-on-surface">{translate('livePageTitle')}</h1>
-                    <span className="bg-error text-on-error font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
-                        <span className="w-2 h-2 bg-on-error rounded-full pulse-dot"></span>
-                            {liveTranslate('matchCount', { count: 3 })}
-                    </span>
                 </div>
                 <div className="relative">
                     <select className="appearance-none bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md rounded-lg pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer">

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useRef } from 'react';
+import { use, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
@@ -130,6 +130,40 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       : s.newDivisionName;
   };
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
+  const [isCourtWorkspaceOpen, setIsCourtWorkspaceOpen] = useState(false);
+
+  const handleChecklistNavigate = (target: {
+    tab: 'basic' | 'schedule' | 'registration' | 'bracket' | 'finance' | 'permissions' | 'livestream';
+    basicSubTab?: 'general' | 'branding' | 'prizes' | 'contact' | 'sponsors';
+    elementId?: string;
+    openCreateDivision?: boolean;
+  }) => {
+    s.setActiveTab(target.tab);
+    if (target.basicSubTab) {
+      s.setBasicSubTab(target.basicSubTab);
+    }
+    if (target.openCreateDivision && s.divisions.length === 0) {
+      s.resetDivisionEditor(getDefaultDivisionName());
+      s.setIsCreateDivisionModalOpen(true);
+    }
+
+    setTimeout(() => {
+      if (target.elementId) {
+        const el = document.getElementById(target.elementId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-4', 'ring-rose-500', 'ring-offset-4', 'animate-pulse');
+          setTimeout(() => {
+            el.classList.remove('ring-4', 'ring-rose-500', 'ring-offset-4', 'animate-pulse');
+          }, 3000);
+
+          const focusable = el.querySelector<HTMLElement>('input, textarea, button, select') || (el instanceof HTMLElement && typeof el.focus === 'function' ? el : null);
+          focusable?.focus?.();
+        }
+      }
+    }, 150);
+  };
+
   const sportPresets = getSportRulePresets(s.sportRuleKind, ruleTranslate);
   const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
@@ -256,15 +290,27 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        <TournamentStepper tournament={s.tournament} onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
-          onNextStep={s.handleTournamentStepTransition} publishFeeAmount={s.publishFeeAmount} isLoading={s.isLoading || s.isPayingPublishFee}
-          onOpenTournament={s.handleConfirmOpen} isOpening={s.isOpening}
-          isEndModalOpen={s.isEndModalOpen} setIsEndModalOpen={s.setIsEndModalOpen}
-          handleConfirmEnd={s.handleConfirmEnd} isEnding={s.isEnding} endChecklist={s.endChecklist}
-                    participants={s.participants} divisions={s.divisions} matches={s.matches} />
+        <TournamentStepper
+          tournament={s.tournament}
+          onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
+          onNextStep={s.handleTournamentStepTransition}
+          publishFeeAmount={s.publishFeeAmount}
+          isLoading={s.isLoading || s.isPayingPublishFee}
+          onOpenTournament={s.handleConfirmOpen}
+          isOpening={s.isOpening}
+          isEndModalOpen={s.isEndModalOpen}
+          setIsEndModalOpen={s.setIsEndModalOpen}
+          handleConfirmEnd={s.handleConfirmEnd}
+          isEnding={s.isEnding}
+          endChecklist={s.endChecklist}
+          participants={s.participants}
+          divisions={s.divisions}
+          matches={s.matches}
+          onChecklistNavigate={handleChecklistNavigate}
+        />
 
         {/* Divisions Selector */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-4 shadow-sm">
+        <div id="manage-divisions-section" className="bg-white rounded-xl border border-slate-200 p-4 mb-4 shadow-sm transition-all">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
             <div>
               <div className="flex items-center gap-2">
@@ -434,24 +480,27 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails}
               courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
               courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
-              isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />
-            <CourtWorkspace
-              venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
-              courts={s.courts}
-              divisions={s.divisions}
-              matches={s.matches}
-              defaultDivisionId={s.selectedDivisionId}
-              defaultDate={s.startDate}
-              sportRuleKind={s.sportRuleKind}
-              setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
-              preview={s.schedulePlanPreview}
-              isPreviewing={s.isPreviewingSchedulePlan}
-              onPreview={s.handlePreviewSchedulePlan}
-              onOpenMatch={(matchId) => {
-                const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
-                if (fullMatch) s.handleOpenScheduling(fullMatch);
-              }}
-            />
+              isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt}
+              isWorkspaceOpen={isCourtWorkspaceOpen} onOpenWorkspace={() => setIsCourtWorkspaceOpen(true)} />
+            {isCourtWorkspaceOpen && (
+              <CourtWorkspace
+                venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
+                courts={s.courts}
+                divisions={s.divisions}
+                matches={s.matches}
+                defaultDivisionId={s.selectedDivisionId}
+                defaultDate={s.startDate}
+                sportRuleKind={s.sportRuleKind}
+                setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
+                preview={s.schedulePlanPreview}
+                isPreviewing={s.isPreviewingSchedulePlan}
+                onPreview={s.handlePreviewSchedulePlan}
+                onOpenMatch={(matchId) => {
+                  const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
+                  if (fullMatch) s.handleOpenScheduling(fullMatch);
+                }}
+              />
+            )}
           </div>
         )}
 

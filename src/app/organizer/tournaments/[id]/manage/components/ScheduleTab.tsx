@@ -44,6 +44,8 @@ interface ScheduleTabProps {
   setNewCourtName: (value: string) => void;
   isSavingCourt: boolean;
   handleAddTournamentCourt: () => void;
+  isWorkspaceOpen: boolean;
+  onOpenWorkspace: () => void;
 }
 
 export function ScheduleTab({
@@ -74,6 +76,8 @@ export function ScheduleTab({
   setNewCourtName,
   isSavingCourt,
   handleAddTournamentCourt,
+  isWorkspaceOpen,
+  onOpenWorkspace,
 }: ScheduleTabProps) {
   const t = useTranslations('OrganizerManage');
   void _tournament;
@@ -101,7 +105,7 @@ export function ScheduleTab({
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
-          <div className="space-y-4">
+          <div id="schedule-venue-section" className="space-y-4 rounded-lg p-2 transition-all">
             <div>
               <p className="text-sm font-bold text-slate-900">{t('venueStepTitle')}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">{t('venueStepHint')}</p>
@@ -116,7 +120,7 @@ export function ScheduleTab({
             {validationField === 'venue' && <p className="text-xs font-semibold text-rose-600">{t('venueRequired')}</p>}
           </div>
 
-          <div className="space-y-4 border-l-0 border-slate-200 lg:border-l lg:pl-5">
+          <div id="schedule-dates-section" className="space-y-4 border-l-0 border-slate-200 lg:border-l lg:pl-5 rounded-lg p-2 transition-all">
             <div>
               <p className="text-sm font-bold text-slate-900">{t('timeStepTitle')}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">{t('timeStepHint')}</p>
@@ -128,7 +132,7 @@ export function ScheduleTab({
         </div>
       </section>
 
-      <CourtSetup venue={courtVenue} courts={courts} newCourtName={newCourtName} setNewCourtName={setNewCourtName} isSaving={isSavingCourt} onAdd={handleAddTournamentCourt} />
+      <CourtSetup venue={courtVenue} courts={courts} newCourtName={newCourtName} setNewCourtName={setNewCourtName} isSaving={isSavingCourt} onAdd={handleAddTournamentCourt} isWorkspaceOpen={isWorkspaceOpen} onOpenWorkspace={onOpenWorkspace} />
 
       <div className="flex justify-end border-t border-slate-200 pt-4">
         <Button onClick={handleSaveScheduleDetails} disabled={isSavingConfig} className="min-h-11 bg-blue-600 px-6 font-bold text-white hover:bg-blue-700">{isSavingConfig ? t('savingSchedule') : t('saveSchedule')}</Button>

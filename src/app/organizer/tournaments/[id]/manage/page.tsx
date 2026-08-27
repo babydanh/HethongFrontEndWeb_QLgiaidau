@@ -451,6 +451,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <CourtScheduleBoard
               courts={s.courts}
               matches={s.matches}
+              preview={s.schedulePlanPreview}
               onOpenMatch={(matchId) => {
                 const fullMatch = s.matches.find(
                   (candidate: (typeof s.matches)[number]) => candidate.id === matchId,

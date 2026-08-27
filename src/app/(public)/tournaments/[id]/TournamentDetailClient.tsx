@@ -338,16 +338,7 @@ const commonTranslate = useTranslations('Common');
     });
   }, [divisionsList, initialDivisionId, liveCountsByDivision, router, searchParams, tournamentId]);
 
-  useEffect(() => {
-    if (activeTab !== 'live' || activeLiveMatchesCount > 0) return;
-    const fallbackTab: TournamentDetailTab = activeDivisionHasMatches ? 'results' : 'overview';
-    Promise.resolve().then(() => {
-      setActiveTab(fallbackTab);
-      const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.set('tab', fallbackTab);
-      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-    });
-  }, [activeDivisionHasMatches, activeLiveMatchesCount, activeTab, router, searchParams, tournamentId]);
+
 
   useEffect(() => {
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
@@ -760,36 +751,12 @@ const commonTranslate = useTranslations('Common');
           {/* Left Column: Hero Banner + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-4 min-w-0 max-w-full overflow-hidden">
             {/* Banner Container */}
-            <div className="relative w-full aspect-[16/9] sm:aspect-[16/8.5] md:aspect-[16/8] max-h-[360px] rounded-2xl overflow-hidden shadow-lg border border-slate-200/80 bg-slate-900">
+            <div className="relative w-full aspect-[16/9] sm:aspect-[16/8.5] md:aspect-[16/8] max-h-[360px] rounded-2xl overflow-hidden shadow-sm border border-slate-200/80 bg-slate-900">
               <GalleryCarousel
                 images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
                 defaultBanner={activeTournament.bannerUrl || undefined}
                 className="w-full h-full object-cover"
               />
-
-              {/* Status Badge floating at Top-Left of Banner */}
-              <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
-                {(() => {
-                  const isLive = isTournamentInProgress(activeTournament.status) || activeLiveMatchesCount > 0;
-                  const isFinished = isTournamentCompleted(activeTournament.status);
-                  return (
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full shadow-md backdrop-blur-md ${
-                      isLive
-                        ? 'bg-rose-600/95 text-white animate-pulse'
-                        : isFinished
-                          ? 'bg-slate-900/90 text-white'
-                          : 'bg-emerald-600/95 text-white'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-ping' : 'bg-current'}`} />
-                      {isLive
-                        ? (translate('inProgress') || 'Đang diễn ra').toUpperCase()
-                        : isFinished
-                          ? (translate('completed') || 'Đã kết thúc').toUpperCase()
-                          : (translate('upcoming') || 'Sắp diễn ra').toUpperCase()}
-                    </span>
-                  );
-                })()}
-              </div>
             </div>
 
             {/* Horizontal Tabs */}
@@ -800,18 +767,18 @@ const commonTranslate = useTranslations('Common');
                   <button
                     key={tab.id}
                     onClick={() => handleTabSelect(tab.id)}
-                    className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
+                    className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive
-                          ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80'
+                          ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/20'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100/80'
                         : tab.isGolden
                           ? isActive
-                            ? 'bg-amber-500 text-white font-extrabold shadow-sm border border-amber-500 hover:bg-amber-600'
-                            : 'bg-amber-50 text-amber-900 border border-amber-300 font-extrabold hover:bg-amber-100'
+                            ? 'bg-amber-500 text-white font-bold shadow-sm border border-amber-500 hover:bg-amber-600'
+                            : 'bg-amber-50 text-amber-900 border border-amber-300/80 font-bold hover:bg-amber-100'
                           : isActive
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-100 hover:text-slate-900'
+                            : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
@@ -820,7 +787,7 @@ const commonTranslate = useTranslations('Common');
                     <span>{tab.label}</span>
                     {tab.badge != null && (
                       <span
-                        className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
                           isActive ? 'bg-white text-rose-600' : 'bg-rose-600 text-white'
                         }`}
                       >
@@ -1000,36 +967,59 @@ const commonTranslate = useTranslations('Common');
               })()}
 
               {/* Tournament Title & Badges */}
-              <div>
-                <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">
-                  {tournament.name}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Status Badge */}
+                  {(() => {
+                    const isLive = isTournamentInProgress(activeTournament.status) || activeLiveMatchesCount > 0;
+                    const isFinished = isTournamentCompleted(activeTournament.status);
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-md border ${
+                        isLive
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : isFinished
+                            ? 'bg-slate-100 text-slate-700 border-slate-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-rose-600 animate-pulse' : isFinished ? 'bg-slate-500' : 'bg-emerald-600'}`} />
+                        {isLive
+                          ? (translate('inProgress') || 'Đang diễn ra')
+                          : isFinished
+                            ? (translate('completed') || 'Đã kết thúc')
+                            : (translate('upcoming') || 'Sắp diễn ra')}
+                      </span>
+                    );
+                  })()}
+
                   {activeTournament.category?.name && (
-                    <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-600 text-white shadow-2xs flex items-center gap-1.5">
+                    <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
                       {(() => {
                         const logo = getSportLogo(activeTournament.category?.name);
                         return logo ? (
-                          <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150" />
+                          <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain" />
                         ) : null;
                       })()}
                       {activeTournament.category.name}
                     </span>
                   )}
-                  <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${
-                    activeTournament.isRanked ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'
+                  <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-md border ${
+                    activeTournament.isRanked ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}>
                     {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : `🎾 ${translate('casualBadge')}`}
                   </span>
                 </div>
+
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
+                  {tournament.name}
+                </h1>
               </div>
 
               {/* Key Details Rows */}
-              <div className="space-y-3 pt-3 border-t border-slate-100 text-sm text-slate-600 font-medium">
+              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">
                 {/* Dates */}
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5">
                   <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                  <p className="text-xs font-bold text-slate-800">
+                  <p className="font-semibold text-slate-800">
                     {activeTournament.startDate ? (
                       <>
                         {formatDate(activeTournament.startDate)}
@@ -1040,25 +1030,25 @@ const commonTranslate = useTranslations('Common');
                 </div>
 
                 {/* Location */}
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                  <p className="text-xs leading-relaxed text-slate-600 break-words" title={getTournamentLocationLabel(activeTournament)}>
+                  <p className="leading-relaxed text-slate-600 break-words" title={getTournamentLocationLabel(activeTournament)}>
                     {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
                   </p>
                 </div>
 
                 {/* Divisions Count */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
-                  <p className="text-xs font-bold text-slate-700">
-                    {divisionsList.length || 1} {translate('competitionContentTitle') || 'Nội dung'}
+                  <p className="font-semibold text-slate-700">
+                    {divisionsList.length || 1} {translate('competitionContentTitle') || 'Nội dung thi đấu'}
                   </p>
                 </div>
 
                 {/* Participants / Teams Count */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Users className="w-4 h-4 text-slate-400 shrink-0" />
-                  <p className="text-xs font-bold text-slate-700">
+                  <p className="font-semibold text-slate-700">
                     {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0} {translate('participantsCount') || 'đội / VĐV'}
                   </p>
                 </div>
@@ -1128,7 +1118,7 @@ const commonTranslate = useTranslations('Common');
                             setIsRegisterModalOpen(true);
                           }
                         }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md text-sm cursor-pointer"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-xs text-sm cursor-pointer"
                       >
                         {registrationButtonLabel}
                       </Button>

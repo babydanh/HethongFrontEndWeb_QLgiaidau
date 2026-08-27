@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   tournamentsApi, divisionsApi, livestreamApi, LivestreamCamera, Tournament, TournamentFeesConfig, TournamentParticipant,
   BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction, Division,
+  SchedulePlanPreview, SchedulePlanPreviewInput,
 } from '@/features/tournaments/api';
 import { venuesApi } from '@/features/venues/api';
 import { matchesApi } from '@/features/matches/api';
@@ -97,6 +98,8 @@ export function useManageState(id: string) {
   const [courts, setCourts] = useState<Court[]>([]);
   const [newCourtName, setNewCourtName] = useState('');
   const [isSavingCourt, setIsSavingCourt] = useState(false);
+  const [schedulePlanPreview, setSchedulePlanPreview] = useState<SchedulePlanPreview | null>(null);
+  const [isPreviewingSchedulePlan, setIsPreviewingSchedulePlan] = useState(false);
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
   const [matchCameraId, setMatchCameraId] = useState<string>('');
   const divisionListRequestRef = useRef(0);
@@ -413,6 +416,23 @@ export function useManageState(id: string) {
       toast.error(getErrorMessage(err));
     } finally {
       setIsSavingCourt(false);
+    }
+  };
+
+  const handlePreviewSchedulePlan = async (payload: SchedulePlanPreviewInput) => {
+    if (!tournament?.id) return null;
+    setIsPreviewingSchedulePlan(true);
+    try {
+      const response = await tournamentsApi.previewSchedulePlan(tournament.id, payload);
+      const preview = response.data;
+      setSchedulePlanPreview(preview);
+      return preview;
+    } catch (err) {
+      setSchedulePlanPreview(null);
+      toast.error(getErrorMessage(err));
+      return null;
+    } finally {
+      setIsPreviewingSchedulePlan(false);
     }
   };
 
@@ -1755,6 +1775,7 @@ export function useManageState(id: string) {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
     newCourtName, setNewCourtName, isSavingCourt,
+    schedulePlanPreview, setSchedulePlanPreview, isPreviewingSchedulePlan,
     isLoading, setIsLoading, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
     draftStatus, clearManageDraft,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
@@ -1817,7 +1838,7 @@ export function useManageState(id: string) {
     isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
     // actions
     fetchTournamentData, fetchDivisions, fetchReferees, refetchDivisionData, applyDivisionFormValues, fetchVenueCourts,
-    handleAddTournamentCourt, handleRemoveTournamentCourt,
+    handleAddTournamentCourt, handleRemoveTournamentCourt, handlePreviewSchedulePlan,
     handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveRegistrationSettings, handleSaveMatchConfig, handleSaveFinanceConfig,
     handleAddReferee, handleCreateDivision, requestDeleteDivision, handleConfirmDeleteDivision,
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,

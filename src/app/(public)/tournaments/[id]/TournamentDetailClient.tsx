@@ -8,7 +8,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } 
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -658,6 +658,16 @@ const commonTranslate = useTranslations('Common');
   const hasAdvancedRegistrationForm = activeTournament.tournamentConfig?.registrationForm?.status === 'PUBLISHED';
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
+  const areAllDivisionsFull = divisionsList.length > 0
+    ? divisionsList.every((d) => {
+        const current = d._count?.participants ?? 0;
+        const max = d.maxParticipants ?? 0;
+        return max > 0 && current >= max;
+      })
+    : (activeTournament.maxParticipants != null &&
+       activeTournament.maxParticipants > 0 &&
+       (activeTournament._count?.participants ?? 0) >= activeTournament.maxParticipants);
+
   let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = isRegistrationStatusLoading;
   const isRegisteredUser = myRegistration?.registered === true;
@@ -678,10 +688,13 @@ const commonTranslate = useTranslations('Common');
     }
   } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
-      registrationButtonLabel = translate('registrationLocked');
+      registrationButtonLabel = translate('registrationLocked') || 'Đã khóa đăng ký';
       isRegistrationButtonDisabled = true;
     } else if (isRegistrationExpired) {
-      registrationButtonLabel = translate('registrationExpired');
+      registrationButtonLabel = translate('registrationExpired') || 'Hết hạn đăng ký';
+      isRegistrationButtonDisabled = true;
+    } else if (areAllDivisionsFull) {
+      registrationButtonLabel = translate('registrationFull') || 'Đã đủ hồ sơ';
       isRegistrationButtonDisabled = true;
     }
   } else if (isTournamentUpcoming(activeTournament.status) || isTournamentRegistrationClosed(activeTournament.status)) {
@@ -950,16 +963,7 @@ const commonTranslate = useTranslations('Common');
       <div className="pt-1">
         {!isOwner && !isTournamentDraft(activeTournament.status) && (
           <div>
-            {isRegistrationButtonDisabled ? (
-              <Button
-                type="button"
-                onClick={() => handleTabSelect('matches')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-4 h-4" />
-                {translate('tabs.matches') || 'Lịch thi đấu'}
-              </Button>
-            ) : canResumePayment ? (
+            {canResumePayment ? (
               <Button
                 type="button"
                 onClick={() => {
@@ -982,6 +986,49 @@ const commonTranslate = useTranslations('Common');
               >
                 <CreditCard className="w-4 h-4" />
                 {translate('continuePayment') || 'Thanh toán ngay'}
+              </Button>
+            ) : isRegisteredUser ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
+              </Button>
+            ) : isRegistrationOpen && areAllDivisionsFull ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <Users className="w-4 h-4 text-slate-400" />
+                <span>{translate('registrationFull') || 'Đã đủ hồ sơ'}</span>
+              </Button>
+            ) : isRegistrationOpen && (isRegistrationLocked || isRegistrationExpired) ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <span>{registrationButtonLabel}</span>
+              </Button>
+            ) : isTournamentInProgress(activeTournament.status) || isTournamentCompleted(activeTournament.status) ? (
+              <Button
+                type="button"
+                onClick={() => handleTabSelect('matches')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                {translate('tabs.matches') || 'Lịch thi đấu'}
+              </Button>
+            ) : isRegistrationButtonDisabled ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <span>{registrationButtonLabel}</span>
               </Button>
             ) : isClubLiteTournament(activeTournament) ? (
               activeTournament.inviteCode ? (
@@ -1174,7 +1221,7 @@ const commonTranslate = useTranslations('Common');
           {/* Left Column: Hero Banner + Mobile Metadata + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
             {/* Banner Container: Slimmer & sleek on mobile, generous & immersive on desktop */}
-            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-950">
+            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-800">
               <GalleryCarousel
                 images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
                 defaultBanner={activeTournament.bannerUrl || undefined}

@@ -116,6 +116,41 @@ export interface TournamentCourtsResponse {
   courts: TournamentCourt[];
 }
 
+export interface SchedulePlanAssignment {
+  matchId: string;
+  courtId: string;
+  scheduledAt: string;
+}
+
+export interface SchedulePlanPreviewInput {
+  divisionId?: string;
+  date: string;
+  courtIds: string[];
+  matchIds?: string[];
+  durationMinutes?: number;
+  bufferMinutes?: number;
+  operatingWindow?: { start: string; end: string };
+  strategy: 'ROUND_ORDER_EARLIEST_AVAILABLE';
+}
+
+export interface SchedulePlanPreview {
+  planId: string;
+  strategy: 'ROUND_ORDER_EARLIEST_AVAILABLE';
+  scheduleVersion: string;
+  durationMinutes: number;
+  bufferMinutes: number;
+  operatingWindow: { start: string; end: string };
+  assignments: SchedulePlanAssignment[];
+  skipped: Array<{ matchId: string; reason: string }>;
+  conflicts: Array<{ matchId?: string; courtId?: string; reason: string }>;
+  readiness: {
+    eligibleCount: number;
+    assignedCount: number;
+    skippedCount: number;
+    canApply: boolean;
+  };
+}
+
 export interface WorkspaceRefereeMatch {
   id: string;
   tournamentId: string;
@@ -778,6 +813,10 @@ export const tournamentsApi = {
     id: string,
     data: { courtName: string; status?: 'AVAILABLE' | 'MAINTENANCE' },
   ) => api.post<ApiResponse<TournamentCourt>>(`/tournaments/${id}/courts`, data),
+  previewSchedulePlan: (
+    id: string,
+    data: SchedulePlanPreviewInput,
+  ) => api.post<ApiResponse<SchedulePlanPreview>>(`/tournaments/${id}/schedule-plans`, data),
   removeTournamentCourt: (id: string, courtId: string) =>
     api.delete<ApiResponse<TournamentCourt>>(
       `/tournaments/${id}/courts/${courtId}`,

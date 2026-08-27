@@ -43,18 +43,21 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
 
   if (allImages.length === 0) {
     return (
-      <div className={`w-full bg-slate-900 flex flex-col items-center justify-center text-white gap-3 relative overflow-hidden ${className}`}>
-        {/* Decorative background branding circles */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className={`w-full bg-gradient-to-br from-slate-800 via-slate-750 to-blue-900 flex flex-col items-center justify-center text-white gap-3 relative overflow-hidden ${className}`}>
+        {/* Decorative background branding glow */}
+        <div className="absolute -right-16 -top-16 w-80 h-80 bg-sky-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col items-center gap-2">
+        <div className="relative z-10 flex flex-col items-center gap-2.5">
           <img
             src={BRAND.assets.logoFull}
             alt={translate('brandLogoAlt', { name: BRAND.name })}
-            className="h-16 md:h-20 w-auto object-contain drop-shadow-md"
+            className="h-16 md:h-20 w-auto object-contain drop-shadow-lg"
           />
-          <span className="text-[11px] tracking-widest text-slate-300 font-bold uppercase mt-1">{translate('galleryEmptyTagline')}</span>
+          <span className="text-[11px] tracking-widest text-sky-200 font-bold uppercase mt-1 drop-shadow-xs">
+            {translate('galleryEmptyTagline') || 'Hệ thống quản lý giải đấu chuyên nghiệp'}
+          </span>
         </div>
       </div>
     );

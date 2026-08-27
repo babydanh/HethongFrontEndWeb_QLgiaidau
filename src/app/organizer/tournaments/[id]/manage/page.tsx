@@ -16,6 +16,7 @@ import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
 import { CourtScheduleBoard } from './components/CourtScheduleBoard';
+import { QuickSchedulePanel } from './components/QuickSchedulePanel';
 import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
@@ -435,6 +436,15 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
               courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
               isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />
+            <QuickSchedulePanel
+              courts={s.courts}
+              divisions={s.divisions}
+              defaultDivisionId={s.selectedDivisionId}
+              defaultDate={s.startDate}
+              preview={s.schedulePlanPreview}
+              isPreviewing={s.isPreviewingSchedulePlan}
+              onPreview={s.handlePreviewSchedulePlan}
+            />
             <CourtScheduleBoard
               courts={s.courts}
               matches={s.matches}

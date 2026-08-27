@@ -129,9 +129,12 @@ export default function LiveMatchesTab({
         if (divisionId) params.division_id = divisionId;
 
         const res = await matchesApi.getMatches(params);
-        const data = Array.isArray(res) ? res : (res.data || []);
+        const rawData = Array.isArray(res) ? res : (res.data ?? []);
+        const data = Array.isArray(rawData) ? rawData : (rawData.data ?? []);
         if (active) {
-          const ongoing = (data as Match[]).filter((m) => m.status === 'ONGOING');
+          const ongoing = (data as Match[]).filter(
+            (m) => m.status === 'ONGOING' && !m.isBye && Boolean(m.participant1Id && m.participant2Id),
+          );
           setLiveMatches(ongoing);
           if (divisionId) onLiveCountChange?.(divisionId, ongoing.length);
         }
@@ -165,7 +168,12 @@ export default function LiveMatchesTab({
 
       setLiveMatches((current) => {
         let next: Match[];
-        if (updatedMatch.status !== 'ONGOING') {
+        const isLiveValid =
+          updatedMatch.status === 'ONGOING' &&
+          !updatedMatch.isBye &&
+          Boolean(updatedMatch.participant1Id && updatedMatch.participant2Id);
+
+        if (!isLiveValid) {
           next = current.filter((m) => m.id !== updatedMatch.id);
         } else {
           const exists = current.some((m) => m.id === updatedMatch.id);

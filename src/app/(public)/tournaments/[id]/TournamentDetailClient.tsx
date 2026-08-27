@@ -217,6 +217,27 @@ const commonTranslate = useTranslations('Common');
     };
   }, [activeTournament?.id, isOwner, selectedDivisionId, user?.id]);
 
+  useEffect(() => {
+    let active = true;
+    const checkResults = async () => {
+      try {
+        const response = await tournamentsApi.getTournamentResults(tournamentId, selectedDivisionId || undefined);
+        const data = response.data;
+        const awards = data?.awards ?? [];
+        const hasTop1 = awards.some((a) => a.rank === 1 && Boolean(a.participant?.teamName));
+        const hasTop2 = awards.some((a) => a.rank === 2 && Boolean(a.participant?.teamName));
+        const isFinished = Boolean(data?.finalized || (hasTop1 && hasTop2));
+        if (active) setHasConfirmedResults(isFinished);
+      } catch {
+        if (active) setHasConfirmedResults(false);
+      }
+    };
+    void checkResults();
+    return () => {
+      active = false;
+    };
+  }, [selectedDivisionId, tournamentId]);
+
   const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
     if (liveRefreshInFlightRef.current) return;
     liveRefreshInFlightRef.current = true;
@@ -225,8 +246,11 @@ const commonTranslate = useTranslations('Common');
         { tournament_id: tournamentId, status: 'ONGOING', limit: 100 },
         signal,
       );
-      const data = Array.isArray(response) ? response : (response.data ?? []);
-      const ongoing = data.filter((match: Match) => match.status === 'ONGOING');
+      const rawData = Array.isArray(response) ? response : (response.data ?? []);
+      const data = Array.isArray(rawData) ? rawData : (rawData.data ?? []);
+      const ongoing = (Array.isArray(data) ? data : []).filter(
+        (match: Match) => match.status === 'ONGOING' && !match.isBye && Boolean(match.participant1Id && match.participant2Id),
+      );
       const nextCounts: Record<string, number> = {};
       for (const match of ongoing) {
         if (!match.divisionId) continue;
@@ -698,7 +722,7 @@ const commonTranslate = useTranslations('Common');
     ...(activeLiveMatchesCount > 0
       ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
       : []),
-    ...(activeDivisionHasMatches
+    ...(hasConfirmedResults
       ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: isCompleted }]
       : []),
     { id: 'overview', label: translate('overview') },

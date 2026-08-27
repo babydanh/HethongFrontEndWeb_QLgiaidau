@@ -4,6 +4,25 @@ import type { ResolvedSportRuleView } from '@/features/tournaments/sport-rules/n
 import type { Match, MatchScore } from '@/types/match';
 import type { SportRuleKind, SportRulesEnvelope } from '@/types/tournament';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return isRecord(value) ? value : null;
+}
+
+function getRoundOverride(
+  config: Record<string, unknown> | null | undefined,
+  roundNumber: number | null | undefined,
+): Record<string, unknown> | null {
+  if (!config || roundNumber == null) return null;
+  const rounds = asRecord(config.rounds) || asRecord(config.roundConfigs);
+  if (!rounds) return null;
+  const override = rounds[String(roundNumber)];
+  return asRecord(override);
+}
+
 type MatchSportContext = {
   matchConfig?: Match['matchConfig'];
   scoreDetails?: Record<string, unknown> | null;
@@ -110,9 +129,16 @@ export function resolveMatchSportRules(
     ?? (match as unknown as Match).group?.stage?.roundConfig
     ?? null;
 
+  const roundNumber = (match as unknown as { roundNumber?: number | null }).roundNumber;
+  const stageRoundOverride = getRoundOverride(stageRoundConfig, roundNumber);
+  const groupRoundConfig = (match as unknown as Match).group?.roundConfig;
+  const groupRoundOverride = getRoundOverride(groupRoundConfig, roundNumber);
+
   const mergedSource = {
     ...(match.tournament?.sportRules ?? {}),
     ...(stageRoundConfig ?? {}),
+    ...(groupRoundOverride ?? {}),
+    ...(stageRoundOverride ?? {}),
     ...(match.matchConfig ?? {}),
   };
 

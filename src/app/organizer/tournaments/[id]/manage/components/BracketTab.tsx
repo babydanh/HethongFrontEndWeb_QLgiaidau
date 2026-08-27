@@ -1047,13 +1047,14 @@ export function BracketTab({
                   {rounds.length > 0 ? (
                     <div className="divide-y divide-slate-100 max-h-[340px] overflow-y-auto space-y-2.5">
                       {rounds.map(({ stage, roundNumber, name, override }) => {
+                        const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
                         return (
                           <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
                             <div className="space-y-0.5">
                               <p className="text-sm font-bold text-slate-800">{name}</p>
                               <p className="text-[11px] text-slate-500 font-semibold">
-                                {override ? (
-                                  `${translate('firstToSets', { sets: override.sets_to_win ?? 1 })}, ${override.points_per_set || 21} ${translate('points')}, ${override.deuce_enabled ? translate('deuceEnabled') : translate('deuceDisabled')}`
+                                {resolvedOverride ? (
+                                  `${translate('firstToSets', { sets: resolvedOverride.setsToWin })}, ${resolvedOverride.pointsPerSet} ${translate('points')}, ${resolvedOverride.winByTwo ? translate('deuceEnabled') : translate('deuceDisabled')}`
                                 ) : (
                                   translate('inheritsFormatRules')
                                 )}
@@ -1123,8 +1124,10 @@ export function BracketTab({
                           const rc = groupStage.id === '__draft_gsk_group__'
                             ? divisionRoundConfig
                             : groupStage.roundConfig;
-                          const setsLabel = rc?.max_sets === 1 ? 1 : rc?.max_sets === 3 ? 2 : 3;
-                          return `${translate('firstToSets', { sets: setsLabel })}, ${rc?.points_per_set || pointsPerSet} ${translate('points')}`;
+                          const resolvedRc = rc ? resolveSportRuleView(rc, sportRuleKind) : null;
+                          return resolvedRc
+                            ? `${translate('firstToSets', { sets: resolvedRc.setsToWin })}, ${resolvedRc.pointsPerSet} ${translate('points')}`
+                            : translate('inheritsFormatRules');
                         })()
                       : translate('inheritsFormatRules')}
                   </p>
@@ -1136,19 +1139,22 @@ export function BracketTab({
 
               {gskConfigurableGroupRounds.length > 0 && (
                 <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-slate-50/50 px-3">
-                  {gskConfigurableGroupRounds.map(({ stage, roundNumber, name, override }) => (
+                  {gskConfigurableGroupRounds.map(({ stage, roundNumber, name, override }) => {
+                    const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
+                    return (
                     <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-4">
                       <div>
                         <p className="text-sm font-bold text-slate-800">{name}</p>
                         <p className="text-[11px] text-slate-500 font-semibold">
-                          {override ? `${translate('firstToSets', { sets: override.sets_to_win ?? 1 })}, ${override.points_per_set || pointsPerSet} ${translate('points')}` : translate('inheritsDefaultRules')}
+                          {resolvedOverride ? `${translate('firstToSets', { sets: resolvedOverride.setsToWin })}, ${resolvedOverride.pointsPerSet} ${translate('points')}` : translate('inheritsDefaultRules')}
                         </p>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => handleOpenRoundModal?.(stage, roundNumber)} className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8">
                         {translate('configureRound')}
                       </Button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1162,19 +1168,22 @@ export function BracketTab({
 
               {gskConfigurableRounds.length > 0 ? (
                 <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-slate-50/50 px-3">
-                  {gskConfigurableRounds.map(({ stage, roundNumber, name, override }) => (
+                  {gskConfigurableRounds.map(({ stage, roundNumber, name, override }) => {
+                    const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
+                    return (
                     <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-4">
                       <div>
                         <p className="text-sm font-bold text-slate-800">{name}</p>
                         <p className="text-[11px] text-slate-500 font-semibold">
-                          {override ? `${translate('firstToSets', { sets: override.sets_to_win ?? 1 })}, ${override.points_per_set || pointsPerSet} ${translate('points')}` : translate('inheritsDefaultRules')}
+                          {resolvedOverride ? `${translate('firstToSets', { sets: resolvedOverride.setsToWin })}, ${resolvedOverride.pointsPerSet} ${translate('points')}` : translate('inheritsDefaultRules')}
                         </p>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => handleOpenRoundModal?.(stage, roundNumber)} className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8">
                         {translate('configureRound')}
                       </Button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-center">

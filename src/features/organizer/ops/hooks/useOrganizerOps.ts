@@ -97,7 +97,9 @@ interface UseOrganizerOpsResult {
   };
 }
 
-const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse, translate: (key: any, values?: any) => string): OpsActivityItem => {
+type AuditTranslate = (key: string, values?: Record<string, string | number | Date>) => string;
+
+const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse, translate: AuditTranslate): OpsActivityItem => {
   const entityType = row.tableName === 'matches' ? 'MATCH' : 'PARTICIPANT';
   const actor = row.user?.fullName || row.user?.email || translate('systemActor');
 
@@ -154,12 +156,12 @@ export function useOrganizerOps(
   const translate = useTranslations('OrganizerOps');
   const commonTranslate = useTranslations('Common');
   const rateLimitMessage = `${commonTranslate('rateLimitTitle')} ${commonTranslate('rateLimitHint')}`;
-  const formatRateLimitMessage = (error: unknown) => {
+  const formatRateLimitMessage = useCallback((error: unknown) => {
     const seconds = getRetryAfterSeconds(error);
     return seconds
       ? commonTranslate('rateLimitRetryAfter', { seconds })
       : rateLimitMessage;
-  };
+  }, [commonTranslate, rateLimitMessage]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [referees, setReferees] = useState<OpsReferee[]>([]);
@@ -221,7 +223,7 @@ export function useOrganizerOps(
     setMatches(matchesRes);
 
     setActivityLog((current) => {
-      const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate));
+      const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate as unknown as AuditTranslate));
       const localOnly = current.filter((item) => item.id.includes('_'));
       return [...backendLog, ...localOnly].slice(0, 60);
     });
@@ -275,7 +277,7 @@ export function useOrganizerOps(
     return () => {
       active = false;
     };
-  }, [tournamentId]);
+  }, [formatRateLimitMessage, tournamentId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -327,7 +329,7 @@ export function useOrganizerOps(
       active = false;
       controller.abort();
     };
-  }, [loadOperationalData, selectedDivisionId, tournamentId]);
+  }, [formatRateLimitMessage, loadOperationalData, selectedDivisionId, tournamentId]);
 
   const refresh = async () => {
     const [tournamentRes, divisionsRes, refereesRes] = await Promise.all([

@@ -489,14 +489,16 @@ export default function CommunityDetailPage() {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto min-w-0">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1">
-              <Image
-                src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
-                alt={community.name}
-                fill
-                className="object-contain rounded-xl p-1.5"
-              />
-            </div>
+            {Boolean(community.logoUrl?.trim()) && (
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1">
+                <Image
+                  src={community.logoUrl!}
+                  alt={community.name}
+                  fill
+                  className="object-contain rounded-xl p-1.5"
+                />
+              </div>
+            )}
             <div className="space-y-2 min-w-0 flex-1">
               {/* Tên câu lạc bộ chuyển xuống card dưới */}
               <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 truncate">

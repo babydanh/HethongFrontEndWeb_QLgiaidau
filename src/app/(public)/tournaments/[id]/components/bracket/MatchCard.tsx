@@ -309,8 +309,12 @@ const RowSide = memo(function RowSide({
             alt=""
             width={18}
             height={18}
-            className="h-[18px] w-[18px] rounded-full object-cover shrink-0"
+            className="h-[18px] w-[18px] rounded-full object-cover shrink-0 border border-slate-200/60"
           />
+        ) : p?.teamName ? (
+          <span className="h-[18px] w-[18px] rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8.5px] font-black text-slate-600 shrink-0 select-none shadow-2xs">
+            {p.teamName.trim().charAt(0).toUpperCase()}
+          </span>
         ) : null}
         <span
           className={

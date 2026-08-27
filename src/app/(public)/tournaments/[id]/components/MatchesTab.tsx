@@ -584,7 +584,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
         }`}>
           {members.map((m, idx) => (
-            <span key={m.userId || `${m.fullName || 'member'}-${idx}`} className="inline-flex items-center">
+            <span key={m.userId || `${m.fullName || 'member'}-${idx}`} className="inline-flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-600 overflow-hidden shrink-0">
+                {(m as { avatarUrl?: string | null }).avatarUrl ? (
+                  <img src={(m as { avatarUrl?: string | null }).avatarUrl!} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  (m.fullName || 'U').trim().charAt(0).toUpperCase()
+                )}
+              </span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -611,10 +618,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       );
     }
     return (
-      <span className={`text-sm font-bold truncate ${
+      <span className={`text-sm font-bold flex items-center gap-1.5 truncate ${
         isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
       }`}>
-        {participant.teamName}
+        <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-600 overflow-hidden shrink-0">
+          {(participant as { logoUrl?: string | null }).logoUrl ? (
+            <img src={(participant as { logoUrl?: string | null }).logoUrl!} alt="" className="w-full h-full object-cover" />
+          ) : (
+            (participant.teamName || 'T').trim().charAt(0).toUpperCase()
+          )}
+        </span>
+        <span className="truncate">{participant.teamName}</span>
       </span>
     );
   };

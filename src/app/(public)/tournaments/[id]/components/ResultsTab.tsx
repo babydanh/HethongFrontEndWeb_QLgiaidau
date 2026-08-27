@@ -35,25 +35,25 @@ function ParticipantAwardIdentity({
 
   const ringClasses =
     rank === 1
-      ? 'ring-2 ring-amber-400 ring-offset-1 border-2 border-white shadow-xs'
+      ? 'ring-2 ring-amber-400 border border-white shadow-2xs'
       : rank === 2
-        ? 'ring-2 ring-slate-400 ring-offset-1 border-2 border-white shadow-xs'
+        ? 'ring-2 ring-slate-400 border border-white shadow-2xs'
         : rank === 3
-          ? 'ring-2 ring-amber-700/70 ring-offset-1 border-2 border-white shadow-xs'
-          : 'ring-1 ring-slate-300 border-2 border-white shadow-xs';
+          ? 'ring-2 ring-orange-500 border border-white shadow-2xs'
+          : 'ring-1 ring-slate-300 border border-white shadow-2xs';
 
   const fallbackBg =
     rank === 1
-      ? 'bg-amber-100 text-amber-800'
+      ? 'bg-amber-100 text-amber-900'
       : rank === 2
-        ? 'bg-slate-200 text-slate-700'
+        ? 'bg-slate-200 text-slate-800'
         : rank === 3
-          ? 'bg-orange-100 text-amber-900'
-          : 'bg-slate-100 text-slate-600';
+          ? 'bg-orange-100 text-orange-900'
+          : 'bg-slate-100 text-slate-700';
 
   return (
-    <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-      <div className="flex shrink-0 items-center -space-x-2" aria-label={participant.teamName}>
+    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+      <div className="flex shrink-0 items-center -space-x-1.5" aria-label={participant.teamName}>
         {members.length > 0 ? (
           members.map((member, index) => {
             const fallback = getInitials(member.fullName || participant.teamName);
@@ -76,7 +76,7 @@ function ParticipantAwardIdentity({
                 alt={member.fullName || participant.teamName}
                 referrerPolicy="no-referrer"
                 onClick={handleMemberClick}
-                className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${ringClasses}`}
+                className={`h-8 w-8 sm:h-8.5 sm:w-8.5 rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${ringClasses}`}
                 title={member.fullName || participant.teamName}
               />
             ) : (
@@ -84,7 +84,7 @@ function ParticipantAwardIdentity({
                 key={member.userId || `${participant.participantId}-${index}`}
                 type="button"
                 onClick={handleMemberClick}
-                className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-xs font-black cursor-pointer hover:scale-105 transition-transform ${fallbackBg} ${ringClasses}`}
+                className={`flex h-8 w-8 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-full text-[11px] font-black cursor-pointer hover:scale-105 transition-transform ${fallbackBg} ${ringClasses}`}
                 title={member.fullName || participant.teamName}
               >
                 {fallback}
@@ -93,18 +93,18 @@ function ParticipantAwardIdentity({
           })
         ) : (
           <span
-            className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-xs font-black ${fallbackBg} ${ringClasses}`}
+            className={`flex h-8 w-8 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-full text-[11px] font-black ${fallbackBg} ${ringClasses}`}
           >
             {getInitials(participant.teamName)}
           </span>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <h4 className="truncate text-sm sm:text-base font-extrabold text-slate-900 leading-tight" title={participant.teamName}>
+        <h4 className="truncate text-xs sm:text-sm font-bold text-slate-900 leading-tight" title={participant.teamName}>
           {participant.teamName}
         </h4>
         {memberNames && (
-          <p className="mt-0.5 truncate text-[11px] sm:text-xs font-medium text-slate-500" title={memberNames}>
+          <p className="mt-0.5 truncate text-[10px] sm:text-[11px] font-medium text-slate-500 leading-none" title={memberNames}>
             {memberNames}
           </p>
         )}
@@ -129,49 +129,47 @@ function ResultAwardCard({
   const isBronze = rank === 3;
 
   const cardStyles = isGold
-    ? 'border-amber-300/90 bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white shadow-xs hover:border-amber-400'
+    ? 'border-amber-400 bg-amber-50/40 hover:bg-amber-50/70'
     : isSilver
-      ? 'border-slate-300 bg-gradient-to-br from-slate-200/50 via-slate-100/30 to-white shadow-xs hover:border-slate-400'
+      ? 'border-slate-300 bg-slate-50/60 hover:bg-slate-50/90'
       : isBronze
-        ? 'border-orange-300/80 bg-gradient-to-br from-orange-500/10 via-amber-700/5 to-white shadow-xs hover:border-orange-400'
-        : 'border-slate-200 bg-white shadow-xs hover:border-slate-300';
+        ? 'border-orange-300 bg-orange-50/40 hover:bg-orange-50/70'
+        : 'border-slate-200 bg-white hover:bg-slate-50';
 
   const badgeStyles = isGold
-    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-2xs'
+    ? 'bg-amber-500 text-white'
     : isSilver
-      ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-2xs'
+      ? 'bg-slate-600 text-white'
       : isBronze
-        ? 'bg-gradient-to-r from-amber-700 to-orange-700 text-white shadow-2xs'
+        ? 'bg-orange-600 text-white'
         : 'bg-slate-500 text-white';
 
   const rankNumberColor = isGold
-    ? 'text-amber-500 drop-shadow-2xs'
+    ? 'text-amber-600'
     : isSilver
       ? 'text-slate-500'
       : isBronze
-        ? 'text-amber-800'
+        ? 'text-orange-600'
         : 'text-slate-400';
 
   const rankIcon = isGold ? '👑' : isSilver ? '🥈' : isBronze ? '🥉' : '🎖️';
 
   return (
     <article
-      className={`rounded-xl border p-3 sm:p-3.5 transition-all flex flex-col justify-between gap-2.5 ${cardStyles}`}
+      className={`rounded-lg border p-2.5 sm:px-3.5 sm:py-2.5 transition-colors shadow-2xs flex items-center justify-between gap-3 min-w-0 ${cardStyles}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black uppercase tracking-wider ${badgeStyles}`}>
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide shrink-0 shadow-2xs ${badgeStyles}`}>
           <span>{rankIcon}</span>
           <span>{label}</span>
         </span>
-      </div>
-      <div className="flex items-center justify-between gap-3 pt-1">
         <div className="min-w-0 flex-1">
           <ParticipantAwardIdentity participant={award.participant} rank={rank} />
         </div>
-        <span className={`shrink-0 text-xl sm:text-2xl font-black ${rankNumberColor}`}>
-          {rank}
-        </span>
       </div>
+      <span className={`shrink-0 text-lg sm:text-xl font-black ${rankNumberColor}`}>
+        {rank}
+      </span>
     </article>
   );
 }
@@ -220,11 +218,11 @@ export default function ResultsTab({
     );
   }
 
-  const awards = (result?.awards ?? [])
+  const rawAwards = (result?.awards ?? [])
     .filter((award) => award.participant && typeof award.rank === 'number' && award.rank >= 1)
     .sort((a, b) => a.rank - b.rank);
 
-  if (!result || awards.length === 0) {
+  if (!result || rawAwards.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
         <p className="text-sm font-bold text-slate-700">{translate('resultsTabPendingTitle')}</p>
@@ -233,6 +231,9 @@ export default function ResultsTab({
     );
   }
 
+  const rank3Count = rawAwards.filter((a) => a.rank === 3).length;
+  const isRank3Shared = rank3Count > 1;
+
   const statusTitle = result.finalized
     ? translate('resultsTabOfficialTitle')
     : translate('resultsTabCurrentTitle');
@@ -240,12 +241,12 @@ export default function ResultsTab({
   const getRankLabel = (rank: number) => {
     if (rank === 1) return translate('champion') || 'Quán quân';
     if (rank === 2) return translate('runnerUp') || 'Á quân';
-    if (rank === 3) return translate('thirdPlace') || 'Hạng ba';
+    if (rank === 3) return isRank3Shared ? 'Đồng hạng 3' : (translate('thirdPlace') || 'Hạng ba');
     return translate('rank', { rank }) || `Hạng ${rank}`;
   };
 
   const resultShareTitle = `${statusTitle}: ${tournamentName || translate('resultsTabLabel')}`;
-  const resultShareText = `${resultShareTitle}\n` + awards.map(a => `${getRankLabel(a.rank)}: ${a.participant?.teamName ?? ''}`).join('\n');
+  const resultShareText = `${resultShareTitle}\n` + rawAwards.map(a => `${getRankLabel(a.rank)}: ${a.participant?.teamName ?? ''}`).join('\n');
   const shareUrl = typeof window !== 'undefined'
     ? (() => {
       const url = new URL(window.location.href);
@@ -258,15 +259,15 @@ export default function ResultsTab({
 
   return (
     <>
-      <section className="flex flex-col gap-4" aria-labelledby="tournament-results-title">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-3">
-          <div className="flex min-w-0 items-start gap-2.5">
-            <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
+      <section className="flex flex-col gap-3" aria-labelledby="tournament-results-title">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-2.5">
+          <div className="flex min-w-0 items-start gap-2">
+            <Trophy className="mt-0.5 h-4.5 w-4.5 shrink-0 text-amber-600" aria-hidden="true" />
             <div className="min-w-0">
-              <h3 id="tournament-results-title" className="truncate text-base font-black text-slate-950 sm:text-lg">
+              <h3 id="tournament-results-title" className="truncate text-sm sm:text-base font-extrabold text-slate-950">
                 {statusTitle}
               </h3>
-              <p className="mt-1 text-xs font-medium text-slate-500">
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500">
                 {translate('resultsTabDescription')}
               </p>
             </div>
@@ -274,15 +275,16 @@ export default function ResultsTab({
           <button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer shadow-2xs"
           >
-            <Share2 className="h-4 w-4" aria-hidden="true" />
+            <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{translate('shareResults')}</span>
           </button>
         </div>
 
-        <div className={`grid grid-cols-1 ${awards.length >= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2'} gap-2.5 sm:gap-3`}>
-          {awards.map((award, index) => (
+        {/* Slim, elegant 2-column or 1-column standing list */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
+          {rawAwards.map((award, index) => (
             <ResultAwardCard
               key={award.participant?.participantId || `${award.rank}-${index}`}
               award={award}

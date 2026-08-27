@@ -43,6 +43,9 @@ export function CourtScheduleBoard({
   const scheduledMatches = matches.filter(
     (match) => Boolean(match.scheduledAt && match.courtId),
   );
+  const unscheduledMatches = matches.filter(
+    (match) => !match.scheduledAt || !match.courtId,
+  );
 
   return (
     <section className="border border-slate-200 rounded-lg bg-white p-5 md:p-6 space-y-4">
@@ -98,6 +101,28 @@ export function CourtScheduleBoard({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {unscheduledMatches.length > 0 && (
+        <div className="border-t border-slate-200 pt-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-sm font-bold text-slate-900">{t('roundModal.courtPlaceholder')}</p>
+            <span className="text-xs font-semibold text-slate-500">{unscheduledMatches.length}</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {unscheduledMatches.map((match) => (
+              <button
+                key={`unscheduled-${match.id}`}
+                type="button"
+                onClick={() => onOpenMatch(match.id)}
+                className="border border-dashed border-slate-300 bg-white px-3 py-3 text-left transition-colors hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <p className="text-sm font-semibold text-slate-800">{matchLabel(match)}</p>
+                <p className="mt-1 text-xs text-slate-500">R{match.roundNumber ?? '—'} · #{match.matchOrder ?? '—'}</p>
+              </button>
+            ))}
           </div>
         </div>
       )}

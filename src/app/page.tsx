@@ -900,10 +900,25 @@ export default function HomePage() {
     });
 
     const scores = extractMatchScores(match.scoreDetails);
-    const currentSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
+    const currentSetIndex = scores.findIndex((s: { isFinished: boolean }) => !s.isFinished);
+    const activeSet = currentSetIndex !== -1 ? scores[currentSetIndex] : (scores[scores.length - 1] || { team1Score: 0, team2Score: 0 });
+    const currentSetNum = currentSetIndex !== -1 ? currentSetIndex + 1 : (scores.length || 1);
+
     const scoreText = isScheduled
       ? (match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS')
-      : `${currentSet.team1Score} - ${currentSet.team2Score}`;
+      : `${activeSet.team1Score} - ${activeSet.team2Score}`;
+
+    const startedAtTime = (match as unknown as { startedAt?: string | null }).startedAt || match.scheduledAt;
+    const elapsedMinutes = startedAtTime && isLive
+      ? Math.max(1, Math.floor((Date.now() - new Date(startedAtTime).getTime()) / 60000))
+      : null;
+    const durationText = elapsedMinutes && elapsedMinutes < 300 ? `${elapsedMinutes}'` : '';
+
+    const setSubStatusText = isLive
+      ? `Set ${currentSetNum}${durationText ? ` • ${durationText}` : ''}`
+      : isScheduled
+        ? (match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : translate('statusUpcoming'))
+        : translate('statusCompleted');
 
     const renderOpponent = (
       participant: BracketMatch['participant1'],
@@ -925,7 +940,7 @@ export default function HomePage() {
           {/* Avatar / Crest */}
           <div className="relative flex items-center justify-center">
             {logoUrl ? (
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden ring-2 ring-slate-700/80 bg-slate-800 shadow-md">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden ring-2 ring-slate-100 bg-slate-50 shadow-xs">
                 <Image
                   src={logoUrl}
                   alt={displayName}
@@ -937,10 +952,10 @@ export default function HomePage() {
               </div>
             ) : (
               <div
-                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-sm shadow-md ring-2 ring-slate-700/80 ${
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-sm shadow-xs ring-2 ring-slate-100 ${
                   side === 'left'
-                    ? 'bg-gradient-to-br from-amber-500/25 to-amber-600/10 text-amber-300 border border-amber-500/30'
-                    : 'bg-gradient-to-br from-sky-500/25 to-sky-600/10 text-sky-300 border border-sky-500/30'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200/80'
+                    : 'bg-sky-50 text-sky-700 border border-sky-200/80'
                 }`}
               >
                 {initial}
@@ -948,7 +963,7 @@ export default function HomePage() {
             )}
           </div>
           {/* Name */}
-          <span className="mt-2 text-xs font-bold text-slate-100 text-center line-clamp-1 max-w-[100px] sm:max-w-[130px] tracking-tight leading-tight">
+          <span className="mt-1.5 text-xs font-bold text-slate-800 text-center line-clamp-1 max-w-[100px] sm:max-w-[130px] tracking-tight leading-tight">
             {displayName}
           </span>
         </div>
@@ -958,27 +973,27 @@ export default function HomePage() {
     return (
       <motion.div
         key={match.id}
-        whileHover={{ y: -3 }}
+        whileHover={{ y: -2 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`bg-[#0f172a] text-slate-100 rounded-2xl border ${
+        className={`bg-white text-slate-900 rounded-xl border ${
           isLive
-            ? 'border-rose-500/50 shadow-lg shadow-rose-950/30'
-            : 'border-slate-800/90 shadow-md hover:border-slate-700'
+            ? 'border-rose-300 shadow-sm shadow-rose-100/60'
+            : 'border-slate-200/90 shadow-2xs hover:border-slate-350'
         } overflow-hidden flex flex-col justify-between group relative`}
       >
         {/* Whole Card Link */}
-        <Link href={`/live/${match.id}`} className="block flex-1 p-3.5 sm:p-4">
+        <Link href={`/live/${match.id}`} className="block flex-1">
           {/* 1. Header Bar: Tournament / League & Live status */}
-          <div className="flex items-center justify-between gap-2 pb-2.5 mb-3 border-b border-slate-800/80">
+          <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-50/70 border-b border-slate-100 text-[11px]">
             <div className="flex items-center gap-1.5 min-w-0">
-              <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="text-xs font-bold text-slate-300 truncate">
+              <Trophy className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="text-xs font-bold text-slate-800 truncate">
                 {(match as EnrichedMatch).tournament?.name || roundLabel}
               </span>
               {roundLabel && (
                 <>
-                  <span className="text-slate-600 text-xs">•</span>
-                  <span className="text-[11px] font-medium text-slate-400 shrink-0 truncate">{roundLabel}</span>
+                  <span className="text-slate-300 text-xs">•</span>
+                  <span className="text-[11px] font-medium text-slate-500 shrink-0 truncate">{roundLabel}</span>
                 </>
               )}
             </div>
@@ -986,19 +1001,19 @@ export default function HomePage() {
             {/* Status Pill Badge */}
             <div className="shrink-0">
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-wider shadow-xs">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 uppercase tracking-wider shadow-2xs">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
                   </span>
                   {translate('statusLive')}
                 </span>
               ) : isCompleted ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                   {translate('statusCompleted')}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
                   {translate('statusUpcoming')}
                 </span>
               )}
@@ -1006,30 +1021,22 @@ export default function HomePage() {
           </div>
 
           {/* 2. Opponents Face-off Arena */}
-          <div className="flex items-center justify-between gap-2 py-1">
+          <div className="flex items-center justify-between gap-2 px-3.5 py-3.5 bg-white">
             {/* Participant 1 */}
             {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
             {/* Center Score / Time */}
-            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[75px]">
-              <span className="text-2xl sm:text-3xl font-black text-white tracking-widest leading-none drop-shadow-sm font-sans">
+            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[80px]">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-widest leading-none drop-shadow-2xs font-sans">
                 {scoreText}
               </span>
-              {isLive ? (
-                <span className="text-[11px] font-bold text-rose-400 mt-1.5 tracking-tight animate-pulse">
-                  {scores.length > 1
-                    ? `Set ${scores.length} • ${currentSet.team1Score}-${currentSet.team2Score}`
-                    : `${currentSet.team1Score}-${currentSet.team2Score}`}
-                </span>
-              ) : isScheduled ? (
-                <span className="text-[11px] font-medium text-sky-400/90 mt-1.5">
-                  {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS'}
-                </span>
-              ) : (
-                <span className="text-[11px] font-medium text-emerald-400/90 mt-1.5">
-                  {translate('statusCompleted')}
-                </span>
-              )}
+              <span
+                className={`text-[11px] font-bold mt-1.5 tracking-tight ${
+                  isLive ? 'text-rose-600 animate-pulse' : isScheduled ? 'text-blue-600' : 'text-slate-500'
+                }`}
+              >
+                {setSubStatusText}
+              </span>
             </div>
 
             {/* Participant 2 */}
@@ -1038,12 +1045,12 @@ export default function HomePage() {
         </Link>
 
         {/* 3. Footer Bar: Court / Format & Cheer / Share Actions */}
-        <div className="px-3.5 py-2.5 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 min-w-0 text-slate-400 text-[11px] truncate">
-            <span className="font-semibold text-slate-300 shrink-0">
+        <div className="px-3.5 py-2 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1.5 min-w-0 text-slate-500 text-[11px] truncate">
+            <span className="font-semibold text-slate-700 shrink-0">
               {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
             </span>
-            <span className="text-slate-600">•</span>
+            <span className="text-slate-300">•</span>
             <span className="truncate" title={match.courtName || match.tournament?.venueName || undefined}>
               {match.courtName || match.tournament?.venueName || translate('courtNotAssigned')}
             </span>
@@ -1059,7 +1066,7 @@ export default function HomePage() {
                 handleHighFive(match.id);
               }}
               title={`${translate('cheer')} (${currentHighFives})`}
-              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 text-[11px] font-semibold transition cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
             >
               <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
               <span>{translate('cheer')}</span>
@@ -1078,7 +1085,7 @@ export default function HomePage() {
                 setIsShareModalOpen(true);
               }}
               title={translate('shareMatchTitle')}
-              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-sky-400 hover:border-sky-500/40 hover:bg-sky-500/10 text-[11px] font-semibold transition cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
             >
               <Share2 className="w-3.5 h-3.5 text-slate-400" />
               <span>{translate('share')}</span>

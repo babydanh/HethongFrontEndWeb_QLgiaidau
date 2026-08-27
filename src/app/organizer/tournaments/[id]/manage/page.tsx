@@ -858,11 +858,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     <>
                       <label className="text-xs font-semibold text-slate-600">{translate('createDivision.maxCount')}
                         <input
-                          type="number"
-                          min={2}
-                          max={128}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={s.newDivisionMaxParticipants}
-                          onChange={(e) => s.setNewDivisionMaxParticipants(Math.min(128, Math.max(2, Number(e.target.value) || 2)))}
+                          onChange={(e) => s.setNewDivisionMaxParticipants(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+                          onBlur={() => {
+                            const parsed = Number(s.newDivisionMaxParticipants);
+                            const normalized = Number.isFinite(parsed) && parsed > 0
+                              ? Math.min(128, Math.max(2, parsed))
+                              : 2;
+                            s.setNewDivisionMaxParticipants(String(normalized));
+                          }}
                           className="mt-1 w-full border rounded-lg p-2 text-sm"
                           placeholder="16"
                         />

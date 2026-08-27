@@ -129,7 +129,7 @@ export function useManageState(id: string) {
   const [newDivisionEloEnabled, setNewDivisionEloEnabled] = useState(false);
   const [newDivisionMinElo, setNewDivisionMinElo] = useState<number | null>(null);
   const [newDivisionMaxElo, setNewDivisionMaxElo] = useState<number | null>(null);
-  const [newDivisionMaxParticipants, setNewDivisionMaxParticipants] = useState(16);
+  const [newDivisionMaxParticipants, setNewDivisionMaxParticipants] = useState('16');
   const [newDivisionLimitEnabled, setNewDivisionLimitEnabled] = useState(true);
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
@@ -907,7 +907,7 @@ export function useManageState(id: string) {
     setNewDivisionEloEnabled(division.minElo != null || division.maxElo != null);
     setNewDivisionMinElo(division.minElo ?? null);
     setNewDivisionMaxElo(division.maxElo ?? null);
-    setNewDivisionMaxParticipants(division.maxParticipants ?? 16);
+    setNewDivisionMaxParticipants(String(division.maxParticipants ?? 16));
     setNewDivisionLimitEnabled(division.maxParticipants != null);
     setIsCreateDivisionModalOpen(true);
   };
@@ -921,7 +921,7 @@ export function useManageState(id: string) {
     setNewDivisionEloEnabled(eloEnabled);
     setNewDivisionMinElo(eloEnabled ? eloMin : null);
     setNewDivisionMaxElo(eloEnabled ? eloMax : null);
-    setNewDivisionMaxParticipants(16);
+    setNewDivisionMaxParticipants('16');
     setNewDivisionLimitEnabled(true);
   };
 
@@ -964,6 +964,10 @@ export function useManageState(id: string) {
       const divisionRoundConfig = editingDivision?.roundConfig
         ? { ...editingDivision.roundConfig, mode: scoringMode }
         : defaultRoundConfig;
+      const parsedMaxParticipants = Number(newDivisionMaxParticipants);
+      const normalizedMaxParticipants = Number.isFinite(parsedMaxParticipants) && parsedMaxParticipants > 0
+        ? Math.min(128, Math.max(2, parsedMaxParticipants))
+        : null;
       const divisionPayload = {
         name: divisionName,
         matchType: mapped.mt,
@@ -979,7 +983,7 @@ export function useManageState(id: string) {
         roundConfig: divisionRoundConfig,
         minElo: newDivisionEloEnabled ? newDivisionMinElo : null,
         maxElo: newDivisionEloEnabled ? newDivisionMaxElo : null,
-        maxParticipants: newDivisionLimitEnabled ? newDivisionMaxParticipants : null,
+        maxParticipants: newDivisionLimitEnabled ? normalizedMaxParticipants : null,
       };
       const res = editingDivision
         ? await divisionsApi.updateDivision(editingDivision.id, divisionPayload)

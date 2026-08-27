@@ -66,6 +66,26 @@ export function ConfigTab({
   const presentation = getSportRulePresentation(sportRuleKind, translate);
   const setUnitLabel = presentation.setUnitLabel;
   const winByTwoLabel = presentation.winByTwoLabel;
+  const [maxParticipantsDraft, setMaxParticipantsDraft] = React.useState(
+    () => String(maxParticipants),
+  );
+
+  React.useEffect(() => {
+    const syncTimer = window.setTimeout(() => {
+      setMaxParticipantsDraft(String(maxParticipants));
+    }, 0);
+    return () => window.clearTimeout(syncTimer);
+  }, [maxParticipants]);
+
+  const commitMaxParticipants = () => {
+    const parsed = Number(maxParticipantsDraft);
+    const normalized = Number.isFinite(parsed) && parsed > 0
+      ? Math.min(128, Math.max(2, parsed))
+      : maxParticipants;
+    setMaxParticipants(normalized);
+    setMaxParticipantsDraft(String(normalized));
+  };
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <div className="flex items-center justify-between border-b pb-2 mb-4">
@@ -100,9 +120,12 @@ export function ConfigTab({
           {isLimitEnabled && (
             <Input
               label={translate('maxRegistrationTeams')}
-              type="number"
-              value={maxParticipants}
-              onChange={(e) => setMaxParticipants(Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={maxParticipantsDraft}
+              onChange={(e) => setMaxParticipantsDraft(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+              onBlur={commitMaxParticipants}
               className="bg-white text-xs mt-1"
             />
           )}

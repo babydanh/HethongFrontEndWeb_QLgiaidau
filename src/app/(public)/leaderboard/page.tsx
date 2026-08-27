@@ -10,7 +10,7 @@ import { usersApi } from "@/features/users/api";
 import { getCanonicalTierName, getEloFormatLabel, getLocalizedRankTierName, getMostProminentRank, getRankTierTranslationKey, isPublicRankingEligible } from "@/features/rankings/elo-display";
 import { buildLeaderboardStandingSlots, isLeaderboardPlaceholder } from "@/features/rankings/leaderboard-slots";
 import { getRankBorderColor } from "@/components/ui/RankAvatar";
-import { getRankStyle, getRankTierDefinitions } from "@/utils/rank-style";
+import { getRankStyle, getStandardRankStyles } from "@/utils/rank-style";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
@@ -892,7 +892,7 @@ export default function LeaderboardPage() {
                                 </div>
                             </dialog>
                             <div className="flex flex-col gap-2">
-                                {[...getRankTierDefinitions(activeCategory?.name)].reverse().map((tier) => {
+                                {[...getStandardRankStyles()].reverse().map((tier) => {
                                   const tierKey = getRankTierTranslationKey(tier.name);
                                   const tierLabel = tierKey ? eloTranslate(tierKey) : tier.name;
                                   const rangeLabel = tier.maxElo === null

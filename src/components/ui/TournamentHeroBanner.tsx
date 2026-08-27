@@ -69,80 +69,60 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
     return () => clearInterval(interval);
   }, [tournaments.length, isDragging]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
     isDraggingRef.current = true;
     setIsDragging(true);
-    startX.current = e.pageX;
+    startX.current = e.clientX;
     dragDistance.current = 0;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore if pointer capture is not supported
+    }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
-    e.preventDefault();
-    const deltaX = e.pageX - startX.current;
+    const deltaX = e.clientX - startX.current;
     setDragOffset(deltaX);
     dragDistance.current = Math.abs(deltaX);
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsDragging(false);
 
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
     const deltaX = dragOffset;
     setDragOffset(0);
 
-    // Swipe logic threshold: if dragged more than 50px, switch banner
     let nextIndex = currentIndex;
-    if (deltaX < -50 && currentIndex < tournaments.length - 1) {
+    if (deltaX < -30 && currentIndex < tournaments.length - 1) {
       nextIndex = currentIndex + 1;
-    } else if (deltaX > 50 && currentIndex > 0) {
+    } else if (deltaX > 30 && currentIndex > 0) {
       nextIndex = currentIndex - 1;
     }
     setCurrentIndex(nextIndex);
   };
 
-  const handleMouseLeave = () => {
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isDraggingRef.current) {
-      handleMouseUp();
+      handlePointerUp(e);
     }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    startX.current = e.touches[0].pageX;
-    dragDistance.current = 0;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingRef.current) return;
-    const deltaX = e.touches[0].pageX - startX.current;
-    setDragOffset(deltaX);
-    dragDistance.current = Math.abs(deltaX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    setIsDragging(false);
-
-    const deltaX = dragOffset;
-    setDragOffset(0);
-
-    let nextIndex = currentIndex;
-    if (deltaX < -50 && currentIndex < tournaments.length - 1) {
-      nextIndex = currentIndex + 1;
-    } else if (deltaX > 50 && currentIndex > 0) {
-      nextIndex = currentIndex - 1;
-    }
-    setCurrentIndex(nextIndex);
   };
 
   const handleLinkClick = (e: React.MouseEvent) => {
-    // If the user dragged more than 10px, prevent click navigation
-    if (dragDistance.current > 10) {
+    // If the user dragged more than 8px, prevent accidental card click navigation
+    if (dragDistance.current > 8) {
       e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -251,14 +231,11 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
     <div className="relative w-full select-none group overflow-hidden rounded-lg">
       {/* Slider Wrapper */}
       <div
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        className="flex transition-transform duration-500 ease-out cursor-grab active:cursor-grabbing"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        className="flex transition-transform duration-500 ease-out cursor-grab active:cursor-grabbing touch-pan-y select-none"
         style={{
           transform: `translateX(calc(-${currentIndex * slideWidth}% + ${dragOffset}px))`,
         }}
@@ -281,7 +258,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                     <img
                       src={tournament.bannerUrl}
                       alt={tournament.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover pointer-events-none select-none"
                       draggable="false"
                     />
                   ) : (
@@ -290,13 +267,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                       <img
                         src={BRAND.assets.logoFull}
                         alt={`${BRAND.name} Logo`}
-                        className="w-40 sm:w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm"
+                        className="w-40 sm:w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm pointer-events-none select-none"
                         draggable="false"
                       />
                     </div>
                   )}
                   {!hideFeaturedCardText && (
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/35 to-transparent pointer-events-none" />
                   )}
                 </div>
 
@@ -304,7 +281,8 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                 <Link
                   href={`/tournaments/${tournament.id}`}
                   onClick={handleLinkClick}
-                  className="absolute inset-0 z-10"
+                  draggable="false"
+                  className="absolute inset-0 z-10 select-none"
                 />
 
                 {!hideFeaturedCardText && (
@@ -357,29 +335,51 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
         <>
           {/* Arrow Left */}
           <button
-            onClick={handlePrev}
-            className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-slate-200 text-slate-800 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-20"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handlePrev();
+            }}
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white/85 hover:bg-white text-slate-800 border border-slate-200/80 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 backdrop-blur-md z-30"
+            aria-label="Previous banner"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           {/* Arrow Right */}
           <button
-            onClick={handleNext}
-            className="absolute right-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-slate-200 text-slate-800 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-20"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleNext();
+            }}
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white/85 hover:bg-white text-slate-800 border border-slate-200/80 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 backdrop-blur-md z-30"
+            aria-label="Next banner"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
           {/* Dots Indicators */}
-          <div className="absolute bottom-2.5 sm:bottom-4 right-3 sm:right-6 flex items-center gap-1.5 z-20">
+          <div className="absolute bottom-2.5 sm:bottom-4 right-3 sm:right-6 flex items-center gap-1.5 z-30">
             {tournaments.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrentIndex(idx)}
-                className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                  idx === currentIndex ? 'w-4 sm:w-5 bg-blue-500 shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white/80'
-                }`}
-              />
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentIndex(idx);
+                }}
+                className="p-1 cursor-pointer flex items-center justify-center group/dot"
+                aria-label={`Go to slide ${idx + 1}`}
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all block ${
+                    idx === currentIndex ? 'w-4 sm:w-5 bg-blue-500 shadow-sm' : 'w-1.5 bg-white/55 hover:bg-white/90'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </>

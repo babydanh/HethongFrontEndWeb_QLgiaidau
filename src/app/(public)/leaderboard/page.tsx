@@ -7,10 +7,11 @@ import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, type FootballTeamRanking, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
-import { getCanonicalTierName, getEloFormatLabel, getLocalizedRankTierName, getMostProminentRank, getRankTierTranslationKey, isPublicRankingEligible } from "@/features/rankings/elo-display";
+import { getCanonicalTierName, getEloFormatLabel, getMostProminentRank, getRankTierTranslationKey, isPublicRankingEligible } from "@/features/rankings/elo-display";
 import { buildLeaderboardStandingSlots, isLeaderboardPlaceholder } from "@/features/rankings/leaderboard-slots";
+
 import { getRankBorderColor } from "@/components/ui/RankAvatar";
-import { getRankStyle, getStandardRankStyles } from "@/utils/rank-style";
+import { getStandardRankStyles } from "@/utils/rank-style";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
@@ -21,38 +22,17 @@ interface LeaderboardSearchResult {
     fullName?: string;
     avatarUrl?: string | null;
     email?: string;
-    eloPoints: number;
-    tierName: string;
+    eloPoints: number | null;
     categoryName?: string;
     matchType?: PlayerRanking['matchType'];
     genderRestriction?: PlayerRanking['genderRestriction'];
 }
 
-type StandingEloSize = 'sm' | 'md';
-
-function StandingElo({
-  ranking,
-  sportLabel,
-  size = 'sm',
-}: {
-  ranking: PlayerRanking;
-  sportLabel: string;
-  size?: StandingEloSize;
-}) {
-  const t = useTranslations('Leaderboard');
-  const eloTranslate = useTranslations('EloDisplay');
-  const formatLabel = getLeaderboardFormatLabel(ranking, t);
-  const tierLabel = getLocalizedRankTierName(ranking, eloTranslate);
-  const tierStyle = getRankStyle(ranking.eloPoints, getCanonicalTierName(ranking), ranking.categoryName);
+function StandingElo({ ranking, size = 'sm' }: { ranking: PlayerRanking; size?: 'sm' | 'md' }) {
   return (
-    <div
-      className={`inline-flex flex-col items-center rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 shadow-xs ${size === 'md' ? 'min-w-28' : 'min-w-24'}`}
-      title={`${sportLabel} · ${formatLabel}: ${ranking.eloPoints} ELO · ${tierLabel}`}
-    >
-      <span className="max-w-32 truncate text-[8px] font-bold uppercase tracking-wide text-slate-500">{sportLabel} · {formatLabel}</span>
-      <span className={`${size === 'md' ? 'text-sm' : 'text-xs'} rounded-md px-1.5 py-0.5 font-black leading-tight ${tierStyle.badgeClass}`}>{ranking.eloPoints} ELO</span>
-      <span className="max-w-32 truncate text-[8px] font-semibold text-slate-500">{tierLabel}</span>
-    </div>
+    <span className={`${size === 'md' ? 'text-base' : 'text-sm'} font-black text-slate-900`}>
+      {ranking.eloPoints} ELO
+    </span>
   );
 }
 
@@ -101,6 +81,7 @@ function RankingMembers({ ranking, size = 'md' }: { ranking: PlayerRanking; size
   );
 }
 
+
 function getStandingBorderColor(ranking: PlayerRanking | undefined, fallback: string): string {
   if (!ranking) return fallback;
   return getRankBorderColor(
@@ -127,6 +108,10 @@ function getLeaderboardFormatLabel(
   });
 }
 
+const normalizeGenderFilter = (gender: string | null | undefined): 'MALE' | 'FEMALE' => {
+  return gender?.trim().toUpperCase() === 'FEMALE' ? 'FEMALE' : 'MALE';
+};
+
 export default function LeaderboardPage() {
     const t = useTranslations("Leaderboard");
   const eloTranslate = useTranslations('EloDisplay');
@@ -143,10 +128,7 @@ export default function LeaderboardPage() {
     }
   };
 
-  const getStandingSportLabel = (ranking: PlayerRanking) => {
-    const category = categories.find((item) => item.id === ranking.categoryId);
-    return category ? getCategoryLabel(category) : ranking.categoryName || t('sportFallback');
-  };
+
 
     const { openUserProfile } = useUserProfileModalStore();
     const [categories, setCategories] = useState<Category[]>([]);
@@ -159,10 +141,8 @@ export default function LeaderboardPage() {
 
     const [provinces, setProvinces] = useState<Region[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
-    // Start broad so real public standings are not hidden by an implicit
-    // Singles/Male filter. Operators can narrow the list explicitly.
-    const [selectedMatchType, setSelectedMatchType] = useState<string>('');
-    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('');
+    const [selectedMatchType, setSelectedMatchType] = useState<string>('SINGLES');
+    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('MALE');
 
     // ELO User Search States
     const [searchQuery, setSearchQuery] = useState("");
@@ -203,8 +183,7 @@ export default function LeaderboardPage() {
                         );
                         return {
                             ...u,
-                            eloPoints: matchRank?.eloPoints ?? 1000,
-                            tierName: matchRank?.tier?.name || matchRank?.tierName || t("unranked"),
+                            eloPoints: matchRank?.eloPoints ?? null,
                             categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
                             matchType: matchRank?.matchType,
                             genderRestriction: matchRank?.genderRestriction,
@@ -212,8 +191,7 @@ export default function LeaderboardPage() {
                     } catch {
                         return {
                             ...u,
-                            eloPoints: 1000,
-                            tierName: t("unranked"),
+                            eloPoints: null,
                             categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
                         };
                     }
@@ -278,8 +256,14 @@ export default function LeaderboardPage() {
                 if (cancelled) return;
                 setCategories(activeCats);
                 setActiveCategoryId(defaultCategory?.id ?? null);
-                setSelectedMatchType(prominentRank?.matchType ?? 'SINGLES');
-                setSelectedGenderFilter(prominentRank?.genderRestriction ?? (prominentRank ? '' : 'MALE'));
+                const profileGender = normalizeGenderFilter(user?.gender);
+                const defaultMatchType = prominentRank?.matchType ?? 'SINGLES';
+                setSelectedMatchType(defaultMatchType);
+                setSelectedGenderFilter(
+                  defaultMatchType === 'MIXED_DOUBLES'
+                    ? 'MIXED'
+                    : profileGender,
+                );
 
                 const res = await regionsApi.getProvinces();
                 const provList = (Array.isArray(res) ? res : (res as { data?: Region[] }).data) || [];
@@ -417,10 +401,6 @@ export default function LeaderboardPage() {
                                                     id: u.id,
                                                     fullName: u.fullName || t('playerFallback'),
                                                     avatarUrl: u.avatarUrl,
-                                                    highlightRank: {
-                                                        eloPoints: u.eloPoints,
-                                                        tierName: u.tierName,
-                                                    },
                                                 },
                                                 rect,
                                             );
@@ -428,11 +408,7 @@ export default function LeaderboardPage() {
                                         className="w-full flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-blue-50/40 hover:border-blue-200 transition-all cursor-pointer group text-left"
                                     >
                                         <div
-                                            className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0 border-2"
-                                            style={{
-                                                borderColor: getRankBorderColor(u.eloPoints, u.tierName, 0, u.categoryName),
-                                                boxShadow: `0 0 8px -2px ${getRankBorderColor(u.eloPoints, u.tierName, 0, u.categoryName)}60`,
-                                            }}
+                                            className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0 border-2 border-slate-200"
                                         >
                                             {u.avatarUrl ? (
                                                 <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
@@ -450,7 +426,7 @@ export default function LeaderboardPage() {
                                         </div>
                                         <div className="shrink-0 text-right">
                                             <div className="max-w-36 truncate text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')} · {getLeaderboardFormatLabel(u, t)}</div>
-                                            <div className={`inline-flex rounded-md px-1.5 py-0.5 text-xs font-black ${getRankStyle(u.eloPoints, u.tierName, u.categoryName).badgeClass}`}>{u.eloPoints} ELO</div>
+                                            <div className="text-sm font-black text-slate-900">{u.eloPoints === null ? '—' : `${u.eloPoints} ELO`}</div>
                                         </div>
                                     </button>
                                 ))}
@@ -470,7 +446,9 @@ export default function LeaderboardPage() {
                                 onChange={(e) => {
                                     const matchType = e.target.value;
                                     setSelectedMatchType(matchType);
-                                    setSelectedGenderFilter(matchType === 'MIXED_DOUBLES' ? 'MIXED' : '');
+                                    if (matchType === 'MIXED_DOUBLES') {
+                                      setSelectedGenderFilter('MIXED');
+                                    }
                                 }}
                                 className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                             >
@@ -614,7 +592,7 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[1] ? (
-                                                <StandingElo ranking={rankings[1]} sportLabel={getStandingSportLabel(rankings[1])} />
+                                                <StandingElo ranking={rankings[1]} />
                                             ) : (
                                                 <div className="text-[10px] text-[#64748B] font-bold mb-3">--- ELO</div>
                                             )}
@@ -676,7 +654,7 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[0] ? (
-                                                <StandingElo ranking={rankings[0]} sportLabel={getStandingSportLabel(rankings[0])} size="md" />
+                                                <StandingElo ranking={rankings[0]} size="md" />
                                             ) : (
                                                 <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
                                             )}
@@ -738,7 +716,7 @@ export default function LeaderboardPage() {
                                                 </span>
                                             )}
                                             {rankings[2] ? (
-                                                <StandingElo ranking={rankings[2]} sportLabel={getStandingSportLabel(rankings[2])} />
+                                                <StandingElo ranking={rankings[2]} />
                                             ) : (
                                                 <div className="text-[10px] text-[#C2410C] font-bold mb-3">--- ELO</div>
                                             )}
@@ -801,7 +779,7 @@ export default function LeaderboardPage() {
 
                                                     </span>
                                                     {player ? (
-                                                        <StandingElo ranking={player} sportLabel={getStandingSportLabel(player)} />
+                                                        <StandingElo ranking={player} />
                                                     ) : (
                                                         <span className="text-[10px] text-slate-400 font-bold">---</span>
                                                     )}
@@ -980,7 +958,7 @@ function FootballTeamRankingTable({ rankings }: { rankings: FootballTeamRanking[
                       <span className="font-bold text-slate-900">{team.teamName}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-4"><div className="font-black text-slate-900">{team.eloPoints} ELO</div><div className="text-xs text-slate-500">{team.tierName || '—'}</div></td>
+                  <td className="px-5 py-4"><div className="font-black text-slate-900">{team.eloPoints} ELO</div></td>
                   <td className="px-5 py-4 text-slate-700">{team.matchesPlayed}</td>
                   <td className="px-5 py-4 text-slate-700">{team.matchesWon}</td>
                   <td className="px-5 py-4 text-right font-bold text-emerald-700">{winRate}%</td>
@@ -1078,7 +1056,7 @@ function RestRankingsTable({
                                             {isPlaceholder ? (
                                                 <span className="text-[10px] text-slate-400 font-medium">---</span>
                                             ) : (
-                                                <StandingElo ranking={rank} sportLabel={rank.categoryName || t('sportFallback')} />
+                                                <StandingElo ranking={rank} />
                                             )}
                                         </td>
                                         <td className="py-2.5 px-3 text-right text-emerald-650 font-bold">

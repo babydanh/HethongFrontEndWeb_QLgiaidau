@@ -58,6 +58,7 @@ interface MatchBucket {
   unscheduledReady: Match[];
   blocked: Match[];
   directAdvance: Match[];
+  completed: Match[];
 }
 
 const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; labelKey: string }> = [
@@ -124,9 +125,11 @@ export function OpsMatches({
     winnerId: '',
   });
 
+  const safeMatches = useMemo(() => (Array.isArray(matches) ? matches : []), [matches]);
+
   const filteredMatches = useMemo(() => {
-    return matches.filter((match) => (statusFilter === 'ALL' ? true : match.status === statusFilter));
-  }, [matches, statusFilter]);
+    return safeMatches.filter((match) => (statusFilter === 'ALL' ? true : match.status === statusFilter));
+  }, [safeMatches, statusFilter]);
 
   const buckets = useMemo<MatchBucket>(() => {
     const nextBuckets: MatchBucket = {
@@ -135,15 +138,21 @@ export function OpsMatches({
       unscheduledReady: [],
       blocked: [],
       directAdvance: [],
+      completed: [],
     };
 
-    for (const match of matches) {
+    for (const match of safeMatches) {
       const matchInsight = matchInsights?.[match.id];
       const missingOpponent = !match.participant1Id || !match.participant2Id;
       const isDirectAdvance = match.isBye || (!!match.winnerId && missingOpponent);
 
       if (isDirectAdvance) {
         nextBuckets.directAdvance.push(match);
+        continue;
+      }
+
+      if (match.status === 'COMPLETED') {
+        nextBuckets.completed.push(match);
         continue;
       }
 
@@ -194,9 +203,12 @@ export function OpsMatches({
     nextBuckets.directAdvance.sort((left, right) =>
       left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
     );
+    nextBuckets.completed.sort((left, right) =>
+      right.roundNumber - left.roundNumber || right.matchOrder - left.matchOrder,
+    );
 
     return nextBuckets;
-  }, [matchInsights, matches]);
+  }, [matchInsights, safeMatches]);
 
   const summary = useMemo(() => {
     return {
@@ -205,10 +217,10 @@ export function OpsMatches({
       unscheduledReady: buckets.unscheduledReady.length,
       blocked: buckets.blocked.length,
       directAdvance: buckets.directAdvance.length,
-      completed: matches.filter((match) => match.status === 'COMPLETED').length,
-      disputed: matches.filter((match) => match.status === 'DISPUTED').length,
+      completed: buckets.completed.length,
+      disputed: safeMatches.filter((match) => match.status === 'DISPUTED').length,
     };
-  }, [buckets, matches]);
+  }, [buckets, safeMatches]);
 
   useEffect(() => {
     if (!focusedMatchId) {
@@ -608,36 +620,41 @@ export function OpsMatches({
         <div className="mt-6 space-y-6">
           {statusFilter === 'ALL' ? (
             <>
-              {buckets.ongoing.length > 0 &&
-                renderMatchSection(
-                  translate('ongoingSectionTitle'),
-                  translate('ongoingSectionDescription'),
-                  buckets.ongoing,
-                  translate('ongoingSectionEmpty'),
-                )}
+              {renderMatchSection(
+                translate('ongoingSectionTitle'),
+                translate('ongoingSectionDescription'),
+                buckets.ongoing,
+                translate('ongoingSectionEmpty'),
+              )}
               {renderMatchSection(
                 translate('scheduledSectionTitle'),
                 translate('scheduledSectionDescription'),
-                buckets.scheduled.slice(0, 8),
+                buckets.scheduled,
                 translate('scheduledSectionEmpty'),
               )}
               {renderMatchSection(
                 translate('readySectionTitle'),
                 translate('readySectionDescription'),
-                buckets.unscheduledReady.slice(0, 8),
+                buckets.unscheduledReady,
                 translate('readySectionEmpty'),
               )}
               {renderMatchSection(
                 translate('blockedSectionTitle'),
                 translate('blockedSectionDescription'),
-                buckets.blocked.slice(0, 8),
+                buckets.blocked,
                 translate('blockedSectionEmpty'),
               )}
               {renderMatchSection(
                 translate('directAdvanceSectionTitle'),
                 translate('directAdvanceSectionDescription'),
-                buckets.directAdvance.slice(0, 8),
+                buckets.directAdvance,
                 translate('directAdvanceSectionEmpty'),
+              )}
+              {renderMatchSection(
+                translate('completedSectionTitle'),
+                translate('completedSectionDescription'),
+                buckets.completed,
+                translate('completedSectionEmpty'),
               )}
             </>
           ) : filteredMatches.length === 0 ? (
@@ -646,7 +663,7 @@ export function OpsMatches({
               <p className="mt-1 text-xs font-medium text-slate-500">{translate('filteredEmptyDescription')}</p>
             </div>
           ) : (
-            filteredMatches.slice(0, 12).map(renderMatchCard)
+            filteredMatches.map(renderMatchCard)
           )}
         </div>
       </section>

@@ -437,10 +437,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
               isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />
             <QuickSchedulePanel
+              key={`${s.selectedDivisionId}-${s.sportRuleKind}-${s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}`}
               courts={s.courts}
               divisions={s.divisions}
               defaultDivisionId={s.selectedDivisionId}
               defaultDate={s.startDate}
+              sportRuleKind={s.sportRuleKind}
+              setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
               preview={s.schedulePlanPreview}
               isPreviewing={s.isPreviewingSchedulePlan}
               onPreview={s.handlePreviewSchedulePlan}

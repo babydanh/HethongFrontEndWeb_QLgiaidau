@@ -131,6 +131,29 @@ export function OpsMatches({
 
   const safeMatches = useMemo(() => (Array.isArray(matches) ? matches : []), [matches]);
 
+  useEffect(() => {
+    if (!focusedMatchId || !safeMatches.length) return;
+    const targetMatch = safeMatches.find((m) => m.id === focusedMatchId);
+    if (!targetMatch) return;
+
+    const statusStr = String(targetMatch.status ?? '').trim().toUpperCase();
+    if (isActiveMatch(targetMatch)) {
+      setStatusFilter('ONGOING');
+    } else if (statusStr === 'SCHEDULED' || statusStr === 'READY') {
+      setStatusFilter('SCHEDULED');
+    } else if (
+      statusStr === 'COMPLETED' ||
+      statusStr === 'FINISHED' ||
+      Boolean(targetMatch.completedAt || targetMatch.winnerId)
+    ) {
+      setStatusFilter('COMPLETED');
+    } else if (statusStr === 'DISPUTED') {
+      setStatusFilter('DISPUTED');
+    } else {
+      setStatusFilter('ALL');
+    }
+  }, [focusedMatchId, safeMatches]);
+
   const filteredMatches = useMemo(() => {
     return safeMatches.filter((match) => {
       if (statusFilter === 'ALL') return true;

@@ -246,6 +246,7 @@ function GroupView({
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}
+        onDoubleClickMatch={onDoubleClickMatch}
         tournamentId={tournamentId}
         stageId={stageId}
         fallbackSportRuleKind={fallbackSportRuleKind}
@@ -259,6 +260,7 @@ function GroupView({
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}
+        onDoubleClickMatch={onDoubleClickMatch}
         tournamentId={tournamentId}
         stageId={stageId}
         fallbackSportRuleKind={fallbackSportRuleKind}
@@ -287,6 +289,7 @@ function GroupView({
           onScheduleMatch={onScheduleMatch}
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}
+          onDoubleClickMatch={onDoubleClickMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
           dragHandlers={dragHandlers}
         />
@@ -298,6 +301,7 @@ function GroupView({
           onScheduleMatch={onScheduleMatch}
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}
+          onDoubleClickMatch={onDoubleClickMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
           panEnabled={viewMode === 'full'}
           dragHandlers={dragHandlers}
@@ -312,6 +316,7 @@ function GroupView({
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}
+        onDoubleClickMatch={onDoubleClickMatch}
         fallbackSportRuleKind={fallbackSportRuleKind}
         dragHandlers={dragHandlers}
       />
@@ -321,6 +326,7 @@ function GroupView({
       onScheduleMatch={onScheduleMatch}
       selectedMatchId={selectedMatchId}
       onSelectMatch={onSelectMatch}
+      onDoubleClickMatch={onDoubleClickMatch}
       fallbackSportRuleKind={fallbackSportRuleKind}
       panEnabled={viewMode === 'full'}
       dragHandlers={dragHandlers}

@@ -129,6 +129,7 @@ export interface SchedulePlanPreviewInput {
   matchIds?: string[];
   durationMinutes?: number;
   bufferMinutes?: number;
+  gridIncrementMinutes?: 5 | 10 | 15;
   operatingWindow?: { start: string; end: string };
   strategy: 'ROUND_ORDER_EARLIEST_AVAILABLE';
 }
@@ -139,6 +140,7 @@ export interface SchedulePlanPreview {
   scheduleVersion: string;
   durationMinutes: number;
   bufferMinutes: number;
+  gridIncrementMinutes: 5 | 10 | 15;
   operatingWindow: { start: string; end: string };
   assignments: SchedulePlanAssignment[];
   skipped: Array<{ matchId: string; reason: string }>;

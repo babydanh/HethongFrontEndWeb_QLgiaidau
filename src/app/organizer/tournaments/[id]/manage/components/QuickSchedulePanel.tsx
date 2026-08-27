@@ -5,6 +5,9 @@ import { CalendarClock, WandSparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { toApiIsoDateTime } from '@/utils/dateTimeInput';
+import { getSchedulePresets, type SchedulePresetId } from '@/features/tournaments/schedule-presets';
+import type { SportRuleKind } from '@/types/tournament';
 import type {
   Division,
   SchedulePlanPreview,
@@ -17,12 +20,17 @@ interface QuickSchedulePanelProps {
   divisions: Division[];
   defaultDivisionId?: string | null;
   defaultDate?: string | null;
+  sportRuleKind?: SportRuleKind | null;
+  setsToWin?: number | null;
   preview: SchedulePlanPreview | null;
   isPreviewing: boolean;
   onPreview: (payload: SchedulePlanPreviewInput) => Promise<SchedulePlanPreview | null>;
 }
 
 const STRATEGY = 'ROUND_ORDER_EARLIEST_AVAILABLE' as const;
+const GRID_INCREMENTS = [5, 10, 15] as const;
+
+type PresetId = Exclude<SchedulePresetId, 'custom'>;
 
 function formatTime(value: string) {
   const date = new Date(value);
@@ -36,17 +44,22 @@ export function QuickSchedulePanel({
   divisions,
   defaultDivisionId,
   defaultDate,
+  sportRuleKind,
+  setsToWin,
   preview,
   isPreviewing,
   onPreview,
 }: QuickSchedulePanelProps) {
   const t = useTranslations('OrganizerManage');
+  const presets = useMemo(() => getSchedulePresets(sportRuleKind, setsToWin), [sportRuleKind, setsToWin]);
   const [mode, setMode] = useState<'basic' | 'advanced'>('basic');
   const [divisionId, setDivisionId] = useState(defaultDivisionId || '');
   const [date, setDate] = useState(defaultDate?.slice(0, 10) || '');
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[] | null>(null);
-  const [durationMinutes, setDurationMinutes] = useState(45);
-  const [bufferMinutes, setBufferMinutes] = useState(5);
+  const [presetId, setPresetId] = useState<SchedulePresetId>('recommended');
+  const [durationMinutes, setDurationMinutes] = useState(() => presets.recommended.playDurationMinutes);
+  const [bufferMinutes, setBufferMinutes] = useState(() => presets.recommended.bufferMinutes);
+  const [gridIncrementMinutes, setGridIncrementMinutes] = useState<5 | 10 | 15>(10);
   const [windowStart, setWindowStart] = useState('08:00');
   const [windowEnd, setWindowEnd] = useState('22:00');
 
@@ -61,6 +74,13 @@ export function QuickSchedulePanel({
     () => new Map(courts.map((court) => [court.id, court.courtName])),
     [courts],
   );
+
+  const selectPreset = (nextPresetId: PresetId) => {
+    const nextPreset = presets[nextPresetId];
+    setPresetId(nextPresetId);
+    setDurationMinutes(nextPreset.playDurationMinutes);
+    setBufferMinutes(nextPreset.bufferMinutes);
+  };
 
   const toggleCourt = (courtId: string) => {
     setSelectedCourtIds((current) =>
@@ -77,21 +97,22 @@ export function QuickSchedulePanel({
       divisionId: divisionId || undefined,
       date,
       courtIds: effectiveCourtIds,
-      durationMinutes: mode === 'basic' ? 45 : durationMinutes,
-      bufferMinutes: mode === 'basic' ? 5 : bufferMinutes,
+      durationMinutes,
+      bufferMinutes,
+      gridIncrementMinutes,
       strategy: STRATEGY,
     };
     if (mode === 'advanced') {
-      payload.operatingWindow = {
-        start: `${date}T${windowStart}:00.000Z`,
-        end: `${date}T${windowEnd}:00.000Z`,
-      };
+      const start = toApiIsoDateTime(`${date}T${windowStart}`);
+      const end = toApiIsoDateTime(`${date}T${windowEnd}`);
+      if (!start || !end) return;
+      payload.operatingWindow = { start, end };
     }
     await onPreview(payload);
   };
 
   return (
-    <section className="border border-blue-200 bg-blue-50/30 rounded-lg p-5 md:p-6 space-y-5">
+    <section className="space-y-5 border border-blue-200 bg-blue-50/30 p-5 md:p-6">
       <div className="flex items-start gap-3">
         <WandSparkles className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
         <div>
@@ -101,7 +122,7 @@ export function QuickSchedulePanel({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 border border-slate-200 bg-white p-1" role="tablist" aria-label={t('matchSchedule')}>
+      <div className="grid grid-cols-2 border border-slate-200 bg-white p-1" role="tablist" aria-label={t('matchSchedule.title')}>
         <button
           type="button"
           role="tab"
@@ -148,6 +169,32 @@ export function QuickSchedulePanel({
           />
         </div>
 
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold text-slate-700">{t('durationTemplate')}</legend>
+          <p className="text-xs leading-5 text-slate-500">{t('presetSportHint')}</p>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            {(Object.keys(presets) as PresetId[]).map((id) => {
+              const preset = presets[id];
+              const selected = presetId === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => selectPreset(id)}
+                  className={`min-h-20 border px-3 py-3 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${selected ? 'border-blue-600 bg-blue-50 text-blue-950' : 'border-slate-200 bg-white text-slate-800 hover:border-blue-300'}`}
+                >
+                  <span className="flex items-center justify-between gap-2 text-sm font-semibold">
+                    {t(preset.labelKey)}
+                    <span className="text-xs font-normal text-slate-500">{preset.playDurationMinutes + preset.bufferMinutes} {t('minutesShort')}</span>
+                  </span>
+                  <span className="mt-1 block text-xs font-normal leading-5 text-slate-500">{t(preset.descriptionKey)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-slate-700">{t('matchSchedule.court')}</p>
@@ -176,17 +223,34 @@ export function QuickSchedulePanel({
         </div>
 
         {mode === 'advanced' && (
-          <div className="grid grid-cols-1 gap-4 border-l-2 border-blue-600 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Input label={t('durationMinutes')} type="number" min={15} max={240} value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))} />
-            <Input label={t('bufferMinutes')} type="number" min={0} max={60} value={bufferMinutes} onChange={(event) => setBufferMinutes(Number(event.target.value))} />
-            <Input label={t('startTime')} type="time" value={windowStart} onChange={(event) => setWindowStart(event.target.value)} />
-            <Input label={t('endTime')} type="time" value={windowEnd} onChange={(event) => setWindowEnd(event.target.value)} />
+          <div className="space-y-4 border-l-2 border-blue-600 bg-white p-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Input label={t('playDuration')} type="number" min={15} max={240} step={5} value={durationMinutes} onChange={(event) => { setPresetId('custom'); setDurationMinutes(Number(event.target.value)); }} />
+              <Input label={t('bufferMinutes')} type="number" min={0} max={60} step={5} value={bufferMinutes} onChange={(event) => { setPresetId('custom'); setBufferMinutes(Number(event.target.value)); }} />
+              <Input label={t('startTime')} type="time" value={windowStart} onChange={(event) => setWindowStart(event.target.value)} />
+              <Input label={t('endTime')} type="time" value={windowEnd} onChange={(event) => setWindowEnd(event.target.value)} />
+            </div>
+            <label className="block max-w-xs text-sm font-semibold text-slate-700">
+              {t('gridIncrement')}
+              <select
+                value={gridIncrementMinutes}
+                onChange={(event) => setGridIncrementMinutes(Number(event.target.value) as 5 | 10 | 15)}
+                className="mt-1.5 h-10 w-full border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                {GRID_INCREMENTS.map((increment) => <option key={increment} value={increment}>{increment} {t('minutesShort')}</option>)}
+              </select>
+            </label>
+            {presetId === 'custom' && <p className="text-xs text-blue-700">{t('customPresetHint')}</p>}
           </div>
         )}
 
+        <p className="border border-blue-100 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+          {t('slotSummary', { play: durationMinutes, buffer: bufferMinutes, total: durationMinutes + bufferMinutes, increment: gridIncrementMinutes })}
+        </p>
+
         <div className="flex flex-col gap-3 border-t border-blue-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs leading-5 text-slate-500">
-            {t('defaultSchedulePolicy')} {t('defaultSchedulePolicyHint')}
+            {t('defaultSchedulePolicyHint')}
           </p>
           <Button
             type="submit"

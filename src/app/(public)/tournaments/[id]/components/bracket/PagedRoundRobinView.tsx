@@ -16,6 +16,7 @@ interface Props {
   onScheduleMatch?: OnScheduleMatch;
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
+  onDoubleClickMatch?: OnSelectBracketMatch;
   tournamentId?: string;
   stageId?: string;
   fallbackSportRuleKind?: SportRuleKind;
@@ -29,6 +30,7 @@ export function PagedRoundRobinView({
   onScheduleMatch,
   selectedMatchId,
   onSelectMatch,
+  onDoubleClickMatch,
   tournamentId,
   stageId,
   fallbackSportRuleKind,
@@ -148,6 +150,7 @@ export function PagedRoundRobinView({
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}
+        onDoubleClickMatch={onDoubleClickMatch}
         tournamentId={tournamentId}
         stageId={stageId}
         fallbackSportRuleKind={fallbackSportRuleKind}

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarRange, LayoutGrid } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { SchedulePlanPreview, Division } from '@/features/tournaments/api';
+import type { AiScheduleCommandInput, AiScheduleCommandResult, Division, SchedulePlanPreview } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { CourtSetupItem } from './CourtSetup';
 import { QuickSchedulePanel } from './QuickSchedulePanel';
@@ -27,11 +27,16 @@ interface CourtWorkspaceProps {
   matches: WorkspaceMatch[];
   defaultDivisionId?: string | null;
   defaultDate?: string | null;
+  defaultOperatingStart?: string;
+  defaultOperatingEnd?: string;
   sportRuleKind?: SportRuleKind | null;
   setsToWin?: number | null;
   preview: SchedulePlanPreview | null;
   isPreviewing: boolean;
   onPreview: (payload: Parameters<React.ComponentProps<typeof QuickSchedulePanel>['onPreview']>[0]) => Promise<SchedulePlanPreview | null>;
+  onPreviewWithAi: (payload: AiScheduleCommandInput) => Promise<AiScheduleCommandResult | null>;
+  aiScheduleIntent: AiScheduleCommandResult['intent'] | null;
+  isPlanningScheduleWithAi: boolean;
   onOpenMatch: (matchId: string) => void;
 }
 
@@ -42,11 +47,16 @@ export function CourtWorkspace({
   matches,
   defaultDivisionId,
   defaultDate,
+  defaultOperatingStart,
+  defaultOperatingEnd,
   sportRuleKind,
   setsToWin,
   preview,
   isPreviewing,
   onPreview,
+  onPreviewWithAi,
+  aiScheduleIntent,
+  isPlanningScheduleWithAi,
   onOpenMatch,
 }: CourtWorkspaceProps) {
   const t = useTranslations('OrganizerManage');
@@ -99,17 +109,22 @@ export function CourtWorkspace({
       </div>
 
       <QuickSchedulePanel
-        key={`${defaultDivisionId}-${sportRuleKind}-${setsToWin ?? ''}-${selectedRound}`}
+        key={`${defaultDivisionId}-${sportRuleKind}-${setsToWin ?? ''}-${selectedRound}-${defaultOperatingStart}-${defaultOperatingEnd}`}
         courts={courts}
         divisions={divisions}
         defaultDivisionId={defaultDivisionId}
         defaultDate={defaultDate}
+        defaultOperatingStart={defaultOperatingStart}
+        defaultOperatingEnd={defaultOperatingEnd}
         sportRuleKind={sportRuleKind}
         setsToWin={setsToWin}
         matchIds={scopedMatchIds}
         preview={preview}
         isPreviewing={isPreviewing}
         onPreview={onPreview}
+        onPreviewWithAi={onPreviewWithAi}
+        aiScheduleIntent={aiScheduleIntent}
+        isPlanningScheduleWithAi={isPlanningScheduleWithAi}
       />
       <CourtScheduleBoard courts={courts} matches={scopedMatches} preview={preview} onOpenMatch={onOpenMatch} />
     </section>

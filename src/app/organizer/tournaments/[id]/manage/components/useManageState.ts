@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   tournamentsApi, divisionsApi, livestreamApi, LivestreamCamera, Tournament, TournamentFeesConfig, TournamentParticipant,
   BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction, Division,
-  SchedulePlanPreview, SchedulePlanPreviewInput,
+  SchedulePlanPreview, SchedulePlanPreviewInput, AiScheduleCommandInput, AiScheduleCommandResult,
 } from '@/features/tournaments/api';
 import { venuesApi } from '@/features/venues/api';
 import { matchesApi } from '@/features/matches/api';
@@ -100,6 +100,8 @@ export function useManageState(id: string) {
   const [isSavingCourt, setIsSavingCourt] = useState(false);
   const [schedulePlanPreview, setSchedulePlanPreview] = useState<SchedulePlanPreview | null>(null);
   const [isPreviewingSchedulePlan, setIsPreviewingSchedulePlan] = useState(false);
+  const [aiScheduleIntent, setAiScheduleIntent] = useState<AiScheduleCommandResult['intent'] | null>(null);
+  const [isPlanningScheduleWithAi, setIsPlanningScheduleWithAi] = useState(false);
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
   const [matchCameraId, setMatchCameraId] = useState<string>('');
   const divisionListRequestRef = useRef(0);
@@ -436,6 +438,23 @@ export function useManageState(id: string) {
     }
   };
 
+  const handlePreviewScheduleWithAi = async (payload: AiScheduleCommandInput) => {
+    if (!tournament?.id) return null;
+    setIsPlanningScheduleWithAi(true);
+    try {
+      const response = await tournamentsApi.previewScheduleWithAi(tournament.id, payload);
+      setAiScheduleIntent(response.data.intent);
+      setSchedulePlanPreview(response.data.preview);
+      return response.data;
+    } catch (err) {
+      setAiScheduleIntent(null);
+      toast.error(getErrorMessage(err));
+      return null;
+    } finally {
+      setIsPlanningScheduleWithAi(false);
+    }
+  };
+
   const applyResolvedRuleState = useCallback((resolvedRules: ReturnType<typeof resolveSportRuleView>) => {
     setSportRuleKind(resolvedRules.kind);
     setSetsToWin(resolvedRules.setsToWin);
@@ -543,7 +562,7 @@ export function useManageState(id: string) {
         name: customVenueName.trim(),
         locationAddress: fullAddr,
       });
-      const finalVenueId = tournament?.venueId || venueRes?.data?.id || null;
+      const finalVenueId = venueRes?.data?.id || tournament?.venueId || null;
       const existingConfig = (tournament?.tournamentConfig as Record<string, unknown> | undefined) || {};
       const existingLocation = (existingConfig.location as Record<string, unknown> | undefined) || {};
       await tournamentsApi.updateTournament(id, {
@@ -565,6 +584,17 @@ export function useManageState(id: string) {
         registrationStartDate: toApiIsoDateTime(registrationStartDate),
         registrationEndDate: toApiIsoDateTime(registrationEndDate),
       });
+      if (finalVenueId) {
+        const currentCourts = await tournamentsApi.getTournamentCourts(id);
+        if (!currentCourts.data?.courts?.length) {
+          try {
+            await tournamentsApi.addTournamentCourt(id, { courtName: 'Court 1', status: 'AVAILABLE' });
+          } catch (err) {
+            toast.error(getErrorMessage(err));
+          }
+        }
+        await fetchVenueCourts();
+      }
       toast.success('Lưu thông tin lịch và địa điểm thành công!');
       clearManageDraft();
       await fetchTournamentData();
@@ -1754,7 +1784,9 @@ export function useManageState(id: string) {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
     newCourtName, setNewCourtName, isSavingCourt,
-    schedulePlanPreview, setSchedulePlanPreview, isPreviewingSchedulePlan,
+        schedulePlanPreview, setSchedulePlanPreview, isPreviewingSchedulePlan,
+    aiScheduleIntent, setAiScheduleIntent, isPlanningScheduleWithAi,
+
     isLoading, setIsLoading, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
     draftStatus, clearManageDraft,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
@@ -1817,7 +1849,8 @@ export function useManageState(id: string) {
     isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
     // actions
     fetchTournamentData, fetchDivisions, fetchReferees, refetchDivisionData, applyDivisionFormValues, fetchVenueCourts,
-    handleAddTournamentCourt, handleRemoveTournamentCourt, handlePreviewSchedulePlan,
+        handleAddTournamentCourt, handleRemoveTournamentCourt, handlePreviewSchedulePlan, handlePreviewScheduleWithAi,
+
     handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveRegistrationSettings, handleSaveMatchConfig, handleSaveFinanceConfig,
     handleAddReferee, handleCreateDivision, requestDeleteDivision, handleConfirmDeleteDivision,
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,

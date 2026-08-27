@@ -13,7 +13,7 @@ import {
   type ScheduleTimingModel,
 } from '@/features/tournaments/schedule-presets';
 import type { SportRuleKind } from '@/types/tournament';
-import type { Division, SchedulePlanPreview, SchedulePlanPreviewInput } from '@/features/tournaments/api';
+import type { AiScheduleCommandInput, AiScheduleCommandResult, Division, SchedulePlanPreview, SchedulePlanPreviewInput } from '@/features/tournaments/api';
 import type { CourtSetupItem } from './CourtSetup';
 
 interface QuickSchedulePanelProps {
@@ -21,16 +21,21 @@ interface QuickSchedulePanelProps {
   divisions: Division[];
   defaultDivisionId?: string | null;
   defaultDate?: string | null;
+  defaultOperatingStart?: string;
+  defaultOperatingEnd?: string;
   sportRuleKind?: SportRuleKind | null;
   setsToWin?: number | null;
   matchIds?: string[];
   preview: SchedulePlanPreview | null;
   isPreviewing: boolean;
   onPreview: (payload: SchedulePlanPreviewInput) => Promise<SchedulePlanPreview | null>;
+  onPreviewWithAi: (payload: AiScheduleCommandInput) => Promise<AiScheduleCommandResult | null>;
+  aiScheduleIntent: AiScheduleCommandResult['intent'] | null;
+  isPlanningScheduleWithAi: boolean;
 }
 
 const STRATEGY = 'ROUND_ORDER_EARLIEST_AVAILABLE' as const;
-const GRID_INCREMENTS = [5, 10, 15] as const;
+const GRID_INCREMENTS = [5, 10, 15, 30, 60] as const;
 type PresetId = Exclude<SchedulePresetId, 'custom'>;
 
 function formatTime(value: string) {
@@ -43,12 +48,17 @@ export function QuickSchedulePanel({
   divisions,
   defaultDivisionId,
   defaultDate,
+  defaultOperatingStart,
+  defaultOperatingEnd,
   sportRuleKind,
   setsToWin,
   matchIds,
   preview,
   isPreviewing,
   onPreview,
+  onPreviewWithAi,
+  aiScheduleIntent,
+  isPlanningScheduleWithAi,
 }: QuickSchedulePanelProps) {
   const t = useTranslations('OrganizerManage');
   const presets = useMemo(() => getSchedulePresets(sportRuleKind, setsToWin), [sportRuleKind, setsToWin]);
@@ -62,9 +72,11 @@ export function QuickSchedulePanel({
   const [unitCount, setUnitCount] = useState(() => presets.recommended.unitCount);
   const [betweenUnitBreakMinutes, setBetweenUnitBreakMinutes] = useState(() => presets.recommended.betweenUnitBreakMinutes);
   const [changeoverMinutes, setChangeoverMinutes] = useState(() => presets.recommended.changeoverMinutes);
-  const [gridIncrementMinutes, setGridIncrementMinutes] = useState<5 | 10 | 15>(10);
-  const [windowStart, setWindowStart] = useState('08:00');
-  const [windowEnd, setWindowEnd] = useState('22:00');
+  const [gridIncrementMinutes, setGridIncrementMinutes] = useState<5 | 10 | 15 | 30 | 60>(30);
+  const [minimumStartIntervalMinutes, setMinimumStartIntervalMinutes] = useState(30);
+  const [windowStart, setWindowStart] = useState(defaultOperatingStart || '08:00');
+  const [windowEnd, setWindowEnd] = useState(defaultOperatingEnd || '22:00');
+  const [aiCommand, setAiCommand] = useState('');
 
   const timing = useMemo(() => calculateScheduleTiming({
     timingModel,
@@ -115,6 +127,7 @@ export function QuickSchedulePanel({
       betweenUnitBreakMinutes,
       changeoverMinutes,
       gridIncrementMinutes,
+      minimumStartIntervalMinutes,
       strategy: STRATEGY,
     };
     if (mode === 'advanced') {
@@ -124,6 +137,22 @@ export function QuickSchedulePanel({
       payload.operatingWindow = { start, end };
     }
     await onPreview(payload);
+  };
+
+  const handleAiPreview = async () => {
+    if (!aiCommand.trim() || !date || effectiveCourtIds.length === 0) return;
+    const start = toApiIsoDateTime(`${date}T${windowStart}`);
+    const end = toApiIsoDateTime(`${date}T${windowEnd}`);
+    if (!start || !end) return;
+    await onPreviewWithAi({
+      command: aiCommand.trim(),
+      date,
+      courtIds: effectiveCourtIds,
+      divisionId: divisionId || undefined,
+      gridIncrementMinutes,
+      operatingWindow: { start, end },
+      locale: undefined,
+    });
   };
 
   const unitLabel = timingModel === 'PER_HALF' ? t('timingUnitHalf') : timingModel === 'PER_SET' ? t('timingUnitSet') : t('timingUnitMatch');
@@ -151,6 +180,22 @@ export function QuickSchedulePanel({
       <div className="grid grid-cols-2 border border-slate-200 bg-white p-1" role="tablist" aria-label={t('matchSchedule.title')}>
         <button type="button" role="tab" aria-label={t('basicMode')} aria-selected={mode === 'basic'} onClick={() => setMode('basic')} className={`min-h-10 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 ${mode === 'basic' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{t('basicMode')}</button>
         <button type="button" role="tab" aria-label={t('advancedMode')} aria-selected={mode === 'advanced'} onClick={() => setMode('advanced')} className={`min-h-10 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 ${mode === 'advanced' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{t('advancedMode')}</button>
+      </div>
+
+      <div className="border border-violet-200 bg-violet-50/50 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{t('aiScheduleTitle')}</p>
+            <p className="mt-1 text-xs leading-5 text-slate-600">{t('aiScheduleHint')}</p>
+          </div>
+          <span className="shrink-0 border border-violet-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700">{t('aiPreviewOnly')}</span>
+        </div>
+        <textarea value={aiCommand} onChange={(event) => setAiCommand(event.target.value)} rows={2} maxLength={4000} placeholder={t('aiSchedulePlaceholder')} className="mt-3 min-h-20 w-full resize-y border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500" />
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-slate-500">{t('aiScheduleExample')}</p>
+          <Button type="button" onClick={handleAiPreview} disabled={isPlanningScheduleWithAi || !aiCommand.trim() || !date || effectiveCourtIds.length === 0} className="min-h-10 bg-violet-700 text-white hover:bg-violet-800">{isPlanningScheduleWithAi ? t('processing') : t('aiPreviewAction')}</Button>
+        </div>
+        {aiScheduleIntent && <p className="mt-3 border border-violet-200 bg-white px-3 py-2 text-xs leading-5 text-violet-950">{aiScheduleIntent.needsReview ? t('aiNeedsReview') : t('aiUnderstood')}: {aiScheduleIntent.explanation}</p>}
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
@@ -200,7 +245,8 @@ export function QuickSchedulePanel({
               <Input label={t('changeoverMinutes')} type="number" min={0} max={60} step={1} value={changeoverMinutes} onChange={(event) => { markCustom(); setChangeoverMinutes(Number(event.target.value)); }} />
               <Input label={t('startTime')} type="time" value={windowStart} onChange={(event) => setWindowStart(event.target.value)} />
               <Input label={t('endTime')} type="time" value={windowEnd} onChange={(event) => setWindowEnd(event.target.value)} />
-              <label className="text-sm font-semibold text-slate-700">{t('gridIncrement')}<select value={gridIncrementMinutes} onChange={(event) => setGridIncrementMinutes(Number(event.target.value) as 5 | 10 | 15)} className="mt-1.5 h-10 w-full border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">{GRID_INCREMENTS.map((increment) => <option key={increment} value={increment}>{increment} {t('minutesShort')}</option>)}</select></label>
+              <label className="text-sm font-semibold text-slate-700">{t('gridIncrement')}<select value={gridIncrementMinutes} onChange={(event) => setGridIncrementMinutes(Number(event.target.value) as 5 | 10 | 15 | 30 | 60)} className="mt-1.5 h-10 w-full border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">{GRID_INCREMENTS.map((increment) => <option key={increment} value={increment}>{increment} {t('minutesShort')}</option>)}</select></label>
+              <Input label={t('minimumStartInterval')} type="number" min={5} max={240} step={5} value={minimumStartIntervalMinutes} onChange={(event) => { markCustom(); setMinimumStartIntervalMinutes(Number(event.target.value)); }} />
             </div>
             {presetId === 'custom' && <p className="text-xs text-blue-700">{t('customPresetHint')}</p>}
           </div>

@@ -122,6 +122,30 @@ export interface SchedulePlanAssignment {
   scheduledAt: string;
 }
 
+export interface AiScheduleCommandInput {
+  command: string;
+  date: string;
+  courtIds: string[];
+  divisionId?: string;
+  gridIncrementMinutes?: 5 | 10 | 15 | 30 | 60;
+  locale?: string;
+  operatingWindow?: { start: string; end: string };
+}
+
+export interface AiScheduleCommandResult {
+  intent: {
+    date: string;
+    roundNumbers: number[];
+    startTime: string;
+    endTime: string;
+    minimumStartIntervalMinutes: number;
+    timingModel: 'MATCH_TOTAL' | 'PER_SET' | 'PER_HALF';
+    needsReview: boolean;
+    explanation: string;
+  };
+  preview: SchedulePlanPreview;
+}
+
 export interface SchedulePlanPreviewInput {
   divisionId?: string;
   date: string;
@@ -134,7 +158,8 @@ export interface SchedulePlanPreviewInput {
   unitCount?: number;
   betweenUnitBreakMinutes?: number;
   changeoverMinutes?: number;
-  gridIncrementMinutes?: 5 | 10 | 15;
+  gridIncrementMinutes?: 5 | 10 | 15 | 30 | 60;
+  minimumStartIntervalMinutes?: number;
   operatingWindow?: { start: string; end: string };
   strategy: 'ROUND_ORDER_EARLIEST_AVAILABLE';
 }
@@ -150,7 +175,8 @@ export interface SchedulePlanPreview {
   unitCount: number;
   betweenUnitBreakMinutes: number;
   changeoverMinutes: number;
-  gridIncrementMinutes: 5 | 10 | 15;
+  gridIncrementMinutes: 5 | 10 | 15 | 30 | 60;
+  minimumStartIntervalMinutes: number;
   operatingWindow: { start: string; end: string };
   assignments: SchedulePlanAssignment[];
   skipped: Array<{ matchId: string; reason: string }>;
@@ -829,6 +855,10 @@ export const tournamentsApi = {
     id: string,
     data: SchedulePlanPreviewInput,
   ) => api.post<ApiResponse<SchedulePlanPreview>>(`/tournaments/${id}/schedule-plans`, data),
+  previewScheduleWithAi: (
+    id: string,
+    data: AiScheduleCommandInput,
+  ) => api.post<ApiResponse<AiScheduleCommandResult>>(`/ai/tournaments/${id}/schedule-preview`, data),
   removeTournamentCourt: (id: string, courtId: string) =>
     api.delete<ApiResponse<TournamentCourt>>(
       `/tournaments/${id}/courts/${courtId}`,

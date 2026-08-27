@@ -130,7 +130,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       : s.newDivisionName;
   };
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
-  const [isCourtWorkspaceOpen, setIsCourtWorkspaceOpen] = useState(false);
+  const [courtOperatingStart, setCourtOperatingStart] = useState('08:00');
+  const [courtOperatingEnd, setCourtOperatingEnd] = useState('22:00');
 
   const handleChecklistNavigate = (target: {
     tab: 'basic' | 'schedule' | 'registration' | 'bracket' | 'finance' | 'permissions' | 'livestream';
@@ -481,8 +482,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
               courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
               isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt}
-              isWorkspaceOpen={isCourtWorkspaceOpen} onOpenWorkspace={() => setIsCourtWorkspaceOpen(true)} />
-            {isCourtWorkspaceOpen && (
+              operatingStart={courtOperatingStart} setOperatingStart={setCourtOperatingStart}
+              operatingEnd={courtOperatingEnd} setOperatingEnd={setCourtOperatingEnd}
+              onCourtClick={() => requestAnimationFrame(() => document.getElementById('court-workspace-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))} />
+            {s.courts.length > 0 && (
               <CourtWorkspace
                 venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
                 courts={s.courts}
@@ -490,11 +493,16 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 matches={s.matches}
                 defaultDivisionId={s.selectedDivisionId}
                 defaultDate={s.startDate}
+                defaultOperatingStart={courtOperatingStart}
+                defaultOperatingEnd={courtOperatingEnd}
                 sportRuleKind={s.sportRuleKind}
                 setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
                 preview={s.schedulePlanPreview}
                 isPreviewing={s.isPreviewingSchedulePlan}
                 onPreview={s.handlePreviewSchedulePlan}
+                onPreviewWithAi={s.handlePreviewScheduleWithAi}
+                aiScheduleIntent={s.aiScheduleIntent}
+                isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
                 onOpenMatch={(matchId) => {
                   const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
                   if (fullMatch) s.handleOpenScheduling(fullMatch);

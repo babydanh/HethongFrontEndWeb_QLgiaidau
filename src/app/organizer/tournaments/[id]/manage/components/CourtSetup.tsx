@@ -21,8 +21,11 @@ interface CourtSetupProps {
   setNewCourtName: (value: string) => void;
   isSaving: boolean;
   onAdd: () => void;
-  isWorkspaceOpen: boolean;
-  onOpenWorkspace: () => void;
+  operatingStart: string;
+  setOperatingStart: (value: string) => void;
+  operatingEnd: string;
+  setOperatingEnd: (value: string) => void;
+  onCourtClick: (courtId: string) => void;
 }
 
 export function CourtSetup({
@@ -32,8 +35,11 @@ export function CourtSetup({
   setNewCourtName,
   isSaving,
   onAdd,
-  isWorkspaceOpen,
-  onOpenWorkspace,
+  operatingStart,
+  setOperatingStart,
+  operatingEnd,
+  setOperatingEnd,
+  onCourtClick,
 }: CourtSetupProps) {
   const t = useTranslations('OrganizerManage');
 
@@ -86,6 +92,11 @@ export function CourtSetup({
             </Button>
           </div>
 
+          <div className="grid grid-cols-1 gap-3 border-y border-slate-200 py-4 sm:grid-cols-2">
+            <Input label={t('dailyStartTime')} type="time" value={operatingStart} onChange={(event) => setOperatingStart(event.target.value)} disabled={isSaving} />
+            <Input label={t('dailyEndTime')} type="time" value={operatingEnd} onChange={(event) => setOperatingEnd(event.target.value)} disabled={isSaving} />
+          </div>
+
           {courts.length === 0 ? (
             <div className="border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
               {t('status.notSet')}
@@ -94,18 +105,16 @@ export function CourtSetup({
             <>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('matchSchedule.court')}>
                 {courts.map((court) => (
-                  <div key={court.id} className="border border-slate-200 px-3 py-3">
-                    <p className="font-semibold text-slate-800">{court.courtName}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                  <button key={court.id} type="button" onClick={() => onCourtClick(court.id)} className="border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:border-blue-400 hover:bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-slate-800">{court.courtName}</span>
+                      <span className="text-xs font-semibold text-blue-700">{t('goToWorkspace')}</span>
+                    </span>
+                    <span className="mt-1 block text-xs text-slate-500">
                       {court.status === 'AVAILABLE' ? t('courtAvailable') : court.status === 'MAINTENANCE' ? t('courtMaintenance') : t('courtStatusUnknown')}
-                    </p>
-                  </div>
+                    </span>
+                  </button>
                 ))}
-              </div>
-              <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs leading-5 text-slate-500">{t('workspaceOptInHint')}</p>
-                {!isWorkspaceOpen && <Button type="button" onClick={onOpenWorkspace} className="min-h-10 bg-slate-900 text-white hover:bg-slate-700">{t('openWorkspace')}</Button>}
-                {isWorkspaceOpen && <span className="text-xs font-semibold text-emerald-700">{t('workspaceOpen')}</span>}
               </div>
             </>
           )}

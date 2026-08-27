@@ -44,8 +44,11 @@ interface ScheduleTabProps {
   setNewCourtName: (value: string) => void;
   isSavingCourt: boolean;
   handleAddTournamentCourt: () => void;
-  isWorkspaceOpen: boolean;
-  onOpenWorkspace: () => void;
+  operatingStart: string;
+  setOperatingStart: (value: string) => void;
+  operatingEnd: string;
+  setOperatingEnd: (value: string) => void;
+  onCourtClick: (courtId: string) => void;
 }
 
 export function ScheduleTab({
@@ -76,8 +79,11 @@ export function ScheduleTab({
   setNewCourtName,
   isSavingCourt,
   handleAddTournamentCourt,
-  isWorkspaceOpen,
-  onOpenWorkspace,
+  operatingStart,
+  setOperatingStart,
+  operatingEnd,
+  setOperatingEnd,
+  onCourtClick,
 }: ScheduleTabProps) {
   const t = useTranslations('OrganizerManage');
   void _tournament;
@@ -132,7 +138,7 @@ export function ScheduleTab({
         </div>
       </section>
 
-      <CourtSetup venue={courtVenue} courts={courts} newCourtName={newCourtName} setNewCourtName={setNewCourtName} isSaving={isSavingCourt} onAdd={handleAddTournamentCourt} isWorkspaceOpen={isWorkspaceOpen} onOpenWorkspace={onOpenWorkspace} />
+      <CourtSetup venue={courtVenue} courts={courts} newCourtName={newCourtName} setNewCourtName={setNewCourtName} isSaving={isSavingCourt} onAdd={handleAddTournamentCourt} operatingStart={operatingStart} setOperatingStart={setOperatingStart} operatingEnd={operatingEnd} setOperatingEnd={setOperatingEnd} onCourtClick={onCourtClick} />
 
       <div className="flex justify-end border-t border-slate-200 pt-4">
         <Button onClick={handleSaveScheduleDetails} disabled={isSavingConfig} className="min-h-11 bg-blue-600 px-6 font-bold text-white hover:bg-blue-700">{isSavingConfig ? t('savingSchedule') : t('saveSchedule')}</Button>

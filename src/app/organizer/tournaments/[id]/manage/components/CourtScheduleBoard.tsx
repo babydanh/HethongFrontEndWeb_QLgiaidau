@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CalendarClock } from 'lucide-react';
 import type { SchedulePlanPreview } from '@/features/tournaments/api';
@@ -22,6 +22,18 @@ interface CourtScheduleBoardProps {
   preview?: SchedulePlanPreview | null;
   onOpenMatch: (matchId: string) => void;
 }
+
+type DraftAssignment = {
+  courtId: string;
+  scheduledAt: string;
+  durationMinutes: number;
+};
+
+type ResizeState = {
+  matchId: string;
+  startY: number;
+  initialDurationMinutes: number;
+};
 
 const PIXELS_PER_MINUTE = 1.25;
 
@@ -49,6 +61,8 @@ export function CourtScheduleBoard({
   onOpenMatch,
 }: CourtScheduleBoardProps) {
   const t = useTranslations('OrganizerManage');
+  const [draftAssignments, setDraftAssignments] = useState<Record<string, DraftAssignment>>({});
+  const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const previewAssignmentByMatchId = useMemo(
     () => new Map(preview?.assignments.map((assignment) => [assignment.matchId, assignment]) ?? []),
     [preview],
@@ -56,13 +70,37 @@ export function CourtScheduleBoard({
   const displayMatches = useMemo(() => matches.map((match) => {
     const persisted = Boolean(match.scheduledAt && match.courtId);
     const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
+    const draft = draftAssignments[match.id];
     return {
       match,
-      scheduledAt: persisted ? match.scheduledAt : assignment?.scheduledAt ?? null,
-      courtId: persisted ? match.courtId : assignment?.courtId ?? null,
-      isPreview: !persisted && Boolean(assignment),
+      scheduledAt: draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null),
+      courtId: draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null),
+      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : 60),
+      isPreview: !persisted && Boolean(assignment) && !draft,
+      isDraft: Boolean(draft),
     };
-  }), [matches, previewAssignmentByMatchId]);
+  }), [draftAssignments, matches, preview, previewAssignmentByMatchId]);
+  const gridStepMinutes = preview?.minimumStartIntervalMinutes ?? preview?.gridIncrementMinutes ?? 30;
+  useEffect(() => {
+    if (!resizeState) return;
+    const handlePointerMove = (event: PointerEvent) => {
+      const deltaMinutes = Math.round(((event.clientY - resizeState.startY) / PIXELS_PER_MINUTE) / gridStepMinutes) * gridStepMinutes;
+      const durationMinutes = Math.max(gridStepMinutes, resizeState.initialDurationMinutes + deltaMinutes);
+      setDraftAssignments((current) => {
+        const existing = current[resizeState.matchId];
+        if (!existing) return current;
+        return { ...current, [resizeState.matchId]: { ...existing, durationMinutes } };
+      });
+    };
+    const handlePointerUp = () => setResizeState(null);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp, { once: true });
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [gridStepMinutes, resizeState]);
+
   const scheduledMatches = displayMatches.filter(
     (item) => Boolean(item.scheduledAt && item.courtId),
   );
@@ -84,6 +122,26 @@ export function CourtScheduleBoard({
     return { start, end, increment, totalMinutes, marks, height: totalMinutes * PIXELS_PER_MINUTE };
   }, [preview]);
 
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>, courtId: string) => {
+    event.preventDefault();
+    if (!timeline) return;
+    const matchId = event.dataTransfer.getData('text/plain');
+    const item = displayMatches.find((candidate) => candidate.match.id === matchId);
+    if (!item) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const rawMinutes = Math.max(0, (event.clientY - bounds.top) / PIXELS_PER_MINUTE);
+    const snappedMinutes = Math.round(rawMinutes / gridStepMinutes) * gridStepMinutes;
+    const scheduledAt = new Date(timeline.start + snappedMinutes * 60_000).toISOString();
+    setDraftAssignments((current) => ({
+      ...current,
+      [matchId]: {
+        courtId,
+        scheduledAt,
+        durationMinutes: current[matchId]?.durationMinutes ?? item.durationMinutes,
+      },
+    }));
+  };
+
   return (
     <section className="space-y-4 border border-slate-200 bg-white p-5 md:p-6">
       <div className="flex items-start gap-3">
@@ -104,8 +162,8 @@ export function CourtScheduleBoard({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
               <strong>{t('previewBoard')}</strong>
               <span>{t('previewDraft')}</span>
-              <span>{preview.durationMinutes + preview.bufferMinutes} {t('slotMinutes')}</span>
-              <span>{preview.gridIncrementMinutes} {t('minutesShort')} {t('gridIncrement')}</span>
+              <span>{t('dragDraftHint')}</span>
+              <span>{gridStepMinutes} {t('minutesShort')} {t('gridIncrement')}</span>
             </div>
           ) : null}
           <div className="overflow-x-auto border border-slate-200" role="region" aria-label={t('matchSchedule.court')} tabIndex={0}>
@@ -128,26 +186,30 @@ export function CourtScheduleBoard({
                   .filter((item) => item.courtId === court.id && item.scheduledAt)
                   .sort((a, b) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
                 return (
-                  <div key={court.id} className="relative border-r border-slate-200 bg-white" style={{ height: timeline.height }}>
+                                    <div key={court.id} className="relative border-r border-slate-200 bg-white" style={{ height: timeline.height }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => handleDrop(event, court.id)}>
+
                     {timeline.marks.map((mark) => (
                       <span key={`${court.id}-${mark.top}`} className="pointer-events-none absolute inset-x-0 border-t border-slate-100" style={{ top: mark.top }} />
                     ))}
                     {courtMatches.map((item) => {
                       const start = new Date(item.scheduledAt || 0).getTime();
                       const top = Math.max(0, (start - timeline.start) / 60_000 * PIXELS_PER_MINUTE);
-                      const slotDuration = preview ? preview.durationMinutes + preview.bufferMinutes : 60;
+                      const slotDuration = item.durationMinutes;
                       const height = Math.max(68, slotDuration * PIXELS_PER_MINUTE);
                       return (
                         <button
                           key={item.match.id}
                           type="button"
+                          draggable
+                          onDragStart={(event) => event.dataTransfer.setData('text/plain', item.match.id)}
                           onClick={() => onOpenMatch(item.match.id)}
-                          className={`absolute inset-x-1 z-10 overflow-hidden border px-2 py-2 text-left shadow-sm transition-colors hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${item.isPreview ? 'border-dashed border-blue-400 bg-blue-50' : 'border-slate-200 bg-white'}`}
+                          className={`absolute inset-x-1 z-10 overflow-hidden border px-2 py-2 text-left shadow-sm transition-colors hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${item.isDraft ? 'border-violet-500 bg-violet-50' : item.isPreview ? 'border-dashed border-blue-400 bg-blue-50' : 'border-slate-200 bg-white'}`}
                           style={{ top, height }}
                         >
                           <p className="text-[11px] font-bold text-blue-700">{formatMatchTime(item.scheduledAt)}</p>
                           <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-800">{matchLabel(item.match, t)}</p>
                           <p className="mt-1 text-[10px] text-slate-500">R{item.match.roundNumber ?? '—'} · #{item.match.matchOrder ?? '—'}</p>
+                          <span role="presentation" onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setDraftAssignments((current) => ({ ...current, [item.match.id]: { courtId: item.courtId!, scheduledAt: item.scheduledAt!, durationMinutes: item.durationMinutes } })); setResizeState({ matchId: item.match.id, startY: event.clientY, initialDurationMinutes: item.durationMinutes }); }} className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize bg-violet-300/50" aria-label={t('resizeDraft')} />
                         </button>
                       );
                     })}
@@ -195,8 +257,8 @@ export function CourtScheduleBoard({
             <span className="text-xs font-semibold text-slate-500">{unscheduledMatches.length}</span>
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {unscheduledMatches.map((item) => (
-              <button key={`unscheduled-${item.match.id}`} type="button" onClick={() => onOpenMatch(item.match.id)} className="border border-dashed border-slate-300 bg-white px-3 py-3 text-left transition-colors hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              {unscheduledMatches.map((item) => (
+              <button key={`unscheduled-${item.match.id}`} type="button" draggable onDragStart={(event) => event.dataTransfer.setData('text/plain', item.match.id)} onClick={() => onOpenMatch(item.match.id)} className="border border-dashed border-slate-300 bg-white px-3 py-3 text-left transition-colors hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <p className="text-sm font-semibold text-slate-800">{matchLabel(item.match, t)}</p>
                 <p className="mt-1 text-xs text-slate-500">R{item.match.roundNumber ?? '—'} · #{item.match.matchOrder ?? '—'}</p>
               </button>

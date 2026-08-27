@@ -370,11 +370,6 @@ const commonTranslate = useTranslations('Common');
     setSelectedDivisionId(divisionId);
     setOpenDivisionId(divisionId);
     setPendingDivisionId(divisionId);
-
-    // Smoothly ensure the selected division header is in optimal viewport position
-    requestAnimationFrame(() => {
-      scrollToDivisionRow(divisionId);
-    });
   };
 
   const handleShareClick = async () => {

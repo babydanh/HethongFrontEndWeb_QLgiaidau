@@ -42,7 +42,7 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
-import { RankAvatar } from '@/components/ui/RankAvatar';
+import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 
@@ -926,44 +926,91 @@ export default function HomePage() {
       side: 'left' | 'right',
     ) => {
       const members = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
-      const displayName = members.length === 2
+      const isDoubles = members.length === 2;
+      const displayName = isDoubles
         ? members.map((m) => formatShortPersonName(m.fullName) || m.fullName).filter(Boolean).join(' / ')
         : members.length === 1 && members[0].fullName
           ? formatShortPersonName(members[0].fullName) || members[0].fullName
           : formatShortPersonName(participant?.teamName) || fallbackText;
 
-      const logoUrl = participant?.logoUrl || members[0]?.avatarUrl;
-      const initial = (displayName.trim().charAt(0) || '?').toUpperCase();
+      const logoUrl = participant?.logoUrl;
 
-      return (
-        <div className="flex flex-col items-center justify-center min-w-0 flex-1 px-1">
-          {/* Avatar / Crest */}
-          <div className="relative flex items-center justify-center">
-            {logoUrl ? (
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden ring-2 ring-slate-100 bg-slate-50 shadow-xs">
-                <Image
-                  src={logoUrl}
-                  alt={displayName}
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                  unoptimized
-                />
-              </div>
+      const renderSingleAvatar = (
+        m: { fullName?: string | null; avatarUrl?: string | null; eloPoints?: number | null; rankTier?: string | null } | undefined,
+        sizeClass: string,
+        initialSizeClass: string,
+        sideFallback: 'left' | 'right',
+      ) => {
+        const url = m?.avatarUrl;
+        const name = m?.fullName || participant?.teamName || fallbackText;
+        const initial = (name.trim().charAt(0) || '?').toUpperCase();
+        const rankRing = getRankRingClass(m?.eloPoints, m?.rankTier);
+
+        return (
+          <div
+            className={`relative ${sizeClass} rounded-full overflow-hidden ring-2 ${rankRing} ring-offset-1 ring-offset-white bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs`}
+          >
+            {url ? (
+              <Image
+                src={url}
+                alt={name}
+                width={44}
+                height={44}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
             ) : (
               <div
-                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-sm shadow-xs ring-2 ring-slate-100 ${
-                  side === 'left'
-                    ? 'bg-amber-50 text-amber-700 border border-amber-200/80'
-                    : 'bg-sky-50 text-sky-700 border border-sky-200/80'
+                className={`w-full h-full flex items-center justify-center font-black ${initialSizeClass} ${
+                  sideFallback === 'left'
+                    ? 'bg-amber-50/90 text-amber-700'
+                    : 'bg-sky-50/90 text-sky-700'
                 }`}
               >
                 {initial}
               </div>
             )}
           </div>
+        );
+      };
+
+      return (
+        <div className="flex flex-col items-center justify-center min-w-0 flex-1 px-1">
+          {/* Avatar Area */}
+          <div className="relative flex items-center justify-center">
+            {isDoubles ? (
+              // Doubles overlapping: left = "Oo", right = "oO"
+              side === 'left' ? (
+                <div className="flex items-center -space-x-3.5">
+                  <div className="z-20">
+                    {renderSingleAvatar(members[0], 'w-10 h-10', 'text-xs', 'left')}
+                  </div>
+                  <div className="z-10 mt-2">
+                    {renderSingleAvatar(members[1], 'w-7 h-7', 'text-[10px]', 'left')}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center -space-x-3.5">
+                  <div className="z-10 mt-2">
+                    {renderSingleAvatar(members[0], 'w-7 h-7', 'text-[10px]', 'right')}
+                  </div>
+                  <div className="z-20">
+                    {renderSingleAvatar(members[1], 'w-10 h-10', 'text-xs', 'right')}
+                  </div>
+                </div>
+              )
+            ) : (
+              // Singles or Single Team Avatar
+              renderSingleAvatar(
+                members[0] || (logoUrl ? { avatarUrl: logoUrl, fullName: participant?.teamName } : undefined),
+                'w-11 h-11 sm:w-12 sm:h-12',
+                'text-sm',
+                side,
+              )
+            )}
+          </div>
           {/* Name */}
-          <span className="mt-1.5 text-xs font-bold text-slate-800 text-center line-clamp-1 max-w-[100px] sm:max-w-[130px] tracking-tight leading-tight">
+          <span className="mt-1.5 text-xs font-bold text-slate-800 text-center line-clamp-1 max-w-[105px] sm:max-w-[130px] tracking-tight leading-tight">
             {displayName}
           </span>
         </div>
@@ -1019,17 +1066,30 @@ export default function HomePage() {
             {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
             {/* Center Score / Time */}
-            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[80px]">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-widest leading-none drop-shadow-2xs font-sans">
-                {scoreText}
-              </span>
-              <span
-                className={`text-[11px] font-bold mt-1.5 tracking-tight ${
-                  isLive ? 'text-rose-600 animate-pulse' : isScheduled ? 'text-blue-600' : 'text-slate-500'
-                }`}
-              >
-                {setSubStatusText}
-              </span>
+            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[70px]">
+              {isScheduled ? (
+                <>
+                  <span className="text-xs font-black tracking-wider text-slate-500 bg-slate-100/90 border border-slate-200/90 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                    {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS'}
+                  </span>
+                  <span className="text-[10.5px] font-semibold text-blue-600 mt-1">
+                    {translate('statusUpcoming')}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-widest leading-none drop-shadow-2xs font-sans">
+                    {scoreText}
+                  </span>
+                  <span
+                    className={`text-[11px] font-bold mt-1.5 tracking-tight ${
+                      isLive ? 'text-rose-600 animate-pulse' : 'text-slate-500'
+                    }`}
+                  >
+                    {setSubStatusText}
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Participant 2 */}

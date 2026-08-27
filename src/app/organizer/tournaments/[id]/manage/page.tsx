@@ -15,6 +15,7 @@ import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
+import { CourtScheduleBoard } from './components/CourtScheduleBoard';
 import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
@@ -419,19 +420,31 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
           winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo} />}
 
-        {s.activeTab === 'schedule' && <ScheduleTab tournament={s.tournament} bracket={s.bracket} venues={s.venues}
-          validationField={s.validationField}
-          customVenueName={s.customVenueName} setCustomVenueName={s.setCustomVenueName}
-          customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
-          provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
-          wardCode={s.wardCode} setWardCode={s.setWardCode}
-          provinces={s.provinces} wards={s.wards} setWards={s.setWards}
-          startDate={s.startDate} setStartDate={s.setStartDate}
-          endDate={s.endDate} setEndDate={s.setEndDate}
-          isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails}
-          courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
-          courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
-          isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />}
+        {s.activeTab === 'schedule' && (
+          <div className="space-y-6">
+            <ScheduleTab tournament={s.tournament} bracket={s.bracket} venues={s.venues}
+              validationField={s.validationField}
+              customVenueName={s.customVenueName} setCustomVenueName={s.setCustomVenueName}
+              customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
+              provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
+              wardCode={s.wardCode} setWardCode={s.setWardCode}
+              provinces={s.provinces} wards={s.wards} setWards={s.setWards}
+              startDate={s.startDate} setStartDate={s.setStartDate}
+              endDate={s.endDate} setEndDate={s.setEndDate}
+              isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails}
+              courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
+              courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
+              isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />
+            <CourtScheduleBoard
+              courts={s.courts}
+              matches={s.matches}
+              onOpenMatch={(matchId) => {
+                const fullMatch = s.matches.find((candidate) => candidate.id === matchId);
+                if (fullMatch) s.handleOpenScheduling(fullMatch as any);
+              }}
+            />
+          </div>
+        )}
 
         {s.activeTab === 'registration' && <RegistrationTab tournament={s.tournament}
           inviteLink={s.inviteLink}

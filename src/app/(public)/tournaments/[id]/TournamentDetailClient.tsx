@@ -239,7 +239,7 @@ const commonTranslate = useTranslations('Common');
     let active = true;
     const checkResults = async () => {
       try {
-        const response = await tournamentsApi.getTournamentResults(tournamentId, selectedDivisionId || undefined);
+        const response = await tournamentsApi.getTournamentResults(tournamentId);
         const data = response.data;
         const awards = data?.awards ?? [];
         const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
@@ -350,20 +350,10 @@ const commonTranslate = useTranslations('Common');
   );
   const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
 
-  const effectiveLiveCountsByDivision = useMemo<Record<string, number>>(() => {
-    if (isCompleted || hasConfirmedResults) return {};
-    return liveCountsByDivision;
-  }, [isCompleted, hasConfirmedResults, liveCountsByDivision]);
-
-  const effectiveLiveMatchesCount: number = Object.values(effectiveLiveCountsByDivision).reduce(
-    (total: number, count: number) => total + count,
-    0,
-  );
-
-  // If activeTab is 'live' but there are no live matches, or if results are confirmed,
-  // automatically redirect activeTab away from phantom 'live' to 'results' or 'overview'
+  // If activeTab is 'live' but there are no live matches in any division,
+  // automatically redirect activeTab to 'results' (if results exist) or 'overview'
   useEffect(() => {
-    if (activeTab === 'live' && effectiveLiveMatchesCount === 0) {
+    if (activeTab === 'live' && liveMatchesCount === 0) {
       const fallbackTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
       setActiveTab(fallbackTab);
       if (typeof window !== 'undefined') {
@@ -378,7 +368,7 @@ const commonTranslate = useTranslations('Common');
         }
       }
     }
-  }, [activeTab, effectiveLiveMatchesCount, showResultsTab]);
+  }, [activeTab, liveMatchesCount, showResultsTab]);
 
   useEffect(() => {
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
@@ -738,8 +728,8 @@ const commonTranslate = useTranslations('Common');
   };
 
   const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
-    ...(effectiveLiveMatchesCount > 0
-      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: effectiveLiveMatchesCount, isLive: true }]
+    ...(liveMatchesCount > 0
+      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: liveMatchesCount, isLive: true }]
       : []),
     ...(showResultsTab
       ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: true }]
@@ -790,8 +780,8 @@ const commonTranslate = useTranslations('Common');
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Badge */}
           {(() => {
-            const isLive = !isCompleted && !hasConfirmedResults && (isTournamentInProgress(activeTournament.status) || effectiveLiveMatchesCount > 0);
-            const isFinished = isCompleted || hasConfirmedResults;
+            const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;
+            const isFinished = isCompleted || (hasConfirmedResults && liveMatchesCount === 0);
             return (
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
                 isLive
@@ -1249,7 +1239,7 @@ const commonTranslate = useTranslations('Common');
                     {divisionsList.map((division) => {
                       const isActive = division.id === openDivisionId;
                       const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
-                      const liveCount = effectiveLiveCountsByDivision[division.id] ?? 0;
+                      const liveCount = liveCountsByDivision[division.id] ?? 0;
                       const participantCount = division._count?.participants ?? 0;
                       const maxParticipants = division.maxParticipants ?? 0;
                       const participantCapacity = maxParticipants > 0

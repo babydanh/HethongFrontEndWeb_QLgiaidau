@@ -7469,6 +7469,10 @@
     "slotSummary": "Thi đấu khoảng {play} phút · đệm {buffer} phút · mỗi suất {total} phút · lưới {increment} phút",
     "presetSportHint": "Mẫu được gợi ý từ môn, số set/game và cấu hình nội dung hiện tại.",
     "customPresetHint": "Bạn đã chỉnh thời lượng thủ công.",
+    "previewBoard": "Lưới preview",
+    "previewDraft": "Nét đứt = chưa lưu",
+    "time": "Giờ",
+    "teamTbd": "Chờ xác định",
     "toast": {
       "copiedInvite": "Đã sao chép link!"
     }

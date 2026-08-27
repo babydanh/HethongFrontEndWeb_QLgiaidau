@@ -23,6 +23,7 @@ interface QuickSchedulePanelProps {
   defaultDate?: string | null;
   sportRuleKind?: SportRuleKind | null;
   setsToWin?: number | null;
+  matchIds?: string[];
   preview: SchedulePlanPreview | null;
   isPreviewing: boolean;
   onPreview: (payload: SchedulePlanPreviewInput) => Promise<SchedulePlanPreview | null>;
@@ -44,6 +45,7 @@ export function QuickSchedulePanel({
   defaultDate,
   sportRuleKind,
   setsToWin,
+  matchIds,
   preview,
   isPreviewing,
   onPreview,
@@ -103,6 +105,8 @@ export function QuickSchedulePanel({
       divisionId: divisionId || undefined,
       date,
       courtIds: effectiveCourtIds,
+      matchIds,
+
       durationMinutes: timing.estimatedPlayMinutes,
       bufferMinutes: timing.changeoverMinutes,
       timingModel,

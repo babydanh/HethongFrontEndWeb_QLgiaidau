@@ -15,8 +15,7 @@ import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
-import { CourtScheduleBoard } from './components/CourtScheduleBoard';
-import { QuickSchedulePanel } from './components/QuickSchedulePanel';
+import { CourtWorkspace } from './components/CourtWorkspace';
 import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
@@ -436,10 +435,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
               courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
               isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />
-            <QuickSchedulePanel
-              key={`${s.selectedDivisionId}-${s.sportRuleKind}-${s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}`}
+            <CourtWorkspace
+              venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
               courts={s.courts}
               divisions={s.divisions}
+              matches={s.matches}
               defaultDivisionId={s.selectedDivisionId}
               defaultDate={s.startDate}
               sportRuleKind={s.sportRuleKind}
@@ -447,15 +447,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               preview={s.schedulePlanPreview}
               isPreviewing={s.isPreviewingSchedulePlan}
               onPreview={s.handlePreviewSchedulePlan}
-            />
-            <CourtScheduleBoard
-              courts={s.courts}
-              matches={s.matches}
-              preview={s.schedulePlanPreview}
               onOpenMatch={(matchId) => {
-                const fullMatch = s.matches.find(
-                  (candidate: (typeof s.matches)[number]) => candidate.id === matchId,
-                );
+                const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
                 if (fullMatch) s.handleOpenScheduling(fullMatch);
               }}
             />

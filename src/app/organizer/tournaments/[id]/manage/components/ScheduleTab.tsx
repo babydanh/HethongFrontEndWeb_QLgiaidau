@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Calendar, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input, DateTimePicker } from '@/components/ui/Input';
 import { Tournament, BracketStage } from '@/types/tournament';
@@ -47,9 +48,9 @@ interface ScheduleTabProps {
 
 export function ScheduleTab({
   validationField,
-  tournament,
-  bracket,
-  venues,
+  tournament: _tournament,
+  bracket: _bracket,
+  venues: _venues,
   customVenueName,
   setCustomVenueName,
   customVenueAddress,
@@ -74,122 +75,63 @@ export function ScheduleTab({
   isSavingCourt,
   handleAddTournamentCourt,
 }: ScheduleTabProps) {
+  const t = useTranslations('OrganizerManage');
+  void _tournament;
+  void _bracket;
+  void _venues;
   const autoDetectedAddress = useAutoAddressParser({
     addressValue: customVenueAddress,
     provinces,
     wards,
-    onSelectProvince: (pCode) => setProvinceCode(pCode),
-    onSelectWard: (wCode) => setWardCode(wCode),
-    onWardsLoaded: (loadedWards) => {
-      if (setWards) setWards(loadedWards);
-    },
+    onSelectProvince: setProvinceCode,
+    onSelectWard: setWardCode,
+    onWardsLoaded: (loadedWards) => setWards?.(loadedWards),
   });
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
-      <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Lịch thi đấu & Địa điểm</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="flex flex-col gap-3.5 bg-slate-50 border p-5 rounded-lg">
-          <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-1">Địa điểm thi đấu</h4>
-          
-          <Input
-            label="Tên sân / Địa điểm thi đấu"
-            placeholder="Ví dụ: Sân Cầu Lông Sunrise"
-            value={customVenueName}
-            onChange={(e) => setCustomVenueName(e.target.value)}
-          />
-          {validationField === 'venue' && <p className="text-xs font-semibold text-rose-600">Vui lòng nhập tên sân và địa chỉ đầy đủ.</p>}
-
+    <div className="space-y-5">
+      <section className="border border-slate-200 bg-white p-5 md:p-6" aria-labelledby="schedule-setup-title">
+        <div className="flex items-start gap-3 border-b border-slate-200 pb-4">
+          <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
           <div>
-            <Input
-              label="Địa chỉ chi tiết"
-              placeholder="Số 12, Đường hoa mai..."
-              value={customVenueAddress}
-              onChange={(e) => setCustomVenueAddress(e.target.value)}
-            />
-            {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
-                <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
-                <span>
-                  <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
-                  {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tỉnh / Thành</label>
-              <select
-                value={provinceCode}
-                onChange={(e) => setProvinceCode(e.target.value)}
-                className="border border-slate-300 rounded-lg px-2 py-1 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs h-9"
-              >
-                <option value="">Chọn Tỉnh/Thành</option>
-                {provinces.map((p) => (
-                  <option key={p.code} value={p.code}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phường / Xã</label>
-              <select
-                value={wardCode}
-                onChange={(e) => setWardCode(e.target.value)}
-                disabled={!provinceCode}
-                className="border border-slate-300 rounded-lg px-2 py-1 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs h-9 disabled:bg-slate-100 disabled:text-slate-400"
-              >
-                <option value="">Chọn Phường/Xã</option>
-                {wards.map((w) => (
-                  <option key={w.code} value={w.code}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">{t('scheduleSetupStep')}</p>
+            <h2 id="schedule-setup-title" className="mt-1 text-xl font-bold text-slate-900">{t('scheduleSetupTitle')}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">{t('scheduleSetupHint')}</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3.5 bg-slate-50 border p-5 rounded-lg">
-          <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-1">Thời gian thi đấu</h4>
-          
-          <DateTimePicker
-            label="Khai mạc (Ngày bắt đầu)"
-            value={startDate}
-            onChange={setStartDate}
-          />
+        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-bold text-slate-900">{t('venueStepTitle')}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{t('venueStepHint')}</p>
+            </div>
+            <Input label={t('venueName')} placeholder={t('venueNamePlaceholder')} value={customVenueName} onChange={(event) => setCustomVenueName(event.target.value)} />
+            <Input label={t('addressDetails')} placeholder={t('addressPlaceholder')} value={customVenueAddress} onChange={(event) => setCustomVenueAddress(event.target.value)} />
+            {autoDetectedAddress.isMatched && autoDetectedAddress.province && <div className="flex items-center gap-1.5 text-xs font-medium text-blue-600"><Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}{autoDetectedAddress.ward ? ` · ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}</span></div>}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm font-semibold text-slate-700">{t('province')}<select value={provinceCode} onChange={(event) => setProvinceCode(event.target.value)} className="mt-1.5 h-10 w-full border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"><option value="">{t('chooseProvince')}</option>{provinces.map((province) => <option key={province.code} value={province.code}>{province.name}</option>)}</select></label>
+              <label className="text-sm font-semibold text-slate-700">{t('ward')}<select value={wardCode} onChange={(event) => setWardCode(event.target.value)} disabled={!provinceCode} className="mt-1.5 h-10 w-full border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400"><option value="">{t('chooseWard')}</option>{wards.map((ward) => <option key={ward.code} value={ward.code}>{ward.name}</option>)}</select></label>
+            </div>
+            {validationField === 'venue' && <p className="text-xs font-semibold text-rose-600">{t('venueRequired')}</p>}
+          </div>
 
-          <DateTimePicker
-            label="Bế mạc (Ngày kết thúc)"
-            value={endDate}
-            onChange={setEndDate}
-          />
-          {validationField === 'dates' && <p className="text-xs font-semibold text-rose-600">Vui lòng kiểm tra ngày giờ đăng ký và thi đấu.</p>}
+          <div className="space-y-4 border-l-0 border-slate-200 lg:border-l lg:pl-5">
+            <div>
+              <p className="text-sm font-bold text-slate-900">{t('timeStepTitle')}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{t('timeStepHint')}</p>
+            </div>
+            <DateTimePicker label={t('openingDate')} value={startDate} onChange={setStartDate} />
+            <DateTimePicker label={t('closingDate')} value={endDate} onChange={setEndDate} />
+            {validationField === 'dates' && <p className="text-xs font-semibold text-rose-600">{t('datesInvalid')}</p>}
+          </div>
         </div>
-      </div>
+      </section>
 
-      <CourtSetup
-        venue={courtVenue}
-        courts={courts}
-        newCourtName={newCourtName}
-        setNewCourtName={setNewCourtName}
-        isSaving={isSavingCourt}
-        onAdd={handleAddTournamentCourt}
-      />
+      <CourtSetup venue={courtVenue} courts={courts} newCourtName={newCourtName} setNewCourtName={setNewCourtName} isSaving={isSavingCourt} onAdd={handleAddTournamentCourt} />
 
-      <div className="flex justify-end pt-4 border-t">
-        <Button
-          onClick={handleSaveScheduleDetails}
-          disabled={isSavingConfig}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
-        >
-          {isSavingConfig ? 'Đang lưu...' : 'Lưu lịch trình'}
-        </Button>
+      <div className="flex justify-end border-t border-slate-200 pt-4">
+        <Button onClick={handleSaveScheduleDetails} disabled={isSavingConfig} className="min-h-11 bg-blue-600 px-6 font-bold text-white hover:bg-blue-700">{isSavingConfig ? t('savingSchedule') : t('saveSchedule')}</Button>
       </div>
     </div>
   );

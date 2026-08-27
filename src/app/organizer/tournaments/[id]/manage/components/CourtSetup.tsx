@@ -38,11 +38,11 @@ export function CourtSetup({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
-            {t('roundModal.courtLabel')}
+            {t('courtSetupStep')}
           </p>
-          <h3 className="mt-1 text-lg font-bold text-slate-900">{t('matchSchedule.court')}</h3>
+          <h3 className="mt-1 text-lg font-bold text-slate-900">{t('courtSetupTitle')}</h3>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-            {t('roundModal.courtPlaceholder')}
+            {t('courtSetupHint')}
           </p>
         </div>
         <MapPin className="hidden h-5 w-5 shrink-0 text-blue-600 sm:block" aria-hidden="true" />
@@ -51,7 +51,7 @@ export function CourtSetup({
       {!venue ? (
         <div className="flex items-start gap-3 border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <p>{t('roundModal.courtPlaceholder')}</p>
+          <p>{t('createVenueFirst')}</p>
         </div>
       ) : (
         <>
@@ -63,11 +63,11 @@ export function CourtSetup({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <Input
-                label={t('matchSchedule.courtName')}
+                label={t('courtName')}
                 value={newCourtName}
                 maxLength={100}
                 onChange={(event) => setNewCourtName(event.target.value)}
-                placeholder={t('roundModal.courtPlaceholder')}
+                placeholder={t('courtNamePlaceholder')}
                 disabled={isSaving}
               />
             </div>
@@ -92,7 +92,7 @@ export function CourtSetup({
                 <div key={court.id} className="border border-slate-200 px-3 py-3">
                   <p className="font-semibold text-slate-800">{court.courtName}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {court.status === 'AVAILABLE' ? 'Sẵn sàng xếp lịch' : court.status || 'Chưa rõ trạng thái'}
+                    {court.status === 'AVAILABLE' ? t('courtAvailable') : court.status === 'MAINTENANCE' ? t('courtMaintenance') : t('courtStatusUnknown')}
                   </p>
                 </div>
               ))}

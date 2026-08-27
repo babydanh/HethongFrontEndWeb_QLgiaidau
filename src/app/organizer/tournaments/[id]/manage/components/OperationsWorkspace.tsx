@@ -20,6 +20,7 @@ import { cn } from '@/utils/cn';
 interface OperationsWorkspaceProps {
   participants: TournamentParticipant[];
   matches: Match[];
+  isOperationalDataLoading: boolean;
   referees: OpsReferee[];
   activeParticipantActionId: string | null;
   activeMatchActionId: string | null;
@@ -46,6 +47,7 @@ interface OperationsWorkspaceProps {
 export function OperationsWorkspace({
   participants,
   matches,
+  isOperationalDataLoading,
   referees,
   activeParticipantActionId,
   activeMatchActionId,
@@ -205,6 +207,7 @@ export function OperationsWorkspace({
       {activeTab === 'MATCHES' ? (
         <OpsMatches
           matches={matches}
+          isOperationalDataLoading={isOperationalDataLoading}
           referees={referees}
           activeMatchActionId={activeMatchActionId}
           focusedMatchId={focusedMatchId}

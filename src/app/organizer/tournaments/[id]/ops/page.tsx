@@ -58,6 +58,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     participants,
     matches,
     isLoading,
+    isOperationalDataLoading,
     error,
     refresh,
     activeParticipantActionId,
@@ -763,6 +764,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         <OperationsWorkspace
           participants={participants}
           matches={matches}
+          isOperationalDataLoading={isOperationalDataLoading}
           referees={referees}
           activeParticipantActionId={activeParticipantActionId}
           activeMatchActionId={activeMatchActionId}

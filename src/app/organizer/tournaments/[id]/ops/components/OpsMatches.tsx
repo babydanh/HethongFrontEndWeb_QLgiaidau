@@ -27,6 +27,7 @@ import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, Ops
 
 interface OpsMatchesProps {
   matches: Match[];
+  isOperationalDataLoading: boolean;
   referees: OpsReferee[];
   activeMatchActionId: string | null;
   focusedMatchId?: string | null;
@@ -88,6 +89,7 @@ const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; labelKey: string; 
 
 export function OpsMatches({
   matches,
+  isOperationalDataLoading,
   referees,
   activeMatchActionId,
   focusedMatchId,
@@ -564,7 +566,10 @@ export function OpsMatches({
 
   return (
     <>
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section
+        className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+        aria-busy={isOperationalDataLoading}
+      >
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -594,6 +599,12 @@ export function OpsMatches({
             </div>
           </div>
 
+          {isOperationalDataLoading && safeMatches.length > 0 ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800" role="status" aria-live="polite">
+              {translate('refreshingMatches')}
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((option) => (
               <button
@@ -614,33 +625,44 @@ export function OpsMatches({
         </div>
 
         <div className="mt-6 space-y-6">
-          {statusFilter === 'ALL' ? (
-            <>
-              {renderMatchSection(
-                translate('ongoingSectionTitle'),
-                translate('ongoingSectionDescription'),
-                buckets.ongoing,
-                translate('ongoingSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('scheduledSectionTitle'),
-                translate('scheduledSectionDescription'),
-                buckets.scheduled,
-                translate('scheduledSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('completedSectionTitle'),
-                translate('completedSectionDescription'),
-                buckets.completed,
-                translate('completedSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('attentionSectionTitle'),
-                translate('attentionSectionDescription'),
-                buckets.needsAction,
-                translate('attentionSectionEmpty'),
-              )}
-            </>
+          {isOperationalDataLoading && safeMatches.length === 0 ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-8 text-center" role="status" aria-live="polite">
+              <p className="text-sm font-bold text-blue-900">{translate('loadingMatches')}</p>
+            </div>
+          ) : statusFilter === 'ALL' ? (
+            safeMatches.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                <p className="text-sm font-bold text-slate-700">{translate('allEmptyTitle')}</p>
+                <p className="mt-1 text-xs font-medium text-slate-500">{translate('allEmptyDescription')}</p>
+              </div>
+            ) : (
+              <>
+                {buckets.ongoing.length > 0 ? renderMatchSection(
+                  translate('ongoingSectionTitle'),
+                  translate('ongoingSectionDescription'),
+                  buckets.ongoing,
+                  translate('ongoingSectionEmpty'),
+                ) : null}
+                {buckets.scheduled.length > 0 ? renderMatchSection(
+                  translate('scheduledSectionTitle'),
+                  translate('scheduledSectionDescription'),
+                  buckets.scheduled,
+                  translate('scheduledSectionEmpty'),
+                ) : null}
+                {buckets.completed.length > 0 ? renderMatchSection(
+                  translate('completedSectionTitle'),
+                  translate('completedSectionDescription'),
+                  buckets.completed,
+                  translate('completedSectionEmpty'),
+                ) : null}
+                {buckets.needsAction.length > 0 ? renderMatchSection(
+                  translate('attentionSectionTitle'),
+                  translate('attentionSectionDescription'),
+                  buckets.needsAction,
+                  translate('attentionSectionEmpty'),
+                ) : null}
+              </>
+            )
           ) : filteredMatches.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
               <p className="text-sm font-bold text-slate-700">{translate('filteredEmptyTitle')}</p>

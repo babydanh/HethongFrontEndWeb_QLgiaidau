@@ -239,19 +239,31 @@ const commonTranslate = useTranslations('Common');
         const response = await tournamentsApi.getTournamentResults(tournamentId, selectedDivisionId || undefined);
         const data = response.data;
         const awards = data?.awards ?? [];
-        const hasTop1 = awards.some((a) => a.rank === 1 && Boolean(a.participant?.teamName));
-        const hasTop2 = awards.some((a) => a.rank === 2 && Boolean(a.participant?.teamName));
-        const isFinished = Boolean(data?.finalized || (hasTop1 && hasTop2));
+        const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
+        const hasTop2 = awards.some((a) => a.rank === 2 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
+        const hasAwards = awards.length >= 2 || (hasTop1 && hasTop2);
+        const isFinished = Boolean(
+          data?.finalized ||
+          hasAwards ||
+          (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+          (tournament?.status && isTournamentCompleted(tournament.status))
+        );
         if (active) setHasConfirmedResults(isFinished);
       } catch {
-        if (active) setHasConfirmedResults(false);
+        if (active) {
+          const isFinished = Boolean(
+            (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+            (tournament?.status && isTournamentCompleted(tournament.status))
+          );
+          setHasConfirmedResults(isFinished);
+        }
       }
     };
     void checkResults();
     return () => {
       active = false;
     };
-  }, [selectedDivisionId, tournamentId]);
+  }, [activeTournament?.status, selectedDivisionId, tournament?.status, tournamentId]);
 
   const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
     if (liveRefreshInFlightRef.current) return;
@@ -691,12 +703,13 @@ const commonTranslate = useTranslations('Common');
   };
 
   const isCompleted = isTournamentCompleted(activeTournament.status) || isTournamentCompleted(tournament.status);
+  const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
 
   const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
-    ...(activeLiveMatchesCount > 0
-      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
+    ...(liveMatchesCount > 0
+      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: liveMatchesCount, isLive: true }]
       : []),
-    ...(isCompleted && hasConfirmedResults
+    ...(showResultsTab
       ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: true }]
       : []),
     { id: 'overview', label: translate('overview') },
@@ -751,8 +764,8 @@ const commonTranslate = useTranslations('Common');
                           : 'bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100/80'
                         : tab.isGolden
                           ? isActive
-                            ? 'bg-amber-500 text-white font-bold shadow-sm border border-amber-500 hover:bg-amber-600'
-                            : 'bg-amber-50 text-amber-900 border border-amber-300/80 font-bold hover:bg-amber-100'
+                            ? 'bg-amber-500 text-white font-extrabold shadow-sm border border-amber-500 hover:bg-amber-600'
+                            : 'bg-amber-100 text-amber-950 border border-amber-400 font-extrabold shadow-xs hover:bg-amber-200'
                           : isActive
                             ? 'bg-blue-600 text-white shadow-sm'
                             : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
@@ -760,6 +773,9 @@ const commonTranslate = useTranslations('Common');
                   >
                     {tab.isLive && (
                       <span className="h-2 w-2 shrink-0 rounded-full bg-current motion-safe:animate-ping motion-reduce:animate-none" />
+                    )}
+                    {tab.isGolden && (
+                      <Trophy className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-amber-700'}`} />
                     )}
                     <span>{tab.label}</span>
                     {tab.badge != null && (

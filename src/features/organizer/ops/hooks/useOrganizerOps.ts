@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 import { divisionsApi, Division, tournamentsApi } from '@/features/tournaments/api';
@@ -77,6 +77,7 @@ interface UseOrganizerOpsResult {
   participants: TournamentParticipant[];
   matches: Match[];
   isLoading: boolean;
+  isOperationalDataLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   activeParticipantActionId: string | null;
@@ -169,7 +170,10 @@ export function useOrganizerOps(
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOperationalDataLoading, setIsOperationalDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const operationalRequestVersionRef = useRef(0);
+  const operationalRequestInFlightRef = useRef(false);
   const [activeParticipantActionId, setActiveParticipantActionId] = useState<string | null>(null);
   const [activeMatchActionId, setActiveMatchActionId] = useState<string | null>(null);
   const [activityLog, setActivityLog] = useState<OpsActivityItem[]>([]);
@@ -212,12 +216,20 @@ export function useOrganizerOps(
     });
   };
 
-  const loadOperationalData = useCallback(async (divisionId: string, signal?: AbortSignal) => {
+  const loadOperationalData = useCallback(async (
+    divisionId: string,
+    signal?: AbortSignal,
+    requestVersion = operationalRequestVersionRef.current,
+  ) => {
     const [participantsRes, matchesRes, auditRes] = await Promise.all([
       tournamentsApi.getOrganizerTournamentParticipants(tournamentId, divisionId),
       loadAllOrganizerMatches(tournamentId, divisionId, signal),
       tournamentsApi.getOpsAuditLogs(tournamentId, divisionId || undefined),
     ]);
+
+    if (requestVersion !== operationalRequestVersionRef.current) {
+      return;
+    }
 
     setParticipants(participantsRes.data ?? []);
     setMatches(matchesRes);
@@ -306,19 +318,26 @@ export function useOrganizerOps(
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
+    const requestVersion = ++operationalRequestVersionRef.current;
+    operationalRequestInFlightRef.current = true;
 
     const fetchOperationalData = async () => {
       try {
         setIsLoading(true);
+        setIsOperationalDataLoading(true);
         setError(null);
-        await loadOperationalData(selectedDivisionId, controller.signal);
+        await loadOperationalData(selectedDivisionId, controller.signal, requestVersion);
       } catch (err) {
-        if (active) {
+        if (active && requestVersion === operationalRequestVersionRef.current) {
           setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
         }
       } finally {
-        if (active) {
+        if (requestVersion === operationalRequestVersionRef.current) {
+          operationalRequestInFlightRef.current = false;
+        }
+        if (active && requestVersion === operationalRequestVersionRef.current) {
           setIsLoading(false);
+          setIsOperationalDataLoading(false);
         }
       }
     };
@@ -332,17 +351,87 @@ export function useOrganizerOps(
   }, [formatRateLimitMessage, loadOperationalData, selectedDivisionId, tournamentId]);
 
   const refresh = async () => {
-    const [tournamentRes, divisionsRes, refereesRes] = await Promise.all([
-      tournamentsApi.getTournamentById(tournamentId),
-      divisionsApi.getDivisions(tournamentId),
-      tournamentsApi.getTournamentReferees(tournamentId),
-    ]);
+    const requestVersion = ++operationalRequestVersionRef.current;
+    operationalRequestInFlightRef.current = true;
+    setIsOperationalDataLoading(true);
 
-    setTournament(tournamentRes.data ?? null);
-    setDivisions(divisionsRes.data ?? []);
-    setReferees(refereesRes.data ?? []);
-    await loadOperationalData(selectedDivisionId);
+    try {
+      const [tournamentRes, divisionsRes, refereesRes] = await Promise.all([
+        tournamentsApi.getTournamentById(tournamentId),
+        divisionsApi.getDivisions(tournamentId),
+        tournamentsApi.getTournamentReferees(tournamentId),
+      ]);
+
+      if (requestVersion !== operationalRequestVersionRef.current) {
+        return;
+      }
+
+      setTournament(tournamentRes.data ?? null);
+      setDivisions(divisionsRes.data ?? []);
+      setReferees(refereesRes.data ?? []);
+      await loadOperationalData(selectedDivisionId, undefined, requestVersion);
+    } finally {
+      if (requestVersion === operationalRequestVersionRef.current) {
+        operationalRequestInFlightRef.current = false;
+        setIsOperationalDataLoading(false);
+      }
+    }
   };
+
+  const refreshOperationalData = useCallback(async () => {
+    if (!selectedDivisionId || operationalRequestInFlightRef.current) {
+      return;
+    }
+
+    const requestVersion = ++operationalRequestVersionRef.current;
+    operationalRequestInFlightRef.current = true;
+    setIsOperationalDataLoading(true);
+    setError(null);
+
+    try {
+      await loadOperationalData(selectedDivisionId, undefined, requestVersion);
+    } catch (err) {
+      if (requestVersion === operationalRequestVersionRef.current) {
+        setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
+      }
+    } finally {
+      if (requestVersion === operationalRequestVersionRef.current) {
+        operationalRequestInFlightRef.current = false;
+        setIsOperationalDataLoading(false);
+      }
+    }
+  }, [formatRateLimitMessage, loadOperationalData, selectedDivisionId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let lastRefreshAt = 0;
+    const triggerRefresh = () => {
+      const now = Date.now();
+      if (now - lastRefreshAt < 10_000) {
+        return;
+      }
+      lastRefreshAt = now;
+      void Promise.resolve().then(() => refreshOperationalData());
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        triggerRefresh();
+      }
+    };
+
+    window.addEventListener('focus', triggerRefresh);
+    window.addEventListener('online', triggerRefresh);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', triggerRefresh);
+      window.removeEventListener('online', triggerRefresh);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshOperationalData]);
 
   const handleParticipantAction = async (
     participantId: string,
@@ -510,6 +599,7 @@ export function useOrganizerOps(
     participants,
     matches,
     isLoading,
+    isOperationalDataLoading,
     error,
     refresh,
     activeParticipantActionId,

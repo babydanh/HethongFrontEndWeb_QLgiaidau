@@ -704,9 +704,10 @@ export function BracketTab({
           </div>
 
           {/* Nội dung cấu hình: 1 cột (nếu Lite) hoặc 2 cột (nếu Strict) */}
-          <div className={isLiteMode ? 'w-full' : 'grid grid-cols-1 lg:grid-cols-2 gap-6'}>
-            {/* Cột 1: Cấu hình luật tiêu chuẩn (Chỉ hiển thị khi !isLiteMode) */}
-            {!isLiteMode && (
+          {(!isLiteMode || isRoundRobin || isGroupStageKnockout) && (
+            <div className={isLiteMode ? 'w-full' : 'grid grid-cols-1 lg:grid-cols-2 gap-6'}>
+              {/* Cột 1: Cấu hình luật tiêu chuẩn (Chỉ hiển thị khi !isLiteMode) */}
+              {!isLiteMode && (
               <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div>
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
@@ -855,238 +856,240 @@ export function BracketTab({
             )}
 
             {/* Cột 2 (hoặc Full Width ở Lite): Cấu hình thể thức vòng đấu */}
-            <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
-              {isRoundRobin && setTiebreakerMode && !isGroupStageKnockout ? (
-                <div className="space-y-4">
-                  {renderSuggestionBox(getRRSuggestion(participantCount))}
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-blue-600" />
-                      {translate('roundRobinConfigTitle')}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                      {translate('roundRobinConfigDescription')}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('roundsToPlay')}</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={roundsToPlay}
-                        onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
-                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                      />
-                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5">{translate('roundsToPlayHint')}</p>
+            {(isRoundRobin || isGroupStageKnockout || !isLiteMode) && (
+              <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
+                {isRoundRobin && setTiebreakerMode && !isGroupStageKnockout ? (
+                  <div className="space-y-4">
+                    {renderSuggestionBox(getRRSuggestion(participantCount))}
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-blue-600" />
+                        {translate('roundRobinConfigTitle')}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                        {translate('roundRobinConfigDescription')}
+                      </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('winPoints')}</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('roundsToPlay')}</label>
                         <input
                           type="number"
-                          min={0}
-                          value={rrWinPoints}
-                          onChange={(e) => setRrWinPoints?.(Math.max(0, Number(e.target.value)))}
+                          min={1}
+                          max={20}
+                          value={roundsToPlay}
+                          onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
                           className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
                         />
+                        <p className="text-[9px] text-slate-400 font-semibold mt-0.5">{translate('roundsToPlayHint')}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('winPoints')}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={rrWinPoints}
+                            onChange={(e) => setRrWinPoints?.(Math.max(0, Number(e.target.value)))}
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('lossPoints')}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={rrLossPoints}
+                            onChange={(e) => setRrLossPoints?.(Math.max(0, Number(e.target.value)))}
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                          />
+                        </div>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('lossPoints')}</label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={rrLossPoints}
-                          onChange={(e) => setRrLossPoints?.(Math.max(0, Number(e.target.value)))}
-                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('tiebreaker')}</label>
-                      <select
-                        value={rrTiebreaker}
-                        onChange={(e) => setRrTiebreaker?.(e.target.value)}
-                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
-                      >
-                        <option value="H2H_POINTS">{translate('headToHead')}</option>
-                        <option value="SET_DIFF">{translate('setDifference')}</option>
-                        <option value="POINT_DIFF">{translate('pointDifference')}</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('tieHandling')}</label>
-                      <select value={tiebreakerMode} onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold">
-                        <option value="split">{translate('splitTie')}</option>
-                        <option value="playoff">{translate('playoffTie')}</option>
-                      </select>
-                    </div>
-                    {handleSaveRoundRobinConfig && (
-                      <div className="flex justify-end pt-2">
-                        <Button
-                          onClick={handleSaveRoundRobinConfig}
-                          disabled={isSavingRoundRobinConfig}
-                          className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm"
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('tiebreaker')}</label>
+                        <select
+                          value={rrTiebreaker}
+                          onChange={(e) => setRrTiebreaker?.(e.target.value)}
+                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
                         >
-                          {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-                          {translate('saveConfiguration')}
+                          <option value="H2H_POINTS">{translate('headToHead')}</option>
+                          <option value="SET_DIFF">{translate('setDifference')}</option>
+                          <option value="POINT_DIFF">{translate('pointDifference')}</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('tieHandling')}</label>
+                        <select value={tiebreakerMode} onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold">
+                          <option value="split">{translate('splitTie')}</option>
+                          <option value="playoff">{translate('playoffTie')}</option>
+                        </select>
+                      </div>
+                      {handleSaveRoundRobinConfig && (
+                        <div className="flex justify-end pt-2">
+                          <Button
+                            onClick={handleSaveRoundRobinConfig}
+                            disabled={isSavingRoundRobinConfig}
+                            className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm"
+                          >
+                            {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                            {translate('saveConfiguration')}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : isGroupStageKnockout ? (
+                  <div className="space-y-4">
+                    {renderSuggestionBox(getGSKSuggestion(participantCount))}
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <LayoutGrid className="w-5 h-5 text-blue-600" />
+                        {translate('groupStageKnockoutConfigTitle')}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                        {gsStages.length > 0
+                          ? translate('groupStageKnockoutSummary', { groups: numGroups, teams: teamsPerGroup, advancing: teamsAdvancing })
+                          : translate('groupStageKnockoutConfigDescription')}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">{translate('groupStage')}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('numberOfGroups')}</label>
+                          <input
+                            type="number"
+                            min={2}
+                            max={32}
+                            value={numGroups}
+                            onChange={(e) => {
+                              const nextGroups = Math.min(32, Math.max(2, Number(e.target.value) || 2));
+                              setNumGroups?.(nextGroups);
+                              const targetCount = participantCount > 0
+                                ? participantCount
+                                : (isLimitEnabled ? maxParticipants : 0);
+                              if (targetCount > 0) {
+                                setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
+                              }
+                            }}
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsPerGroup')}</label>
+                          <input type="number" min={2} max={128} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.min(128, Math.max(2, Number(e.target.value))))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsAdvancing')}</label>
+                          <input type="number" min={1} max={16} value={teamsAdvancing} onChange={(e) => setTeamsAdvancing?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('groupStageRounds')}</label>
+                          <input type="number" min={1} max={20} value={gskRoundsToPlay} onChange={(e) => setGskRoundsToPlay?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {participantCount > numGroups * teamsPerGroup && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                        {translate('groupCapacityWarning', { configured: numGroups * teamsPerGroup, eligible: participantCount })}
+                      </div>
+                    )}
+
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">{translate('knockout')}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('playoffFormat')}</label>
+                          <select value={gskPlayoffType ?? 'SINGLE_ELIMINATION'} onChange={(e) => setGskPlayoffType?.(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
+                            <option value="SINGLE_ELIMINATION">{translate('singleElimination')}</option>
+                            <option value="DOUBLE_ELIMINATION">{translate('doubleElimination')}</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('seedingType')}</label>
+                          <select value={gskSeedingType ?? 'SEEDED'} onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
+                            <option value="SEEDED">{translate('seededByElo')}</option>
+                            <option value="RANDOM">{translate('randomSeeding')}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700">
+                        <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
+                          <p className="text-[10px] uppercase text-slate-400">{translate('advancingTeams')}</p>
+                          <p>{translate('teamsCount', { count: gskAdvancingTotal })}</p>
+                        </div>
+                        <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
+                          <p className="text-[10px] uppercase text-slate-400">{translate('knockoutStarts')}</p>
+                          <p>{gskDisplayStartRoundLabel}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {handleSaveGskConfig && (
+                      <div className="flex justify-end pt-2">
+                        <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm">
+                          {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                          {translate('saveFormatConfiguration')}
                         </Button>
                       </div>
                     )}
                   </div>
-                </div>
-              ) : isGroupStageKnockout ? (
-                <div className="space-y-4">
-                  {renderSuggestionBox(getGSKSuggestion(participantCount))}
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                      <LayoutGrid className="w-5 h-5 text-blue-600" />
-                      {translate('groupStageKnockoutConfigTitle')}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                      {gsStages.length > 0
-                        ? translate('groupStageKnockoutSummary', { groups: numGroups, teams: teamsPerGroup, advancing: teamsAdvancing })
-                        : translate('groupStageKnockoutConfigDescription')}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">{translate('groupStage')}</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('numberOfGroups')}</label>
-                        <input
-                          type="number"
-                          min={2}
-                          max={32}
-                          value={numGroups}
-                          onChange={(e) => {
-                            const nextGroups = Math.min(32, Math.max(2, Number(e.target.value) || 2));
-                            setNumGroups?.(nextGroups);
-                            const targetCount = participantCount > 0
-                              ? participantCount
-                              : (isLimitEnabled ? maxParticipants : 0);
-                            if (targetCount > 0) {
-                              setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
-                            }
-                          }}
-                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                        />
-                        <p className="text-[9px] text-slate-400 font-semibold">{translate('teamsPerGroupHint')}</p>
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsPerGroup')}</label>
-                        <input type="number" min={2} max={128} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.min(128, Math.max(2, Number(e.target.value))))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsAdvancing')}</label>
-                        <input type="number" min={1} max={16} value={teamsAdvancing} onChange={(e) => setTeamsAdvancing?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('groupStageRounds')}</label>
-                        <input type="number" min={1} max={20} value={gskRoundsToPlay} onChange={(e) => setGskRoundsToPlay?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
-                      </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-blue-600" />
+                        {translate('roundConfigurationTitle')}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">{presentation.roundConfigHint}</p>
                     </div>
-                  </div>
 
-                  {participantCount > numGroups * teamsPerGroup && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                      {translate('groupCapacityWarning', { configured: numGroups * teamsPerGroup, eligible: participantCount })}
-                    </div>
-                  )}
-
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">{translate('knockout')}</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('playoffFormat')}</label>
-                        <select value={gskPlayoffType ?? 'SINGLE_ELIMINATION'} onChange={(e) => setGskPlayoffType?.(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
-                          <option value="SINGLE_ELIMINATION">{translate('singleElimination')}</option>
-                          <option value="DOUBLE_ELIMINATION">{translate('doubleElimination')}</option>
-                        </select>
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('seedingType')}</label>
-                        <select value={gskSeedingType ?? 'SEEDED'} onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full">
-                          <option value="SEEDED">{translate('seededByElo')}</option>
-                          <option value="RANDOM">{translate('randomSeeding')}</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700">
-                      <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
-                        <p className="text-[10px] uppercase text-slate-400">{translate('advancingTeams')}</p>
-                        <p>{translate('teamsCount', { count: gskAdvancingTotal })}</p>
-                      </div>
-                      <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
-                        <p className="text-[10px] uppercase text-slate-400">{translate('knockoutStarts')}</p>
-                        <p>{gskDisplayStartRoundLabel}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {handleSaveGskConfig && (
-                    <div className="flex justify-end pt-2">
-                      <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm">
-                        {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-                        {translate('saveFormatConfiguration')}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-blue-600" />
-                      {translate('roundConfigurationTitle')}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">{presentation.roundConfigHint}</p>
-                  </div>
-
-                  {rounds.length > 0 ? (
-                    <div className="divide-y divide-slate-100 max-h-[340px] overflow-y-auto space-y-2.5">
-                      {rounds.map(({ stage, roundNumber, name, override }) => {
-                        const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
-                        return (
-                          <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
-                            <div className="space-y-0.5">
-                              <p className="text-sm font-bold text-slate-800">{name}</p>
-                              <p className="text-[11px] text-slate-500 font-semibold">
-                                {resolvedOverride ? (
-                                  `${translate('firstToSets', { sets: resolvedOverride.setsToWin })}, ${resolvedOverride.pointsPerSet} ${translate('points')}, ${resolvedOverride.winByTwo ? translate('deuceEnabled') : translate('deuceDisabled')}`
-                                ) : (
-                                  translate('inheritsFormatRules')
-                                )}
-                              </p>
+                    {rounds.length > 0 ? (
+                      <div className="divide-y divide-slate-100 max-h-[340px] overflow-y-auto space-y-2.5">
+                        {rounds.map(({ stage, roundNumber, name, override }) => {
+                          const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
+                          return (
+                            <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
+                              <div className="space-y-0.5">
+                                <p className="text-sm font-bold text-slate-800">{name}</p>
+                                <p className="text-[11px] text-slate-500 font-semibold">
+                                  {resolvedOverride ? (
+                                    `${translate('firstToSets', { sets: resolvedOverride.setsToWin })}, ${resolvedOverride.pointsPerSet} ${translate('points')}, ${resolvedOverride.winByTwo ? translate('deuceEnabled') : translate('deuceDisabled')}`
+                                  ) : (
+                                    translate('inheritsFormatRules')
+                                  )}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
+                                className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8"
+                              >
+                                {translate('configureRound')}
+                              </Button>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
-                              className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8"
-                            >
-                              {translate('configureRound')}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-lg border border-dashed text-center">
-                      <p className="text-xs font-semibold text-slate-455">{translate('bracketNotInitialized')}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{translate('initializeBracketForRounds')}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-lg border border-dashed text-center">
+                        <p className="text-xs font-semibold text-slate-455">{translate('bracketNotInitialized')}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{translate('initializeBracketForRounds')}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </>
-      )}
+        )}
+      </>
+    )}
 
       {/* Cấp độ 2 (Dành cho GSK): Khối cấu hình chi tiết từng vòng đấu toàn diện */}
-      {selectedDivisionId && isGroupStageKnockout && (
+      {selectedDivisionId && isGroupStageKnockout && !isLiteMode && (
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">

@@ -143,8 +143,11 @@ const commonTranslate = useTranslations('Common');
   const { openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
-    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'live' || tabParam === 'results') {
+    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results') {
       return tabParam as TournamentDetailTab;
+    }
+    if (isTournamentCompleted(tournament?.status)) {
+      return 'results';
     }
     return 'overview';
   });
@@ -341,9 +344,41 @@ const commonTranslate = useTranslations('Common');
     };
   }, [refreshLiveCounts, tournamentId]);
 
+  const isCompleted = Boolean(
+    (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+    (tournament?.status && isTournamentCompleted(tournament.status))
+  );
+  const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
 
+  const effectiveLiveCountsByDivision = useMemo<Record<string, number>>(() => {
+    if (isCompleted || hasConfirmedResults) return {};
+    return liveCountsByDivision;
+  }, [isCompleted, hasConfirmedResults, liveCountsByDivision]);
 
+  const effectiveLiveMatchesCount: number = Object.values(effectiveLiveCountsByDivision).reduce(
+    (total: number, count: number) => total + count,
+    0,
+  );
 
+  // If activeTab is 'live' but there are no live matches, or if results are confirmed,
+  // automatically redirect activeTab away from phantom 'live' to 'results' or 'overview'
+  useEffect(() => {
+    if (activeTab === 'live' && effectiveLiveMatchesCount === 0) {
+      const fallbackTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
+      setActiveTab(fallbackTab);
+      if (typeof window !== 'undefined') {
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.get('tab') === 'live') {
+          if (fallbackTab === 'overview') {
+            currentUrl.searchParams.delete('tab');
+          } else {
+            currentUrl.searchParams.set('tab', fallbackTab);
+          }
+          window.history.replaceState(null, '', currentUrl.pathname + currentUrl.search);
+        }
+      }
+    }
+  }, [activeTab, effectiveLiveMatchesCount, showResultsTab]);
 
   useEffect(() => {
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
@@ -701,22 +736,6 @@ const commonTranslate = useTranslations('Common');
     const eStr = end ? formatDate(end) : '...';
     return `${sStr} - ${eStr}`;
   };
-
-  const isCompleted = Boolean(
-    (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
-    (tournament?.status && isTournamentCompleted(tournament.status))
-  );
-  const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
-
-  const effectiveLiveCountsByDivision = useMemo<Record<string, number>>(() => {
-    if (isCompleted || hasConfirmedResults) return {};
-    return liveCountsByDivision;
-  }, [isCompleted, hasConfirmedResults, liveCountsByDivision]);
-
-  const effectiveLiveMatchesCount: number = Object.values(effectiveLiveCountsByDivision).reduce(
-    (total: number, count: number) => total + count,
-    0,
-  );
 
   const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
     ...(effectiveLiveMatchesCount > 0

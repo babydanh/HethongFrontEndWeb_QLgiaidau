@@ -360,7 +360,7 @@ export function useManageState(id: string) {
     }
   }, [searchParams]);
 
-  const fetchVenueCourts = async () => {
+  const fetchVenueCourts = useCallback(async () => {
     try {
       const r = await tournamentsApi.getTournamentCourts(id);
       setCourts(
@@ -374,7 +374,7 @@ export function useManageState(id: string) {
     } catch {
       setCourts([]);
     }
-  };
+  }, [id]);
 
   const handleAddTournamentCourt = async () => {
     if (!tournament?.id || !tournament.venueId) {
@@ -1578,7 +1578,7 @@ export function useManageState(id: string) {
       }
       return tRes.data;
     } catch { toast.error('Không thể tải thông tin giải đấu'); return null; }
-  }, [applyResolvedRuleState, fetchDivisions, id]);
+  }, [applyResolvedRuleState, fetchDivisions, fetchVenueCourts, id]);
 
   // ── Init ──
   useEffect(() => {

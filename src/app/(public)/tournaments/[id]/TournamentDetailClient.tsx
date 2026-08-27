@@ -666,12 +666,14 @@ const commonTranslate = useTranslations('Common');
     return `${sStr} - ${eStr}`;
   };
 
-  const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean }[] = [
+  const isCompleted = isTournamentCompleted(activeTournament.status) || isTournamentCompleted(tournament.status);
+
+  const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
     ...(activeLiveMatchesCount > 0
       ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
       : []),
     ...(activeDivisionHasMatches
-      ? [{ id: 'results' as const, label: translate('resultsTabLabel') }]
+      ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: isCompleted }]
       : []),
     { id: 'overview', label: translate('overview') },
     { id: 'teams', label: translate('tabs.teams') },
@@ -892,9 +894,13 @@ const commonTranslate = useTranslations('Common');
                         ? isActive
                           ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
                           : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80'
-                        : isActive
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                        : tab.isGolden
+                          ? isActive
+                            ? 'bg-amber-500 text-white font-extrabold shadow-sm border border-amber-500 hover:bg-amber-600'
+                            : 'bg-amber-50 text-amber-900 border border-amber-300 font-extrabold hover:bg-amber-100'
+                          : isActive
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
@@ -1004,6 +1010,8 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                                       key={division.id}
                                       tournamentId={tournament.id}
                                       divisionId={division.id}
+                                      isCompleted={isCompleted}
+                                      tournamentName={activeTournament.name}
                                     />
                                   )}
                                   {activeTab === 'teams' && (

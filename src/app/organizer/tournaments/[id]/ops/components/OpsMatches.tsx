@@ -59,6 +59,7 @@ interface MatchBucket {
   blocked: Match[];
   directAdvance: Match[];
   completed: Match[];
+  needsAction: Match[];
 }
 
 const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; labelKey: string }> = [
@@ -111,7 +112,7 @@ export function OpsMatches({
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
   };
-  const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ONGOING');
   const [selectedScheduleMatch, setSelectedScheduleMatch] = useState<Match | null>(null);
   const [scheduleDraft, setScheduleDraft] = useState<ScheduleDraft>({
     courtName: '',
@@ -139,6 +140,7 @@ export function OpsMatches({
       blocked: [],
       directAdvance: [],
       completed: [],
+      needsAction: [],
     };
 
     for (const match of safeMatches) {
@@ -146,13 +148,9 @@ export function OpsMatches({
       const missingOpponent = !match.participant1Id || !match.participant2Id;
       const isDirectAdvance = match.isBye || (!!match.winnerId && missingOpponent);
 
-      if (isDirectAdvance) {
+            if (isDirectAdvance) {
         nextBuckets.directAdvance.push(match);
-        continue;
-      }
-
-      if (match.status === 'COMPLETED') {
-        nextBuckets.completed.push(match);
+        nextBuckets.needsAction.push(match);
         continue;
       }
 
@@ -161,19 +159,24 @@ export function OpsMatches({
         continue;
       }
 
-      if (match.status === 'SCHEDULED') {
-        if (matchInsight?.dependencyBlocked || missingOpponent) {
-          nextBuckets.blocked.push(match);
-          continue;
-        }
-
-        if (match.scheduledAt) {
-          nextBuckets.scheduled.push(match);
-          continue;
-        }
-
-        nextBuckets.unscheduledReady.push(match);
+      if (match.status === 'COMPLETED') {
+        nextBuckets.completed.push(match);
+        continue;
       }
+
+      if (match.status === 'SCHEDULED') {
+        if (matchInsight?.dependencyBlocked || missingOpponent || !match.scheduledAt) {
+          nextBuckets.needsAction.push(match);
+          continue;
+        }
+
+        nextBuckets.scheduled.push(match);
+        continue;
+      }
+
+      // DISPUTED and any unknown status must remain visible to the operator.
+      nextBuckets.needsAction.push(match);
+
     }
 
     nextBuckets.ongoing.sort((left, right) => {
@@ -206,6 +209,9 @@ export function OpsMatches({
     nextBuckets.completed.sort((left, right) =>
       right.roundNumber - left.roundNumber || right.matchOrder - left.matchOrder,
     );
+    nextBuckets.needsAction.sort((left, right) =>
+      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
+    );
 
     return nextBuckets;
   }, [matchInsights, safeMatches]);
@@ -218,6 +224,7 @@ export function OpsMatches({
       blocked: buckets.blocked.length,
       directAdvance: buckets.directAdvance.length,
       completed: buckets.completed.length,
+      needsAction: buckets.needsAction.length,
       disputed: safeMatches.filter((match) => match.status === 'DISPUTED').length,
     };
   }, [buckets, safeMatches]);
@@ -633,28 +640,16 @@ export function OpsMatches({
                 translate('scheduledSectionEmpty'),
               )}
               {renderMatchSection(
-                translate('readySectionTitle'),
-                translate('readySectionDescription'),
-                buckets.unscheduledReady,
-                translate('readySectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('blockedSectionTitle'),
-                translate('blockedSectionDescription'),
-                buckets.blocked,
-                translate('blockedSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('directAdvanceSectionTitle'),
-                translate('directAdvanceSectionDescription'),
-                buckets.directAdvance,
-                translate('directAdvanceSectionEmpty'),
-              )}
-              {renderMatchSection(
                 translate('completedSectionTitle'),
                 translate('completedSectionDescription'),
                 buckets.completed,
                 translate('completedSectionEmpty'),
+              )}
+              {renderMatchSection(
+                translate('attentionSectionTitle'),
+                translate('attentionSectionDescription'),
+                buckets.needsAction,
+                translate('attentionSectionEmpty'),
               )}
             </>
           ) : filteredMatches.length === 0 ? (

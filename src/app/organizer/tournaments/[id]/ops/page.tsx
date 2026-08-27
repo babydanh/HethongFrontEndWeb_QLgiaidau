@@ -69,7 +69,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   } = useOrganizerOps(resolvedParams.id);
   const [bracketViewVersion, setBracketViewVersion] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<string | null>(null);
-  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS' | 'CAMERA'>('OVERVIEW');
+  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS' | 'CAMERA'>('OPERATIONS');
   const bracketSelectedDivisionId = bracketManager.selectedDivisionId;
   const bracketDivisions = bracketManager.divisions;
   const applyDivisionFormValues = bracketManager.applyDivisionFormValues;

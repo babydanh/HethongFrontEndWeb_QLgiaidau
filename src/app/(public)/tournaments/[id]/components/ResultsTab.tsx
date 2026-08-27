@@ -70,14 +70,10 @@ function ParticipantAwardIdentity({ participant }: { participant: AwardParticipa
 function ResultAwardCard({
   award,
   label,
-  statusLabel,
-  finalized,
   rank,
 }: {
   award: TournamentResultAward;
   label: string;
-  statusLabel: string;
-  finalized: boolean;
   rank: 1 | 2;
 }) {
   if (!award.participant) return null;
@@ -98,13 +94,6 @@ function ResultAwardCard({
           }`}
         >
           {label}
-        </span>
-        <span
-          className={`rounded-full px-2 py-1 text-[10px] font-bold ${
-            finalized ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'
-          }`}
-        >
-          {statusLabel}
         </span>
       </div>
       <div className="mt-4 flex items-center justify-between gap-4">
@@ -221,15 +210,11 @@ export default function ResultsTab({
           <ResultAwardCard
             award={championAward}
             label={translate('champion')}
-            statusLabel={result.finalized ? translate('finalizedBadge') : translate('provisionalBadge')}
-            finalized={result.finalized}
             rank={1}
           />
           <ResultAwardCard
             award={runnerUpAward}
             label={translate('runnerUp')}
-            statusLabel={result.finalized ? translate('finalizedBadge') : translate('provisionalBadge')}
-            finalized={result.finalized}
             rank={2}
           />
         </div>

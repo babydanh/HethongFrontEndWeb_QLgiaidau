@@ -146,6 +146,7 @@ const commonTranslate = useTranslations('Common');
   const liveRefreshInFlightRef = useRef(false);
   const hasAutoOpenedLiveRef = useRef(false);
   const hasUserNavigatedRef = useRef(false);
+  const pendingNavigatedTabRef = useRef<TournamentDetailTab | null>(null);
   const liveMatchesCount = Object.values(liveCountsByDivision).reduce((total, count) => total + count, 0);
   const activeLiveMatchesCount = visibleDivisionId
     ? liveCountsByDivision[visibleDivisionId] ?? 0
@@ -341,6 +342,7 @@ const commonTranslate = useTranslations('Common');
 
   const handleTabSelect = (tabId: TournamentDetailTab) => {
     hasUserNavigatedRef.current = true;
+    pendingNavigatedTabRef.current = tabId;
     setActiveTab(tabId);
     const nextParams = new URLSearchParams(searchParams.toString());
     if (tabId === 'overview') {
@@ -554,18 +556,22 @@ const commonTranslate = useTranslations('Common');
   }, [divisionsList, searchParams]);
 
   useEffect(() => {
-    const requestedTab = searchParams.get('tab');
+    const rawTab = searchParams.get('tab');
+    const requestedTab: TournamentDetailTab =
+      rawTab && TOURNAMENT_DETAIL_TABS.includes(rawTab as TournamentDetailTab)
+        ? (rawTab as TournamentDetailTab)
+        : 'overview';
 
-    if (!requestedTab) {
-      if (activeTab !== 'overview' && !hasUserNavigatedRef.current) {
-        Promise.resolve().then(() => setActiveTab('overview'));
+    // If an intentional user click navigation is in progress:
+    if (pendingNavigatedTabRef.current !== null) {
+      if (requestedTab === pendingNavigatedTabRef.current) {
+        pendingNavigatedTabRef.current = null; // Caught up!
+      } else {
+        // Router params not yet updated to target tab, do NOT overwrite activeTab!
+        return;
       }
-      return;
     }
 
-    if (!TOURNAMENT_DETAIL_TABS.includes(requestedTab as TournamentDetailTab)) {
-      return;
-    }
     if (requestedTab === 'sponsors' && publicSponsors.length === 0) {
       if (activeTab === 'sponsors') {
         Promise.resolve().then(() => setActiveTab('overview'));
@@ -575,7 +581,7 @@ const commonTranslate = useTranslations('Common');
 
     if (activeTab !== requestedTab) {
       Promise.resolve().then(() => {
-        setActiveTab(requestedTab as TournamentDetailTab);
+        setActiveTab(requestedTab);
       });
     }
   }, [activeTab, publicSponsors.length, searchParams]);

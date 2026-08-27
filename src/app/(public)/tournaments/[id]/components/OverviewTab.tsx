@@ -39,27 +39,27 @@ export default function OverviewTab({ tournament }: Props) {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <section
-        className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view"
+        className="prose prose-slate max-w-none text-slate-800 text-sm sm:text-base leading-relaxed editorjs-content-view"
         onClick={handleContentClick}
       >
         {description ? (
           <div dangerouslySetInnerHTML={{ __html: description }} />
         ) : (
-          <p className="italic text-slate-400 text-center">
+          <p className="italic text-slate-400 text-center text-xs sm:text-sm">
             {translate("overviewDescriptionFallback")}
           </p>
         )}
       </section>
 
       {hasPrizeDescription && (
-        <section className="border-t border-slate-100 pt-6">
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-900">
+        <section className="border-t border-slate-100 pt-4 sm:pt-6">
+          <h3 className="mb-2.5 sm:mb-3 text-xs sm:text-sm font-bold uppercase tracking-wide text-slate-900">
             {translate("prizeTitle")}
           </h3>
           <div
-            className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view"
+            className="prose prose-slate max-w-none text-slate-800 text-sm sm:text-base leading-relaxed editorjs-content-view"
             onClick={handleContentClick}
           >
             <div dangerouslySetInnerHTML={{ __html: rawPrizeDescription! }} />

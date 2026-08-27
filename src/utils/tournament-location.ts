@@ -27,16 +27,41 @@ export interface MatchLocationInput {
   } | null;
 }
 
-const normalizeLocationPart = (value: string): string =>
-  value
+const normalizeLocationPart = (value: string): string => {
+  const normalized = value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase()
-    .replace(/\bthanh\s*pho\b/g, 'tp')
-    .replace(/\btp\.?\b/g, 'tp')
     .replace(/[.\/_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+
+  const metropolitanAliases: Record<string, string> = {
+    'thanh pho ho chi minh': 'tp_hcm',
+    'tp ho chi minh': 'tp_hcm',
+    'tp hcm': 'tp_hcm',
+    'tphcm': 'tp_hcm',
+    'ho chi minh': 'tp_hcm',
+    'thanh pho ha noi': 'tp_hn',
+    'tp ha noi': 'tp_hn',
+    'tphn': 'tp_hn',
+    'ha noi': 'tp_hn',
+    'thanh pho da nang': 'tp_danang',
+    'tp da nang': 'tp_danang',
+    'da nang': 'tp_danang',
+    'thanh pho hai phong': 'tp_haiphong',
+    'tp hai phong': 'tp_haiphong',
+    'hai phong': 'tp_haiphong',
+    'thanh pho can tho': 'tp_cantho',
+    'tp can tho': 'tp_cantho',
+    'can tho': 'tp_cantho',
+  };
+  if (metropolitanAliases[normalized]) return metropolitanAliases[normalized];
+
+  return normalized
+    .replace(/^(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|tp|q|h|tx|p|x)\s+/, '')
+    .trim();
+};
 
 const uniqueParts = (values: Array<string | null | undefined>): string[] => {
   const parts = values

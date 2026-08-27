@@ -871,11 +871,11 @@ const commonTranslate = useTranslations('Common');
         </div>
       </div>
 
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-8 mt-4 sm:mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8 items-start">
 
           {/* Left Area - Tabs & Content (takes 3 cols) */}
-          <div className="lg:col-span-3 space-y-6 min-w-0 max-w-full overflow-hidden">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6 min-w-0 max-w-full overflow-hidden">
             {/* Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => {
@@ -916,7 +916,7 @@ const commonTranslate = useTranslations('Common');
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[400px] sm:min-h-[500px] min-w-0 max-w-full overflow-hidden">
                                           {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
@@ -1051,7 +1051,7 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
 
           {/* Right Area - Registration & Info Card (takes 1 col) */}
           <div className="lg:col-span-1 lg:sticky lg:top-6">
-            <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-6 shadow-sm">
+            <div className="bg-white rounded-lg border border-slate-250/80 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 shadow-sm">
               {showRegistrationDetails && (
                 <>
               {/* Entry Fee */}

@@ -339,6 +339,18 @@ const commonTranslate = useTranslations('Common');
     }
   };
 
+  const handleTabSelect = (tabId: TournamentDetailTab) => {
+    hasUserNavigatedRef.current = true;
+    setActiveTab(tabId);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (tabId === 'overview') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', tabId);
+    }
+    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+  };
+
   const handleDivisionSelect = (divisionId: string) => {
     hasUserNavigatedRef.current = true;
     if (openDivisionId === divisionId) {
@@ -544,7 +556,14 @@ const commonTranslate = useTranslations('Common');
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
 
-    if (!requestedTab || !TOURNAMENT_DETAIL_TABS.includes(requestedTab as TournamentDetailTab)) {
+    if (!requestedTab) {
+      if (activeTab !== 'overview' && !hasUserNavigatedRef.current) {
+        Promise.resolve().then(() => setActiveTab('overview'));
+      }
+      return;
+    }
+
+    if (!TOURNAMENT_DETAIL_TABS.includes(requestedTab as TournamentDetailTab)) {
       return;
     }
     if (requestedTab === 'sponsors' && publicSponsors.length === 0) {
@@ -885,10 +904,7 @@ const commonTranslate = useTranslations('Common');
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => {
-                      hasUserNavigatedRef.current = true;
-                      setActiveTab(tab.id);
-                    }}
+                    onClick={() => handleTabSelect(tab.id)}
                     className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive

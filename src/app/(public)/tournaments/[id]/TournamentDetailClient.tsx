@@ -8,7 +8,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } 
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, CreditCard } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -742,198 +742,47 @@ const commonTranslate = useTranslations('Common');
 
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
-      {/* Banner Carousel Showcase */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
-        <div className="relative w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px] rounded-lg md:rounded-2xl overflow-hidden shadow-xl">
-          <GalleryCarousel
-            images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
-            defaultBanner={activeTournament.bannerUrl || undefined}
-            className="w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px]"
-          />
-
-          {!hidePublicBannerText && (
-            <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
-              <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md tracking-wide uppercase truncate">
-                {tournament.name}
-              </h1>
-            </div>
-          )}
+        {/* Back navigation */}
+        <div className="mb-3.5">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors py-1.5 px-3 rounded-lg hover:bg-slate-200/70 cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>{translate('back') || 'Quay lại'}</span>
+          </button>
         </div>
-      </div>
 
-      {/* Info Panel below banner */}
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
-        <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            {Boolean(activeTournament.logoUrl?.trim()) && (
-              <Link
-                href={`/tournaments/${activeTournament.id}`}
-                className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
-                title={translate('viewTournamentDetails')}
-              >
-                <img
-                  src={activeTournament.logoUrl!}
-                  alt={activeTournament.name}
-                  className="w-full h-full object-contain rounded-full p-2"
-                />
-              </Link>
-            )}
-            <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-2">
-                {activeTournament.category?.name && (
-                  <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-600 text-white shadow-2xs flex items-center gap-1.5">
-                    {(() => {
-                      const logo = getSportLogo(activeTournament.category?.name);
-                      return logo ? (
-                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150" />
-                      ) : null;
-                    })()}
-                    {activeTournament.category.name}
-                  </span>
-                )}
-                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${getTournamentStatusClassName(activeTournament.status)}`}>
+        {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          {/* Left Column: Hero Banner + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-4 min-w-0 max-w-full overflow-hidden">
+            {/* Banner Container */}
+            <div className="relative w-full aspect-[16/9] sm:aspect-[16/8.5] md:aspect-[16/8] max-h-[360px] rounded-2xl overflow-hidden shadow-lg border border-slate-200/80 bg-slate-900">
+              <GalleryCarousel
+                images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
+                defaultBanner={activeTournament.bannerUrl || undefined}
+                className="w-full h-full object-cover"
+              />
+
+              {/* Status Badge floating at Top-Left of Banner */}
+              <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full shadow-md backdrop-blur-md ${
+                  isTournamentInProgress(activeTournament.status)
+                    ? 'bg-rose-600/95 text-white animate-pulse'
+                    : isTournamentCompleted(activeTournament.status)
+                      ? 'bg-slate-900/90 text-white'
+                      : 'bg-blue-600/95 text-white'
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   {getTournamentStatusLabel(activeTournament.status, statusLabels).toUpperCase()}
                 </span>
-                <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-900 text-white shadow-2xs flex items-center gap-1">
-                  <Trophy className="w-3 h-3 text-amber-400" />
-                  {(() => {
-                    const fmt = (activeTournament.format ?? '').replace('.', '_').replace(' ', '_').toUpperCase();
-                    if (fmt === 'SINGLE_ELIMINATION') return translate('format.singleElimination');
-                    if (fmt === 'DOUBLE_ELIMINATION') return translate('format.doubleElimination');
-                    if (fmt === 'ROUND_ROBIN') return translate('format.roundRobin');
-                    if (fmt === 'GROUP_STAGE_KNOCKOUT') return translate('format.groupStageKnockout');
-                    return fmt;
-                  })()}
-                </span>
-                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${
-                  activeTournament.isRanked
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-emerald-600 text-white'
-                }`}>
-                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : `🎾 ${translate('casualBadge')}`}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  {activeTournament.startDate ? (
-                    <>
-                      {formatDate(activeTournament.startDate)}
-                      {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
-                    </>
-                  ) : translate('dateNotSet')}
-                </span>
-                <span className="flex min-w-0 max-w-full items-start gap-1.5 md:max-w-[min(100%,760px)]">
-                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="break-words whitespace-normal leading-6" title={getTournamentLocationLabel(activeTournament)}>
-                    {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
-                  </span>
-                </span>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-stretch md:items-center">
-            <div className="flex items-center gap-2.5 w-full md:w-auto">
-              {user?.id && (
-                <Button
-                  onClick={toggleFollow}
-                  disabled={followLoading}
-                  variant={isFollowing ? 'default' : 'outline'}
-                  className={`flex-1 md:flex-none font-bold shadow-sm h-10 text-xs md:text-sm ${
-                    isFollowing
-                      ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
-                  }`}
-                >
-                  <Bookmark className={`w-3.5 h-3.5 mr-1.5 ${isFollowing ? 'fill-current' : ''}`} />
-                  {isFollowing ? translate('followActive') : translate('follow')}
-                </Button>
-              )}
-              <Button onClick={handleShareClick} variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm h-10 text-xs md:text-sm">
-                <Share2 className="w-3.5 h-3.5 mr-1.5" /> {translate("share")}
-              </Button>
-              <ReportViolationButton
-                targetType="TOURNAMENT"
-                targetId={tournament.id}
-                targetLabel={tournament.name}
-                hidden={isOwner}
-                compact
-              />
-            </div>
-
-            {!isOwner && !isTournamentDraft(activeTournament.status) && (
-              <Button
-                disabled={isRegistrationButtonDisabled}
-                className={`${
-                  isRegistrationButtonDisabled
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
-                } font-bold w-full md:w-auto shadow-sm h-10 text-xs md:text-sm`}
-                                onClick={() => {
-                  if (isRegistrationButtonDisabled) return;
-                  if (canResumePayment) {
-                    const resumeParticipantId = myRegistration.participant?.id;
-                    if (!resumeParticipantId) {
-                      toast.error(translate('paymentResumeUnavailable'));
-                      return;
-                    }
-                    const checkoutParams = new URLSearchParams({
-                      participantId: resumeParticipantId,
-                      tournamentId,
-                    });
-                    const resumeDivisionId =
-                      myRegistration.participant?.tournamentDivisionId || selectedDivisionId;
-                    if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                    if (inviteCode) checkoutParams.set('invite', inviteCode);
-                    if (inviteParticipantId && teamInviteToken) {
-                      checkoutParams.set('pid', inviteParticipantId);
-                      checkoutParams.set('token', teamInviteToken);
-                    }
-                    router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                    return;
-                  }
-                  if (isClubLiteTournament(activeTournament)) {
-
-                    if (activeTournament.inviteCode) {
-                      router.push(`/lite/tournaments/join/${activeTournament.inviteCode}`);
-                    } else {
-                      toast.error(translate('joinLinkUnavailable'));
-                    }
-                    return;
-                  }
-                  const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' ||
-                                                registrationModeUi.mode !== 'OPEN' ||
-                                                divisionsList.length > 0 ||
-                                                hasAdvancedRegistrationForm;
-                  if (needsRegistrationPage) {
-                    router.push(registerHref);
-                  } else {
-                    setIsRegisterModalOpen(true);
-                  }
-                }}
-              >
-                {registrationButtonLabel}
-              </Button>
-            )}
-            {isOwner && !isTournamentDraft(activeTournament.status) && (
-              <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-center w-full md:w-auto shadow-sm flex items-center justify-center h-10">
-                <p className="text-xs text-slate-600 font-bold whitespace-nowrap">
-                  {translate('ownerLabel')}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-8 mt-4 sm:mt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8 items-start">
-
-          {/* Left Area - Tabs & Content (takes 3 cols) */}
-          <div className="lg:col-span-3 space-y-4 sm:space-y-6 min-w-0 max-w-full overflow-hidden">
-            {/* Tabs */}
+            {/* Horizontal Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
@@ -941,7 +790,7 @@ const commonTranslate = useTranslations('Common');
                   <button
                     key={tab.id}
                     onClick={() => handleTabSelect(tab.id)}
-                    className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
+                    className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive
                           ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
@@ -952,7 +801,7 @@ const commonTranslate = useTranslations('Common');
                             : 'bg-amber-50 text-amber-900 border border-amber-300 font-extrabold hover:bg-amber-100'
                           : isActive
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                            : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
@@ -973,9 +822,9 @@ const commonTranslate = useTranslations('Common');
               })}
             </div>
 
-            {/* Tab Content */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[400px] sm:min-h-[500px] min-w-0 max-w-full overflow-hidden">
-                                          {/* Compact vertical content rows with inline selected detail */}
+            {/* Tab Content Container */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden">
+              {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
                   <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -1037,7 +886,7 @@ const commonTranslate = useTranslations('Common');
                           </button>
 
                           <div
-className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                               isActive ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] pointer-events-none'
                             }`}
                           >
@@ -1103,302 +952,124 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
 
               {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
               {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
-
             </div>
-
           </div>
 
-          {/* Right Area - Registration & Info Card (takes 1 col) */}
-          <div className="lg:col-span-1 lg:sticky lg:top-6">
-            <div className="bg-white rounded-lg border border-slate-250/80 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 shadow-sm">
-              {showRegistrationDetails && (
-                <>
-              {/* Entry Fee */}
-              <div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">{translate("entryFee")}</span>
-                <div className="text-2xl font-bold text-blue-600">
-                  {selectedDivision?.entryFee && selectedDivision.entryFee > 0
-                    ? `${Number(selectedDivision.entryFee).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} VND`
-                    : translate('free')}
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">{translate("feeAtRegistration")}</p>
-
-                {/* Selected Division ELO Range Indicator */}
-                {(() => {
-                  const activeDiv = divisionsList.find(d => d.id === selectedDivisionId);
-                  if (!activeDiv || (activeDiv.minElo === null && activeDiv.maxElo === null)) return null;
-                  const isDoublesDiv = activeDiv.matchType === 'DOUBLES' || activeDiv.matchType === 'MIXED_DOUBLES';
-                  return (
-                    <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-lg p-2.5">
-                      <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block mb-0.5">
-                        {isDoublesDiv ? translate('eloRequirementDoubles') : translate('eloRequirementSingles')}
-                      </span>
-                      <span className="text-xs font-bold text-blue-700">
-                        {activeDiv.minElo !== null ? activeDiv.minElo : '0'}
-                        {' - '}
-                        {activeDiv.maxElo !== null ? activeDiv.maxElo : translate('unlimited')}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </div>
-
-                </>
-              )}
-
-              {/* Organizer Info */}
-              <div className="border-t border-slate-100 pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">{translate('organizerLabel')}</span>
-                {(() => {
-                  const organizer = activeTournament.organizer;
-                  if (!organizer?.id) {
-                    return (
-                      <div className="flex items-center gap-3">
-                        {organizer?.avatarUrl ? (
-                          <img
-                            src={organizer.avatarUrl}
-                            alt={organizer.fullName || 'BTC'}
-                            className="w-10 h-10 rounded-full border border-slate-200 object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
-                            <User className="w-5 h-5 text-blue-500" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-slate-900 font-bold text-sm">{organizer?.fullName || translate('organizerDefault')}</p>
-                            {organizer?.isTrusted ? (
-                              <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title={translate('organizerTrusted')}>
-                                👑 {translate('organizerTrusted')}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title={translate('organizerNew')}>
-                                🔰 {translate('organizerNew')}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        openUserProfile(
-                          {
-                            id: organizer.id,
-                            fullName: organizer.fullName || translate('organizerDefault'),
-                            avatarUrl: organizer.avatarUrl || null,
-                          },
-                          rect,
-                        );
-                      }}
-                      className="flex items-center gap-3 text-left w-full p-2 -ml-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all cursor-pointer group"
-                    >
-                      {organizer.avatarUrl ? (
+          {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
+          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 space-y-4 min-w-0">
+            {/* Metadata Main Card */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 md:p-6 shadow-sm space-y-4">
+              {/* Organizer / Club Header */}
+              {(() => {
+                const organizer = activeTournament.organizer;
+                const displayLogo = activeTournament.logoUrl || organizer?.avatarUrl;
+                const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
+                return (
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                      {displayLogo ? (
                         <img
-                          src={organizer.avatarUrl}
-                          alt={organizer.fullName || 'BTC'}
-                          className="w-10 h-10 rounded-full border border-slate-200 object-cover shadow-sm group-hover:scale-105 transition-transform"
+                          src={displayLogo}
+                          alt={displayName}
+                          className="w-full h-full object-cover rounded-full"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-105 transition-transform">
-                          <User className="w-5 h-5 text-blue-500" />
-                        </div>
+                        <Trophy className="w-5 h-5 text-slate-500" />
                       )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-slate-900 font-bold text-sm truncate group-hover:text-blue-600 transition-colors">
-                            {organizer.fullName || translate('organizerDefault')}
-                          </p>
-                          {organizer.isTrusted ? (
-                            <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerTrusted')}>
-                              👑 {translate('organizerTrusted')}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerNew')}>
-                              🔰 {translate('organizerNew')}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
-                      </div>
-                    </button>
-                  );
-                })()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        {translate('organizerLabel') || 'Ban tổ chức'}
+                      </p>
+                      <p className="text-sm font-bold text-slate-900 truncate" title={displayName}>
+                        {displayName}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Tournament Title & Badges */}
+              <div>
+                <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                  {tournament.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                  {activeTournament.category?.name && (
+                    <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-600 text-white shadow-2xs flex items-center gap-1.5">
+                      {(() => {
+                        const logo = getSportLogo(activeTournament.category?.name);
+                        return logo ? (
+                          <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150" />
+                        ) : null;
+                      })()}
+                      {activeTournament.category.name}
+                    </span>
+                  )}
+                  <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${
+                    activeTournament.isRanked ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'
+                  }`}>
+                    {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : `🎾 ${translate('casualBadge')}`}
+                  </span>
+                </div>
               </div>
 
-              {showRegistrationDetails && (
-                <>
-              {/* Slots Progress Bar for all divisions */}
-              {divisionsList.length > 0 ? (
-                <div className="border-t border-slate-100 pt-4 space-y-3">
-                  <span className="text-xs font-bold text-slate-450 uppercase tracking-wider block">{translate("profilesByTable")}</span>
-                  {divisionsList.map((div) => {
-                    const divParticipants = div._count?.participants ?? 0;
-                    const divMax = div.maxParticipants ?? activeTournament.maxParticipants ?? 16;
-                    const divPercent = divMax > 0 ? Math.min(100, Math.round((divParticipants / divMax) * 100)) : 0;
-                    const isDivDoubles = div.matchType === 'DOUBLES' || div.matchType === 'MIXED_DOUBLES';
-                    const hasElo = div.minElo !== null || div.maxElo !== null;
-                    return (
-                      <div key={div.id} className="space-y-1">
-                        <div className="flex justify-between items-center text-[11px] font-bold">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
-                            {hasElo && (
-                              <span className="text-[9px] text-blue-600 font-bold">
-                                {isDivDoubles ? translate('eloRequirementDoubles') : translate('eloRequirementSingles')}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent}%)</span>
-                        </div>
-                        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              divPercent >= 90 ? 'bg-rose-500' : divPercent >= 70 ? 'bg-amber-500' : 'bg-emerald-600'
-                            }`}
-                            style={{ width: `${divPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                maxParticipants > 0 && (
-                  <div className="border-t border-slate-100 pt-4">
-                    <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-                      <span className="text-slate-500 uppercase tracking-wider">{translate('participantsCount')}</span>
-                      <span className="text-slate-800">{participantCount} / {maxParticipants}</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          percentageFilled >= 90 ? 'bg-rose-500' : percentageFilled >= 70 ? 'bg-amber-500' : 'bg-blue-650'
-                        }`}
-                        style={{ width: `${percentageFilled}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-1">{translate('slotsFilled', { percentage: percentageFilled })}</p>
-                  </div>
-                )
-              )}
-
-              {/* Registration Period */}
-              <div className="border-t border-slate-100 pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">{translate("registrationPeriod")}</span>
-                <div className="flex items-start gap-2.5">
-                  <Calendar className="w-4 h-4 text-slate-450 mt-0.5 shrink-0" />
-                  <div className="text-xs font-semibold text-slate-700 leading-normal">
-                    {formatDateRange(activeTournament.registrationStartDate, activeTournament.registrationEndDate)}
-                  </div>
+              {/* Key Details Rows */}
+              <div className="space-y-3 pt-3 border-t border-slate-100 text-sm text-slate-600 font-medium">
+                {/* Dates */}
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-slate-800">
+                    {activeTournament.startDate ? (
+                      <>
+                        {formatDate(activeTournament.startDate)}
+                        {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
+                      </>
+                    ) : translate('dateNotSet')}
+                  </p>
                 </div>
 
-                {/* Smart Sequential Countdown Timer (Chỉ hiện 1 đếm ngược duy nhất) */}
-                {(() => {
-                  const now = new Date();
-                  const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
-                  const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
-                  const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
-                  const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
+                {/* Location */}
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  <p className="text-xs leading-relaxed text-slate-600 break-words" title={getTournamentLocationLabel(activeTournament)}>
+                    {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
+                  </p>
+                </div>
 
-                  // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
-                  if (regStart && now < regStart) {
-                    return (
-                      <CountdownTimer
-                        targetDate={activeTournament.registrationStartDate!}
-                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="info"
-                      />
-                    );
-                  }
+                {/* Divisions Count */}
+                <div className="flex items-center gap-3">
+                  <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
+                  <p className="text-xs font-bold text-slate-700">
+                    {divisionsList.length || 1} {translate('competitionContentTitle') || 'Nội dung'}
+                  </p>
+                </div>
 
-                  // 2. Đã mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
-                  if (regEnd && now < regEnd) {
-                    return (
-                      <CountdownTimer
-                        targetDate={activeTournament.registrationEndDate!}
-                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="warning"
-                      />
-                    );
-                  }
-
-                  // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
-                  if (tourStart && now < tourStart) {
-                    return (
-                      <CountdownTimer
-                        targetDate={activeTournament.startDate!}
-                        labels={{ active: translate('startAfter'), expired: translate('started'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="danger"
-                      />
-                    );
-                  }
-
-                  // 4. Giải đang diễn ra -> Đếm ngược ngày kết thúc
-                  if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
-                    return (
-                      <div>
-                        <CountdownTimer
-                          targetDate={activeTournament.endDate!}
-                          labels={{ active: translate('endAfter'), expired: translate('completed'), dayLabel: commonTranslate('countdownDay') }}
-                          variant="danger"
-                        />
-                        <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange")}</p>
-                      </div>
-                    );
-                  }
-
-                  // 5. Đã kết thúc
-                  if (isTournamentCompleted(activeTournament.status) || (regEnd && now >= regEnd && !tourStart)) {
-                    return (
-                      <div className="mt-2 p-2.5 border rounded-lg bg-slate-50 border-slate-200 text-slate-400">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-slate-400" />
-                          <span className="text-xs font-bold text-slate-400">{translate('completed')}</span>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })()}
-
+                {/* Participants / Teams Count */}
+                <div className="flex items-center gap-3">
+                  <Users className="w-4 h-4 text-slate-400 shrink-0" />
+                  <p className="text-xs font-bold text-slate-700">
+                    {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0} {translate('participantsCount') || 'đội / VĐV'}
+                  </p>
+                </div>
               </div>
 
-              {/* Warnings and Info Banners */}
-              {isRegistrationOpen && isRegistrationLocked && (
-                <div className="bg-slate-50 border border-amber-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
-                  <AlertCircle className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-semibold text-amber-800 leading-normal">
-                    {translate("registrationLockedNotice")}
-                  </p>
-                </div>
-              )}
-              {isRegistrationOpen && isRegistrationExpired && (
-                <div className="bg-rose-50 border border-rose-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
-                  <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-semibold text-rose-800 leading-normal">
-                    {translate("registrationExpiredNotice")}
-                  </p>
-                </div>
-              )}
-
-              {/* Action Button */}
-              {!isOwner && !isTournamentDraft(activeTournament.status) && (
-                  <div className="mt-1 block w-full">
+              {/* Primary CTA Button */}
+              <div className="pt-2">
+                {!isOwner && !isTournamentDraft(activeTournament.status) && (
+                  <div>
                     {isRegistrationButtonDisabled ? (
-                      <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
-                        {registrationButtonLabel}
+                      <Button
+                        type="button"
+                        onClick={() => handleTabSelect('matches')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        {translate('tabs.matches') || 'Lịch thi đấu'}
                       </Button>
                     ) : canResumePayment ? (
                       <Button
+                        type="button"
                         onClick={() => {
                           const resumeParticipantId = myRegistration?.participant?.id;
                           if (resumeParticipantId) {
@@ -1415,62 +1086,126 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                             router.push(registerHref);
                           }
                         }}
-                        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-2.5 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
+                        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-xl shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
                       >
-                        💳 {translate('continuePayment') || 'Thanh toán ngay'}
+                        <CreditCard className="w-4 h-4" />
+                        {translate('continuePayment') || 'Thanh toán ngay'}
                       </Button>
                     ) : isClubLiteTournament(activeTournament) ? (
                       activeTournament.inviteCode ? (
-                        <Link
-                          href={`/lite/tournaments/join/${activeTournament.inviteCode}`}
-                          className="block w-full"
-                        >
-                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-sm cursor-pointer text-sm">
+                        <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
+                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md text-sm">
                             {translate('liteJoin')}
                           </Button>
                         </Link>
                       ) : (
-                        <Button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
+                        <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-xl text-sm">
                           {translate('joinLinkUnavailable')}
                         </Button>
                       )
                     ) : (
-                      <Link href={registerHref} className="block w-full">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md cursor-pointer text-sm">
-                          {registrationButtonLabel}
-                        </Button>
-                      </Link>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          const needsRegistrationPage =
+                            activeTournament.visibility === 'PRIVATE' ||
+                            registrationModeUi.mode !== 'OPEN' ||
+                            divisionsList.length > 0 ||
+                            hasAdvancedRegistrationForm;
+                          if (needsRegistrationPage) {
+                            router.push(registerHref);
+                          } else {
+                            setIsRegisterModalOpen(true);
+                          }
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md text-sm cursor-pointer"
+                      >
+                        {registrationButtonLabel}
+                      </Button>
                     )}
+                  </div>
+                )}
+
+                {isOwner && !isTournamentDraft(activeTournament.status) && (
+                  <div className="space-y-2">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                      <p className="text-xs text-slate-700 font-bold">
+                        {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/organizer/tournaments/${activeTournament.id}/manage`}
+                      className="block w-full"
+                    >
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-sm text-sm">
+                        {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Registration Timeline Table */}
+              <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="font-medium">{translate('regStart') || 'Mở đăng ký'}:</span>
+                  <span className="font-bold text-slate-800">
+                    {activeTournament.registrationStartDate ? formatDate(activeTournament.registrationStartDate) : translate('notUpdated')}
+                  </span>
                 </div>
-              )}
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="font-medium">{translate('regEnd') || 'Thời hạn đăng ký'}:</span>
+                  <span className="font-bold text-slate-800">
+                    {activeTournament.registrationEndDate ? formatDate(activeTournament.registrationEndDate) : translate('notUpdated')}
+                  </span>
+                </div>
+                {Number(activeTournament.entryFee) > 0 && (
+                  <div className="flex items-center justify-between text-slate-600 pt-1.5 border-t border-dashed border-slate-100">
+                    <span className="font-medium">{translate('entryFee') || 'Lệ phí'}:</span>
+                    <span className="font-black text-blue-600 text-sm">
+                      {formatCurrency(activeTournament.entryFee)}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-                </>
-              )}
-
-              {isOwner && !isTournamentDraft(activeTournament.status) && (
-                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 mt-1 text-center">
-                    <p className="text-xs text-slate-800 font-bold">
-                    {translate('ownerAdminLabel')}
-                  </p>
-                  <Link
-                    href={isClubLiteTournament(activeTournament)
-                      ? `/organizer/tournaments/${activeTournament.id}/manage`
-                      : `/organizer/tournaments/${activeTournament.id}/manage`
-                    }
-                    className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline"
+              {/* Secondary Utility Actions (Follow, Share, Report) */}
+              <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                {user?.id && (
+                  <Button
+                    onClick={toggleFollow}
+                    disabled={followLoading}
+                    variant={isFollowing ? 'default' : 'outline'}
+                    className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-xl ${
+                      isFollowing
+                        ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
                   >
-                    {isClubLiteTournament(activeTournament)
-                      ? translate('manageLite')
-                      : translate('manageBracketSchedule')
-                    }
-                  </Link>
-                </div>
-              )}
+                    <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
+                    {isFollowing ? translate('followActive') : translate('follow')}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleShareClick}
+                  variant="outline"
+                  className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-xl"
+                >
+                  <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
+                </Button>
+                <ReportViolationButton
+                  targetType="TOURNAMENT"
+                  targetId={tournament.id}
+                  targetLabel={tournament.name}
+                  hidden={isOwner}
+                  compact
+                />
+              </div>
             </div>
 
-            {/* Contact Info Card */}
+            {/* Contact Info Card if available */}
             {activeTournament.contactInfo && (
-              <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-2.5 shadow-sm mt-4">
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 flex flex-col gap-2.5 shadow-sm">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
                 {activeTournament.contactInfo.phone && (
                   <div className="flex items-center gap-2.5">
@@ -1519,7 +1254,6 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
               </div>
             )}
           </div>
-
         </div>
       </div>
 

@@ -7549,6 +7549,7 @@
     "allScheduled": "All matches in this scope are scheduled.",
     "resizeDraft": "Drag to change draft duration",
     "time": "Time",
+    "unscheduledMatches": "Unscheduled matches",
     "teamTbd": "TBD",
     "toast": {
       "copiedInvite": "Invite link copied!"

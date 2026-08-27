@@ -7549,6 +7549,7 @@
     "allScheduled": "Tất cả trận trong phạm vi đã có lịch.",
     "resizeDraft": "Kéo để thay đổi thời lượng bản nháp",
     "time": "Giờ",
+    "unscheduledMatches": "Trận chưa xếp",
     "teamTbd": "Chờ xác định",
     "toast": {
       "copiedInvite": "Đã sao chép link!"

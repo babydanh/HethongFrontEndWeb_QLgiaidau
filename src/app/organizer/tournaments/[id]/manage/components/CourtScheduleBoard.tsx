@@ -2,9 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, GripVertical } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { SchedulePlanPreview } from '@/features/tournaments/api';
 import type { CourtSetupItem } from './CourtSetup';
+import {
+  Modal,
+  ModalClose,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 
 interface ScheduleBoardMatch {
   id: string;
@@ -40,6 +50,12 @@ type ResizeState = {
 
 const PIXELS_PER_MINUTE = 1.25;
 
+function datePart(value?: string | null) {
+  if (!value) return null;
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? null;
+}
+
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
   const date = new Date(value);
@@ -47,6 +63,18 @@ function formatMatchTime(value?: string | null) {
   return new Intl.DateTimeFormat(undefined, {
     hour: '2-digit',
     minute: '2-digit',
+  }).format(date);
+}
+
+function formatDateLabel(value: string | null, locale: string) {
+  if (!value) return '—';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   }).format(date);
 }
 
@@ -67,8 +95,10 @@ export function CourtScheduleBoard({
   onOpenMatch,
 }: CourtScheduleBoardProps) {
   const t = useTranslations('OrganizerManage');
+  const locale = useLocale();
   const [draftAssignments, setDraftAssignments] = useState<Record<string, DraftAssignment>>({});
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
+  const [queueOpen, setQueueOpen] = useState(false);
   const previewAssignmentByMatchId = useMemo(
     () => new Map(preview?.assignments.map((assignment) => [assignment.matchId, assignment]) ?? []),
     [preview],
@@ -110,17 +140,18 @@ export function CourtScheduleBoard({
 
   const scheduledMatches = displayMatches.filter((item) => Boolean(item.scheduledAt && item.courtId));
   const unscheduledMatches = displayMatches.filter((item) => !item.scheduledAt || !item.courtId);
+  const scheduleDate = datePart(defaultDate) ?? datePart(preview?.operatingWindow.start);
 
   const timeline = useMemo(() => {
     const start = preview
       ? new Date(preview.operatingWindow.start).getTime()
-      : defaultDate && /^\\d{4}-\\d{2}-\\d{2}$/.test(defaultDate)
-        ? new Date(`${defaultDate}T${defaultOperatingStart}:00.000Z`).getTime()
+      : scheduleDate
+        ? new Date(`${scheduleDate}T${defaultOperatingStart}:00`).getTime()
         : Number.NaN;
     const end = preview
       ? new Date(preview.operatingWindow.end).getTime()
-      : defaultDate && /^\\d{4}-\\d{2}-\\d{2}$/.test(defaultDate)
-        ? new Date(`${defaultDate}T${defaultOperatingEnd}:00.000Z`).getTime()
+      : scheduleDate
+        ? new Date(`${scheduleDate}T${defaultOperatingEnd}:00`).getTime()
         : Number.NaN;
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
     const increment = preview?.gridIncrementMinutes ?? 30;
@@ -130,7 +161,7 @@ export function CourtScheduleBoard({
       label: formatMatchTime(new Date(start + index * increment * 60_000).toISOString()),
     }));
     return { start, end, increment, totalMinutes, marks, height: totalMinutes * PIXELS_PER_MINUTE };
-  }, [defaultDate, defaultOperatingEnd, defaultOperatingStart, preview]);
+  }, [defaultOperatingEnd, defaultOperatingStart, preview, scheduleDate]);
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, courtId: string) => {
     event.preventDefault();
@@ -150,6 +181,7 @@ export function CourtScheduleBoard({
         durationMinutes: current[matchId]?.durationMinutes ?? item.durationMinutes,
       },
     }));
+    setQueueOpen(false);
   };
 
   const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => (
@@ -182,11 +214,12 @@ export function CourtScheduleBoard({
           onPointerDown={(event) => {
             event.stopPropagation();
             event.preventDefault();
+            if (!item.courtId || !item.scheduledAt) return;
             setDraftAssignments((current) => ({
               ...current,
               [item.match.id]: {
-                courtId: item.courtId!,
-                scheduledAt: item.scheduledAt!,
+                courtId: item.courtId,
+                scheduledAt: item.scheduledAt,
                 durationMinutes: item.durationMinutes,
               },
             }));
@@ -201,80 +234,72 @@ export function CourtScheduleBoard({
 
   return (
     <section className="space-y-3" aria-labelledby="schedule-board-title">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-y border-slate-200 py-2.5">
-        <div className="flex items-center gap-2 text-sm text-slate-700">
-          <CalendarClock className="h-4 w-4 text-blue-600" aria-hidden="true" />
-          <h3 id="schedule-board-title" className="font-semibold">{t('tabs.schedule')}</h3>
-          <span className="text-xs text-slate-500">{scheduledMatches.length}/{displayMatches.length}</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200 py-2.5">
+        <div className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
+          <CalendarClock className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+          <div className="min-w-0">
+            <h3 id="schedule-board-title" className="truncate font-semibold">{formatDateLabel(scheduleDate, locale)}</h3>
+            <p className="text-xs text-slate-500">{t('time')} {defaultOperatingStart}–{defaultOperatingEnd} · {t('scheduled')} {scheduledMatches.length}/{displayMatches.length}</p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+          <button type="button" onClick={() => setQueueOpen(true)} className="border border-slate-300 bg-white px-3 py-2 font-semibold text-slate-700 transition-colors hover:border-blue-400 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            {t('unscheduledMatches')} <span className="ml-1 text-blue-700">{unscheduledMatches.length}</span>
+          </button>
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 bg-white ring-1 ring-slate-300" aria-hidden="true" />{t('scheduled')}</span>
           {preview && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 border border-dashed border-blue-500 bg-blue-50" aria-hidden="true" />{t('previewDraft')}</span>}
           {Object.keys(draftAssignments).length > 0 && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 bg-violet-200 ring-1 ring-violet-500" aria-hidden="true" />{t('draft')}</span>}
         </div>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)]">
-        <aside className="border border-slate-200 bg-slate-50/70 p-3 xl:max-h-[720px] xl:overflow-y-auto" aria-label={t('unscheduledCourt')}>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-bold text-slate-900">{t('unscheduledCourt')}</p>
-              <p className="mt-0.5 text-xs text-slate-500">{t('dragDraftHint')}</p>
+      {courts.length === 0 ? (
+        <div className="border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">{t('status.notSet')}</div>
+      ) : timeline ? (
+        <div className="overflow-auto border border-slate-200 bg-white" role="region" aria-label={t('matchSchedule.court')} tabIndex={0}>
+          <div className="grid min-w-[900px]" style={{ gridTemplateColumns: `72px repeat(${courts.length}, minmax(220px, 1fr))` }}>
+            <div className="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-50 px-2 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('time')}</div>
+            {courts.map((court) => {
+              const count = scheduledMatches.filter((item) => item.courtId === court.id).length;
+              return <div key={court.id} className="sticky top-0 z-20 border-b border-r border-slate-200 bg-white px-3 py-3"><p className="truncate text-sm font-bold text-slate-900">{court.courtName}</p><p className="mt-1 text-[11px] text-slate-500">{count} · {t('matchSchedule.court')}</p></div>;
+            })}
+            <div className="relative border-r border-slate-200 bg-slate-50" style={{ height: timeline.height }}>
+              {timeline.marks.map((mark) => <span key={mark.top} className="absolute left-2 -translate-y-1/2 text-[11px] text-slate-500" style={{ top: mark.top }}>{mark.label}</span>)}
             </div>
-            <span className="text-xs font-semibold text-slate-500">{unscheduledMatches.length}</span>
+            {courts.map((court) => {
+              const courtMatches = scheduledMatches
+                .filter((item) => item.courtId === court.id && item.scheduledAt)
+                .sort((a, b) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
+              return (
+                <div key={court.id} className="relative border-r border-slate-200 bg-white" style={{ height: timeline.height }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => handleDrop(event, court.id)}>
+                  {timeline.marks.map((mark) => <span key={`${court.id}-${mark.top}`} className="pointer-events-none absolute inset-x-0 border-t border-slate-100" style={{ top: mark.top }} />)}
+                  {courtMatches.map((item) => renderMatchCard(item))}
+                </div>
+              );
+            })}
           </div>
+        </div>
+      ) : (
+        <div className="border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">{t('status.notSet')}</div>
+      )}
+
+      <Modal open={queueOpen} onOpenChange={setQueueOpen}>
+        <ModalContent className="max-w-2xl">
+          <ModalHeader>
+            <ModalTitle>{t('unscheduledMatches')} · {unscheduledMatches.length}</ModalTitle>
+            <ModalDescription>{t('dragDraftHint')}</ModalDescription>
+          </ModalHeader>
           {unscheduledMatches.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            <div className="grid max-h-[55vh] gap-2 overflow-y-auto sm:grid-cols-2">
               {unscheduledMatches.map((item) => renderMatchCard(item, true))}
             </div>
           ) : (
-            <div className="border border-dashed border-slate-300 bg-white px-3 py-6 text-center text-xs text-slate-500">{t('allScheduled')}</div>
+            <div className="border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">{t('allScheduled')}</div>
           )}
-        </aside>
-
-        <div className="min-w-0">
-          {courts.length === 0 ? (
-            <div className="border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">{t('status.notSet')}</div>
-          ) : timeline ? (
-            <div className="overflow-auto border border-slate-200 bg-white" role="region" aria-label={t('matchSchedule.court')} tabIndex={0}>
-              <div className="grid min-w-[760px]" style={{ gridTemplateColumns: `68px repeat(${courts.length}, minmax(180px, 1fr))` }}>
-                <div className="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-50 px-2 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('time')}</div>
-                {courts.map((court) => (
-                  <div key={court.id} className="sticky top-0 z-20 border-b border-r border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-900">{court.courtName}</div>
-                ))}
-                <div className="relative border-r border-slate-200 bg-slate-50" style={{ height: timeline.height }}>
-                  {timeline.marks.map((mark) => <span key={mark.top} className="absolute left-2 -translate-y-1/2 text-[11px] text-slate-500" style={{ top: mark.top }}>{mark.label}</span>)}
-                </div>
-                {courts.map((court) => {
-                  const courtMatches = scheduledMatches
-                    .filter((item) => item.courtId === court.id && item.scheduledAt)
-                    .sort((a, b) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
-                  return (
-                    <div key={court.id} className="relative border-r border-slate-200 bg-white" style={{ height: timeline.height }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => handleDrop(event, court.id)}>
-                      {timeline.marks.map((mark) => <span key={`${court.id}-${mark.top}`} className="pointer-events-none absolute inset-x-0 border-t border-slate-100" style={{ top: mark.top }} />)}
-                      {courtMatches.map((item) => renderMatchCard(item))}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2" style={{ gridTemplateColumns: `repeat(${Math.min(courts.length, 3)}, minmax(0, 1fr))` }}>
-              {courts.map((court) => {
-                const courtMatches = scheduledMatches
-                  .filter((item) => item.courtId === court.id)
-                  .sort((a, b) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
-                return (
-                  <div key={court.id} className="min-h-40 border border-slate-200 bg-slate-50/60">
-                    <div className="border-b border-slate-200 bg-white px-3 py-3"><p className="text-sm font-bold text-slate-900">{court.courtName}</p><p className="mt-1 text-xs text-slate-500">{courtMatches.length} · {t('matchSchedule.court')}</p></div>
-                    <div className="space-y-2 p-2">{courtMatches.length === 0 ? <p className="px-2 py-4 text-center text-xs text-slate-400">{t('status.notSet')}</p> : courtMatches.map((item) => renderMatchCard(item, true))}</div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+          <ModalFooter>
+            <ModalClose asChild><Button type="button" variant="outline" className="border-slate-300 bg-white">{t('close')}</Button></ModalClose>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </section>
   );
 }

@@ -521,41 +521,6 @@ export function useManageState(id: string) {
           mode: isLiteMode ? 'LITE' : 'STRICT',
         },
       });
-      if (selectedDivisionId && tournament) {
-        const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
-          MALE_SINGLES: {mt:MatchTypeDB.SINGLES, gr:GenderRestriction.MALE},
-          FEMALE_SINGLES: {mt:MatchTypeDB.SINGLES, gr:GenderRestriction.FEMALE},
-          MALE_DOUBLES: {mt:MatchTypeDB.DOUBLES, gr:GenderRestriction.MALE},
-          FEMALE_DOUBLES: {mt:MatchTypeDB.DOUBLES, gr:GenderRestriction.FEMALE},
-          MIXED_DOUBLES: {mt:MatchTypeDB.MIXED_DOUBLES, gr:GenderRestriction.MIXED},
-        };
-        const normalizedMatchType = normalizeMatchFormatForCategory(matchType as MatchFormatOptionValue, selectedCategory);
-        const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
-
-        const currentDiv = divisions.find(d => d.id === selectedDivisionId);
-        const hasMatchTypeChanged = currentDiv && (currentDiv.matchType !== mapped.mt || currentDiv.genderRestriction !== mapped.gr);
-
-        const divUpdatePayload: Record<string, unknown> = {
-          maxParticipants: isLimitEnabled ? maxParticipants : null,
-          isConfigOverride: true,
-          roundConfig: buildStageRoundConfigPayload({
-            kind: normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory),
-            setsToWin,
-            pointsPerSet,
-            winByTwo,
-            maxPoints: winByTwo ? maxDeucePoints : null,
-            mode: isLiteMode ? 'LITE' : 'STRICT',
-          }),
-        };
-
-        if (hasMatchTypeChanged) {
-          divUpdatePayload.matchType = mapped.mt;
-          divUpdatePayload.genderRestriction = mapped.gr;
-        }
-
-        await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, divUpdatePayload);
-        await fetchDivisions(id);
-      }
       toast.success('Lưu thông tin giải đấu thành công!');
       clearManageDraft();
       await fetchTournamentData();

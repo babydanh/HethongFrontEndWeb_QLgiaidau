@@ -345,7 +345,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     </button>
 
                     {/* Action buttons (Edit / Delete) */}
-                    <div className="flex flex-col justify-between border-l border-slate-100 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex flex-col justify-between border-l border-slate-100 p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button 
                         type="button" 
                         onClick={() => s.openDivisionEditor(div)}

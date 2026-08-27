@@ -721,6 +721,417 @@ const commonTranslate = useTranslations('Common');
       : []),
   ];
 
+  const renderMetadataCard = () => (
+    <div className="bg-white border border-slate-200/90 rounded-xl p-5 md:p-6 shadow-sm space-y-4">
+      {/* Organizer / Club Header */}
+      {(() => {
+        const organizer = activeTournament.organizer;
+        const displayLogo = activeTournament.logoUrl || organizer?.avatarUrl;
+        const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+              {displayLogo ? (
+                <img
+                  src={displayLogo}
+                  alt={displayName}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <Trophy className="w-5 h-5 text-slate-500" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                {translate('organizerLabel') || 'Ban tổ chức'}
+              </p>
+              <p className="text-sm font-bold text-slate-900 truncate" title={displayName}>
+                {displayName}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Tournament Title & Badges */}
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Badge */}
+          {(() => {
+            const isLive = isTournamentInProgress(activeTournament.status) || activeLiveMatchesCount > 0;
+            const isFinished = isTournamentCompleted(activeTournament.status);
+            return (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+                isLive
+                  ? 'bg-rose-600 text-white'
+                  : isFinished
+                    ? 'bg-slate-700 text-white'
+                    : 'bg-emerald-600 text-white'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+                {isLive
+                  ? (translate('inProgress') || 'Đang diễn ra')
+                  : isFinished
+                    ? (translate('completed') || 'Đã kết thúc')
+                    : (translate('upcoming') || 'Sắp diễn ra')}
+              </span>
+            );
+          })()}
+
+          {/* Sport Badge */}
+          {activeTournament.category?.name && (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
+              {(() => {
+                const logo = getSportLogo(activeTournament.category?.name);
+                return logo ? (
+                  <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                ) : null;
+              })()}
+              {activeTournament.category.name}
+            </span>
+          )}
+
+          {/* Ranked / Casual Badge */}
+          <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+            activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+          }`}>
+            {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
+          </span>
+        </div>
+
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
+          {tournament.name}
+        </h1>
+      </div>
+
+      {/* Key Details Rows */}
+      <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">
+        {/* Dates */}
+        <div className="flex items-start gap-2.5">
+          <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+          <p className="font-semibold text-slate-800">
+            {activeTournament.startDate ? (
+              <>
+                {formatDate(activeTournament.startDate)}
+                {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
+              </>
+            ) : translate('dateNotSet')}
+          </p>
+        </div>
+
+        {/* Location */}
+        <div className="flex items-start gap-2.5">
+          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+          <p className="leading-relaxed text-slate-600 break-words" title={getTournamentLocationLabel(activeTournament)}>
+            {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
+          </p>
+        </div>
+
+        {/* Divisions Count */}
+        <div className="flex items-center gap-2.5">
+          <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
+          <p className="font-semibold text-slate-700">
+            {divisionsList.length || 1} {translate('competitionContentTitle') || 'Nội dung thi đấu'}
+          </p>
+        </div>
+
+        {/* Participants / Teams Count */}
+        <div className="flex items-center gap-2.5">
+          <Users className="w-4 h-4 text-slate-400 shrink-0" />
+          <p className="font-semibold text-slate-700">
+            {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0} {translate('participantsCount') || 'đội / VĐV'}
+          </p>
+        </div>
+      </div>
+
+      {/* Smart Sequential Countdown Timer */}
+      {(() => {
+        const now = new Date();
+        const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
+        const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
+        const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
+        const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
+
+        // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
+        if (regStart && now < regStart) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.registrationStartDate!}
+                labels={{
+                  active: translate('registrationOpensAfter') || 'Mở đăng ký sau',
+                  expired: translate('registrationOpened') || 'Đã mở đăng ký',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="info"
+              />
+            </div>
+          );
+        }
+
+        // 2. Đang mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
+        if (regEnd && now < regEnd && !isRegistrationLocked) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.registrationEndDate!}
+                labels={{
+                  active: translate('closeRegistrationAfter') || 'Đóng đăng ký sau',
+                  expired: translate('registrationClosed') || 'Đã đóng đăng ký',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="warning"
+              />
+            </div>
+          );
+        }
+
+        // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
+        if (tourStart && now < tourStart) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.startDate!}
+                labels={{
+                  active: translate('startAfter') || 'Khởi tranh sau',
+                  expired: translate('started') || 'Đã khởi tranh',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="danger"
+              />
+            </div>
+          );
+        }
+
+        // 4. Đang diễn ra -> Đếm ngược ngày kết thúc
+        if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.endDate!}
+                labels={{
+                  active: translate('endAfter') || 'Kết thúc sau',
+                  expired: translate('completed') || 'Đã kết thúc',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="danger"
+              />
+              <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange") || 'Thời gian thi đấu có thể thay đổi theo tiến độ.'}</p>
+            </div>
+          );
+        }
+
+        return null;
+      })()}
+
+      {/* Primary CTA Button */}
+      <div className="pt-1">
+        {!isOwner && !isTournamentDraft(activeTournament.status) && (
+          <div>
+            {isRegistrationButtonDisabled ? (
+              <Button
+                type="button"
+                onClick={() => handleTabSelect('matches')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                {translate('tabs.matches') || 'Lịch thi đấu'}
+              </Button>
+            ) : canResumePayment ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  const resumeParticipantId = myRegistration?.participant?.id;
+                  if (resumeParticipantId) {
+                    const checkoutParams = new URLSearchParams({
+                      participantId: resumeParticipantId,
+                      tournamentId,
+                    });
+                    const resumeDivisionId =
+                      myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
+                    if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
+                    if (inviteCode) checkoutParams.set('invite', inviteCode);
+                    router.push(`/payments/checkout?${checkoutParams.toString()}`);
+                  } else {
+                    router.push(registerHref);
+                  }
+                }}
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                {translate('continuePayment') || 'Thanh toán ngay'}
+              </Button>
+            ) : isClubLiteTournament(activeTournament) ? (
+              activeTournament.inviteCode ? (
+                <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm">
+                    {translate('liteJoin')}
+                  </Button>
+                </Link>
+              ) : (
+                <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm">
+                  {translate('joinLinkUnavailable')}
+                </Button>
+              )
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  const needsRegistrationPage =
+                    activeTournament.visibility === 'PRIVATE' ||
+                    registrationModeUi.mode !== 'OPEN' ||
+                    divisionsList.length > 0 ||
+                    hasAdvancedRegistrationForm;
+                  if (needsRegistrationPage) {
+                    router.push(registerHref);
+                  } else {
+                    setIsRegisterModalOpen(true);
+                  }
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer"
+              >
+                {registrationButtonLabel}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {isOwner && !isTournamentDraft(activeTournament.status) && (
+          <div className="space-y-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+              <p className="text-xs text-slate-700 font-bold">
+                {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
+              </p>
+            </div>
+            <Link
+              href={`/organizer/tournaments/${activeTournament.id}/manage`}
+              className="block w-full"
+            >
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-sm">
+                {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Registration Timeline Table */}
+      <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
+        <div className="flex items-center justify-between text-slate-600">
+          <span className="font-medium">{translate('regStart') || 'Mở đăng ký'}:</span>
+          <span className="font-bold text-slate-800">
+            {activeTournament.registrationStartDate ? formatDate(activeTournament.registrationStartDate) : translate('notUpdated')}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-slate-600">
+          <span className="font-medium">{translate('regEnd') || 'Thời hạn đăng ký'}:</span>
+          <span className="font-bold text-slate-800">
+            {activeTournament.registrationEndDate ? formatDate(activeTournament.registrationEndDate) : translate('notUpdated')}
+          </span>
+        </div>
+        {isRegistrationLocked && (
+          <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
+            <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
+            <span>🔒</span>
+          </div>
+        )}
+        {Number(activeTournament.entryFee) > 0 && (
+          <div className="flex items-center justify-between text-slate-600 pt-1.5 border-t border-dashed border-slate-100">
+            <span className="font-medium">{translate('entryFee') || 'Lệ phí'}:</span>
+            <span className="font-black text-blue-600 text-sm">
+              {formatCurrency(activeTournament.entryFee)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Secondary Utility Actions (Follow, Share, Report) */}
+      <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+        {user?.id && (
+          <Button
+            onClick={toggleFollow}
+            disabled={followLoading}
+            variant={isFollowing ? 'default' : 'outline'}
+            className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-lg ${
+              isFollowing
+                ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
+                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+          >
+            <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
+            {isFollowing ? translate('followActive') : translate('follow')}
+          </Button>
+        )}
+        <Button
+          onClick={handleShareClick}
+          variant="outline"
+          className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-lg"
+        >
+          <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
+        </Button>
+        <ReportViolationButton
+          targetType="TOURNAMENT"
+          targetId={tournament.id}
+          targetLabel={tournament.name}
+          hidden={isOwner}
+          compact
+        />
+      </div>
+    </div>
+  );
+
+  const renderContactCard = () => (
+    activeTournament.contactInfo ? (
+      <div className="bg-white rounded-xl border border-slate-200/90 p-5 flex flex-col gap-2.5 shadow-sm">
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
+        {activeTournament.contactInfo.phone && (
+          <div className="flex items-center gap-2.5">
+            <Phone className="w-4 h-4 text-slate-450 shrink-0" />
+            <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
+          </div>
+        )}
+        {activeTournament.contactInfo.email && (
+          <div className="flex items-center gap-2.5">
+            <Mail className="w-4 h-4 text-slate-450 shrink-0" />
+            <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
+          </div>
+        )}
+        {Object.entries(activeTournament.contactInfo)
+          .filter(([key]) => key !== 'phone' && key !== 'email')
+          .map(([key, val]) => {
+            if (!val) return null;
+            const lowercaseKey = key.toLowerCase();
+            const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
+
+            let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
+            let iconColor = 'text-slate-450';
+
+            if (lowercaseKey.includes('instagram')) {
+              IconComponent = InstagramIcon;
+              iconColor = 'text-pink-600';
+            } else if (lowercaseKey.includes('zalo')) {
+              IconComponent = ZaloIcon;
+              iconColor = 'text-blue-650';
+            }
+
+            return (
+              <div key={key} className="flex items-center gap-2.5">
+                <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
+                <span className="text-xs font-bold text-slate-500">{key}:</span>
+                {isUrl ? (
+                  <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
+                    {val}
+                  </a>
+                ) : (
+                  <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
+                )}
+              </div>
+            );
+          })}
+      </div>
+    ) : null
+  );
+
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
@@ -747,6 +1158,11 @@ const commonTranslate = useTranslations('Common');
                 defaultBanner={activeTournament.bannerUrl || undefined}
                 className="w-full h-full object-cover"
               />
+            </div>
+
+            {/* Mobile Metadata Container */}
+            <div className="block lg:hidden space-y-4">
+              {renderMetadataCard()}
             </div>
 
             {/* Horizontal Tabs */}
@@ -918,418 +1334,17 @@ const commonTranslate = useTranslations('Common');
               {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
               {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
             </div>
+
+            {/* Mobile Contact Container */}
+            <div className="block lg:hidden">
+              {renderContactCard()}
+            </div>
           </div>
 
           {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
-          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
-            {/* Metadata Main Card */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-5 md:p-6 shadow-sm space-y-4">
-              {/* Organizer / Club Header */}
-              {(() => {
-                const organizer = activeTournament.organizer;
-                const displayLogo = activeTournament.logoUrl || organizer?.avatarUrl;
-                const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
-                return (
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-                      {displayLogo ? (
-                        <img
-                          src={displayLogo}
-                          alt={displayName}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      ) : (
-                        <Trophy className="w-5 h-5 text-slate-500" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        {translate('organizerLabel') || 'Ban tổ chức'}
-                      </p>
-                      <p className="text-sm font-bold text-slate-900 truncate" title={displayName}>
-                        {displayName}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Tournament Title & Badges */}
-              <div className="space-y-2.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Status Badge */}
-                  {(() => {
-                    const isLive = isTournamentInProgress(activeTournament.status) || activeLiveMatchesCount > 0;
-                    const isFinished = isTournamentCompleted(activeTournament.status);
-                    return (
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
-                        isLive
-                          ? 'bg-rose-600 text-white'
-                          : isFinished
-                            ? 'bg-slate-700 text-white'
-                            : 'bg-emerald-600 text-white'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
-                        {isLive
-                          ? (translate('inProgress') || 'Đang diễn ra')
-                          : isFinished
-                            ? (translate('completed') || 'Đã kết thúc')
-                            : (translate('upcoming') || 'Sắp diễn ra')}
-                      </span>
-                    );
-                  })()}
-
-                  {/* Sport Badge */}
-                  {activeTournament.category?.name && (
-                    <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
-                      {(() => {
-                        const logo = getSportLogo(activeTournament.category?.name);
-                        return logo ? (
-                          <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
-                        ) : null;
-                      })()}
-                      {activeTournament.category.name}
-                    </span>
-                  )}
-
-                  {/* Ranked / Casual Badge */}
-                  <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
-                    activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
-                  }`}>
-                    {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
-                  </span>
-                </div>
-
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
-                  {tournament.name}
-                </h1>
-              </div>
-
-              {/* Key Details Rows */}
-              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">
-                {/* Dates */}
-                <div className="flex items-start gap-2.5">
-                  <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                  <p className="font-semibold text-slate-800">
-                    {activeTournament.startDate ? (
-                      <>
-                        {formatDate(activeTournament.startDate)}
-                        {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
-                      </>
-                    ) : translate('dateNotSet')}
-                  </p>
-                </div>
-
-                {/* Location */}
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed text-slate-600 break-words" title={getTournamentLocationLabel(activeTournament)}>
-                    {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
-                  </p>
-                </div>
-
-                {/* Divisions Count */}
-                <div className="flex items-center gap-2.5">
-                  <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
-                  <p className="font-semibold text-slate-700">
-                    {divisionsList.length || 1} {translate('competitionContentTitle') || 'Nội dung thi đấu'}
-                  </p>
-                </div>
-
-                {/* Participants / Teams Count */}
-                <div className="flex items-center gap-2.5">
-                  <Users className="w-4 h-4 text-slate-400 shrink-0" />
-                  <p className="font-semibold text-slate-700">
-                    {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0} {translate('participantsCount') || 'đội / VĐV'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Smart Sequential Countdown Timer */}
-              {(() => {
-                const now = new Date();
-                const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
-                const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
-                const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
-                const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
-
-                // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
-                if (regStart && now < regStart) {
-                  return (
-                    <div className="pt-2 border-t border-slate-100">
-                      <CountdownTimer
-                        targetDate={activeTournament.registrationStartDate!}
-                        labels={{
-                          active: translate('registrationOpensAfter') || 'Mở đăng ký sau',
-                          expired: translate('registrationOpened') || 'Đã mở đăng ký',
-                          dayLabel: commonTranslate('countdownDay') || 'ngày',
-                        }}
-                        variant="info"
-                      />
-                    </div>
-                  );
-                }
-
-                // 2. Đang mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
-                if (regEnd && now < regEnd && !isRegistrationLocked) {
-                  return (
-                    <div className="pt-2 border-t border-slate-100">
-                      <CountdownTimer
-                        targetDate={activeTournament.registrationEndDate!}
-                        labels={{
-                          active: translate('closeRegistrationAfter') || 'Đóng đăng ký sau',
-                          expired: translate('registrationClosed') || 'Đã đóng đăng ký',
-                          dayLabel: commonTranslate('countdownDay') || 'ngày',
-                        }}
-                        variant="warning"
-                      />
-                    </div>
-                  );
-                }
-
-                // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
-                if (tourStart && now < tourStart) {
-                  return (
-                    <div className="pt-2 border-t border-slate-100">
-                      <CountdownTimer
-                        targetDate={activeTournament.startDate!}
-                        labels={{
-                          active: translate('startAfter') || 'Khởi tranh sau',
-                          expired: translate('started') || 'Đã khởi tranh',
-                          dayLabel: commonTranslate('countdownDay') || 'ngày',
-                        }}
-                        variant="danger"
-                      />
-                    </div>
-                  );
-                }
-
-                // 4. Đang diễn ra -> Đếm ngược ngày kết thúc
-                if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
-                  return (
-                    <div className="pt-2 border-t border-slate-100">
-                      <CountdownTimer
-                        targetDate={activeTournament.endDate!}
-                        labels={{
-                          active: translate('endAfter') || 'Kết thúc sau',
-                          expired: translate('completed') || 'Đã kết thúc',
-                          dayLabel: commonTranslate('countdownDay') || 'ngày',
-                        }}
-                        variant="danger"
-                      />
-                      <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange") || 'Thời gian thi đấu có thể thay đổi theo tiến độ.'}</p>
-                    </div>
-                  );
-                }
-
-                return null;
-              })()}
-
-              {/* Primary CTA Button */}
-              <div className="pt-1">
-                {!isOwner && !isTournamentDraft(activeTournament.status) && (
-                  <div>
-                    {isRegistrationButtonDisabled ? (
-                      <Button
-                        type="button"
-                        onClick={() => handleTabSelect('matches')}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <Calendar className="w-4 h-4" />
-                        {translate('tabs.matches') || 'Lịch thi đấu'}
-                      </Button>
-                    ) : canResumePayment ? (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const resumeParticipantId = myRegistration?.participant?.id;
-                          if (resumeParticipantId) {
-                            const checkoutParams = new URLSearchParams({
-                              participantId: resumeParticipantId,
-                              tournamentId,
-                            });
-                            const resumeDivisionId =
-                              myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
-                            if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                            if (inviteCode) checkoutParams.set('invite', inviteCode);
-                            router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                          } else {
-                            router.push(registerHref);
-                          }
-                        }}
-                        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-xl shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
-                      >
-                        <CreditCard className="w-4 h-4" />
-                        {translate('continuePayment') || 'Thanh toán ngay'}
-                      </Button>
-                    ) : isClubLiteTournament(activeTournament) ? (
-                      activeTournament.inviteCode ? (
-                        <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
-                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md text-sm">
-                            {translate('liteJoin')}
-                          </Button>
-                        </Link>
-                      ) : (
-                        <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm">
-                          {translate('joinLinkUnavailable')}
-                        </Button>
-                      )
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const needsRegistrationPage =
-                            activeTournament.visibility === 'PRIVATE' ||
-                            registrationModeUi.mode !== 'OPEN' ||
-                            divisionsList.length > 0 ||
-                            hasAdvancedRegistrationForm;
-                          if (needsRegistrationPage) {
-                            router.push(registerHref);
-                          } else {
-                            setIsRegisterModalOpen(true);
-                          }
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer"
-                      >
-                        {registrationButtonLabel}
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {isOwner && !isTournamentDraft(activeTournament.status) && (
-                  <div className="space-y-2">
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-700 font-bold">
-                        {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/organizer/tournaments/${activeTournament.id}/manage`}
-                      className="block w-full"
-                    >
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-sm">
-                        {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              {/* Registration Timeline Table */}
-              <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
-                <div className="flex items-center justify-between text-slate-600">
-                  <span className="font-medium">{translate('regStart') || 'Mở đăng ký'}:</span>
-                  <span className="font-bold text-slate-800">
-                    {activeTournament.registrationStartDate ? formatDate(activeTournament.registrationStartDate) : translate('notUpdated')}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span className="font-medium">{translate('regEnd') || 'Thời hạn đăng ký'}:</span>
-                  <span className="font-bold text-slate-800">
-                    {activeTournament.registrationEndDate ? formatDate(activeTournament.registrationEndDate) : translate('notUpdated')}
-                  </span>
-                </div>
-                {isRegistrationLocked && (
-                  <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
-                    <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
-                    <span>🔒</span>
-                  </div>
-                )}
-                {Number(activeTournament.entryFee) > 0 && (
-                  <div className="flex items-center justify-between text-slate-600 pt-1.5 border-t border-dashed border-slate-100">
-                    <span className="font-medium">{translate('entryFee') || 'Lệ phí'}:</span>
-                    <span className="font-black text-blue-600 text-sm">
-                      {formatCurrency(activeTournament.entryFee)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Secondary Utility Actions (Follow, Share, Report) */}
-              <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
-                {user?.id && (
-                  <Button
-                    onClick={toggleFollow}
-                    disabled={followLoading}
-                    variant={isFollowing ? 'default' : 'outline'}
-                    className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-lg ${
-                      isFollowing
-                        ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
-                    {isFollowing ? translate('followActive') : translate('follow')}
-                  </Button>
-                )}
-                <Button
-                  onClick={handleShareClick}
-                  variant="outline"
-                  className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-lg"
-                >
-                  <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
-                </Button>
-                <ReportViolationButton
-                  targetType="TOURNAMENT"
-                  targetId={tournament.id}
-                  targetLabel={tournament.name}
-                  hidden={isOwner}
-                  compact
-                />
-              </div>
-            </div>
-
-            {/* Contact Info Card if available */}
-            {activeTournament.contactInfo && (
-              <div className="bg-white rounded-xl border border-slate-200/90 p-5 flex flex-col gap-2.5 shadow-sm">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
-                {activeTournament.contactInfo.phone && (
-                  <div className="flex items-center gap-2.5">
-                    <Phone className="w-4 h-4 text-slate-450 shrink-0" />
-                    <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
-                  </div>
-                )}
-                {activeTournament.contactInfo.email && (
-                  <div className="flex items-center gap-2.5">
-                    <Mail className="w-4 h-4 text-slate-450 shrink-0" />
-                    <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
-                  </div>
-                )}
-                {Object.entries(activeTournament.contactInfo)
-                  .filter(([key]) => key !== 'phone' && key !== 'email')
-                  .map(([key, val]) => {
-                    if (!val) return null;
-                    const lowercaseKey = key.toLowerCase();
-                    const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
-
-                    let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
-                    let iconColor = 'text-slate-450';
-
-                    if (lowercaseKey.includes('instagram')) {
-                      IconComponent = InstagramIcon;
-                      iconColor = 'text-pink-600';
-                    } else if (lowercaseKey.includes('zalo')) {
-                      IconComponent = ZaloIcon;
-                      iconColor = 'text-blue-650';
-                    }
-
-                    return (
-                      <div key={key} className="flex items-center gap-2.5">
-                        <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
-                        <span className="text-xs font-bold text-slate-500">{key}:</span>
-                        {isUrl ? (
-                          <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
-                            {val}
-                          </a>
-                        ) : (
-                          <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
+          <div className="hidden lg:block lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
+            {renderMetadataCard()}
+            {renderContactCard()}
           </div>
         </div>
       </div>

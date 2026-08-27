@@ -1092,7 +1092,17 @@ export function useManageState(id: string) {
 
   const handleConfirmLock = async () => {
     setIsLocking(true);
-    try { await tournamentsApi.lockTournament(id); toast.success('Chốt danh sách thành công!'); setIsLockModalOpen(false); await fetchTournamentData(); await refetchDivisionData(); }
+    try {
+      await tournamentsApi.lockTournament(id);
+      toast.success('Chốt danh sách thành công!');
+      setIsLockModalOpen(false);
+      // Cập nhật registrationEndDate = thời gian chốt danh sách để đóng form đăng ký
+      const now = new Date();
+      const pad = (v: number) => String(v).padStart(2, '0');
+      setRegistrationEndDate(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`);
+      await fetchTournamentData();
+      await refetchDivisionData();
+    }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsLocking(false); }
   };

@@ -3,9 +3,12 @@ import { test, expect, Page } from '@playwright/test';
 test.describe.serial('Register 3 user accounts automation flow', () => {
   test.setTimeout(120_000);
 
-  const baseURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+  // LOCAL
+  // const baseURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+  // PRODUCTION
+  const baseURL = 'https://sporto.asia';
   const users = Array.from({ length: 3 }, (_, index) => {
-    const number = index + 11; // Start from 11 to avoid conflicts with existing users
+    const number = index + 1; // Start from 11 to avoid conflicts with existing users
     return {
       fullName: `Vận động viên ${number}`,
       email: `user${number}@gmail.com`,

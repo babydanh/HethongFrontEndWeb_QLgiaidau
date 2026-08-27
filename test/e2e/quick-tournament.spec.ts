@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+// LOCAL
+// const baseURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+// PRODUCTION
+const baseURL = 'https://sporto.asia';
 test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
   test.setTimeout(120_000);
 
@@ -11,7 +15,7 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
   test.beforeEach(async ({ page }) => {
     const sleep = async () => page.waitForTimeout(500);
     // Login
-    await page.goto('http://localhost:3001/login');
+    await page.goto(`${baseURL}/login`);
     await sleep();
 
     await page.getByTestId('login-email-input').fill(userEmail);
@@ -29,7 +33,7 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
     const sleep = async () => page.waitForTimeout(500);
 
     // Navigate to quick create page and clean any old draft
-    await page.goto('http://localhost:3001/organizer/tournaments/create');
+    await page.goto(`${baseURL}/organizer/tournaments/create`);
     await page.evaluate(() => localStorage.clear());
     await sleep();
 
@@ -75,7 +79,7 @@ test.describe.serial('Quick Tournament Creation and Edit Flow', () => {
     const sleep = async () => page.waitForTimeout(1000);
 
     // 1. Truy cập vào /dashboard
-    await page.goto('http://localhost:3001/dashboard');
+    await page.goto(`${baseURL}/dashboard`);
     await sleep();
 
     // 2. Click vào tab/link 'Quản lý giải đấu'

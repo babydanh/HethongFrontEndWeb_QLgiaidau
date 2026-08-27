@@ -3,7 +3,10 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('Edit Profile Flow', () => {
   test.setTimeout(60_000);
 
-  const baseURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+  // LOCAL
+  // const baseURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+  // PRODUCTION
+  const baseURL = 'https://sporto.asia';
 
   const profileData = {
     phone: '0987654321',

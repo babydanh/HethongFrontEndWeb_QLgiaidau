@@ -40,7 +40,7 @@ function CountdownTimer({ targetDate, daysLabel }: { targetDate: string; daysLab
   );
 }
 
-export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[280px] md:h-[420px] lg:h-[460px]' }: Props) {
+export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[185px] sm:h-[240px] md:h-[380px] lg:h-[420px]' }: Props) {
   const translate = useTranslations('Home');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(95);
@@ -109,25 +109,34 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length > 0) {
-      isDraggingRef.current = true;
-      setIsDragging(true);
-      startX.current = e.touches[0].pageX;
-      dragDistance.current = 0;
-    }
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    startX.current = e.touches[0].pageX;
+    dragDistance.current = 0;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingRef.current || e.touches.length === 0) return;
+    if (!isDraggingRef.current) return;
     const deltaX = e.touches[0].pageX - startX.current;
     setDragOffset(deltaX);
     dragDistance.current = Math.abs(deltaX);
   };
 
   const handleTouchEnd = () => {
-    if (isDraggingRef.current) {
-      handleMouseUp();
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+
+    const deltaX = dragOffset;
+    setDragOffset(0);
+
+    let nextIndex = currentIndex;
+    if (deltaX < -50 && currentIndex < tournaments.length - 1) {
+      nextIndex = currentIndex + 1;
+    } else if (deltaX > 50 && currentIndex > 0) {
+      nextIndex = currentIndex - 1;
     }
+    setCurrentIndex(nextIndex);
   };
 
   const handleLinkClick = (e: React.MouseEvent) => {
@@ -139,7 +148,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <div className={`w-full ${heightClass} rounded-[20px] bg-[#a9c9fb] flex flex-col justify-center items-center text-center p-8 md:p-14 shadow-lg shadow-blue-500/15 relative overflow-hidden min-h-[300px] md:min-h-[400px]`}>
+      <div className={`w-full ${heightClass} rounded-[20px] bg-[#a9c9fb] flex flex-col justify-center items-center text-center p-8 md:p-14 shadow-lg shadow-blue-500/15 relative overflow-hidden min-h-[185px] md:min-h-[400px]`}>
         {/* Faint racket + shuttlecock background icon watermark */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] md:w-[600px] h-[350px] md:h-[600px] opacity-[0.16] pointer-events-none z-0">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -218,20 +227,20 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
     switch (status) {
       case 'REGISTRATION_OPEN':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-emerald-500 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] uppercase font-bold bg-emerald-500 text-white shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
             {translate('registrationOpen')}
           </span>
         );
       case 'REGISTRATION_CLOSED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-amber-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] uppercase font-bold bg-amber-600 text-white shadow-sm">
             {translate('registrationClosed')}
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-blue-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] uppercase font-bold bg-blue-600 text-white shadow-sm">
             {translate('upcoming')}
           </span>
         );
@@ -249,20 +258,18 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onDragStart={(e) => e.preventDefault()}
-        className="flex py-1 cursor-grab active:cursor-grabbing touch-pan-y"
+        className="flex transition-transform duration-500 ease-out cursor-grab active:cursor-grabbing"
         style={{
           transform: `translateX(calc(-${currentIndex * slideWidth}% + ${dragOffset}px))`,
-          transition: isDragging ? 'none' : 'transform 750ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        {tournaments.map((tournament, idx) => {
-          const isActive = idx === currentIndex;
+        {tournaments.map((tournament, index) => {
+          const isActive = index === currentIndex;
           const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
           return (
             <div
               key={tournament.id}
-              className="shrink-0 pr-3"
+              className="flex-shrink-0 px-1 sm:px-1.5"
               style={{
                 width: `${slideWidth}%`,
               }}
@@ -283,13 +290,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                       <img
                         src={BRAND.assets.logoFull}
                         alt={`${BRAND.name} Logo`}
-                        className="w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm"
+                        className="w-40 sm:w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm"
                         draggable="false"
                       />
                     </div>
                   )}
                   {!hideFeaturedCardText && (
-                    <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
                   )}
                 </div>
 
@@ -301,14 +308,14 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                 />
 
                 {!hideFeaturedCardText && (
-                <div className="absolute bottom-4 left-5 right-5 z-20 pointer-events-none max-w-xl flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
+                <div className="absolute bottom-2.5 sm:bottom-4 left-3 sm:left-5 right-12 sm:right-20 z-20 pointer-events-none max-w-xl flex flex-col gap-0.5 sm:gap-1">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                     {tournament.category?.name && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 shadow-sm">
+                      <span className="flex items-center gap-1 text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-1.5 sm:px-2 py-0.5 rounded border border-white/20 shadow-sm">
                         {(() => {
                           const logo = getSportLogo(tournament.category?.name);
                           return logo ? (
-                            <img src={logo} alt={tournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150 drop-shadow" />
+                            <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 sm:w-3.5 sm:h-3.5 object-contain brightness-150 drop-shadow" />
                           ) : null;
                         })()}
                         {tournament.category.name}
@@ -317,14 +324,14 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                     {getStatusBadge(tournament.status)}
                   </div>
 
-                  <h2 className="text-base md:text-xl font-bold text-white tracking-tight leading-tight line-clamp-1 [text-shadow:_0_1.5px_4px_rgba(0,0,0,0.85)]">
+                  <h2 className="text-xs sm:text-base md:text-xl font-bold text-white tracking-tight leading-tight line-clamp-1 [text-shadow:_0_1.5px_4px_rgba(0,0,0,0.85)]">
                     {tournament.name}
                   </h2>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-100 font-medium [text-shadow:_0_1px_3px_rgba(0,0,0,0.85)]">
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[9.5px] sm:text-[11px] text-slate-100 font-medium [text-shadow:_0_1px_3px_rgba(0,0,0,0.85)]">
                     {tournament.startDate && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 inline-block drop-shadow" /> {new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 inline-block drop-shadow" /> {new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                         {tournament.endDate && ` - ${new Date(tournament.endDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`}
                       </span>
                     )}
@@ -333,7 +340,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                     )}
                     {getTournamentShortLocation(tournament) && (
                       <span className="flex items-center gap-1 line-clamp-1">
-                        <MapPin className="w-3 h-3 inline-block drop-shadow" /> {getTournamentShortLocation(tournament)}
+                        <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 inline-block drop-shadow" /> {getTournamentShortLocation(tournament)}
                       </span>
                     )}
                   </div>
@@ -364,13 +371,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
           </button>
 
           {/* Dots Indicators */}
-          <div className="absolute bottom-6 right-10 flex items-center gap-1.5 z-20">
+          <div className="absolute bottom-2.5 sm:bottom-4 right-3 sm:right-6 flex items-center gap-1.5 z-20">
             {tournaments.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
                 className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                  idx === currentIndex ? 'w-5 bg-blue-600' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                  idx === currentIndex ? 'w-4 sm:w-5 bg-blue-500 shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white/80'
                 }`}
               />
             ))}
@@ -380,4 +387,3 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
     </div>
   );
 }
-

@@ -1019,7 +1019,7 @@ export default function HomePage() {
             )}
           </div>
           {/* Name */}
-          <span className="mt-1.5 text-xs font-bold text-slate-800 text-center line-clamp-1 max-w-[105px] sm:max-w-[130px] tracking-tight leading-tight">
+          <span className="mt-1.5 text-xs font-bold text-slate-800 text-center line-clamp-1 max-w-[110px] sm:max-w-[140px] tracking-tight leading-tight">
             {displayName}
           </span>
         </div>
@@ -1040,7 +1040,7 @@ export default function HomePage() {
         {/* Whole Card Link */}
         <Link href={`/live/${match.id}`} className="block flex-1">
           {/* 1. Header Bar: Round / Stage & Live status */}
-          <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-50/70 border-b border-slate-100 text-[11px]">
+          <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-slate-50/70 border-b border-slate-100 text-[11px]">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-[11px] font-bold text-slate-700 truncate">
                 {roundLabel || translate('roundFallback')}
@@ -1070,12 +1070,12 @@ export default function HomePage() {
           </div>
 
           {/* 2. Opponents Face-off Arena */}
-          <div className="flex items-center justify-between gap-2 px-3.5 py-3.5 bg-white">
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-2.5 sm:py-3.5 bg-white">
             {/* Participant 1 */}
             {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
             {/* Center Score / Time */}
-            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[70px]">
+            <div className="flex flex-col items-center justify-center shrink-0 px-1.5 sm:px-2 min-w-[65px] sm:min-w-[70px]">
               {isScheduled ? (
                 <>
                   <span className="text-xs font-black tracking-wider text-slate-500 bg-slate-100/90 border border-slate-200/90 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
@@ -1107,7 +1107,7 @@ export default function HomePage() {
         </Link>
 
         {/* 3. Footer Bar: Court / Format & Cheer / Share Actions */}
-        <div className="px-3.5 py-2 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
+        <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 min-w-0 text-slate-500 text-[11px] truncate">
             <span className="font-semibold text-slate-700 shrink-0">
               {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
@@ -1332,21 +1332,21 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <TournamentHeroBanner tournaments={featuredHomepageTournaments} heightClass="h-[320px] md:h-[420px]" />
+              <TournamentHeroBanner tournaments={featuredHomepageTournaments} heightClass="h-[185px] sm:h-[240px] md:h-[380px] lg:h-[420px]" />
             )}
           </section>
 
           {/* Section 2: Trận live (Match Feed style) */}
           {(isLoading || liveMatches.length > 0) && (
             <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
                 <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
                 </span>
               </div>
-              <div className="p-4 flex flex-col gap-4">
+              <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
                 {isLoading ? (
                   <div className="space-y-4">
                     <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
@@ -1370,14 +1370,14 @@ export default function HomePage() {
                         const matchedTournament = tournaments.find(t => t.id === group.id);
                         const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
                         return (
-                          <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
+                          <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
                             {/* Group Tournament Header */}
                             <div className="flex items-center justify-between">
                               <Link
                                 href={group.id ? `/tournaments/${group.id}` : '#'}
-                                className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                                className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                               >
-                                <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
                                   <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                                 </div>
                                 <div className="min-w-0">
@@ -1389,13 +1389,13 @@ export default function HomePage() {
                                       <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>
-                                  <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                     {group.name}
                                   </h3>
                                 </div>
                               </Link>
 
-                              <div className="flex items-center gap-3 shrink-0">
+                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                 {/* Mini Pagination controls for tournament matches */}
                                 {totalPages > 1 && (
                                   <div className="flex items-center gap-1">
@@ -1421,7 +1421,7 @@ export default function HomePage() {
                               </div>
                             </div>
                             {/* Matches List Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                               {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                             </div>
                           </div>
@@ -1472,10 +1472,10 @@ export default function HomePage() {
           {/* Section 2.2: Trận đấu vừa kết thúc */}
           {(isLoading || completedMatches.length > 0) && (
             <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
                 <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentMatchResults')}</h2>
               </div>
-              <div className="p-4 flex flex-col gap-4">
+              <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
                 {isLoading ? (
                   <div className="space-y-4">
                     <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
@@ -1492,14 +1492,14 @@ export default function HomePage() {
                       const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                       return (
-                        <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
+                        <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
                           {/* Group Tournament Header */}
                           <div className="flex items-center justify-between">
                             <Link
                               href={group.id ? `/tournaments/${group.id}` : '#'}
-                              className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                              className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                             >
-                              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
                                 <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                               </div>
                               <div className="min-w-0">
@@ -1511,13 +1511,13 @@ export default function HomePage() {
                                     <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                   {group.name}
                                 </h3>
                               </div>
                             </Link>
 
-                            <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                               {/* Mini Pagination controls */}
                               {totalPages > 1 && (
                                 <div className="flex items-center gap-1">
@@ -1534,7 +1534,7 @@ export default function HomePage() {
                                   <button
                                     onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                     disabled={currentPage === totalPages}
-                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-350 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                                   >
                                     <ChevronRight className="w-3.5 h-3.5" />
                                   </button>
@@ -1543,8 +1543,8 @@ export default function HomePage() {
                             </div>
                           </div>
                           {/* Matches List Grid */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                            {displayMatches.map((match) => renderMatchCard(match, false, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>
                       );
@@ -1558,10 +1558,10 @@ export default function HomePage() {
           {/* Section 2.5: Trận đấu sắp diễn ra */}
           {(isLoading || upcomingMatches.length > 0) && (
             <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
                 <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('upcomingSchedule')}</h2>
               </div>
-              <div className="p-4 flex flex-col gap-4">
+              <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
                 {isLoading ? (
                   <div className="space-y-4">
                     <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
@@ -1578,14 +1578,14 @@ export default function HomePage() {
                       const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                       return (
-                        <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
+                        <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
                           {/* Group Tournament Header */}
                           <div className="flex items-center justify-between">
                             <Link
                               href={group.id ? `/tournaments/${group.id}` : '#'}
-                              className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                              className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                             >
-                              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
                                 <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                               </div>
                               <div className="min-w-0">
@@ -1597,13 +1597,13 @@ export default function HomePage() {
                                     <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                   {group.name}
                                 </h3>
                               </div>
                             </Link>
 
-                            <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                               {/* Mini Pagination controls */}
                               {totalPages > 1 && (
                                 <div className="flex items-center gap-1">
@@ -1620,7 +1620,7 @@ export default function HomePage() {
                                   <button
                                     onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                     disabled={currentPage === totalPages}
-                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-350 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                                   >
                                     <ChevronRight className="w-3.5 h-3.5" />
                                   </button>
@@ -1629,7 +1629,7 @@ export default function HomePage() {
                             </div>
                           </div>
                           {/* Matches List Grid */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                             {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>

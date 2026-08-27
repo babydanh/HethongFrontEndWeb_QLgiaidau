@@ -1221,7 +1221,7 @@ const commonTranslate = useTranslations('Common');
           {/* Left Column: Hero Banner + Mobile Metadata + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
             {/* Banner Container: Slimmer & sleek on mobile, generous & immersive on desktop */}
-            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-800">
+            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
               <GalleryCarousel
                 images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
                 defaultBanner={activeTournament.bannerUrl || undefined}

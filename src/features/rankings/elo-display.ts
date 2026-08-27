@@ -55,6 +55,42 @@ export const getEloMatchTypeLabel = (
   return (labels?.categoryFallback as string) ?? 'Tổng quan';
 };
 
+export type EloFormatLabels = {
+  singlesMale: string;
+  singlesFemale: string;
+  singlesOpen: string;
+  doublesMale: string;
+  doublesFemale: string;
+  doublesOpen: string;
+  mixedDoubles: string;
+  unknown: string;
+};
+
+/**
+ * Human-readable content label. Format and gender are one business label so
+ * a standalone "Singles/Đơn" can never hide the gender restriction.
+ */
+export const getEloFormatLabel = (
+  matchType?: string | null,
+  genderRestriction?: string | null,
+  labels?: Partial<EloFormatLabels>,
+): string => {
+  const fallback = labels?.unknown ?? getEloMatchTypeLabel(matchType);
+  const gender = genderRestriction?.toUpperCase() ?? '';
+  if (matchType === 'MIXED_DOUBLES') return labels?.mixedDoubles ?? 'Mixed doubles';
+  if (matchType === 'SINGLES') {
+    if (gender === 'MALE') return labels?.singlesMale ?? 'Men\'s singles';
+    if (gender === 'FEMALE') return labels?.singlesFemale ?? 'Women\'s singles';
+    return labels?.singlesOpen ?? 'Open singles';
+  }
+  if (matchType === 'DOUBLES') {
+    if (gender === 'MALE') return labels?.doublesMale ?? 'Men\'s doubles';
+    if (gender === 'FEMALE') return labels?.doublesFemale ?? 'Women\'s doubles';
+    return labels?.doublesOpen ?? 'Open doubles';
+  }
+  return fallback;
+};
+
 /** Display name combining category and match type. */
 export const getRankDisplayName = (rank: PlayerRanking): string => {
   const categoryName = rank.categoryName || 'Môn thể thao';
@@ -86,6 +122,13 @@ const TIER_TRANSLATION_KEYS: Record<string, string> = {
   'Low Tier A': 'tierLowA',
   'High Tier A': 'tierHighA',
   'Tier S': 'tierS',
+  Beginner: 'tierBeginner',
+  Intermediate: 'tierIntermediate',
+  Advanced: 'tierAdvanced',
+  Pro: 'tierPro',
+  'NTRP 2.0-3.0 (Beginner)': 'tierBeginner',
+  'NTRP 3.5-4.0 (Intermediate)': 'tierIntermediate',
+  'NTRP 4.5+ (Advanced)': 'tierAdvanced',
 };
 
 const getCanonicalBackendTierName = (rank: PlayerRanking): string | null => {
@@ -101,6 +144,9 @@ export const getRankTierName = (rank: PlayerRanking | null | undefined): string 
 };
 
 export type EloTierLabelTranslator = (key: string) => string;
+
+export const getRankTierTranslationKey = (tierName: string): string | null =>
+  TIER_TRANSLATION_KEYS[tierName] ?? null;
 
 /** Localize a canonical tier key while keeping the raw tier name for styling. */
 export const getLocalizedRankTierName = (

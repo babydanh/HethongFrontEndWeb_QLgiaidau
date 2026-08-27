@@ -7,12 +7,14 @@ import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, type FootballTeamRanking, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
-import { getCanonicalTierName } from "@/features/rankings/elo-display";
+import { getCanonicalTierName, getEloFormatLabel, getLocalizedRankTierName, getMostProminentRank, getRankTierTranslationKey, isPublicRankingEligible } from "@/features/rankings/elo-display";
 import { buildLeaderboardStandingSlots, isLeaderboardPlaceholder } from "@/features/rankings/leaderboard-slots";
 import { getRankBorderColor } from "@/components/ui/RankAvatar";
+import { getRankStyle, getRankTierDefinitions } from "@/utils/rank-style";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
+import { useAuthStore } from "@/lib/zustand/authStore";
 
 interface LeaderboardSearchResult {
     id: string;
@@ -22,6 +24,8 @@ interface LeaderboardSearchResult {
     eloPoints: number;
     tierName: string;
     categoryName?: string;
+    matchType?: PlayerRanking['matchType'];
+    genderRestriction?: PlayerRanking['genderRestriction'];
 }
 
 type StandingEloSize = 'sm' | 'md';
@@ -35,13 +39,19 @@ function StandingElo({
   sportLabel: string;
   size?: StandingEloSize;
 }) {
+  const t = useTranslations('Leaderboard');
+  const eloTranslate = useTranslations('EloDisplay');
+  const formatLabel = getLeaderboardFormatLabel(ranking, t);
+  const tierLabel = getLocalizedRankTierName(ranking, eloTranslate);
+  const tierStyle = getRankStyle(ranking.eloPoints, getCanonicalTierName(ranking), ranking.categoryName);
   return (
     <div
-      className={`inline-flex flex-col items-center rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 shadow-xs ${size === 'md' ? 'min-w-24' : 'min-w-20'}`}
-      title={`${sportLabel}: ${ranking.eloPoints} ELO`}
+      className={`inline-flex flex-col items-center rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 shadow-xs ${size === 'md' ? 'min-w-28' : 'min-w-24'}`}
+      title={`${sportLabel} · ${formatLabel}: ${ranking.eloPoints} ELO · ${tierLabel}`}
     >
-      <span className="max-w-28 truncate text-[8px] font-bold uppercase tracking-wide text-slate-500">{sportLabel}</span>
-      <span className={`${size === 'md' ? 'text-sm' : 'text-xs'} font-black leading-tight text-slate-900`}>{ranking.eloPoints} ELO</span>
+      <span className="max-w-32 truncate text-[8px] font-bold uppercase tracking-wide text-slate-500">{sportLabel} · {formatLabel}</span>
+      <span className={`${size === 'md' ? 'text-sm' : 'text-xs'} rounded-md px-1.5 py-0.5 font-black leading-tight ${tierStyle.badgeClass}`}>{ranking.eloPoints} ELO</span>
+      <span className="max-w-32 truncate text-[8px] font-semibold text-slate-500">{tierLabel}</span>
     </div>
   );
 }
@@ -101,8 +111,26 @@ function getStandingBorderColor(ranking: PlayerRanking | undefined, fallback: st
   );
 }
 
+function getLeaderboardFormatLabel(
+  ranking: Pick<PlayerRanking, 'matchType' | 'genderRestriction'> | undefined,
+  translate: (key: string) => string,
+): string {
+  return getEloFormatLabel(ranking?.matchType, ranking?.genderRestriction, {
+    singlesMale: translate('formatSinglesMale'),
+    singlesFemale: translate('formatSinglesFemale'),
+    singlesOpen: translate('formatSinglesOpen'),
+    doublesMale: translate('formatDoublesMale'),
+    doublesFemale: translate('formatDoublesFemale'),
+    doublesOpen: translate('formatDoublesOpen'),
+    mixedDoubles: translate('formatMixedDoubles'),
+    unknown: translate('formatUnknown'),
+  });
+}
+
 export default function LeaderboardPage() {
-  const t = useTranslations("Leaderboard");
+    const t = useTranslations("Leaderboard");
+  const eloTranslate = useTranslations('EloDisplay');
+  const { user } = useAuthStore();
 
     const getCategoryLabel = (category: Category) => {
     switch (category.slug) {
@@ -178,6 +206,8 @@ export default function LeaderboardPage() {
                             eloPoints: matchRank?.eloPoints ?? 1000,
                             tierName: matchRank?.tier?.name || matchRank?.tierName || t("unranked"),
                             categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
+                            matchType: matchRank?.matchType,
+                            genderRestriction: matchRank?.genderRestriction,
                         };
                     } catch {
                         return {
@@ -199,6 +229,7 @@ export default function LeaderboardPage() {
     };
 
     useEffect(() => {
+        let cancelled = false;
         const init = async () => {
             try {
                 const catsRes = await categoriesApi.getCategories();
@@ -233,20 +264,35 @@ export default function LeaderboardPage() {
                   return cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false;
                 });
 
+                const profileResponse = user?.id
+                  ? await rankingsApi.getUserRankings(user.id).catch(() => null)
+                  : null;
+                const profileRanks = profileResponse?.publicRanks ?? [];
+                const prominentRank = getMostProminentRank(profileRanks.filter(isPublicRankingEligible));
+                const pickleballCategory = activeCats.find((category) => category.slug === 'pickleball');
+                const profileCategory = prominentRank
+                  ? activeCats.find((category) => category.id === prominentRank.categoryId)
+                  : undefined;
+                const defaultCategory = profileCategory ?? pickleballCategory ?? activeCats[0];
+
+                if (cancelled) return;
                 setCategories(activeCats);
-                if (activeCats.length > 0) {
-                    setActiveCategoryId(activeCats[0].id);
-                }
+                setActiveCategoryId(defaultCategory?.id ?? null);
+                setSelectedMatchType(prominentRank?.matchType ?? 'SINGLES');
+                setSelectedGenderFilter(prominentRank?.genderRestriction ?? (prominentRank ? '' : 'MALE'));
 
                 const res = await regionsApi.getProvinces();
                 const provList = (Array.isArray(res) ? res : (res as { data?: Region[] }).data) || [];
-                setProvinces(provList);
+                if (!cancelled) setProvinces(provList);
             } catch (error) {
                 console.error("Failed to initialize leaderboard data", error);
             }
         };
-        init();
-    }, []);
+        void init();
+        return () => {
+          cancelled = true;
+        };
+    }, [user?.id, t]);
 
     useEffect(() => {
         if (!activeCategoryId) return;
@@ -403,8 +449,8 @@ export default function LeaderboardPage() {
                                             <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                         </div>
                                         <div className="shrink-0 text-right">
-                                            <div className="text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')}</div>
-                                            <div className="text-xs font-black text-slate-800">{u.eloPoints} ELO</div>
+                                            <div className="max-w-36 truncate text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')} · {getLeaderboardFormatLabel(u, t)}</div>
+                                            <div className={`inline-flex rounded-md px-1.5 py-0.5 text-xs font-black ${getRankStyle(u.eloPoints, u.tierName, u.categoryName).badgeClass}`}>{u.eloPoints} ELO</div>
                                         </div>
                                     </button>
                                 ))}
@@ -846,42 +892,19 @@ export default function LeaderboardPage() {
                                 </div>
                             </dialog>
                             <div className="flex flex-col gap-2">
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FEF3C7] border-amber-300">
-                                    <span className="bg-[#D97706] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Tier S</span>
-                                    <span className="font-bold text-xs text-[#92400E]">1800+ ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#F8C4B4] border-rose-300">
-                                    <span className="bg-[#DC2626] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier A</span>
-                                    <span className="font-bold text-xs text-[#991B1B]">1700 - 1799 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FBE8E0] border-rose-200">
-                                    <span className="bg-[#EF4444] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier A</span>
-                                    <span className="font-bold text-xs text-[#B91C1C]">1600 - 1699 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#BFDBFE] border-blue-300">
-                                    <span className="bg-[#2563EB] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier B</span>
-                                    <span className="font-bold text-xs text-[#1E40AF]">1500 - 1599 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#EFF6FF] border-blue-200">
-                                    <span className="bg-[#3B82F6] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier B</span>
-                                    <span className="font-bold text-xs text-[#1D4ED8]">1400 - 1499 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#A7F3D0] border-emerald-300">
-                                    <span className="bg-[#059669] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier C</span>
-                                    <span className="font-bold text-xs text-[#065F46]">1300 - 1399 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#ECFDF5] border-emerald-200">
-                                    <span className="bg-[#10B981] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier C</span>
-                                    <span className="font-bold text-xs text-[#047857]">1200 - 1299 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#E2E8F0] border-slate-300">
-                                    <span className="bg-[#475569] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier D</span>
-                                    <span className="font-bold text-xs text-[#1E293B]">1100 - 1199 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#F5F5F4] border-stone-300">
-                                    <span className="bg-[#78716C] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier D</span>
-                                    <span className="font-bold text-xs text-[#44403C]">0 - 1099 ELO</span>
-                                </div>
+                                {[...getRankTierDefinitions(activeCategory?.name)].reverse().map((tier) => {
+                                  const tierKey = getRankTierTranslationKey(tier.name);
+                                  const tierLabel = tierKey ? eloTranslate(tierKey) : tier.name;
+                                  const rangeLabel = tier.maxElo === null
+                                    ? `${tier.minElo}+ ELO`
+                                    : `${tier.minElo} - ${tier.maxElo} ELO`;
+                                  return (
+                                    <div key={tier.name} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                      <span className={`rounded px-2.5 py-0.5 text-[10px] font-bold uppercase shadow-xs ${tier.badgeClass}`}>{tierLabel}</span>
+                                      <span className="text-right text-xs font-bold text-slate-700">{rangeLabel}</span>
+                                    </div>
+                                  );
+                                })}
                             </div>
                         </div>
                     </div>

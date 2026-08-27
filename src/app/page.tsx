@@ -1050,10 +1050,12 @@ export default function HomePage() {
   // The homepage card is a compact personal summary. It must not change to
   // "all sports" when the tournament explorer filter changes; use one
   // representative sport from the user's own ranking data instead.
-  const prominentRank = getMostProminentRank(publicRanks);
-  const prominentCategoryId = prominentRank?.categoryId;
-  const categoryRanks = getRanksForCategory(publicRanks, prominentCategoryId);
-  const activeRankInfo = getBestRankForCategory(categoryRanks, prominentCategoryId);
+  const eligibleRanks = publicRanks.filter(isPublicRankingEligible);
+  const prominentRank = getMostProminentRank(eligibleRanks);
+  const pickleballCategory = categories.find((category) => category.slug === 'pickleball');
+  const prominentCategoryId = prominentRank?.categoryId || pickleballCategory?.id;
+  const categoryRanks = getRanksForCategory(eligibleRanks, prominentCategoryId);
+  const activeRankInfo = prominentRank || getBestRankForCategory(categoryRanks, prominentCategoryId);
 
   const eloPoints = activeRankInfo?.eloPoints ?? prominentRank?.eloPoints ?? 1000;
   const displayTier = getRankTierName(activeRankInfo);

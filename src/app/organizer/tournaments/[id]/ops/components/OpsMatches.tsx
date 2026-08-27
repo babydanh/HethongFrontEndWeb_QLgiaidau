@@ -53,6 +53,7 @@ interface OperationDraft {
 }
 
 interface MatchBucket {
+  ongoing: Match[];
   scheduled: Match[];
   unscheduledReady: Match[];
   blocked: Match[];
@@ -129,6 +130,7 @@ export function OpsMatches({
 
   const buckets = useMemo<MatchBucket>(() => {
     const nextBuckets: MatchBucket = {
+      ongoing: [],
       scheduled: [],
       unscheduledReady: [],
       blocked: [],
@@ -142,6 +144,11 @@ export function OpsMatches({
 
       if (isDirectAdvance) {
         nextBuckets.directAdvance.push(match);
+        continue;
+      }
+
+      if (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') {
+        nextBuckets.ongoing.push(match);
         continue;
       }
 
@@ -159,6 +166,15 @@ export function OpsMatches({
         nextBuckets.unscheduledReady.push(match);
       }
     }
+
+    nextBuckets.ongoing.sort((left, right) => {
+      const leftTime = left.scheduledAt ? new Date(left.scheduledAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const rightTime = right.scheduledAt ? new Date(right.scheduledAt).getTime() : Number.MAX_SAFE_INTEGER;
+      if (leftTime !== rightTime) {
+        return leftTime - rightTime;
+      }
+      return left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder;
+    });
 
     nextBuckets.scheduled.sort((left, right) => {
       const leftTime = left.scheduledAt ? new Date(left.scheduledAt).getTime() : Number.MAX_SAFE_INTEGER;
@@ -184,11 +200,11 @@ export function OpsMatches({
 
   const summary = useMemo(() => {
     return {
+      ongoing: buckets.ongoing.length,
       scheduled: buckets.scheduled.length,
       unscheduledReady: buckets.unscheduledReady.length,
       blocked: buckets.blocked.length,
       directAdvance: buckets.directAdvance.length,
-      ongoing: matches.filter((match) => match.status === 'ONGOING').length,
       completed: matches.filter((match) => match.status === 'COMPLETED').length,
       disputed: matches.filter((match) => match.status === 'DISPUTED').length,
     };
@@ -589,9 +605,16 @@ export function OpsMatches({
           </div>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-6">
           {statusFilter === 'ALL' ? (
             <>
+              {buckets.ongoing.length > 0 &&
+                renderMatchSection(
+                  translate('ongoingSectionTitle'),
+                  translate('ongoingSectionDescription'),
+                  buckets.ongoing,
+                  translate('ongoingSectionEmpty'),
+                )}
               {renderMatchSection(
                 translate('scheduledSectionTitle'),
                 translate('scheduledSectionDescription'),

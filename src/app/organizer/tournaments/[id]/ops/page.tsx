@@ -147,6 +147,11 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     setActivePageTab('BRACKET');
   };
 
+  const handleBracketDoubleClick = (match: BracketMatch) => {
+    setFocusedMatchId(match.id);
+    setActivePageTab('OPERATIONS');
+  };
+
   useEffect(() => {
     if (!focusedMatchId || activePageTab !== 'BRACKET') {
       return;
@@ -655,7 +660,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           handleAdvanceStandings={bracketManager.handleAdvanceStandings}
           isAdvancingStandings={bracketManager.isAdvancingStandings}
           selectedMatchId={focusedMatchId}
-          onSelectMatch={(match: import('@/types/tournament').BracketMatch) => setFocusedMatchId(match.id)}
+          onSelectMatch={(match: BracketMatch) => setFocusedMatchId(match.id)}
+          onDoubleClickMatch={handleBracketDoubleClick}
           isLiteMode={tournament.sportRules?.mode === 'LITE'}
           setIsLiteMode={() => {}}
         />

@@ -84,6 +84,7 @@ interface BracketTabProps {
   setRoundsToPlay?: (val: number) => void;
   selectedMatchId?: string | null;
   onSelectMatch?: (match: import('@/types/tournament').BracketMatch) => void;
+  onDoubleClickMatch?: (match: import('@/types/tournament').BracketMatch) => void;
   isLiteMode: boolean;
   setIsLiteMode: (val: boolean) => void;
 
@@ -178,6 +179,7 @@ export function BracketTab({
   setRoundsToPlay,
   selectedMatchId,
   onSelectMatch,
+  onDoubleClickMatch,
   handleSaveRoundRobinConfig,
   isSavingRoundRobinConfig,
   isLiteMode, setIsLiteMode,
@@ -1320,6 +1322,7 @@ export function BracketTab({
                             onScheduleMatch={handleOpenScheduling}
                             selectedMatchId={selectedMatchId}
                             onSelectMatch={onSelectMatch}
+                            onDoubleClickMatch={onDoubleClickMatch}
                             tournamentId={tournament.id}
                             stageId={stage.id}
                           />
@@ -1348,6 +1351,7 @@ export function BracketTab({
                 tiebreakerMode={tiebreakerMode}
                 selectedMatchId={selectedMatchId}
                 onSelectMatch={onSelectMatch}
+                onDoubleClickMatch={onDoubleClickMatch}
                 knockoutOnly
                 dragHandlers={bracketDragHandlers}
                 bracketSnapshot={bracket}

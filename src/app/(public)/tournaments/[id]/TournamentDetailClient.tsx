@@ -175,9 +175,6 @@ const commonTranslate = useTranslations('Common');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const contentDetailRef = useRef<HTMLDivElement>(null);
-  const divisionRowRefs = useRef(new Map<string, HTMLDivElement>());
-  const shouldScrollToDivisionRef = useRef(false);
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
 
@@ -332,20 +329,7 @@ const commonTranslate = useTranslations('Common');
     router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
   }, [debouncedDivisionId, router, searchParams, tournamentId]);
 
-  const scrollToDivisionRow = (divisionId: string) => {
-    const row = divisionRowRefs.current.get(divisionId);
-    if (!row) return;
-    const headerOffset = 96;
-    const rect = row.getBoundingClientRect();
-    const isOutside = rect.top < headerOffset || rect.top > window.innerHeight - 180;
-    if (isOutside) {
-      const targetY = window.scrollY + rect.top - headerOffset;
-      window.scrollTo({
-        top: Math.max(0, targetY),
-        behavior: 'smooth',
-      });
-    }
-  };
+
 
   const handleTabSelect = (tabId: TournamentDetailTab) => {
     hasUserNavigatedRef.current = true;
@@ -797,11 +781,7 @@ const commonTranslate = useTranslations('Common');
                       return (
                         <div
                           key={division.id}
-                          ref={(node) => {
-                            if (node) divisionRowRefs.current.set(division.id, node);
-                            else divisionRowRefs.current.delete(division.id);
-                          }}
-                          className="border-b border-slate-100 last:border-b-0"
+                          className="border-b border-slate-100 last:border-b-0 scroll-mt-24"
                         >
                           <button
                             type="button"
@@ -850,7 +830,6 @@ const commonTranslate = useTranslations('Common');
                             <div className="overflow-hidden">
                               {isActive && divisionTournament && (
                                 <div
-                                  ref={contentDetailRef}
                                   id="selected-division-content"
                                   className="border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5"
                                 >

@@ -1102,11 +1102,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         isCompleted,
                         match.isBye || (match.participant2 == null && isCompleted)
                       )}
-                      {match.participant1?.seed && (
-                        <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-bold shrink-0">
-                          #{match.participant1.seed}
-                        </span>
-                      )}
                     </div>
  
                     {/* Scores set Display */}
@@ -1139,11 +1134,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         isP2Winner,
                         isCompleted,
                         match.isBye || (match.participant1 == null && isCompleted)
-                      )}
-                      {match.participant2?.seed && (
-                        <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-bold shrink-0">
-                          #{match.participant2.seed}
-                        </span>
                       )}
                     </div>
 

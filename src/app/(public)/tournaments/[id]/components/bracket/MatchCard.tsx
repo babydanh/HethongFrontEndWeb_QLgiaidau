@@ -49,6 +49,7 @@ export const MatchCard = memo(function MatchCard({
   match,
   onScheduleMatch,
   onSelectMatch,
+  onDoubleClickMatch,
   selected = false,
   isP1Bye = false,
   isP2Bye = false,
@@ -58,6 +59,7 @@ export const MatchCard = memo(function MatchCard({
   match: BracketMatch;
   onScheduleMatch?: OnScheduleMatch;
   onSelectMatch?: OnSelectBracketMatch;
+  onDoubleClickMatch?: OnSelectBracketMatch;
   selected?: boolean;
   isP1Bye?: boolean;
   isP2Bye?: boolean;
@@ -194,6 +196,7 @@ export const MatchCard = memo(function MatchCard({
               : 'border-slate-300')
       }
       onClick={() => onSelectMatch?.(match)}
+      onDoubleClick={() => onDoubleClickMatch?.(match)}
     >
       {selected && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-lg z-40 border border-white animate-bounce pointer-events-none">

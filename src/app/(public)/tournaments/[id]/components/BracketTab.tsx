@@ -186,6 +186,7 @@ function GroupView({
   stageType,
   onScheduleMatch,
   onSelectMatch,
+  onDoubleClickMatch,
   tiebreakerMode,
   tournamentId,
   stageId,
@@ -200,6 +201,7 @@ function GroupView({
   stageType: string;
   onScheduleMatch?: OnScheduleMatch;
   onSelectMatch?: OnSelectBracketMatch;
+  onDoubleClickMatch?: OnSelectBracketMatch;
   tiebreakerMode?: 'split' | 'playoff';
   tournamentId?: string;
   stageId?: string;
@@ -338,6 +340,7 @@ export default function BracketTab({
   tiebreakerMode,
   selectedMatchId,
   onSelectMatch,
+  onDoubleClickMatch,
   fallbackSportRuleKind,
   knockoutOnly = false,
   dragHandlers,
@@ -671,6 +674,7 @@ export default function BracketTab({
                     onScheduleMatch={onScheduleMatch}
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
+                    onDoubleClickMatch={onDoubleClickMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     dragHandlers={dragHandlers}
                   />
@@ -682,6 +686,7 @@ export default function BracketTab({
                     onScheduleMatch={onScheduleMatch}
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
+                    onDoubleClickMatch={onDoubleClickMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     panEnabled={effectiveViewMode === 'full'}
                     dragHandlers={dragHandlers}
@@ -706,6 +711,7 @@ export default function BracketTab({
                   stageId={activeStage?.id}
                   selectedMatchId={selectedMatchId}
                   onSelectMatch={onSelectMatch}
+                  onDoubleClickMatch={onDoubleClickMatch}
                   fallbackSportRuleKind={effectiveSportRuleKind}
                   roundConfig={activeStage?.roundConfig}
                   viewMode={effectiveViewMode}

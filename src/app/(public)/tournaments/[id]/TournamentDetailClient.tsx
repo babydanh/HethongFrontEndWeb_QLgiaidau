@@ -141,7 +141,13 @@ const commonTranslate = useTranslations('Common');
 
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
   const { openUserProfile } = useUserProfileModalStore();
-  const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
+  const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
+    const tabParam = searchParams?.get('tab');
+    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'live' || tabParam === 'results') {
+      return tabParam as TournamentDetailTab;
+    }
+    return 'overview';
+  });
   const [liveCountsByDivision, setLiveCountsByDivision] = useState<Record<string, number>>({});
   const liveRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const liveRefreshInFlightRef = useRef(false);
@@ -315,28 +321,7 @@ const commonTranslate = useTranslations('Common');
     };
   }, [refreshLiveCounts, tournamentId]);
 
-  useEffect(() => {
-    if (hasAutoOpenedLiveRef.current || hasUserNavigatedRef.current) return;
-    const requestedTab = searchParams.get('tab');
-    if (requestedTab && requestedTab !== 'live') return;
-    const liveDivisionId = initialDivisionId
-      ? (liveCountsByDivision[initialDivisionId] > 0 ? initialDivisionId : undefined)
-      : Object.entries(liveCountsByDivision).find(
-          ([divisionId, count]) => count > 0 && divisionsList.some((division) => division.id === divisionId),
-        )?.[0];
-    if (!liveDivisionId) return;
 
-    hasAutoOpenedLiveRef.current = true;
-    Promise.resolve().then(() => {
-      setActiveTab('live');
-      setSelectedDivisionId(liveDivisionId);
-      setOpenDivisionId(liveDivisionId);
-      const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.set('divisionId', liveDivisionId);
-      nextParams.set('tab', 'live');
-      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-    });
-  }, [divisionsList, initialDivisionId, liveCountsByDivision, router, searchParams, tournamentId]);
 
 
 
@@ -719,8 +704,8 @@ const commonTranslate = useTranslations('Common');
     ...(activeLiveMatchesCount > 0
       ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
       : []),
-    ...(hasConfirmedResults
-      ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: isCompleted }]
+    ...(isCompleted && hasConfirmedResults
+      ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: true }]
       : []),
     { id: 'overview', label: translate('overview') },
     { id: 'teams', label: translate('tabs.teams') },
@@ -1054,8 +1039,88 @@ const commonTranslate = useTranslations('Common');
                 </div>
               </div>
 
+              {/* Smart Sequential Countdown Timer */}
+              {(() => {
+                const now = new Date();
+                const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
+                const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
+                const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
+                const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
+
+                // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
+                if (regStart && now < regStart) {
+                  return (
+                    <div className="pt-2 border-t border-slate-100">
+                      <CountdownTimer
+                        targetDate={activeTournament.registrationStartDate!}
+                        labels={{
+                          active: translate('registrationOpensAfter') || 'Mở đăng ký sau',
+                          expired: translate('registrationOpened') || 'Đã mở đăng ký',
+                          dayLabel: commonTranslate('countdownDay') || 'ngày',
+                        }}
+                        variant="info"
+                      />
+                    </div>
+                  );
+                }
+
+                // 2. Đang mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
+                if (regEnd && now < regEnd && !isRegistrationLocked) {
+                  return (
+                    <div className="pt-2 border-t border-slate-100">
+                      <CountdownTimer
+                        targetDate={activeTournament.registrationEndDate!}
+                        labels={{
+                          active: translate('closeRegistrationAfter') || 'Đóng đăng ký sau',
+                          expired: translate('registrationClosed') || 'Đã đóng đăng ký',
+                          dayLabel: commonTranslate('countdownDay') || 'ngày',
+                        }}
+                        variant="warning"
+                      />
+                    </div>
+                  );
+                }
+
+                // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
+                if (tourStart && now < tourStart) {
+                  return (
+                    <div className="pt-2 border-t border-slate-100">
+                      <CountdownTimer
+                        targetDate={activeTournament.startDate!}
+                        labels={{
+                          active: translate('startAfter') || 'Khởi tranh sau',
+                          expired: translate('started') || 'Đã khởi tranh',
+                          dayLabel: commonTranslate('countdownDay') || 'ngày',
+                        }}
+                        variant="danger"
+                      />
+                    </div>
+                  );
+                }
+
+                // 4. Đang diễn ra -> Đếm ngược ngày kết thúc
+                if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
+                  return (
+                    <div className="pt-2 border-t border-slate-100">
+                      <CountdownTimer
+                        targetDate={activeTournament.endDate!}
+                        labels={{
+                          active: translate('endAfter') || 'Kết thúc sau',
+                          expired: translate('completed') || 'Đã kết thúc',
+                          dayLabel: commonTranslate('countdownDay') || 'ngày',
+                        }}
+                        variant="danger"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange") || 'Thời gian thi đấu có thể thay đổi theo tiến độ.'}</p>
+                    </div>
+                  );
+                }
+
+                return null;
+              })()}
+
               {/* Primary CTA Button */}
-              <div className="pt-2">
+              <div className="pt-1">
                 {!isOwner && !isTournamentDraft(activeTournament.status) && (
                   <div>
                     {isRegistrationButtonDisabled ? (

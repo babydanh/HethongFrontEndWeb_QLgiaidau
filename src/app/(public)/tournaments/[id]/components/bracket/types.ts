@@ -57,6 +57,8 @@ export interface BracketTabProps {
   onScheduleMatch?: OnScheduleMatch;
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
+  /** Organizer-only handoff from the bracket to the operations tab. */
+  onDoubleClickMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   dragHandlers?: BracketDragHandlers;
   /** Owner-provided canonical snapshot for editor views; avoids a second bracket GET after a mutation. */

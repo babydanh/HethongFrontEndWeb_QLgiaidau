@@ -126,6 +126,8 @@ export default function LeaderboardPage() {
     const [rankings, setRankings] = useState<PlayerRanking[]>([]);
     const [footballRankings, setFootballRankings] = useState<FootballTeamRanking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [rankingError, setRankingError] = useState(false);
+    const [reloadNonce, setReloadNonce] = useState(0);
 
     const [provinces, setProvinces] = useState<Region[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
@@ -251,6 +253,7 @@ export default function LeaderboardPage() {
         
         const fetchRankings = async () => {
             setIsLoading(true);
+            setRankingError(false);
             try {
                 if (isFootballCategory) {
                     const res = await rankingsApi.getFootballTeamRankings({
@@ -282,12 +285,14 @@ export default function LeaderboardPage() {
             } catch (error) {
                 console.error("Failed to fetch rankings", error);
                 setRankings([]);
+                setFootballRankings([]);
+                setRankingError(true);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchRankings();
-    }, [activeCategoryId, isFootballCategory, selectedProvinceCode, selectedMatchType, selectedGenderFilter]);
+    }, [activeCategoryId, isFootballCategory, selectedProvinceCode, selectedMatchType, selectedGenderFilter, reloadNonce]);
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
@@ -481,6 +486,21 @@ export default function LeaderboardPage() {
                         <div className="bg-white rounded-lg border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
                             <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
+                        </div>
+                    ) : rankingError ? (
+                        <div className="bg-white rounded-xl border border-rose-200 shadow-sm p-10 md:p-14 text-center" role="alert">
+                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                                <Info className="h-6 w-6" aria-hidden="true" />
+                            </div>
+                            <h2 className="text-lg font-bold text-slate-900">{t('loadFailedTitle')}</h2>
+                            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t('loadFailedDescription')}</p>
+                            <button
+                                type="button"
+                                onClick={() => setReloadNonce((value) => value + 1)}
+                                className="mt-5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                            >
+                                {t('retry')}
+                            </button>
                         </div>
                     ) : (
                         <>

@@ -19,6 +19,50 @@ import type {
 
 const buildOpsActivityStorageKey = (tournamentId: string) => `organizer_ops_activity_${tournamentId}`;
 
+interface MatchPageMeta {
+  nextCursor?: string | null;
+  hasMore?: boolean;
+}
+
+interface MatchPageResponse {
+  data?: Match[];
+  meta?: MatchPageMeta;
+}
+
+const MAX_MATCH_PAGES = 50;
+const MATCH_PAGE_SIZE = 100;
+
+async function loadAllOrganizerMatches(
+  tournamentId: string,
+  divisionId: string,
+  signal?: AbortSignal,
+): Promise<Match[]> {
+  const matchesById = new Map<string, Match>();
+  let cursor: string | undefined;
+
+  for (let pageIndex = 0; pageIndex < MAX_MATCH_PAGES; pageIndex += 1) {
+    const response = await matchesApi.getMatches(
+      {
+        tournamentId,
+        ...(divisionId ? { divisionId } : {}),
+        limit: MATCH_PAGE_SIZE,
+        ...(cursor ? { cursor } : {}),
+      },
+      signal,
+    );
+    const page = response as unknown as MatchPageResponse;
+    for (const match of page.data ?? []) {
+      if (match.id) matchesById.set(match.id, match);
+    }
+
+    const nextCursor = page.meta?.nextCursor ?? undefined;
+    if (!page.meta?.hasMore || !nextCursor || nextCursor === cursor) break;
+    cursor = nextCursor;
+  }
+
+  return [...matchesById.values()];
+}
+
 interface UseOrganizerOpsOptions {
   selectedDivisionId?: string;
   onSelectedDivisionIdChange?: (divisionId: string) => void;
@@ -166,33 +210,22 @@ export function useOrganizerOps(
     });
   };
 
-  const loadOperationalData = useCallback(async (divisionId: string) => {
+  const loadOperationalData = useCallback(async (divisionId: string, signal?: AbortSignal) => {
     const [participantsRes, matchesRes, auditRes] = await Promise.all([
       tournamentsApi.getOrganizerTournamentParticipants(tournamentId, divisionId),
-      matchesApi.getMatches({
-        tournamentId,
-        ...(divisionId ? { divisionId } : {}),
-        limit: 100,
-      }),
+      loadAllOrganizerMatches(tournamentId, divisionId, signal),
       tournamentsApi.getOpsAuditLogs(tournamentId, divisionId || undefined),
     ]);
 
     setParticipants(participantsRes.data ?? []);
-    
-    const rawMatches = matchesRes.data as unknown;
-    const matchArray = Array.isArray(rawMatches)
-      ? rawMatches
-      : Array.isArray((rawMatches as { data?: Match[] })?.data)
-        ? ((rawMatches as { data: Match[] }).data)
-        : [];
-    setMatches(matchArray);
+    setMatches(matchesRes);
 
     setActivityLog((current) => {
       const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate));
       const localOnly = current.filter((item) => item.id.includes('_'));
       return [...backendLog, ...localOnly].slice(0, 60);
     });
-  }, [tournamentId]);
+  }, [tournamentId, translate]);
 
   useEffect(() => {
     let active = true;
@@ -270,12 +303,13 @@ export function useOrganizerOps(
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     const fetchOperationalData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        await loadOperationalData(selectedDivisionId);
+        await loadOperationalData(selectedDivisionId, controller.signal);
       } catch (err) {
         if (active) {
           setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
@@ -291,6 +325,7 @@ export function useOrganizerOps(
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [loadOperationalData, selectedDivisionId, tournamentId]);
 

@@ -6046,6 +6046,8 @@
     "scheduledCount": "Đã xếp lịch",
     "unscheduledCount": "Chờ xếp lịch",
     "ongoingCount": "Đang đấu",
+    "completedCount": "Hoàn thành",
+    "attentionCountLabel": "Cần xử lý",
     "blockedCount": "Đang nghẽn nhánh",
     "directAdvanceCount": "Đi thẳng / miễn đấu",
     "ongoingSectionTitle": "Các trận đang diễn ra",

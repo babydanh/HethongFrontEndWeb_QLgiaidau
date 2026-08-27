@@ -6046,6 +6046,8 @@
     "scheduledCount": "Scheduled",
     "unscheduledCount": "Awaiting schedule",
     "ongoingCount": "In progress",
+    "completedCount": "Completed",
+    "attentionCountLabel": "Needs attention",
     "blockedCount": "Bracket blocked",
     "directAdvanceCount": "Direct advance / bye",
     "ongoingSectionTitle": "Ongoing matches",

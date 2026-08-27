@@ -21,6 +21,8 @@ import type { Match, MatchPenaltyRecord } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
+import { isActiveMatch } from '@/utils/match-status';
+
 import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, OpsReferee } from '@/features/organizer/ops/types';
 
 interface OpsMatchesProps {
@@ -55,9 +57,6 @@ interface OperationDraft {
 interface MatchBucket {
   ongoing: Match[];
   scheduled: Match[];
-  unscheduledReady: Match[];
-  blocked: Match[];
-  directAdvance: Match[];
   completed: Match[];
   needsAction: Match[];
 }
@@ -129,16 +128,21 @@ export function OpsMatches({
   const safeMatches = useMemo(() => (Array.isArray(matches) ? matches : []), [matches]);
 
   const filteredMatches = useMemo(() => {
-    return safeMatches.filter((match) => (statusFilter === 'ALL' ? true : match.status === statusFilter));
+    return safeMatches.filter((match) => {
+      if (statusFilter === 'ALL') return true;
+      if (statusFilter === 'ONGOING') return isActiveMatch(match);
+      if (statusFilter === 'COMPLETED') {
+        const status = String(match.status ?? '').trim().toUpperCase();
+        return status === 'COMPLETED' || status === 'FINISHED' || Boolean(match.completedAt || match.winnerId);
+      }
+      return match.status === statusFilter;
+    });
   }, [safeMatches, statusFilter]);
 
   const buckets = useMemo<MatchBucket>(() => {
     const nextBuckets: MatchBucket = {
       ongoing: [],
       scheduled: [],
-      unscheduledReady: [],
-      blocked: [],
-      directAdvance: [],
       completed: [],
       needsAction: [],
     };
@@ -147,24 +151,25 @@ export function OpsMatches({
       const matchInsight = matchInsights?.[match.id];
       const missingOpponent = !match.participant1Id || !match.participant2Id;
       const isDirectAdvance = match.isBye || (!!match.winnerId && missingOpponent);
+      const status = String(match.status ?? '').trim().toUpperCase();
+      const isTerminal = status === 'COMPLETED' || status === 'FINISHED' || Boolean(match.completedAt || match.winnerId);
 
-            if (isDirectAdvance) {
-        nextBuckets.directAdvance.push(match);
+      if (isDirectAdvance) {
         nextBuckets.needsAction.push(match);
         continue;
       }
 
-      if (match.status === 'ONGOING') {
+      if (isActiveMatch(match)) {
         nextBuckets.ongoing.push(match);
         continue;
       }
 
-      if (match.status === 'COMPLETED') {
+      if (isTerminal) {
         nextBuckets.completed.push(match);
         continue;
       }
 
-      if (match.status === 'SCHEDULED') {
+      if (status === 'SCHEDULED') {
         if (matchInsight?.dependencyBlocked || missingOpponent || !match.scheduledAt) {
           nextBuckets.needsAction.push(match);
           continue;
@@ -195,17 +200,8 @@ export function OpsMatches({
         return leftTime - rightTime;
       }
       return left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder;
-    });
+        });
 
-    nextBuckets.unscheduledReady.sort((left, right) =>
-      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
-    );
-    nextBuckets.blocked.sort((left, right) =>
-      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
-    );
-    nextBuckets.directAdvance.sort((left, right) =>
-      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
-    );
     nextBuckets.completed.sort((left, right) =>
       right.roundNumber - left.roundNumber || right.matchOrder - left.matchOrder,
     );
@@ -220,9 +216,6 @@ export function OpsMatches({
     return {
       ongoing: buckets.ongoing.length,
       scheduled: buckets.scheduled.length,
-      unscheduledReady: buckets.unscheduledReady.length,
-      blocked: buckets.blocked.length,
-      directAdvance: buckets.directAdvance.length,
       completed: buckets.completed.length,
       needsAction: buckets.needsAction.length,
       disputed: safeMatches.filter((match) => match.status === 'DISPUTED').length,
@@ -583,25 +576,21 @@ export function OpsMatches({
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{translate('scheduledCount')}</p>
-              <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">{translate('unscheduledCount')}</p>
-              <p className="mt-2 text-lg font-bold text-amber-700">{summary.unscheduledReady}</p>
-            </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{translate('ongoingCount')}</p>
               <p className="mt-2 text-lg font-bold text-blue-700">{summary.ongoing}</p>
             </div>
-            <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">{translate('blockedCount')}</p>
-              <p className="mt-2 text-lg font-bold text-rose-700">{summary.blocked}</p>
-            </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{translate('directAdvanceCount')}</p>
-              <p className="mt-2 text-lg font-bold text-emerald-700">{summary.directAdvance}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{translate('scheduledCount')}</p>
+              <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
+            </div>
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">{translate('completedCount')}</p>
+              <p className="mt-2 text-lg font-bold text-emerald-700">{summary.completed}</p>
+            </div>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">{translate('attentionCountLabel')}</p>
+              <p className="mt-2 text-lg font-bold text-amber-800">{summary.needsAction}</p>
             </div>
           </div>
 

@@ -51,18 +51,19 @@ export const MatchCard = memo(function MatchCard({
   onSelectMatch,
   selected = false,
   isP1Bye = false,
-    isP2Bye = false,
+  isP2Bye = false,
   dragHandlers,
+  cardWidth,
 }: {
-
   match: BracketMatch;
   onScheduleMatch?: OnScheduleMatch;
   onSelectMatch?: OnSelectBracketMatch;
   selected?: boolean;
   isP1Bye?: boolean;
-    isP2Bye?: boolean;
+  isP2Bye?: boolean;
   fallbackSportRuleKind?: SportRuleKind;
   dragHandlers?: BracketDragHandlers;
+  cardWidth?: number;
 }) {
 
   const translate = useTranslations('TournamentDetail');
@@ -181,7 +182,7 @@ export const MatchCard = memo(function MatchCard({
       data-bracket-match-live={live ? 'true' : 'false'}
       data-no-pan="true"
       aria-disabled={live}
-      style={{ width: CARD_W, height: actualCardH }}
+      style={{ width: cardWidth ?? CARD_W, height: actualCardH }}
       className={
                 'rounded-md overflow-hidden border flex flex-col shadow-sm transition-[box-shadow,border-color] duration-150 hover:shadow bg-white select-none ' +
 

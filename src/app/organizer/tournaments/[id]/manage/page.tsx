@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
@@ -132,6 +132,21 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
   const [courtOperatingStart, setCourtOperatingStart] = useState('08:00');
   const [courtOperatingEnd, setCourtOperatingEnd] = useState('22:00');
+  const [isCourtWorkspaceFullscreen, setIsCourtWorkspaceFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (!isCourtWorkspaceFullscreen) return undefined;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCourtWorkspaceFullscreen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isCourtWorkspaceFullscreen]);
 
   const handleChecklistNavigate = (target: {
     tab: 'basic' | 'schedule' | 'registration' | 'bracket' | 'finance' | 'permissions' | 'livestream';
@@ -484,8 +499,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt}
               operatingStart={courtOperatingStart} setOperatingStart={setCourtOperatingStart}
               operatingEnd={courtOperatingEnd} setOperatingEnd={setCourtOperatingEnd}
-              onCourtClick={() => requestAnimationFrame(() => document.getElementById('court-workspace-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))} />
-            {s.courts.length > 0 && (
+              onCourtClick={() => setIsCourtWorkspaceFullscreen(true)} />
+            {s.courts.length > 0 && !isCourtWorkspaceFullscreen && (
               <CourtWorkspace
                 venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
                 courts={s.courts}
@@ -509,6 +524,47 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 }}
               />
             )}
+          </div>
+        )}
+
+        {s.activeTab === 'schedule' && s.courts.length > 0 && isCourtWorkspaceFullscreen && (
+          <div className="fixed inset-0 z-[70] flex min-h-screen flex-col overflow-hidden bg-slate-100" role="dialog" aria-modal="true" aria-labelledby="fullscreen-workspace-title">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm md:px-6">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{translate('workspaceFullscreen')}</p>
+                <h2 id="fullscreen-workspace-title" className="truncate text-base font-bold text-slate-900 md:text-lg">{s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name || translate('venueNotSet')}</h2>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setIsCourtWorkspaceFullscreen(false)} className="shrink-0 border-slate-300 bg-white text-slate-800">
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
+                {translate('exitWorkspace')}
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
+              <div className="mx-auto max-w-[1800px]">
+                <CourtWorkspace
+                  venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
+                  courts={s.courts}
+                  divisions={s.divisions}
+                  matches={s.matches}
+                  defaultDivisionId={s.selectedDivisionId}
+                  defaultDate={s.startDate}
+                  defaultOperatingStart={courtOperatingStart}
+                  defaultOperatingEnd={courtOperatingEnd}
+                  sportRuleKind={s.sportRuleKind}
+                  setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
+                  preview={s.schedulePlanPreview}
+                  isPreviewing={s.isPreviewingSchedulePlan}
+                  onPreview={s.handlePreviewSchedulePlan}
+                  onPreviewWithAi={s.handlePreviewScheduleWithAi}
+                  aiScheduleIntent={s.aiScheduleIntent}
+                  isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
+                  onOpenMatch={(matchId) => {
+                    const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
+                    if (fullMatch) s.handleOpenScheduling(fullMatch);
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
 

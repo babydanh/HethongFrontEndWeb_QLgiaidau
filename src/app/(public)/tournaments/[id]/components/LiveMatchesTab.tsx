@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, PlayCircle, Radio, Clock, Search } from 'luc
 import { formatDateTime } from '@/utils/format';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
+import { isActiveMatch } from '@/utils/match-status';
 
 interface LiveMatchesTabProps {
   tournament: Tournament;
@@ -138,14 +139,16 @@ export default function LiveMatchesTab({
               ? (rawRes as { data: { data: Match[] } }).data.data
               : [];
         if (active) {
-          const ongoing = (list as Match[]).filter(
-            (m) => m.status === 'ONGOING' && !m.isBye && Boolean(m.participant1Id && m.participant2Id),
-          );
+          const ongoing = (list as Match[]).filter(isActiveMatch);
           setLiveMatches(ongoing);
           if (divisionId) onLiveCountChange?.(divisionId, ongoing.length);
         }
       } catch (err) {
         console.error('Failed to fetch live matches:', err);
+        if (active) {
+          setLiveMatches([]);
+          if (divisionId) onLiveCountChange?.(divisionId, 0);
+        }
       }
     };
 
@@ -174,10 +177,7 @@ export default function LiveMatchesTab({
 
       setLiveMatches((current) => {
         let next: Match[];
-        const isLiveValid =
-          updatedMatch.status === 'ONGOING' &&
-          !updatedMatch.isBye &&
-          Boolean(updatedMatch.participant1Id && updatedMatch.participant2Id);
+        const isLiveValid = isActiveMatch(updatedMatch);
 
         if (!isLiveValid) {
           next = current.filter((m) => m.id !== updatedMatch.id);

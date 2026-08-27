@@ -62,6 +62,7 @@ import {
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from '../registrationMode';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
+import { isActiveMatch } from '@/utils/match-status';
 
 
 
@@ -254,9 +255,7 @@ const commonTranslate = useTranslations('Common');
           : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
             ? (rawRes as { data: { data: Match[] } }).data.data
             : [];
-      const ongoing = (list as Match[]).filter(
-        (match: Match) => match.status === 'ONGOING' && !match.isBye && Boolean(match.participant1Id && match.participant2Id),
-      );
+      const ongoing = (list as Match[]).filter(isActiveMatch);
       const nextCounts: Record<string, number> = {};
       for (const match of ongoing) {
         if (!match.divisionId) continue;
@@ -264,7 +263,8 @@ const commonTranslate = useTranslations('Common');
       }
       setLiveCountsByDivision(nextCounts);
     } catch {
-      // Abort and transient match-feed errors keep the last confirmed snapshot.
+      // Fail closed: an unverified snapshot must never keep a stale LIVE badge visible.
+      setLiveCountsByDivision({});
     } finally {
       liveRefreshInFlightRef.current = false;
     }
@@ -765,20 +765,19 @@ const commonTranslate = useTranslations('Common');
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <Link
-              href={`/tournaments/${activeTournament.id}`}
-              className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
-              title={translate('viewTournamentDetails')}
-            >
-              <img
-                src={activeTournament.logoUrl || BRAND.assets.defaultTournamentLogo}
-                alt={activeTournament.name}
-                className="w-full h-full object-contain rounded-full p-2"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = BRAND.assets.defaultTournamentLogo;
-                }}
-              />
-            </Link>
+            {Boolean(activeTournament.logoUrl?.trim()) && (
+              <Link
+                href={`/tournaments/${activeTournament.id}`}
+                className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
+                title={translate('viewTournamentDetails')}
+              >
+                <img
+                  src={activeTournament.logoUrl!}
+                  alt={activeTournament.name}
+                  className="w-full h-full object-contain rounded-full p-2"
+                />
+              </Link>
+            )}
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {activeTournament.category?.name && (
@@ -1063,7 +1062,6 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                                       key={division.id}
                                       tournamentId={tournament.id}
                                       divisionId={division.id}
-                                      isCompleted={isCompleted}
                                       tournamentName={activeTournament.name}
                                     />
                                   )}

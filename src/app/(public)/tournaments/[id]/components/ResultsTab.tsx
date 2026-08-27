@@ -1,9 +1,7 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
 import { Loader2, Share2, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { tournamentsApi, type TournamentResult } from '@/features/tournaments/api';
+import { tournamentsApi, type TournamentResult, type TournamentResultAward } from '@/features/tournaments/api';
 import ShareModal from '@/components/common/ShareModal';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
 
@@ -14,38 +12,108 @@ interface ResultsTabProps {
   tournamentName?: string;
 }
 
-function ParticipantMembersAvatars({
-  participant,
-}: {
-  participant: NonNullable<TournamentResult['awards']>[number]['participant'];
-}) {
-  if (!participant) return null;
-  const members = Array.isArray(participant.members) ? participant.members : [];
+type AwardParticipant = NonNullable<TournamentResultAward['participant']>;
 
-  if (members.length === 0) return null;
+function getInitials(value: string) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  return (words.length > 1 ? `${words[0][0]}${words.at(-1)?.[0] ?? ''}` : words[0]?.[0] ?? '?').toUpperCase();
+}
+
+function ParticipantAwardIdentity({ participant }: { participant: AwardParticipant }) {
+  const members = getUniqueParticipantMembers(
+    Array.isArray(participant.members) ? participant.members : [],
+  ).slice(0, 2);
+  const memberNames = members.map((member) => member.fullName?.trim()).filter(Boolean).join(' / ');
 
   return (
-    <div className="flex items-center gap-2 mt-2">
-      <div className="flex items-center -space-x-2 shrink-0">
-        {members.slice(0, 4).map((m, idx) => {
-          const fallback = encodeURIComponent(m.fullName || `P${idx + 1}`);
-          return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="flex shrink-0 items-center -space-x-2" aria-label={participant.teamName}>
+        {members.length > 0 ? members.map((member, index) => {
+          const fallback = getInitials(member.fullName || participant.teamName);
+          return member.avatarUrl ? (
             <img
-              key={m.userId || idx}
-              src={m.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${fallback}`}
-              alt={m.fullName || participant.teamName}
-              className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-xs bg-slate-100"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${fallback}`;
-              }}
+              key={member.userId || `${participant.participantId}-${index}`}
+              src={member.avatarUrl}
+              alt={member.fullName || participant.teamName}
+              referrerPolicy="no-referrer"
+              className="h-11 w-11 rounded-full border-2 border-white bg-slate-100 object-cover shadow-sm"
             />
+          ) : (
+            <span
+              key={member.userId || `${participant.participantId}-${index}`}
+              className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-xs font-black text-slate-600 shadow-sm"
+              title={member.fullName || participant.teamName}
+            >
+              {fallback}
+            </span>
           );
-        })}
+        }) : (
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-xs font-black text-slate-600 shadow-sm">
+            {getInitials(participant.teamName)}
+          </span>
+        )}
       </div>
-      <span className="text-xs font-semibold text-slate-600 truncate">
-        {members.map((m) => m.fullName).filter(Boolean).join(' • ')}
-      </span>
+      <div className="min-w-0">
+        <h4 className="truncate text-base font-black text-slate-950 sm:text-lg" title={participant.teamName}>
+          {participant.teamName}
+        </h4>
+        {memberNames && (
+          <p className="mt-0.5 truncate text-xs font-medium text-slate-500" title={memberNames}>
+            {memberNames}
+          </p>
+        )}
+      </div>
     </div>
+  );
+}
+
+function ResultAwardCard({
+  award,
+  label,
+  statusLabel,
+  finalized,
+  rank,
+}: {
+  award: TournamentResultAward;
+  label: string;
+  statusLabel: string;
+  finalized: boolean;
+  rank: 1 | 2;
+}) {
+  if (!award.participant) return null;
+  const isChampion = rank === 1;
+
+  return (
+    <article
+      className={`rounded-2xl border p-4 sm:p-5 ${
+        isChampion
+          ? 'border-amber-300 bg-amber-50/70'
+          : 'border-slate-200 bg-slate-50/70'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className={`text-[11px] font-black uppercase tracking-[0.16em] ${
+            isChampion ? 'text-amber-800' : 'text-slate-600'
+          }`}
+        >
+          {label}
+        </span>
+        <span
+          className={`rounded-full px-2 py-1 text-[10px] font-bold ${
+            finalized ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'
+          }`}
+        >
+          {statusLabel}
+        </span>
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-4">
+        <ParticipantAwardIdentity participant={award.participant} />
+        <span className={`shrink-0 text-2xl font-black ${isChampion ? 'text-amber-700' : 'text-slate-500'}`}>
+          {rank}
+        </span>
+      </div>
+    </article>
   );
 }
 
@@ -66,11 +134,9 @@ export default function ResultsTab({
     const loadResults = async () => {
       try {
         const response = await tournamentsApi.getTournamentResults(tournamentId, divisionId);
-        if (active && response.data) {
-          setResult(response.data);
-        }
+        if (active && response.data) setResult(response.data);
       } catch {
-        // results error handled silently
+        // Keep the last confirmed snapshot and let the next bounded refresh retry.
       } finally {
         if (active) {
           setIsLoading(false);
@@ -96,120 +162,85 @@ export default function ResultsTab({
   }
 
   const awards = (result?.awards ?? [])
-    .filter((award) => award.participant)
+    .filter((award) => award.participant && (award.rank === 1 || award.rank === 2))
     .sort((a, b) => a.rank - b.rank);
-
-  const championAward = awards.find((a) => a.rank === 1);
-  const runnerUpAward = awards.find((a) => a.rank === 2);
-  const otherAwards = awards.filter((a) => a.rank > 2);
-
-  const hasConfirmedResult = Boolean(championAward && runnerUpAward);
-
-  if (!hasConfirmedResult) {
+  const championAward = awards.find((award) => award.rank === 1);
+  const runnerUpAward = awards.find((award) => award.rank === 2);
+  if (!result || !championAward || !runnerUpAward) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
         <p className="text-sm font-bold text-slate-700">{translate('resultsTabPendingTitle')}</p>
-        <p className="mt-1 text-xs font-medium text-slate-500">
-          {translate('resultsTabPendingDescription')}
-        </p>
+        <p className="mt-1 text-xs font-medium text-slate-500">{translate('resultsTabPendingDescription')}</p>
       </div>
     );
   }
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const shareTitle = tournamentName
-    ? `${tournamentName} - ${translate('resultsTabLabel')}`
-    : translate('resultsTabLabel');
+  const statusTitle = result.finalized
+    ? translate('resultsTabOfficialTitle')
+    : translate('resultsTabCurrentTitle');
+  const championName = championAward.participant?.teamName ?? '';
+  const runnerUpName = runnerUpAward.participant?.teamName ?? '';
+  const resultShareTitle = `${statusTitle}: ${tournamentName || translate('resultsTabLabel')}`;
+  const resultShareText = `${resultShareTitle}\n${translate('rank', { rank: 1 })}: ${championName}\n${translate('rank', { rank: 2 })}: ${runnerUpName}`;
+  const shareUrl = typeof window !== 'undefined'
+    ? (() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', 'results');
+      url.searchParams.set('share', 'results');
+      if (divisionId) url.searchParams.set('divisionId', divisionId);
+      return url.toString();
+    })()
+    : '';
 
   return (
     <>
-      <div className="flex flex-col gap-4">
-        {/* Top Header Bar with Clean Share Action */}
-        <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" aria-hidden="true" />
-            <h3 className="text-base sm:text-lg font-black text-slate-900">
-              {translate('resultsTabLabel')}
-            </h3>
+      <section className="flex flex-col gap-4" aria-labelledby="tournament-results-title">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-3">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
+            <div className="min-w-0">
+              <h3 id="tournament-results-title" className="truncate text-base font-black text-slate-950 sm:text-lg">
+                {statusTitle}
+              </h3>
+              <p className="mt-1 text-xs font-medium text-slate-500">
+                {translate('resultsTabDescription')}
+              </p>
+            </div>
           </div>
-
           <button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all shadow-xs cursor-pointer"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="h-4 w-4" aria-hidden="true" />
             <span>{translate('shareResults')}</span>
           </button>
         </div>
 
-        {/* Podium Cards */}
-        <div className="flex flex-col gap-3.5">
-          {/* TOP 1 - QUÁN QUÂN */}
-          {championAward && (
-            <div className="rounded-xl border-2 border-amber-400 bg-amber-50/50 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="inline-flex items-center bg-amber-400 text-amber-950 text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-2xs">
-                  🏆 {translate('champion')}
-                </span>
-                <span className="text-xs font-bold text-amber-800">
-                  {translate('rank', { rank: 1 })}
-                </span>
-              </div>
-              <h4 className="text-base sm:text-xl font-black text-slate-900 truncate">
-                {championAward.participant?.teamName}
-              </h4>
-              <ParticipantMembersAvatars participant={championAward.participant} />
-            </div>
-          )}
-
-          {/* TOP 2 - Á QUÂN */}
-          {runnerUpAward && (
-            <div className="rounded-xl border border-slate-250 bg-slate-50/80 p-4 shadow-xs">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="inline-flex items-center bg-slate-200 text-slate-800 text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md">
-                  🥈 {translate('runnerUp')}
-                </span>
-                <span className="text-xs font-bold text-slate-500">
-                  {translate('rank', { rank: 2 })}
-                </span>
-              </div>
-              <h5 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                {runnerUpAward.participant?.teamName}
-              </h5>
-              <ParticipantMembersAvatars participant={runnerUpAward.participant} />
-            </div>
-          )}
-
-          {/* OTHER AWARDS */}
-          {otherAwards.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-              {otherAwards.map((award) => (
-                <div
-                  key={`${award.rank}-${award.participant?.participantId}`}
-                  className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-flex items-center bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md">
-                      🥉 {translate('rank', { rank: award.rank })}
-                    </span>
-                  </div>
-                  <h5 className="text-sm font-bold text-slate-900 truncate">
-                    {award.participant?.teamName}
-                  </h5>
-                  <ParticipantMembersAvatars participant={award.participant} />
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ResultAwardCard
+            award={championAward}
+            label={translate('champion')}
+            statusLabel={result.finalized ? translate('finalizedBadge') : translate('provisionalBadge')}
+            finalized={result.finalized}
+            rank={1}
+          />
+          <ResultAwardCard
+            award={runnerUpAward}
+            label={translate('runnerUp')}
+            statusLabel={result.finalized ? translate('finalizedBadge') : translate('provisionalBadge')}
+            finalized={result.finalized}
+            rank={2}
+          />
         </div>
-      </div>
+      </section>
 
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={shareUrl}
-        title={shareTitle}
+        title={resultShareTitle}
+        shareText={resultShareText}
       />
     </>
   );

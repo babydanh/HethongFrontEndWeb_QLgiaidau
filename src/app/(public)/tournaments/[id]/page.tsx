@@ -4,10 +4,64 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { stripHtmlAndNormalize } from '@/utils/string';
 import TournamentDetailClient from './TournamentDetailClient';
-import { getTournament } from './tournament-fetcher';
+import { getTournament, getTournamentResults } from './tournament-fetcher';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+const firstSearchParam = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
+
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const isResultShare =
+    firstSearchParam(resolvedSearchParams.tab) === 'results' &&
+    firstSearchParam(resolvedSearchParams.share) === 'results';
+
+  if (!isResultShare) return {};
+
+  const [tournament, result] = await Promise.all([
+    getTournament(resolvedParams.id),
+    getTournamentResults(resolvedParams.id, firstSearchParam(resolvedSearchParams.divisionId)),
+  ]);
+  const awards = result?.awards ?? [];
+  const top1 = awards.find((award) => award.rank === 1)?.participant;
+  const top2 = awards.find((award) => award.rank === 2)?.participant;
+  if (!tournament || !result || !top1 || !top2) return {};
+
+  const translate = await getTranslations('TournamentDetail');
+  const resultHeading = result.finalized
+    ? translate('resultsTabOfficialTitle')
+    : translate('resultsTabCurrentTitle');
+  const title = `${resultHeading}: ${tournament.name}`;
+  const description = `${translate('rank', { rank: 1 })}: ${top1.teamName} · ${translate('rank', { rank: 2 })}: ${top2.teamName}.`;
+  const query = new URLSearchParams({ tab: 'results', share: 'results' });
+  const divisionId = firstSearchParam(resolvedSearchParams.divisionId);
+  if (divisionId) query.set('divisionId', divisionId);
+  const shareUrl = `https://sporto.asia/tournaments/${resolvedParams.id}?${query.toString()}`;
+  const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg';
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `https://sporto.asia/tournaments/${resolvedParams.id}` },
+    openGraph: {
+      title,
+      description,
+      url: shareUrl,
+      images: [{ url: imageUrl, alt: title }],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
 }
 
 /** Map trạng thái giải đấu sang schema.org EventStatus (chuẩn Google). */

@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import type { TournamentResult } from '@/features/tournaments/api';
 
 const REVALIDATE_SECONDS = 60;
 
@@ -24,6 +25,30 @@ export async function fetchTournamentWithRetry(url: string, init?: RequestInit) 
 
   throw lastError ?? new Error('Tournament request failed');
 }
+
+export const getTournamentResults = cache(async (id: string, divisionId?: string) => {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+  const appApiKey = process.env.NEXT_PUBLIC_APP_KEY || process.env.APP_KEY || '';
+  const query = divisionId ? `?divisionId=${encodeURIComponent(divisionId)}` : '';
+
+  try {
+    const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}/results${query}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      next: { revalidate: 15 },
+    });
+    if (!response.ok) return null;
+    const payload = await response.json() as { data?: TournamentResult | null };
+    return payload.data ?? null;
+  } catch {
+    return null;
+  }
+});
 
 export const getTournament = cache(async (id: string) => {
   const cookieStore = await cookies();

@@ -665,14 +665,14 @@ export default function TournamentsListPage() {
           </div>
         )}
                 {/* Quick status filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-2.5" aria-label={translate("quickFilter")}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-start gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-2.5" aria-label={translate("quickFilter")}>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-900">
               <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
               {translate("quickFilter")}
             </span>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-1.5 text-xs font-bold sm:ml-auto">
+          <div className="flex flex-wrap items-center justify-start gap-1.5 text-xs font-bold">
             <button
               type="button"
               aria-pressed={selectedStatus === 'COMPLETED'}

@@ -17,6 +17,7 @@ import BracketTab from './components/BracketTab';
 import MatchesTab from './components/MatchesTab';
 import SponsorsTab from './components/SponsorsTab';
 import LiveMatchesTab from './components/LiveMatchesTab';
+import ResultsTab from './components/ResultsTab';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
@@ -69,10 +70,11 @@ interface Props {
   initialTournament: Tournament | null;
 }
 
-type TournamentDetailTab = 'live' | 'overview' | 'teams' | 'bracket' | 'matches' | 'sponsors';
+type TournamentDetailTab = 'live' | 'results' | 'overview' | 'teams' | 'bracket' | 'matches' | 'sponsors';
 
 const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'overview',
+  'results',
   'teams',
   'bracket',
   'matches',
@@ -145,6 +147,12 @@ const commonTranslate = useTranslations('Common');
   const hasAutoOpenedLiveRef = useRef(false);
   const hasUserNavigatedRef = useRef(false);
   const liveMatchesCount = Object.values(liveCountsByDivision).reduce((total, count) => total + count, 0);
+  const activeLiveMatchesCount = visibleDivisionId
+    ? liveCountsByDivision[visibleDivisionId] ?? 0
+    : liveMatchesCount;
+  const activeDivisionHasMatches = Boolean(
+    visibleDivisionId && divisionsList.find((division) => division.id === visibleDivisionId)?._count?.matches,
+  );
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
@@ -293,9 +301,15 @@ const commonTranslate = useTranslations('Common');
   }, [divisionsList, initialDivisionId, liveCountsByDivision, router, searchParams, tournamentId]);
 
   useEffect(() => {
-    if (activeTab !== 'live' || liveMatchesCount > 0) return;
-    Promise.resolve().then(() => setActiveTab('overview'));
-  }, [activeTab, liveMatchesCount]);
+    if (activeTab !== 'live' || activeLiveMatchesCount > 0) return;
+    const fallbackTab: TournamentDetailTab = activeDivisionHasMatches ? 'results' : 'overview';
+    Promise.resolve().then(() => {
+      setActiveTab(fallbackTab);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set('tab', fallbackTab);
+      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    });
+  }, [activeDivisionHasMatches, activeLiveMatchesCount, activeTab, router, searchParams, tournamentId]);
 
   useEffect(() => {
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
@@ -647,8 +661,11 @@ const commonTranslate = useTranslations('Common');
   };
 
   const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean }[] = [
-    ...(liveMatchesCount > 0
-      ? [{ id: 'live' as const, label: 'LIVE', badge: liveMatchesCount, isLive: true }]
+    ...(activeLiveMatchesCount > 0
+      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
+      : []),
+    ...(activeDivisionHasMatches
+      ? [{ id: 'results' as const, label: translate('resultsTabLabel') }]
       : []),
     { id: 'overview', label: translate('overview') },
     { id: 'teams', label: translate('tabs.teams') },
@@ -971,6 +988,13 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                                     <LiveMatchesTab
                                       key={division.id}
                                       tournament={divisionTournament}
+                                      tournamentId={tournament.id}
+                                      divisionId={division.id}
+                                    />
+                                  )}
+                                  {activeTab === 'results' && (
+                                    <ResultsTab
+                                      key={division.id}
                                       tournamentId={tournament.id}
                                       divisionId={division.id}
                                     />

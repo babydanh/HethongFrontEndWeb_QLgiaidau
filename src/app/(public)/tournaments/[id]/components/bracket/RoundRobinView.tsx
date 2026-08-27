@@ -219,11 +219,6 @@ export function RoundRobinView({
                     </td>
                     <td className="px-3 py-3 font-semibold text-slate-800">
                       <span className="flex items-center gap-1.5">
-                        {row.seed != null && (
-                          <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-bold leading-4">
-                            #{row.seed}
-                          </span>
-                        )}
                         {row.teamName}
                         {teamsAdvancing > 0 && idx < teamsAdvancing && (
                           <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">

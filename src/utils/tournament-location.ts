@@ -30,9 +30,14 @@ export interface MatchLocationInput {
 const normalizeLocationPart = (value: string): string => {
   const normalized = value
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .split('')
+    .filter((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return codePoint < 0x0300 || codePoint > 0x036f;
+    })
+    .join('')
     .toLocaleLowerCase()
-    .replace(/[.\/_-]+/g, ' ')
+    .replace(/[.\/\\_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -56,11 +61,29 @@ const normalizeLocationPart = (value: string): string => {
     'tp can tho': 'tp_cantho',
     'can tho': 'tp_cantho',
   };
-  if (metropolitanAliases[normalized]) return metropolitanAliases[normalized];
+  const administrativePrefixes = [
+    'thanh pho ',
+    'thi xa ',
+    'tinh ',
+    'quan ',
+    'huyen ',
+    'phuong ',
+    'xa ',
+    'tp ',
+    'tx ',
+    'q ',
+    'h ',
+    'p ',
+    'x ',
+  ];
+  const withoutAdministrativePrefix = administrativePrefixes.reduce(
+    (current, prefix) => current.startsWith(prefix) ? current.slice(prefix.length).trim() : current,
+    normalized,
+  );
 
-  return normalized
-    .replace(/^(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|tp|q|h|tx|p|x)\s+/, '')
-    .trim();
+  return metropolitanAliases[normalized]
+    ?? metropolitanAliases[withoutAdministrativePrefix]
+    ?? withoutAdministrativePrefix;
 };
 
 const uniqueParts = (values: Array<string | null | undefined>): string[] => {

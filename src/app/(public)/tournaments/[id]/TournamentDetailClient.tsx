@@ -161,6 +161,7 @@ const commonTranslate = useTranslations('Common');
     });
   }, []);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
+  const [hasConfirmedResults, setHasConfirmedResults] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
   const [isRegistrationStatusLoading, setIsRegistrationStatusLoading] = useState(false);

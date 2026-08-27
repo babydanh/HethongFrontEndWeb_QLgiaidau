@@ -983,19 +983,12 @@ export default function HomePage() {
       >
         {/* Whole Card Link */}
         <Link href={`/live/${match.id}`} className="block flex-1">
-          {/* 1. Header Bar: Tournament / League & Live status */}
+          {/* 1. Header Bar: Round / Stage & Live status */}
           <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-50/70 border-b border-slate-100 text-[11px]">
             <div className="flex items-center gap-1.5 min-w-0">
-              <Trophy className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="text-xs font-bold text-slate-800 truncate">
-                {(match as EnrichedMatch).tournament?.name || roundLabel}
+              <span className="text-[11px] font-bold text-slate-700 truncate">
+                {roundLabel || translate('roundFallback')}
               </span>
-              {roundLabel && (
-                <>
-                  <span className="text-slate-300 text-xs">•</span>
-                  <span className="text-[11px] font-medium text-slate-500 shrink-0 truncate">{roundLabel}</span>
-                </>
-              )}
             </div>
 
             {/* Status Pill Badge */}

@@ -26,7 +26,6 @@ import { BracketMatch } from '@/features/tournaments/api';
 import type { SportRulesEnvelope } from '@/types/tournament';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import { getMatchCourtLabel } from '@/utils/tournament-location';
-
 import HomepageEloProgressCard from '@/components/rankings/HomepageEloProgressCard';
 import {
   getBestRankForCategory,
@@ -44,7 +43,7 @@ import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 import { RankAvatar } from '@/components/ui/RankAvatar';
-import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
+import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 
 interface EnrichedTournament {
@@ -900,146 +899,192 @@ export default function HomePage() {
       translations: roundLabelTranslations,
     });
 
+    const scores = extractMatchScores(match.scoreDetails);
+    const currentSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
+    const scoreText = isScheduled
+      ? (match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS')
+      : `${currentSet.team1Score} - ${currentSet.team2Score}`;
+
+    const renderOpponent = (
+      participant: BracketMatch['participant1'],
+      fallbackText: string,
+      side: 'left' | 'right',
+    ) => {
+      const members = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
+      const displayName = members.length === 2
+        ? members.map((m) => formatShortPersonName(m.fullName) || m.fullName).filter(Boolean).join(' / ')
+        : members.length === 1 && members[0].fullName
+          ? formatShortPersonName(members[0].fullName) || members[0].fullName
+          : formatShortPersonName(participant?.teamName) || fallbackText;
+
+      const logoUrl = participant?.logoUrl || members[0]?.avatarUrl;
+      const initial = (displayName.trim().charAt(0) || '?').toUpperCase();
+
+      return (
+        <div className="flex flex-col items-center justify-center min-w-0 flex-1 px-1">
+          {/* Avatar / Crest */}
+          <div className="relative flex items-center justify-center">
+            {logoUrl ? (
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden ring-2 ring-slate-700/80 bg-slate-800 shadow-md">
+                <Image
+                  src={logoUrl}
+                  alt={displayName}
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-sm shadow-md ring-2 ring-slate-700/80 ${
+                  side === 'left'
+                    ? 'bg-gradient-to-br from-amber-500/25 to-amber-600/10 text-amber-300 border border-amber-500/30'
+                    : 'bg-gradient-to-br from-sky-500/25 to-sky-600/10 text-sky-300 border border-sky-500/30'
+                }`}
+              >
+                {initial}
+              </div>
+            )}
+          </div>
+          {/* Name */}
+          <span className="mt-2 text-xs font-bold text-slate-100 text-center line-clamp-1 max-w-[100px] sm:max-w-[130px] tracking-tight leading-tight">
+            {displayName}
+          </span>
+        </div>
+      );
+    };
+
     return (
       <motion.div
         key={match.id}
-        whileHover={{ y: -2 }}
+        whileHover={{ y: -3 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`bg-white rounded-xl border ${
+        className={`bg-[#0f172a] text-slate-100 rounded-2xl border ${
           isLive
-            ? 'border-rose-200/90 shadow-xs shadow-rose-100/50'
-            : 'border-slate-200 shadow-2xs hover:border-slate-350'
+            ? 'border-rose-500/50 shadow-lg shadow-rose-950/30'
+            : 'border-slate-800/90 shadow-md hover:border-slate-700'
         } overflow-hidden flex flex-col justify-between group relative`}
       >
         {/* Whole Card Link */}
-        <Link href={`/live/${match.id}`} className="block flex-1">
-          {/* 1. Header Bar (Gọn & Rõ ràng) */}
-          <div className={`px-3.5 py-2 ${isLive ? 'bg-rose-50/40' : 'bg-slate-50/70'} border-b border-slate-100 flex items-center justify-between text-[11px]`}>
-            <div className="flex items-center gap-1.5 truncate max-w-[70%]">
-              {isLive && (
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
+        <Link href={`/live/${match.id}`} className="block flex-1 p-3.5 sm:p-4">
+          {/* 1. Header Bar: Tournament / League & Live status */}
+          <div className="flex items-center justify-between gap-2 pb-2.5 mb-3 border-b border-slate-800/80">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-300 truncate">
+                {(match as EnrichedMatch).tournament?.name || roundLabel}
+              </span>
+              {roundLabel && (
+                <>
+                  <span className="text-slate-600 text-xs">•</span>
+                  <span className="text-[11px] font-medium text-slate-400 shrink-0 truncate">{roundLabel}</span>
+                </>
+              )}
+            </div>
+
+            {/* Status Pill Badge */}
+            <div className="shrink-0">
+              {isLive ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-wider shadow-xs">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  </span>
+                  {translate('statusLive')}
+                </span>
+              ) : isCompleted ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60">
+                  {translate('statusCompleted')}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                  {translate('statusUpcoming')}
                 </span>
               )}
-              <span className={`uppercase tracking-wider shrink-0 text-[10px] font-bold ${
-                isLive ? 'text-rose-600 animate-pulse' : isCompleted ? 'text-slate-450' : 'text-blue-600'
-              }`}>
-                {isLive ? translate('statusLive') : isCompleted ? translate('statusCompleted') : translate('statusUpcoming')}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="shrink-0 text-slate-600 font-medium text-[11px]">{roundLabel}</span>
             </div>
-            {(() => {
-              const stageBadgeText = translateStageName(match.group?.stage?.name, translate);
-              const shouldShowStageBadge = stageBadgeText && !roundLabel.toLowerCase().includes(stageBadgeText.toLowerCase());
-              return shouldShowStageBadge ? (
-                <span className="uppercase text-slate-500 bg-white border border-slate-200/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
-                  {stageBadgeText}
-                </span>
-              ) : null;
-            })()}
           </div>
 
-          {/* 2. Opponents Match Grid */}
-          <div className="px-3.5 py-3 flex items-center justify-between gap-3 bg-white">
-            {/* Player / doubles pair 1 */}
-            <div className="flex items-center w-5/12 min-w-0">
-              <ParticipantIdentity
-                participant={match.participant1}
-                fallback={translate('pendingTeam')}
-                compact
-              />
-            </div>
+          {/* 2. Opponents Face-off Arena */}
+          <div className="flex items-center justify-between gap-2 py-1">
+            {/* Participant 1 */}
+            {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
-            {/* Score / Status Display Panel */}
-            <div className="flex flex-col items-center justify-center shrink-0 min-w-[65px]">
-              {isScheduled ? (
-                <span className="text-[10.5px] font-bold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100/70">
+            {/* Center Score / Time */}
+            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[75px]">
+              <span className="text-2xl sm:text-3xl font-black text-white tracking-widest leading-none drop-shadow-sm font-sans">
+                {scoreText}
+              </span>
+              {isLive ? (
+                <span className="text-[11px] font-bold text-rose-400 mt-1.5 tracking-tight animate-pulse">
+                  {scores.length > 1
+                    ? `Set ${scores.length} • ${currentSet.team1Score}-${currentSet.team2Score}`
+                    : `${currentSet.team1Score}-${currentSet.team2Score}`}
+                </span>
+              ) : isScheduled ? (
+                <span className="text-[11px] font-medium text-sky-400/90 mt-1.5">
                   {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS'}
                 </span>
               ) : (
-                <div className={`flex items-center justify-center px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold leading-none tracking-wider shadow-2xs ${
-                  isLive
-                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                    : 'bg-slate-100 text-slate-700 border border-slate-200'
-                }`}>
-                  {(() => {
-                    const scores = extractMatchScores(match.scoreDetails);
-                    const targetSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
-                    return `${targetSet.team1Score} - ${targetSet.team2Score}`;
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Player / doubles pair 2 */}
-            <div className="flex items-center w-5/12 min-w-0 justify-end text-right">
-              <ParticipantIdentity
-                participant={match.participant2}
-                fallback={translate('pendingTeam')}
-                align="right"
-                compact
-              />
-            </div>
-          </div>
-
-          {/* 3. Footer Bar: Thể thức, Sân đấu & Tương tác (gọn gàng trong 1 hàng duy nhất) */}
-          <div className="px-3.5 py-2 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-2 min-w-0 text-slate-500">
-              <span className="font-semibold text-slate-700 text-[10.5px] whitespace-nowrap">
-                {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
-              </span>
-              <span className="text-slate-300">•</span>
-              {match.courtName || match.tournament?.venueName ? (
-                <span className="truncate max-w-[130px] md:max-w-[160px] text-slate-500 text-[10.5px]" title={getMatchCourtLabel({
-                  courtName: match.courtName || match.tournament?.venueName,
-                  courtAddress: match.courtAddress,
-                })}>
-                  {match.courtName || match.tournament?.venueName}
+                <span className="text-[11px] font-medium text-emerald-400/90 mt-1.5">
+                  {translate('statusCompleted')}
                 </span>
-              ) : (
-                <span className="text-slate-400 italic text-[10.5px]">{translate('courtNotAssigned')}</span>
               )}
             </div>
 
-            {/* Cheer & Share buttons in footer */}
-            <div className="flex items-center gap-1.5 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleHighFive(match.id);
-                }}
-                title={`${translate('cheer')} (${currentHighFives})`}
-                className="inline-flex items-center gap-1 py-1 px-2 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
-              >
-                <Heart className="w-3 h-3 text-rose-500 fill-rose-500/15" />
-                <span>{translate('cheer')}</span>
-                {currentHighFives > 0 && <span className="text-slate-400 font-normal">({currentHighFives})</span>}
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const p1Name = getTeamShortName(match.participant1?.teamName, translate('pendingTeam'));
-                  const p2Name = getTeamShortName(match.participant2?.teamName, translate('pendingTeam'));
-                  setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
-                  setActiveShareTitle(translate('shareMatchTitleWithTeams', { p1: p1Name, p2: p2Name }));
-                  setIsShareModalOpen(true);
-                }}
-                title={translate('shareMatchTitle')}
-                className="inline-flex items-center gap-1 py-1 px-2 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
-              >
-                <Share2 className="w-3 h-3 text-slate-400" />
-                <span>{translate('share')}</span>
-              </button>
-            </div>
+            {/* Participant 2 */}
+            {renderOpponent(match.participant2, translate('pendingTeam'), 'right')}
           </div>
         </Link>
+
+        {/* 3. Footer Bar: Court / Format & Cheer / Share Actions */}
+        <div className="px-3.5 py-2.5 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1.5 min-w-0 text-slate-400 text-[11px] truncate">
+            <span className="font-semibold text-slate-300 shrink-0">
+              {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className="truncate" title={match.courtName || match.tournament?.venueName || undefined}>
+              {match.courtName || match.tournament?.venueName || translate('courtNotAssigned')}
+            </span>
+          </div>
+
+          {/* Cheer & Share */}
+          <div className="flex items-center gap-1.5 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleHighFive(match.id);
+              }}
+              title={`${translate('cheer')} (${currentHighFives})`}
+              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 text-[11px] font-semibold transition cursor-pointer shadow-xs"
+            >
+              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
+              <span>{translate('cheer')}</span>
+              {currentHighFives > 0 && <span className="text-slate-400 font-normal">({currentHighFives})</span>}
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const p1Name = getTeamShortName(match.participant1?.teamName, translate('pendingTeam'));
+                const p2Name = getTeamShortName(match.participant2?.teamName, translate('pendingTeam'));
+                setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
+                setActiveShareTitle(translate('shareMatchTitleWithTeams', { p1: p1Name, p2: p2Name }));
+                setIsShareModalOpen(true);
+              }}
+              title={translate('shareMatchTitle')}
+              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-sky-400 hover:border-sky-500/40 hover:bg-sky-500/10 text-[11px] font-semibold transition cursor-pointer shadow-xs"
+            >
+              <Share2 className="w-3.5 h-3.5 text-slate-400" />
+              <span>{translate('share')}</span>
+            </button>
+          </div>
+        </div>
       </motion.div>
     );
   };

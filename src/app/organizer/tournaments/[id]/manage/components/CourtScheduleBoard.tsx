@@ -100,12 +100,14 @@ export function CourtScheduleBoard({
         </div>
       ) : timeline ? (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-            <strong>{t('previewBoard')}</strong>
-            <span>{t('previewDraft')}</span>
-            <span>{preview.durationMinutes + preview.bufferMinutes} {t('slotMinutes')}</span>
-            <span>{preview.gridIncrementMinutes} {t('minutesShort')} {t('gridIncrement')}</span>
-          </div>
+          {preview ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+              <strong>{t('previewBoard')}</strong>
+              <span>{t('previewDraft')}</span>
+              <span>{preview.durationMinutes + preview.bufferMinutes} {t('slotMinutes')}</span>
+              <span>{preview.gridIncrementMinutes} {t('minutesShort')} {t('gridIncrement')}</span>
+            </div>
+          ) : null}
           <div className="overflow-x-auto border border-slate-200" role="region" aria-label={t('matchSchedule.court')} tabIndex={0}>
             <div className="grid min-w-[760px]" style={{ gridTemplateColumns: `68px repeat(${Math.max(courts.length, 1)}, minmax(180px, 1fr))` }}>
               <div className="border-b border-r border-slate-200 bg-slate-50 px-2 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('time')}</div>
@@ -133,7 +135,8 @@ export function CourtScheduleBoard({
                     {courtMatches.map((item) => {
                       const start = new Date(item.scheduledAt || 0).getTime();
                       const top = Math.max(0, (start - timeline.start) / 60_000 * PIXELS_PER_MINUTE);
-                      const height = Math.max(68, (preview.durationMinutes + preview.bufferMinutes) * PIXELS_PER_MINUTE);
+                      const slotDuration = preview ? preview.durationMinutes + preview.bufferMinutes : 60;
+                      const height = Math.max(68, slotDuration * PIXELS_PER_MINUTE);
                       return (
                         <button
                           key={item.match.id}

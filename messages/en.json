@@ -7469,6 +7469,10 @@
     "slotSummary": "About {play} min play · {buffer} min buffer · {total} min per slot · {increment} min grid",
     "presetSportHint": "Suggested from the sport, set/game structure, and current event configuration.",
     "customPresetHint": "You have edited the timing manually.",
+    "previewBoard": "Preview grid",
+    "previewDraft": "Dashed = not saved",
+    "time": "Time",
+    "teamTbd": "TBD",
     "toast": {
       "copiedInvite": "Invite link copied!"
     }

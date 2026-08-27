@@ -8,6 +8,7 @@ import { rankingsApi, type FootballTeamRanking, PlayerRanking } from "@/features
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
 import { getCanonicalTierName } from "@/features/rankings/elo-display";
+import { buildLeaderboardStandingSlots, isLeaderboardPlaceholder } from "@/features/rankings/leaderboard-slots";
 import { getRankBorderColor } from "@/components/ui/RankAvatar";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
@@ -745,7 +746,7 @@ export default function LeaderboardPage() {
                                 </div>
                             </div>
 
-                            {/* Rest of rankings: Top 11 - 100 */}
+                            {/* Remaining public standing slots: ranks 11–20 */}
                             <RestRankingsTable
                                 rankings={rankings}
                                 categoryId={activeCategoryId ?? ''}
@@ -937,22 +938,11 @@ function RestRankingsTable({
 }) {
   const t = useTranslations("Leaderboard");
   const { openUserProfile } = useUserProfileModalStore();
-  // The public surface intentionally shows the first 20 positions. During
-  // cold start, positions 11–20 are visual slots, never fake ranking rows.
-  const realData = rankings.slice(10, 20);
-  const placeholderData: PlayerRanking[] = Array.from({ length: 10 }, (_, index) => ({
-    id: `placeholder-${categoryId || 'all'}-${selectedMatchType || 'all'}-${index + 11}`,
+  const listData = buildLeaderboardStandingSlots(
+    rankings,
     categoryId,
-    eloPoints: 0,
-    matchesPlayed: 0,
-    matchesWon: 0,
-    winStreak: 0,
-    updatedAt: '1970-01-01T00:00:00.000Z',
-  }));
-  const listData = [
-    ...realData,
-    ...placeholderData.slice(realData.length),
-  ];
+    selectedMatchType,
+  );
 
     // Split into 2 columns
     const mid = Math.ceil(listData.length / 2);
@@ -975,7 +965,7 @@ function RestRankingsTable({
                         <tbody className="divide-y text-slate-700 font-semibold">
                             {data.map((rank, index) => {
                                 const rankNum = startRank + index;
-                                const isPlaceholder = rank.id.startsWith("placeholder-");
+                                const isPlaceholder = isLeaderboardPlaceholder(rank);
                                 const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(0) : '0';
                                 return (
                                     <tr key={rank.id} className="transition-colors hover:bg-slate-55/40 border-b">

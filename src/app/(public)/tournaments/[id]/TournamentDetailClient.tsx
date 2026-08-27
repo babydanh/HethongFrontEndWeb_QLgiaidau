@@ -769,16 +769,26 @@ const commonTranslate = useTranslations('Common');
 
               {/* Status Badge floating at Top-Left of Banner */}
               <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full shadow-md backdrop-blur-md ${
-                  isTournamentInProgress(activeTournament.status)
-                    ? 'bg-rose-600/95 text-white animate-pulse'
-                    : isTournamentCompleted(activeTournament.status)
-                      ? 'bg-slate-900/90 text-white'
-                      : 'bg-blue-600/95 text-white'
-                }`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                  {getTournamentStatusLabel(activeTournament.status, statusLabels).toUpperCase()}
-                </span>
+                {(() => {
+                  const isLive = isTournamentInProgress(activeTournament.status) || activeLiveMatchesCount > 0;
+                  const isFinished = isTournamentCompleted(activeTournament.status);
+                  return (
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full shadow-md backdrop-blur-md ${
+                      isLive
+                        ? 'bg-rose-600/95 text-white animate-pulse'
+                        : isFinished
+                          ? 'bg-slate-900/90 text-white'
+                          : 'bg-emerald-600/95 text-white'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-ping' : 'bg-current'}`} />
+                      {isLive
+                        ? (translate('inProgress') || 'Đang diễn ra').toUpperCase()
+                        : isFinished
+                          ? (translate('completed') || 'Đã kết thúc').toUpperCase()
+                          : (translate('upcoming') || 'Sắp diễn ra').toUpperCase()}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
 
@@ -1159,6 +1169,12 @@ const commonTranslate = useTranslations('Common');
                     {activeTournament.registrationEndDate ? formatDate(activeTournament.registrationEndDate) : translate('notUpdated')}
                   </span>
                 </div>
+                {isRegistrationLocked && (
+                  <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
+                    <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
+                    <span>🔒</span>
+                  </div>
+                )}
                 {Number(activeTournament.entryFee) > 0 && (
                   <div className="flex items-center justify-between text-slate-600 pt-1.5 border-t border-dashed border-slate-100">
                     <span className="font-medium">{translate('entryFee') || 'Lệ phí'}:</span>

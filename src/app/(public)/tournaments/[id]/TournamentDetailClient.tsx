@@ -735,7 +735,7 @@ const commonTranslate = useTranslations('Common');
   ];
 
   const renderMetadataCard = () => (
-    <div className="bg-white border border-slate-200/90 rounded-xl p-5 md:p-6 shadow-sm space-y-4">
+    <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm space-y-3 sm:space-y-4">
       {/* Organizer / Club Header */}
       {(() => {
         const organizer = activeTournament.organizer;
@@ -1147,9 +1147,9 @@ const commonTranslate = useTranslations('Common');
 
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
+      <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6">
         {/* Back navigation */}
-        <div className="mb-3.5">
+        <div className="mb-2.5 sm:mb-3.5">
           <button
             type="button"
             onClick={() => router.back()}
@@ -1161,11 +1161,11 @@ const commonTranslate = useTranslations('Common');
         </div>
 
         {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          {/* Left Column: Hero Banner + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-4 min-w-0 max-w-full overflow-hidden">
-            {/* Banner Container */}
-            <div className="relative w-full h-[320px] md:h-[420px] lg:h-[460px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-950">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
+          {/* Left Column: Hero Banner + Mobile Metadata + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
+            {/* Banner Container: Slimmer & sleek on mobile, generous & immersive on desktop */}
+            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-950">
               <GalleryCarousel
                 images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
                 defaultBanner={activeTournament.bannerUrl || undefined}
@@ -1173,8 +1173,8 @@ const commonTranslate = useTranslations('Common');
               />
             </div>
 
-            {/* Mobile Metadata Container */}
-            <div className="block lg:hidden space-y-4">
+            {/* Mobile Metadata Container: Show tournament info & primary CTA immediately on mobile */}
+            <div className="block lg:hidden space-y-3 sm:space-y-4">
               {renderMetadataCard()}
             </div>
 

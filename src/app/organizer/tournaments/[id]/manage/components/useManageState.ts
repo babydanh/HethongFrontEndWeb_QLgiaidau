@@ -967,7 +967,7 @@ export function useManageState(id: string) {
       const parsedMaxParticipants = Number(newDivisionMaxParticipants);
       const normalizedMaxParticipants = Number.isFinite(parsedMaxParticipants) && parsedMaxParticipants > 0
         ? Math.min(128, Math.max(2, parsedMaxParticipants))
-        : null;
+        : 2;
       const divisionPayload = {
         name: divisionName,
         matchType: mapped.mt,

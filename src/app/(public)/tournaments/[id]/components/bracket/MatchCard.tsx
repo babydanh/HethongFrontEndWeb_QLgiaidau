@@ -184,10 +184,9 @@ export const MatchCard = memo(function MatchCard({
       aria-disabled={live}
       style={{ width: cardWidth ?? CARD_W, height: actualCardH }}
       className={
-                'rounded-md overflow-hidden border flex flex-col shadow-sm transition-[box-shadow,border-color] duration-150 hover:shadow bg-white select-none ' +
-
+        'relative rounded-md overflow-visible border flex flex-col shadow-sm transition-all duration-300 hover:shadow bg-white select-none ' +
         (selected
-          ? 'border-amber-500 ring-2 ring-amber-400 shadow-md'
+          ? 'border-amber-500 ring-4 ring-amber-400 ring-offset-2 shadow-2xl scale-[1.04] z-30 animate-pulse bg-amber-50/10'
           : live
             ? 'border-blue-600 ring-2 ring-blue-500/30 shadow-md'
             : done
@@ -196,6 +195,11 @@ export const MatchCard = memo(function MatchCard({
       }
       onClick={() => onSelectMatch?.(match)}
     >
+      {selected && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-lg z-40 border border-white animate-bounce pointer-events-none">
+          🎯 Trận đang xem
+        </div>
+      )}
       {(match.participant1 || match.participant2) && !match.isBye && !isOrganizer ? (
         <Link href={'/live/' + match.id} className="flex flex-col flex-1 hover:no-underline group" draggable={false}>
           {cardInner}

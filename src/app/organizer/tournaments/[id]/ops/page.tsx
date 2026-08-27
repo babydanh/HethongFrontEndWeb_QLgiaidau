@@ -145,14 +145,32 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   const handleFocusMatchOnBracket = (matchId: string) => {
     setFocusedMatchId(matchId);
     setActivePageTab('BRACKET');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        bracketSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        const matchNode = document.querySelector<HTMLElement>(`[data-bracket-match-id="${matchId}"]`);
-        matchNode?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-      });
-    });
   };
+
+  useEffect(() => {
+    if (!focusedMatchId || activePageTab !== 'BRACKET') {
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    const tryScrollToMatch = () => {
+      attempts++;
+      const matchNode = document.querySelector<HTMLElement>(`[data-bracket-match-id="${focusedMatchId}"]`);
+      if (matchNode) {
+        matchNode.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        return;
+      }
+
+      if (attempts < maxAttempts) {
+        setTimeout(tryScrollToMatch, 120);
+      }
+    };
+
+    const timer = setTimeout(tryScrollToMatch, 150);
+    return () => clearTimeout(timer);
+  }, [activePageTab, focusedMatchId]);
 
   const handleOpsUpdateMatchSchedule = async (
     match: typeof matches[number],

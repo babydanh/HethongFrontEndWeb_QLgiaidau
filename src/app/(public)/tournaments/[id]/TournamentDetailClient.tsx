@@ -728,7 +728,7 @@ const commonTranslate = useTranslations('Common');
           {/* Left Column: Hero Banner + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-4 min-w-0 max-w-full overflow-hidden">
             {/* Banner Container */}
-            <div className="relative w-full aspect-[16/9] min-h-[280px] sm:min-h-[350px] md:min-h-[400px] lg:min-h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-950">
+            <div className="relative w-full h-[320px] md:h-[420px] lg:h-[460px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-950">
               <GalleryCarousel
                 images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
                 defaultBanner={activeTournament.bannerUrl || undefined}

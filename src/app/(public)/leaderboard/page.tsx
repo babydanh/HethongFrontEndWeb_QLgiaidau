@@ -448,6 +448,8 @@ export default function LeaderboardPage() {
                                     setSelectedMatchType(matchType);
                                     if (matchType === 'MIXED_DOUBLES') {
                                       setSelectedGenderFilter('MIXED');
+                                    } else if (selectedGenderFilter === 'MIXED') {
+                                      setSelectedGenderFilter(normalizeGenderFilter(user?.gender));
                                     }
                                 }}
                                 className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"

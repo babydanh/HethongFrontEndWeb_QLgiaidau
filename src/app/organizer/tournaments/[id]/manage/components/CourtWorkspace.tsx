@@ -1,9 +1,25 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarRange, LayoutGrid } from 'lucide-react';
+import { CalendarRange, LayoutGrid, Settings2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { AiScheduleCommandInput, AiScheduleCommandResult, Division, SchedulePlanPreview } from '@/features/tournaments/api';
+import { Button } from '@/components/ui/Button';
+import {
+  Modal,
+  ModalClose,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from '@/components/ui/Modal';
+import type {
+  AiScheduleCommandInput,
+  AiScheduleCommandResult,
+  Division,
+  SchedulePlanPreview,
+  SchedulePlanPreviewInput,
+} from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { CourtSetupItem } from './CourtSetup';
 import { QuickSchedulePanel } from './QuickSchedulePanel';
@@ -33,7 +49,7 @@ interface CourtWorkspaceProps {
   setsToWin?: number | null;
   preview: SchedulePlanPreview | null;
   isPreviewing: boolean;
-  onPreview: (payload: Parameters<React.ComponentProps<typeof QuickSchedulePanel>['onPreview']>[0]) => Promise<SchedulePlanPreview | null>;
+  onPreview: (payload: SchedulePlanPreviewInput) => Promise<SchedulePlanPreview | null>;
   onPreviewWithAi: (payload: AiScheduleCommandInput) => Promise<AiScheduleCommandResult | null>;
   aiScheduleIntent: AiScheduleCommandResult['intent'] | null;
   isPlanningScheduleWithAi: boolean;
@@ -61,6 +77,9 @@ export function CourtWorkspace({
 }: CourtWorkspaceProps) {
   const t = useTranslations('OrganizerManage');
   const [selectedRound, setSelectedRound] = useState('all');
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => courts.map((court) => court.id));
+  const [courtPickerOpen, setCourtPickerOpen] = useState(false);
+  const [scheduleSettingsOpen, setScheduleSettingsOpen] = useState(false);
   const roundOptions = useMemo(
     () => [...new Set(matches.map((match) => match.roundNumber).filter((round): round is number => Number.isInteger(round)))].sort((a, b) => a - b),
     [matches],
@@ -70,63 +89,117 @@ export function CourtWorkspace({
     [matches, selectedRound],
   );
   const scopedMatchIds = selectedRound === 'all' ? undefined : scopedMatches.map((match) => match.id);
+  const visibleCourts = useMemo(() => {
+    const selected = new Set(selectedCourtIds);
+    return courts.filter((court) => selected.has(court.id));
+  }, [courts, selectedCourtIds]);
+  const allCourtsSelected = courts.length > 0 && visibleCourts.length === courts.length;
+
+  const toggleCourt = (courtId: string) => {
+    setSelectedCourtIds((current) => current.includes(courtId)
+      ? current.filter((id) => id !== courtId)
+      : [...current, courtId]);
+  };
 
   if (courts.length === 0) return null;
 
   return (
-    <section className="space-y-5 border border-slate-200 bg-white p-5 md:p-6" aria-labelledby="court-workspace-title">
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-start gap-3">
+    <section className="space-y-4 border border-slate-200 bg-white p-4 md:p-5" aria-labelledby="court-workspace-title">
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
           <LayoutGrid className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">{t('courtWorkspace')}</p>
-            <h2 id="court-workspace-title" className="mt-1 text-xl font-bold text-slate-900">{venueName || t('venueNotSet')}</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">{t('workspaceIntro')}</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{t('courtWorkspace')}</p>
+            <h2 id="court-workspace-title" className="mt-1 truncate text-xl font-bold text-slate-900">{venueName || t('venueNotSet')}</h2>
+            <p className="mt-1 text-sm leading-5 text-slate-500">{t('workspaceIntro')}</p>
           </div>
         </div>
-        <div className="shrink-0 border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-          <strong>{courts.length}</strong> {t('courtCount')}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" onClick={() => setCourtPickerOpen(true)} className="min-h-10 border-slate-300 bg-white text-slate-800">
+            <LayoutGrid className="mr-2 h-4 w-4" aria-hidden="true" />
+            {t('chooseCourts')} <span className="ml-1 text-slate-500">{visibleCourts.length}/{courts.length}</span>
+          </Button>
+          <Button type="button" variant="outline" onClick={() => setScheduleSettingsOpen(true)} className="min-h-10 border-slate-300 bg-white text-slate-800">
+            <Settings2 className="mr-2 h-4 w-4" aria-hidden="true" />
+            {t('scheduleSettings')}
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
-        <div>
-          <p className="text-sm font-semibold text-slate-800">{t('assignmentScope')}</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">{t('assignmentScopeHint')}</p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
+          <CalendarRange className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+          <span className="truncate">{selectedRound === 'all' ? t('allRoundsSummary', { count: matches.length }) : t('roundSummary', { round: selectedRound, count: scopedMatches.length })}</span>
         </div>
-        <label className="text-sm font-semibold text-slate-700">
-          {t('roundLabel')}
-          <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="mt-1.5 h-10 w-full border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <span className="sr-only">{t('roundLabel')}</span>
+          <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="h-10 min-w-40 border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
             <option value="all">{t('allRounds')}</option>
             {roundOptions.map((round) => <option key={round} value={String(round)}>{t('roundValue', { round })}</option>)}
           </select>
         </label>
       </div>
 
-      <div className="flex items-center gap-2 border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-900">
-        <CalendarRange className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{selectedRound === 'all' ? t('allRoundsSummary', { count: matches.length }) : t('roundSummary', { round: selectedRound, count: scopedMatches.length })}</span>
-      </div>
+      <CourtScheduleBoard courts={visibleCourts} matches={scopedMatches} preview={preview} defaultDate={defaultDate} defaultOperatingStart={defaultOperatingStart} defaultOperatingEnd={defaultOperatingEnd} onOpenMatch={onOpenMatch} />
 
-      <QuickSchedulePanel
-        key={`${defaultDivisionId}-${sportRuleKind}-${setsToWin ?? ''}-${selectedRound}-${defaultOperatingStart}-${defaultOperatingEnd}`}
-        courts={courts}
-        divisions={divisions}
-        defaultDivisionId={defaultDivisionId}
-        defaultDate={defaultDate}
-        defaultOperatingStart={defaultOperatingStart}
-        defaultOperatingEnd={defaultOperatingEnd}
-        sportRuleKind={sportRuleKind}
-        setsToWin={setsToWin}
-        matchIds={scopedMatchIds}
-        preview={preview}
-        isPreviewing={isPreviewing}
-        onPreview={onPreview}
-        onPreviewWithAi={onPreviewWithAi}
-        aiScheduleIntent={aiScheduleIntent}
-        isPlanningScheduleWithAi={isPlanningScheduleWithAi}
-      />
-      <CourtScheduleBoard courts={courts} matches={scopedMatches} preview={preview} onOpenMatch={onOpenMatch} />
+      <Modal open={courtPickerOpen} onOpenChange={setCourtPickerOpen}>
+        <ModalContent className="max-w-xl">
+          <ModalHeader>
+            <ModalTitle>{t('chooseCourts')}</ModalTitle>
+            <ModalDescription>{t('selectedCourtsHint')}</ModalDescription>
+          </ModalHeader>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {courts.map((court) => {
+              const selected = selectedCourtIds.includes(court.id);
+              return (
+                <button key={court.id} type="button" aria-pressed={selected} onClick={() => toggleCourt(court.id)} className={`flex min-h-12 items-center justify-between border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${selected ? 'border-blue-600 bg-blue-50 text-blue-950' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300'}`}>
+                  <span className="truncate font-semibold">{court.courtName}</span>
+                  <span className={`ml-3 h-4 w-4 shrink-0 border ${selected ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'}`} aria-hidden="true" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-xs text-slate-500">
+            <span>{t('selectedCourtCount', { count: visibleCourts.length })}</span>
+            <button type="button" onClick={() => setSelectedCourtIds(allCourtsSelected ? [] : courts.map((court) => court.id))} className="font-semibold text-blue-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
+              {allCourtsSelected ? t('clearAllCourts') : t('selectAllCourts')}
+            </button>
+          </div>
+          <ModalFooter>
+            <ModalClose asChild><Button type="button" variant="outline" className="border-slate-300 bg-white">{t('close')}</Button></ModalClose>
+            <ModalClose asChild><Button type="button" disabled={visibleCourts.length === 0} className="bg-blue-600 text-white hover:bg-blue-700">{t('applyCourtSelection')}</Button></ModalClose>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal open={scheduleSettingsOpen} onOpenChange={setScheduleSettingsOpen}>
+        <ModalContent className="max-w-5xl">
+          <ModalHeader>
+            <ModalTitle>{t('scheduleSettings')}</ModalTitle>
+            <ModalDescription>{t('scheduleSettingsHint')}</ModalDescription>
+          </ModalHeader>
+          <QuickSchedulePanel
+            key={`${defaultDivisionId}-${sportRuleKind}-${setsToWin ?? ''}-${selectedRound}-${defaultOperatingStart}-${defaultOperatingEnd}-${visibleCourts.map((court) => court.id).join(',')}`}
+            courts={visibleCourts}
+            divisions={divisions}
+            defaultDivisionId={defaultDivisionId}
+            defaultDate={defaultDate}
+            defaultOperatingStart={defaultOperatingStart}
+            defaultOperatingEnd={defaultOperatingEnd}
+            sportRuleKind={sportRuleKind}
+            setsToWin={setsToWin}
+            matchIds={scopedMatchIds}
+            preview={preview}
+            isPreviewing={isPreviewing}
+            onPreview={onPreview}
+            onPreviewWithAi={onPreviewWithAi}
+            aiScheduleIntent={aiScheduleIntent}
+            isPlanningScheduleWithAi={isPlanningScheduleWithAi}
+            selectedCourtIds={visibleCourts.map((court) => court.id)}
+            showCourtSelector={false}
+          />
+        </ModalContent>
+      </Modal>
     </section>
   );
 }

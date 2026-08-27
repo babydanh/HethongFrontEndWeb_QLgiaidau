@@ -32,6 +32,9 @@ interface QuickSchedulePanelProps {
   onPreviewWithAi: (payload: AiScheduleCommandInput) => Promise<AiScheduleCommandResult | null>;
   aiScheduleIntent: AiScheduleCommandResult['intent'] | null;
   isPlanningScheduleWithAi: boolean;
+  selectedCourtIds?: string[];
+  onSelectedCourtIdsChange?: (courtIds: string[]) => void;
+  showCourtSelector?: boolean;
 }
 
 const STRATEGY = 'ROUND_ORDER_EARLIEST_AVAILABLE' as const;
@@ -59,13 +62,21 @@ export function QuickSchedulePanel({
   onPreviewWithAi,
   aiScheduleIntent,
   isPlanningScheduleWithAi,
+  selectedCourtIds: controlledCourtIds,
+  onSelectedCourtIdsChange,
+  showCourtSelector = true,
 }: QuickSchedulePanelProps) {
   const t = useTranslations('OrganizerManage');
   const presets = useMemo(() => getSchedulePresets(sportRuleKind, setsToWin), [sportRuleKind, setsToWin]);
   const [mode, setMode] = useState<'basic' | 'advanced'>('basic');
   const [divisionId, setDivisionId] = useState(defaultDivisionId || '');
   const [date, setDate] = useState(defaultDate?.slice(0, 10) || '');
-  const [selectedCourtIds, setSelectedCourtIds] = useState<string[] | null>(null);
+  const [internalSelectedCourtIds, setInternalSelectedCourtIds] = useState<string[] | null>(null);
+  const selectedCourtIds = controlledCourtIds ?? internalSelectedCourtIds;
+  const updateSelectedCourtIds = (next: string[] | null) => {
+    if (onSelectedCourtIdsChange) onSelectedCourtIdsChange(next ?? courts.map((court) => court.id));
+    else setInternalSelectedCourtIds(next);
+  };
   const [presetId, setPresetId] = useState<SchedulePresetId>('recommended');
   const [timingModel, setTimingModel] = useState<ScheduleTimingModel>(() => presets.recommended.timingModel);
   const [unitDurationMinutes, setUnitDurationMinutes] = useState(() => presets.recommended.unitDurationMinutes);
@@ -105,9 +116,9 @@ export function QuickSchedulePanel({
 
   const markCustom = () => setPresetId('custom');
   const toggleCourt = (courtId: string) => {
-    setSelectedCourtIds((current) => (current ?? courts.map((court) => court.id)).includes(courtId)
-      ? (current ?? courts.map((court) => court.id)).filter((id) => id !== courtId)
-      : [...(current ?? courts.map((court) => court.id)), courtId]);
+    updateSelectedCourtIds((selectedCourtIds ?? courts.map((court) => court.id)).includes(courtId)
+      ? (selectedCourtIds ?? courts.map((court) => court.id)).filter((id) => id !== courtId)
+      : [...(selectedCourtIds ?? courts.map((court) => court.id)), courtId]);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -229,11 +240,11 @@ export function QuickSchedulePanel({
           </div>
         </fieldset>
 
-        <div>
-          <div className="mb-2 flex items-center justify-between gap-3"><p className="text-sm font-semibold text-slate-700">{t('matchSchedule.court')}</p><button type="button" onClick={() => setSelectedCourtIds(allCourtsSelected ? [] : courts.map((court) => court.id))} className="text-xs font-semibold text-blue-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{allCourtsSelected ? t('clearAllCourts') : t('selectAllCourts')}</button></div>
+        {showCourtSelector && <div>
+          <div className="mb-2 flex items-center justify-between gap-3"><p className="text-sm font-semibold text-slate-700">{t('matchSchedule.court')}</p><button type="button" onClick={() => updateSelectedCourtIds(allCourtsSelected ? [] : courts.map((court) => court.id))} className="text-xs font-semibold text-blue-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{allCourtsSelected ? t('clearAllCourts') : t('selectAllCourts')}</button></div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">{courts.map((court) => <label key={court.id} className="flex min-h-11 items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"><input type="checkbox" checked={effectiveCourtIds.includes(court.id)} onChange={() => toggleCourt(court.id)} className="h-4 w-4 accent-blue-600" /><span className="truncate">{court.courtName}</span></label>)}</div>
           {courts.length === 0 && <p className="mt-2 text-sm text-slate-500">{t('status.notSet')}</p>}
-        </div>
+        </div>}
 
         {mode === 'advanced' && (
           <div className="space-y-4 border-l-2 border-blue-600 bg-white p-4">

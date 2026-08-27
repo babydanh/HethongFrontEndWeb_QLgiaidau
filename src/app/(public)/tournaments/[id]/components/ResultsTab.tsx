@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { tournamentsApi, type TournamentResult, type TournamentResultAward } from '@/features/tournaments/api';
 import ShareModal from '@/components/common/ShareModal';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 
 interface ResultsTabProps {
   tournamentId: string;
@@ -19,46 +20,91 @@ function getInitials(value: string) {
   return (words.length > 1 ? `${words[0][0]}${words.at(-1)?.[0] ?? ''}` : words[0]?.[0] ?? '?').toUpperCase();
 }
 
-function ParticipantAwardIdentity({ participant }: { participant: AwardParticipant }) {
+function ParticipantAwardIdentity({
+  participant,
+  rank,
+}: {
+  participant: AwardParticipant;
+  rank: number;
+}) {
+  const { openUserById } = useUserProfileModalStore();
   const members = getUniqueParticipantMembers(
     Array.isArray(participant.members) ? participant.members : [],
   ).slice(0, 2);
   const memberNames = members.map((member) => member.fullName?.trim()).filter(Boolean).join(' / ');
 
+  const ringClasses =
+    rank === 1
+      ? 'ring-2 ring-amber-400 ring-offset-1 border-2 border-white shadow-xs'
+      : rank === 2
+        ? 'ring-2 ring-slate-400 ring-offset-1 border-2 border-white shadow-xs'
+        : rank === 3
+          ? 'ring-2 ring-amber-700/70 ring-offset-1 border-2 border-white shadow-xs'
+          : 'ring-1 ring-slate-300 border-2 border-white shadow-xs';
+
+  const fallbackBg =
+    rank === 1
+      ? 'bg-amber-100 text-amber-800'
+      : rank === 2
+        ? 'bg-slate-200 text-slate-700'
+        : rank === 3
+          ? 'bg-orange-100 text-amber-900'
+          : 'bg-slate-100 text-slate-600';
+
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
       <div className="flex shrink-0 items-center -space-x-2" aria-label={participant.teamName}>
-        {members.length > 0 ? members.map((member, index) => {
-          const fallback = getInitials(member.fullName || participant.teamName);
-          return member.avatarUrl ? (
-            <img
-              key={member.userId || `${participant.participantId}-${index}`}
-              src={member.avatarUrl}
-              alt={member.fullName || participant.teamName}
-              referrerPolicy="no-referrer"
-              className="h-11 w-11 rounded-full border-2 border-white bg-slate-100 object-cover shadow-sm"
-            />
-          ) : (
-            <span
-              key={member.userId || `${participant.participantId}-${index}`}
-              className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-xs font-black text-slate-600 shadow-sm"
-              title={member.fullName || participant.teamName}
-            >
-              {fallback}
-            </span>
-          );
-        }) : (
-          <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-xs font-black text-slate-600 shadow-sm">
+        {members.length > 0 ? (
+          members.map((member, index) => {
+            const fallback = getInitials(member.fullName || participant.teamName);
+            const handleMemberClick = (e: React.MouseEvent) => {
+              e.stopPropagation();
+              if (member.userId) {
+                openUserById(
+                  member.userId,
+                  member.fullName || undefined,
+                  member.avatarUrl || null,
+                  e.currentTarget.getBoundingClientRect(),
+                );
+              }
+            };
+
+            return member.avatarUrl ? (
+              <img
+                key={member.userId || `${participant.participantId}-${index}`}
+                src={member.avatarUrl}
+                alt={member.fullName || participant.teamName}
+                referrerPolicy="no-referrer"
+                onClick={handleMemberClick}
+                className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${ringClasses}`}
+                title={member.fullName || participant.teamName}
+              />
+            ) : (
+              <button
+                key={member.userId || `${participant.participantId}-${index}`}
+                type="button"
+                onClick={handleMemberClick}
+                className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-xs font-black cursor-pointer hover:scale-105 transition-transform ${fallbackBg} ${ringClasses}`}
+                title={member.fullName || participant.teamName}
+              >
+                {fallback}
+              </button>
+            );
+          })
+        ) : (
+          <span
+            className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-xs font-black ${fallbackBg} ${ringClasses}`}
+          >
             {getInitials(participant.teamName)}
           </span>
         )}
       </div>
-      <div className="min-w-0">
-        <h4 className="truncate text-base font-black text-slate-950 sm:text-lg" title={participant.teamName}>
+      <div className="min-w-0 flex-1">
+        <h4 className="truncate text-sm sm:text-base font-extrabold text-slate-900 leading-tight" title={participant.teamName}>
           {participant.teamName}
         </h4>
         {memberNames && (
-          <p className="mt-0.5 truncate text-xs font-medium text-slate-500" title={memberNames}>
+          <p className="mt-0.5 truncate text-[11px] sm:text-xs font-medium text-slate-500" title={memberNames}>
             {memberNames}
           </p>
         )}
@@ -74,31 +120,55 @@ function ResultAwardCard({
 }: {
   award: TournamentResultAward;
   label: string;
-  rank: 1 | 2;
+  rank: number;
 }) {
   if (!award.participant) return null;
-  const isChampion = rank === 1;
+
+  const isGold = rank === 1;
+  const isSilver = rank === 2;
+  const isBronze = rank === 3;
+
+  const cardStyles = isGold
+    ? 'border-amber-300/90 bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white shadow-xs hover:border-amber-400'
+    : isSilver
+      ? 'border-slate-300 bg-gradient-to-br from-slate-200/50 via-slate-100/30 to-white shadow-xs hover:border-slate-400'
+      : isBronze
+        ? 'border-orange-300/80 bg-gradient-to-br from-orange-500/10 via-amber-700/5 to-white shadow-xs hover:border-orange-400'
+        : 'border-slate-200 bg-white shadow-xs hover:border-slate-300';
+
+  const badgeStyles = isGold
+    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-2xs'
+    : isSilver
+      ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-2xs'
+      : isBronze
+        ? 'bg-gradient-to-r from-amber-700 to-orange-700 text-white shadow-2xs'
+        : 'bg-slate-500 text-white';
+
+  const rankNumberColor = isGold
+    ? 'text-amber-500 drop-shadow-2xs'
+    : isSilver
+      ? 'text-slate-500'
+      : isBronze
+        ? 'text-amber-800'
+        : 'text-slate-400';
+
+  const rankIcon = isGold ? '👑' : isSilver ? '🥈' : isBronze ? '🥉' : '🎖️';
 
   return (
     <article
-      className={`rounded-2xl border p-4 sm:p-5 ${
-        isChampion
-          ? 'border-amber-300 bg-amber-50/70'
-          : 'border-slate-200 bg-slate-50/70'
-      }`}
+      className={`rounded-xl border p-3 sm:p-3.5 transition-all flex flex-col justify-between gap-2.5 ${cardStyles}`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className={`text-[11px] font-black uppercase tracking-[0.16em] ${
-            isChampion ? 'text-amber-800' : 'text-slate-600'
-          }`}
-        >
-          {label}
+      <div className="flex items-center justify-between gap-2">
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black uppercase tracking-wider ${badgeStyles}`}>
+          <span>{rankIcon}</span>
+          <span>{label}</span>
         </span>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-4">
-        <ParticipantAwardIdentity participant={award.participant} />
-        <span className={`shrink-0 text-2xl font-black ${isChampion ? 'text-amber-700' : 'text-slate-500'}`}>
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="min-w-0 flex-1">
+          <ParticipantAwardIdentity participant={award.participant} rank={rank} />
+        </div>
+        <span className={`shrink-0 text-xl sm:text-2xl font-black ${rankNumberColor}`}>
           {rank}
         </span>
       </div>
@@ -151,11 +221,10 @@ export default function ResultsTab({
   }
 
   const awards = (result?.awards ?? [])
-    .filter((award) => award.participant && (award.rank === 1 || award.rank === 2))
+    .filter((award) => award.participant && typeof award.rank === 'number' && award.rank >= 1)
     .sort((a, b) => a.rank - b.rank);
-  const championAward = awards.find((award) => award.rank === 1);
-  const runnerUpAward = awards.find((award) => award.rank === 2);
-  if (!result || !championAward || !runnerUpAward) {
+
+  if (!result || awards.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
         <p className="text-sm font-bold text-slate-700">{translate('resultsTabPendingTitle')}</p>
@@ -167,10 +236,16 @@ export default function ResultsTab({
   const statusTitle = result.finalized
     ? translate('resultsTabOfficialTitle')
     : translate('resultsTabCurrentTitle');
-  const championName = championAward.participant?.teamName ?? '';
-  const runnerUpName = runnerUpAward.participant?.teamName ?? '';
+
+  const getRankLabel = (rank: number) => {
+    if (rank === 1) return translate('champion') || 'Quán quân';
+    if (rank === 2) return translate('runnerUp') || 'Á quân';
+    if (rank === 3) return translate('thirdPlace') || 'Hạng ba';
+    return translate('rank', { rank }) || `Hạng ${rank}`;
+  };
+
   const resultShareTitle = `${statusTitle}: ${tournamentName || translate('resultsTabLabel')}`;
-  const resultShareText = `${resultShareTitle}\n${translate('rank', { rank: 1 })}: ${championName}\n${translate('rank', { rank: 2 })}: ${runnerUpName}`;
+  const resultShareText = `${resultShareTitle}\n` + awards.map(a => `${getRankLabel(a.rank)}: ${a.participant?.teamName ?? ''}`).join('\n');
   const shareUrl = typeof window !== 'undefined'
     ? (() => {
       const url = new URL(window.location.href);
@@ -199,24 +274,22 @@ export default function ResultsTab({
           <button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
           >
             <Share2 className="h-4 w-4" aria-hidden="true" />
             <span>{translate('shareResults')}</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <ResultAwardCard
-            award={championAward}
-            label={translate('champion')}
-            rank={1}
-          />
-          <ResultAwardCard
-            award={runnerUpAward}
-            label={translate('runnerUp')}
-            rank={2}
-          />
+        <div className={`grid grid-cols-1 ${awards.length >= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2'} gap-2.5 sm:gap-3`}>
+          {awards.map((award, index) => (
+            <ResultAwardCard
+              key={award.participant?.participantId || `${award.rank}-${index}`}
+              award={award}
+              label={getRankLabel(award.rank)}
+              rank={award.rank}
+            />
+          ))}
         </div>
       </section>
 

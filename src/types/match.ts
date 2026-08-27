@@ -63,6 +63,7 @@ export interface Match {
   startedAt?: string | null;
   completedAt?: string | null;
   updatedAt: string;
+  courtId?: string | null;
   courtName?: string | null;
   courtAddress?: string | null;
   participant1Id?: string | null;

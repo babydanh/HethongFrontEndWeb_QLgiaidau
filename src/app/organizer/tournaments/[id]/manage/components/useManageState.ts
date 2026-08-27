@@ -254,7 +254,7 @@ export function useManageState(id: string) {
   } | null>(null);
 
   // ── Match schedule modal ──
-  const [selectedMatch, setSelectedMatch] = useState<BracketMatch|null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<(BracketMatch | Match) | null>(null);
   const [matchCourtId, setMatchCourtId] = useState('');
   const [matchCourtName, setMatchCourtName] = useState('');
   const [matchCourtAddress, setMatchCourtAddress] = useState('');
@@ -1435,7 +1435,7 @@ export function useManageState(id: string) {
     finally { setIsSavingStage(false); }
   };
 
-  const handleOpenScheduling = (match: BracketMatch) => {
+  const handleOpenScheduling = (match: BracketMatch | Match) => {
     setSelectedMatch(match);
     setMatchCourtId(match.courtId || '');
     setMatchCourtName(match.courtName || '');

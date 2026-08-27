@@ -439,8 +439,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               courts={s.courts}
               matches={s.matches}
               onOpenMatch={(matchId) => {
-                const fullMatch = s.matches.find((candidate) => candidate.id === matchId);
-                if (fullMatch) s.handleOpenScheduling(fullMatch as any);
+                const fullMatch = s.matches.find(
+                  (candidate: (typeof s.matches)[number]) => candidate.id === matchId,
+                );
+                if (fullMatch) s.handleOpenScheduling(fullMatch);
               }}
             />
           </div>

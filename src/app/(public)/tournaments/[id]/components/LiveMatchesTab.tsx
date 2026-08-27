@@ -11,11 +11,13 @@ import { ChevronLeft, ChevronRight, PlayCircle, Radio, Clock, Search } from 'luc
 import { formatDateTime } from '@/utils/format';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
+import { isActiveMatch } from '@/utils/match-status';
 
 interface LiveMatchesTabProps {
   tournament: Tournament;
   tournamentId: string;
   divisionId?: string;
+  onLiveCountChange?: (divisionId: string, count: number) => void;
 }
 
 const ITEMS_PER_PAGE = 6;
@@ -96,6 +98,7 @@ export default function LiveMatchesTab({
   tournament,
   tournamentId,
   divisionId,
+  onLiveCountChange,
 }: LiveMatchesTabProps) {
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
@@ -127,13 +130,25 @@ export default function LiveMatchesTab({
         if (divisionId) params.division_id = divisionId;
 
         const res = await matchesApi.getMatches(params);
-        const data = Array.isArray(res) ? res : (res.data || []);
+        const rawRes = res as unknown;
+        const list = Array.isArray(rawRes)
+          ? rawRes
+          : Array.isArray((rawRes as { data?: unknown })?.data)
+            ? (rawRes as { data: Match[] }).data
+            : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
+              ? (rawRes as { data: { data: Match[] } }).data.data
+              : [];
         if (active) {
-          const ongoing = (data as Match[]).filter((m) => m.status === 'ONGOING');
+          const ongoing = (list as Match[]).filter(isActiveMatch);
           setLiveMatches(ongoing);
+          if (divisionId) onLiveCountChange?.(divisionId, ongoing.length);
         }
       } catch (err) {
         console.error('Failed to fetch live matches:', err);
+        if (active) {
+          setLiveMatches([]);
+          if (divisionId) onLiveCountChange?.(divisionId, 0);
+        }
       }
     };
 
@@ -142,7 +157,7 @@ export default function LiveMatchesTab({
     return () => {
       active = false;
     };
-  }, [tournamentId, divisionId]);
+  }, [divisionId, onLiveCountChange, tournamentId]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -162,7 +177,9 @@ export default function LiveMatchesTab({
 
       setLiveMatches((current) => {
         let next: Match[];
-        if (updatedMatch.status !== 'ONGOING') {
+        const isLiveValid = isActiveMatch(updatedMatch);
+
+        if (!isLiveValid) {
           next = current.filter((m) => m.id !== updatedMatch.id);
         } else {
           const exists = current.some((m) => m.id === updatedMatch.id);
@@ -172,6 +189,7 @@ export default function LiveMatchesTab({
             next = [updatedMatch, ...current];
           }
         }
+        if (divisionId) onLiveCountChange?.(divisionId, next.length);
         return next;
       });
     };
@@ -184,7 +202,7 @@ export default function LiveMatchesTab({
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [tournamentId, divisionId]);
+  }, [divisionId, onLiveCountChange, tournamentId]);
 
   const filteredMatches = liveMatches.filter((m) => {
     if (!searchQuery.trim()) return true;

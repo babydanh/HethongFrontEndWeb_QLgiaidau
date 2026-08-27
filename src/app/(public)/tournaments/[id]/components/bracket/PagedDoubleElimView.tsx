@@ -153,7 +153,48 @@ export function PagedDoubleElimView({
   const getRoundTitle = (r: number) =>
     activeBranch === 'upper' ? getUbLabel(r) : getLbLabel(r);
 
-  const roundGap = COL_GAP;
+  const currentRound = activeBranchRounds[activeRoundIndex] ?? activeBranchRounds[0];
+  const viewportRef = React.useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  React.useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    setContainerWidth(el.clientWidth);
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const numVisible = visibleRounds.length;
+
+  // Dynamic responsive card width and gap
+  const { cardW, roundGap } = useMemo(() => {
+    if (!containerWidth || numVisible <= 0) {
+      return { cardW: CARD_W, roundGap: COL_GAP };
+    }
+    const available = containerWidth - 56;
+    const minNeeded = numVisible * CARD_W + Math.max(0, numVisible - 1) * 36;
+
+    if (available >= minNeeded) {
+      const targetGap = Math.min(64, Math.max(36, Math.floor(available * 0.05)));
+      const candidateW = Math.floor((available - (numVisible - 1) * targetGap) / numVisible);
+      const finalCardW = Math.min(320, Math.max(CARD_W, candidateW));
+      const remaining = available - numVisible * finalCardW;
+      const finalGap = numVisible > 1
+        ? Math.min(72, Math.max(36, Math.floor(remaining / (numVisible - 1))))
+        : COL_GAP;
+      return { cardW: finalCardW, roundGap: finalGap };
+    }
+
+    return { cardW: CARD_W, roundGap: 36 };
+  }, [containerWidth, numVisible]);
 
   // Calculate compact posMap for visible rounds (top-aligned at y = 16px)
   const posMap = useMemo(() => {
@@ -161,7 +202,7 @@ export function PagedDoubleElimView({
     const visibleSet = new Set(visibleRounds);
 
     visibleRounds.forEach((r, vIdx) => {
-      const colX = vIdx * (CARD_W + roundGap);
+      const colX = vIdx * (cardW + roundGap);
       const roundMatches = activeBranchByRound[r] ?? [];
 
       let previousY = Number.NEGATIVE_INFINITY;
@@ -202,7 +243,7 @@ export function PagedDoubleElimView({
     });
 
     return map;
-  }, [visibleRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap]);
+  }, [visibleRounds, activeBranchByRound, activeBranchMatches, cardH, cardW, roundGap]);
 
   // Calculate dynamic bounding height to fit matches tightly
   const totalHeight = useMemo(() => {
@@ -215,23 +256,22 @@ export function PagedDoubleElimView({
     return maxY;
   }, [posMap, cardH]);
 
-  const numVisible = visibleRounds.length;
-  const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 48;
-
-  const currentRound = activeBranchRounds[activeRoundIndex] ?? activeBranchRounds[0];
-  const viewportRef = React.useRef<HTMLDivElement>(null);
+  const svgW = Math.max(
+    containerWidth > 0 ? containerWidth - 32 : 0,
+    numVisible * cardW + Math.max(0, numVisible - 1) * roundGap + 32
+  );
 
   // Auto-scroll horizontally when active round changes to ensure active column (e.g. Finals) is never cut off
   React.useEffect(() => {
     if (!viewportRef.current) return;
     const activeVisibleIdx = visibleRounds.indexOf(activeBranchRounds[activeRoundIndex]);
     if (activeVisibleIdx >= 0) {
-      const colX = activeVisibleIdx * (CARD_W + roundGap) * zoom;
+      const colX = activeVisibleIdx * (cardW + roundGap) * zoom;
       const containerW = viewportRef.current.clientWidth;
-      const targetScroll = Math.max(0, colX - (containerW - CARD_W * zoom) / 2);
+      const targetScroll = Math.max(0, colX - (containerW - cardW * zoom) / 2);
       viewportRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
     }
-  }, [activeRoundIndex, visibleRounds, zoom, roundGap, activeBranchRounds]);
+  }, [activeRoundIndex, visibleRounds, zoom, cardW, roundGap, activeBranchRounds]);
 
   return (
     <div
@@ -373,7 +413,7 @@ export function PagedDoubleElimView({
                 return (
                   <div
                     key={r}
-                    style={{ width: CARD_W, flexShrink: 0 }}
+                    style={{ width: cardW, flexShrink: 0 }}
                     className="text-center"
                   >
                     <button
@@ -415,14 +455,14 @@ export function PagedDoubleElimView({
                 const endPos = posMap.get(m.nextMatchId);
                 if (!endPos) return null;
 
-                const midX = (startPos.x + CARD_W + endPos.x) / 2;
+                const midX = (startPos.x + cardW + endPos.x) / 2;
                 const isBlue = m.status === 'COMPLETED' || m.status === 'ONGOING' || m.status === 'IN_PROGRESS';
                 const stroke = isBlue ? '#2563eb' : '#cbd5e1';
 
                 return (
                   <path
                     key={m.id}
-                    d={`M ${startPos.x + CARD_W} ${startPos.y} H ${midX} V ${endPos.y} H ${endPos.x}`}
+                    d={`M ${startPos.x + cardW} ${startPos.y} H ${midX} V ${endPos.y} H ${endPos.x}`}
                     stroke={stroke}
                     strokeWidth={1.5}
                     fill="none"
@@ -447,13 +487,14 @@ export function PagedDoubleElimView({
                   className="absolute isolate z-10"
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0px)`,
-                    width: CARD_W,
+                    width: cardW,
                     transition: 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms ease-out',
                     willChange: 'transform',
                   }}
                 >
                   <MatchCard
                     match={match}
+                    cardWidth={cardW}
                     onScheduleMatch={onScheduleMatch}
                     onSelectMatch={onSelectMatch}
                     selected={selectedMatchId === match.id}

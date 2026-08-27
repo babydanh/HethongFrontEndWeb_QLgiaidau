@@ -51,18 +51,19 @@ export const MatchCard = memo(function MatchCard({
   onSelectMatch,
   selected = false,
   isP1Bye = false,
-    isP2Bye = false,
+  isP2Bye = false,
   dragHandlers,
+  cardWidth,
 }: {
-
   match: BracketMatch;
   onScheduleMatch?: OnScheduleMatch;
   onSelectMatch?: OnSelectBracketMatch;
   selected?: boolean;
   isP1Bye?: boolean;
-    isP2Bye?: boolean;
+  isP2Bye?: boolean;
   fallbackSportRuleKind?: SportRuleKind;
   dragHandlers?: BracketDragHandlers;
+  cardWidth?: number;
 }) {
 
   const translate = useTranslations('TournamentDetail');
@@ -181,12 +182,11 @@ export const MatchCard = memo(function MatchCard({
       data-bracket-match-live={live ? 'true' : 'false'}
       data-no-pan="true"
       aria-disabled={live}
-      style={{ width: CARD_W, height: actualCardH }}
+      style={{ width: cardWidth ?? CARD_W, height: actualCardH }}
       className={
-                'rounded-md overflow-hidden border flex flex-col shadow-sm transition-[box-shadow,border-color] duration-150 hover:shadow bg-white select-none ' +
-
+        'relative rounded-md overflow-visible border flex flex-col shadow-sm transition-all duration-300 hover:shadow bg-white select-none ' +
         (selected
-          ? 'border-amber-500 ring-2 ring-amber-400 shadow-md'
+          ? 'border-amber-500 ring-4 ring-amber-400 ring-offset-2 shadow-2xl scale-[1.04] z-30 animate-pulse bg-amber-50/10'
           : live
             ? 'border-blue-600 ring-2 ring-blue-500/30 shadow-md'
             : done
@@ -195,6 +195,11 @@ export const MatchCard = memo(function MatchCard({
       }
       onClick={() => onSelectMatch?.(match)}
     >
+      {selected && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-lg z-40 border border-white animate-bounce pointer-events-none">
+          🎯 Trận đang xem
+        </div>
+      )}
       {(match.participant1 || match.participant2) && !match.isBye && !isOrganizer ? (
         <Link href={'/live/' + match.id} className="flex flex-col flex-1 hover:no-underline group" draggable={false}>
           {cardInner}
@@ -304,8 +309,12 @@ const RowSide = memo(function RowSide({
             alt=""
             width={18}
             height={18}
-            className="h-[18px] w-[18px] rounded-full object-cover shrink-0"
+            className="h-[18px] w-[18px] rounded-full object-cover shrink-0 border border-slate-200/60"
           />
+        ) : p?.teamName ? (
+          <span className="h-[18px] w-[18px] rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8.5px] font-black text-slate-600 shrink-0 select-none shadow-2xs">
+            {p.teamName.trim().charAt(0).toUpperCase()}
+          </span>
         ) : null}
         <span
           className={

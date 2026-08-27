@@ -179,11 +179,13 @@ export function useOrganizerOps(
 
     setParticipants(participantsRes.data ?? []);
     
-    if (matchesRes.data) {
-      setMatches(matchesRes.data);
-    } else {
-      setMatches([]);
-    }
+    const rawMatches = matchesRes.data as unknown;
+    const matchArray = Array.isArray(rawMatches)
+      ? rawMatches
+      : Array.isArray((rawMatches as { data?: Match[] })?.data)
+        ? ((rawMatches as { data: Match[] }).data)
+        : [];
+    setMatches(matchArray);
 
     setActivityLog((current) => {
       const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate));

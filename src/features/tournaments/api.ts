@@ -223,7 +223,11 @@ export interface TournamentFeesConfig {
 export interface TournamentResultAward {
   rank: number;
   shared: boolean;
-  participant: { participantId: string; teamName: string } | null;
+  participant: {
+    participantId: string;
+    teamName: string;
+    members?: Array<{ userId?: string; fullName?: string; avatarUrl?: string }>;
+  } | null;
 }
 
 export interface TournamentResult {

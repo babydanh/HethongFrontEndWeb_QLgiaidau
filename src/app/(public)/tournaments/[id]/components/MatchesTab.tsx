@@ -584,7 +584,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
         }`}>
           {members.map((m, idx) => (
-            <span key={m.userId || `${m.fullName || 'member'}-${idx}`} className="inline-flex items-center">
+            <span key={m.userId || `${m.fullName || 'member'}-${idx}`} className="inline-flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-600 overflow-hidden shrink-0">
+                {(m as { avatarUrl?: string | null }).avatarUrl ? (
+                  <img src={(m as { avatarUrl?: string | null }).avatarUrl!} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  (m.fullName || 'U').trim().charAt(0).toUpperCase()
+                )}
+              </span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -611,10 +618,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       );
     }
     return (
-      <span className={`text-sm font-bold truncate ${
+      <span className={`text-sm font-bold flex items-center gap-1.5 truncate ${
         isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
       }`}>
-        {participant.teamName}
+        <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-600 overflow-hidden shrink-0">
+          {(participant as { logoUrl?: string | null }).logoUrl ? (
+            <img src={(participant as { logoUrl?: string | null }).logoUrl!} alt="" className="w-full h-full object-cover" />
+          ) : (
+            (participant.teamName || 'T').trim().charAt(0).toUpperCase()
+          )}
+        </span>
+        <span className="truncate">{participant.teamName}</span>
       </span>
     );
   };
@@ -654,7 +668,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 <button
                   type="button"
                   onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-                  className={`h-9 px-3.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none ${
+                  className={`h-9 px-3 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none ${
                     hasActiveRoundFilter
                       ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                       : isFilterDropdownOpen
@@ -662,25 +676,25 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                   }`}
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>{translate('moreFilters') || 'Lọc'}</span>
+                  <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+                  <span>{translate('filter')}</span>
                   {activeFilterLabel && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full max-w-[80px] sm:max-w-[140px] truncate ${
                       hasActiveRoundFilter ? 'bg-white/25 text-white' : 'bg-blue-100 text-blue-700'
                     }`}>
                       {activeFilterLabel}
                     </span>
                   )}
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown Popover */}
                 {isFilterDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-96 max-h-[75vh] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl p-4 z-40 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 scrollbar-thin scrollbar-thumb-slate-200">
+                  <div className="absolute right-0 top-full mt-1.5 w-[calc(100vw-3rem)] max-w-xs sm:max-w-none sm:w-96 max-h-[75vh] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-2xl p-4 z-40 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 scrollbar-thin scrollbar-thumb-slate-200">
                     {/* Popover Header */}
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        {matchTranslate('round') || 'Vòng đấu'}
+                      <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                        {translate('filterRoundsTitle')}
                       </span>
                       {hasActiveRoundFilter && (
                         <button
@@ -691,9 +705,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                             setSelectedLeg('ALL');
                             setSelectedRoundKey('ALL');
                           }}
-                          className="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+                          className="text-xs font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
                         >
-                          {translate('clearFilters') || 'Đặt lại'}
+                          {translate('clearFilters')}
                         </button>
                       )}
                     </div>
@@ -982,8 +996,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
             {/* Active Round Filter Removable Chip */}
             {hasActiveRoundFilter && (
-              <div className="ml-auto flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-bold shadow-2xs">
-                <span>{activeFilterLabel || matchTranslate('round')}</span>
+              <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-bold shadow-2xs sm:ml-auto w-fit">
+                <span className="max-w-[140px] sm:max-w-none truncate">{activeFilterLabel || matchTranslate('round')}</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -992,10 +1006,10 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     setSelectedLeg('ALL');
                     setSelectedRoundKey('ALL');
                   }}
-                  className="hover:text-rose-600 transition-colors cursor-pointer ml-0.5"
-                  title={translate('clearFilters') || 'Xóa lọc'}
+                  className="hover:text-rose-600 transition-colors cursor-pointer ml-0.5 shrink-0"
+                  title={translate('clearFilters')}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
@@ -1102,11 +1116,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         isCompleted,
                         match.isBye || (match.participant2 == null && isCompleted)
                       )}
-                      {match.participant1?.seed && (
-                        <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-bold shrink-0">
-                          #{match.participant1.seed}
-                        </span>
-                      )}
                     </div>
  
                     {/* Scores set Display */}
@@ -1139,11 +1148,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                         isP2Winner,
                         isCompleted,
                         match.isBye || (match.participant1 == null && isCompleted)
-                      )}
-                      {match.participant2?.seed && (
-                        <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-bold shrink-0">
-                          #{match.participant2.seed}
-                        </span>
                       )}
                     </div>
 

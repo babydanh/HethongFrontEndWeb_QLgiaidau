@@ -122,6 +122,30 @@ function unwrapRooms(value: InboxRoomsResponse): InboxRoom[] {
   return [];
 }
 
+function isSameDirectConversation(
+  a?: InboxRoom | null,
+  b?: InboxRoom | null,
+  currentUserId?: string,
+): boolean {
+  if (!a || !b) return false;
+  if (a.id === b.id) return true;
+  if (a.type !== 'DIRECT' || b.type !== 'DIRECT') return false;
+  const aParticipants = (a.participants ?? [])
+    .filter((p) => p.id && p.id !== currentUserId)
+    .map((p) => p.id)
+    .sort()
+    .join(',');
+  const bParticipants = (b.participants ?? [])
+    .filter((p) => p.id && p.id !== currentUserId)
+    .map((p) => p.id)
+    .sort()
+    .join(',');
+  if (aParticipants && bParticipants && aParticipants === bParticipants) return true;
+  const aOther = a.participants?.find((p) => p.id !== currentUserId)?.fullName?.trim().toLowerCase();
+  const bOther = b.participants?.find((p) => p.id !== currentUserId)?.fullName?.trim().toLowerCase();
+  return Boolean(aOther && bOther && aOther === bOther);
+}
+
 function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
   const byConversation = new Map<string, InboxRoom>();
   for (const room of rooms) {
@@ -146,9 +170,7 @@ function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
 
     const roomTime = Date.parse(room.updatedAt);
     const existingTime = Date.parse(existing.updatedAt);
-    const unreadCount = existing.id === room.id
-      ? Math.max(existing.unreadCount, room.unreadCount)
-      : existing.unreadCount + room.unreadCount;
+    const unreadCount = Math.max(existing.unreadCount, room.unreadCount);
     if (roomTime >= existingTime) {
       byConversation.set(key, { ...room, unreadCount });
     } else {
@@ -464,7 +486,12 @@ export default function UnifiedChatWidget() {
             ...currentRooms.filter((room) => room.type === 'DIRECT'),
           ],
           userId,
-        );
+        ).map((r) => {
+          if (active.kind === 'ROOM' && isSameDirectConversation(r, active.room, userId)) {
+            return { ...r, unreadCount: 0 };
+          }
+          return r;
+        });
         roomsRef.current = reconciled;
         return reconciled;
       });
@@ -740,12 +767,15 @@ export default function UnifiedChatWidget() {
           : [...current, { ...message, mine: message.senderId === user?.id }],
       );
       const shouldCountAsUnread = message.senderId !== user?.id && showScrollBottomRef.current;
+      if (!shouldCountAsUnread && message.senderId !== user?.id) {
+        void inboxApi.markRead(roomId).catch(() => undefined);
+      }
       setRooms((prev) =>
         prev.map((r) =>
-          r.id === message.roomId
+          r.id === message.roomId || isSameDirectConversation(r, { id: message.roomId, type: 'DIRECT' } as InboxRoom, user?.id)
             ? {
                 ...r,
-                unreadCount: shouldCountAsUnread ? r.unreadCount + 1 : r.unreadCount,
+                unreadCount: shouldCountAsUnread ? r.unreadCount + 1 : 0,
                 lastMessage: {
                   id: message.id,
                   senderId: message.senderId,
@@ -1667,7 +1697,9 @@ export default function UnifiedChatWidget() {
               {sortedRooms.map((room) => {
                 const isClub = room.type === 'CLUB';
                 const isSelected =
-                  selection.kind === 'ROOM' && selectedRoom?.id === room.id;
+                  selection.kind === 'ROOM' &&
+                  isSameDirectConversation(selectedRoom, room, user?.id);
+                const hasUnread = !isSelected && room.unreadCount > 0;
                 const avatar = getRoomAvatar(room, user?.id);
 
                 return (
@@ -1678,15 +1710,16 @@ export default function UnifiedChatWidget() {
                       const openedRoom = { ...room, unreadCount: 0 };
                       setSelection({ kind: 'ROOM', room: openedRoom });
                       setRooms((current) => current.map((item) => (
-                        item.id === room.id ? { ...item, unreadCount: 0 } : item
+                        isSameDirectConversation(item, room, user?.id) ? { ...item, unreadCount: 0 } : item
                       )));
                       setIsMobileRoomOpen(true);
+                      void inboxApi.markRead(room.id).catch(() => undefined);
                     }}
-                    aria-label={`${roomTitle(room, roomLabels, user?.id)}${room.unreadCount > 0 ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
+                    aria-label={`${roomTitle(room, roomLabels, user?.id)}${hasUnread ? `, ${translate('chatUnreadMessages', { count: room.unreadCount })}` : `, ${translate('chatNoUnreadMessages')}`}`}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${
                       isSelected
                         ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
-                        : room.unreadCount > 0
+                        : hasUnread
                           ? 'bg-rose-50/70 text-slate-800 font-semibold hover:bg-rose-100/80'
                           : 'hover:bg-white text-slate-700'
                     }`}
@@ -1730,7 +1763,7 @@ export default function UnifiedChatWidget() {
                         {room.lastMessage?.content || (room.lastMessage ? translate('imageAttachment') : translate('noMessages'))}
                       </small>
                     </span>
-                    {room.unreadCount > 0 && (
+                    {hasUnread && (
                       <span
                         className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold leading-4 text-white shadow-sm"
                         title={translate('chatUnreadMessages', { count: room.unreadCount })}

@@ -10,10 +10,12 @@ interface ShareModalProps {
   onClose: () => void;
   shareUrl: string;
   title: string;
+  shareText?: string;
   fbAppId?: string; // Optional Facebook App ID
 }
 
-export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }: ShareModalProps) {
+export default function ShareModal({ isOpen, onClose, shareUrl, title, shareText, fbAppId }: ShareModalProps) {
+  const effectiveShareText = shareText || title;
   const [copied, setCopied] = useState(false);
   const translate = useTranslations('Common');
   const [mounted, setMounted] = useState(false);
@@ -78,7 +80,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
     try {
       await navigator.share({
         title: title,
-        text: translate('nativeShareText', { title }),
+        text: effectiveShareText,
         url: shareUrl,
       });
     } catch (err) {
@@ -166,7 +168,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
 
           {/* Telegram */}
           <button
-            onClick={() => openSharePopup(getTelegramShareUrl(shareUrl, title))}
+            onClick={() => openSharePopup(getTelegramShareUrl(shareUrl, effectiveShareText))}
             className="flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/30 group cursor-pointer"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#229ED9] text-white transition-all group-hover:scale-105 shadow-sm">
@@ -179,7 +181,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
 
           {/* Twitter (X) */}
           <button
-            onClick={() => openSharePopup(getTwitterShareUrl(shareUrl, title))}
+            onClick={() => openSharePopup(getTwitterShareUrl(shareUrl, effectiveShareText))}
             className="flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 group cursor-pointer"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition-all group-hover:scale-105 shadow-sm">
@@ -192,7 +194,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
 
           {/* Threads */}
           <button
-            onClick={() => openSharePopup(getThreadsShareUrl(shareUrl, title))}
+            onClick={() => openSharePopup(getThreadsShareUrl(shareUrl, effectiveShareText))}
             className="flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 group cursor-pointer"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition-all group-hover:scale-105 shadow-sm">

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
-import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle, Search } from 'lucide-react';
+import { ChevronDown, User, Award, ShieldCheck, XCircle, CheckCircle, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -232,11 +232,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                               </div>
                             ) : (
                               <span>{team.teamName}</span>
-                            )}
-                            {team.seed !== null && (
-                              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700 sm:text-[10px]">
-                                {translate('seedLabel', { number: team.seed })}
-                              </span>
                             )}
                           </div>
                         </td>

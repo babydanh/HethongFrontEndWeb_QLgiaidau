@@ -62,6 +62,7 @@ import {
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from '../registrationMode';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
+import { isActiveMatch } from '@/utils/match-status';
 
 
 
@@ -146,6 +147,7 @@ const commonTranslate = useTranslations('Common');
   const liveRefreshInFlightRef = useRef(false);
   const hasAutoOpenedLiveRef = useRef(false);
   const hasUserNavigatedRef = useRef(false);
+  const pendingNavigatedTabRef = useRef<TournamentDetailTab | null>(null);
   const liveMatchesCount = Object.values(liveCountsByDivision).reduce((total, count) => total + count, 0);
   const activeLiveMatchesCount = visibleDivisionId
     ? liveCountsByDivision[visibleDivisionId] ?? 0
@@ -153,7 +155,14 @@ const commonTranslate = useTranslations('Common');
   const activeDivisionHasMatches = Boolean(
     visibleDivisionId && divisionsList.find((division) => division.id === visibleDivisionId)?._count?.matches,
   );
+  const handleLiveCountChange = useCallback((divisionId: string, count: number) => {
+    setLiveCountsByDivision((current) => {
+      if (current[divisionId] === count) return current;
+      return { ...current, [divisionId]: count };
+    });
+  }, []);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
+  const [hasConfirmedResults, setHasConfirmedResults] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
   const [isRegistrationStatusLoading, setIsRegistrationStatusLoading] = useState(false);
@@ -209,6 +218,27 @@ const commonTranslate = useTranslations('Common');
     };
   }, [activeTournament?.id, isOwner, selectedDivisionId, user?.id]);
 
+  useEffect(() => {
+    let active = true;
+    const checkResults = async () => {
+      try {
+        const response = await tournamentsApi.getTournamentResults(tournamentId, selectedDivisionId || undefined);
+        const data = response.data;
+        const awards = data?.awards ?? [];
+        const hasTop1 = awards.some((a) => a.rank === 1 && Boolean(a.participant?.teamName));
+        const hasTop2 = awards.some((a) => a.rank === 2 && Boolean(a.participant?.teamName));
+        const isFinished = Boolean(data?.finalized || (hasTop1 && hasTop2));
+        if (active) setHasConfirmedResults(isFinished);
+      } catch {
+        if (active) setHasConfirmedResults(false);
+      }
+    };
+    void checkResults();
+    return () => {
+      active = false;
+    };
+  }, [selectedDivisionId, tournamentId]);
+
   const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
     if (liveRefreshInFlightRef.current) return;
     liveRefreshInFlightRef.current = true;
@@ -217,8 +247,15 @@ const commonTranslate = useTranslations('Common');
         { tournament_id: tournamentId, status: 'ONGOING', limit: 100 },
         signal,
       );
-      const data = Array.isArray(response) ? response : (response.data ?? []);
-      const ongoing = data.filter((match: Match) => match.status === 'ONGOING');
+      const rawRes = response as unknown;
+      const list = Array.isArray(rawRes)
+        ? rawRes
+        : Array.isArray((rawRes as { data?: unknown })?.data)
+          ? (rawRes as { data: Match[] }).data
+          : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
+            ? (rawRes as { data: { data: Match[] } }).data.data
+            : [];
+      const ongoing = (list as Match[]).filter(isActiveMatch);
       const nextCounts: Record<string, number> = {};
       for (const match of ongoing) {
         if (!match.divisionId) continue;
@@ -226,7 +263,8 @@ const commonTranslate = useTranslations('Common');
       }
       setLiveCountsByDivision(nextCounts);
     } catch {
-      // Abort and transient match-feed errors keep the last confirmed snapshot.
+      // Fail closed: an unverified snapshot must never keep a stale LIVE badge visible.
+      setLiveCountsByDivision({});
     } finally {
       liveRefreshInFlightRef.current = false;
     }
@@ -331,6 +369,19 @@ const commonTranslate = useTranslations('Common');
         behavior: 'smooth',
       });
     }
+  };
+
+  const handleTabSelect = (tabId: TournamentDetailTab) => {
+    hasUserNavigatedRef.current = true;
+    pendingNavigatedTabRef.current = tabId;
+    setActiveTab(tabId);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (tabId === 'overview') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', tabId);
+    }
+    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
   };
 
   const handleDivisionSelect = (divisionId: string) => {
@@ -536,11 +587,22 @@ const commonTranslate = useTranslations('Common');
   }, [divisionsList, searchParams]);
 
   useEffect(() => {
-    const requestedTab = searchParams.get('tab');
+    const rawTab = searchParams.get('tab');
+    const requestedTab: TournamentDetailTab =
+      rawTab && TOURNAMENT_DETAIL_TABS.includes(rawTab as TournamentDetailTab)
+        ? (rawTab as TournamentDetailTab)
+        : 'overview';
 
-    if (!requestedTab || !TOURNAMENT_DETAIL_TABS.includes(requestedTab as TournamentDetailTab)) {
-      return;
+    // If an intentional user click navigation is in progress:
+    if (pendingNavigatedTabRef.current !== null) {
+      if (requestedTab === pendingNavigatedTabRef.current) {
+        pendingNavigatedTabRef.current = null; // Caught up!
+      } else {
+        // Router params not yet updated to target tab, do NOT overwrite activeTab!
+        return;
+      }
     }
+
     if (requestedTab === 'sponsors' && publicSponsors.length === 0) {
       if (activeTab === 'sponsors') {
         Promise.resolve().then(() => setActiveTab('overview'));
@@ -550,7 +612,7 @@ const commonTranslate = useTranslations('Common');
 
     if (activeTab !== requestedTab) {
       Promise.resolve().then(() => {
-        setActiveTab(requestedTab as TournamentDetailTab);
+        setActiveTab(requestedTab);
       });
     }
   }, [activeTab, publicSponsors.length, searchParams]);
@@ -660,12 +722,14 @@ const commonTranslate = useTranslations('Common');
     return `${sStr} - ${eStr}`;
   };
 
-  const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean }[] = [
+  const isCompleted = isTournamentCompleted(activeTournament.status) || isTournamentCompleted(tournament.status);
+
+  const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
     ...(activeLiveMatchesCount > 0
       ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
       : []),
-    ...(activeDivisionHasMatches
-      ? [{ id: 'results' as const, label: translate('resultsTabLabel') }]
+    ...(hasConfirmedResults
+      ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: isCompleted }]
       : []),
     { id: 'overview', label: translate('overview') },
     { id: 'teams', label: translate('tabs.teams') },
@@ -701,20 +765,19 @@ const commonTranslate = useTranslations('Common');
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <Link
-              href={`/tournaments/${activeTournament.id}`}
-              className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
-              title={translate('viewTournamentDetails')}
-            >
-              <img
-                src={activeTournament.logoUrl || BRAND.assets.defaultTournamentLogo}
-                alt={activeTournament.name}
-                className="w-full h-full object-contain rounded-full p-2"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = BRAND.assets.defaultTournamentLogo;
-                }}
-              />
-            </Link>
+            {Boolean(activeTournament.logoUrl?.trim()) && (
+              <Link
+                href={`/tournaments/${activeTournament.id}`}
+                className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
+                title={translate('viewTournamentDetails')}
+              >
+                <img
+                  src={activeTournament.logoUrl!}
+                  alt={activeTournament.name}
+                  className="w-full h-full object-contain rounded-full p-2"
+                />
+              </Link>
+            )}
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {activeTournament.category?.name && (
@@ -865,11 +928,11 @@ const commonTranslate = useTranslations('Common');
         </div>
       </div>
 
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-8 mt-4 sm:mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8 items-start">
 
           {/* Left Area - Tabs & Content (takes 3 cols) */}
-          <div className="lg:col-span-3 space-y-6 min-w-0 max-w-full overflow-hidden">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6 min-w-0 max-w-full overflow-hidden">
             {/* Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => {
@@ -877,18 +940,19 @@ const commonTranslate = useTranslations('Common');
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => {
-                      hasUserNavigatedRef.current = true;
-                      setActiveTab(tab.id);
-                    }}
+                    onClick={() => handleTabSelect(tab.id)}
                     className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive
                           ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
                           : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80'
-                        : isActive
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                        : tab.isGolden
+                          ? isActive
+                            ? 'bg-amber-500 text-white font-extrabold shadow-sm border border-amber-500 hover:bg-amber-600'
+                            : 'bg-amber-50 text-amber-900 border border-amber-300 font-extrabold hover:bg-amber-100'
+                          : isActive
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
@@ -910,7 +974,7 @@ const commonTranslate = useTranslations('Common');
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[400px] sm:min-h-[500px] min-w-0 max-w-full overflow-hidden">
                                           {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
@@ -990,6 +1054,7 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                                       tournament={divisionTournament}
                                       tournamentId={tournament.id}
                                       divisionId={division.id}
+                                      onLiveCountChange={handleLiveCountChange}
                                     />
                                   )}
                                   {activeTab === 'results' && (
@@ -997,6 +1062,7 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                                       key={division.id}
                                       tournamentId={tournament.id}
                                       divisionId={division.id}
+                                      tournamentName={activeTournament.name}
                                     />
                                   )}
                                   {activeTab === 'teams' && (
@@ -1044,7 +1110,7 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
 
           {/* Right Area - Registration & Info Card (takes 1 col) */}
           <div className="lg:col-span-1 lg:sticky lg:top-6">
-            <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-6 shadow-sm">
+            <div className="bg-white rounded-lg border border-slate-250/80 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 shadow-sm">
               {showRegistrationDetails && (
                 <>
               {/* Entry Fee */}

@@ -925,13 +925,22 @@ export default function HomePage() {
       fallbackText: string,
       side: 'left' | 'right',
     ) => {
-      const members = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
-      const isDoubles = members.length === 2;
-      const displayName = isDoubles
-        ? members.map((m) => formatShortPersonName(m.fullName) || m.fullName).filter(Boolean).join(' / ')
-        : members.length === 1 && members[0].fullName
-          ? formatShortPersonName(members[0].fullName) || members[0].fullName
-          : formatShortPersonName(participant?.teamName) || fallbackText;
+      const rawMembers = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
+      const teamNameParts = participant?.teamName && participant.teamName.includes(' / ')
+        ? participant.teamName.split(' / ').map((p) => p.trim()).filter(Boolean)
+        : [];
+
+      const isDoubles = rawMembers.length === 2 || teamNameParts.length === 2;
+      const member1 = rawMembers[0] || (teamNameParts[0] ? { fullName: teamNameParts[0] } : undefined);
+      const member2 = rawMembers[1] || (teamNameParts[1] ? { fullName: teamNameParts[1] } : undefined);
+
+      const displayName = rawMembers.length === 2
+        ? rawMembers.map((m) => formatShortPersonName(m.fullName) || m.fullName).filter(Boolean).join(' / ')
+        : teamNameParts.length === 2
+          ? teamNameParts.map((p) => formatShortPersonName(p) || p).join(' / ')
+          : rawMembers.length === 1 && rawMembers[0].fullName
+            ? formatShortPersonName(rawMembers[0].fullName) || rawMembers[0].fullName
+            : formatShortPersonName(participant?.teamName) || fallbackText;
 
       const logoUrl = participant?.logoUrl;
 
@@ -961,10 +970,10 @@ export default function HomePage() {
               />
             ) : (
               <div
-                className={`w-full h-full flex items-center justify-center font-black ${initialSizeClass} ${
+                className={`w-full h-full flex items-center justify-center font-bold tracking-tight ${initialSizeClass} ${
                   sideFallback === 'left'
-                    ? 'bg-amber-50/90 text-amber-700'
-                    : 'bg-sky-50/90 text-sky-700'
+                    ? 'bg-amber-50 text-amber-800'
+                    : 'bg-sky-50 text-sky-800'
                 }`}
               >
                 {initial}
@@ -979,30 +988,30 @@ export default function HomePage() {
           {/* Avatar Area */}
           <div className="relative flex items-center justify-center">
             {isDoubles ? (
-              // Doubles overlapping: left = "Oo", right = "oO"
+              // Doubles with light natural offset: left = "Oo", right = "oO"
               side === 'left' ? (
-                <div className="flex items-center -space-x-3.5">
+                <div className="flex items-center -space-x-2">
                   <div className="z-20">
-                    {renderSingleAvatar(members[0], 'w-10 h-10', 'text-xs', 'left')}
+                    {renderSingleAvatar(member1, 'w-9 h-9 sm:w-10 sm:h-10', 'text-xs', 'left')}
                   </div>
-                  <div className="z-10 mt-2">
-                    {renderSingleAvatar(members[1], 'w-7 h-7', 'text-[10px]', 'left')}
+                  <div className="z-10 mt-1">
+                    {renderSingleAvatar(member2, 'w-7 h-7 sm:w-7.5 sm:h-7.5', 'text-[10px]', 'left')}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center -space-x-3.5">
-                  <div className="z-10 mt-2">
-                    {renderSingleAvatar(members[0], 'w-7 h-7', 'text-[10px]', 'right')}
+                <div className="flex items-center -space-x-2">
+                  <div className="z-10 mt-1">
+                    {renderSingleAvatar(member1, 'w-7 h-7 sm:w-7.5 sm:h-7.5', 'text-[10px]', 'right')}
                   </div>
                   <div className="z-20">
-                    {renderSingleAvatar(members[1], 'w-10 h-10', 'text-xs', 'right')}
+                    {renderSingleAvatar(member2, 'w-9 h-9 sm:w-10 sm:h-10', 'text-xs', 'right')}
                   </div>
                 </div>
               )
             ) : (
               // Singles or Single Team Avatar
               renderSingleAvatar(
-                members[0] || (logoUrl ? { avatarUrl: logoUrl, fullName: participant?.teamName } : undefined),
+                rawMembers[0] || (logoUrl ? { avatarUrl: logoUrl, fullName: participant?.teamName } : undefined),
                 'w-11 h-11 sm:w-12 sm:h-12',
                 'text-sm',
                 side,

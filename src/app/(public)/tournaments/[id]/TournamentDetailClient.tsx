@@ -153,6 +153,12 @@ const commonTranslate = useTranslations('Common');
   const activeDivisionHasMatches = Boolean(
     visibleDivisionId && divisionsList.find((division) => division.id === visibleDivisionId)?._count?.matches,
   );
+  const handleLiveCountChange = useCallback((divisionId: string, count: number) => {
+    setLiveCountsByDivision((current) => {
+      if (current[divisionId] === count) return current;
+      return { ...current, [divisionId]: count };
+    });
+  }, []);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
@@ -990,6 +996,7 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
                                       tournament={divisionTournament}
                                       tournamentId={tournament.id}
                                       divisionId={division.id}
+                                      onLiveCountChange={handleLiveCountChange}
                                     />
                                   )}
                                   {activeTab === 'results' && (

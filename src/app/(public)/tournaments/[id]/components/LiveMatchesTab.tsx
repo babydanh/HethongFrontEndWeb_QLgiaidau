@@ -16,6 +16,7 @@ interface LiveMatchesTabProps {
   tournament: Tournament;
   tournamentId: string;
   divisionId?: string;
+  onLiveCountChange?: (divisionId: string, count: number) => void;
 }
 
 const ITEMS_PER_PAGE = 6;
@@ -96,6 +97,7 @@ export default function LiveMatchesTab({
   tournament,
   tournamentId,
   divisionId,
+  onLiveCountChange,
 }: LiveMatchesTabProps) {
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
@@ -131,6 +133,7 @@ export default function LiveMatchesTab({
         if (active) {
           const ongoing = (data as Match[]).filter((m) => m.status === 'ONGOING');
           setLiveMatches(ongoing);
+          if (divisionId) onLiveCountChange?.(divisionId, ongoing.length);
         }
       } catch (err) {
         console.error('Failed to fetch live matches:', err);
@@ -142,7 +145,7 @@ export default function LiveMatchesTab({
     return () => {
       active = false;
     };
-  }, [tournamentId, divisionId]);
+  }, [divisionId, onLiveCountChange, tournamentId]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -172,6 +175,7 @@ export default function LiveMatchesTab({
             next = [updatedMatch, ...current];
           }
         }
+        if (divisionId) onLiveCountChange?.(divisionId, next.length);
         return next;
       });
     };
@@ -184,7 +188,7 @@ export default function LiveMatchesTab({
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [tournamentId, divisionId]);
+  }, [divisionId, onLiveCountChange, tournamentId]);
 
   const filteredMatches = liveMatches.filter((m) => {
     if (!searchQuery.trim()) return true;

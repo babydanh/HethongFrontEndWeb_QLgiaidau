@@ -179,6 +179,17 @@ const commonTranslate = useTranslations('Common');
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      if (!window.location.hash) {
+        window.scrollTo(0, 0);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
     tournamentsApi.getPublicSponsors(tournamentId)
       .then((response) => {
@@ -326,10 +337,10 @@ const commonTranslate = useTranslations('Common');
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set('divisionId', debouncedDivisionId);
-    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-  }, [debouncedDivisionId, router, searchParams, tournamentId]);
-
-
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/tournaments/${tournamentId}?${nextParams.toString()}`);
+    }
+  }, [debouncedDivisionId, searchParams, tournamentId]);
 
   const handleTabSelect = (tabId: TournamentDetailTab) => {
     hasUserNavigatedRef.current = true;
@@ -341,7 +352,9 @@ const commonTranslate = useTranslations('Common');
     } else {
       nextParams.set('tab', tabId);
     }
-    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/tournaments/${tournamentId}?${nextParams.toString()}`);
+    }
   };
 
   const handleDivisionSelect = (divisionId: string) => {

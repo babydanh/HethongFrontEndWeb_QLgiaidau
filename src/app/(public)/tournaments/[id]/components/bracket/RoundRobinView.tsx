@@ -39,6 +39,7 @@ interface Props {
   onScheduleMatch?: OnScheduleMatch;
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
+  onDoubleClickMatch?: OnSelectBracketMatch;
   tournamentId?: string;
   stageId?: string;
   fallbackSportRuleKind?: SportRuleKind;
@@ -57,6 +58,7 @@ export function RoundRobinView({
   onScheduleMatch,
   selectedMatchId,
   onSelectMatch,
+  onDoubleClickMatch,
   tournamentId,
   stageId,
   fallbackSportRuleKind,
@@ -378,6 +380,7 @@ export function RoundRobinView({
                               key={m.id}
                               data-bracket-match-id={m.id}
                               onClick={() => onSelectMatch?.(m)}
+                              onDoubleClick={() => onDoubleClickMatch?.(m)}
                               className={
                                 'flex min-h-[148px] cursor-pointer flex-col rounded-lg border p-3.5 text-xs font-semibold shadow-sm transition-all ' +
                                 (selectedMatchId === m.id

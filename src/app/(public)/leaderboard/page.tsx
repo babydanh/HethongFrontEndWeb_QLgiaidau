@@ -7,11 +7,14 @@ import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, type FootballTeamRanking, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
-import { getCanonicalTierName } from "@/features/rankings/elo-display";
+import { getCanonicalTierName, getEloFormatLabel, getLocalizedRankTierName, getMostProminentRank, getRankTierTranslationKey, isPublicRankingEligible } from "@/features/rankings/elo-display";
+import { buildLeaderboardStandingSlots, isLeaderboardPlaceholder } from "@/features/rankings/leaderboard-slots";
 import { getRankBorderColor } from "@/components/ui/RankAvatar";
+import { getRankStyle, getStandardRankStyles } from "@/utils/rank-style";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
+import { useAuthStore } from "@/lib/zustand/authStore";
 
 interface LeaderboardSearchResult {
     id: string;
@@ -21,6 +24,8 @@ interface LeaderboardSearchResult {
     eloPoints: number;
     tierName: string;
     categoryName?: string;
+    matchType?: PlayerRanking['matchType'];
+    genderRestriction?: PlayerRanking['genderRestriction'];
 }
 
 type StandingEloSize = 'sm' | 'md';
@@ -34,13 +39,19 @@ function StandingElo({
   sportLabel: string;
   size?: StandingEloSize;
 }) {
+  const t = useTranslations('Leaderboard');
+  const eloTranslate = useTranslations('EloDisplay');
+  const formatLabel = getLeaderboardFormatLabel(ranking, t);
+  const tierLabel = getLocalizedRankTierName(ranking, eloTranslate);
+  const tierStyle = getRankStyle(ranking.eloPoints, getCanonicalTierName(ranking), ranking.categoryName);
   return (
     <div
-      className={`inline-flex flex-col items-center rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 shadow-xs ${size === 'md' ? 'min-w-24' : 'min-w-20'}`}
-      title={`${sportLabel}: ${ranking.eloPoints} ELO`}
+      className={`inline-flex flex-col items-center rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 shadow-xs ${size === 'md' ? 'min-w-28' : 'min-w-24'}`}
+      title={`${sportLabel} · ${formatLabel}: ${ranking.eloPoints} ELO · ${tierLabel}`}
     >
-      <span className="max-w-28 truncate text-[8px] font-bold uppercase tracking-wide text-slate-500">{sportLabel}</span>
-      <span className={`${size === 'md' ? 'text-sm' : 'text-xs'} font-black leading-tight text-slate-900`}>{ranking.eloPoints} ELO</span>
+      <span className="max-w-32 truncate text-[8px] font-bold uppercase tracking-wide text-slate-500">{sportLabel} · {formatLabel}</span>
+      <span className={`${size === 'md' ? 'text-sm' : 'text-xs'} rounded-md px-1.5 py-0.5 font-black leading-tight ${tierStyle.badgeClass}`}>{ranking.eloPoints} ELO</span>
+      <span className="max-w-32 truncate text-[8px] font-semibold text-slate-500">{tierLabel}</span>
     </div>
   );
 }
@@ -100,8 +111,26 @@ function getStandingBorderColor(ranking: PlayerRanking | undefined, fallback: st
   );
 }
 
+function getLeaderboardFormatLabel(
+  ranking: Pick<PlayerRanking, 'matchType' | 'genderRestriction'> | undefined,
+  translate: (key: string) => string,
+): string {
+  return getEloFormatLabel(ranking?.matchType, ranking?.genderRestriction, {
+    singlesMale: translate('formatSinglesMale'),
+    singlesFemale: translate('formatSinglesFemale'),
+    singlesOpen: translate('formatSinglesOpen'),
+    doublesMale: translate('formatDoublesMale'),
+    doublesFemale: translate('formatDoublesFemale'),
+    doublesOpen: translate('formatDoublesOpen'),
+    mixedDoubles: translate('formatMixedDoubles'),
+    unknown: translate('formatUnknown'),
+  });
+}
+
 export default function LeaderboardPage() {
-  const t = useTranslations("Leaderboard");
+    const t = useTranslations("Leaderboard");
+  const eloTranslate = useTranslations('EloDisplay');
+  const { user } = useAuthStore();
 
     const getCategoryLabel = (category: Category) => {
     switch (category.slug) {
@@ -125,6 +154,8 @@ export default function LeaderboardPage() {
     const [rankings, setRankings] = useState<PlayerRanking[]>([]);
     const [footballRankings, setFootballRankings] = useState<FootballTeamRanking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [rankingError, setRankingError] = useState(false);
+    const [reloadNonce, setReloadNonce] = useState(0);
 
     const [provinces, setProvinces] = useState<Region[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
@@ -175,6 +206,8 @@ export default function LeaderboardPage() {
                             eloPoints: matchRank?.eloPoints ?? 1000,
                             tierName: matchRank?.tier?.name || matchRank?.tierName || t("unranked"),
                             categoryName: categories.find((category) => category.id === activeCategoryId)?.name,
+                            matchType: matchRank?.matchType,
+                            genderRestriction: matchRank?.genderRestriction,
                         };
                     } catch {
                         return {
@@ -196,6 +229,7 @@ export default function LeaderboardPage() {
     };
 
     useEffect(() => {
+        let cancelled = false;
         const init = async () => {
             try {
                 const catsRes = await categoriesApi.getCategories();
@@ -230,26 +264,42 @@ export default function LeaderboardPage() {
                   return cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false;
                 });
 
+                const profileResponse = user?.id
+                  ? await rankingsApi.getUserRankings(user.id).catch(() => null)
+                  : null;
+                const profileRanks = profileResponse?.publicRanks ?? [];
+                const prominentRank = getMostProminentRank(profileRanks.filter(isPublicRankingEligible));
+                const pickleballCategory = activeCats.find((category) => category.slug === 'pickleball');
+                const profileCategory = prominentRank
+                  ? activeCats.find((category) => category.id === prominentRank.categoryId)
+                  : undefined;
+                const defaultCategory = profileCategory ?? pickleballCategory ?? activeCats[0];
+
+                if (cancelled) return;
                 setCategories(activeCats);
-                if (activeCats.length > 0) {
-                    setActiveCategoryId(activeCats[0].id);
-                }
+                setActiveCategoryId(defaultCategory?.id ?? null);
+                setSelectedMatchType(prominentRank?.matchType ?? 'SINGLES');
+                setSelectedGenderFilter(prominentRank?.genderRestriction ?? (prominentRank ? '' : 'MALE'));
 
                 const res = await regionsApi.getProvinces();
                 const provList = (Array.isArray(res) ? res : (res as { data?: Region[] }).data) || [];
-                setProvinces(provList);
+                if (!cancelled) setProvinces(provList);
             } catch (error) {
                 console.error("Failed to initialize leaderboard data", error);
             }
         };
-        init();
-    }, []);
+        void init();
+        return () => {
+          cancelled = true;
+        };
+    }, [user?.id, t]);
 
     useEffect(() => {
         if (!activeCategoryId) return;
         
         const fetchRankings = async () => {
             setIsLoading(true);
+            setRankingError(false);
             try {
                 if (isFootballCategory) {
                     const res = await rankingsApi.getFootballTeamRankings({
@@ -281,12 +331,14 @@ export default function LeaderboardPage() {
             } catch (error) {
                 console.error("Failed to fetch rankings", error);
                 setRankings([]);
+                setFootballRankings([]);
+                setRankingError(true);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchRankings();
-    }, [activeCategoryId, isFootballCategory, selectedProvinceCode, selectedMatchType, selectedGenderFilter]);
+    }, [activeCategoryId, isFootballCategory, selectedProvinceCode, selectedMatchType, selectedGenderFilter, reloadNonce]);
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
@@ -397,8 +449,8 @@ export default function LeaderboardPage() {
                                             <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                         </div>
                                         <div className="shrink-0 text-right">
-                                            <div className="text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')}</div>
-                                            <div className="text-xs font-black text-slate-800">{u.eloPoints} ELO</div>
+                                            <div className="max-w-36 truncate text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')} · {getLeaderboardFormatLabel(u, t)}</div>
+                                            <div className={`inline-flex rounded-md px-1.5 py-0.5 text-xs font-black ${getRankStyle(u.eloPoints, u.tierName, u.categoryName).badgeClass}`}>{u.eloPoints} ELO</div>
                                         </div>
                                     </button>
                                 ))}
@@ -481,17 +533,24 @@ export default function LeaderboardPage() {
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
                             <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
                         </div>
-                    ) : rankings.length === 0 ? (
-                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-10 md:p-14 text-center">
-                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                    ) : rankingError ? (
+                        <div className="bg-white rounded-xl border border-rose-200 shadow-sm p-10 md:p-14 text-center" role="alert">
+                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
                                 <Info className="h-6 w-6" aria-hidden="true" />
                             </div>
-                            <h2 className="text-lg font-bold text-slate-900">{t('noEligibleRanksTitle')}</h2>
-                            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t('noEligibleRanksDescription')}</p>
+                            <h2 className="text-lg font-bold text-slate-900">{t('loadFailedTitle')}</h2>
+                            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t('loadFailedDescription')}</p>
+                            <button
+                                type="button"
+                                onClick={() => setReloadNonce((value) => value + 1)}
+                                className="mt-5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                            >
+                                {t('retry')}
+                            </button>
                         </div>
                     ) : (
                         <>
-                            {/* Top 3 Podium Stage (Light Theme) */}
+                            {/* Top 3 Podium Stage (Light Theme). Empty slots remain visible during cold start. */}
                             <div className="bg-gradient-to-b from-blue-50/70 via-sky-50/40 to-white rounded-xl border border-blue-100 shadow-sm p-6 md:p-8 text-slate-800 relative overflow-hidden mb-8">
                                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/10 via-sky-50/5 to-transparent pointer-events-none" />
                                 
@@ -512,6 +571,7 @@ export default function LeaderboardPage() {
                                     <div className="w-full md:w-1/3 order-2 md:order-1 flex flex-col items-center group/podium">
                                         <button 
                                             type="button"
+                                            disabled={!getPrimaryRankingMember(rankings[1])?.id}
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[1]);
                                                 if (!member?.id) return;
@@ -573,6 +633,7 @@ export default function LeaderboardPage() {
                                     <div className="w-full md:w-1/3 order-1 md:order-2 flex flex-col items-center group/podium relative -translate-y-2 md:-translate-y-4">
                                         <button 
                                             type="button"
+                                            disabled={!getPrimaryRankingMember(rankings[0])?.id}
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[0]);
                                                 if (!member?.id) return;
@@ -634,6 +695,7 @@ export default function LeaderboardPage() {
                                     <div className="w-full md:w-1/3 order-3 md:order-3 flex flex-col items-center group/podium">
                                         <button 
                                             type="button"
+                                            disabled={!getPrimaryRankingMember(rankings[2])?.id}
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[2]);
                                                 if (!member?.id) return;
@@ -750,15 +812,19 @@ export default function LeaderboardPage() {
                                 </div>
                             </div>
 
-                            {/* Rest of rankings: Top 11 - 100 */}
-                            <RestRankingsTable rankings={rankings} selectedMatchType={selectedMatchType} />
+                            {/* Remaining public standing slots: ranks 11–20 */}
+                            <RestRankingsTable
+                                rankings={rankings}
+                                categoryId={activeCategoryId ?? ''}
+                                selectedMatchType={selectedMatchType}
+                            />
                         </>
                     )}
                 </div>
 
                 {/* Right Column: Sidebar Tier Breakdown & Search */}
                 <div className="lg:col-span-4 xl:col-span-3">
-                    <div className="flex flex-col gap-6 sticky top-28 lg:top-32">
+                    <div className="sticky top-[calc(var(--app-header-height)+3rem)] flex flex-col gap-6 lg:top-[calc(var(--app-header-height)+4rem)]">
                         {/* Tier Breakdown Card */}
                         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
                             <div className="flex items-start justify-between">
@@ -826,42 +892,19 @@ export default function LeaderboardPage() {
                                 </div>
                             </dialog>
                             <div className="flex flex-col gap-2">
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FEF3C7] border-amber-300">
-                                    <span className="bg-[#D97706] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Tier S</span>
-                                    <span className="font-bold text-xs text-[#92400E]">1800+ ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#F8C4B4] border-rose-300">
-                                    <span className="bg-[#DC2626] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier A</span>
-                                    <span className="font-bold text-xs text-[#991B1B]">1700 - 1799 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FBE8E0] border-rose-200">
-                                    <span className="bg-[#EF4444] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier A</span>
-                                    <span className="font-bold text-xs text-[#B91C1C]">1600 - 1699 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#BFDBFE] border-blue-300">
-                                    <span className="bg-[#2563EB] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier B</span>
-                                    <span className="font-bold text-xs text-[#1E40AF]">1500 - 1599 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#EFF6FF] border-blue-200">
-                                    <span className="bg-[#3B82F6] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier B</span>
-                                    <span className="font-bold text-xs text-[#1D4ED8]">1400 - 1499 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#A7F3D0] border-emerald-300">
-                                    <span className="bg-[#059669] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier C</span>
-                                    <span className="font-bold text-xs text-[#065F46]">1300 - 1399 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#ECFDF5] border-emerald-200">
-                                    <span className="bg-[#10B981] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier C</span>
-                                    <span className="font-bold text-xs text-[#047857]">1200 - 1299 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#E2E8F0] border-slate-300">
-                                    <span className="bg-[#475569] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier D</span>
-                                    <span className="font-bold text-xs text-[#1E293B]">1100 - 1199 ELO</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#F5F5F4] border-stone-300">
-                                    <span className="bg-[#78716C] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier D</span>
-                                    <span className="font-bold text-xs text-[#44403C]">0 - 1099 ELO</span>
-                                </div>
+                                {[...getStandardRankStyles()].reverse().map((tier) => {
+                                  const tierKey = getRankTierTranslationKey(tier.name);
+                                  const tierLabel = tierKey ? eloTranslate(tierKey) : tier.name;
+                                  const rangeLabel = tier.maxElo === null
+                                    ? `${tier.minElo}+ ELO`
+                                    : `${tier.minElo} - ${tier.maxElo} ELO`;
+                                  return (
+                                    <div key={tier.name} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                      <span className={`rounded px-2.5 py-0.5 text-[10px] font-bold uppercase shadow-xs ${tier.badgeClass}`}>{tierLabel}</span>
+                                      <span className="text-right text-xs font-bold text-slate-700">{rangeLabel}</span>
+                                    </div>
+                                  );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -927,18 +970,22 @@ function FootballTeamRankingTable({ rankings }: { rankings: FootballTeamRanking[
   );
 }
 
-function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRanking[], selectedMatchType: string }) {
+function RestRankingsTable({
+  rankings,
+  categoryId,
+  selectedMatchType,
+}: {
+  rankings: PlayerRanking[];
+  categoryId: string;
+  selectedMatchType: string;
+}) {
   const t = useTranslations("Leaderboard");
-    const { openUserProfile } = useUserProfileModalStore();
-    // Rankings starting from index 10 (Hạng 11 trở đi)
-    const realData = rankings.slice(10, 100);
-    
-    // Render only rows returned by the API. Missing positions are not players.
-    const listData = [...realData];
-
-    if (listData.length === 0) {
-        return null;
-    }
+  const { openUserProfile } = useUserProfileModalStore();
+  const listData = buildLeaderboardStandingSlots(
+    rankings,
+    categoryId,
+    selectedMatchType,
+  );
 
     // Split into 2 columns
     const mid = Math.ceil(listData.length / 2);
@@ -961,7 +1008,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                         <tbody className="divide-y text-slate-700 font-semibold">
                             {data.map((rank, index) => {
                                 const rankNum = startRank + index;
-                                const isPlaceholder = rank.id.startsWith("placeholder-");
+                                const isPlaceholder = isLeaderboardPlaceholder(rank);
                                 const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(0) : '0';
                                 return (
                                     <tr key={rank.id} className="transition-colors hover:bg-slate-55/40 border-b">

@@ -189,11 +189,22 @@ export function isHighTierCode(code?: string | null): boolean {
 
 export function getTierBadgeStyle(theme: TierThemeConfig, code: string) {
   const isHigh = isHighTierCode(code);
+  const backgroundByCode: Record<string, string> = {
+    TS: 'rgba(245, 158, 11, 0.14)',
+    HTA: 'rgba(225, 29, 72, 0.12)',
+    LTA: 'rgba(244, 63, 94, 0.10)',
+    HTB: 'rgba(37, 99, 235, 0.12)',
+    LTB: 'rgba(59, 130, 246, 0.10)',
+    HTC: 'rgba(5, 150, 105, 0.12)',
+    LTC: 'rgba(16, 185, 129, 0.10)',
+    HTD: 'rgba(71, 85, 105, 0.12)',
+    LTD: 'rgba(100, 116, 139, 0.10)',
+  };
   return {
     isHigh,
-    backgroundColor: '#090d16',
+    backgroundColor: backgroundByCode[code] || 'rgba(15, 23, 42, 0.06)',
     borderColor: theme.coreFillStart || theme.ringInner,
-    textColor: theme.ringOuter || theme.textColor,
+    textColor: theme.coreFillEnd || theme.textColor,
   };
 }
 

@@ -53,10 +53,11 @@ export default function EloSidebarCard({
     : recentEloDelta !== null && recentEloDelta < 0
       ? 'text-rose-500'
       : 'text-slate-400';
-  const tierColor = getRankStyle(eloPoints, tierName, activeRank?.categoryName).badgeClass;
-  const tierBorder = tierColor.split(' ').find((token) => token.startsWith('border-')) || 'border-slate-200';
+  const tierStyle = getRankStyle(eloPoints, activeRank?.tierName || tierName, activeRank?.categoryName);
+  const tierColor = tierStyle.badgeClass;
+  const tierBorder = tierStyle.ringClass.replace('ring-', 'border-');
   const hasRank = Boolean(activeRank && isPublicRankingEligible(activeRank));
-  const progress = getEloProgressInfo(eloPoints, undefined, eloLabels);
+  const progress = getEloProgressInfo(eloPoints, activeRank?.categoryName, eloLabels);
 
   return (
     <div className={`bg-white rounded-xl border-2 ${tierBorder} p-5 shadow-sm`}>
@@ -80,7 +81,7 @@ export default function EloSidebarCard({
 
       <div className="flex items-end gap-3 mb-1">
         {hasRank ? (
-          <span className="text-4xl font-bold text-slate-900 tabular-nums tracking-tight">{eloPoints}</span>
+          <span className={`rounded-lg px-2.5 py-1 text-4xl font-bold tabular-nums tracking-tight ${hasRank ? tierColor : 'text-slate-500'}`}>{eloPoints}</span>
         ) : (
           <span className="text-2xl font-bold text-slate-500 tracking-tight">{tierName}</span>
         )}
@@ -106,7 +107,7 @@ export default function EloSidebarCard({
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-200">
           <div
-            className={`h-full rounded-full transition-all ${hasRank ? 'bg-gradient-to-r from-blue-500 to-cyan-400' : 'bg-slate-300'}`}
+            className={`h-full rounded-full transition-all ${hasRank ? tierStyle.progressClass : 'bg-slate-300'}`}
             style={{ width: `${hasRank ? Math.round(progress.percent) : 0}%` }}
           />
         </div>

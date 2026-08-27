@@ -30,7 +30,7 @@ import { RankAvatar } from '@/components/ui/RankAvatar';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking, FootballTeamRanking, EloHistoryLog } from '@/features/rankings/api';
-import { getBestRankForCategory, getLocalizedRankTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
+import { getBestRankForCategory, getEloFormatLabel, getLocalizedRankTierName, getMostProminentRank, isPublicRankingEligible } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
   footballTeamsApi,
@@ -44,11 +44,7 @@ import { categoriesApi, Category } from '@/features/categories/api';
 import { matchesApi, Match } from '@/features/matches/api';
 
 import { sortFollowedTournaments } from '@/utils/tournament-follow';
-import { getMatchLocationLabel } from '@/utils/tournament-location';
-import {
-  getTournamentStatusClassName,
-  isTournamentUpcoming,
-} from '@/utils/tournament-status';
+import { getTournamentStatusClassName } from '@/utils/tournament-status';
 import { cn } from '@/utils/cn';
 
 function formatDate(value: string | null | undefined, locale: string, withTime = false, fallback = '') {
@@ -211,22 +207,19 @@ export default function DashboardPage() {
   };
 
   const publicRanks = userRankings?.publicRanks || [];
-  const strongestRank = [...publicRanks]
-    .filter(isPublicRankingEligible)
-    .sort((a, b) => b.eloPoints - a.eloPoints || b.matchesPlayed - a.matchesPlayed)[0];
+  const strongestRank = getMostProminentRank(publicRanks.filter(isPublicRankingEligible));
   const strongestActiveCategoryId = strongestRank
     && categories.some((category) => category.id === strongestRank.categoryId)
     ? strongestRank.categoryId
     : '';
-  const stableCategoryIndex = categories.length > 0
-    ? Array.from(user?.id || 'sporto').reduce((total, character) => total + character.charCodeAt(0), 0) % categories.length
-    : 0;
-  const selectedEloCategoryId = categories.some((category) => category.id === eloCategoryId)
+  const pickleballCategoryId = categories.find((category) => category.slug === 'pickleball')?.id || '';
+  const hasExplicitEloCategory = categories.some((category) => category.id === eloCategoryId);
+  const selectedEloCategoryId = hasExplicitEloCategory
     ? eloCategoryId
-    : strongestActiveCategoryId || categories[stableCategoryIndex]?.id || '';
-  const activeRank = selectedEloCategoryId
+    : strongestActiveCategoryId || pickleballCategoryId || categories[0]?.id || '';
+  const activeRank = hasExplicitEloCategory
     ? getBestRankForCategory(publicRanks, selectedEloCategoryId)
-    : getBestRankForCategory(publicRanks);
+    : strongestRank;
   const activeEloHistory = [...eloHistory]
     .filter((item) => !selectedEloCategoryId || item.categoryId === selectedEloCategoryId)
     .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
@@ -243,6 +236,16 @@ export default function DashboardPage() {
   const tierName = activeRank
     ? getLocalizedRankTierName(activeRank, eloTranslate)
     : translate("unranked");
+  const activeFormatLabel = getEloFormatLabel(activeRank?.matchType || 'SINGLES', activeRank?.genderRestriction || 'MALE', {
+    singlesMale: eloTranslate('formatSinglesMale'),
+    singlesFemale: eloTranslate('formatSinglesFemale'),
+    singlesOpen: eloTranslate('formatSinglesOpen'),
+    doublesMale: eloTranslate('formatDoublesMale'),
+    doublesFemale: eloTranslate('formatDoublesFemale'),
+    doublesOpen: eloTranslate('formatDoublesOpen'),
+    mixedDoubles: eloTranslate('formatMixedDoubles'),
+    unknown: eloTranslate('formatUnknown'),
+  });
 
   const bestFootballTeam = [...footballTeams].sort((a, b) => {
     const eloDelta = (b.rank?.eloPoints ?? 1000) - (a.rank?.eloPoints ?? 1000);
@@ -893,7 +896,7 @@ export default function DashboardPage() {
             tierName={tierName}
                         activeRank={activeRank}
             recentEloDelta={activeEloHistory[0]?.changedPoints ?? null}
-            sportLabel={activeRank?.matchType === 'SINGLES' ? translate("singlesShort") : activeRank?.matchType === 'DOUBLES' ? translate("doublesShort") : activeRank?.matchType === 'MIXED_DOUBLES' ? translate("mixedDoublesShort") : undefined}
+            sportLabel={activeFormatLabel}
             sportOptions={categories.map((category) => ({ id: category.id, name: category.name }))}
             selectedSportId={selectedEloCategoryId}
             onSportChange={setEloCategoryId}

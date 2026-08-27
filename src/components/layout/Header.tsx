@@ -65,7 +65,7 @@ export function Header() {
 
   useEffect(() => {
     if (!user?.id) {
-      setUserRank(null);
+      Promise.resolve().then(() => setUserRank(null));
       return;
     }
     let isMounted = true;
@@ -284,13 +284,13 @@ export function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full transition-all duration-300',
+        'sticky top-0 z-50 h-[var(--app-header-height)] w-full transition-all duration-300',
         isScrolled
           ? 'border-b border-blue-200/80 bg-white/90 shadow-sm backdrop-blur-md'
           : 'border-b border-blue-100/60 bg-[#F4F8FF]',
       )}
     >
-      <div className="flex h-16 w-full items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32">
+      <div className="flex h-full w-full items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32">
         <div className="flex h-full items-center gap-8">
           <Link href="/" className="relative flex h-full items-center py-0">
             <Image
@@ -363,7 +363,7 @@ export function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="fixed inset-x-4 top-16 md:absolute md:top-full md:inset-x-auto md:right-0 mt-2 w-auto max-w-sm md:w-[22rem] overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xl z-50"
+                    className="fixed inset-x-4 top-[var(--app-header-height)] md:absolute md:top-full md:inset-x-auto md:right-0 mt-2 w-auto max-w-sm md:w-[22rem] overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xl z-50"
                   >
                     <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                       <div>

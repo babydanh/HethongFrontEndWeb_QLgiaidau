@@ -21,10 +21,14 @@ import type { Match, MatchPenaltyRecord } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
+import { isActiveMatch } from '@/utils/match-status';
+
 import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, OpsReferee } from '@/features/organizer/ops/types';
 
 interface OpsMatchesProps {
   matches: Match[];
+  isOperationalDataLoading: boolean;
+  error: string | null;
   referees: OpsReferee[];
   activeMatchActionId: string | null;
   focusedMatchId?: string | null;
@@ -55,10 +59,8 @@ interface OperationDraft {
 interface MatchBucket {
   ongoing: Match[];
   scheduled: Match[];
-  unscheduledReady: Match[];
-  blocked: Match[];
-  directAdvance: Match[];
   completed: Match[];
+  needsAction: Match[];
 }
 
 const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; labelKey: string }> = [
@@ -88,6 +90,8 @@ const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; labelKey: string; 
 
 export function OpsMatches({
   matches,
+  isOperationalDataLoading,
+  error,
   referees,
   activeMatchActionId,
   focusedMatchId,
@@ -111,7 +115,7 @@ export function OpsMatches({
     roundOf: (round) => matchTranslate('roundOf', { round }),
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
   };
-  const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ONGOING');
   const [selectedScheduleMatch, setSelectedScheduleMatch] = useState<Match | null>(null);
   const [scheduleDraft, setScheduleDraft] = useState<ScheduleDraft>({
     courtName: '',
@@ -128,52 +132,60 @@ export function OpsMatches({
   const safeMatches = useMemo(() => (Array.isArray(matches) ? matches : []), [matches]);
 
   const filteredMatches = useMemo(() => {
-    return safeMatches.filter((match) => (statusFilter === 'ALL' ? true : match.status === statusFilter));
+    return safeMatches.filter((match) => {
+      if (statusFilter === 'ALL') return true;
+      if (statusFilter === 'ONGOING') return isActiveMatch(match);
+      if (statusFilter === 'COMPLETED') {
+        const status = String(match.status ?? '').trim().toUpperCase();
+        return status === 'COMPLETED' || status === 'FINISHED' || Boolean(match.completedAt || match.winnerId);
+      }
+      return match.status === statusFilter;
+    });
   }, [safeMatches, statusFilter]);
 
   const buckets = useMemo<MatchBucket>(() => {
     const nextBuckets: MatchBucket = {
       ongoing: [],
       scheduled: [],
-      unscheduledReady: [],
-      blocked: [],
-      directAdvance: [],
       completed: [],
+      needsAction: [],
     };
 
     for (const match of safeMatches) {
       const matchInsight = matchInsights?.[match.id];
       const missingOpponent = !match.participant1Id || !match.participant2Id;
       const isDirectAdvance = match.isBye || (!!match.winnerId && missingOpponent);
+      const status = String(match.status ?? '').trim().toUpperCase();
+      const isTerminal = status === 'COMPLETED' || status === 'FINISHED' || Boolean(match.completedAt || match.winnerId);
 
       if (isDirectAdvance) {
-        nextBuckets.directAdvance.push(match);
+        nextBuckets.needsAction.push(match);
         continue;
       }
 
-      if (match.status === 'COMPLETED') {
-        nextBuckets.completed.push(match);
-        continue;
-      }
-
-      if (match.status === 'ONGOING') {
+      if (isActiveMatch(match)) {
         nextBuckets.ongoing.push(match);
         continue;
       }
 
-      if (match.status === 'SCHEDULED') {
-        if (matchInsight?.dependencyBlocked || missingOpponent) {
-          nextBuckets.blocked.push(match);
-          continue;
-        }
-
-        if (match.scheduledAt) {
-          nextBuckets.scheduled.push(match);
-          continue;
-        }
-
-        nextBuckets.unscheduledReady.push(match);
+      if (isTerminal) {
+        nextBuckets.completed.push(match);
+        continue;
       }
+
+      if (status === 'SCHEDULED') {
+        if (matchInsight?.dependencyBlocked || missingOpponent || !match.scheduledAt) {
+          nextBuckets.needsAction.push(match);
+          continue;
+        }
+
+        nextBuckets.scheduled.push(match);
+        continue;
+      }
+
+      // DISPUTED and any unknown status must remain visible to the operator.
+      nextBuckets.needsAction.push(match);
+
     }
 
     nextBuckets.ongoing.sort((left, right) => {
@@ -192,19 +204,13 @@ export function OpsMatches({
         return leftTime - rightTime;
       }
       return left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder;
-    });
+        });
 
-    nextBuckets.unscheduledReady.sort((left, right) =>
-      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
-    );
-    nextBuckets.blocked.sort((left, right) =>
-      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
-    );
-    nextBuckets.directAdvance.sort((left, right) =>
-      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
-    );
     nextBuckets.completed.sort((left, right) =>
       right.roundNumber - left.roundNumber || right.matchOrder - left.matchOrder,
+    );
+    nextBuckets.needsAction.sort((left, right) =>
+      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
     );
 
     return nextBuckets;
@@ -214,10 +220,8 @@ export function OpsMatches({
     return {
       ongoing: buckets.ongoing.length,
       scheduled: buckets.scheduled.length,
-      unscheduledReady: buckets.unscheduledReady.length,
-      blocked: buckets.blocked.length,
-      directAdvance: buckets.directAdvance.length,
       completed: buckets.completed.length,
+      needsAction: buckets.needsAction.length,
       disputed: safeMatches.filter((match) => match.status === 'DISPUTED').length,
     };
   }, [buckets, safeMatches]);
@@ -227,8 +231,23 @@ export function OpsMatches({
       return;
     }
 
-    const card = document.getElementById(`ops-match-card-${focusedMatchId}`);
-    card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const tryScroll = () => {
+      attempts++;
+      const card = document.getElementById(`ops-match-card-${focusedMatchId}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (attempts < maxAttempts) {
+        setTimeout(tryScroll, 100);
+      }
+    };
+
+    const timer = setTimeout(tryScroll, 100);
+    return () => clearTimeout(timer);
   }, [focusedMatchId]);
 
   const openScheduleModal = (match: Match) => {
@@ -564,7 +583,10 @@ export function OpsMatches({
 
   return (
     <>
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section
+        className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+        aria-busy={isOperationalDataLoading}
+      >
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -576,27 +598,29 @@ export function OpsMatches({
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{translate('scheduledCount')}</p>
-              <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">{translate('unscheduledCount')}</p>
-              <p className="mt-2 text-lg font-bold text-amber-700">{summary.unscheduledReady}</p>
-            </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{translate('ongoingCount')}</p>
               <p className="mt-2 text-lg font-bold text-blue-700">{summary.ongoing}</p>
             </div>
-            <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">{translate('blockedCount')}</p>
-              <p className="mt-2 text-lg font-bold text-rose-700">{summary.blocked}</p>
-            </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{translate('directAdvanceCount')}</p>
-              <p className="mt-2 text-lg font-bold text-emerald-700">{summary.directAdvance}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{translate('scheduledCount')}</p>
+              <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
+            </div>
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">{translate('completedCount')}</p>
+              <p className="mt-2 text-lg font-bold text-emerald-700">{summary.completed}</p>
+            </div>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">{translate('attentionCountLabel')}</p>
+              <p className="mt-2 text-lg font-bold text-amber-800">{summary.needsAction}</p>
             </div>
           </div>
+
+          {isOperationalDataLoading && safeMatches.length > 0 ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800" role="status" aria-live="polite">
+              {translate('refreshingMatches')}
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((option) => (
@@ -618,45 +642,48 @@ export function OpsMatches({
         </div>
 
         <div className="mt-6 space-y-6">
-          {statusFilter === 'ALL' ? (
-            <>
-              {renderMatchSection(
-                translate('ongoingSectionTitle'),
-                translate('ongoingSectionDescription'),
-                buckets.ongoing,
-                translate('ongoingSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('scheduledSectionTitle'),
-                translate('scheduledSectionDescription'),
-                buckets.scheduled,
-                translate('scheduledSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('readySectionTitle'),
-                translate('readySectionDescription'),
-                buckets.unscheduledReady,
-                translate('readySectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('blockedSectionTitle'),
-                translate('blockedSectionDescription'),
-                buckets.blocked,
-                translate('blockedSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('directAdvanceSectionTitle'),
-                translate('directAdvanceSectionDescription'),
-                buckets.directAdvance,
-                translate('directAdvanceSectionEmpty'),
-              )}
-              {renderMatchSection(
-                translate('completedSectionTitle'),
-                translate('completedSectionDescription'),
-                buckets.completed,
-                translate('completedSectionEmpty'),
-              )}
-            </>
+          {!isOperationalDataLoading && error && safeMatches.length === 0 ? (
+            <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-8 text-center" role="alert">
+              <p className="text-sm font-bold text-rose-900">{translate('matchesLoadError')}</p>
+            </div>
+          ) : isOperationalDataLoading && safeMatches.length === 0 ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-8 text-center" role="status" aria-live="polite">
+              <p className="text-sm font-bold text-blue-900">{translate('loadingMatches')}</p>
+            </div>
+          ) : statusFilter === 'ALL' ? (
+            safeMatches.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                <p className="text-sm font-bold text-slate-700">{translate('allEmptyTitle')}</p>
+                <p className="mt-1 text-xs font-medium text-slate-500">{translate('allEmptyDescription')}</p>
+              </div>
+            ) : (
+              <>
+                {buckets.ongoing.length > 0 ? renderMatchSection(
+                  translate('ongoingSectionTitle'),
+                  translate('ongoingSectionDescription'),
+                  buckets.ongoing,
+                  translate('ongoingSectionEmpty'),
+                ) : null}
+                {buckets.scheduled.length > 0 ? renderMatchSection(
+                  translate('scheduledSectionTitle'),
+                  translate('scheduledSectionDescription'),
+                  buckets.scheduled,
+                  translate('scheduledSectionEmpty'),
+                ) : null}
+                {buckets.completed.length > 0 ? renderMatchSection(
+                  translate('completedSectionTitle'),
+                  translate('completedSectionDescription'),
+                  buckets.completed,
+                  translate('completedSectionEmpty'),
+                ) : null}
+                {buckets.needsAction.length > 0 ? renderMatchSection(
+                  translate('attentionSectionTitle'),
+                  translate('attentionSectionDescription'),
+                  buckets.needsAction,
+                  translate('attentionSectionEmpty'),
+                ) : null}
+              </>
+            )
           ) : filteredMatches.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
               <p className="text-sm font-bold text-slate-700">{translate('filteredEmptyTitle')}</p>

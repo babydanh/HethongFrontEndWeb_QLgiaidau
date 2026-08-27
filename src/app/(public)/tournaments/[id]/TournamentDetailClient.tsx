@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
@@ -8,7 +8,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } 
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, CreditCard } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -141,7 +141,16 @@ const commonTranslate = useTranslations('Common');
 
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
   const { openUserProfile } = useUserProfileModalStore();
-  const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
+  const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
+    const tabParam = searchParams?.get('tab');
+    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results') {
+      return tabParam as TournamentDetailTab;
+    }
+    if (isTournamentCompleted(tournament?.status)) {
+      return 'results';
+    }
+    return 'overview';
+  });
   const [liveCountsByDivision, setLiveCountsByDivision] = useState<Record<string, number>>({});
   const liveRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const liveRefreshInFlightRef = useRef(false);
@@ -169,11 +178,19 @@ const commonTranslate = useTranslations('Common');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const contentDetailRef = useRef<HTMLDivElement>(null);
-  const divisionRowRefs = useRef(new Map<string, HTMLDivElement>());
-  const shouldScrollToDivisionRef = useRef(false);
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      if (!window.location.hash) {
+        window.scrollTo(0, 0);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -222,22 +239,34 @@ const commonTranslate = useTranslations('Common');
     let active = true;
     const checkResults = async () => {
       try {
-        const response = await tournamentsApi.getTournamentResults(tournamentId, selectedDivisionId || undefined);
+        const response = await tournamentsApi.getTournamentResults(tournamentId);
         const data = response.data;
         const awards = data?.awards ?? [];
-        const hasTop1 = awards.some((a) => a.rank === 1 && Boolean(a.participant?.teamName));
-        const hasTop2 = awards.some((a) => a.rank === 2 && Boolean(a.participant?.teamName));
-        const isFinished = Boolean(data?.finalized || (hasTop1 && hasTop2));
+        const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
+        const hasTop2 = awards.some((a) => a.rank === 2 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
+        const hasAwards = awards.length >= 2 || (hasTop1 && hasTop2);
+        const isFinished = Boolean(
+          data?.finalized ||
+          hasAwards ||
+          (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+          (tournament?.status && isTournamentCompleted(tournament.status))
+        );
         if (active) setHasConfirmedResults(isFinished);
       } catch {
-        if (active) setHasConfirmedResults(false);
+        if (active) {
+          const isFinished = Boolean(
+            (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+            (tournament?.status && isTournamentCompleted(tournament.status))
+          );
+          setHasConfirmedResults(isFinished);
+        }
       }
     };
     void checkResults();
     return () => {
       active = false;
     };
-  }, [selectedDivisionId, tournamentId]);
+  }, [activeTournament?.status, selectedDivisionId, tournament?.status, tournamentId]);
 
   const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
     if (liveRefreshInFlightRef.current) return;
@@ -315,61 +344,40 @@ const commonTranslate = useTranslations('Common');
     };
   }, [refreshLiveCounts, tournamentId]);
 
-  useEffect(() => {
-    if (hasAutoOpenedLiveRef.current || hasUserNavigatedRef.current) return;
-    const requestedTab = searchParams.get('tab');
-    if (requestedTab && requestedTab !== 'live') return;
-    const liveDivisionId = initialDivisionId
-      ? (liveCountsByDivision[initialDivisionId] > 0 ? initialDivisionId : undefined)
-      : Object.entries(liveCountsByDivision).find(
-          ([divisionId, count]) => count > 0 && divisionsList.some((division) => division.id === divisionId),
-        )?.[0];
-    if (!liveDivisionId) return;
+  const isCompleted = Boolean(
+    (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+    (tournament?.status && isTournamentCompleted(tournament.status))
+  );
+  const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
 
-    hasAutoOpenedLiveRef.current = true;
-    Promise.resolve().then(() => {
-      setActiveTab('live');
-      setSelectedDivisionId(liveDivisionId);
-      setOpenDivisionId(liveDivisionId);
-      const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.set('divisionId', liveDivisionId);
-      nextParams.set('tab', 'live');
-      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-    });
-  }, [divisionsList, initialDivisionId, liveCountsByDivision, router, searchParams, tournamentId]);
-
+  // If activeTab is 'live' but there are no live matches in any division,
+  // automatically redirect activeTab to 'results' (if results exist) or 'overview'
   useEffect(() => {
-    if (activeTab !== 'live' || activeLiveMatchesCount > 0) return;
-    const fallbackTab: TournamentDetailTab = activeDivisionHasMatches ? 'results' : 'overview';
-    Promise.resolve().then(() => {
+    if (activeTab === 'live' && liveMatchesCount === 0) {
+      const fallbackTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
       setActiveTab(fallbackTab);
-      const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.set('tab', fallbackTab);
-      router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-    });
-  }, [activeDivisionHasMatches, activeLiveMatchesCount, activeTab, router, searchParams, tournamentId]);
+      if (typeof window !== 'undefined') {
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.get('tab') === 'live') {
+          if (fallbackTab === 'overview') {
+            currentUrl.searchParams.delete('tab');
+          } else {
+            currentUrl.searchParams.set('tab', fallbackTab);
+          }
+          window.history.replaceState(null, '', currentUrl.pathname + currentUrl.search);
+        }
+      }
+    }
+  }, [activeTab, liveMatchesCount, showResultsTab]);
 
   useEffect(() => {
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set('divisionId', debouncedDivisionId);
-    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
-  }, [debouncedDivisionId, router, searchParams, tournamentId]);
-
-  const scrollToDivisionRow = (divisionId: string) => {
-    const row = divisionRowRefs.current.get(divisionId);
-    if (!row) return;
-    const headerOffset = 96;
-    const rect = row.getBoundingClientRect();
-    const isOutside = rect.top < headerOffset || rect.top > window.innerHeight - 180;
-    if (isOutside) {
-      const targetY = window.scrollY + rect.top - headerOffset;
-      window.scrollTo({
-        top: Math.max(0, targetY),
-        behavior: 'smooth',
-      });
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/tournaments/${tournamentId}?${nextParams.toString()}`);
     }
-  };
+  }, [debouncedDivisionId, searchParams, tournamentId]);
 
   const handleTabSelect = (tabId: TournamentDetailTab) => {
     hasUserNavigatedRef.current = true;
@@ -381,7 +389,9 @@ const commonTranslate = useTranslations('Common');
     } else {
       nextParams.set('tab', tabId);
     }
-    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/tournaments/${tournamentId}?${nextParams.toString()}`);
+    }
   };
 
   const handleDivisionSelect = (divisionId: string) => {
@@ -394,11 +404,6 @@ const commonTranslate = useTranslations('Common');
     setSelectedDivisionId(divisionId);
     setOpenDivisionId(divisionId);
     setPendingDivisionId(divisionId);
-
-    // Smoothly ensure the selected division header is in optimal viewport position
-    requestAnimationFrame(() => {
-      scrollToDivisionRow(divisionId);
-    });
   };
 
   const handleShareClick = async () => {
@@ -653,6 +658,16 @@ const commonTranslate = useTranslations('Common');
   const hasAdvancedRegistrationForm = activeTournament.tournamentConfig?.registrationForm?.status === 'PUBLISHED';
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
+  const areAllDivisionsFull = divisionsList.length > 0
+    ? divisionsList.every((d) => {
+        const current = d._count?.participants ?? 0;
+        const max = d.maxParticipants ?? 0;
+        return max > 0 && current >= max;
+      })
+    : (activeTournament.maxParticipants != null &&
+       activeTournament.maxParticipants > 0 &&
+       (activeTournament._count?.participants ?? 0) >= activeTournament.maxParticipants);
+
   let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = isRegistrationStatusLoading;
   const isRegisteredUser = myRegistration?.registered === true;
@@ -673,10 +688,13 @@ const commonTranslate = useTranslations('Common');
     }
   } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
-      registrationButtonLabel = translate('registrationLocked');
+      registrationButtonLabel = translate('registrationLocked') || 'Đã khóa đăng ký';
       isRegistrationButtonDisabled = true;
     } else if (isRegistrationExpired) {
-      registrationButtonLabel = translate('registrationExpired');
+      registrationButtonLabel = translate('registrationExpired') || 'Hết hạn đăng ký';
+      isRegistrationButtonDisabled = true;
+    } else if (areAllDivisionsFull) {
+      registrationButtonLabel = translate('registrationFull') || 'Đã đủ hồ sơ';
       isRegistrationButtonDisabled = true;
     }
   } else if (isTournamentUpcoming(activeTournament.status) || isTournamentRegistrationClosed(activeTournament.status)) {
@@ -722,14 +740,12 @@ const commonTranslate = useTranslations('Common');
     return `${sStr} - ${eStr}`;
   };
 
-  const isCompleted = isTournamentCompleted(activeTournament.status) || isTournamentCompleted(tournament.status);
-
   const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
-    ...(activeLiveMatchesCount > 0
-      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: activeLiveMatchesCount, isLive: true }]
+    ...(liveMatchesCount > 0
+      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: liveMatchesCount, isLive: true }]
       : []),
-    ...(hasConfirmedResults
-      ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: isCompleted }]
+    ...(showResultsTab
+      ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: true }]
       : []),
     { id: 'overview', label: translate('overview') },
     { id: 'teams', label: translate('tabs.teams') },
@@ -740,200 +756,485 @@ const commonTranslate = useTranslations('Common');
       : []),
   ];
 
-  return (
-    <div className="bg-slate-50 min-h-screen pb-12">
-      {/* Banner Carousel Showcase */}
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
-        <div className="relative w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px] rounded-lg md:rounded-2xl overflow-hidden shadow-xl">
-          <GalleryCarousel
-            images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
-            defaultBanner={activeTournament.bannerUrl || undefined}
-            className="w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px]"
-          />
-
-          {!hidePublicBannerText && (
-            <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
-              <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md tracking-wide uppercase truncate">
-                {tournament.name}
-              </h1>
+  const renderMetadataCard = () => (
+    <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm space-y-3 sm:space-y-4">
+      {/* Organizer / Club Header */}
+      {(() => {
+        const organizer = activeTournament.organizer;
+        const displayLogo = activeTournament.logoUrl || organizer?.avatarUrl;
+        const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+              {displayLogo ? (
+                <img
+                  src={displayLogo}
+                  alt={displayName}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <Trophy className="w-5 h-5 text-slate-500" />
+              )}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                {translate('organizerLabel') || 'Ban tổ chức'}
+              </p>
+              <p className="text-sm font-bold text-slate-900 truncate" title={displayName}>
+                {displayName}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Tournament Title & Badges */}
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Badge */}
+          {(() => {
+            const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;
+            const isFinished = isCompleted || (hasConfirmedResults && liveMatchesCount === 0);
+            return (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+                isLive
+                  ? 'bg-rose-600 text-white'
+                  : isFinished
+                    ? 'bg-slate-700 text-white'
+                    : 'bg-emerald-600 text-white'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+                {isLive
+                  ? (translate('inProgress') || 'Đang diễn ra')
+                  : isFinished
+                    ? (translate('completed') || 'Đã kết thúc')
+                    : (translate('upcoming') || 'Sắp diễn ra')}
+              </span>
+            );
+          })()}
+
+          {/* Sport Badge */}
+          {activeTournament.category?.name && (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
+              {(() => {
+                const logo = getSportLogo(activeTournament.category?.name);
+                return logo ? (
+                  <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                ) : null;
+              })()}
+              {activeTournament.category.name}
+            </span>
           )}
+
+          {/* Ranked / Casual Badge */}
+          <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+            activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+          }`}>
+            {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
+          </span>
+        </div>
+
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
+          {tournament.name}
+        </h1>
+      </div>
+
+      {/* Key Details Rows */}
+      <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">
+        {/* Dates */}
+        <div className="flex items-start gap-2.5">
+          <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+          <p className="font-semibold text-slate-800">
+            {activeTournament.startDate ? (
+              <>
+                {formatDate(activeTournament.startDate)}
+                {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
+              </>
+            ) : translate('dateNotSet')}
+          </p>
+        </div>
+
+        {/* Location */}
+        <div className="flex items-start gap-2.5">
+          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+          <p className="leading-relaxed text-slate-600 break-words" title={getTournamentLocationLabel(activeTournament)}>
+            {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
+          </p>
+        </div>
+
+        {/* Divisions Count */}
+        <div className="flex items-center gap-2.5">
+          <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
+          <p className="font-semibold text-slate-700">
+            {divisionsList.length || 1} {translate('competitionContentTitle') || 'Nội dung thi đấu'}
+          </p>
+        </div>
+
+        {/* Participants / Teams Count */}
+        <div className="flex items-center gap-2.5">
+          <Users className="w-4 h-4 text-slate-400 shrink-0" />
+          <p className="font-semibold text-slate-700">
+            {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0} {translate('participantsCount') || 'đội / VĐV'}
+          </p>
         </div>
       </div>
 
-      {/* Info Panel below banner */}
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
-        <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            {Boolean(activeTournament.logoUrl?.trim()) && (
-              <Link
-                href={`/tournaments/${activeTournament.id}`}
-                className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
-                title={translate('viewTournamentDetails')}
-              >
-                <img
-                  src={activeTournament.logoUrl!}
-                  alt={activeTournament.name}
-                  className="w-full h-full object-contain rounded-full p-2"
-                />
-              </Link>
-            )}
-            <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-2">
-                {activeTournament.category?.name && (
-                  <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-blue-600 text-white shadow-2xs flex items-center gap-1.5">
-                    {(() => {
-                      const logo = getSportLogo(activeTournament.category?.name);
-                      return logo ? (
-                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150" />
-                      ) : null;
-                    })()}
-                    {activeTournament.category.name}
-                  </span>
-                )}
-                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${getTournamentStatusClassName(activeTournament.status)}`}>
-                  {getTournamentStatusLabel(activeTournament.status, statusLabels).toUpperCase()}
-                </span>
-                <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-900 text-white shadow-2xs flex items-center gap-1">
-                  <Trophy className="w-3 h-3 text-amber-400" />
-                  {(() => {
-                    const fmt = (activeTournament.format ?? '').replace('.', '_').replace(' ', '_').toUpperCase();
-                    if (fmt === 'SINGLE_ELIMINATION') return translate('format.singleElimination');
-                    if (fmt === 'DOUBLE_ELIMINATION') return translate('format.doubleElimination');
-                    if (fmt === 'ROUND_ROBIN') return translate('format.roundRobin');
-                    if (fmt === 'GROUP_STAGE_KNOCKOUT') return translate('format.groupStageKnockout');
-                    return fmt;
-                  })()}
-                </span>
-                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-2xs ${
-                  activeTournament.isRanked
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-emerald-600 text-white'
-                }`}>
-                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : `🎾 ${translate('casualBadge')}`}
-                </span>
-              </div>
+      {/* Smart Sequential Countdown Timer */}
+      {(() => {
+        const now = new Date();
+        const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
+        const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
+        const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
+        const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  {activeTournament.startDate ? (
-                    <>
-                      {formatDate(activeTournament.startDate)}
-                      {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
-                    </>
-                  ) : translate('dateNotSet')}
-                </span>
-                <span className="flex min-w-0 max-w-full items-start gap-1.5 md:max-w-[min(100%,760px)]">
-                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="break-words whitespace-normal leading-6" title={getTournamentLocationLabel(activeTournament)}>
-                    {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
-                  </span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-stretch md:items-center">
-            <div className="flex items-center gap-2.5 w-full md:w-auto">
-              {user?.id && (
-                <Button
-                  onClick={toggleFollow}
-                  disabled={followLoading}
-                  variant={isFollowing ? 'default' : 'outline'}
-                  className={`flex-1 md:flex-none font-bold shadow-sm h-10 text-xs md:text-sm ${
-                    isFollowing
-                      ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
-                  }`}
-                >
-                  <Bookmark className={`w-3.5 h-3.5 mr-1.5 ${isFollowing ? 'fill-current' : ''}`} />
-                  {isFollowing ? translate('followActive') : translate('follow')}
-                </Button>
-              )}
-              <Button onClick={handleShareClick} variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm h-10 text-xs md:text-sm">
-                <Share2 className="w-3.5 h-3.5 mr-1.5" /> {translate("share")}
-              </Button>
-              <ReportViolationButton
-                targetType="TOURNAMENT"
-                targetId={tournament.id}
-                targetLabel={tournament.name}
-                hidden={isOwner}
-                compact
+        // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
+        if (regStart && now < regStart) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.registrationStartDate!}
+                labels={{
+                  active: translate('registrationOpensAfter') || 'Mở đăng ký sau',
+                  expired: translate('registrationOpened') || 'Đã mở đăng ký',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="info"
               />
             </div>
+          );
+        }
 
-            {!isOwner && !isTournamentDraft(activeTournament.status) && (
+        // 2. Đang mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
+        if (regEnd && now < regEnd && !isRegistrationLocked) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.registrationEndDate!}
+                labels={{
+                  active: translate('closeRegistrationAfter') || 'Đóng đăng ký sau',
+                  expired: translate('registrationClosed') || 'Đã đóng đăng ký',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="warning"
+              />
+            </div>
+          );
+        }
+
+        // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
+        if (tourStart && now < tourStart) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.startDate!}
+                labels={{
+                  active: translate('startAfter') || 'Khởi tranh sau',
+                  expired: translate('started') || 'Đã khởi tranh',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="danger"
+              />
+            </div>
+          );
+        }
+
+        // 4. Đang diễn ra -> Đếm ngược ngày kết thúc
+        if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
+          return (
+            <div className="pt-2 border-t border-slate-100">
+              <CountdownTimer
+                targetDate={activeTournament.endDate!}
+                labels={{
+                  active: translate('endAfter') || 'Kết thúc sau',
+                  expired: translate('completed') || 'Đã kết thúc',
+                  dayLabel: commonTranslate('countdownDay') || 'ngày',
+                }}
+                variant="danger"
+              />
+              <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange") || 'Thời gian thi đấu có thể thay đổi theo tiến độ.'}</p>
+            </div>
+          );
+        }
+
+        return null;
+      })()}
+
+      {/* Primary CTA Button */}
+      <div className="pt-1">
+        {!isOwner && !isTournamentDraft(activeTournament.status) && (
+          <div>
+            {canResumePayment ? (
               <Button
-                disabled={isRegistrationButtonDisabled}
-                className={`${
-                  isRegistrationButtonDisabled
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
-                } font-bold w-full md:w-auto shadow-sm h-10 text-xs md:text-sm`}
-                                onClick={() => {
-                  if (isRegistrationButtonDisabled) return;
-                  if (canResumePayment) {
-                    const resumeParticipantId = myRegistration.participant?.id;
-                    if (!resumeParticipantId) {
-                      toast.error(translate('paymentResumeUnavailable'));
-                      return;
-                    }
+                type="button"
+                onClick={() => {
+                  const resumeParticipantId = myRegistration?.participant?.id;
+                  if (resumeParticipantId) {
                     const checkoutParams = new URLSearchParams({
                       participantId: resumeParticipantId,
                       tournamentId,
                     });
                     const resumeDivisionId =
-                      myRegistration.participant?.tournamentDivisionId || selectedDivisionId;
+                      myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
                     if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
                     if (inviteCode) checkoutParams.set('invite', inviteCode);
-                    if (inviteParticipantId && teamInviteToken) {
-                      checkoutParams.set('pid', inviteParticipantId);
-                      checkoutParams.set('token', teamInviteToken);
-                    }
                     router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                    return;
+                  } else {
+                    router.push(registerHref);
                   }
-                  if (isClubLiteTournament(activeTournament)) {
-
-                    if (activeTournament.inviteCode) {
-                      router.push(`/lite/tournaments/join/${activeTournament.inviteCode}`);
-                    } else {
-                      toast.error(translate('joinLinkUnavailable'));
-                    }
-                    return;
-                  }
-                  const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' ||
-                                                registrationModeUi.mode !== 'OPEN' ||
-                                                divisionsList.length > 0 ||
-                                                hasAdvancedRegistrationForm;
+                }}
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                {translate('continuePayment') || 'Thanh toán ngay'}
+              </Button>
+            ) : isRegisteredUser ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
+              </Button>
+            ) : isRegistrationOpen && areAllDivisionsFull ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <Users className="w-4 h-4 text-slate-400" />
+                <span>{translate('registrationFull') || 'Đã đủ hồ sơ'}</span>
+              </Button>
+            ) : isRegistrationOpen && (isRegistrationLocked || isRegistrationExpired) ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <span>{registrationButtonLabel}</span>
+              </Button>
+            ) : isTournamentInProgress(activeTournament.status) || isTournamentCompleted(activeTournament.status) ? (
+              <Button
+                type="button"
+                onClick={() => handleTabSelect('matches')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                {translate('tabs.matches') || 'Lịch thi đấu'}
+              </Button>
+            ) : isRegistrationButtonDisabled ? (
+              <Button
+                type="button"
+                disabled
+                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <span>{registrationButtonLabel}</span>
+              </Button>
+            ) : isClubLiteTournament(activeTournament) ? (
+              activeTournament.inviteCode ? (
+                <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm">
+                    {translate('liteJoin')}
+                  </Button>
+                </Link>
+              ) : (
+                <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm">
+                  {translate('joinLinkUnavailable')}
+                </Button>
+              )
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  const needsRegistrationPage =
+                    activeTournament.visibility === 'PRIVATE' ||
+                    registrationModeUi.mode !== 'OPEN' ||
+                    divisionsList.length > 0 ||
+                    hasAdvancedRegistrationForm;
                   if (needsRegistrationPage) {
                     router.push(registerHref);
                   } else {
                     setIsRegisterModalOpen(true);
                   }
                 }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer"
               >
                 {registrationButtonLabel}
               </Button>
             )}
-            {isOwner && !isTournamentDraft(activeTournament.status) && (
-              <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-center w-full md:w-auto shadow-sm flex items-center justify-center h-10">
-                <p className="text-xs text-slate-600 font-bold whitespace-nowrap">
-                  {translate('ownerLabel')}
-                </p>
-              </div>
-            )}
           </div>
-        </div>
+        )}
+
+        {isOwner && !isTournamentDraft(activeTournament.status) && (
+          <div className="space-y-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+              <p className="text-xs text-slate-700 font-bold">
+                {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
+              </p>
+            </div>
+            <Link
+              href={`/organizer/tournaments/${activeTournament.id}/manage`}
+              className="block w-full"
+            >
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-sm">
+                {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-8 mt-4 sm:mt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8 items-start">
+      {/* Registration Timeline Table */}
+      <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
+        <div className="flex items-center justify-between text-slate-600">
+          <span className="font-medium">{translate('regStart') || 'Mở đăng ký'}:</span>
+          <span className="font-bold text-slate-800">
+            {activeTournament.registrationStartDate ? formatDate(activeTournament.registrationStartDate) : translate('notUpdated')}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-slate-600">
+          <span className="font-medium">{translate('regEnd') || 'Thời hạn đăng ký'}:</span>
+          <span className="font-bold text-slate-800">
+            {activeTournament.registrationEndDate ? formatDate(activeTournament.registrationEndDate) : translate('notUpdated')}
+          </span>
+        </div>
+        {isRegistrationLocked && (
+          <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
+            <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
+            <span>🔒</span>
+          </div>
+        )}
+        {Number(activeTournament.entryFee) > 0 && (
+          <div className="flex items-center justify-between text-slate-600 pt-1.5 border-t border-dashed border-slate-100">
+            <span className="font-medium">{translate('entryFee') || 'Lệ phí'}:</span>
+            <span className="font-black text-blue-600 text-sm">
+              {formatCurrency(activeTournament.entryFee)}
+            </span>
+          </div>
+        )}
+      </div>
 
-          {/* Left Area - Tabs & Content (takes 3 cols) */}
-          <div className="lg:col-span-3 space-y-4 sm:space-y-6 min-w-0 max-w-full overflow-hidden">
-            {/* Tabs */}
+      {/* Secondary Utility Actions (Follow, Share, Report) */}
+      <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+        {user?.id && (
+          <Button
+            onClick={toggleFollow}
+            disabled={followLoading}
+            variant={isFollowing ? 'default' : 'outline'}
+            className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-lg ${
+              isFollowing
+                ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
+                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+          >
+            <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
+            {isFollowing ? translate('followActive') : translate('follow')}
+          </Button>
+        )}
+        <Button
+          onClick={handleShareClick}
+          variant="outline"
+          className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-lg"
+        >
+          <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
+        </Button>
+        <ReportViolationButton
+          targetType="TOURNAMENT"
+          targetId={tournament.id}
+          targetLabel={tournament.name}
+          hidden={isOwner}
+          compact
+        />
+      </div>
+    </div>
+  );
+
+  const renderContactCard = () => (
+    activeTournament.contactInfo ? (
+      <div className="bg-white rounded-xl border border-slate-200/90 p-5 flex flex-col gap-2.5 shadow-sm">
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
+        {activeTournament.contactInfo.phone && (
+          <div className="flex items-center gap-2.5">
+            <Phone className="w-4 h-4 text-slate-450 shrink-0" />
+            <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
+          </div>
+        )}
+        {activeTournament.contactInfo.email && (
+          <div className="flex items-center gap-2.5">
+            <Mail className="w-4 h-4 text-slate-450 shrink-0" />
+            <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
+          </div>
+        )}
+        {Object.entries(activeTournament.contactInfo)
+          .filter(([key]) => key !== 'phone' && key !== 'email')
+          .map(([key, val]) => {
+            if (!val) return null;
+            const lowercaseKey = key.toLowerCase();
+            const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
+
+            let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
+            let iconColor = 'text-slate-450';
+
+            if (lowercaseKey.includes('instagram')) {
+              IconComponent = InstagramIcon;
+              iconColor = 'text-pink-600';
+            } else if (lowercaseKey.includes('zalo')) {
+              IconComponent = ZaloIcon;
+              iconColor = 'text-blue-650';
+            }
+
+            return (
+              <div key={key} className="flex items-center gap-2.5">
+                <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
+                <span className="text-xs font-bold text-slate-500">{key}:</span>
+                {isUrl ? (
+                  <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
+                    {val}
+                  </a>
+                ) : (
+                  <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
+                )}
+              </div>
+            );
+          })}
+      </div>
+    ) : null
+  );
+
+  return (
+    <div className="bg-slate-50 min-h-screen pb-12">
+      <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6">
+        {/* Back navigation */}
+        <div className="mb-2.5 sm:mb-3.5">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors py-1.5 px-3 rounded-lg hover:bg-slate-200/70 cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>{translate('back') || 'Quay lại'}</span>
+          </button>
+        </div>
+
+        {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
+          {/* Left Column: Hero Banner + Mobile Metadata + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
+            {/* Banner Container: Slimmer & sleek on mobile, generous & immersive on desktop */}
+            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-800">
+              <GalleryCarousel
+                images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
+                defaultBanner={activeTournament.bannerUrl || undefined}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Mobile Metadata Container: Show tournament info & primary CTA immediately on mobile */}
+            <div className="block lg:hidden space-y-3 sm:space-y-4">
+              {renderMetadataCard()}
+            </div>
+
+            {/* Horizontal Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
@@ -941,27 +1242,30 @@ const commonTranslate = useTranslations('Common');
                   <button
                     key={tab.id}
                     onClick={() => handleTabSelect(tab.id)}
-                    className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
+                    className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                       tab.isLive
                         ? isActive
-                          ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                          : 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100/80'
+                          ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/20'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100/80'
                         : tab.isGolden
                           ? isActive
                             ? 'bg-amber-500 text-white font-extrabold shadow-sm border border-amber-500 hover:bg-amber-600'
-                            : 'bg-amber-50 text-amber-900 border border-amber-300 font-extrabold hover:bg-amber-100'
+                            : 'bg-amber-100 text-amber-950 border border-amber-400 font-extrabold shadow-xs hover:bg-amber-200'
                           : isActive
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                            : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
                       <span className="h-2 w-2 shrink-0 rounded-full bg-current motion-safe:animate-ping motion-reduce:animate-none" />
                     )}
+                    {tab.isGolden && (
+                      <Trophy className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-amber-700'}`} />
+                    )}
                     <span>{tab.label}</span>
                     {tab.badge != null && (
                       <span
-                        className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
                           isActive ? 'bg-white text-rose-600' : 'bg-rose-600 text-white'
                         }`}
                       >
@@ -973,9 +1277,9 @@ const commonTranslate = useTranslations('Common');
               })}
             </div>
 
-            {/* Tab Content */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[400px] sm:min-h-[500px] min-w-0 max-w-full overflow-hidden">
-                                          {/* Compact vertical content rows with inline selected detail */}
+            {/* Tab Content Container */}
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-4 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden">
+              {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
                   <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -991,11 +1295,7 @@ const commonTranslate = useTranslations('Common');
                       return (
                         <div
                           key={division.id}
-                          ref={(node) => {
-                            if (node) divisionRowRefs.current.set(division.id, node);
-                            else divisionRowRefs.current.delete(division.id);
-                          }}
-                          className="border-b border-slate-100 last:border-b-0"
+                          className="scroll-mt-[calc(var(--app-header-height)+1rem)] border-b border-slate-100 last:border-b-0"
                         >
                           <button
                             type="button"
@@ -1037,14 +1337,13 @@ const commonTranslate = useTranslations('Common');
                           </button>
 
                           <div
-className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                               isActive ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] pointer-events-none'
                             }`}
                           >
                             <div className="overflow-hidden">
                               {isActive && divisionTournament && (
                                 <div
-                                  ref={contentDetailRef}
                                   id="selected-division-content"
                                   className="border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5"
                                 >
@@ -1103,423 +1402,19 @@ className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier
 
               {activeTab === 'overview' && <OverviewTab key="overview" tournament={tournament} />}
               {activeTab === 'sponsors' && <SponsorsTab sponsors={publicSponsors} />}
-
             </div>
 
-          </div>
-
-          {/* Right Area - Registration & Info Card (takes 1 col) */}
-          <div className="lg:col-span-1 lg:sticky lg:top-6">
-            <div className="bg-white rounded-lg border border-slate-250/80 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 shadow-sm">
-              {showRegistrationDetails && (
-                <>
-              {/* Entry Fee */}
-              <div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">{translate("entryFee")}</span>
-                <div className="text-2xl font-bold text-blue-600">
-                  {selectedDivision?.entryFee && selectedDivision.entryFee > 0
-                    ? `${Number(selectedDivision.entryFee).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} VND`
-                    : translate('free')}
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">{translate("feeAtRegistration")}</p>
-
-                {/* Selected Division ELO Range Indicator */}
-                {(() => {
-                  const activeDiv = divisionsList.find(d => d.id === selectedDivisionId);
-                  if (!activeDiv || (activeDiv.minElo === null && activeDiv.maxElo === null)) return null;
-                  const isDoublesDiv = activeDiv.matchType === 'DOUBLES' || activeDiv.matchType === 'MIXED_DOUBLES';
-                  return (
-                    <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-lg p-2.5">
-                      <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block mb-0.5">
-                        {isDoublesDiv ? translate('eloRequirementDoubles') : translate('eloRequirementSingles')}
-                      </span>
-                      <span className="text-xs font-bold text-blue-700">
-                        {activeDiv.minElo !== null ? activeDiv.minElo : '0'}
-                        {' - '}
-                        {activeDiv.maxElo !== null ? activeDiv.maxElo : translate('unlimited')}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </div>
-
-                </>
-              )}
-
-              {/* Organizer Info */}
-              <div className="border-t border-slate-100 pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">{translate('organizerLabel')}</span>
-                {(() => {
-                  const organizer = activeTournament.organizer;
-                  if (!organizer?.id) {
-                    return (
-                      <div className="flex items-center gap-3">
-                        {organizer?.avatarUrl ? (
-                          <img
-                            src={organizer.avatarUrl}
-                            alt={organizer.fullName || 'BTC'}
-                            className="w-10 h-10 rounded-full border border-slate-200 object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
-                            <User className="w-5 h-5 text-blue-500" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-slate-900 font-bold text-sm">{organizer?.fullName || translate('organizerDefault')}</p>
-                            {organizer?.isTrusted ? (
-                              <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title={translate('organizerTrusted')}>
-                                👑 {translate('organizerTrusted')}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title={translate('organizerNew')}>
-                                🔰 {translate('organizerNew')}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        openUserProfile(
-                          {
-                            id: organizer.id,
-                            fullName: organizer.fullName || translate('organizerDefault'),
-                            avatarUrl: organizer.avatarUrl || null,
-                          },
-                          rect,
-                        );
-                      }}
-                      className="flex items-center gap-3 text-left w-full p-2 -ml-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all cursor-pointer group"
-                    >
-                      {organizer.avatarUrl ? (
-                        <img
-                          src={organizer.avatarUrl}
-                          alt={organizer.fullName || 'BTC'}
-                          className="w-10 h-10 rounded-full border border-slate-200 object-cover shadow-sm group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-105 transition-transform">
-                          <User className="w-5 h-5 text-blue-500" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-slate-900 font-bold text-sm truncate group-hover:text-blue-600 transition-colors">
-                            {organizer.fullName || translate('organizerDefault')}
-                          </p>
-                          {organizer.isTrusted ? (
-                            <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerTrusted')}>
-                              👑 {translate('organizerTrusted')}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md shrink-0" title={translate('organizerNew')}>
-                              🔰 {translate('organizerNew')}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
-                      </div>
-                    </button>
-                  );
-                })()}
-              </div>
-
-              {showRegistrationDetails && (
-                <>
-              {/* Slots Progress Bar for all divisions */}
-              {divisionsList.length > 0 ? (
-                <div className="border-t border-slate-100 pt-4 space-y-3">
-                  <span className="text-xs font-bold text-slate-450 uppercase tracking-wider block">{translate("profilesByTable")}</span>
-                  {divisionsList.map((div) => {
-                    const divParticipants = div._count?.participants ?? 0;
-                    const divMax = div.maxParticipants ?? activeTournament.maxParticipants ?? 16;
-                    const divPercent = divMax > 0 ? Math.min(100, Math.round((divParticipants / divMax) * 100)) : 0;
-                    const isDivDoubles = div.matchType === 'DOUBLES' || div.matchType === 'MIXED_DOUBLES';
-                    const hasElo = div.minElo !== null || div.maxElo !== null;
-                    return (
-                      <div key={div.id} className="space-y-1">
-                        <div className="flex justify-between items-center text-[11px] font-bold">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
-                            {hasElo && (
-                              <span className="text-[9px] text-blue-600 font-bold">
-                                {isDivDoubles ? translate('eloRequirementDoubles') : translate('eloRequirementSingles')}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent}%)</span>
-                        </div>
-                        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              divPercent >= 90 ? 'bg-rose-500' : divPercent >= 70 ? 'bg-amber-500' : 'bg-emerald-600'
-                            }`}
-                            style={{ width: `${divPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                maxParticipants > 0 && (
-                  <div className="border-t border-slate-100 pt-4">
-                    <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-                      <span className="text-slate-500 uppercase tracking-wider">{translate('participantsCount')}</span>
-                      <span className="text-slate-800">{participantCount} / {maxParticipants}</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          percentageFilled >= 90 ? 'bg-rose-500' : percentageFilled >= 70 ? 'bg-amber-500' : 'bg-blue-650'
-                        }`}
-                        style={{ width: `${percentageFilled}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-1">{translate('slotsFilled', { percentage: percentageFilled })}</p>
-                  </div>
-                )
-              )}
-
-              {/* Registration Period */}
-              <div className="border-t border-slate-100 pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">{translate("registrationPeriod")}</span>
-                <div className="flex items-start gap-2.5">
-                  <Calendar className="w-4 h-4 text-slate-450 mt-0.5 shrink-0" />
-                  <div className="text-xs font-semibold text-slate-700 leading-normal">
-                    {formatDateRange(activeTournament.registrationStartDate, activeTournament.registrationEndDate)}
-                  </div>
-                </div>
-
-                {/* Smart Sequential Countdown Timer (Chỉ hiện 1 đếm ngược duy nhất) */}
-                {(() => {
-                  const now = new Date();
-                  const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
-                  const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
-                  const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
-                  const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
-
-                  // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
-                  if (regStart && now < regStart) {
-                    return (
-                      <CountdownTimer
-                        targetDate={activeTournament.registrationStartDate!}
-                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="info"
-                      />
-                    );
-                  }
-
-                  // 2. Đã mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
-                  if (regEnd && now < regEnd) {
-                    return (
-                      <CountdownTimer
-                        targetDate={activeTournament.registrationEndDate!}
-                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="warning"
-                      />
-                    );
-                  }
-
-                  // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
-                  if (tourStart && now < tourStart) {
-                    return (
-                      <CountdownTimer
-                        targetDate={activeTournament.startDate!}
-                        labels={{ active: translate('startAfter'), expired: translate('started'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="danger"
-                      />
-                    );
-                  }
-
-                  // 4. Giải đang diễn ra -> Đếm ngược ngày kết thúc
-                  if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
-                    return (
-                      <div>
-                        <CountdownTimer
-                          targetDate={activeTournament.endDate!}
-                          labels={{ active: translate('endAfter'), expired: translate('completed'), dayLabel: commonTranslate('countdownDay') }}
-                          variant="danger"
-                        />
-                        <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange")}</p>
-                      </div>
-                    );
-                  }
-
-                  // 5. Đã kết thúc
-                  if (isTournamentCompleted(activeTournament.status) || (regEnd && now >= regEnd && !tourStart)) {
-                    return (
-                      <div className="mt-2 p-2.5 border rounded-lg bg-slate-50 border-slate-200 text-slate-400">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-slate-400" />
-                          <span className="text-xs font-bold text-slate-400">{translate('completed')}</span>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })()}
-
-              </div>
-
-              {/* Warnings and Info Banners */}
-              {isRegistrationOpen && isRegistrationLocked && (
-                <div className="bg-slate-50 border border-amber-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
-                  <AlertCircle className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-semibold text-amber-800 leading-normal">
-                    {translate("registrationLockedNotice")}
-                  </p>
-                </div>
-              )}
-              {isRegistrationOpen && isRegistrationExpired && (
-                <div className="bg-rose-50 border border-rose-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
-                  <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-semibold text-rose-800 leading-normal">
-                    {translate("registrationExpiredNotice")}
-                  </p>
-                </div>
-              )}
-
-              {/* Action Button */}
-              {!isOwner && !isTournamentDraft(activeTournament.status) && (
-                  <div className="mt-1 block w-full">
-                    {isRegistrationButtonDisabled ? (
-                      <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
-                        {registrationButtonLabel}
-                      </Button>
-                    ) : canResumePayment ? (
-                      <Button
-                        onClick={() => {
-                          const resumeParticipantId = myRegistration?.participant?.id;
-                          if (resumeParticipantId) {
-                            const checkoutParams = new URLSearchParams({
-                              participantId: resumeParticipantId,
-                              tournamentId,
-                            });
-                            const resumeDivisionId =
-                              myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
-                            if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                            if (inviteCode) checkoutParams.set('invite', inviteCode);
-                            router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                          } else {
-                            router.push(registerHref);
-                          }
-                        }}
-                        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-2.5 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
-                      >
-                        💳 {translate('continuePayment') || 'Thanh toán ngay'}
-                      </Button>
-                    ) : isClubLiteTournament(activeTournament) ? (
-                      activeTournament.inviteCode ? (
-                        <Link
-                          href={`/lite/tournaments/join/${activeTournament.inviteCode}`}
-                          className="block w-full"
-                        >
-                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-sm cursor-pointer text-sm">
-                            {translate('liteJoin')}
-                          </Button>
-                        </Link>
-                      ) : (
-                        <Button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
-                          {translate('joinLinkUnavailable')}
-                        </Button>
-                      )
-                    ) : (
-                      <Link href={registerHref} className="block w-full">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md cursor-pointer text-sm">
-                          {registrationButtonLabel}
-                        </Button>
-                      </Link>
-                    )}
-                </div>
-              )}
-
-                </>
-              )}
-
-              {isOwner && !isTournamentDraft(activeTournament.status) && (
-                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 mt-1 text-center">
-                    <p className="text-xs text-slate-800 font-bold">
-                    {translate('ownerAdminLabel')}
-                  </p>
-                  <Link
-                    href={isClubLiteTournament(activeTournament)
-                      ? `/organizer/tournaments/${activeTournament.id}/manage`
-                      : `/organizer/tournaments/${activeTournament.id}/manage`
-                    }
-                    className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline"
-                  >
-                    {isClubLiteTournament(activeTournament)
-                      ? translate('manageLite')
-                      : translate('manageBracketSchedule')
-                    }
-                  </Link>
-                </div>
-              )}
+            {/* Mobile Contact Container */}
+            <div className="block lg:hidden">
+              {renderContactCard()}
             </div>
-
-            {/* Contact Info Card */}
-            {activeTournament.contactInfo && (
-              <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-2.5 shadow-sm mt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
-                {activeTournament.contactInfo.phone && (
-                  <div className="flex items-center gap-2.5">
-                    <Phone className="w-4 h-4 text-slate-450 shrink-0" />
-                    <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
-                  </div>
-                )}
-                {activeTournament.contactInfo.email && (
-                  <div className="flex items-center gap-2.5">
-                    <Mail className="w-4 h-4 text-slate-450 shrink-0" />
-                    <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
-                  </div>
-                )}
-                {Object.entries(activeTournament.contactInfo)
-                  .filter(([key]) => key !== 'phone' && key !== 'email')
-                  .map(([key, val]) => {
-                    if (!val) return null;
-                    const lowercaseKey = key.toLowerCase();
-                    const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
-
-                    let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
-                    let iconColor = 'text-slate-450';
-
-                    if (lowercaseKey.includes('instagram')) {
-                      IconComponent = InstagramIcon;
-                      iconColor = 'text-pink-600';
-                    } else if (lowercaseKey.includes('zalo')) {
-                      IconComponent = ZaloIcon;
-                      iconColor = 'text-blue-650';
-                    }
-
-                    return (
-                      <div key={key} className="flex items-center gap-2.5">
-                        <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
-                        <span className="text-xs font-bold text-slate-500">{key}:</span>
-                        {isUrl ? (
-                          <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
-                            {val}
-                          </a>
-                        ) : (
-                          <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
           </div>
 
+          {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
+          <div className="hidden lg:block lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
+            {renderMetadataCard()}
+            {renderContactCard()}
+          </div>
         </div>
       </div>
 

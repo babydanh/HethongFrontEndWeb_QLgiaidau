@@ -186,6 +186,7 @@ function GroupView({
   stageType,
   onScheduleMatch,
   onSelectMatch,
+  onDoubleClickMatch,
   tiebreakerMode,
   tournamentId,
   stageId,
@@ -200,6 +201,7 @@ function GroupView({
   stageType: string;
   onScheduleMatch?: OnScheduleMatch;
   onSelectMatch?: OnSelectBracketMatch;
+  onDoubleClickMatch?: OnSelectBracketMatch;
   tiebreakerMode?: 'split' | 'playoff';
   tournamentId?: string;
   stageId?: string;
@@ -338,6 +340,7 @@ export default function BracketTab({
   tiebreakerMode,
   selectedMatchId,
   onSelectMatch,
+  onDoubleClickMatch,
   fallbackSportRuleKind,
   knockoutOnly = false,
   dragHandlers,
@@ -488,6 +491,17 @@ export default function BracketTab({
   const renderedStages = hasOwnerSnapshot && appliedOwnerSnapshot !== bracketSnapshot
     ? (knockoutOnly ? (bracketSnapshot?.stages ?? []).filter(isKnockoutStage) : bracketSnapshot?.stages ?? [])
     : stages;
+
+  useEffect(() => {
+    if (!selectedMatchId || !renderedStages.length) return;
+    const stageWithMatch = renderedStages.find((stage) =>
+      stage.groups?.some((group) => group.matches?.some((m) => m.id === selectedMatchId)),
+    );
+    if (stageWithMatch && stageWithMatch.id !== activeStageId) {
+      setActiveStageId(stageWithMatch.id);
+    }
+  }, [activeStageId, renderedStages, selectedMatchId]);
+
   const activeStage = renderedStages.find((s) => s.id === activeStageId);
   const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage));
   const effectiveViewMode = activeStageSupportsFullView ? viewMode : 'paged';
@@ -671,6 +685,7 @@ export default function BracketTab({
                     onScheduleMatch={onScheduleMatch}
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
+                    onDoubleClickMatch={onDoubleClickMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     dragHandlers={dragHandlers}
                   />
@@ -682,6 +697,7 @@ export default function BracketTab({
                     onScheduleMatch={onScheduleMatch}
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
+                    onDoubleClickMatch={onDoubleClickMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     panEnabled={effectiveViewMode === 'full'}
                     dragHandlers={dragHandlers}
@@ -706,6 +722,7 @@ export default function BracketTab({
                   stageId={activeStage?.id}
                   selectedMatchId={selectedMatchId}
                   onSelectMatch={onSelectMatch}
+                  onDoubleClickMatch={onDoubleClickMatch}
                   fallbackSportRuleKind={effectiveSportRuleKind}
                   roundConfig={activeStage?.roundConfig}
                   viewMode={effectiveViewMode}

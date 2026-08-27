@@ -15,6 +15,8 @@ import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
+import { CourtScheduleBoard } from './components/CourtScheduleBoard';
+import { QuickSchedulePanel } from './components/QuickSchedulePanel';
 import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
@@ -419,16 +421,42 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
           winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo} />}
 
-        {s.activeTab === 'schedule' && <ScheduleTab tournament={s.tournament} bracket={s.bracket} venues={s.venues}
-          validationField={s.validationField}
-          customVenueName={s.customVenueName} setCustomVenueName={s.setCustomVenueName}
-          customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
-          provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
-          wardCode={s.wardCode} setWardCode={s.setWardCode}
-          provinces={s.provinces} wards={s.wards} setWards={s.setWards}
-          startDate={s.startDate} setStartDate={s.setStartDate}
-          endDate={s.endDate} setEndDate={s.setEndDate}
-          isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails} />}
+        {s.activeTab === 'schedule' && (
+          <div className="space-y-6">
+            <ScheduleTab tournament={s.tournament} bracket={s.bracket} venues={s.venues}
+              validationField={s.validationField}
+              customVenueName={s.customVenueName} setCustomVenueName={s.setCustomVenueName}
+              customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
+              provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
+              wardCode={s.wardCode} setWardCode={s.setWardCode}
+              provinces={s.provinces} wards={s.wards} setWards={s.setWards}
+              startDate={s.startDate} setStartDate={s.setStartDate}
+              endDate={s.endDate} setEndDate={s.setEndDate}
+              isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails}
+              courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
+              courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
+              isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />
+            <QuickSchedulePanel
+              courts={s.courts}
+              divisions={s.divisions}
+              defaultDivisionId={s.selectedDivisionId}
+              defaultDate={s.startDate}
+              preview={s.schedulePlanPreview}
+              isPreviewing={s.isPreviewingSchedulePlan}
+              onPreview={s.handlePreviewSchedulePlan}
+            />
+            <CourtScheduleBoard
+              courts={s.courts}
+              matches={s.matches}
+              onOpenMatch={(matchId) => {
+                const fullMatch = s.matches.find(
+                  (candidate: (typeof s.matches)[number]) => candidate.id === matchId,
+                );
+                if (fullMatch) s.handleOpenScheduling(fullMatch);
+              }}
+            />
+          </div>
+        )}
 
         {s.activeTab === 'registration' && <RegistrationTab tournament={s.tournament}
           inviteLink={s.inviteLink}
@@ -881,8 +909,34 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       : translate('matchSchedule.inherited')}
                   </p>
                 </div>
-                <div><label className="text-xs font-bold text-slate-500">{translate('matchSchedule.court')}</label>
-                  <input value={s.matchCourtName} onChange={e => s.setMatchCourtName(e.target.value)} placeholder={translate('matchSchedule.courtName')} className="w-full border rounded-lg p-2 text-sm" /></div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500">{translate('matchSchedule.court')}</label>
+                  <select
+                    value={s.matchCourtId}
+                    onChange={(e) => {
+                      const courtId = e.target.value;
+                      const court = s.courts.find((item) => item.id === courtId);
+                      s.setMatchCourtId(courtId);
+                      if (court) {
+                        s.setMatchCourtName(court.courtName);
+                        s.setMatchCourtAddress(s.tournament?.venue?.locationAddress || s.customVenueAddress);
+                      }
+                    }}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-sm"
+                  >
+                    <option value="">{translate('roundModal.courtPlaceholder')}</option>
+                    {s.courts.filter((court) => court.status !== 'MAINTENANCE').map((court) => (
+                      <option key={court.id} value={court.id}>{court.courtName}</option>
+                    ))}
+                  </select>
+                  <input
+                    value={s.matchCourtName}
+                    onChange={(e) => { s.setMatchCourtId(''); s.setMatchCourtName(e.target.value); }}
+                    disabled={Boolean(s.matchCourtId)}
+                    placeholder={translate('matchSchedule.courtName')}
+                    className="mt-2 w-full rounded-lg border border-slate-200 p-2 text-sm disabled:bg-slate-100"
+                  />
+                </div>
                 <div><label className="text-xs font-bold text-slate-500">{translate('matchSchedule.courtAddress')}</label>
                   <input value={s.matchCourtAddress} onChange={e => s.setMatchCourtAddress(e.target.value)} placeholder={translate('matchSchedule.courtAddress')} className="w-full border rounded-lg p-2 text-sm" /></div>
                 <div><label className="text-xs font-bold text-slate-500">{translate('matchSchedule.scheduleTime')}</label>

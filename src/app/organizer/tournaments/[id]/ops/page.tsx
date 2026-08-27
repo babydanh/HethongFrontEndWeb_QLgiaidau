@@ -58,6 +58,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     participants,
     matches,
     isLoading,
+    isOperationalDataLoading,
     error,
     refresh,
     activeParticipantActionId,
@@ -69,7 +70,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   } = useOrganizerOps(resolvedParams.id);
   const [bracketViewVersion, setBracketViewVersion] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<string | null>(null);
-  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS' | 'CAMERA'>('OVERVIEW');
+  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS' | 'CAMERA'>('OPERATIONS');
   const bracketSelectedDivisionId = bracketManager.selectedDivisionId;
   const bracketDivisions = bracketManager.divisions;
   const applyDivisionFormValues = bracketManager.applyDivisionFormValues;
@@ -143,8 +144,21 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   };
 
   const handleFocusMatchOnBracket = (matchId: string) => {
+    const targetMatch = matches.find((m) => m.id === matchId);
+    if (targetMatch && targetMatch.divisionId && targetMatch.divisionId !== selectedDivisionId) {
+      setSelectedDivisionId(targetMatch.divisionId);
+    }
     setFocusedMatchId(matchId);
     setActivePageTab('BRACKET');
+  };
+
+  const handleBracketDoubleClick = (match: BracketMatch) => {
+    const targetMatch = matches.find((m) => m.id === match.id);
+    if (targetMatch && targetMatch.divisionId && targetMatch.divisionId !== selectedDivisionId) {
+      setSelectedDivisionId(targetMatch.divisionId);
+    }
+    setFocusedMatchId(match.id);
+    setActivePageTab('OPERATIONS');
   };
 
   useEffect(() => {
@@ -153,7 +167,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     }
 
     let attempts = 0;
-    const maxAttempts = 15;
+    const maxAttempts = 25;
 
     const tryScrollToMatch = () => {
       attempts++;
@@ -164,13 +178,13 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       }
 
       if (attempts < maxAttempts) {
-        setTimeout(tryScrollToMatch, 120);
+        setTimeout(tryScrollToMatch, 100);
       }
     };
 
-    const timer = setTimeout(tryScrollToMatch, 150);
+    const timer = setTimeout(tryScrollToMatch, 100);
     return () => clearTimeout(timer);
-  }, [activePageTab, focusedMatchId]);
+  }, [activePageTab, focusedMatchId, selectedDivisionId]);
 
   const handleOpsUpdateMatchSchedule = async (
     match: typeof matches[number],
@@ -547,7 +561,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         )}
       </div>
 
-      <div className="sticky top-16 z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur lg:top-20">
+      <div className="sticky top-[var(--app-header-height)] z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur lg:top-[calc(var(--app-header-height)+1rem)]">
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {([
             { id: 'OVERVIEW', label: translate('overviewTab'), icon: BarChart3 },
@@ -655,7 +669,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           handleAdvanceStandings={bracketManager.handleAdvanceStandings}
           isAdvancingStandings={bracketManager.isAdvancingStandings}
           selectedMatchId={focusedMatchId}
-          onSelectMatch={(match: import('@/types/tournament').BracketMatch) => setFocusedMatchId(match.id)}
+          onSelectMatch={(match: BracketMatch) => setFocusedMatchId(match.id)}
+          onDoubleClickMatch={handleBracketDoubleClick}
           isLiteMode={tournament.sportRules?.mode === 'LITE'}
           setIsLiteMode={() => {}}
         />
@@ -757,6 +772,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         <OperationsWorkspace
           participants={participants}
           matches={matches}
+          isOperationalDataLoading={isOperationalDataLoading}
           referees={referees}
           activeParticipantActionId={activeParticipantActionId}
           activeMatchActionId={activeMatchActionId}

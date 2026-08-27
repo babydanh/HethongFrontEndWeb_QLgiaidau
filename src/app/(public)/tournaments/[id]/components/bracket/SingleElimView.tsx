@@ -28,6 +28,7 @@ interface Props {
   onScheduleMatch?: OnScheduleMatch;
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
+  onDoubleClickMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   panEnabled?: boolean;
   dragHandlers?: BracketDragHandlers;
@@ -38,7 +39,8 @@ export function SingleElimView({
   onScheduleMatch,
   selectedMatchId,
   onSelectMatch,
-    fallbackSportRuleKind,
+  onDoubleClickMatch,
+  fallbackSportRuleKind,
   panEnabled = false,
   dragHandlers,
 }: Props) {
@@ -249,6 +251,7 @@ export function SingleElimView({
                     match={match}
                     onScheduleMatch={onScheduleMatch}
                     onSelectMatch={onSelectMatch}
+                    onDoubleClickMatch={onDoubleClickMatch}
                     selected={selectedMatchId === match.id}
                     isP1Bye={isP1Bye}
                     isP2Bye={isP2Bye}

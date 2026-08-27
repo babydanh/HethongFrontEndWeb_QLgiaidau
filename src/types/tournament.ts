@@ -360,6 +360,7 @@ export interface BracketMatch {
   loserNextMatchId?: string | null;
   scheduledAt?: string | null;
   completedAt?: string | null;
+  courtId?: string | null;
   courtName?: string | null;
   courtAddress?: string | null;
   cheerCount?: number;

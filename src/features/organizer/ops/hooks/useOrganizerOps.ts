@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 import { divisionsApi, Division, tournamentsApi } from '@/features/tournaments/api';
@@ -19,6 +19,50 @@ import type {
 
 const buildOpsActivityStorageKey = (tournamentId: string) => `organizer_ops_activity_${tournamentId}`;
 
+interface MatchPageMeta {
+  nextCursor?: string | null;
+  hasMore?: boolean;
+}
+
+interface MatchPageResponse {
+  data?: Match[];
+  meta?: MatchPageMeta;
+}
+
+const MAX_MATCH_PAGES = 50;
+const MATCH_PAGE_SIZE = 100;
+
+async function loadAllOrganizerMatches(
+  tournamentId: string,
+  divisionId: string,
+  signal?: AbortSignal,
+): Promise<Match[]> {
+  const matchesById = new Map<string, Match>();
+  let cursor: string | undefined;
+
+  for (let pageIndex = 0; pageIndex < MAX_MATCH_PAGES; pageIndex += 1) {
+    const response = await matchesApi.getMatches(
+      {
+        tournamentId,
+        ...(divisionId ? { divisionId } : {}),
+        limit: MATCH_PAGE_SIZE,
+        ...(cursor ? { cursor } : {}),
+      },
+      signal,
+    );
+    const page = response as unknown as MatchPageResponse;
+    for (const match of page.data ?? []) {
+      if (match.id) matchesById.set(match.id, match);
+    }
+
+    const nextCursor = page.meta?.nextCursor ?? undefined;
+    if (!page.meta?.hasMore || !nextCursor || nextCursor === cursor) break;
+    cursor = nextCursor;
+  }
+
+  return [...matchesById.values()];
+}
+
 interface UseOrganizerOpsOptions {
   selectedDivisionId?: string;
   onSelectedDivisionIdChange?: (divisionId: string) => void;
@@ -33,6 +77,7 @@ interface UseOrganizerOpsResult {
   participants: TournamentParticipant[];
   matches: Match[];
   isLoading: boolean;
+  isOperationalDataLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   activeParticipantActionId: string | null;
@@ -53,7 +98,9 @@ interface UseOrganizerOpsResult {
   };
 }
 
-const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse, translate: (key: any, values?: any) => string): OpsActivityItem => {
+type AuditTranslate = (key: string, values?: Record<string, string | number | Date>) => string;
+
+const mapAuditLogToActivity = (tournamentId: string, row: OpsAuditLogResponse, translate: AuditTranslate): OpsActivityItem => {
   const entityType = row.tableName === 'matches' ? 'MATCH' : 'PARTICIPANT';
   const actor = row.user?.fullName || row.user?.email || translate('systemActor');
 
@@ -110,12 +157,12 @@ export function useOrganizerOps(
   const translate = useTranslations('OrganizerOps');
   const commonTranslate = useTranslations('Common');
   const rateLimitMessage = `${commonTranslate('rateLimitTitle')} ${commonTranslate('rateLimitHint')}`;
-  const formatRateLimitMessage = (error: unknown) => {
+  const formatRateLimitMessage = useCallback((error: unknown) => {
     const seconds = getRetryAfterSeconds(error);
     return seconds
       ? commonTranslate('rateLimitRetryAfter', { seconds })
       : rateLimitMessage;
-  };
+  }, [commonTranslate, rateLimitMessage]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [referees, setReferees] = useState<OpsReferee[]>([]);
@@ -123,7 +170,10 @@ export function useOrganizerOps(
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOperationalDataLoading, setIsOperationalDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const operationalRequestVersionRef = useRef(0);
+  const operationalRequestInFlightRef = useRef(false);
   const [activeParticipantActionId, setActiveParticipantActionId] = useState<string | null>(null);
   const [activeMatchActionId, setActiveMatchActionId] = useState<string | null>(null);
   const [activityLog, setActivityLog] = useState<OpsActivityItem[]>([]);
@@ -166,33 +216,30 @@ export function useOrganizerOps(
     });
   };
 
-  const loadOperationalData = useCallback(async (divisionId: string) => {
+  const loadOperationalData = useCallback(async (
+    divisionId: string,
+    signal?: AbortSignal,
+    requestVersion = operationalRequestVersionRef.current,
+  ) => {
     const [participantsRes, matchesRes, auditRes] = await Promise.all([
       tournamentsApi.getOrganizerTournamentParticipants(tournamentId, divisionId),
-      matchesApi.getMatches({
-        tournamentId,
-        ...(divisionId ? { divisionId } : {}),
-        limit: 100,
-      }),
+      loadAllOrganizerMatches(tournamentId, divisionId, signal),
       tournamentsApi.getOpsAuditLogs(tournamentId, divisionId || undefined),
     ]);
 
+    if (requestVersion !== operationalRequestVersionRef.current) {
+      return;
+    }
+
     setParticipants(participantsRes.data ?? []);
-    
-    const rawMatches = matchesRes.data as unknown;
-    const matchArray = Array.isArray(rawMatches)
-      ? rawMatches
-      : Array.isArray((rawMatches as { data?: Match[] })?.data)
-        ? ((rawMatches as { data: Match[] }).data)
-        : [];
-    setMatches(matchArray);
+    setMatches(matchesRes);
 
     setActivityLog((current) => {
-      const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate));
+      const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row, translate as unknown as AuditTranslate));
       const localOnly = current.filter((item) => item.id.includes('_'));
       return [...backendLog, ...localOnly].slice(0, 60);
     });
-  }, [tournamentId]);
+  }, [tournamentId, translate]);
 
   useEffect(() => {
     let active = true;
@@ -242,7 +289,7 @@ export function useOrganizerOps(
     return () => {
       active = false;
     };
-  }, [tournamentId]);
+  }, [formatRateLimitMessage, tournamentId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -270,19 +317,27 @@ export function useOrganizerOps(
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const requestVersion = ++operationalRequestVersionRef.current;
+    operationalRequestInFlightRef.current = true;
 
     const fetchOperationalData = async () => {
       try {
         setIsLoading(true);
+        setIsOperationalDataLoading(true);
         setError(null);
-        await loadOperationalData(selectedDivisionId);
+        await loadOperationalData(selectedDivisionId, controller.signal, requestVersion);
       } catch (err) {
-        if (active) {
+        if (active && requestVersion === operationalRequestVersionRef.current) {
           setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
         }
       } finally {
-        if (active) {
+        if (requestVersion === operationalRequestVersionRef.current) {
+          operationalRequestInFlightRef.current = false;
+        }
+        if (active && requestVersion === operationalRequestVersionRef.current) {
           setIsLoading(false);
+          setIsOperationalDataLoading(false);
         }
       }
     };
@@ -291,21 +346,92 @@ export function useOrganizerOps(
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [loadOperationalData, selectedDivisionId, tournamentId]);
+  }, [formatRateLimitMessage, loadOperationalData, selectedDivisionId, tournamentId]);
 
   const refresh = async () => {
-    const [tournamentRes, divisionsRes, refereesRes] = await Promise.all([
-      tournamentsApi.getTournamentById(tournamentId),
-      divisionsApi.getDivisions(tournamentId),
-      tournamentsApi.getTournamentReferees(tournamentId),
-    ]);
+    const requestVersion = ++operationalRequestVersionRef.current;
+    operationalRequestInFlightRef.current = true;
+    setIsOperationalDataLoading(true);
 
-    setTournament(tournamentRes.data ?? null);
-    setDivisions(divisionsRes.data ?? []);
-    setReferees(refereesRes.data ?? []);
-    await loadOperationalData(selectedDivisionId);
+    try {
+      const [tournamentRes, divisionsRes, refereesRes] = await Promise.all([
+        tournamentsApi.getTournamentById(tournamentId),
+        divisionsApi.getDivisions(tournamentId),
+        tournamentsApi.getTournamentReferees(tournamentId),
+      ]);
+
+      if (requestVersion !== operationalRequestVersionRef.current) {
+        return;
+      }
+
+      setTournament(tournamentRes.data ?? null);
+      setDivisions(divisionsRes.data ?? []);
+      setReferees(refereesRes.data ?? []);
+      await loadOperationalData(selectedDivisionId, undefined, requestVersion);
+    } finally {
+      if (requestVersion === operationalRequestVersionRef.current) {
+        operationalRequestInFlightRef.current = false;
+        setIsOperationalDataLoading(false);
+      }
+    }
   };
+
+  const refreshOperationalData = useCallback(async () => {
+    if (!selectedDivisionId || operationalRequestInFlightRef.current) {
+      return;
+    }
+
+    const requestVersion = ++operationalRequestVersionRef.current;
+    operationalRequestInFlightRef.current = true;
+    setIsOperationalDataLoading(true);
+    setError(null);
+
+    try {
+      await loadOperationalData(selectedDivisionId, undefined, requestVersion);
+    } catch (err) {
+      if (requestVersion === operationalRequestVersionRef.current) {
+        setError(getErrorMessage(err, undefined, formatRateLimitMessage(err)));
+      }
+    } finally {
+      if (requestVersion === operationalRequestVersionRef.current) {
+        operationalRequestInFlightRef.current = false;
+        setIsOperationalDataLoading(false);
+      }
+    }
+  }, [formatRateLimitMessage, loadOperationalData, selectedDivisionId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let lastRefreshAt = 0;
+    const triggerRefresh = () => {
+      const now = Date.now();
+      if (now - lastRefreshAt < 10_000) {
+        return;
+      }
+      lastRefreshAt = now;
+      void Promise.resolve().then(() => refreshOperationalData());
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        triggerRefresh();
+      }
+    };
+
+    window.addEventListener('focus', triggerRefresh);
+    window.addEventListener('online', triggerRefresh);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', triggerRefresh);
+      window.removeEventListener('online', triggerRefresh);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshOperationalData]);
 
   const handleParticipantAction = async (
     participantId: string,
@@ -473,6 +599,7 @@ export function useOrganizerOps(
     participants,
     matches,
     isLoading,
+    isOperationalDataLoading,
     error,
     refresh,
     activeParticipantActionId,

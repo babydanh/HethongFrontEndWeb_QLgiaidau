@@ -6,16 +6,15 @@ import { SolidShieldEmblem } from '@/components/ui/SolidShieldEmblem';
 
 import type { PlayerRanking } from '@/types/ranking';
 import { cn } from '@/utils/cn';
-import { getEloTier } from '@/components/ui/EloTierBadge';
 import {
-  getEloMatchTypeLabel,
+  getEloFormatLabel,
   getLocalizedRankTierName,
   getEloProgressInfo,
   isPublicRankingEligible,
   getShieldStatus,
   type EloProgressToNextLabel,
 } from '@/features/rankings/elo-display';
-import { getRankProgressInfo } from '@/utils/rank-style';
+import { getRankProgressInfo, getRankStyle } from '@/utils/rank-style';
 
 export interface HomepageEloProgressCardProps {
   activeRankInfo: PlayerRanking | null;
@@ -51,7 +50,18 @@ export default function HomepageEloProgressCard({
   };
   if (!isAuthenticated) return null;
 
-  const currentTier = getEloTier(eloPoints, displayTier, activeRankInfo?.categoryName);
+  const formatLabels = {
+    singlesMale: eloTranslate('formatSinglesMale'),
+    singlesFemale: eloTranslate('formatSinglesFemale'),
+    singlesOpen: eloTranslate('formatSinglesOpen'),
+    doublesMale: eloTranslate('formatDoublesMale'),
+    doublesFemale: eloTranslate('formatDoublesFemale'),
+    doublesOpen: eloTranslate('formatDoublesOpen'),
+    mixedDoubles: eloTranslate('formatMixedDoubles'),
+    unknown: eloTranslate('formatUnknown'),
+  };
+  const formatLabel = getEloFormatLabel(activeRankInfo?.matchType || 'SINGLES', activeRankInfo?.genderRestriction || 'MALE', formatLabels);
+  const tierStyle = getRankStyle(eloPoints, activeRankInfo?.tierName || displayTier, activeRankInfo?.categoryName);
   const shieldStatus = getShieldStatus(activeRankInfo, eloLabels);
   const progressInfo = getEloProgressInfo(eloPoints, activeRankInfo?.categoryName, eloLabels);
   const rankProgress = getRankProgressInfo(eloPoints, activeRankInfo?.categoryName);
@@ -79,17 +89,15 @@ export default function HomepageEloProgressCard({
                 {sportName}
               </span>
             )}
-            {activeRankInfo?.matchType && (
-              <span className="text-[10px] font-bold text-white bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider shadow-2xs">
-                {getEloMatchTypeLabel(activeRankInfo.matchType, eloLabels)}
-              </span>
-            )}
+            <span className="text-[10px] font-bold text-white bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider shadow-2xs">
+              {formatLabel}
+            </span>
           </div>
           <h4 className="text-base font-bold text-slate-800 tracking-tight">
             {rankLabel}
           </h4>
         </div>
-        <span className="inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full font-bold shadow-sm transition-all duration-300 bg-emerald-600 text-white border border-emerald-500/30">
+        <span className={`inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full font-bold shadow-sm transition-all duration-300 ${tierStyle.badgeClass}`}>
           {eloPoints} ELO
         </span>
       </div>
@@ -135,10 +143,10 @@ export default function HomepageEloProgressCard({
                 className="flex items-center justify-between gap-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 border border-slate-200/70 hover:border-slate-200 px-4 py-2.5 transition-all duration-200"
               >
                 <span className="text-[11px] font-bold text-slate-600">
-                  {getEloMatchTypeLabel(rank.matchType, eloLabels)}
+                  {getEloFormatLabel(rank.matchType, rank.genderRestriction, formatLabels)}
                 </span>
                 <span className="text-[11px] font-bold text-slate-800 tabular-nums">
-                  {rank.eloPoints} ELO
+                  <span className={`rounded-md px-1.5 py-0.5 ${getRankStyle(rank.eloPoints, rank.tierName, rank.categoryName).badgeClass}`}>{rank.eloPoints} ELO</span>
                 </span>
               </div>
             ))}

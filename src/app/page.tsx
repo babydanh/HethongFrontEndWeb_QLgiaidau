@@ -16,6 +16,7 @@ import { BRAND } from '@/constants/brand';
 import { categoriesApi } from '@/features/categories/api';
 import { Category } from '@/types/category';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
@@ -341,6 +342,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
+  const { openUserProfile } = useUserProfileModalStore();
   const translate = useTranslations('Home');
   const locale = useLocale();
   const roundLabelTranslations: RoundLabelTranslations = {
@@ -1050,10 +1052,12 @@ export default function HomePage() {
   // The homepage card is a compact personal summary. It must not change to
   // "all sports" when the tournament explorer filter changes; use one
   // representative sport from the user's own ranking data instead.
-  const prominentRank = getMostProminentRank(publicRanks);
-  const prominentCategoryId = prominentRank?.categoryId;
-  const categoryRanks = getRanksForCategory(publicRanks, prominentCategoryId);
-  const activeRankInfo = getBestRankForCategory(categoryRanks, prominentCategoryId);
+  const eligibleRanks = publicRanks.filter(isPublicRankingEligible);
+  const prominentRank = getMostProminentRank(eligibleRanks);
+  const pickleballCategory = categories.find((category) => category.slug === 'pickleball');
+  const prominentCategoryId = prominentRank?.categoryId || pickleballCategory?.id;
+  const categoryRanks = getRanksForCategory(eligibleRanks, prominentCategoryId);
+  const activeRankInfo = prominentRank || getBestRankForCategory(categoryRanks, prominentCategoryId);
 
   const eloPoints = activeRankInfo?.eloPoints ?? prominentRank?.eloPoints ?? 1000;
   const displayTier = getRankTierName(activeRankInfo);
@@ -1586,23 +1590,66 @@ export default function HomePage() {
                  <div className="absolute top-0 left-0 w-full h-16 bg-blue-600" />
 
                  {/* Avatar */}
-                 <RankAvatar
-                   src={user?.avatarUrl}
-                   name={user?.fullName}
-                   elo={hasPublicRank ? activeElo : null}
-                   tierName={displayTier}
-                   matchesPlayed={matchesPlayed}
-                   size="md"
-                   ringClassName="ring-4 z-10 mt-5 transition-transform duration-300 hover:scale-[1.03]"
-                 />
+                 <button
+                   type="button"
+                   aria-label={translate('profile')}
+                   onClick={(event) => {
+                     if (!user?.id) return;
+                     openUserProfile(
+                       {
+                         id: user.id,
+                         fullName: user.fullName || translate('user'),
+                         avatarUrl: user.avatarUrl,
+                         highlightRank: activeRankInfo
+                           ? {
+                               eloPoints: activeRankInfo.eloPoints,
+                               tierName: activeRankInfo.tierName,
+                               categoryName: activeRankInfo.categoryName || sportName,
+                               matchesPlayed: activeRankInfo.matchesPlayed,
+                               adminLeaderboardEligible: activeRankInfo.adminLeaderboardEligible,
+                             }
+                           : null,
+                       },
+                       event.currentTarget.getBoundingClientRect(),
+                     );
+                   }}
+                   className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                 >
+                   <RankAvatar
+                     src={user?.avatarUrl}
+                     name={user?.fullName}
+                     elo={hasPublicRank ? activeElo : null}
+                     tierName={displayTier}
+                     categoryName={activeRankInfo?.categoryName || sportName}
+                     matchesPlayed={matchesPlayed}
+                     size="md"
+                     ringClassName="ring-4 z-10 mt-5 transition-transform duration-300 hover:scale-[1.03]"
+                   />
+                 </button>
 
                  {/* Name & Email */}
-                 <h3 className="text-base font-semibold text-slate-900 mt-2.5 line-clamp-1 leading-snug">
-                   {user?.fullName || translate('user')}
-                 </h3>
-                 <p className="text-xs text-slate-400 truncate w-full mb-3.5">
-                   {user?.email}
-                 </p>
+                 <button
+                   type="button"
+                   onClick={(event) => {
+                     if (!user?.id) return;
+                     openUserProfile(
+                       {
+                         id: user.id,
+                         fullName: user.fullName || translate('user'),
+                         avatarUrl: user.avatarUrl,
+                       },
+                       event.currentTarget.getBoundingClientRect(),
+                     );
+                   }}
+                   className="mt-2.5 w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                 >
+                   <h3 className="text-base font-semibold text-slate-900 line-clamp-1 leading-snug">
+                     {user?.fullName || translate('user')}
+                   </h3>
+                   <p className="mb-3.5 w-full truncate text-xs text-slate-400">
+                     {user?.email}
+                   </p>
+                 </button>
 
                  {/* Stats Grid */}
                  <div className="grid grid-cols-3 w-full gap-2 mt-1 pt-3 border-t border-slate-100">

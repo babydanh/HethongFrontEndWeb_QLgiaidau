@@ -77,7 +77,7 @@ export function SingleElimView({
   });
 
   const SLOT_H_1 = cardH + 16;
-  const roundGap = COL_GAP + 24;
+  const roundGap = COL_GAP;
   const totalHeight = firstRoundCount * SLOT_H_1 + 48;
   const posMap = new Map<string, { x: number; y: number }>();
 
@@ -96,7 +96,7 @@ export function SingleElimView({
     });
   });
 
-  const svgW = maxRound * CARD_W + (maxRound - 1) * roundGap + roundGap;
+  const svgW = maxRound * CARD_W + Math.max(0, maxRound - 1) * roundGap + 48;
 
   return (
     <div
@@ -150,7 +150,7 @@ export function SingleElimView({
 
       <div
         {...panHandlers}
-        className={`pb-4 max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto'}`}
+        className={`pb-4 max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto scroll-smooth'}`}
         style={panEnabled ? { touchAction: 'none', overscrollBehavior: 'contain' } : undefined}
       >
         <div

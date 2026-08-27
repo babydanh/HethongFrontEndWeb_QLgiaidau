@@ -53,7 +53,7 @@ export function PagedSingleElimView({
   );
 
   const maxRound = rounds.length > 0 ? Math.max(...rounds) : 1;
-  const roundGap = COL_GAP + 28;
+  const roundGap = COL_GAP;
 
   // Auto-detect active round index
   const defaultRoundIndex = useMemo(() => {
@@ -135,7 +135,7 @@ export function PagedSingleElimView({
   }, [posMap, cardH]);
 
   const numVisible = visibleRounds.length;
-  const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
+  const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 48;
 
   const roundLabelTranslations = {
     final: bracketTranslate('singleFinal'),
@@ -249,7 +249,7 @@ export function PagedSingleElimView({
       {/* GPU-Accelerated Adaptive Tree Viewport */}
       <div
         ref={viewportRef}
-        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
+        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto scroll-smooth rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
           isFullscreen ? 'flex-1 max-h-none' : ''
         }`}
       >

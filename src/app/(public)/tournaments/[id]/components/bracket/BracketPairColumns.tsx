@@ -10,7 +10,7 @@ import React from 'react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
-import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER } from './types';
+import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
 
@@ -38,7 +38,7 @@ export function BracketPairColumns({
   fallbackSportRuleKind,
 }: Props) {
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
-  const colGap = 56;
+  const colGap = COL_GAP;
   const slotH1 = cardH + 20;
 
   const N1 = activeRoundMatches.length;
@@ -60,9 +60,8 @@ export function BracketPairColumns({
   });
 
   if (N2 > 0) {
-    const round2H = N2 * (totalH / N2);
+    const slotH2 = totalH / N2;
     nextRoundMatches.forEach((m, idx) => {
-      const slotH2 = totalH / N2;
       const y = idx * slotH2 + slotH2 / 2;
       posMap.set(m.id, { x: CARD_W + colGap, y });
     });

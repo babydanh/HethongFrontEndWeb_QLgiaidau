@@ -48,7 +48,7 @@ export function DoubleElimView({
   panEnabled = false,
   dragHandlers,
 }: Props) {
-    const translate = useTranslations('TournamentDetail');
+  const translate = useTranslations('TournamentDetail');
   const bracketTranslate = useTranslations('BracketView');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
@@ -89,10 +89,6 @@ export function DoubleElimView({
 
   // Find max matches count in any Winners Bracket round
   let maxUbMatchesInRound = 1;
-  // Use the actual round-1 count as the baseline for losers-band spacing.
-  // Estimating from later rounds can inflate the slot grid and make the losers
-  // bracket look duplicated or stretched.
-  const firstRoundCount = ubByRound[1]?.length || 1;
   ubRounds.forEach((r) => {
     const count = ubByRound[r]?.length || 0;
     if (count > maxUbMatchesInRound) maxUbMatchesInRound = count;
@@ -128,7 +124,6 @@ export function DoubleElimView({
   });
 
   // ── Losers Bracket Positioning ──
-  // Column index: sequential r-1, except LB final which aligns with UB final column
   visibleLbRounds.forEach((r) => {
     let colIndex = hideLbRound1 ? r - 2 : r - 1;
     if (r === maxLbRound) {
@@ -177,6 +172,7 @@ export function DoubleElimView({
   const allMatchesForLogic = [...upperMatches, ...lowerMatches, ...gfSorted];
   const visibleLowerMatches = visibleLbRounds.flatMap((round) => lbByRound[round] || []);
   const allMatches = [...upperMatches, ...visibleLowerMatches, ...gfSorted];
+
   const getUpperRoundHeader = (fromEnd: number) => {
     if (fromEnd === 0) return translate('upperGrandFinal');
     if (fromEnd === 1) return translate('upperSemifinal');
@@ -184,6 +180,7 @@ export function DoubleElimView({
     if (fromEnd >= 3 && fromEnd <= 5) return translate('upperRound', { round: 2 ** (fromEnd + 1) });
     return translate('upperQualifier');
   };
+
   const getLowerRoundHeader = (fromEnd: number, displayRound: number) => {
     if (fromEnd === 0) return translate('lowerGrandFinal');
     if (fromEnd === 1) return translate('lowerSemifinal');
@@ -242,7 +239,7 @@ export function DoubleElimView({
 
       <div
         {...panHandlers}
-        className={`pb-6 max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto'}`}
+        className={`pb-6 max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto scroll-smooth'}`}
         style={panEnabled ? { touchAction: 'none', overscrollBehavior: 'contain' } : undefined}
       >
         <div
@@ -274,22 +271,6 @@ export function DoubleElimView({
                 const startPos = posMap.get(m.id);
                 if (!startPos) return null;
 
-                const elements: React.ReactNode[] = [];
-                const makePath = (endPos: { x: number; y: number }, stroke: string, dashed = false) => {
-                  const midX = (startPos.x + CARD_W + endPos.x) / 2;
-                  return (
-                  <path
-                    d={`M ${startPos.x + CARD_W} ${startPos.y} L ${midX} ${startPos.y} L ${midX} ${endPos.y} L ${endPos.x} ${endPos.y}`}
-                    stroke={stroke}
-                    strokeWidth={1.5}
-                    fill="none"
-                    opacity={0.72}
-                    strokeDasharray={dashed ? '5 4' : undefined}
-                  />
-                  );
-                };
-
-                // Winner next path
                 if (m.nextMatchId) {
                   const endPos = posMap.get(m.nextMatchId);
                   if (endPos) {
@@ -320,8 +301,8 @@ export function DoubleElimView({
               style={{ top: UB_TOP - 56, left: 0 }}
             >
               <div className="w-1 h-3.5 bg-blue-500 rounded-full" />
-                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                  {translate("winnersBracket")}
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                {translate('winnersBracket')}
               </span>
             </div>
 
@@ -332,8 +313,8 @@ export function DoubleElimView({
                 style={{ top: LB_TOP - 56, left: 0 }}
               >
                 <div className="w-1 h-3.5 bg-rose-500 rounded-full" />
-                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                    {translate("losersBracket")}
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                  {translate('losersBracket')}
                 </span>
               </div>
             )}
@@ -390,7 +371,7 @@ export function DoubleElimView({
               >
                 <div className="w-1 h-3.5 bg-slate-900 rounded-full" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                  {translate("grandFinal")}
+                  {translate('grandFinal')}
                 </span>
               </div>
             )}
@@ -404,13 +385,12 @@ export function DoubleElimView({
               return (
                 <div
                   key={match.id}
-                                    className="absolute motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-reduce:transition-none"
+                  className="absolute motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-reduce:transition-none"
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0)`,
                     width: CARD_W,
                     willChange: 'transform',
                   }}
-
                 >
                   <MatchCard
                     match={match}

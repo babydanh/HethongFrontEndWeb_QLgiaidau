@@ -153,7 +153,7 @@ export function PagedDoubleElimView({
   const getRoundTitle = (r: number) =>
     activeBranch === 'upper' ? getUbLabel(r) : getLbLabel(r);
 
-  const roundGap = COL_GAP + 28;
+  const roundGap = COL_GAP;
 
   // Calculate compact posMap for visible rounds (top-aligned at y = 16px)
   const posMap = useMemo(() => {
@@ -216,7 +216,7 @@ export function PagedDoubleElimView({
   }, [posMap, cardH]);
 
   const numVisible = visibleRounds.length;
-  const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
+  const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 48;
 
   const currentRound = activeBranchRounds[activeRoundIndex] ?? activeBranchRounds[0];
   const viewportRef = React.useRef<HTMLDivElement>(null);
@@ -346,7 +346,7 @@ export function PagedDoubleElimView({
       {/* GPU-Accelerated Adaptive Tree Viewport */}
       <div
         ref={viewportRef}
-        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
+        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto scroll-smooth rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
           isFullscreen ? 'flex-1 max-h-none' : ''
         }`}
       >

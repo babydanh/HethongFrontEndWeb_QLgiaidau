@@ -12,12 +12,12 @@ import type { BracketStage, SportRuleKind } from '@/types/tournament';
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LAYOUT CONSTANTS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-export const CARD_W = 250;           // match card width (px)
+export const CARD_W = 240;           // match card width (px) - optimized compact width
 export const CARD_H_PUBLIC = 114;    // public view height (super compact 114px)
 export const CARD_H_ORGANIZER = 144; // organizer view height (with schedule button)
 export const BASE_SLOT = 124;        // slot height for densest round
-export const MATCH_GAP_Y = 28;       // breathing room between stacked match cards
-export const COL_GAP = 96;           // horizontal gap between round columns
+export const MATCH_GAP_Y = 24;       // breathing room between stacked match cards
+export const COL_GAP = 48;           // horizontal gap between round columns (compact & unobscured)
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // BRANCH SETS (for Double Elimination filtering)

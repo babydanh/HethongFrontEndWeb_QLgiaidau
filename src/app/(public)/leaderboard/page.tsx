@@ -892,19 +892,43 @@ export default function LeaderboardPage() {
                                 </div>
                             </dialog>
                             <div className="flex flex-col gap-2">
-                                {[...getStandardRankStyles()].reverse().map((tier) => {
-                                  const tierKey = getRankTierTranslationKey(tier.name);
-                                  const tierLabel = tierKey ? eloTranslate(tierKey) : tier.name;
-                                  const rangeLabel = tier.maxElo === null
-                                    ? `${tier.minElo}+ ELO`
-                                    : `${tier.minElo} - ${tier.maxElo} ELO`;
-                                  return (
-                                    <div key={tier.name} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                                      <span className={`rounded px-2.5 py-0.5 text-[10px] font-bold uppercase shadow-xs ${tier.badgeClass}`}>{tierLabel}</span>
-                                      <span className="text-right text-xs font-bold text-slate-700">{rangeLabel}</span>
-                                    </div>
-                                  );
-                                })}
+                                {(() => {
+                                  const TIER_ROW_STYLES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+                                    'Tier S': { bg: 'bg-[#FEF3C7]', border: 'border-amber-300', text: 'text-[#92400E]', badge: 'bg-[#D97706] text-white' },
+                                    'High Tier A': { bg: 'bg-[#F8C4B4]', border: 'border-rose-300', text: 'text-[#991B1B]', badge: 'bg-[#DC2626] text-white' },
+                                    'Low Tier A': { bg: 'bg-[#FBE8E0]', border: 'border-rose-200', text: 'text-[#B91C1C]', badge: 'bg-[#EF4444] text-white' },
+                                    'High Tier B': { bg: 'bg-[#BFDBFE]', border: 'border-blue-300', text: 'text-[#1E40AF]', badge: 'bg-[#2563EB] text-white' },
+                                    'Low Tier B': { bg: 'bg-[#EFF6FF]', border: 'border-blue-200', text: 'text-[#1D4ED8]', badge: 'bg-[#3B82F6] text-white' },
+                                    'High Tier C': { bg: 'bg-[#A7F3D0]', border: 'border-emerald-300', text: 'text-[#065F46]', badge: 'bg-[#059669] text-white' },
+                                    'Low Tier C': { bg: 'bg-[#ECFDF5]', border: 'border-emerald-200', text: 'text-[#047857]', badge: 'bg-[#10B981] text-white' },
+                                    'High Tier D': { bg: 'bg-[#E2E8F0]', border: 'border-slate-300', text: 'text-[#1E293B]', badge: 'bg-[#475569] text-white' },
+                                    'Low Tier D': { bg: 'bg-[#F5F5F4]', border: 'border-stone-300', text: 'text-[#44403C]', badge: 'bg-[#78716C] text-white' },
+                                    'Pro': { bg: 'bg-[#FEF3C7]', border: 'border-amber-300', text: 'text-[#92400E]', badge: 'bg-[#D97706] text-white' },
+                                    'Advanced': { bg: 'bg-[#ECFDF5]', border: 'border-emerald-200', text: 'text-[#047857]', badge: 'bg-[#10B981] text-white' },
+                                    'Intermediate': { bg: 'bg-[#EFF6FF]', border: 'border-blue-200', text: 'text-[#1D4ED8]', badge: 'bg-[#3B82F6] text-white' },
+                                    'Beginner': { bg: 'bg-[#F5F5F4]', border: 'border-stone-300', text: 'text-[#44403C]', badge: 'bg-[#78716C] text-white' },
+                                  };
+
+                                  return [...getStandardRankStyles()].reverse().map((tier) => {
+                                    const tierKey = getRankTierTranslationKey(tier.name);
+                                    const tierLabel = tierKey ? eloTranslate(tierKey) : tier.name;
+                                    const rangeLabel = tier.maxElo === null
+                                      ? `${tier.minElo}+ ELO`
+                                      : `${tier.minElo} - ${tier.maxElo} ELO`;
+                                    const style = TIER_ROW_STYLES[tier.name] || {
+                                      bg: 'bg-slate-50',
+                                      border: 'border-slate-200',
+                                      text: 'text-slate-700',
+                                      badge: tier.badgeClass,
+                                    };
+                                    return (
+                                      <div key={tier.name} className={`flex items-center justify-between gap-2 rounded-lg border p-2.5 ${style.bg} ${style.border}`}>
+                                        <span className={`rounded px-2.5 py-0.5 text-[10px] font-bold uppercase shadow-xs ${style.badge}`}>{tierLabel}</span>
+                                        <span className={`text-right text-xs font-bold ${style.text}`}>{rangeLabel}</span>
+                                      </div>
+                                    );
+                                  });
+                                })()}
                             </div>
                         </div>
                     </div>

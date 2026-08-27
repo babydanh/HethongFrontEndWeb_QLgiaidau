@@ -38,6 +38,17 @@ export function PagedRoundRobinView({
   const translate = useTranslations('TournamentDetail');
   const [subView, setSubView] = useState<'matrix' | 'table'>('matrix');
   const [activeLeg, setActiveLeg] = useState(1);
+
+  React.useEffect(() => {
+    if (!selectedMatchId || !matches.length) return;
+    const targetMatch = matches.find((m) => m.id === selectedMatchId);
+    if (targetMatch) {
+      const info = getRoundRobinRoundInfo(targetMatch, matches);
+      if (info.leg && info.leg !== activeLeg) {
+        setActiveLeg(info.leg);
+      }
+    }
+  }, [activeLeg, matches, selectedMatchId]);
   const legCount = useMemo(() => {
     const persistedLegs = matches
       .map((match) => match.leg)

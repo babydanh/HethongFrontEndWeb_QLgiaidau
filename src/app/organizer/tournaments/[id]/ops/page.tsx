@@ -144,11 +144,19 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   };
 
   const handleFocusMatchOnBracket = (matchId: string) => {
+    const targetMatch = matches.find((m) => m.id === matchId);
+    if (targetMatch && targetMatch.divisionId && targetMatch.divisionId !== selectedDivisionId) {
+      setSelectedDivisionId(targetMatch.divisionId);
+    }
     setFocusedMatchId(matchId);
     setActivePageTab('BRACKET');
   };
 
   const handleBracketDoubleClick = (match: BracketMatch) => {
+    const targetMatch = matches.find((m) => m.id === match.id);
+    if (targetMatch && targetMatch.divisionId && targetMatch.divisionId !== selectedDivisionId) {
+      setSelectedDivisionId(targetMatch.divisionId);
+    }
     setFocusedMatchId(match.id);
     setActivePageTab('OPERATIONS');
   };
@@ -159,7 +167,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     }
 
     let attempts = 0;
-    const maxAttempts = 15;
+    const maxAttempts = 25;
 
     const tryScrollToMatch = () => {
       attempts++;
@@ -170,13 +178,13 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       }
 
       if (attempts < maxAttempts) {
-        setTimeout(tryScrollToMatch, 120);
+        setTimeout(tryScrollToMatch, 100);
       }
     };
 
-    const timer = setTimeout(tryScrollToMatch, 150);
+    const timer = setTimeout(tryScrollToMatch, 100);
     return () => clearTimeout(timer);
-  }, [activePageTab, focusedMatchId]);
+  }, [activePageTab, focusedMatchId, selectedDivisionId]);
 
   const handleOpsUpdateMatchSchedule = async (
     match: typeof matches[number],

@@ -231,8 +231,23 @@ export function OpsMatches({
       return;
     }
 
-    const card = document.getElementById(`ops-match-card-${focusedMatchId}`);
-    card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const tryScroll = () => {
+      attempts++;
+      const card = document.getElementById(`ops-match-card-${focusedMatchId}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (attempts < maxAttempts) {
+        setTimeout(tryScroll, 100);
+      }
+    };
+
+    const timer = setTimeout(tryScroll, 100);
+    return () => clearTimeout(timer);
   }, [focusedMatchId]);
 
   const openScheduleModal = (match: Match) => {

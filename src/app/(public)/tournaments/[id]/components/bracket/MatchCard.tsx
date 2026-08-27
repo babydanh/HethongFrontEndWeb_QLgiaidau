@@ -9,7 +9,6 @@
 
 import React, { memo } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { Play, Clock } from 'lucide-react';
@@ -67,7 +66,6 @@ export const MatchCard = memo(function MatchCard({
   dragHandlers?: BracketDragHandlers;
   cardWidth?: number;
 }) {
-
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
   const done = match.status === 'COMPLETED';
@@ -103,14 +101,14 @@ export const MatchCard = memo(function MatchCard({
         }
       >
         <div className="flex items-center gap-1.5 min-w-0 truncate">
-          <span className="text-slate-600 font-bold">{translate("matchNumber", { number: match.matchOrder })}</span>
+          <span className="text-slate-600 font-bold">{translate('matchNumber', { number: match.matchOrder })}</span>
           {live && (
-            <span className="flex items-center gap-0.5 text-blue-700 font-extrabold animate-pulse text-[9px]">
-              <Play className="w-2.5 h-2.5 fill-blue-700" /> {translate("liveLabel")}
+            <span className="flex items-center gap-0.5 text-blue-700 font-extrabold text-[9px]">
+              <Play className="w-2.5 h-2.5 fill-blue-700" /> {translate('liveLabel')}
             </span>
           )}
           {match.isBye && (
-            <span className="text-blue-700 font-bold uppercase tracking-wider text-[8.5px]">{translate("bye")}</span>
+            <span className="text-blue-700 font-bold uppercase tracking-wider text-[8.5px]">{translate('bye')}</span>
           )}
         </div>
 
@@ -136,7 +134,7 @@ export const MatchCard = memo(function MatchCard({
           won={p1Won}
           isByeSlot={isP1Bye || (match.isBye && !match.participant1)}
           setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
-                    pickScore={(s) => s.p1}
+          pickScore={(s) => s.p1}
           maxCols={maxCols}
           matchId={match.id}
           slot="participant1"
@@ -149,14 +147,13 @@ export const MatchCard = memo(function MatchCard({
           won={p2Won}
           isByeSlot={isP2Bye || (match.isBye && !match.participant2)}
           setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
-                    pickScore={(s) => s.p2}
+          pickScore={(s) => s.p2}
           maxCols={maxCols}
           matchId={match.id}
           slot="participant2"
           dragHandlers={dragHandlers}
           locked={live}
         />
-
       </div>
 
       {/* Compact 1-Line Scheduled Date & Time Footer */}
@@ -184,22 +181,23 @@ export const MatchCard = memo(function MatchCard({
       data-bracket-match-live={live ? 'true' : 'false'}
       data-no-pan="true"
       aria-disabled={live}
+      title={onDoubleClickMatch ? 'Nhấp đúp (Double-click) để mở điều hành trận này' : undefined}
       style={{ width: cardWidth ?? CARD_W, height: actualCardH }}
       className={
-        'relative rounded-md overflow-visible border flex flex-col shadow-sm transition-all duration-300 hover:shadow bg-white select-none ' +
+        'relative rounded-md overflow-visible border flex flex-col shadow-sm transition-all duration-200 hover:shadow-md bg-white select-none cursor-pointer ' +
         (selected
-          ? 'border-amber-500 ring-4 ring-amber-400 ring-offset-2 shadow-2xl scale-[1.04] z-30 animate-pulse bg-amber-50/10'
+          ? 'border-amber-500 ring-4 ring-amber-400 ring-offset-2 shadow-2xl scale-[1.03] z-30 bg-amber-50/25'
           : live
-            ? 'border-blue-600 ring-2 ring-blue-500/30 shadow-md'
+            ? 'border-blue-600 ring-2 ring-blue-500/30 shadow-md hover:border-blue-700'
             : done
-              ? 'border-slate-350 shadow-sm'
-              : 'border-slate-300')
+              ? 'border-slate-350 shadow-sm hover:border-slate-400'
+              : 'border-slate-300 hover:border-blue-400')
       }
       onClick={() => onSelectMatch?.(match)}
       onDoubleClick={() => onDoubleClickMatch?.(match)}
     >
       {selected && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-lg z-40 border border-white animate-bounce pointer-events-none">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md z-40 border border-white pointer-events-none">
           🎯 Trận đang xem
         </div>
       )}
@@ -245,7 +243,7 @@ const RowSide = memo(function RowSide({
   won,
   isByeSlot = false,
   setList,
-    pickScore,
+  pickScore,
   maxCols,
   matchId,
   slot,
@@ -253,11 +251,10 @@ const RowSide = memo(function RowSide({
   locked,
 }: {
   p: BracketMatch['participant1'];
-
   won: boolean;
   isByeSlot?: boolean;
   setList: { p1: string; p2: string }[];
-    pickScore: (s: { p1: string; p2: string }) => string;
+  pickScore: (s: { p1: string; p2: string }) => string;
   maxCols: number;
   matchId: string;
   slot: BracketSlot;
@@ -271,15 +268,14 @@ const RowSide = memo(function RowSide({
     disabled: !dragHandlers?.enabled || locked,
     data: { target: { type: 'slot', matchId, slot } },
   });
-    const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
-
+  const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
     id: `bracket-participant:${matchId}:${slot}`,
     disabled: !dragEnabled,
     data: p ? { source: { type: 'slot', matchId, slot, participant: p } } : undefined,
   });
-  return (
 
-        <div
+  return (
+    <div
       ref={setDropNodeRef}
       className={
         'flex items-center justify-between py-1 transition-colors border-l-[4px] pl-2 pr-2.5 ' +
@@ -298,8 +294,7 @@ const RowSide = memo(function RowSide({
             {...listeners}
             aria-label={translate('bracketDragParticipant')}
             title={translate('bracketDragParticipant')}
-                        className={`cursor-grab touch-none rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing transition-opacity duration-100 ${isDragging ? 'opacity-0' : 'opacity-100'}`}
-
+            className={`cursor-grab touch-none rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing transition-opacity duration-100 ${isDragging ? 'opacity-0' : 'opacity-100'}`}
             onClick={(event) => event.stopPropagation()}
           >
             ⋮⋮

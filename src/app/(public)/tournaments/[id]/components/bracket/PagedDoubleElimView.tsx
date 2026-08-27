@@ -109,6 +109,27 @@ export function PagedDoubleElimView({
 
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
 
+  React.useEffect(() => {
+    if (!selectedMatchId) return;
+    const isLower = lowerMatches.some((m) => m.id === selectedMatchId);
+    const isUpper = combinedUpperMatches.some((m) => m.id === selectedMatchId);
+    if (isLower && activeBranch !== 'lower') {
+      setActiveBranch('lower');
+    } else if (isUpper && activeBranch !== 'upper') {
+      setActiveBranch('upper');
+    }
+
+    const targetList = isLower ? lowerMatches : combinedUpperMatches;
+    const targetMatch = targetList.find((m) => m.id === selectedMatchId);
+    if (targetMatch && typeof targetMatch.roundNumber === 'number') {
+      const targetRounds = isLower ? lbRounds : ubRounds;
+      const targetRoundIndex = targetRounds.indexOf(targetMatch.roundNumber);
+      if (targetRoundIndex >= 0 && targetRoundIndex !== activeRoundIndex) {
+        setActiveRoundIndex(targetRoundIndex);
+      }
+    }
+  }, [activeBranch, activeRoundIndex, combinedUpperMatches, lbRounds, lowerMatches, selectedMatchId, ubRounds]);
+
   // Sliding 3-Round Window Logic
   const visibleStartIndex = useMemo(() => {
     if (activeBranchRounds.length <= 3) return 0;

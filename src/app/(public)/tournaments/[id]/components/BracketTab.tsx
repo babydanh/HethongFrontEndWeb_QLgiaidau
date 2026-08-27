@@ -491,6 +491,17 @@ export default function BracketTab({
   const renderedStages = hasOwnerSnapshot && appliedOwnerSnapshot !== bracketSnapshot
     ? (knockoutOnly ? (bracketSnapshot?.stages ?? []).filter(isKnockoutStage) : bracketSnapshot?.stages ?? [])
     : stages;
+
+  useEffect(() => {
+    if (!selectedMatchId || !renderedStages.length) return;
+    const stageWithMatch = renderedStages.find((stage) =>
+      stage.groups?.some((group) => group.matches?.some((m) => m.id === selectedMatchId)),
+    );
+    if (stageWithMatch && stageWithMatch.id !== activeStageId) {
+      setActiveStageId(stageWithMatch.id);
+    }
+  }, [activeStageId, renderedStages, selectedMatchId]);
+
   const activeStage = renderedStages.find((s) => s.id === activeStageId);
   const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage));
   const effectiveViewMode = activeStageSupportsFullView ? viewMode : 'paged';

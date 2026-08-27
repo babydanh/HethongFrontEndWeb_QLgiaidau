@@ -67,6 +67,18 @@ export function PagedSingleElimView({
   }, [rounds, byRound]);
 
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
+
+  React.useEffect(() => {
+    if (!selectedMatchId || !matches.length || !rounds.length) return;
+    const targetMatch = matches.find((m) => m.id === selectedMatchId);
+    if (targetMatch && typeof targetMatch.roundNumber === 'number') {
+      const targetRoundIndex = rounds.indexOf(targetMatch.roundNumber);
+      if (targetRoundIndex >= 0 && targetRoundIndex !== activeRoundIndex) {
+        setActiveRoundIndex(targetRoundIndex);
+      }
+    }
+  }, [activeRoundIndex, matches, rounds, selectedMatchId]);
+
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
 

@@ -20,9 +20,7 @@ function ParticipantMembersAvatars({
   participant: NonNullable<TournamentResult['awards']>[number]['participant'];
 }) {
   if (!participant) return null;
-  const members = getUniqueParticipantMembers(
-    participant.members && Array.isArray(participant.members) ? participant.members : [],
-  );
+  const members = Array.isArray(participant.members) ? participant.members : [];
 
   if (members.length === 0) return null;
 

@@ -147,7 +147,7 @@ export function OpsMatches({
         continue;
       }
 
-      if (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') {
+      if (match.status === 'ONGOING') {
         nextBuckets.ongoing.push(match);
         continue;
       }

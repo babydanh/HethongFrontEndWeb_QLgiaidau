@@ -129,10 +129,16 @@ export default function LiveMatchesTab({
         if (divisionId) params.division_id = divisionId;
 
         const res = await matchesApi.getMatches(params);
-        const rawData = Array.isArray(res) ? res : (res.data ?? []);
-        const data = Array.isArray(rawData) ? rawData : (rawData.data ?? []);
+        const rawRes = res as unknown;
+        const list = Array.isArray(rawRes)
+          ? rawRes
+          : Array.isArray((rawRes as { data?: unknown })?.data)
+            ? (rawRes as { data: Match[] }).data
+            : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
+              ? (rawRes as { data: { data: Match[] } }).data.data
+              : [];
         if (active) {
-          const ongoing = (data as Match[]).filter(
+          const ongoing = (list as Match[]).filter(
             (m) => m.status === 'ONGOING' && !m.isBye && Boolean(m.participant1Id && m.participant2Id),
           );
           setLiveMatches(ongoing);

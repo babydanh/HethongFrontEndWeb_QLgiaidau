@@ -246,9 +246,15 @@ const commonTranslate = useTranslations('Common');
         { tournament_id: tournamentId, status: 'ONGOING', limit: 100 },
         signal,
       );
-      const rawData = Array.isArray(response) ? response : (response.data ?? []);
-      const data = Array.isArray(rawData) ? rawData : (rawData.data ?? []);
-      const ongoing = (Array.isArray(data) ? data : []).filter(
+      const rawRes = response as unknown;
+      const list = Array.isArray(rawRes)
+        ? rawRes
+        : Array.isArray((rawRes as { data?: unknown })?.data)
+          ? (rawRes as { data: Match[] }).data
+          : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
+            ? (rawRes as { data: { data: Match[] } }).data.data
+            : [];
+      const ongoing = (list as Match[]).filter(
         (match: Match) => match.status === 'ONGOING' && !match.isBye && Boolean(match.participant1Id && match.participant2Id),
       );
       const nextCounts: Record<string, number> = {};

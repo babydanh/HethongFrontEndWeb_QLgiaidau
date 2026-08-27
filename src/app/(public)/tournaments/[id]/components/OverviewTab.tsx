@@ -12,7 +12,9 @@ interface Props {
 export default function OverviewTab({ tournament }: Props) {
   const translate = useTranslations('TournamentDetail');
   const description = tournament.description || tournament.parent?.description;
-  const rawPrizeDescription = tournament.prizeDescription || tournament.parent?.prizeDescription;
+  const rawPrizeDescription =
+    tournament.prizeDescription ||
+    (tournament.parent as { prizeDescription?: string } | undefined)?.prizeDescription;
   const hasPrizeDescription = Boolean(
     rawPrizeDescription &&
     (rawPrizeDescription.replace(/<[^>]*>/g, '').trim().length > 0 || rawPrizeDescription.includes('<img'))

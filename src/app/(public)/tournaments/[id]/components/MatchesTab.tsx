@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
@@ -457,6 +457,30 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     return null;
   }, [selectedRoundOption, selectedGroupOption, selectedStageKey, selectedLeg, matchTranslate, getStageFilterLabel]);
 
+  const getScheduleSection = useCallback((match: BracketMatch) => {
+    const metadata = matchViewMetadata.get(match.id);
+    const stageKey = metadata?.stageKey ?? getMatchStageKey(match);
+    if (stageKey === 'GROUP_STAGE') {
+      const rawGroupName = match.group?.name?.trim();
+      const groupName = rawGroupName
+        ? /^(bảng|group)\s/i.test(rawGroupName)
+          ? rawGroupName
+          : matchTranslate('groupName', { name: rawGroupName })
+        : translate('groupsLabel');
+      const leg = metadata?.leg ?? 1;
+      return {
+        key: `${stageKey}|${metadata?.groupKey ?? groupName}|${leg}`,
+        label: `${groupName} • ${matchTranslate('legNumber', { leg })}`,
+        sortKey: `0|${groupName}|${String(leg).padStart(3, '0')}`,
+      };
+    }
+    return {
+      key: stageKey,
+      label: getStageFilterLabel(stageKey),
+      sortKey: `1|${stageKey}`,
+    };
+  }, [getMatchStageKey, getStageFilterLabel, matchTranslate, matchViewMetadata, translate]);
+
   // Filter matches based on selected states
   const filteredMatches = useMemo(() => {
     return matches.filter(m => {
@@ -501,17 +525,20 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
       return true;
     }).sort((a, b) => {
-      // Sort Nhánh thắng (MAIN/Winners) first, Nhánh thua (LOSERS) second
+      const sectionA = getScheduleSection(a);
+      const sectionB = getScheduleSection(b);
+      if (sectionA.sortKey !== sectionB.sortKey) return sectionA.sortKey.localeCompare(sectionB.sortKey);
+
+      // Keep matches from one Bảng/Lượt together, then preserve bracket branch/order.
       const branchA = (a.bracketBranch || '').toUpperCase();
       const branchB = (b.bracketBranch || '').toUpperCase();
-      
       if (branchA !== branchB) {
         if (branchA === 'LOSERS') return 1;
         if (branchB === 'LOSERS') return -1;
       }
       return a.matchOrder - b.matchOrder;
     });
-  }, [matches, matchViewMetadata, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery]);
+  }, [getScheduleSection, matches, matchViewMetadata, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery]);
 
   const matchPageCount = Math.max(1, Math.ceil(filteredMatches.length / MATCHES_PER_VIEW));
   const currentMatchPage = Math.min(matchPage, matchPageCount);
@@ -1033,7 +1060,10 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       {/* Render Matches List */}
       {filteredMatches.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {visibleMatches.map((match) => {
+          {visibleMatches.map((match, index) => {
+            const currentSection = getScheduleSection(match);
+            const previousSection = index > 0 ? getScheduleSection(visibleMatches[index - 1]) : null;
+            const showScheduleSection = currentSection.key !== previousSection?.key;
             const sets = extractMatchScores(match.scoreDetails);
             const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
             const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
@@ -1053,7 +1083,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               : maxSets;
 
             return (
-              <div
+              <React.Fragment key={match.id}>
+                {showScheduleSection && (
+                  <div className="col-span-1 md:col-span-2 flex items-center gap-3 pt-1" aria-label={currentSection.label}>
+                    <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-extrabold text-slate-600">
+                      {currentSection.label}
+                    </span>
+                    <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+                  </div>
+                )}
+                <div
                 key={match.id}
                 className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between ${
                   isLive 
@@ -1202,7 +1242,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     <span>{matchTranslate('detailsAction')}</span>
                   </Link>
                 </div>
-              </div>
+                </div>
+              </React.Fragment>
             );
           })}
         </div>

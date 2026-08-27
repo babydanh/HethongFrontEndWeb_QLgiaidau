@@ -553,7 +553,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         )}
       </div>
 
-      <div className="sticky top-16 z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur lg:top-20">
+      <div className="sticky top-[var(--app-header-height)] z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur lg:top-[calc(var(--app-header-height)+1rem)]">
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {([
             { id: 'OVERVIEW', label: translate('overviewTab'), icon: BarChart3 },

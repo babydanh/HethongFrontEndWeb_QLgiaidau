@@ -778,7 +778,7 @@ export default function LeaderboardPage() {
 
                 {/* Right Column: Sidebar Tier Breakdown & Search */}
                 <div className="lg:col-span-4 xl:col-span-3">
-                    <div className="flex flex-col gap-6 sticky top-28 lg:top-32">
+                    <div className="sticky top-[calc(var(--app-header-height)+3rem)] flex flex-col gap-6 lg:top-[calc(var(--app-header-height)+4rem)]">
                         {/* Tier Breakdown Card */}
                         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
                             <div className="flex items-start justify-between">

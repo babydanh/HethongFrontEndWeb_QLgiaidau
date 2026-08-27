@@ -174,7 +174,7 @@ export function OperationsWorkspace({
         </div>
       </section>
 
-      <div className="sticky top-20 z-20 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+      <div className="sticky top-[calc(var(--app-header-height)+1rem)] z-20 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
         <div className="grid grid-cols-3 gap-2">
           {([
             { id: 'MATCHES', label: translate('matchesTab'), count: matches.length, icon: ListChecks },
@@ -208,6 +208,7 @@ export function OperationsWorkspace({
         <OpsMatches
           matches={matches}
           isOperationalDataLoading={isOperationalDataLoading}
+          error={error}
           referees={referees}
           activeMatchActionId={activeMatchActionId}
           focusedMatchId={focusedMatchId}

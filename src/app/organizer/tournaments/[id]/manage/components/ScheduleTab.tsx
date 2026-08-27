@@ -7,6 +7,7 @@ import { Input, DateTimePicker } from '@/components/ui/Input';
 import { Tournament, BracketStage } from '@/types/tournament';
 import { Region } from '@/features/regions/api';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import { CourtSetup, CourtSetupItem } from './CourtSetup';
 
 interface Venue {
   id: string;
@@ -36,6 +37,12 @@ interface ScheduleTabProps {
   setEndDate: (val: string) => void;
   isSavingConfig: boolean;
   handleSaveScheduleDetails: () => void;
+  courtVenue: Venue | null;
+  courts: CourtSetupItem[];
+  newCourtName: string;
+  setNewCourtName: (value: string) => void;
+  isSavingCourt: boolean;
+  handleAddTournamentCourt: () => void;
 }
 
 export function ScheduleTab({
@@ -60,6 +67,12 @@ export function ScheduleTab({
   setEndDate,
   isSavingConfig,
   handleSaveScheduleDetails,
+  courtVenue,
+  courts,
+  newCourtName,
+  setNewCourtName,
+  isSavingCourt,
+  handleAddTournamentCourt,
 }: ScheduleTabProps) {
   const autoDetectedAddress = useAutoAddressParser({
     addressValue: customVenueAddress,
@@ -159,6 +172,15 @@ export function ScheduleTab({
           {validationField === 'dates' && <p className="text-xs font-semibold text-rose-600">Vui lòng kiểm tra ngày giờ đăng ký và thi đấu.</p>}
         </div>
       </div>
+
+      <CourtSetup
+        venue={courtVenue}
+        courts={courts}
+        newCourtName={newCourtName}
+        setNewCourtName={setNewCourtName}
+        isSaving={isSavingCourt}
+        onAdd={handleAddTournamentCourt}
+      />
 
       <div className="flex justify-end pt-4 border-t">
         <Button

@@ -428,7 +428,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           provinces={s.provinces} wards={s.wards} setWards={s.setWards}
           startDate={s.startDate} setStartDate={s.setStartDate}
           endDate={s.endDate} setEndDate={s.setEndDate}
-          isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails} />}
+          isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails}
+          courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
+          courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
+          isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt} />}
 
         {s.activeTab === 'registration' && <RegistrationTab tournament={s.tournament}
           inviteLink={s.inviteLink}

@@ -980,7 +980,7 @@ export default function SettingsTab({ community }: { community: Community }) {
 
         {/* SIDEBAR: Sticky Gợi Ý Thiết Lập & Tiện Ích CLB (Chiếm 1 cột, bám theo khi cuộn trang) */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="sticky top-24 space-y-6">
+          <div className="sticky top-[calc(var(--app-header-height)+2rem)] space-y-6">
             {/* Card 1: Gợi ý tối ưu hồ sơ CLB */}
             <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/20 to-indigo-50/30 p-6 shadow-sm">
               <div className="mb-4">

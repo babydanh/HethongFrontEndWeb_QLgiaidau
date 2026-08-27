@@ -28,6 +28,7 @@ import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, Ops
 interface OpsMatchesProps {
   matches: Match[];
   isOperationalDataLoading: boolean;
+  error: string | null;
   referees: OpsReferee[];
   activeMatchActionId: string | null;
   focusedMatchId?: string | null;
@@ -90,6 +91,7 @@ const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; labelKey: string; 
 export function OpsMatches({
   matches,
   isOperationalDataLoading,
+  error,
   referees,
   activeMatchActionId,
   focusedMatchId,
@@ -625,7 +627,11 @@ export function OpsMatches({
         </div>
 
         <div className="mt-6 space-y-6">
-          {isOperationalDataLoading && safeMatches.length === 0 ? (
+          {!isOperationalDataLoading && error && safeMatches.length === 0 ? (
+            <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-8 text-center" role="alert">
+              <p className="text-sm font-bold text-rose-900">{translate('matchesLoadError')}</p>
+            </div>
+          ) : isOperationalDataLoading && safeMatches.length === 0 ? (
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-8 text-center" role="status" aria-live="polite">
               <p className="text-sm font-bold text-blue-900">{translate('loadingMatches')}</p>
             </div>

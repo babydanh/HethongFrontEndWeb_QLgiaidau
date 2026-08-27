@@ -810,7 +810,7 @@ const commonTranslate = useTranslations('Common');
                       return (
                         <div
                           key={division.id}
-                          className="border-b border-slate-100 last:border-b-0 scroll-mt-24"
+                          className="scroll-mt-[calc(var(--app-header-height)+1rem)] border-b border-slate-100 last:border-b-0"
                         >
                           <button
                             type="button"
@@ -921,7 +921,7 @@ const commonTranslate = useTranslations('Common');
           </div>
 
           {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
-          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 space-y-4 min-w-0">
+          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
             {/* Metadata Main Card */}
             <div className="bg-white border border-slate-200/90 rounded-xl p-5 md:p-6 shadow-sm space-y-4">
               {/* Organizer / Club Header */}

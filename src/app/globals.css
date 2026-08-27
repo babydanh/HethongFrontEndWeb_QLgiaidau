@@ -45,10 +45,15 @@
     --ds-radius: 0.5rem;
     --ds-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
     --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+
+    /* Shared site Header is h-16. Keep document scrolling and inner sticky
+       surfaces on the same geometry contract. */
+    --app-header-height: 4rem;
 }
 
 html {
   font-size: 14.5px;
+  scroll-padding-top: var(--app-header-height);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

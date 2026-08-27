@@ -75,7 +75,12 @@ export type TournamentReferee = {
   id: string; userId: string; status: string; fullName: string; avatarUrl: string | null;
 };
 export interface Venue { id: string; name: string; locationAddress: string; }
-export interface Court { id: string; courtName: string; }
+export interface Court {
+  id: string;
+  venueId?: string;
+  courtName: string;
+  status?: string;
+}
 
 export function useManageState(id: string) {
   const router = useRouter();
@@ -90,6 +95,8 @@ export function useManageState(id: string) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig | null>(null);
   const [courts, setCourts] = useState<Court[]>([]);
+  const [newCourtName, setNewCourtName] = useState('');
+  const [isSavingCourt, setIsSavingCourt] = useState(false);
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
   const [matchCameraId, setMatchCameraId] = useState<string>('');
   const divisionListRequestRef = useRef(0);
@@ -353,9 +360,60 @@ export function useManageState(id: string) {
     }
   }, [searchParams]);
 
-  const fetchVenueCourts = async (vId: string) => {
-    try { const r = await venuesApi.getVenueById(vId); setCourts(r.data?.courts?.map(c => ({id:c.id, courtName:c.name})) || []); }
-    catch { setCourts([]); }
+  const fetchVenueCourts = async () => {
+    try {
+      const r = await tournamentsApi.getTournamentCourts(id);
+      setCourts(
+        r.data?.courts?.map((c) => ({
+          id: c.id,
+          venueId: c.venueId,
+          courtName: c.courtName,
+          status: c.status,
+        })) || [],
+      );
+    } catch {
+      setCourts([]);
+    }
+  };
+
+  const handleAddTournamentCourt = async () => {
+    if (!tournament?.id || !tournament.venueId) {
+      toast.error('Hãy lưu địa điểm thi đấu trước khi thêm sân.');
+      return;
+    }
+    const courtName = newCourtName.trim();
+    if (!courtName) {
+      toast.error('Vui lòng nhập tên sân.');
+      return;
+    }
+    setIsSavingCourt(true);
+    try {
+      await tournamentsApi.addTournamentCourt(tournament.id, {
+        courtName,
+        status: 'AVAILABLE',
+      });
+      setNewCourtName('');
+      await fetchVenueCourts();
+      toast.success('Đã thêm sân vào địa điểm của giải.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingCourt(false);
+    }
+  };
+
+  const handleRemoveTournamentCourt = async (courtId: string) => {
+    if (!tournament?.id) return;
+    setIsSavingCourt(true);
+    try {
+      await tournamentsApi.removeTournamentCourt(tournament.id, courtId);
+      if (tournament.venueId) await fetchVenueCourts();
+      toast.success('Đã xóa sân khỏi địa điểm của giải.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingCourt(false);
+    }
   };
 
   const applyResolvedRuleState = useCallback((resolvedRules: ReturnType<typeof resolveSportRuleView>) => {
@@ -496,8 +554,11 @@ export function useManageState(id: string) {
       if (registrationStartDate && registrationEndDate && new Date(registrationEndDate) <= new Date(registrationStartDate)) { toast.error('Hạn chót đăng ký phải sau ngày mở đăng ký'); setIsSavingConfig(false); return; }
       if (startDate && registrationEndDate && new Date(startDate) < new Date(registrationEndDate)) { toast.error('Ngày khai mạc phải sau hạn chốt đăng ký'); setIsSavingConfig(false); return; }
 
-      const venueRes = await venuesApi.createVenue({ name: customVenueName.trim(), locationAddress: fullAddr });
-      const finalVenueId = venueRes?.data?.id || null;
+      const venueRes = await tournamentsApi.saveTournamentVenue(id, {
+        name: customVenueName.trim(),
+        locationAddress: fullAddr,
+      });
+      const finalVenueId = tournament?.venueId || venueRes?.data?.id || null;
       const existingConfig = (tournament?.tournamentConfig as Record<string, unknown> | undefined) || {};
       const existingLocation = (existingConfig.location as Record<string, unknown> | undefined) || {};
       await tournamentsApi.updateTournament(id, {
@@ -1501,7 +1562,7 @@ export function useManageState(id: string) {
         applyResolvedRuleState(resolvedRules);
 
         if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
-        if (t.venueId) await fetchVenueCourts(t.venueId);
+        if (t.venueId) await fetchVenueCourts();
         // Nạp danh sách trận đấu (dùng cho export kết quả toàn giải ở bước kết thúc)
         try {
           const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 100 });
@@ -1688,6 +1749,7 @@ export function useManageState(id: string) {
   return {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
+    newCourtName, setNewCourtName, isSavingCourt,
     isLoading, setIsLoading, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
     draftStatus, clearManageDraft,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
@@ -1750,6 +1812,7 @@ export function useManageState(id: string) {
     isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
     // actions
     fetchTournamentData, fetchDivisions, fetchReferees, refetchDivisionData, applyDivisionFormValues, fetchVenueCourts,
+    handleAddTournamentCourt, handleRemoveTournamentCourt,
     handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveRegistrationSettings, handleSaveMatchConfig, handleSaveFinanceConfig,
     handleAddReferee, handleCreateDivision, requestDeleteDivision, handleConfirmDeleteDivision,
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,

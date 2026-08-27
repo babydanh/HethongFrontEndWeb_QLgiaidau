@@ -4,7 +4,9 @@ import { ApiResponse } from '@/types/api';
 export interface Court {
   id: string;
   venueId: string;
-  name: string;
+  courtName: string;
+  /** Legacy API alias; new code must prefer courtName. */
+  name?: string;
   status: string;
   description?: string;
 }

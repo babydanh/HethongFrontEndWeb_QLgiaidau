@@ -100,6 +100,22 @@ export interface TournamentReferee {
   avatarUrl: string | null;
 }
 
+export interface TournamentCourt {
+  id: string;
+  venueId: string;
+  courtName: string;
+  status: 'AVAILABLE' | 'MAINTENANCE' | string;
+}
+
+export interface TournamentCourtsResponse {
+  venue: {
+    id: string;
+    name: string;
+    locationAddress: string;
+  } | null;
+  courts: TournamentCourt[];
+}
+
 export interface WorkspaceRefereeMatch {
   id: string;
   tournamentId: string;
@@ -749,6 +765,23 @@ export const tournamentsApi = {
     api.get<ApiResponse<TournamentWorkspace>>("/tournaments/workspace/me"),
   getTournamentById: (id: string, params?: Record<string, unknown>) =>
     api.get<ApiResponse<Tournament>>(`/tournaments/${id}`, { params }),
+  saveTournamentVenue: (
+    id: string,
+    data: { name: string; locationAddress: string },
+  ) => api.patch<ApiResponse<{ id: string; name: string; locationAddress: string }>>(
+    `/tournaments/${id}/venue`,
+    data,
+  ),
+  getTournamentCourts: (id: string) =>
+    api.get<ApiResponse<TournamentCourtsResponse>>(`/tournaments/${id}/courts`),
+  addTournamentCourt: (
+    id: string,
+    data: { courtName: string; status?: 'AVAILABLE' | 'MAINTENANCE' },
+  ) => api.post<ApiResponse<TournamentCourt>>(`/tournaments/${id}/courts`, data),
+  removeTournamentCourt: (id: string, courtId: string) =>
+    api.delete<ApiResponse<TournamentCourt>>(
+      `/tournaments/${id}/courts/${courtId}`,
+    ),
   getTournamentByInviteCode: (inviteCode: string) =>
     api.get<ApiResponse<Tournament>>(`/tournaments/join/${inviteCode}`),
   joinTournamentByInviteCode: <T>(inviteCode: string, data: T) =>

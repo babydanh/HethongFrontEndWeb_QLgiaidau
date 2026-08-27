@@ -1436,7 +1436,10 @@ export function useManageState(id: string) {
   };
 
   const handleOpenScheduling = (match: BracketMatch) => {
-    setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
+    setSelectedMatch(match);
+    setMatchCourtId(match.courtId || '');
+    setMatchCourtName(match.courtName || '');
+    setMatchCourtAddress(match.courtAddress || '');
     setMatchScheduledAt(toDateTimeLocalValue(match.scheduledAt));
     setMatchCameraId('');
     void livestreamApi.getMatchPlayback(match.id).then((res) => {
@@ -1496,7 +1499,9 @@ export function useManageState(id: string) {
     try {
       const normalizedKind = normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory);
       await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
-        courtName: matchCourtName || null, courtAddress: matchCourtAddress || null,
+        courtId: matchCourtId || null,
+        courtName: matchCourtName || null,
+        courtAddress: matchCourtAddress || null,
         scheduledAt: matchScheduledAt ? new Date(matchScheduledAt).toISOString() : null,
         matchConfig: isCustomMatchConfig ? buildSportRulesPayload({
           kind: normalizedKind,

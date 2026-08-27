@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
@@ -702,12 +702,25 @@ const commonTranslate = useTranslations('Common');
     return `${sStr} - ${eStr}`;
   };
 
-  const isCompleted = isTournamentCompleted(activeTournament.status) || isTournamentCompleted(tournament.status);
+  const isCompleted = Boolean(
+    (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
+    (tournament?.status && isTournamentCompleted(tournament.status))
+  );
   const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
 
+  const effectiveLiveCountsByDivision = useMemo<Record<string, number>>(() => {
+    if (isCompleted || hasConfirmedResults) return {};
+    return liveCountsByDivision;
+  }, [isCompleted, hasConfirmedResults, liveCountsByDivision]);
+
+  const effectiveLiveMatchesCount: number = Object.values(effectiveLiveCountsByDivision).reduce(
+    (total: number, count: number) => total + count,
+    0,
+  );
+
   const tabs: { id: TournamentDetailTab; label: string; badge?: number; isLive?: boolean; isGolden?: boolean }[] = [
-    ...(liveMatchesCount > 0
-      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: liveMatchesCount, isLive: true }]
+    ...(effectiveLiveMatchesCount > 0
+      ? [{ id: 'live' as const, label: translate('liveTabLabel'), badge: effectiveLiveMatchesCount, isLive: true }]
       : []),
     ...(showResultsTab
       ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: true }]
@@ -758,8 +771,8 @@ const commonTranslate = useTranslations('Common');
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Badge */}
           {(() => {
-            const isLive = isTournamentInProgress(activeTournament.status) || activeLiveMatchesCount > 0;
-            const isFinished = isTournamentCompleted(activeTournament.status);
+            const isLive = !isCompleted && !hasConfirmedResults && (isTournamentInProgress(activeTournament.status) || effectiveLiveMatchesCount > 0);
+            const isFinished = isCompleted || hasConfirmedResults;
             return (
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
                 isLive
@@ -1217,7 +1230,7 @@ const commonTranslate = useTranslations('Common');
                     {divisionsList.map((division) => {
                       const isActive = division.id === openDivisionId;
                       const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
-                      const liveCount = liveCountsByDivision[division.id] ?? 0;
+                      const liveCount = effectiveLiveCountsByDivision[division.id] ?? 0;
                       const participantCount = division._count?.participants ?? 0;
                       const maxParticipants = division.maxParticipants ?? 0;
                       const participantCapacity = maxParticipants > 0

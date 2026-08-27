@@ -2650,6 +2650,8 @@
   "Leaderboard": {
     "singles": "Đơn",
     "typeLabel": "Thể loại:",
+    "allMatchTypes": "Tất cả loại đấu",
+    "allGenders": "Tất cả giới tính",
     "hallOfFame": "SÂN KHẤU VINH DANH",
     "topPlayers": "TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC",
     "doubles": "Đôi",

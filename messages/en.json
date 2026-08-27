@@ -2650,6 +2650,8 @@
   "Leaderboard": {
     "singles": "Singles",
     "typeLabel": "Type:",
+    "allMatchTypes": "All match types",
+    "allGenders": "All genders",
     "hallOfFame": "HALL OF FAME",
     "topPlayers": "TOP 10 OUTSTANDING PLAYERS",
     "doubles": "Doubles",

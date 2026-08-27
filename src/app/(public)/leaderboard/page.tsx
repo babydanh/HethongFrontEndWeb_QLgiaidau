@@ -481,17 +481,9 @@ export default function LeaderboardPage() {
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
                             <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
                         </div>
-                    ) : rankings.length === 0 ? (
-                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-10 md:p-14 text-center">
-                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                                <Info className="h-6 w-6" aria-hidden="true" />
-                            </div>
-                            <h2 className="text-lg font-bold text-slate-900">{t('noEligibleRanksTitle')}</h2>
-                            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t('noEligibleRanksDescription')}</p>
-                        </div>
                     ) : (
                         <>
-                            {/* Top 3 Podium Stage (Light Theme) */}
+                            {/* Top 3 Podium Stage (Light Theme). Empty slots remain visible during cold start. */}
                             <div className="bg-gradient-to-b from-blue-50/70 via-sky-50/40 to-white rounded-xl border border-blue-100 shadow-sm p-6 md:p-8 text-slate-800 relative overflow-hidden mb-8">
                                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/10 via-sky-50/5 to-transparent pointer-events-none" />
                                 
@@ -512,6 +504,7 @@ export default function LeaderboardPage() {
                                     <div className="w-full md:w-1/3 order-2 md:order-1 flex flex-col items-center group/podium">
                                         <button 
                                             type="button"
+                                            disabled={!getPrimaryRankingMember(rankings[1])?.id}
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[1]);
                                                 if (!member?.id) return;
@@ -573,6 +566,7 @@ export default function LeaderboardPage() {
                                     <div className="w-full md:w-1/3 order-1 md:order-2 flex flex-col items-center group/podium relative -translate-y-2 md:-translate-y-4">
                                         <button 
                                             type="button"
+                                            disabled={!getPrimaryRankingMember(rankings[0])?.id}
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[0]);
                                                 if (!member?.id) return;
@@ -634,6 +628,7 @@ export default function LeaderboardPage() {
                                     <div className="w-full md:w-1/3 order-3 md:order-3 flex flex-col items-center group/podium">
                                         <button 
                                             type="button"
+                                            disabled={!getPrimaryRankingMember(rankings[2])?.id}
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[2]);
                                                 if (!member?.id) return;
@@ -751,7 +746,11 @@ export default function LeaderboardPage() {
                             </div>
 
                             {/* Rest of rankings: Top 11 - 100 */}
-                            <RestRankingsTable rankings={rankings} selectedMatchType={selectedMatchType} />
+                            <RestRankingsTable
+                                rankings={rankings}
+                                categoryId={activeCategoryId ?? ''}
+                                selectedMatchType={selectedMatchType}
+                            />
                         </>
                     )}
                 </div>
@@ -927,18 +926,33 @@ function FootballTeamRankingTable({ rankings }: { rankings: FootballTeamRanking[
   );
 }
 
-function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRanking[], selectedMatchType: string }) {
+function RestRankingsTable({
+  rankings,
+  categoryId,
+  selectedMatchType,
+}: {
+  rankings: PlayerRanking[];
+  categoryId: string;
+  selectedMatchType: string;
+}) {
   const t = useTranslations("Leaderboard");
-    const { openUserProfile } = useUserProfileModalStore();
-    // Rankings starting from index 10 (Hạng 11 trở đi)
-    const realData = rankings.slice(10, 100);
-    
-    // Render only rows returned by the API. Missing positions are not players.
-    const listData = [...realData];
-
-    if (listData.length === 0) {
-        return null;
-    }
+  const { openUserProfile } = useUserProfileModalStore();
+  // The public surface intentionally shows the first 20 positions. During
+  // cold start, positions 11–20 are visual slots, never fake ranking rows.
+  const realData = rankings.slice(10, 20);
+  const placeholderData: PlayerRanking[] = Array.from({ length: 10 }, (_, index) => ({
+    id: `placeholder-${categoryId || 'all'}-${selectedMatchType || 'all'}-${index + 11}`,
+    categoryId,
+    eloPoints: 0,
+    matchesPlayed: 0,
+    matchesWon: 0,
+    winStreak: 0,
+    updatedAt: '1970-01-01T00:00:00.000Z',
+  }));
+  const listData = [
+    ...realData,
+    ...placeholderData.slice(realData.length),
+  ];
 
     // Split into 2 columns
     const mid = Math.ceil(listData.length / 2);

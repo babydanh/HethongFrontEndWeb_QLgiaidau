@@ -21,17 +21,17 @@ const config: Config = {
       colors: {
         /* ── SportO brand navy palette — built around logo navy #002e7c ── */
         blue: {
-          50:  "#eff4fc",
-          100: "#d6e2f7",
+          50:  "var(--color-primary-light, #eff4fc)",
+          100: "var(--color-accent, #d6e2f7)",
           150: "#b8cdfa",
           200: "#80a5e6",
           300: "#3d6dc9",
           400: "#1a4fb0",
           450: "#0b3c94",
-          500: "#003999",
-          600: "#002e7c",  /* ← SportO primary navy #002e7c */
-          650: "#00276a",
-          700: "#002461",  /* ← hover: deeper navy */
+          500: "var(--color-primary, #003999)",
+          600: "var(--color-primary, #002e7c)",  /* ← SportO primary navy mapped to globals.css */
+          650: "var(--color-primary-hover, #00276a)",
+          700: "var(--color-primary-hover, #002461)",  /* ← hover: deeper navy mapped to globals.css */
           800: "#001a45",
           900: "#00112e",
           950: "#000a1c",

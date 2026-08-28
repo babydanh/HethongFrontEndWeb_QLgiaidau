@@ -7567,6 +7567,13 @@
     "assignmentSearch": "Tìm theo tên đội, vòng hoặc mã trận",
     "noMatchesFound": "Không có trận phù hợp với bộ lọc.",
     "teamTbd": "Chờ xác định",
+    "workspaceFullscreen": "Toàn màn hình",
+    "exitWorkspace": "Thoát workplace",
+    "finalRound": "Chung kết",
+    "semiFinalRound": "Bán kết",
+    "quarterFinalRound": "Tứ kết",
+    "roundOf": "Vòng {round}",
+    "close": "Đóng",
     "toast": {
       "copiedInvite": "Đã sao chép link!"
     }

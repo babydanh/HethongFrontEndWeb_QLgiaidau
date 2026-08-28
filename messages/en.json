@@ -7567,6 +7567,13 @@
     "assignmentSearch": "Search by team name, round, or match number",
     "noMatchesFound": "No matches match the current filter.",
     "teamTbd": "TBD",
+    "workspaceFullscreen": "Full screen",
+    "exitWorkspace": "Exit workspace",
+    "finalRound": "Final",
+    "semiFinalRound": "Semi-final",
+    "quarterFinalRound": "Quarter-final",
+    "roundOf": "Round of {round}",
+    "close": "Close",
     "toast": {
       "copiedInvite": "Invite link copied!"
     }

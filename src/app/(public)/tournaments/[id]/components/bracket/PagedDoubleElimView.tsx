@@ -379,7 +379,7 @@ export function PagedDoubleElimView({
           {/* Zoom controls */}
           <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-sm sm:col-span-1">
             <button
-              onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}
+              onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
               title={translate('zoomOut')}
             >
@@ -389,7 +389,7 @@ export function PagedDoubleElimView({
               {Math.round(zoom * 100)}%
             </span>
             <button
-              onClick={() => setZoom((z) => Math.min(z + 0.1, 1.4))}
+              onClick={() => setZoom((z) => Math.min(z + 0.1, 2.0))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
               title={translate('zoomIn')}
             >
@@ -409,6 +409,30 @@ export function PagedDoubleElimView({
       {/* GPU-Accelerated Adaptive Tree Viewport */}
       <div
         ref={viewportRef}
+        onTouchStart={(e) => {
+          if (e.touches.length === 2) {
+            const d = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY,
+            );
+            (viewportRef as any)._initialPinchDist = d;
+            (viewportRef as any)._initialZoom = zoom;
+          }
+        }}
+        onTouchMove={(e) => {
+          if (e.touches.length === 2 && (viewportRef as any)._initialPinchDist) {
+            const d = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY,
+            );
+            const factor = d / (viewportRef as any)._initialPinchDist;
+            const target = Math.min(2.0, Math.max(0.25, (viewportRef as any)._initialZoom * factor));
+            setZoom(Number(target.toFixed(2)));
+          }
+        }}
+        onTouchEnd={() => {
+          (viewportRef as any)._initialPinchDist = 0;
+        }}
         className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto scroll-smooth rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
           isFullscreen ? 'flex-1 max-h-none' : ''
         }`}

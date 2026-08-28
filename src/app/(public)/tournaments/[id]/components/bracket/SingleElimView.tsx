@@ -2,14 +2,14 @@
  * SingleElimView — single-elimination bracket tree
  *
  * Lays out match cards in round columns with SVG connector lines.
- * Supports zoom (50 % – 150 %) and fullscreen.
+ * Supports multi-touch pinch to zoom, touch drag/pan (20 % – 250 %), auto-fit, and fullscreen.
  */
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Scan } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type {
@@ -41,7 +41,7 @@ export function SingleElimView({
   onSelectMatch,
   onDoubleClickMatch,
   fallbackSportRuleKind,
-  panEnabled = false,
+  panEnabled = true,
   dragHandlers,
 }: Props) {
   const translate = useTranslations('BracketView');
@@ -60,9 +60,19 @@ export function SingleElimView({
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { pan, isDragging, resetPan, panHandlers } = useBracketPanZoom(panEnabled, (delta) => {
-    setZoom((current) => Math.min(1.5, Math.max(0.5, current + delta)));
-  });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { pan, isDragging, resetPan, panHandlers } = useBracketPanZoom(
+    { enabled: panEnabled, minZoom: 0.2, maxZoom: 2.5 },
+    (delta) => {
+      if (delta === 0) {
+        // Double tap toggle: toggle between auto-fit and 100%
+        handleAutoFit();
+      } else {
+        setZoom((current) => Math.min(2.5, Math.max(0.2, current + delta)));
+      }
+    },
+  );
 
   const byRound = buildMatchesByRound(matches);
   const rounds = Object.keys(byRound)
@@ -100,47 +110,76 @@ export function SingleElimView({
 
   const svgW = maxRound * CARD_W + Math.max(0, maxRound - 1) * roundGap + 48;
 
+  // Auto-fit function to scale whole bracket to viewport width
+  const handleAutoFit = useCallback(() => {
+    if (!containerRef.current) return;
+    const clientW = containerRef.current.clientWidth - 32;
+    if (clientW > 0 && svgW > 0) {
+      const targetZoom = Math.min(1.0, Math.max(0.25, clientW / svgW));
+      setZoom(Number(targetZoom.toFixed(2)));
+      resetPan();
+    }
+  }, [svgW, resetPan]);
+
+  // Initial Auto-fit on mobile screens
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      handleAutoFit();
+    }
+  }, [handleAutoFit]);
+
   return (
     <div
       className={
         isFullscreen
-          ? 'fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden flex flex-col'
-          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-lg p-4 shadow-sm'
+          ? 'fixed inset-0 z-50 bg-slate-50 p-4 sm:p-6 overflow-hidden flex flex-col'
+          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-lg p-3 sm:p-4 shadow-sm'
       }
     >
-      {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
+      {/* Zoom & Fit Controls */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
         <button
-          onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
-          className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+          onClick={() => setZoom((z) => Math.max(z - 0.1, 0.2))}
+          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-sm font-black"
           title={translate('zoomOut')}
+          aria-label={translate('zoomOut')}
         >
           -
         </button>
-        <span className="w-12 text-center select-none">
+        <span className="w-11 sm:w-12 text-center text-[11px] sm:text-xs select-none">
           {Math.round(zoom * 100)}%
         </span>
         <button
-          onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
-          className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+          onClick={() => setZoom((z) => Math.min(z + 0.1, 2.5))}
+          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-sm font-black"
           title={translate('zoomIn')}
+          aria-label={translate('zoomIn')}
         >
           +
+        </button>
+        <button
+          onClick={handleAutoFit}
+          className="px-2 h-8 sm:h-9 flex items-center justify-center gap-1 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-[11px] font-bold text-blue-600"
+          title="Vừa màn hình"
+        >
+          <Scan className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Vừa màn hình</span>
         </button>
         <button
           onClick={() => {
             setZoom(1);
             resetPan();
           }}
-          className="px-2.5 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+          className="hidden sm:flex px-2.5 h-9 items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
           title={translate('resetZoom')}
         >
-          {translate('defaultZoom')}
+          100%
         </button>
         <button
           onClick={() => setIsFullscreen(!isFullscreen)}
-          className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
+          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
           title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
+          aria-label={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
         >
           {isFullscreen ? (
             <Minimize2 className="w-4 h-4" />
@@ -151,27 +190,29 @@ export function SingleElimView({
       </div>
 
       <div
+        ref={containerRef}
         {...panHandlers}
-        className={`pb-4 max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto scroll-smooth'}`}
-        style={panEnabled ? { touchAction: 'none', overscrollBehavior: 'contain' } : undefined}
+        className={`relative pb-4 min-h-[420px] max-h-[82vh] touch-none select-none ${
+          isFullscreen ? 'flex-1 max-h-none min-h-0' : ''
+        } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} overflow-hidden rounded-lg`}
+        style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
       >
+        {/* Pan & Zoom Canvas Container */}
         <div
           style={{
-            width: svgW * zoom,
-            height: totalHeight * zoom,
-            transition: 'width 0.15s ease-out, height 0.15s ease-out',
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'top left',
+            width: svgW,
+            height: totalHeight + 60,
+            transition: isDragging ? 'none' : 'transform 0.12s cubic-bezier(0.2, 0, 0, 1)',
+            willChange: 'transform',
           }}
-          className="relative"
+          className="absolute left-4 top-4"
         >
-          {/* Round titles */}
+          {/* Round titles header */}
           <div
-            style={{
-              transform: `scale(${zoom})`,
-              transformOrigin: 'top left',
-              width: svgW,
-              transition: 'transform 0.15s ease-out',
-            }}
-            className="flex mb-6 flex-shrink-0"
+            style={{ width: svgW }}
+            className="flex mb-4 flex-shrink-0"
           >
             <div className="flex" style={{ gap: roundGap }}>
               {Array.from({ length: maxRound }).map((_, ri) => (
@@ -180,7 +221,7 @@ export function SingleElimView({
                   style={{ width: CARD_W, flexShrink: 0 }}
                   className="text-center"
                 >
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border bg-slate-50 text-slate-600 border-slate-200">
+                  <span className="inline-block text-[10.5px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border bg-white/90 text-slate-700 border-slate-200/80 shadow-2xs">
                     {getRoundLabel(ri, maxRound, '', roundLabelTranslations)}
                   </span>
                 </div>
@@ -191,14 +232,11 @@ export function SingleElimView({
           {/* Interactive tree canvas */}
           <div
             style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-              transformOrigin: 'top left',
               width: svgW,
               height: totalHeight,
-              transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-              marginTop: '44px',
+              marginTop: '8px',
             }}
-            className="absolute"
+            className="relative"
           >
             {/* SVG connectors */}
             <svg
@@ -239,13 +277,12 @@ export function SingleElimView({
               return (
                 <div
                   key={match.id}
-                                    className="absolute motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-reduce:transition-none"
+                  className="absolute motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-reduce:transition-none"
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0)`,
                     width: CARD_W,
                     willChange: 'transform',
                   }}
-
                 >
                   <MatchCard
                     match={match}
@@ -255,10 +292,9 @@ export function SingleElimView({
                     selected={selectedMatchId === match.id}
                     isP1Bye={isP1Bye}
                     isP2Bye={isP2Bye}
-                                        fallbackSportRuleKind={fallbackSportRuleKind}
+                    fallbackSportRuleKind={fallbackSportRuleKind}
                     dragHandlers={dragHandlers}
                   />
-
                 </div>
               );
             })}

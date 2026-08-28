@@ -235,19 +235,36 @@ const commonTranslate = useTranslations('Common');
     };
   }, [activeTournament?.id, isOwner, selectedDivisionId, user?.id]);
 
+  const checkResultsRef = useRef<() => Promise<void>>(async () => {});
+
   useEffect(() => {
     let active = true;
     const checkResults = async () => {
       try {
-        const response = await tournamentsApi.getTournamentResults(tournamentId);
-        const data = response.data;
-        const awards = data?.awards ?? [];
-        const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
-        const hasTop2 = awards.some((a) => a.rank === 2 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
-        const hasAwards = awards.length >= 2 || (hasTop1 && hasTop2);
+        const divisionIdsToCheck = divisionsList.length > 0
+          ? divisionsList.map((d) => d.id)
+          : [undefined];
+
+        const results = await Promise.allSettled(
+          divisionIdsToCheck.map((dId) => tournamentsApi.getTournamentResults(tournamentId, dId))
+        );
+
+        let foundResults = false;
+        for (const res of results) {
+          if (res.status === 'fulfilled' && res.value?.data) {
+            const data = res.value.data;
+            const awards = data.awards ?? [];
+            const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
+            const hasAwards = awards.length >= 1 || data.finalized;
+            if (hasAwards || hasTop1) {
+              foundResults = true;
+              break;
+            }
+          }
+        }
+
         const isFinished = Boolean(
-          data?.finalized ||
-          hasAwards ||
+          foundResults ||
           (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
           (tournament?.status && isTournamentCompleted(tournament.status))
         );
@@ -262,11 +279,12 @@ const commonTranslate = useTranslations('Common');
         }
       }
     };
+    checkResultsRef.current = checkResults;
     void checkResults();
     return () => {
       active = false;
     };
-  }, [activeTournament?.status, selectedDivisionId, tournament?.status, tournamentId]);
+  }, [activeTournament?.status, divisionsList, selectedDivisionId, tournament?.status, tournamentId]);
 
   const refreshLiveCounts = useCallback(async (signal?: AbortSignal) => {
     if (liveRefreshInFlightRef.current) return;
@@ -321,7 +339,10 @@ const commonTranslate = useTranslations('Common');
       } catch {
         return;
       }
-      if (updatedMatch?.tournamentId === tournamentId) scheduleLiveRefresh();
+      if (updatedMatch?.tournamentId === tournamentId) {
+        scheduleLiveRefresh();
+        void checkResultsRef.current();
+      }
     };
 
     void refreshLiveCounts(controller.signal);

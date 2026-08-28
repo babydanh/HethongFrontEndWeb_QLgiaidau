@@ -7,9 +7,9 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, Trophy, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, Maximize2, Minimize2, Scan } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type {
@@ -208,6 +208,24 @@ export function PagedSingleElimView({
 
   const currentRound = rounds[activeRoundIndex] ?? rounds[0];
 
+  const handleAutoFit = useCallback(() => {
+    if (!viewportRef.current) return;
+    const clientW = viewportRef.current.clientWidth - 16;
+    if (clientW > 0 && svgW > 0) {
+      const targetZoom = Math.min(1.0, Math.max(0.25, clientW / svgW));
+      setZoom(Number(targetZoom.toFixed(2)));
+    }
+  }, [svgW]);
+
+  // Initial Auto-fit on mobile screens
+  const hasAutoFittedRef = useRef(false);
+  useEffect(() => {
+    if (!hasAutoFittedRef.current && containerWidth > 0 && containerWidth < 768 && svgW > containerWidth) {
+      hasAutoFittedRef.current = true;
+      handleAutoFit();
+    }
+  }, [containerWidth, svgW, handleAutoFit]);
+
   // Auto-scroll horizontally when active round changes to ensure active column (e.g. Finals) is never cut off
   React.useEffect(() => {
     if (!viewportRef.current) return;
@@ -275,20 +293,28 @@ export function PagedSingleElimView({
           <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-2xs sm:col-span-1">
             <button
               onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer text-sm font-black"
               title={bracketTranslate('zoomOut')}
             >
               -
             </button>
-            <span className="w-9 text-center text-[11px] select-none">
+            <span className="w-10 text-center text-[11px] select-none font-bold">
               {Math.round(zoom * 100)}%
             </span>
             <button
               onClick={() => setZoom((z) => Math.min(z + 0.1, 2.0))}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer text-sm font-black"
               title={bracketTranslate('zoomIn')}
             >
               +
+            </button>
+            <button
+              onClick={handleAutoFit}
+              className="px-1.5 h-7 flex items-center justify-center gap-1 hover:bg-slate-50 rounded text-[11px] font-bold text-blue-600 cursor-pointer"
+              title="Vừa màn hình"
+            >
+              <Scan className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Vừa màn hình</span>
             </button>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}

@@ -1365,7 +1365,7 @@ const commonTranslate = useTranslations('Common');
                               <span
                                 className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10.5px] sm:text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/80 leading-none"
                               >
-                                {translate('statusCompleted') || 'Đã kết thúc'}
+                                {translate('status.completed')}
                               </span>
                             )}
                             <span

@@ -84,10 +84,19 @@ function ParticipantAvatarOnly({
 
   const sizeClasses =
     size === 'lg'
-      ? 'h-8 w-8 sm:h-11 sm:w-11 text-[10px] sm:text-xs'
+      ? 'h-9 w-9 sm:h-11 sm:w-11 text-[10px] sm:text-xs'
       : size === 'md'
-        ? 'h-6.5 w-6.5 sm:h-8 sm:w-8 text-[9px] sm:text-[10.5px]'
-        : 'h-5.5 w-5.5 sm:h-6.5 sm:w-6.5 text-[8px] sm:text-[9.5px]';
+        ? 'h-7 w-7 sm:h-8.5 sm:w-8.5 text-[9px] sm:text-[10.5px]'
+        : 'h-6 w-6 sm:h-7 sm:w-7 text-[8px] sm:text-[9.5px]';
+
+  const avatarBorder =
+    rank === 1
+      ? 'border-2 border-white ring-2 ring-amber-400'
+      : rank === 2
+        ? 'border-2 border-white ring-2 ring-slate-400'
+        : rank === 3
+          ? 'border-2 border-white ring-2 ring-orange-400'
+          : 'border-2 border-white ring-1 ring-slate-300';
 
   const fallbackBg =
     rank === 1
@@ -120,7 +129,7 @@ function ParticipantAvatarOnly({
             alt={member.fullName}
             referrerPolicy="no-referrer"
             onClick={handleMemberClick}
-            className={`${sizeClasses} rounded-full object-cover cursor-pointer hover:scale-105 transition-transform border border-white shadow-2xs`}
+            className={`${sizeClasses} rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${avatarBorder} shadow-2xs`}
             title={member.fullName}
           />
         ) : (
@@ -128,7 +137,7 @@ function ParticipantAvatarOnly({
             key={member.userId || `${participant.participantId}-${index}`}
             type="button"
             onClick={handleMemberClick}
-            className={`flex ${sizeClasses} items-center justify-center rounded-full font-black cursor-pointer hover:scale-105 transition-transform border border-white shadow-2xs leading-none ${fallbackBg}`}
+            className={`flex ${sizeClasses} items-center justify-center rounded-full font-black cursor-pointer hover:scale-105 transition-transform ${avatarBorder} shadow-2xs leading-none ${fallbackBg}`}
             title={member.fullName}
           >
             {member.initials}
@@ -152,12 +161,12 @@ function ParticipantAwardIdentity({
 
   const ringClasses =
     rank === 1
-      ? 'ring-2 ring-amber-400 border border-white shadow-2xs'
+      ? 'border-2 border-white ring-2 ring-amber-400'
       : rank === 2
-        ? 'ring-2 ring-slate-400 border border-white shadow-2xs'
+        ? 'border-2 border-white ring-2 ring-slate-400'
         : rank === 3
-          ? 'ring-2 ring-orange-500 border border-white shadow-2xs'
-          : 'ring-1 ring-slate-300 border border-white shadow-2xs';
+          ? 'border-2 border-white ring-2 ring-orange-500'
+          : 'border-2 border-white ring-1 ring-slate-300';
 
   const fallbackBg =
     rank === 1
@@ -191,7 +200,7 @@ function ParticipantAwardIdentity({
               alt={member.fullName}
               referrerPolicy="no-referrer"
               onClick={handleMemberClick}
-              className={`h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${ringClasses}`}
+              className={`h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${ringClasses} shadow-2xs`}
               title={member.fullName}
             />
           ) : (
@@ -199,7 +208,7 @@ function ParticipantAwardIdentity({
               key={member.userId || `${participant.participantId}-${index}`}
               type="button"
               onClick={handleMemberClick}
-              className={`flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-full text-[10px] sm:text-[11px] font-black cursor-pointer hover:scale-105 transition-transform leading-none ${fallbackBg} ${ringClasses}`}
+              className={`flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-full text-[10px] sm:text-[11px] font-black cursor-pointer hover:scale-105 transition-transform leading-none ${fallbackBg} ${ringClasses} shadow-2xs`}
               title={member.fullName}
             >
               {member.initials}
@@ -244,7 +253,7 @@ function ResultMiniPodium({
               <span className="mb-0.5 sm:mb-1 text-[9px] sm:text-[10px] font-black uppercase text-slate-500 tracking-wider">
                 {getRankLabel(2)}
               </span>
-              <div className="rounded-full ring-1.5 sm:ring-2 ring-slate-400 p-0.5 bg-white shadow-2xs mb-1">
+              <div className="mb-1">
                 <ParticipantAvatarOnly participant={silver.participant} rank={2} size="md" />
               </div>
               <p
@@ -272,7 +281,7 @@ function ResultMiniPodium({
               <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-white shadow-md border border-white sm:border-2 -mb-1.5 sm:-mb-2 z-10">
                 <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white drop-shadow-xs" />
               </div>
-              <div className="rounded-full ring-2 sm:ring-3 ring-amber-400 p-0.5 bg-white shadow-md mb-1">
+              <div className="mb-1">
                 <ParticipantAvatarOnly participant={gold.participant} rank={1} size="lg" />
               </div>
               <span className="text-[9px] sm:text-[10px] font-black uppercase text-amber-600 tracking-wider">
@@ -300,15 +309,15 @@ function ResultMiniPodium({
               <span className="mb-0.5 sm:mb-1 text-[9px] sm:text-[10px] font-black uppercase text-orange-600 tracking-wider">
                 {getRankLabel(3)}
               </span>
-              <div className="flex items-center -space-x-1.5 sm:-space-x-2">
+              <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
                 {bronzes.map((bronze, bIdx) =>
                   bronze.participant ? (
-                    <div
+                    <ParticipantAvatarOnly
                       key={bronze.participant.participantId || bIdx}
-                      className="rounded-full ring-1.5 sm:ring-2 ring-orange-400 p-0.5 bg-white shadow-2xs"
-                    >
-                      <ParticipantAvatarOnly participant={bronze.participant} rank={3} size="md" />
-                    </div>
+                      participant={bronze.participant}
+                      rank={3}
+                      size="md"
+                    />
                   ) : null,
                 )}
               </div>

@@ -1298,9 +1298,6 @@ const commonTranslate = useTranslations('Common');
                     {tab.isLive && (
                       <span className="h-2 w-2 shrink-0 rounded-full bg-current motion-safe:animate-ping motion-reduce:animate-none" />
                     )}
-                    {tab.isGolden && (
-                      <Trophy className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-amber-700'}`} />
-                    )}
                     <span>{tab.label}</span>
                     {tab.badge != null && (
                       <span
@@ -1362,6 +1359,13 @@ const commonTranslate = useTranslations('Common');
                               >
                                 <span className="h-1.5 w-1.5 rounded-full bg-rose-600 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
                                 <span>{liveCount}</span>
+                              </span>
+                            )}
+                            {(isCompleted || hasConfirmedResults || isTournamentCompleted(division.status)) && (
+                              <span
+                                className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10.5px] sm:text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/80 leading-none"
+                              >
+                                {translate('statusCompleted') || 'Đã kết thúc'}
                               </span>
                             )}
                             <span

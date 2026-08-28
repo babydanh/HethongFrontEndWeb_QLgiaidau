@@ -53,7 +53,7 @@ type AssignmentPickerState = {
   scheduledAt: string;
 };
 
-const PIXELS_PER_MINUTE = 1.25;
+const PIXELS_PER_MINUTE = 2;
 
 function datePart(value?: string | null) {
   if (!value) return null;

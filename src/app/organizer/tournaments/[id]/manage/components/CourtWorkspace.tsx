@@ -20,7 +20,7 @@ import type {
   SchedulePlanPreview,
   SchedulePlanPreviewInput,
 } from '@/features/tournaments/api';
-import type { SportRuleKind } from '@/types/tournament';
+import type { BracketStage, SportRuleKind } from '@/types/tournament';
 import type { CourtSetupItem } from './CourtSetup';
 import { QuickSchedulePanel } from './QuickSchedulePanel';
 import { CourtScheduleBoard } from './CourtScheduleBoard';
@@ -29,6 +29,11 @@ interface WorkspaceMatch {
   id: string;
   divisionId?: string | null;
   roundNumber?: number | null;
+  leg?: number | null;
+  stage?: {
+    name?: string | null;
+    roundConfig?: { roundsToPlay?: number; rounds_to_play?: number } | null;
+  } | null;
   matchOrder?: number | null;
   scheduledAt?: string | null;
   courtId?: string | null;
@@ -38,6 +43,7 @@ interface WorkspaceMatch {
 
 interface CourtWorkspaceProps {
   venueName?: string | null;
+  bracket?: { stages: BracketStage[] } | null;
   courts: CourtSetupItem[];
   divisions: Division[];
   matches: WorkspaceMatch[];
@@ -58,6 +64,7 @@ interface CourtWorkspaceProps {
 
 export function CourtWorkspace({
   venueName,
+  bracket = null,
   courts,
   divisions,
   matches,
@@ -76,17 +83,63 @@ export function CourtWorkspace({
   onOpenMatch,
 }: CourtWorkspaceProps) {
   const t = useTranslations('OrganizerManage');
+  const [selectedDivision, setSelectedDivision] = useState(defaultDivisionId ?? 'all');
+  const [selectedStage, setSelectedStage] = useState('all');
   const [selectedRound, setSelectedRound] = useState('all');
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => courts.map((court) => court.id));
   const [courtPickerOpen, setCourtPickerOpen] = useState(false);
   const [scheduleSettingsOpen, setScheduleSettingsOpen] = useState(false);
-  const roundOptions = useMemo(
-    () => [...new Set(matches.map((match) => match.roundNumber).filter((round): round is number => Number.isInteger(round)))].sort((a, b) => a - b),
-    [matches],
+  const stageMetaByMatchId = useMemo(() => {
+    const entries = bracket?.stages.flatMap((stage) => stage.groups.flatMap((group) => group.matches.map((match) => [match.id, {
+      stageId: stage.id,
+      stageName: stage.name,
+      stageType: stage.type,
+      roundsToPlay: stage.roundConfig?.roundsToPlay ?? stage.roundConfig?.rounds_to_play ?? 1,
+    }] as const))) ?? [];
+    return new Map(entries);
+  }, [bracket]);
+  const divisionOptions = useMemo(() => divisions.filter((division) => matches.some((match) => match.divisionId === division.id)), [divisions, matches]);
+  const contentMatches = useMemo(
+    () => selectedDivision === 'all' ? matches : matches.filter((match) => match.divisionId === selectedDivision),
+    [matches, selectedDivision],
   );
+  const stageOptions = useMemo(() => {
+    const options = contentMatches.map((match) => {
+      const meta = stageMetaByMatchId.get(match.id);
+      return meta ? { id: meta.stageId, name: meta.stageName } : match.stage?.name ? { id: match.stage.name, name: match.stage.name } : null;
+    }).filter((option): option is { id: string; name: string } => Boolean(option));
+    return [...new Map(options.map((option) => [option.id, option])).values()];
+  }, [contentMatches, stageMetaByMatchId]);
+  const stageMatches = useMemo(
+    () => selectedStage === 'all' ? contentMatches : contentMatches.filter((match) => (stageMetaByMatchId.get(match.id)?.stageId ?? match.stage?.name) === selectedStage),
+    [contentMatches, selectedStage, stageMetaByMatchId],
+  );
+  const activeStageMeta = stageMatches.map((match) => stageMetaByMatchId.get(match.id)).find(Boolean);
+  const configuredLegCount = activeStageMeta?.roundsToPlay ?? Math.max(0, ...stageMatches.map((match) => Math.max(match.stage?.roundConfig?.roundsToPlay ?? 0, match.stage?.roundConfig?.rounds_to_play ?? 0)));
+  const stageType = activeStageMeta?.stageType?.toUpperCase() ?? '';
+  const isKnockoutStage = stageType.includes('ELIMINATION');
+  const legOptions = useMemo(
+    () => [...new Set(stageMatches.map((match) => match.leg).filter((leg): leg is number => typeof leg === 'number' && Number.isInteger(leg) && leg > 0))].sort((a, b) => a - b),
+    [stageMatches],
+  );
+  const usesLegFilter = configuredLegCount > 1 || legOptions.length > 1;
+  const roundOptions = useMemo(
+    () => usesLegFilter || isKnockoutStage ? [...new Set(stageMatches.map((match) => usesLegFilter ? match.leg : match.roundNumber).filter((round): round is number => typeof round === 'number' && Number.isInteger(round)))].sort((a, b) => a - b) : [],
+    [isKnockoutStage, stageMatches, usesLegFilter],
+  );
+  const roundLabel = (round: number) => {
+    if (usesLegFilter) return t('legValue', { leg: round });
+    const maxRound = roundOptions.at(-1) ?? round;
+    const distanceFromFinal = maxRound - round;
+    if (isKnockoutStage && distanceFromFinal >= 0 && distanceFromFinal <= 4) {
+      const knockoutLabels = [t('finalRound'), t('semiFinalRound'), t('quarterFinalRound'), t('roundOf', { count: 16 }), t('roundOf', { count: 32 })];
+      return knockoutLabels[distanceFromFinal];
+    }
+    return t('roundValue', { round });
+  };
   const scopedMatches = useMemo(
-    () => selectedRound === 'all' ? matches : matches.filter((match) => String(match.roundNumber) === selectedRound),
-    [matches, selectedRound],
+    () => selectedRound === 'all' ? stageMatches : stageMatches.filter((match) => (usesLegFilter ? String(match.leg) === selectedRound : String(match.roundNumber) === selectedRound)),
+    [stageMatches, selectedRound, usesLegFilter],
   );
   const scopedMatchIds = selectedRound === 'all' ? undefined : scopedMatches.map((match) => match.id);
   const visibleCourts = useMemo(() => {
@@ -122,18 +175,34 @@ export function CourtWorkspace({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white pb-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white pb-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
           <CalendarRange className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
-          <span className="truncate">{selectedRound === 'all' ? t('allRoundsSummary', { count: matches.length }) : t('roundSummary', { round: selectedRound, count: scopedMatches.length })}</span>
+          <span className="truncate">{selectedRound === 'all' ? t('allRoundsSummary', { count: scopedMatches.length }) : t('roundSummary', { round: roundLabel(Number(selectedRound)), count: scopedMatches.length })}</span>
         </div>
-        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <span className="sr-only">{t('roundLabel')}</span>
-          <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="h-10 min-w-40 border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-            <option value="all">{t('allRounds')}</option>
-            {roundOptions.map((round) => <option key={round} value={String(round)}>{t('roundValue', { round })}</option>)}
-          </select>
-        </label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span>{t('divisionLabel')}</span>
+            <select value={selectedDivision} onChange={(event) => { setSelectedDivision(event.target.value); setSelectedStage('all'); setSelectedRound('all'); }} className="h-10 min-w-44 border border-slate-300 bg-white px-3 text-sm font-normal normal-case tracking-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+              <option value="all">{t('allDivisions')}</option>
+              {divisionOptions.map((division) => <option key={division.id} value={division.id}>{division.name}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span>{t('stageLabel')}</span>
+            <select value={selectedStage} onChange={(event) => { setSelectedStage(event.target.value); setSelectedRound('all'); }} className="h-10 min-w-40 border border-slate-300 bg-white px-3 text-sm font-normal normal-case tracking-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+              <option value="all">{t('allStages')}</option>
+              {stageOptions.map((stage) => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span>{usesLegFilter ? t('legLabel') : t('roundLabel')}</span>
+            <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="h-10 min-w-40 border border-slate-300 bg-white px-3 text-sm font-normal normal-case tracking-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+              <option value="all">{usesLegFilter ? t('allLegs') : t('allRounds')}</option>
+              {roundOptions.map((round) => <option key={round} value={String(round)}>{roundLabel(round)}</option>)}
+            </select>
+          </label>
+        </div>
       </div>
 
       <CourtScheduleBoard courts={visibleCourts} matches={scopedMatches} preview={preview} defaultDate={defaultDate} defaultOperatingStart={defaultOperatingStart} defaultOperatingEnd={defaultOperatingEnd} onOpenMatch={onOpenMatch} />

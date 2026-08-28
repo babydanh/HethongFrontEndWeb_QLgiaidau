@@ -542,6 +542,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
               <div className="mx-auto max-w-[1800px]">
                 <CourtWorkspace
+                  bracket={s.bracket}
                   venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
                   courts={s.courts}
                   divisions={s.divisions}

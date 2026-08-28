@@ -904,9 +904,14 @@ export default function HomePage() {
     const activeSet = currentSetIndex !== -1 ? scores[currentSetIndex] : (scores[scores.length - 1] || { team1Score: 0, team2Score: 0 });
     const currentSetNum = currentSetIndex !== -1 ? currentSetIndex + 1 : (scores.length || 1);
 
-    const scoreText = isScheduled
-      ? (match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS')
-      : `${activeSet.team1Score} - ${activeSet.team2Score}`;
+    const isP1Winner = Boolean(
+      (match.winnerId && match.participant1Id && match.winnerId === match.participant1Id) ||
+      (isCompleted && activeSet.team1Score > activeSet.team2Score)
+    );
+    const isP2Winner = Boolean(
+      (match.winnerId && match.participant2Id && match.winnerId === match.participant2Id) ||
+      (isCompleted && activeSet.team2Score > activeSet.team1Score)
+    );
 
     const startedAtTime = (match as unknown as { startedAt?: string | null }).startedAt || match.scheduledAt;
     const elapsedMinutes = startedAtTime && isLive
@@ -925,6 +930,9 @@ export default function HomePage() {
       fallbackText: string,
       side: 'left' | 'right',
     ) => {
+      const isWinner = side === 'left' ? isP1Winner : isP2Winner;
+      const isLoser = side === 'left' ? isP2Winner : isP1Winner;
+
       const rawMembers = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
       const teamNameParts = participant?.teamName && participant.teamName.includes(' / ')
         ? participant.teamName.split(' / ').map((p) => p.trim()).filter(Boolean)
@@ -957,7 +965,13 @@ export default function HomePage() {
 
         return (
           <div
-            className={`relative ${sizeClass} rounded-full overflow-hidden ring-2 ${rankRing} ring-offset-1 ring-offset-white bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs`}
+            className={`relative ${sizeClass} rounded-full overflow-hidden ring-2 ${
+              isCompleted && isWinner
+                ? 'ring-blue-600 ring-offset-1 ring-offset-white shadow-xs'
+                : isCompleted && isLoser
+                  ? 'ring-slate-200 opacity-80'
+                  : `${rankRing} ring-offset-1 ring-offset-white`
+            } bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs transition-all`}
           >
             {url ? (
               <Image
@@ -971,9 +985,13 @@ export default function HomePage() {
             ) : (
               <div
                 className={`w-full h-full flex items-center justify-center font-bold tracking-tight ${initialSizeClass} ${
-                  sideFallback === 'left'
-                    ? 'bg-amber-50 text-amber-800'
-                    : 'bg-sky-50 text-sky-800'
+                  isCompleted && isWinner
+                    ? 'bg-blue-50 text-blue-700 font-extrabold'
+                    : isCompleted && isLoser
+                      ? 'bg-slate-100 text-slate-400'
+                      : sideFallback === 'left'
+                        ? 'bg-amber-50 text-amber-800'
+                        : 'bg-sky-50 text-sky-800'
                 }`}
               >
                 {initial}
@@ -992,19 +1010,19 @@ export default function HomePage() {
               side === 'left' ? (
                 <div className="flex items-center -space-x-2">
                   <div className="z-20">
-                    {renderSingleAvatar(member1, 'w-9 h-9 sm:w-10 sm:h-10', 'text-xs', 'left')}
+                    {renderSingleAvatar(member1, 'w-8 h-8 sm:w-9 sm:h-9', 'text-xs', 'left')}
                   </div>
                   <div className="z-10 mt-1">
-                    {renderSingleAvatar(member2, 'w-7 h-7 sm:w-7.5 sm:h-7.5', 'text-[10px]', 'left')}
+                    {renderSingleAvatar(member2, 'w-6.5 h-6.5 sm:w-7 sm:h-7', 'text-[10px]', 'left')}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center -space-x-2">
                   <div className="z-10 mt-1">
-                    {renderSingleAvatar(member1, 'w-7 h-7 sm:w-7.5 sm:h-7.5', 'text-[10px]', 'right')}
+                    {renderSingleAvatar(member1, 'w-6.5 h-6.5 sm:w-7 sm:h-7', 'text-[10px]', 'right')}
                   </div>
                   <div className="z-20">
-                    {renderSingleAvatar(member2, 'w-9 h-9 sm:w-10 sm:h-10', 'text-xs', 'right')}
+                    {renderSingleAvatar(member2, 'w-8 h-8 sm:w-9 sm:h-9', 'text-xs', 'right')}
                   </div>
                 </div>
               )
@@ -1012,14 +1030,22 @@ export default function HomePage() {
               // Singles or Single Team Avatar
               renderSingleAvatar(
                 rawMembers[0] || (logoUrl ? { avatarUrl: logoUrl, fullName: participant?.teamName } : undefined),
-                'w-11 h-11 sm:w-12 sm:h-12',
+                'w-9.5 h-9.5 sm:w-10.5 sm:h-10.5',
                 'text-sm',
                 side,
               )
             )}
           </div>
           {/* Name */}
-          <span className="mt-1.5 text-xs font-bold text-slate-800 text-center line-clamp-1 max-w-[110px] sm:max-w-[140px] tracking-tight leading-tight">
+          <span
+            className={`mt-1.5 text-xs text-center line-clamp-1 max-w-[110px] sm:max-w-[140px] tracking-tight leading-tight ${
+              isCompleted && isWinner
+                ? 'font-bold text-slate-900'
+                : isCompleted && isLoser
+                  ? 'font-medium text-slate-400'
+                  : 'font-bold text-slate-800'
+            }`}
+          >
             {displayName}
           </span>
         </div>
@@ -1075,7 +1101,7 @@ export default function HomePage() {
             {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
             {/* Center Score / Time */}
-            <div className="flex flex-col items-center justify-center shrink-0 px-1.5 sm:px-2 min-w-[65px] sm:min-w-[70px]">
+            <div className="flex flex-col items-center justify-center shrink-0 px-1 sm:px-2 min-w-[60px] sm:min-w-[68px]">
               {isScheduled ? (
                 <>
                   <span className="text-xs font-black tracking-wider text-slate-500 bg-slate-100/90 border border-slate-200/90 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
@@ -1087,12 +1113,34 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-widest leading-none drop-shadow-2xs font-sans">
-                    {scoreText}
-                  </span>
+                  <div className="flex items-center gap-1 sm:gap-1.5 font-sans leading-none">
+                    <span
+                      className={`text-xl sm:text-2xl tracking-tight transition-colors ${
+                        isCompleted && isP1Winner
+                          ? 'text-blue-600 font-extrabold'
+                          : isCompleted && isP2Winner
+                            ? 'text-slate-400 font-bold'
+                            : 'text-slate-900 font-extrabold'
+                      }`}
+                    >
+                      {activeSet.team1Score}
+                    </span>
+                    <span className="text-slate-300 font-bold text-xs sm:text-sm select-none">-</span>
+                    <span
+                      className={`text-xl sm:text-2xl tracking-tight transition-colors ${
+                        isCompleted && isP2Winner
+                          ? 'text-blue-600 font-extrabold'
+                          : isCompleted && isP1Winner
+                            ? 'text-slate-400 font-bold'
+                            : 'text-slate-900 font-extrabold'
+                      }`}
+                    >
+                      {activeSet.team2Score}
+                    </span>
+                  </div>
                   <span
-                    className={`text-[11px] font-bold mt-1.5 tracking-tight ${
-                      isLive ? 'text-rose-600 animate-pulse' : 'text-slate-500'
+                    className={`text-[10.5px] sm:text-[11px] font-bold mt-1.5 tracking-tight ${
+                      isLive ? 'text-rose-600 animate-pulse' : 'text-slate-400'
                     }`}
                   >
                     {setSubStatusText}

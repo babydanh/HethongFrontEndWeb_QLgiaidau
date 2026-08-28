@@ -293,14 +293,14 @@ export function PagedDoubleElimView({
     }
   }, [svgW]);
 
-  // Initial Auto-fit on mobile screens
-  const hasAutoFittedRef = useRef(false);
-  useEffect(() => {
-    if (!hasAutoFittedRef.current && containerWidth > 0 && containerWidth < 768 && svgW > containerWidth) {
-      hasAutoFittedRef.current = true;
+  // Double-tap zoom toggle between 100% (readable) and auto-fit (overview)
+  const toggleZoomMode = useCallback(() => {
+    if (zoom < 0.85) {
+      setZoom(1.0);
+    } else {
       handleAutoFit();
     }
-  }, [containerWidth, svgW, handleAutoFit]);
+  }, [handleAutoFit, zoom]);
 
   // Auto-scroll horizontally when active round changes to ensure active column (e.g. Finals) is never cut off
   React.useEffect(() => {

@@ -50,6 +50,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
   const isDraggingRef = useRef(false);
   const startX = useRef(0);
   const dragDistance = useRef(0);
+  const dragDeltaX = useRef(0);
 
   useEffect(() => {
     const handleResize = () => {
@@ -75,16 +76,20 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
     setIsDragging(true);
     startX.current = e.clientX;
     dragDistance.current = 0;
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      // ignore if pointer capture is not supported
+    dragDeltaX.current = 0;
+    if (e.pointerType !== 'mouse') {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // ignore if pointer capture is not supported
+      }
     }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
     const deltaX = e.clientX - startX.current;
+    dragDeltaX.current = deltaX;
     setDragOffset(deltaX);
     dragDistance.current = Math.abs(deltaX);
   };
@@ -100,8 +105,9 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
       // ignore
     }
 
-    const deltaX = dragOffset;
+    const deltaX = dragDeltaX.current;
     setDragOffset(0);
+    dragDeltaX.current = 0;
 
     let nextIndex = currentIndex;
     if (deltaX < -30 && currentIndex < tournaments.length - 1) {
@@ -341,7 +347,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
               e.stopPropagation();
               handlePrev();
             }}
-            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white/85 hover:bg-white text-slate-800 border border-slate-200/80 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 backdrop-blur-md z-30"
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white/85 hover:bg-white text-slate-800 border border-slate-200/80 shadow-md cursor-pointer opacity-100 transition-all hover:scale-105 active:scale-95 backdrop-blur-md z-30"
             aria-label="Previous banner"
           >
             <ChevronLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -354,34 +360,12 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
               e.stopPropagation();
               handleNext();
             }}
-            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white/85 hover:bg-white text-slate-800 border border-slate-200/80 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 backdrop-blur-md z-30"
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-white/85 hover:bg-white text-slate-800 border border-slate-200/80 shadow-md cursor-pointer opacity-100 transition-all hover:scale-105 active:scale-95 backdrop-blur-md z-30"
             aria-label="Next banner"
           >
             <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
-          {/* Dots Indicators */}
-          <div className="absolute bottom-2.5 sm:bottom-4 right-3 sm:right-6 flex items-center gap-1.5 z-30">
-            {tournaments.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setCurrentIndex(idx);
-                }}
-                className="p-1 cursor-pointer flex items-center justify-center group/dot"
-                aria-label={`Go to slide ${idx + 1}`}
-              >
-                <span
-                  className={`h-1.5 rounded-full transition-all block ${
-                    idx === currentIndex ? 'w-4 sm:w-5 bg-blue-500 shadow-sm' : 'w-1.5 bg-white/55 hover:bg-white/90'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
         </>
       )}
     </div>

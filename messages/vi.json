@@ -7550,6 +7550,13 @@
     "resizeDraft": "Kéo để thay đổi thời lượng bản nháp",
     "time": "Giờ",
     "unscheduledMatches": "Trận chưa xếp",
+    "clickToAssign": "Bấm vào ô giờ trống để chọn trận",
+    "timelineScrollHint": "Kéo thanh cuộn để xem các khung giờ",
+    "openAssignmentPicker": "Chọn trận cho {court} lúc {time}",
+    "assignmentPickerTitle": "Chọn trận · {court} · {time}",
+    "assignmentPickerHint": "Chỉ các trận chưa xếp trong phạm vi hiện tại được hiển thị.",
+    "assignmentSearch": "Tìm theo tên đội, vòng hoặc mã trận",
+    "noMatchesFound": "Không có trận phù hợp với bộ lọc.",
     "teamTbd": "Chờ xác định",
     "toast": {
       "copiedInvite": "Đã sao chép link!"

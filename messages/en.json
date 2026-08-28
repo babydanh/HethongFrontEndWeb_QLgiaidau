@@ -7550,6 +7550,13 @@
     "resizeDraft": "Drag to change draft duration",
     "time": "Time",
     "unscheduledMatches": "Unscheduled matches",
+    "clickToAssign": "Click an empty time cell to choose a match",
+    "timelineScrollHint": "Scroll to move through the time range",
+    "openAssignmentPicker": "Choose a match for {court} at {time}",
+    "assignmentPickerTitle": "Choose a match · {court} · {time}",
+    "assignmentPickerHint": "Only unscheduled matches in the current scope are shown.",
+    "assignmentSearch": "Search by team name, round, or match number",
+    "noMatchesFound": "No matches match the current filter.",
     "teamTbd": "TBD",
     "toast": {
       "copiedInvite": "Invite link copied!"

@@ -155,7 +155,7 @@ const commonTranslate = useTranslations('Common');
   const activeTournament = selectedDivision ?? tournament;
 
   const isOwner = !!user?.id && !!activeTournament?.organizerId && user.id === activeTournament.organizerId;
-  const { openUserProfile } = useUserProfileModalStore();
+  const { openUserById, openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
     if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results' || tabParam === 'live') {
@@ -648,10 +648,11 @@ const commonTranslate = useTranslations('Common');
 
   useEffect(() => {
     const rawTab = searchParams.get('tab');
+    const defaultTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
     const requestedTab: TournamentDetailTab =
       rawTab && TOURNAMENT_DETAIL_TABS.includes(rawTab as TournamentDetailTab)
         ? (rawTab as TournamentDetailTab)
-        : 'overview';
+        : defaultTab;
 
     // If an intentional user click navigation is in progress:
     if (pendingNavigatedTabRef.current !== null) {
@@ -665,7 +666,7 @@ const commonTranslate = useTranslations('Common');
 
     if (requestedTab === 'sponsors' && publicSponsors.length === 0) {
       if (activeTab === 'sponsors') {
-        Promise.resolve().then(() => setActiveTab('overview'));
+        Promise.resolve().then(() => setActiveTab(defaultTab));
       }
       return;
     }
@@ -675,7 +676,13 @@ const commonTranslate = useTranslations('Common');
         setActiveTab(requestedTab);
       });
     }
-  }, [activeTab, publicSponsors.length, searchParams]);
+  }, [activeTab, publicSponsors.length, searchParams, showResultsTab]);
+
+  useEffect(() => {
+    if (showResultsTab && !hasUserNavigatedRef.current && !searchParams.get('tab')) {
+      setActiveTab('results');
+    }
+  }, [showResultsTab, searchParams]);
 
   if (isInitialLoading) {
     return (
@@ -815,12 +822,35 @@ const commonTranslate = useTranslations('Common');
     <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm space-y-3 sm:space-y-4">
       {/* Organizer / Club Header */}
       {(() => {
-        const organizer = activeTournament.organizer;
+        const organizer = activeTournament.organizer || tournament?.organizer;
+        const organizerId = organizer?.id || activeTournament.organizerId || tournament?.organizerId;
         const displayLogo = activeTournament.logoUrl || organizer?.avatarUrl;
         const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
+        const isClickable = Boolean(organizerId);
+
+        const handleOrganizerClick = (e: React.MouseEvent<HTMLElement>) => {
+          if (!organizerId) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
+        };
+
         return (
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+          <div
+            onClick={isClickable ? handleOrganizerClick : undefined}
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            onKeyDown={isClickable ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleOrganizerClick(e as unknown as React.MouseEvent<HTMLElement>);
+              }
+            } : undefined}
+            className={`flex items-center gap-3 transition-all rounded-xl p-2 -m-2 ${
+              isClickable ? 'cursor-pointer hover:bg-slate-50 active:bg-slate-100 group' : ''
+            }`}
+            title={isClickable ? `Xem hồ sơ của ${displayName}` : displayName}
+          >
+            <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs group-hover:border-blue-400 group-hover:ring-2 group-hover:ring-blue-100 transition-all">
               {displayLogo ? (
                 <img
                   src={displayLogo}
@@ -832,12 +862,17 @@ const commonTranslate = useTranslations('Common');
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
                 {translate('organizerLabel') || 'Ban tổ chức'}
               </p>
-              <p className="text-sm font-bold text-slate-900 truncate" title={displayName}>
-                {displayName}
-              </p>
+              <div className="flex items-center gap-1">
+                <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors" title={displayName}>
+                  {displayName}
+                </p>
+                {isClickable && (
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
+                )}
+              </div>
             </div>
           </div>
         );

@@ -20,10 +20,10 @@
     --color-background: #ffffff; /* pure white background */
     --color-foreground: #0f172a; /* slate-900 */
 
-    --color-primary: #002e7c; /* SportO Primary Navy #002e7c */
+    --color-primary: rgb(48, 197, 132); /* SportO Primary Navy #002e7c */
     --color-primary-hover: #002461; /* SportO Primary Hover Navy #002461 */
     --color-primary-foreground: #ffffff;
-    --color-primary-light: #eff4fc; /* primary tint */
+    --color-primary-light: #b2cffd; /* primary tint */
 
     --color-secondary: #3ab5f6; /* SportO Cyan Accent */
 

@@ -104,15 +104,11 @@ export function CourtWorkspace({
   if (courts.length === 0) return null;
 
   return (
-    <section className="space-y-4 border border-slate-200 bg-white p-4 md:p-5" aria-labelledby="court-workspace-title">
-      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <LayoutGrid className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{t('courtWorkspace')}</p>
-            <h2 id="court-workspace-title" className="mt-1 truncate text-xl font-bold text-slate-900">{venueName || t('venueNotSet')}</h2>
-            <p className="mt-1 text-sm leading-5 text-slate-500">{t('workspaceIntro')}</p>
-          </div>
+    <section className="space-y-3" aria-labelledby="court-workspace-title">
+      <div className="flex flex-col gap-3 border-y border-slate-200 bg-white py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <LayoutGrid className="h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
+          <h2 id="court-workspace-title" className="truncate text-xl font-bold text-slate-900">{venueName || t('venueNotSet')}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" onClick={() => setCourtPickerOpen(true)} className="min-h-10 border-slate-300 bg-white text-slate-800">
@@ -126,7 +122,7 @@ export function CourtWorkspace({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white pb-3 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
           <CalendarRange className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
           <span className="truncate">{selectedRound === 'all' ? t('allRoundsSummary', { count: matches.length }) : t('roundSummary', { round: selectedRound, count: scopedMatches.length })}</span>

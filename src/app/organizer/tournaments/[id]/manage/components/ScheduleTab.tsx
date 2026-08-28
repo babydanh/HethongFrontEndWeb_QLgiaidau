@@ -104,8 +104,7 @@ export function ScheduleTab({
         <div className="flex items-start gap-3 border-b border-slate-200 pb-4">
           <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">{t('scheduleSetupStep')}</p>
-            <h2 id="schedule-setup-title" className="mt-1 text-xl font-bold text-slate-900">{t('scheduleSetupTitle')}</h2>
+            <h2 id="schedule-setup-title" className="text-xl font-bold text-slate-900">{t('scheduleSetupTitle')}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">{t('scheduleSetupHint')}</p>
           </div>
         </div>

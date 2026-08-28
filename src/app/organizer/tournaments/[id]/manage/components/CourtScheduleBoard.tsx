@@ -95,8 +95,6 @@ export function CourtScheduleBoard({
   matches,
   preview = null,
   defaultDate,
-  defaultOperatingStart = '08:00',
-  defaultOperatingEnd = '22:00',
   onOpenMatch,
 }: CourtScheduleBoardProps) {
   const t = useTranslations('OrganizerManage');
@@ -153,12 +151,12 @@ export function CourtScheduleBoard({
     const start = preview
       ? new Date(preview.operatingWindow.start).getTime()
       : scheduleDate
-        ? new Date(`${scheduleDate}T${defaultOperatingStart}:00`).getTime()
+        ? new Date(`${scheduleDate}T00:00:00`).getTime()
         : Number.NaN;
     const end = preview
       ? new Date(preview.operatingWindow.end).getTime()
       : scheduleDate
-        ? new Date(`${scheduleDate}T${defaultOperatingEnd}:00`).getTime()
+        ? new Date(`${scheduleDate}T00:00:00`).getTime() + 24 * 60 * 60 * 1000
         : Number.NaN;
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
     const increment = preview?.gridIncrementMinutes ?? 30;
@@ -168,7 +166,7 @@ export function CourtScheduleBoard({
       label: formatMatchTime(new Date(start + index * increment * 60_000).toISOString()),
     }));
     return { start, end, increment, totalMinutes, marks, height: totalMinutes * PIXELS_PER_MINUTE };
-  }, [defaultOperatingEnd, defaultOperatingStart, preview, scheduleDate]);
+  }, [preview, scheduleDate]);
 
   const filteredPickerMatches = useMemo(() => {
     const query = assignmentSearch.trim().toLocaleLowerCase();
@@ -276,7 +274,7 @@ export function CourtScheduleBoard({
           <CalendarClock className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
           <div className="min-w-0">
             <h3 id="schedule-board-title" className="truncate font-semibold">{formatDateLabel(scheduleDate, locale)}</h3>
-            <p className="text-xs text-slate-500">{t('time')} {defaultOperatingStart}–{defaultOperatingEnd} · {t('scheduled')} {scheduledMatches.length}/{displayMatches.length}</p>
+            <p className="text-xs text-slate-500">{preview ? `${t('time')} ${formatMatchTime(preview.operatingWindow.start)}–${formatMatchTime(preview.operatingWindow.end)}` : t('fullDay')} · {t('scheduled')} {scheduledMatches.length}/{displayMatches.length}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">

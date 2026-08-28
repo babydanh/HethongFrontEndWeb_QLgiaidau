@@ -72,6 +72,7 @@ interface Props {
   initialDivisions?: Division[];
   initialHasResults?: boolean;
   initialResults?: TournamentResult | null;
+  initialCompletedDivisionIds?: Record<string, boolean>;
 }
 
 type TournamentDetailTab = 'live' | 'results' | 'overview' | 'teams' | 'bracket' | 'matches' | 'sponsors';
@@ -110,6 +111,7 @@ export default function TournamentDetailClient({
   initialDivisions = [],
   initialHasResults = false,
   initialResults,
+  initialCompletedDivisionIds,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const reduceMotion = useReducedMotion();
@@ -185,6 +187,9 @@ const commonTranslate = useTranslations('Common');
   }, []);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
   const [hasConfirmedResults, setHasConfirmedResults] = useState(initialHasResults);
+  const [completedDivisionIds, setCompletedDivisionIds] = useState<Record<string, boolean>>(
+    initialCompletedDivisionIds ?? {}
+  );
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
   const [isRegistrationStatusLoading, setIsRegistrationStatusLoading] = useState(false);
@@ -262,8 +267,16 @@ const commonTranslate = useTranslations('Common');
           divisionIdsToCheck.map((dId) => tournamentsApi.getTournamentResults(tournamentId, dId))
         );
 
+        const completedMap: Record<string, boolean> = {};
+        divisionsList.forEach((div) => {
+          if (isTournamentCompleted(div.status)) {
+            completedMap[div.id] = true;
+          }
+        });
+
         let foundResults = false;
-        for (const res of results) {
+        results.forEach((res, idx) => {
+          const dId = divisionIdsToCheck[idx];
           if (res.status === 'fulfilled' && res.value?.data) {
             const data = res.value.data;
             const awards = data.awards ?? [];
@@ -271,10 +284,12 @@ const commonTranslate = useTranslations('Common');
             const hasAwards = awards.length >= 1 || data.finalized;
             if (hasAwards || hasTop1) {
               foundResults = true;
-              break;
+            }
+            if (dId && (data.finalized || hasTop1)) {
+              completedMap[dId] = true;
             }
           }
-        }
+        });
 
         const isFinished = Boolean(
           foundResults ||
@@ -282,6 +297,7 @@ const commonTranslate = useTranslations('Common');
           (tournament?.status && isTournamentCompleted(tournament.status))
         );
         if (active) {
+          setCompletedDivisionIds(completedMap);
           setHasConfirmedResults(isFinished);
           if (isFinished && !hasUserNavigatedRef.current && !searchParams?.get('tab')) {
             setActiveTab((currentTab) => (currentTab === 'overview' ? 'results' : currentTab));
@@ -1361,7 +1377,7 @@ const commonTranslate = useTranslations('Common');
                                 <span>{liveCount}</span>
                               </span>
                             )}
-                            {isTournamentCompleted(division.status) && (
+                            {Boolean(completedDivisionIds[division.id] || isTournamentCompleted(division.status)) && (
                               <span
                                 className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10.5px] sm:text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/80 leading-none"
                               >

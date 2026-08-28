@@ -131,6 +131,32 @@ const config: Config = {
           DEFAULT: "var(--color-card)",
           foreground: "var(--color-card-foreground)",
         },
+        surface: {
+          canvas: "var(--color-surface-canvas)",
+          raised: "var(--color-surface-raised)",
+          subtle: "var(--color-surface-subtle)",
+          hover: "var(--color-surface-hover)",
+        },
+        content: {
+          primary: "var(--color-text-primary)",
+          secondary: "var(--color-text-secondary)",
+          muted: "var(--color-text-muted)",
+          disabled: "var(--color-text-disabled)",
+          link: "var(--color-text-link)",
+        },
+        outline: {
+          DEFAULT: "var(--color-border-default)",
+          subtle: "var(--color-border-subtle)",
+          strong: "var(--color-border-strong)",
+        },
+        action: {
+          primary: "var(--color-action-primary)",
+          "primary-hover": "var(--color-action-primary-hover)",
+          foreground: "var(--color-action-primary-foreground)",
+        },
+        focus: {
+          ring: "var(--color-focus-ring)",
+        },
 
         /* ── Dashboard design-system tokens ── */
         ds: {

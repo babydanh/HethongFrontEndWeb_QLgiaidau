@@ -6,6 +6,7 @@ import { stripHtmlAndNormalize } from '@/utils/string';
 import { isTournamentCompleted } from '@/utils/tournament-status';
 import TournamentDetailClient from './TournamentDetailClient';
 import { getTournament, getTournamentDivisions, getTournamentResults } from './tournament-fetcher';
+import type { TournamentResult } from '@/features/tournaments/api';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -108,7 +109,7 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
 
   const divisionId = firstSearchParam(resolvedSearchParams.divisionId);
   const divisionIdsToCheck = divisions.length > 0
-    ? (divisionId ? [divisionId] : divisions.map((d) => d.id))
+    ? divisions.map((d) => d.id)
     : [undefined];
 
   const resultsList = await Promise.allSettled(
@@ -118,18 +119,29 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
   let hasInitialResults = Boolean(
     tournament.status && isTournamentCompleted(tournament.status)
   );
-  let primaryResults = null;
+  let primaryResults: TournamentResult | null = null;
+  const initialCompletedDivisionIds: Record<string, boolean> = {};
 
-  for (const res of resultsList) {
+  divisions.forEach((div) => {
+    if (isTournamentCompleted(div.status)) {
+      initialCompletedDivisionIds[div.id] = true;
+    }
+  });
+
+  resultsList.forEach((res, idx) => {
+    const dId = divisionIdsToCheck[idx];
     if (res.status === 'fulfilled' && res.value) {
       const awards = res.value.awards ?? [];
       const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
       if (awards.length >= 1 || res.value.finalized || hasTop1) {
         hasInitialResults = true;
         if (!primaryResults) primaryResults = res.value;
+        if (dId && (res.value.finalized || hasTop1)) {
+          initialCompletedDivisionIds[dId] = true;
+        }
       }
     }
-  }
+  });
 
   const translate = await getTranslations('TournamentDetail');
   const sportsEventSchema = tournament ? {
@@ -205,6 +217,7 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
         initialDivisions={divisions}
         initialHasResults={hasInitialResults}
         initialResults={primaryResults}
+        initialCompletedDivisionIds={initialCompletedDivisionIds}
       />
     </>
   );

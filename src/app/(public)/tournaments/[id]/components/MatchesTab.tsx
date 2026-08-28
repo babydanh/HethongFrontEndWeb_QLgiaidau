@@ -1142,71 +1142,87 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       <span key={index} className="w-7 text-center">S{index + 1}</span>
                     ))}
                   </div>
-                  {/* Participant 1 */}
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
-                      {isP1Winner ? (
-                        <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
-                      ) : (
-                        isCompleted && <div className="w-4 h-4 shrink-0" />
-                      )}
-                      {renderParticipantName(
-                        match.participant1,
-                        isP1Winner,
-                        isCompleted,
-                        match.isBye || (match.participant2 == null && isCompleted)
-                      )}
+                    {/* Participant 1 */}
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
+                        {isP1Winner ? (
+                          <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
+                        ) : (
+                          isCompleted && <div className="w-4 h-4 shrink-0" />
+                        )}
+                        {renderParticipantName(
+                          match.participant1,
+                          isP1Winner,
+                          isCompleted,
+                          match.isBye || (match.participant2 == null && isCompleted)
+                        )}
+                      </div>
+ 
+                      {/* Scores set Display */}
+                      <div className="flex items-center gap-1 shrink-0 font-mono">
+                        {Array.from({ length: visibleSets }, (_, idx) => {
+                          const s1 = sets[idx]?.team1Score;
+                          const s2 = sets[idx]?.team2Score;
+                          const hasScores = typeof s1 === 'number' && typeof s2 === 'number';
+                          const isSetWinner = hasScores && s1 > s2;
+                          return (
+                            <span
+                              key={idx}
+                              className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
+                                hasScores && isSetWinner
+                                  ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                                  : hasScores
+                                    ? 'bg-slate-100 text-slate-700 font-semibold'
+                                    : 'bg-slate-50 text-slate-400 border border-slate-200'
+                              }`}
+                            >
+                              {s1 ?? '-'}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
  
-                    {/* Scores set Display */}
-                    <div className="flex items-center gap-1 shrink-0 font-mono">
-                      {Array.from({ length: visibleSets }, (_, idx) => (
-                        <span
-                          key={idx}
-                          className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
-                            isCompleted 
-                              ? (isP1Winner ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400')
-                              : 'bg-slate-50 text-slate-600 border border-slate-200'
-                          }`}
-                        >
-                          {sets[idx]?.team1Score ?? '-'}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
- 
-                  {/* Participant 2 */}
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
-                      {isP2Winner ? (
-                        <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
-                      ) : (
-                        isCompleted && <div className="w-4 h-4 shrink-0" />
-                      )}
-                      {renderParticipantName(
-                        match.participant2,
-                        isP2Winner,
-                        isCompleted,
-                        match.isBye || (match.participant1 == null && isCompleted)
-                      )}
-                    </div>
+                    {/* Participant 2 */}
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
+                        {isP2Winner ? (
+                          <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
+                        ) : (
+                          isCompleted && <div className="w-4 h-4 shrink-0" />
+                        )}
+                        {renderParticipantName(
+                          match.participant2,
+                          isP2Winner,
+                          isCompleted,
+                          match.isBye || (match.participant1 == null && isCompleted)
+                        )}
+                      </div>
 
-                    {/* Scores set Display */}
-                    <div className="flex items-center gap-1 shrink-0 font-mono">
-                      {Array.from({ length: visibleSets }, (_, idx) => (
-                        <span
-                          key={idx}
-                          className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
-                            isCompleted 
-                              ? (isP2Winner ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400')
-                              : 'bg-slate-50 text-slate-600 border border-slate-200'
-                          }`}
-                        >
-                          {sets[idx]?.team2Score ?? '-'}
-                        </span>
-                      ))}
+                      {/* Scores set Display */}
+                      <div className="flex items-center gap-1 shrink-0 font-mono">
+                        {Array.from({ length: visibleSets }, (_, idx) => {
+                          const s1 = sets[idx]?.team1Score;
+                          const s2 = sets[idx]?.team2Score;
+                          const hasScores = typeof s1 === 'number' && typeof s2 === 'number';
+                          const isSetWinner = hasScores && s2 > s1;
+                          return (
+                            <span
+                              key={idx}
+                              className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
+                                hasScores && isSetWinner
+                                  ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                                  : hasScores
+                                    ? 'bg-slate-100 text-slate-700 font-semibold'
+                                    : 'bg-slate-50 text-slate-400 border border-slate-200'
+                              }`}
+                            >
+                              {s2 ?? '-'}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
                 </div>
 
                 {/* Footer details */}

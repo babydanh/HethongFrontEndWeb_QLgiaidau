@@ -334,15 +334,22 @@ const RowSide = memo(function RowSide({
         {Array.from({ length: maxCols }).map((_, ci) => {
           const score = setList[ci];
           const val = score ? pickScore(score) : '';
+          const n1 = score?.p1 ? Number(score.p1) : NaN;
+          const n2 = score?.p2 ? Number(score.p2) : NaN;
+          const isSetWinner =
+            !isNaN(n1) &&
+            !isNaN(n2) &&
+            (slot === 'participant1' ? n1 > n2 : n2 > n1);
+
           return (
             <div key={ci} className="w-6.5 text-center">
               <span
                 className={
                   'inline-block text-[10.5px] font-extrabold w-4.5 h-4.5 leading-4.5 rounded text-center ' +
                   (val
-                    ? won
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-800 border border-slate-200/80'
+                    ? isSetWinner
+                      ? 'bg-blue-600 text-white shadow-2xs font-black'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200/80 font-semibold'
                     : 'text-slate-300 font-normal')
                 }
               >

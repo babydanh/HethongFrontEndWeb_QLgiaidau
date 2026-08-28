@@ -83,8 +83,9 @@ function mapEventStatus(status?: string): string {
   }
 }
 
-export default async function TournamentDetailPage({ params }: PageProps) {
+export default async function TournamentDetailPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   let tournament: Awaited<ReturnType<typeof getTournament>>;
   try {
     tournament = await getTournament(resolvedParams.id);
@@ -97,6 +98,16 @@ export default async function TournamentDetailPage({ params }: PageProps) {
   if (!tournament) {
     notFound();
   }
+
+  const divisionId = firstSearchParam(resolvedSearchParams.divisionId);
+  const initialDivisionId = divisionId || tournament.divisions?.[0]?.id;
+  const initialResults = await getTournamentResults(resolvedParams.id, initialDivisionId);
+  const awards = initialResults?.awards ?? [];
+  const hasAwards = awards.length >= 1 || initialResults?.finalized;
+  const hasInitialResults = Boolean(
+    hasAwards ||
+    (tournament.status && (tournament.status === 'COMPLETED' || tournament.status === 'FINISHED'))
+  );
 
   const translate = await getTranslations('TournamentDetail');
   const sportsEventSchema = tournament ? {
@@ -166,7 +177,12 @@ export default async function TournamentDetailPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
-      <TournamentDetailClient tournamentId={resolvedParams.id} initialTournament={tournament} />
+      <TournamentDetailClient
+        tournamentId={resolvedParams.id}
+        initialTournament={tournament}
+        initialHasResults={hasInitialResults}
+        initialResults={initialResults}
+      />
     </>
   );
 }

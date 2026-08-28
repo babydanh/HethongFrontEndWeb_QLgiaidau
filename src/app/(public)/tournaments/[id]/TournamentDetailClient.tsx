@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
-import type { Division, MyRegistrationResponse, Tournament, TournamentSponsor } from '@/features/tournaments/api';
+import type { Division, MyRegistrationResponse, Tournament, TournamentResult, TournamentSponsor } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
@@ -69,6 +69,8 @@ import { isActiveMatch } from '@/utils/match-status';
 interface Props {
   tournamentId: string;
   initialTournament: Tournament | null;
+  initialHasResults?: boolean;
+  initialResults?: TournamentResult | null;
 }
 
 type TournamentDetailTab = 'live' | 'results' | 'overview' | 'teams' | 'bracket' | 'matches' | 'sponsors';
@@ -101,7 +103,12 @@ function createDivisionTournament(tournament: Tournament, division: Division): T
   };
 }
 
-export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
+export default function TournamentDetailClient({
+  tournamentId,
+  initialTournament,
+  initialHasResults = false,
+  initialResults,
+}: Props) {
   const translate = useTranslations('TournamentDetail');
   const reduceMotion = useReducedMotion();
   const registrationTranslate = useTranslations('RegistrationMode');
@@ -143,10 +150,10 @@ const commonTranslate = useTranslations('Common');
   const { openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
-    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results') {
+    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results' || tabParam === 'live') {
       return tabParam as TournamentDetailTab;
     }
-    if (isTournamentCompleted(tournament?.status)) {
+    if (initialHasResults || isTournamentCompleted(initialTournament?.status)) {
       return 'results';
     }
     return 'overview';
@@ -171,7 +178,7 @@ const commonTranslate = useTranslations('Common');
     });
   }, []);
   const [publicSponsors, setPublicSponsors] = useState<TournamentSponsor[]>([]);
-  const [hasConfirmedResults, setHasConfirmedResults] = useState(false);
+  const [hasConfirmedResults, setHasConfirmedResults] = useState(initialHasResults);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
   const [isRegistrationStatusLoading, setIsRegistrationStatusLoading] = useState(false);
@@ -268,7 +275,12 @@ const commonTranslate = useTranslations('Common');
           (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
           (tournament?.status && isTournamentCompleted(tournament.status))
         );
-        if (active) setHasConfirmedResults(isFinished);
+        if (active) {
+          setHasConfirmedResults(isFinished);
+          if (isFinished && !hasUserNavigatedRef.current && !searchParams?.get('tab')) {
+            setActiveTab((currentTab) => (currentTab === 'overview' ? 'results' : currentTab));
+          }
+        }
       } catch {
         if (active) {
           const isFinished = Boolean(

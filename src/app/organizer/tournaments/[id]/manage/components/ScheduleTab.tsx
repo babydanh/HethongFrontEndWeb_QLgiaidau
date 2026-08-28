@@ -44,6 +44,8 @@ interface ScheduleTabProps {
   setNewCourtName: (value: string) => void;
   isSavingCourt: boolean;
   handleAddTournamentCourt: () => void;
+  handleAddTournamentCourtsBatch?: (count: number, prefix?: string) => Promise<void>;
+  handleRemoveTournamentCourt?: (courtId: string) => Promise<void>;
   operatingStart: string;
   setOperatingStart: (value: string) => void;
   operatingEnd: string;
@@ -79,6 +81,8 @@ export function ScheduleTab({
   setNewCourtName,
   isSavingCourt,
   handleAddTournamentCourt,
+  handleAddTournamentCourtsBatch,
+  handleRemoveTournamentCourt,
   operatingStart,
   setOperatingStart,
   operatingEnd,
@@ -100,7 +104,7 @@ export function ScheduleTab({
 
   return (
     <div className="space-y-5">
-      <section className="border border-slate-200 bg-white p-5 md:p-6" aria-labelledby="schedule-setup-title">
+      <section className="border border-slate-200 bg-white p-5 md:p-6 rounded-xl shadow-xs" aria-labelledby="schedule-setup-title">
         <div className="flex items-start gap-3 border-b border-slate-200 pb-4">
           <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
           <div>
@@ -137,7 +141,21 @@ export function ScheduleTab({
         </div>
       </section>
 
-      <CourtSetup venue={courtVenue} courts={courts} newCourtName={newCourtName} setNewCourtName={setNewCourtName} isSaving={isSavingCourt} onAdd={handleAddTournamentCourt} operatingStart={operatingStart} setOperatingStart={setOperatingStart} operatingEnd={operatingEnd} setOperatingEnd={setOperatingEnd} onCourtClick={onCourtClick} />
+      <CourtSetup
+        venue={courtVenue}
+        courts={courts}
+        newCourtName={newCourtName}
+        setNewCourtName={setNewCourtName}
+        isSaving={isSavingCourt}
+        onAdd={handleAddTournamentCourt}
+        onBatchAdd={handleAddTournamentCourtsBatch}
+        onRemoveCourt={handleRemoveTournamentCourt}
+        operatingStart={operatingStart}
+        setOperatingStart={setOperatingStart}
+        operatingEnd={operatingEnd}
+        setOperatingEnd={setOperatingEnd}
+        onCourtClick={onCourtClick}
+      />
 
       <div className="flex justify-end border-t border-slate-200 pt-4">
         <Button onClick={handleSaveScheduleDetails} disabled={isSavingConfig} className="min-h-11 bg-blue-600 px-6 font-bold text-white hover:bg-blue-700">{isSavingConfig ? t('savingSchedule') : t('saveSchedule')}</Button>

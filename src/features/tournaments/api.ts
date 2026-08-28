@@ -851,6 +851,10 @@ export const tournamentsApi = {
     id: string,
     data: { courtName: string; status?: 'AVAILABLE' | 'MAINTENANCE' },
   ) => api.post<ApiResponse<TournamentCourt>>(`/tournaments/${id}/courts`, data),
+  addTournamentCourtsBatch: (
+    id: string,
+    data: { courtCount: number; namePrefix?: string },
+  ) => api.post<ApiResponse<TournamentCourt[]>>(`/tournaments/${id}/courts/batch`, data),
   previewSchedulePlan: (
     id: string,
     data: SchedulePlanPreviewInput,

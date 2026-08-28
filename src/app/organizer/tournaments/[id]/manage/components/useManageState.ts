@@ -272,8 +272,6 @@ export function useManageState(id: string) {
   const [matchSuperTiebreakEnabled, setMatchSuperTiebreakEnabled] = useState(false);
   const [matchSuperTiebreakPoints, setMatchSuperTiebreakPoints] = useState(10);
   const [isScheduling, setIsScheduling] = useState(false);
-
-  // ── Other ──
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [mockNamesText, setMockNamesText] = useState('');
@@ -400,6 +398,26 @@ export function useManageState(id: string) {
       setNewCourtName('');
       await fetchVenueCourts();
       toast.success('Đã thêm sân vào địa điểm của giải.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingCourt(false);
+    }
+  };
+
+  const handleAddTournamentCourtsBatch = async (courtCount: number, namePrefix = 'Sân') => {
+    if (!tournament?.id || !tournament.venueId) {
+      toast.error('Hãy lưu địa điểm thi đấu trước khi tạo hàng loạt sân.');
+      return;
+    }
+    setIsSavingCourt(true);
+    try {
+      await tournamentsApi.addTournamentCourtsBatch(tournament.id, {
+        courtCount,
+        namePrefix,
+      });
+      await fetchVenueCourts();
+      toast.success(`Đã tạo nhanh ${courtCount} sân vào địa điểm của giải.`);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -1849,7 +1867,7 @@ export function useManageState(id: string) {
     isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
     // actions
     fetchTournamentData, fetchDivisions, fetchReferees, refetchDivisionData, applyDivisionFormValues, fetchVenueCourts,
-        handleAddTournamentCourt, handleRemoveTournamentCourt, handlePreviewSchedulePlan, handlePreviewScheduleWithAi,
+    handleAddTournamentCourt, handleAddTournamentCourtsBatch, handleRemoveTournamentCourt, handlePreviewSchedulePlan, handlePreviewScheduleWithAi,
 
     handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveRegistrationSettings, handleSaveMatchConfig, handleSaveFinanceConfig,
     handleAddReferee, handleCreateDivision, requestDeleteDivision, handleConfirmDeleteDivision,

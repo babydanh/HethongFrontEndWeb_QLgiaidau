@@ -12,14 +12,14 @@ export interface ButtonProps
 
 export const getButtonClasses = (variant: string = "default", size: string = "default", className?: string) => {
   const variants: Record<string, string> = {
-    default: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-    destructive: "bg-rose-500 text-white hover:bg-rose-600 shadow-sm",
-    success: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
-    warning: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm",
-    outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 text-slate-700",
+    default: "bg-action-primary text-action-foreground hover:bg-action-primary-hover shadow-sm",
+    destructive: "bg-danger text-white hover:bg-danger/90 shadow-sm",
+    success: "bg-success text-white hover:bg-success/90 shadow-sm",
+    warning: "bg-warning text-white hover:bg-warning/90 shadow-sm",
+    outline: "border border-outline bg-surface-raised hover:bg-surface-hover hover:text-content-primary text-content-secondary",
     secondary: "bg-blue-50 text-blue-900 hover:bg-blue-100",
-    ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-600",
-    link: "text-blue-600 underline-offset-4 hover:underline",
+    ghost: "hover:bg-surface-hover hover:text-content-primary text-content-muted",
+    link: "text-content-link underline-offset-4 hover:underline",
   }
   const sizes: Record<string, string> = {
     default: "h-10 px-4 py-2",
@@ -27,7 +27,7 @@ export const getButtonClasses = (variant: string = "default", size: string = "de
     lg: "h-11 rounded-md px-8",
     icon: "h-10 w-10",
   }
-  const baseClass = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+  const baseClass = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
   return cn(baseClass, variants[variant], sizes[size], className)
 }
 
@@ -37,12 +37,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     
     // Classes matching the blue/white clean theme
     const variants = {
-      default: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-      destructive: "bg-rose-500 text-white hover:bg-rose-600 shadow-sm",
-      outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 text-slate-700",
+      default: "bg-action-primary text-action-foreground hover:bg-action-primary-hover shadow-sm",
+      destructive: "bg-danger text-white hover:bg-danger/90 shadow-sm",
+      outline: "border border-outline bg-surface-raised hover:bg-surface-hover hover:text-content-primary text-content-secondary",
       secondary: "bg-blue-50 text-blue-900 hover:bg-blue-100",
-      ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-600",
-      link: "text-blue-600 underline-offset-4 hover:underline",
+      ghost: "hover:bg-surface-hover hover:text-content-primary text-content-muted",
+      link: "text-content-link underline-offset-4 hover:underline",
     }
     
     const sizes = {
@@ -52,7 +52,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       icon: "h-10 w-10",
     }
     
-    const baseClass = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+    const baseClass = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
 
 
     return (

@@ -499,6 +499,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt}
               operatingStart={courtOperatingStart} setOperatingStart={setCourtOperatingStart}
               operatingEnd={courtOperatingEnd} setOperatingEnd={setCourtOperatingEnd}
+              handleAddTournamentCourtsBatch={s.handleAddTournamentCourtsBatch}
+              handleRemoveTournamentCourt={s.handleRemoveTournamentCourt}
               onCourtClick={() => setIsCourtWorkspaceFullscreen(true)} />
             {s.courts.length > 0 && !isCourtWorkspaceFullscreen && (
               <CourtWorkspace
@@ -655,6 +657,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isSavingGskConfig={s.isSavingGskConfig}
               isLiteMode={s.isLiteMode}
               setIsLiteMode={s.setIsLiteMode}
+              courts={s.courts}
+              divisions={s.divisions}
+              venues={s.venues}
+              currentVenueId={s.tournament?.venueId || undefined}
+              defaultDate={s.startDate}
+              onRefetchData={s.refetchDivisionData}
             />
           </div>
         )}

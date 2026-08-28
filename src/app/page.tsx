@@ -323,7 +323,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
       {!hideFeaturedCardText && (
         <div className="p-5 flex-grow flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
+            <h3 className="text-sm font-semibold text-slate-900 group-hover:text-content-link transition-colors line-clamp-1 leading-snug">
               {tournament.name}
             </h3>
             <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-medium">
@@ -986,7 +986,7 @@ export default function HomePage() {
               <div
                 className={`w-full h-full flex items-center justify-center font-bold tracking-tight ${initialSizeClass} ${
                   isCompleted && isWinner
-                    ? 'bg-blue-50 text-blue-700 font-extrabold'
+                    ? 'bg-primary-light text-content-link font-extrabold'
                     : isCompleted && isLoser
                       ? 'bg-slate-100 text-slate-400'
                       : sideFallback === 'left'
@@ -1088,7 +1088,7 @@ export default function HomePage() {
                   {translate('statusCompleted')}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary-light text-content-link border border-outline-subtle">
                   {translate('statusUpcoming')}
                 </span>
               )}
@@ -1107,7 +1107,7 @@ export default function HomePage() {
                   <span className="text-xs font-black tracking-wider text-slate-500 bg-slate-100/90 border border-slate-200/90 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
                     {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS'}
                   </span>
-                  <span className="text-[10.5px] font-semibold text-blue-600 mt-1">
+                  <span className="text-[10.5px] font-semibold text-content-link mt-1">
                     {translate('statusUpcoming')}
                   </span>
                 </>
@@ -1117,7 +1117,7 @@ export default function HomePage() {
                     <span
                       className={`text-xl sm:text-2xl tracking-tight transition-colors ${
                         isCompleted && isP1Winner
-                          ? 'text-blue-600 font-extrabold'
+                          ? 'text-content-link font-extrabold'
                           : isCompleted && isP2Winner
                             ? 'text-slate-400 font-bold'
                             : 'text-slate-900 font-extrabold'
@@ -1129,7 +1129,7 @@ export default function HomePage() {
                     <span
                       className={`text-xl sm:text-2xl tracking-tight transition-colors ${
                         isCompleted && isP2Winner
-                          ? 'text-blue-600 font-extrabold'
+                          ? 'text-content-link font-extrabold'
                           : isCompleted && isP1Winner
                             ? 'text-slate-400 font-bold'
                             : 'text-slate-900 font-extrabold'
@@ -1195,7 +1195,7 @@ export default function HomePage() {
                 setIsShareModalOpen(true);
               }}
               title={translate('shareMatchTitle')}
-              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-content-link hover:border-outline-strong hover:bg-primary-light text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
             >
               <Share2 className="w-3.5 h-3.5 text-slate-400" />
               <span>{translate('share')}</span>
@@ -1255,7 +1255,7 @@ export default function HomePage() {
   const featuredHomepageTournaments = activeTournaments.slice(0, 10);
 
   return (
-    <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 animate-in fade-in duration-200">
+    <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1275,7 +1275,7 @@ export default function HomePage() {
               {selectedCategoryId === '' && (
                 <motion.div
                   layoutId="activeCategory"
-                  className="absolute inset-0 bg-blue-600 rounded-full z-0"
+                  className="absolute inset-0 bg-action-primary rounded-full z-0"
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 />
               )}
@@ -1307,7 +1307,7 @@ export default function HomePage() {
                   {isActive && (
                     <motion.div
                       layoutId="activeCategory"
-                      className="absolute inset-0 bg-blue-600 rounded-full z-0"
+                      className="absolute inset-0 bg-action-primary rounded-full z-0"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -1328,7 +1328,7 @@ export default function HomePage() {
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end relative z-[30]">
               <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h1>
-              <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 relative z-[31]">
+              <Link href="/tournaments" className="text-xs font-semibold text-content-link hover:underline flex items-center gap-1 relative z-[31]">
                 {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -1336,7 +1336,7 @@ export default function HomePage() {
             {isLoading ? (
               <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-lg"></div>
             ) : activeTournaments.length === 0 ? (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-blue-300 shadow-[0_10px_30px_rgba(29,95,224,0.18)] min-h-[320px] md:min-h-[420px] flex items-center justify-center text-center px-10 py-14">
+              <div className="relative w-full rounded-2xl overflow-hidden bg-primary-light shadow-[0_10px_30px_rgba(29,95,224,0.18)] min-h-[320px] md:min-h-[420px] flex items-center justify-center text-center px-10 py-14">
                 {/* Watermark racket + shuttlecock */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
                   <svg viewBox="0 0 200 200" className="w-[400px] h-[400px] md:w-[500px] md:h-[500px]" xmlns="http://www.w3.org/2000/svg">
@@ -1368,7 +1368,7 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <div className="relative z-10 max-w-md">
-                  <span className="inline-block text-[11px] font-bold tracking-[0.14em] uppercase text-blue-700 bg-white/70 border border-blue-200/50 px-3.5 py-1.5 rounded-full mb-5">
+                  <span className="inline-block text-[11px] font-bold tracking-[0.14em] uppercase text-content-link bg-white/70 border border-outline-strong/50 px-3.5 py-1.5 rounded-full mb-5">
                     {translate('featuredTournaments')}
                   </span>
                   <h3 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-3 tracking-tight">
@@ -1437,7 +1437,7 @@ export default function HomePage() {
                                       <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>
-                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
                                     {group.name}
                                   </h3>
                                 </div>
@@ -1495,7 +1495,7 @@ export default function HomePage() {
                               onClick={() => setLiveMatchPage(pageNum)}
                               className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
                                 isCurrent
-                                  ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                                  ? 'bg-action-primary text-white border-transparent shadow-sm'
                                   : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                               }`}
                             >
@@ -1559,7 +1559,7 @@ export default function HomePage() {
                                     <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
-                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
                                   {group.name}
                                 </h3>
                               </div>
@@ -1645,7 +1645,7 @@ export default function HomePage() {
                                     <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
-                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
                                   {group.name}
                                 </h3>
                               </div>
@@ -1697,7 +1697,7 @@ export default function HomePage() {
                   <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentTournaments')}</h2>
                   <p className="text-[11px] font-medium text-slate-500 mt-0.5">{translate('last14Days')}</p>
                 </div>
-                <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                <Link href="/tournaments" className="text-xs font-semibold text-content-link hover:underline flex items-center gap-1">
                   {translate('explore')} <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -1736,7 +1736,7 @@ export default function HomePage() {
                <h3 className="text-sm font-semibold text-slate-900 mb-1">{translate('notSignedIn')}</h3>
                <p className="text-xs text-slate-500 mb-4">{translate('loginToSee')}</p>
                <div className="flex flex-col w-full gap-2">
-                 <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
+                 <a href="/login" className="bg-action-primary hover:bg-action-primary-hover text-white font-semibold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
                    {translate('signInNow')}
                  </a>
                  <a href="/register" className="border border-slate-200 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
@@ -1749,7 +1749,7 @@ export default function HomePage() {
                {/* Card 1: User Profile Card */}
                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-4 flex flex-col items-center text-center relative overflow-hidden">
                  {/* Sports cover banner background */}
-                 <div className="absolute top-0 left-0 w-full h-16 bg-blue-600" />
+                 <div className="absolute top-0 left-0 w-full h-16 bg-action-primary" />
 
                  {/* Avatar */}
                  <button

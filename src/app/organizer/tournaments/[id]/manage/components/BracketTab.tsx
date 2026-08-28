@@ -13,12 +13,14 @@ import {
 } from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Settings, Save, Trophy, LayoutGrid, Users, Loader2, RefreshCw } from 'lucide-react';
+import { Settings, Save, Trophy, LayoutGrid, Users, Loader2, RefreshCw, Calendar, GitBranch } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
-import { tournamentsApi, type BracketSlotMutation } from '@/features/tournaments/api';
+import { tournamentsApi, type BracketSlotMutation, type Division } from '@/features/tournaments/api';
 
+import { ScheduleGridView } from './ScheduleGridView';
+import type { CourtSetupItem } from './CourtSetup';
 import { RoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/RoundRobinView';
 import { Tournament, BracketStage, BracketMatch, type SportRuleKind, type StageRoundConfig } from '@/types/tournament';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
@@ -42,6 +44,13 @@ interface BracketTabProps {
   bracket: { stages: BracketStage[] } | null;
   selectedDivisionId: string;
   participants: unknown[];
+  courts?: CourtSetupItem[];
+  divisions?: Division[];
+  venues?: Array<{ id: string; name: string; locationAddress?: string }>;
+  currentVenueId?: string;
+  onSelectVenue?: (venueId: string) => void;
+  defaultDate?: string;
+  onRefetchData?: () => Promise<void>;
   isGeneratingBracket: boolean;
   handleGenerateBracket: () => void;
   handleOpenScheduling: (match: BracketMatch) => void;

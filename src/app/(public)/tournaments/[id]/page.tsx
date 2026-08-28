@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { stripHtmlAndNormalize } from '@/utils/string';
+import { isTournamentCompleted } from '@/utils/tournament-status';
 import TournamentDetailClient from './TournamentDetailClient';
-import { getTournament, getTournamentResults } from './tournament-fetcher';
+import { getTournament, getTournamentDivisions, getTournamentResults } from './tournament-fetcher';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -87,8 +88,14 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
   const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   let tournament: Awaited<ReturnType<typeof getTournament>>;
+  let divisions: Awaited<ReturnType<typeof getTournamentDivisions>> = [];
   try {
-    tournament = await getTournament(resolvedParams.id);
+    const [t, d] = await Promise.all([
+      getTournament(resolvedParams.id),
+      getTournamentDivisions(resolvedParams.id),
+    ]);
+    tournament = t;
+    divisions = d;
   } catch {
     // Preserve Next.js error handling for transient API/5xx failures instead of
     // turning an outage into a misleading not-found page.
@@ -100,14 +107,29 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
   }
 
   const divisionId = firstSearchParam(resolvedSearchParams.divisionId);
-  const initialDivisionId = divisionId || tournament.divisions?.[0]?.id;
-  const initialResults = await getTournamentResults(resolvedParams.id, initialDivisionId);
-  const awards = initialResults?.awards ?? [];
-  const hasAwards = awards.length >= 1 || initialResults?.finalized;
-  const hasInitialResults = Boolean(
-    hasAwards ||
-    (tournament.status && (tournament.status === 'COMPLETED' || tournament.status === 'FINISHED'))
+  const divisionIdsToCheck = divisions.length > 0
+    ? (divisionId ? [divisionId] : divisions.map((d) => d.id))
+    : [undefined];
+
+  const resultsList = await Promise.allSettled(
+    divisionIdsToCheck.map((dId) => getTournamentResults(resolvedParams.id, dId))
   );
+
+  let hasInitialResults = Boolean(
+    tournament.status && isTournamentCompleted(tournament.status)
+  );
+  let primaryResults = null;
+
+  for (const res of resultsList) {
+    if (res.status === 'fulfilled' && res.value) {
+      const awards = res.value.awards ?? [];
+      const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
+      if (awards.length >= 1 || res.value.finalized || hasTop1) {
+        hasInitialResults = true;
+        if (!primaryResults) primaryResults = res.value;
+      }
+    }
+  }
 
   const translate = await getTranslations('TournamentDetail');
   const sportsEventSchema = tournament ? {
@@ -180,8 +202,9 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
       <TournamentDetailClient
         tournamentId={resolvedParams.id}
         initialTournament={tournament}
+        initialDivisions={divisions}
         initialHasResults={hasInitialResults}
-        initialResults={initialResults}
+        initialResults={primaryResults}
       />
     </>
   );

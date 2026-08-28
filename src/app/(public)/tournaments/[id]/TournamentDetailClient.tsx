@@ -69,6 +69,7 @@ import { isActiveMatch } from '@/utils/match-status';
 interface Props {
   tournamentId: string;
   initialTournament: Tournament | null;
+  initialDivisions?: Division[];
   initialHasResults?: boolean;
   initialResults?: TournamentResult | null;
 }
@@ -106,6 +107,7 @@ function createDivisionTournament(tournament: Tournament, division: Division): T
 export default function TournamentDetailClient({
   tournamentId,
   initialTournament,
+  initialDivisions = [],
   initialHasResults = false,
   initialResults,
 }: Props) {
@@ -131,10 +133,14 @@ const commonTranslate = useTranslations('Common');
   const { user } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
-  const [openDivisionId, setOpenDivisionId] = useState<string>('');
-  const [divisionsList, setDivisionsList] = useState<Division[]>([]);
-  const [initialDivisionId] = useState(() => searchParams.get('divisionId'));
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>(
+    () => searchParams?.get('divisionId') || initialDivisions[0]?.id || ''
+  );
+  const [openDivisionId, setOpenDivisionId] = useState<string>(
+    () => searchParams?.get('divisionId') || initialDivisions[0]?.id || ''
+  );
+  const [divisionsList, setDivisionsList] = useState<Division[]>(initialDivisions);
+  const [initialDivisionId] = useState(() => searchParams?.get('divisionId') || initialDivisions[0]?.id || '');
   const visibleDivisionId = openDivisionId || selectedDivisionId;
   const selectedDivision: Tournament | null = (() => {
     if (!tournament || !visibleDivisionId) {

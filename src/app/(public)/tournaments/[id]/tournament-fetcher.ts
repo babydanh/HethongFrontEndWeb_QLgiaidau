@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
-import type { TournamentResult } from '@/features/tournaments/api';
+import type { Division, Tournament, TournamentResult } from '@/features/tournaments/api';
 
 const REVALIDATE_SECONDS = 60;
 
@@ -26,7 +26,7 @@ export async function fetchTournamentWithRetry(url: string, init?: RequestInit) 
   throw lastError ?? new Error('Tournament request failed');
 }
 
-export const getTournamentResults = cache(async (id: string, divisionId?: string) => {
+export const getTournamentResults = cache(async (id: string, divisionId?: string): Promise<TournamentResult | null> => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
   const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
@@ -50,7 +50,7 @@ export const getTournamentResults = cache(async (id: string, divisionId?: string
   }
 });
 
-export const getTournament = cache(async (id: string) => {
+export const getTournament = cache(async (id: string): Promise<Tournament | null> => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
   const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
@@ -65,8 +65,6 @@ export const getTournament = cache(async (id: string) => {
       },
     });
     if (!response.ok) {
-      // A missing/private/cancelled tournament should become a real 404 at the route.
-      // Keep 429/5xx as errors so a temporary API outage is not cached as "not found".
       if (response.status >= 400 && response.status < 500 && response.status !== 429) {
         return null;
       }
@@ -77,5 +75,28 @@ export const getTournament = cache(async (id: string) => {
   } catch (error) {
     console.error('Failed to fetch tournament:', error);
     throw error;
+  }
+});
+
+export const getTournamentDivisions = cache(async (id: string): Promise<Division[]> => {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
+  const appApiKey = process.env.NEXT_PUBLIC_APP_KEY || process.env.APP_KEY || '';
+
+  try {
+    const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}/divisions`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(appApiKey ? { 'x-app-key': appApiKey } : {}),
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      next: { revalidate: 30 },
+    });
+    if (!response.ok) return [];
+    const res = await response.json() as { data?: Division[] | null };
+    return res.data ?? [];
+  } catch {
+    return [];
   }
 });

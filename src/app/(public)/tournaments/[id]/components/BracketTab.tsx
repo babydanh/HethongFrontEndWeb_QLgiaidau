@@ -629,12 +629,12 @@ export default function BracketTab({
             </div>
 
             {activeStageSupportsFullView && (
-              <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner self-start sm:self-auto">
+              <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-1 self-start sm:self-auto">
                 <button
                   onClick={() => setViewMode('paged')}
                   className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
                     viewMode === 'paged'
-                      ? 'bg-blue-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
                   }`}
                 >

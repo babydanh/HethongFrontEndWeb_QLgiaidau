@@ -1278,11 +1278,11 @@ const commonTranslate = useTranslations('Common');
             </div>
 
             {/* Tab Content Container */}
-            <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-4 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3.5 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden">
               {/* Compact vertical content rows with inline selected detail */}
               {divisionsList.length > 0 && activeTab !== 'overview' && activeTab !== 'sponsors' && (
-                <div className="mb-5 border-b border-slate-100 pb-5" aria-label={translate('competitionContentTitle')}>
-                  <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div className="mb-2" aria-label={translate('competitionContentTitle')}>
+                  <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-xl">
                     {divisionsList.map((division) => {
                       const isActive = division.id === openDivisionId;
                       const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
@@ -1295,23 +1295,23 @@ const commonTranslate = useTranslations('Common');
                       return (
                         <div
                           key={division.id}
-                          className="scroll-mt-[calc(var(--app-header-height)+1rem)] border-b border-slate-100 last:border-b-0"
+                          className="scroll-mt-[calc(var(--app-header-height)+1rem)]"
                         >
                           <button
                             type="button"
                             aria-current={isActive ? 'true' : undefined}
                             aria-expanded={isActive}
                             onClick={() => handleDivisionSelect(division.id)}
-                            className={`group flex min-h-[68px] w-full items-center gap-3 px-3.5 py-3.5 text-left transition-colors sm:px-4 ${
+                            className={`group flex min-h-[60px] w-full items-center gap-3 px-3 py-3 text-left transition-all rounded-xl sm:px-4 ${
                               isActive
-                                ? 'bg-blue-50/70 text-slate-950'
-                                : 'bg-white text-slate-800 hover:bg-slate-50'
+                                ? 'bg-blue-50/80 text-blue-950 font-bold'
+                                : 'bg-slate-50/60 text-slate-700 hover:bg-slate-100/70 hover:text-slate-900'
                             }`}
                           >
-                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
-                              isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                              isActive ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white text-slate-400 border border-slate-200/60 group-hover:text-blue-600'
                             }`}>
-                              <ChevronRight className={`h-5 w-5 transition-transform duration-300 ease-out ${isActive ? 'rotate-90 text-blue-600' : 'text-slate-400'}`} aria-hidden="true" />
+                              <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isActive ? 'rotate-90 text-white' : 'text-slate-400'}`} aria-hidden="true" />
                             </span>
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
@@ -1319,7 +1319,7 @@ const commonTranslate = useTranslations('Common');
                             {liveCount > 0 && (
                               <span
                                 aria-label={translate('divisionLiveCount', { count: liveCount })}
-                                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-black text-rose-700 sm:text-xs"
+                                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-black text-rose-700 sm:text-xs"
                               >
                                 <span className="h-1.5 w-1.5 rounded-full bg-rose-600 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
                                 <span>{liveCount}</span>
@@ -1327,8 +1327,8 @@ const commonTranslate = useTranslations('Common');
                             )}
                             <span
                               aria-label={`${translate('participantsCount')}: ${participantCapacity}`}
-                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold sm:text-sm transition-colors ${
-                                isActive ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-700'
+                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold sm:text-sm transition-colors ${
+                                isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
                               }`}
                             >
                               <Users className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1345,7 +1345,7 @@ const commonTranslate = useTranslations('Common');
                               {isActive && divisionTournament && (
                                 <div
                                   id="selected-division-content"
-                                  className="border-t border-blue-100 bg-white px-3.5 py-4 sm:px-5 sm:py-5"
+                                  className="pt-3 pb-2 px-0"
                                 >
                                   {activeTab === 'live' && (
                                     <LiveMatchesTab

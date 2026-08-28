@@ -346,9 +346,9 @@ export function PagedDoubleElimView({
       </div>
 
       {/* Top Navigation & Controls Bar */}
-      <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <div className="flex min-w-0 flex-col gap-2.5 pb-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100/90">
         <div>
-          <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+          <span className="text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">
             {translate('roundProgress', { current: activeRoundIndex + 1, total: activeBranchRounds.length })}
           </span>
           <h4 className="text-sm sm:text-base font-bold text-slate-900">
@@ -360,7 +360,7 @@ export function PagedDoubleElimView({
           <button
             onClick={() => setActiveRoundIndex(Math.max(activeRoundIndex - 1, 0))}
             disabled={activeRoundIndex === 0}
-            className="flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-100 disabled:opacity-40 sm:px-3 sm:py-1.5"
+            className="flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:bg-slate-100 disabled:opacity-40 sm:px-3 sm:py-1.5 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4 shrink-0" />
             <span className="sm:hidden">{translate('previousMobile')}</span><span className="hidden sm:inline">{translate('previous')}</span>
@@ -368,7 +368,7 @@ export function PagedDoubleElimView({
           <button
             onClick={() => setActiveRoundIndex(Math.min(activeRoundIndex + 1, activeBranchRounds.length - 1))}
             disabled={activeRoundIndex === activeBranchRounds.length - 1}
-            className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-40 sm:px-3 sm:py-1.5"
+            className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-bold text-white shadow-2xs transition-all hover:bg-blue-700 disabled:opacity-40 sm:px-3 sm:py-1.5 cursor-pointer"
           >
             <span className="sm:hidden">{translate('nextMobile')}</span><span className="hidden sm:inline">{translate('next')}</span>
             <ChevronRight className="h-4 w-4 shrink-0" />
@@ -377,10 +377,10 @@ export function PagedDoubleElimView({
           <div className="col-span-2 hidden h-px w-full bg-slate-200 sm:block sm:h-4 sm:w-px" />
 
           {/* Zoom controls */}
-          <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-sm sm:col-span-1">
+          <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-2xs sm:col-span-1">
             <button
               onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer"
               title={translate('zoomOut')}
             >
               -
@@ -390,14 +390,14 @@ export function PagedDoubleElimView({
             </span>
             <button
               onClick={() => setZoom((z) => Math.min(z + 0.1, 2.0))}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer"
               title={translate('zoomIn')}
             >
               +
             </button>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-500 hover:text-slate-900"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-500 hover:text-slate-900 cursor-pointer"
               title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
@@ -433,7 +433,7 @@ export function PagedDoubleElimView({
         onTouchEnd={() => {
           (viewportRef as any)._initialPinchDist = 0;
         }}
-        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto scroll-smooth rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 sm:p-4 ${
+        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto scroll-smooth py-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent ${
           isFullscreen ? 'flex-1 max-h-none' : ''
         }`}
       >

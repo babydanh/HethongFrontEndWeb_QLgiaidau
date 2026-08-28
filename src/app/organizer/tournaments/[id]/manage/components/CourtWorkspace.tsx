@@ -195,13 +195,15 @@ export function CourtWorkspace({
               {stageOptions.map((stage) => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            <span>{usesLegFilter ? t('legLabel') : t('roundLabel')}</span>
-            <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="h-10 min-w-40 border border-slate-300 bg-white px-3 text-sm font-normal normal-case tracking-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-              <option value="all">{usesLegFilter ? t('allLegs') : t('allRounds')}</option>
-              {roundOptions.map((round) => <option key={round} value={String(round)}>{roundLabel(round)}</option>)}
-            </select>
-          </label>
+          {roundOptions.length > 0 && (
+            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span>{usesLegFilter ? t('legLabel') : t('roundLabel')}</span>
+              <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="h-10 min-w-40 border border-slate-300 bg-white px-3 text-sm font-normal normal-case tracking-normal text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                <option value="all">{usesLegFilter ? t('allLegs') : t('allRounds')}</option>
+                {roundOptions.map((round) => <option key={round} value={String(round)}>{roundLabel(round)}</option>)}
+              </select>
+            </label>
+          )}
         </div>
       </div>
 

@@ -222,7 +222,7 @@ export function DoubleElimView({
       className={
         isFullscreen
           ? 'fixed inset-0 z-50 bg-slate-50 p-4 sm:p-6 overflow-hidden flex flex-col'
-          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-lg p-3 sm:p-4 shadow-sm'
+          : 'relative rounded-xl p-0.5 sm:p-1'
       }
     >
       {/* Zoom Controls */}

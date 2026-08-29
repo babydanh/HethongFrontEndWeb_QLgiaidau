@@ -45,6 +45,13 @@ interface ScheduleBoardMatch {
   } | null;
   stageName?: string | null;
   roundName?: string | null;
+  groupName?: string | null;
+  status?: string | null;
+  score1?: number | string | null;
+  score2?: number | string | null;
+  participant1Score?: number | string | null;
+  participant2Score?: number | string | null;
+  sets?: Array<{ score1?: number | null; score2?: number | null; participant1Score?: number | null; participant2Score?: number | null }>;
   participant1?: { teamName?: string | null; name?: string | null } | null;
   participant2?: { teamName?: string | null; name?: string | null } | null;
 }
@@ -65,14 +72,18 @@ interface CourtScheduleBoardProps {
 type DraftAssignment = {
   courtId: string;
   scheduledAt: string;
-  durationMinutes: number;
+  durationMinutes?: number;
 };
 
 type AssignmentPickerState = {
   courtId: string;
-  courtName: string;
   scheduledAt: string;
-  rowIndex: number;
+  targetRowIndex: number;
+};
+
+type ScaleOption = {
+  minutes: number;
+  label: string;
 };
 
 type SelectionRange = {
@@ -104,7 +115,7 @@ type MatchCardResizeState = {
   currentDurationMinutes: number;
 };
 
-const PIXELS_PER_MINUTE = 2.6; // 1 minute = 2.6px (30 mins = 78px height, ample space for match cards)
+const PIXELS_PER_MINUTE = 2.8; // 1 minute = 2.8px (30 mins = 84px height, ample space for score cards)
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -130,19 +141,32 @@ function formatDateLabel(value: string | null, locale: string) {
 }
 
 function getCleanRoundLabel(match: ScheduleBoardMatch) {
-  const rawStage = match.stage?.name || match.stageName || match.roundName || '';
+  const rNum = match.roundNumber;
+  const matchOrder = match.matchOrder;
+  const rawStage = match.roundName || match.stage?.name || match.stageName || '';
   let clean = rawStage
+    .replace(/^stage\b/gi, '')
     .replace(/vòng\s*loại\s*trực\s*tiếp/gi, '')
     .replace(/knockout/gi, '')
     .replace(/elimination/gi, '')
     .trim();
   clean = clean.replace(/^[•·\-\s]+|[•·\-\s]+$/g, '').trim();
 
-  if (clean) return clean;
+  if (clean && clean.toLowerCase() !== 'stage') return clean;
 
-  const rNum = match.roundNumber;
   if (rNum) return `Vòng ${rNum}`;
+  if (matchOrder) return `Trận #${matchOrder}`;
   return 'Trận đấu';
+}
+
+function extractMatchScores(match: ScheduleBoardMatch) {
+  const m = match as unknown as Record<string, unknown>;
+  const s1 = m.participant1Score ?? m.score1 ?? (Array.isArray(m.sets) && m.sets.length > 0 ? (m.sets as Array<Record<string, unknown>>).map(s => s.score1 ?? s.participant1Score).filter(v => v !== undefined && v !== null).join('-') : null);
+  const s2 = m.participant2Score ?? m.score2 ?? (Array.isArray(m.sets) && m.sets.length > 0 ? (m.sets as Array<Record<string, unknown>>).map(s => s.score2 ?? s.participant2Score).filter(v => v !== undefined && v !== null).join('-') : null);
+  return {
+    score1: s1 !== null && s1 !== undefined && String(s1).trim() !== '' ? String(s1) : null,
+    score2: s2 !== null && s2 !== undefined && String(s2).trim() !== '' ? String(s2) : null,
+  };
 }
 
 function getParticipantName(p?: { teamName?: string | null; name?: string | null } | null) {
@@ -595,11 +619,6 @@ export function CourtScheduleBoard({
       }
       return copy;
     });
-
-    setBlockedSlots((prev) =>
-      prev.filter((slot) => {
-        if (!selectedCourtIds.has(slot.courtId)) return true;
-        const t = new Date(slot.scheduledAt).getTime();
         return !(t >= minTimestamp && t < maxTimestamp);
       }),
     );
@@ -607,16 +626,16 @@ export function CourtScheduleBoard({
     setSelectionRange(null);
   };
 
-  const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
-    const division = divisions.find((d) => d.id === item.match.divisionId);
-    const roundLabelStr = getCleanRoundLabel(item.match);
+  const renderScheduledMatch = (item: ScheduledMatchCard, compact = false) => {
     const p1 = getParticipantName(item.match.participant1);
     const p2 = getParticipantName(item.match.participant2);
+    const roundLabelStr = getCleanRoundLabel(item.match);
+    const division = divisions.find((d) => d.id === item.match.divisionId);
+    const { score1, score2 } = extractMatchScores(item.match);
 
-    // Calculate position based on timelineRows
-    const matchTime = new Date(item.scheduledAt || 0).getTime();
     let cardTop = 0;
-    let cardHeight = (item.durationMinutes || 30) * PIXELS_PER_MINUTE - 4;
+    const cardHeight = Math.max(72, item.durationMinutes * PIXELS_PER_MINUTE - 4);
+    const matchTime = new Date(item.scheduledAt).getTime();
 
     const matchingRow = timelineRows.rows.find(
       (r) => matchTime >= r.startTimestamp && matchTime < r.endTimestamp,
@@ -643,10 +662,10 @@ export function CourtScheduleBoard({
           event.stopPropagation();
           onOpenMatch(item.match.id);
         }}
-        className={`group w-full rounded-md border text-left transition-all cursor-pointer ${
+        className={`group w-full rounded-lg border text-left transition-all cursor-pointer ${
           compact
             ? 'border-slate-200 bg-white p-2.5 hover:border-blue-400 hover:shadow-xs'
-            : 'absolute inset-x-1 z-10 overflow-hidden px-2 py-1 shadow-2xs hover:border-blue-500 hover:shadow-sm'
+            : 'absolute inset-x-1 z-10 overflow-hidden px-2.5 py-1.5 shadow-2xs hover:border-blue-500 hover:shadow-sm'
         } ${
           item.isDraft
             ? 'border-violet-400 bg-violet-50/95 text-violet-950 ring-1 ring-violet-300'
@@ -658,42 +677,59 @@ export function CourtScheduleBoard({
           !compact
             ? {
                 top: cardTop,
-                height: Math.max(46, cardHeight),
+                height: Math.max(72, cardHeight),
               }
             : undefined
         }
       >
         <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
           {/* Header of Card: Round Setting + Division Tag */}
-          <div className="flex items-center justify-between gap-1 border-b border-slate-100/90 pb-0.5">
-            <span className="truncate text-[10px] font-bold text-slate-800">
+          <div className="flex items-center justify-between gap-1 border-b border-slate-100 pb-1 shrink-0">
+            <span className="truncate text-[11px] font-bold text-slate-800 tracking-tight">
               {roundLabelStr}
             </span>
             <div className="flex items-center gap-1 shrink-0">
               {division && (
-                <span className="truncate rounded-xs bg-slate-100 px-1 py-0 text-[9px] font-semibold text-slate-600 border border-slate-200/80">
+                <span className="truncate rounded bg-blue-50 px-1.5 py-0.2 text-[9px] font-bold text-blue-700 border border-blue-100">
                   {division.name}
                 </span>
               )}
-              <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1 rounded-xs border border-blue-100">
+              <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
                 {item.durationMinutes || 30}p
               </span>
             </div>
           </div>
 
-          {/* Body: 2 Participants/Teams */}
-          <div className="flex-1 flex flex-col justify-center space-y-0.5 min-w-0 pt-0.5">
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-              <span className="truncate text-[10px] sm:text-[11px] font-semibold text-slate-900 leading-tight">
-                {p1}
-              </span>
+          {/* Body: 2 Participants/Teams with dedicated score on the right */}
+          <div className="flex-1 flex flex-col justify-around py-0.5 min-w-0">
+            {/* Team 1 Row */}
+            <div className="flex items-center justify-between gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span className="truncate text-xs font-semibold text-slate-900 leading-none">
+                  {p1}
+                </span>
+              </div>
+              {score1 !== null ? (
+                <span className="shrink-0 min-w-[20px] text-center rounded bg-slate-100 px-1.5 py-0.2 text-[11px] font-bold text-slate-800 border border-slate-200">
+                  {score1}
+                </span>
+              ) : null}
             </div>
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
-              <span className="truncate text-[10px] sm:text-[11px] font-semibold text-slate-700 leading-tight">
-                {p2}
-              </span>
+
+            {/* Team 2 Row */}
+            <div className="flex items-center justify-between gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
+                <span className="truncate text-xs font-semibold text-slate-700 leading-none">
+                  {p2}
+                </span>
+              </div>
+              {score2 !== null ? (
+                <span className="shrink-0 min-w-[20px] text-center rounded bg-slate-100 px-1.5 py-0.2 text-[11px] font-bold text-slate-800 border border-slate-200">
+                  {score2}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -816,7 +852,7 @@ export function CourtScheduleBoard({
           <div
             className="grid min-w-[900px]"
             style={{
-              gridTemplateColumns: `88px repeat(${courts.length}, minmax(210px, 1fr))`,
+              gridTemplateColumns: `88px repeat(${courts.length}, minmax(260px, 1fr))`,
             }}
           >
             {/* Corner header */}

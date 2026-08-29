@@ -150,12 +150,44 @@ function formatDateLabel(value: string | null, locale: string) {
   }).format(date);
 }
 
-function getCleanRoundLabel(match: ScheduleBoardMatch) {
-  const rNum = match.roundNumber;
-  const matchOrder = match.matchOrder;
-  const rawStage = String(match.roundName || match.stage?.name || match.stageName || match.groupName || '').trim();
+function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
+  const m = match as unknown as Record<string, unknown>;
+  const rawRoundName = String(match.roundName || m.stageName || match.stage?.name || '').trim();
+  const lowerName = rawRoundName.toLowerCase();
   
-  let clean = rawStage
+  // 1. Check if 3rd place match
+  if (lowerName.includes('tranh hạng 3') || lowerName.includes('3rd') || lowerName.includes('third')) {
+    return 'TRANH HẠNG 3';
+  }
+
+  // 2. Check if group stage / round robin
+  const groupName = match.groupName || (lowerName.includes('bảng') ? rawRoundName : '');
+  if (groupName) {
+    const cleanGroup = groupName.replace(/giai\s*đoạn\s*\d*/gi, '').replace(/stage\s*\d*/gi, '').trim();
+    const legNum = match.leg || match.roundNumber;
+    if (legNum) {
+      return `${cleanGroup.toUpperCase()} • LƯỢT ${legNum}`;
+    }
+    return cleanGroup.toUpperCase();
+  }
+
+  // 3. Check knockout by distance from final (Chung kết, Bán kết, Tứ kết, Vòng 16, 32, 64, 128)
+  const rNum = match.roundNumber || 1;
+  const isKnockout = maxRound > 1 || lowerName.includes('knockout') || lowerName.includes('loại trực tiếp') || lowerName.includes('elimination');
+
+  if (isKnockout && maxRound >= 1) {
+    const diff = maxRound - rNum;
+    if (diff === 0) return 'CHUNG KẾT';
+    if (diff === 1) return 'BÁN KẾT';
+    if (diff === 2) return 'TỨ KẾT';
+    if (diff === 3) return 'VÒNG 1/8 (R16)';
+    if (diff === 4) return 'VÒNG 1/16 (R32)';
+    if (diff === 5) return 'VÒNG 1/32 (R64)';
+    if (diff === 6) return 'VÒNG 1/64 (R128)';
+  }
+
+  // 4. Clean custom name if valid
+  let clean = rawRoundName
     .replace(/^stage\s*\d*/gi, '')
     .replace(/stage/gi, '')
     .replace(/vòng\s*loại\s*trực\s*tiếp/gi, '')
@@ -166,12 +198,12 @@ function getCleanRoundLabel(match: ScheduleBoardMatch) {
   clean = clean.replace(/^[•·\-\s:]+|[•·\-\s:]+$/g, '').trim();
 
   if (clean && !clean.toLowerCase().includes('stage')) {
-    return clean;
+    return clean.toUpperCase();
   }
 
-  if (rNum) return `Vòng ${rNum}`;
-  if (matchOrder) return `Trận #${matchOrder}`;
-  return 'Vòng đấu';
+  if (rNum) return `VÒNG ${rNum}`;
+  if (match.matchOrder) return `TRẬN #${match.matchOrder}`;
+  return 'VÒNG ĐẤU';
 }
 
 function extractSetScores(match: ScheduleBoardMatch) {
@@ -413,7 +445,7 @@ export function CourtScheduleBoard({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [draftAssignments, isSavingDraft]);
 
-  // Auto-Schedule All Unscheduled Matches (AI Smart Fill - Draft staging)
+  // Auto-Schedule All Unscheduled Matches (AI Smart Fill with full interval overlap protection)
   const handleAutoScheduleAll = () => {
     if (unscheduledMatches.length === 0 || courts.length === 0) return;
     const newDrafts: Record<string, DraftAssignment> = {};
@@ -422,18 +454,28 @@ export function CourtScheduleBoard({
     for (let rIdx = 0; rIdx < timelineRows.rows.length; rIdx++) {
       const rowInfo = timelineRows.rows[rIdx];
       if (!rowInfo) continue;
-      const targetTime = new Date(rowInfo.startTimestamp).toISOString();
+      const slotStart = rowInfo.startTimestamp;
+      const slotEnd = slotStart + rowInfo.durationMinutes * 60_000;
+      const targetTime = new Date(slotStart).toISOString();
 
       for (const court of courts) {
         if (matchIdx >= unscheduledMatches.length) break;
 
-        // Check if court slot is already occupied
-        const isOccupied = displayMatches.some(
-          (m) =>
-            m.courtId === court.id &&
-            m.scheduledAt &&
-            new Date(m.scheduledAt).getTime() === rowInfo.startTimestamp,
-        );
+        // Check if court slot is already occupied with time range overlap
+        const isOccupied =
+          Object.values(newDrafts).some((d) => {
+            if (d.courtId !== court.id) return false;
+            const dStart = new Date(d.scheduledAt).getTime();
+            const dEnd = dStart + (d.durationMinutes || defaultStepMinutes) * 60_000;
+            return slotStart < dEnd && slotEnd > dStart;
+          }) ||
+          displayMatches.some((m) => {
+            if (m.courtId !== court.id || !m.scheduledAt) return false;
+            const mStart = new Date(m.scheduledAt).getTime();
+            const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
+            return slotStart < mEnd && slotEnd > mStart;
+          });
+
         if (isOccupied) continue;
 
         const targetMatch = unscheduledMatches[matchIdx];
@@ -545,11 +587,12 @@ export function CourtScheduleBoard({
       if (!query) return true;
       const p1 = getParticipantName(item.match.participant1).toLocaleLowerCase();
       const p2 = getParticipantName(item.match.participant2).toLocaleLowerCase();
-      const roundStr = getCleanRoundLabel(item.match).toLocaleLowerCase();
+      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+      const roundStr = getAccurateRoundLabel(item.match, maxR).toLocaleLowerCase();
       const orderStr = `#${item.match.matchOrder ?? ''}`.toLocaleLowerCase();
       return p1.includes(query) || p2.includes(query) || roundStr.includes(query) || orderStr.includes(query);
     });
-  }, [assignmentSearch, pickerDivisionFilter, unscheduledMatches]);
+  }, [assignmentSearch, pickerDivisionFilter, unscheduledMatches, maxRoundByDivision]);
 
   const openAssignmentPicker = (courtId: string, scheduledAt: string, rowIndex: number) => {
     const court = courts.find((c) => c.id === courtId);
@@ -581,10 +624,6 @@ export function CourtScheduleBoard({
         const targetTime = new Date(rowInfo.startTimestamp).toISOString();
         const duration = item.durationMinutes || rowInfo.durationMinutes || 30;
 
-        if (onSaveScheduleDirect) {
-          await onSaveScheduleDirect(matchId, assignmentPicker.courtId, targetTime);
-        }
-
         newDrafts[matchId] = {
           courtId: assignmentPicker.courtId,
           scheduledAt: targetTime,
@@ -597,6 +636,8 @@ export function CourtScheduleBoard({
       setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
       setAssignmentPicker(null);
       setSelectedPickerMatchIds([]);
+      setSaveToast(`Đã xếp ${selectedPickerMatchIds.length} trận! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+      setTimeout(() => setSaveToast(null), 3000);
     } finally {
       setIsSavingDraft(false);
     }
@@ -608,7 +649,7 @@ export function CourtScheduleBoard({
     );
   };
 
-  // Drag & drop support
+  // Drag & drop support with Smart Conflict Prevention / Position Swapping
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, courtId: string) => {
     event.preventDefault();
     const matchId = event.dataTransfer.getData('text/plain');
@@ -618,20 +659,92 @@ export function CourtScheduleBoard({
     const bounds = event.currentTarget.getBoundingClientRect();
     const rawY = Math.max(0, event.clientY - bounds.top);
 
-    // Find closest row
+    // Find closest target row
     const targetRow = timelineRows.rows.find((r) => rawY >= r.top && rawY < r.top + r.height) || timelineRows.rows[0];
-    const scheduledAt = new Date(targetRow.startTimestamp).toISOString();
+    const targetStart = targetRow.startTimestamp;
+    const targetDuration = item.durationMinutes || targetRow.durationMinutes || defaultStepMinutes;
+    const targetEnd = targetStart + targetDuration * 60_000;
 
-    if (onSaveScheduleDirect) {
-      void onSaveScheduleDirect(matchId, courtId, scheduledAt);
+    // Check if there is already a conflicting match on this court overlapping this time slot
+    const conflictingItem = displayMatches.find((m) => {
+      if (m.match.id === matchId || m.courtId !== courtId || !m.scheduledAt) return false;
+      const mStart = new Date(m.scheduledAt).getTime();
+      const mDuration = m.durationMinutes || defaultStepMinutes;
+      const mEnd = mStart + mDuration * 60_000;
+      return targetStart < mEnd && targetEnd > mStart;
+    });
+
+    if (conflictingItem) {
+      const oldCourtId = item.courtId;
+      const oldScheduledAt = item.scheduledAt;
+      const oldDuration = item.durationMinutes;
+
+      if (oldCourtId && oldScheduledAt) {
+        // SWAP: Exchange places between the two scheduled matches
+        setDraftAssignments((current) => ({
+          ...current,
+          [matchId]: {
+            courtId,
+            scheduledAt: new Date(targetStart).toISOString(),
+            durationMinutes: targetDuration,
+          },
+          [conflictingItem.match.id]: {
+            courtId: oldCourtId,
+            scheduledAt: oldScheduledAt,
+            durationMinutes: oldDuration ?? targetDuration,
+          },
+        }));
+        setSaveToast(`Đã hoán đổi vị trí 2 trận đấu! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+        setTimeout(() => setSaveToast(null), 3000);
+        return;
+      } else {
+        // Unscheduled match: Find next continuous empty slot on this court
+        let nextAvailableStart: number | null = null;
+        for (const row of timelineRows.rows) {
+          if (row.startTimestamp < targetStart) continue;
+          const slotStart = row.startTimestamp;
+          const slotEnd = slotStart + targetDuration * 60_000;
+          const hasOverlap = displayMatches.some((m) => {
+            if (m.match.id === matchId || m.courtId !== courtId || !m.scheduledAt) return false;
+            const mStart = new Date(m.scheduledAt).getTime();
+            const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
+            return slotStart < mEnd && slotEnd > mStart;
+          });
+          if (!hasOverlap) {
+            nextAvailableStart = slotStart;
+            break;
+          }
+        }
+
+        if (nextAvailableStart) {
+          const newScheduledAt = new Date(nextAvailableStart).toISOString();
+          setDraftAssignments((current) => ({
+            ...current,
+            [matchId]: {
+              courtId,
+              scheduledAt: newScheduledAt,
+              durationMinutes: targetDuration,
+            },
+          }));
+          setSaveToast(`Khung giờ đã có trận, đã xếp vào giờ trống tiếp theo (${formatMatchTime(newScheduledAt)})!`);
+          setTimeout(() => setSaveToast(null), 3500);
+          return;
+        } else {
+          setSaveToast(`Sân đã kín lịch trong khung giờ này!`);
+          setTimeout(() => setSaveToast(null), 3000);
+          return;
+        }
+      }
     }
 
+    // No conflict: Assign directly
+    const scheduledAt = new Date(targetStart).toISOString();
     setDraftAssignments((current) => ({
       ...current,
       [matchId]: {
         courtId,
         scheduledAt,
-        durationMinutes: current[matchId]?.durationMinutes ?? targetRow.durationMinutes,
+        durationMinutes: targetDuration,
       },
     }));
   };
@@ -791,7 +904,9 @@ export function CourtScheduleBoard({
   };
 
   const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
-    const roundLabelStr = getCleanRoundLabel(item.match);
+    const divId = item.match.divisionId || 'default';
+    const maxRound = maxRoundByDivision.get(divId) || 1;
+    const roundLabelStr = getAccurateRoundLabel(item.match, maxRound);
     const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
     const setList = extractSetScores(item.match);
     const p1Players = getParticipantPlayers(item.match.participant1);

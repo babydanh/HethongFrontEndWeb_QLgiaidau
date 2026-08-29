@@ -683,7 +683,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   courts={s.courts}
                   divisions={s.divisions}
                   matches={s.matches}
-                  defaultDivisionId={s.selectedDivisionId}
+                  defaultDivisionId="all"
                   defaultDate={s.startDate}
                   defaultOperatingStart={courtOperatingStart}
                   defaultOperatingEnd={courtOperatingEnd}
@@ -700,6 +700,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     if (fullMatch) s.handleOpenScheduling(fullMatch);
                   }}
                   onSaveScheduleDirect={s.handleSaveScheduleDirect}
+                  onRefetchData={s.refetchDivisionData}
                 />
               </div>
             </div>

@@ -268,7 +268,7 @@ export function CourtScheduleBoard({
   // Dynamic Timeline Configuration
   const [operatingStart, setOperatingStart] = useState(defaultOperatingStart || '08:00');
   const [operatingEnd, setOperatingEnd] = useState(defaultOperatingEnd || '22:00');
-  const [defaultStepMinutes, setDefaultStepMinutes] = useState(30);
+  const [defaultStepMinutes, setDefaultStepMinutes] = useState(15);
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [timeSettingsOpen, setTimeSettingsOpen] = useState(false);
   const [saveToast, setSaveToast] = useState<string | null>(null);
@@ -276,7 +276,7 @@ export function CourtScheduleBoard({
   // Form temp state for Time Settings Modal
   const [tempStart, setTempStart] = useState(operatingStart);
   const [tempEnd, setTempEnd] = useState(operatingEnd);
-  const [tempStep, setTempStep] = useState(defaultStepMinutes);
+  const [tempStep, setTempStep] = useState(15);
 
   // Excel Row Durations (in minutes per row, default step)
   const [rowDurations, setRowDurations] = useState<Record<number, number>>({});
@@ -1833,7 +1833,7 @@ export function CourtScheduleBoard({
               onClick={() => {
                 setTempStart(defaultOperatingStart || '08:00');
                 setTempEnd(defaultOperatingEnd || '22:00');
-                setTempStep(30);
+                setTempStep(15);
               }}
               className="h-8 text-xs font-semibold cursor-pointer"
             >

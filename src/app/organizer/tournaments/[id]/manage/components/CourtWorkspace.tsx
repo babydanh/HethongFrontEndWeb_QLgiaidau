@@ -283,6 +283,7 @@ export function CourtWorkspace({
         defaultDate={defaultDate}
         defaultOperatingStart={defaultOperatingStart}
         defaultOperatingEnd={defaultOperatingEnd}
+        isFullscreen={isFullscreen}
         onOpenMatch={onOpenMatch}
         onSaveScheduleDirect={onSaveScheduleDirect}
       />

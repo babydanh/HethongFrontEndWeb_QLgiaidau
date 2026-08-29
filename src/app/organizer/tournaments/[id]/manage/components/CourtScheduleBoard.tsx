@@ -57,6 +57,7 @@ interface CourtScheduleBoardProps {
   defaultDate?: string | null;
   defaultOperatingStart?: string;
   defaultOperatingEnd?: string;
+  isFullscreen?: boolean;
   onOpenMatch: (matchId: string) => void;
   onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string) => Promise<void>;
 }
@@ -157,6 +158,7 @@ export function CourtScheduleBoard({
   defaultDate,
   defaultOperatingStart = '08:00',
   defaultOperatingEnd = '22:00',
+  isFullscreen = false,
   onOpenMatch,
   onSaveScheduleDirect,
 }: CourtScheduleBoardProps) {
@@ -827,7 +829,11 @@ export function CourtScheduleBoard({
         </div>
       ) : (
         <div
-          className="max-h-[min(72vh,760px)] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none"
+          className={`${
+            isFullscreen
+              ? 'h-[calc(100vh-170px)]'
+              : 'max-h-[min(72vh,760px)]'
+          } overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none`}
           role="region"
           aria-label={t('matchSchedule.court')}
           tabIndex={0}
@@ -883,12 +889,9 @@ export function CourtScheduleBoard({
                     }`}
                     style={{ top: row.top, height: row.height }}
                   >
-                    <div className="flex flex-col items-center justify-center pt-1.5 text-center select-none">
-                      <span className="text-[11px] font-bold text-slate-800 tracking-tight leading-tight">
+                    <div className="flex h-full items-center justify-center text-center select-none px-1">
+                      <span className="text-xs font-bold text-slate-800 tracking-tight">
                         {row.startTimeStr}
-                      </span>
-                      <span className="text-[9px] font-semibold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-100 mt-0.5">
-                        {row.durationMinutes} phút
                       </span>
                     </div>
 

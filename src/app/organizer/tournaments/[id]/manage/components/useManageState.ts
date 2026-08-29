@@ -123,6 +123,10 @@ export function useManageState(id: string) {
   const [isAddingReferee, setIsAddingReferee] = useState(false);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
+  const divisionsRef = useRef<Division[]>([]);
+  divisionsRef.current = divisions;
+  const selectedDivisionIdRef = useRef<string>('');
+  selectedDivisionIdRef.current = selectedDivisionId;
   const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
   const [editingDivision, setEditingDivision] = useState<Division | null>(null);
   const [newDivisionMatchType, setNewDivisionMatchType] = useState('MALE_DOUBLES');
@@ -330,8 +334,8 @@ export function useManageState(id: string) {
 
   const refetchDivisionData = useCallback(async (customDivisionId?: string, customDivList?: Division[]) => {
     const requestId = ++divisionDataRequestRef.current;
-    const divisionId = customDivisionId ?? selectedDivisionId;
-    const activeDivList = customDivList ?? divisions;
+    const divisionId = customDivisionId ?? selectedDivisionIdRef.current;
+    const activeDivList = customDivList ?? divisionsRef.current;
     try {
       let currentStages: BracketStage[] = [];
       if (divisionId) {
@@ -413,7 +417,7 @@ export function useManageState(id: string) {
         setMatches(combinedMatches);
       }
     } catch { /* Preserve the last successful division snapshot on transient errors. */ }
-  }, [divisions, id, selectedDivisionId]);
+  }, [id]);
 
   const fetchDivisions = useCallback(async (tournamentId: string) => {
     const requestId = ++divisionListRequestRef.current;
@@ -422,6 +426,7 @@ export function useManageState(id: string) {
       if (requestId !== divisionListRequestRef.current) return;
       if (r.data && Array.isArray(r.data)) {
         setDivisions(r.data);
+        divisionsRef.current = r.data;
         const reqDiv = searchParams.get('divisionId');
         let nextDivId = '';
         if (reqDiv && r.data.some(d => d.id === reqDiv)) {
@@ -430,15 +435,18 @@ export function useManageState(id: string) {
           nextDivId = r.data[0].id;
         }
         setSelectedDivisionId(nextDivId);
+        selectedDivisionIdRef.current = nextDivId;
         void refetchDivisionData(nextDivId, r.data);
       } else {
         setDivisions([]);
+        divisionsRef.current = [];
         setSelectedDivisionId('');
+        selectedDivisionIdRef.current = '';
       }
     } catch {
       // Keep the last successful division list visible when the API is rate-limited.
     }
-  }, [refetchDivisionData, searchParams]);
+  }, [id, refetchDivisionData, searchParams]);
 
   const fetchTournamentVenues = useCallback(async () => {
     if (!id) return;
@@ -1878,7 +1886,8 @@ export function useManageState(id: string) {
     void Promise.resolve().then(() => {
       void init();
     });
-  }, [fetchCameras, fetchDivisions, fetchTournamentData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Restore an unfinished form once the canonical server values are loaded.
   useEffect(() => {

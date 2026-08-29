@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, User, Users, Video, Zap, Pencil } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, User, Users, Video, Zap, Pencil, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -213,9 +213,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   const TABS = [
     { key: 'basic', label: translate('tabs.basic'), icon: Settings },
-    { key: 'schedule', label: translate('tabs.schedule'), icon: Calendar },
+    { key: 'schedule', label: 'Địa điểm & Sân', icon: MapPin },
     { key: 'registration', label: translate('tabs.registration'), icon: Users },
     { key: 'bracket', label: translate('tabs.bracket'), icon: Trophy },
+    { key: 'court_schedule', label: 'Lịch thi đấu', icon: Calendar },
     { key: 'livestream', label: translate('tabs.livestream'), icon: Video },
     { key: 'finance', label: translate('tabs.finance'), icon: DollarSign },
     { key: 'permissions', label: translate('tabs.permissions'), icon: FileText },
@@ -435,7 +436,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         {/* Tabs nav */}
         <div className="overflow-x-auto mb-6 bg-white rounded-lg border border-slate-200 shadow-sm hide-scrollbar">
-          <div className="flex md:grid md:grid-cols-7 gap-1.5 p-1.5 min-w-max md:min-w-0">
+          <div className="flex md:grid md:grid-cols-8 gap-1.5 p-1.5 min-w-max md:min-w-0">
             {TABS.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -611,9 +612,28 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               defaultDate={s.startDate}
               onRefetchData={s.refetchDivisionData}
             />
+          </div>
+        )}
 
-            {/* Bảng Lịch thi đấu & Xếp sân được tích hợp trực tiếp tại tab Sơ đồ */}
-            {s.courts.length > 0 && !isCourtWorkspaceFullscreen && (
+        {/* Tab Lịch thi đấu & Xếp sân độc lập */}
+        {s.activeTab === 'court_schedule' && (
+          <div className="space-y-6">
+            {s.courts.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
+                <MapPin className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+                <h4 className="text-base font-bold text-slate-800">Chưa có sân thi đấu</h4>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  Vui lòng qua tab &quot;Địa điểm & Sân&quot; để thiết lập ít nhất 1 sân thi đấu trước khi xếp lịch.
+                </p>
+                <Button
+                  type="button"
+                  onClick={() => s.setActiveTab('schedule')}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+                >
+                  Thiết lập sân bãi ngay
+                </Button>
+              </div>
+            ) : (
               <CourtWorkspace
                 venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
                 courts={s.courts}

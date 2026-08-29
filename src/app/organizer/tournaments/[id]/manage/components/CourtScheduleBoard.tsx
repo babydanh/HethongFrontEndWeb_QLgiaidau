@@ -109,9 +109,10 @@ function formatMatchTime(value?: string | null) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   }).format(date);
 }
 
@@ -834,7 +835,7 @@ export function CourtScheduleBoard({
           <div
             className="grid min-w-[900px]"
             style={{
-              gridTemplateColumns: `78px repeat(${courts.length}, minmax(210px, 1fr))`,
+              gridTemplateColumns: `88px repeat(${courts.length}, minmax(210px, 1fr))`,
             }}
           >
             {/* Corner header */}
@@ -877,14 +878,18 @@ export function CourtScheduleBoard({
                 return (
                   <div
                     key={row.index}
-                    className={`absolute inset-x-0 border-b border-slate-200/80 px-1.5 flex flex-col justify-between transition-colors ${
-                      isRowSelected ? 'bg-blue-100/70 text-blue-950 font-bold' : ''
+                    className={`absolute inset-x-0 border-b border-slate-200/80 px-1 flex flex-col justify-between transition-colors ${
+                      isRowSelected ? 'bg-blue-100/80 text-blue-950 font-bold' : ''
                     }`}
                     style={{ top: row.top, height: row.height }}
                   >
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[10px] font-bold text-slate-700">{row.startTimeStr}</span>
-                      <span className="text-[9px] text-slate-400 font-semibold">{row.durationMinutes}p</span>
+                    <div className="flex flex-col items-center justify-center pt-1.5 text-center select-none">
+                      <span className="text-[11px] font-bold text-slate-800 tracking-tight leading-tight">
+                        {row.startTimeStr}
+                      </span>
+                      <span className="text-[9px] font-semibold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-100 mt-0.5">
+                        {row.durationMinutes} phút
+                      </span>
                     </div>
 
                     {/* Excel Row Resize Divider Handle */}
@@ -919,7 +924,7 @@ export function CourtScheduleBoard({
                           affectedRowIndices: affected,
                         });
                       }}
-                      className="group -mb-1 h-2 cursor-row-resize flex items-center justify-center hover:bg-blue-400/30 transition-colors z-20"
+                      className="group -mb-1 h-2.5 w-full cursor-row-resize flex items-center justify-center hover:bg-blue-400/30 transition-colors z-20"
                       title="Kéo lên/xuống để chỉnh độ cao & thời gian ô (1p / -1p). Tô nhiều ô sẽ canh đều toàn bộ!"
                     >
                       <div className="h-0.5 w-full bg-slate-300 group-hover:bg-blue-600 transition-colors" />

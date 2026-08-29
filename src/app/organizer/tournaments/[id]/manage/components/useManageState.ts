@@ -414,7 +414,7 @@ export function useManageState(id: string) {
               (stage.groups || []).flatMap((group) =>
                 (group.matches || []).map((m) => ({
                   ...m,
-                  divisionId: (m as { divisionId?: string }).divisionId || divId,
+                  divisionId: divId,
                   stage: { name: stage.name, roundConfig: stage.roundConfig },
                 })),
               ),

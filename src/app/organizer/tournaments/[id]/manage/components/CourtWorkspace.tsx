@@ -72,6 +72,12 @@ export function CourtWorkspace({
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedRound, setSelectedRound] = useState<string>('all');
 
+  useEffect(() => {
+    if (defaultDivisionId) {
+      setSelectedDivision(defaultDivisionId);
+    }
+  }, [defaultDivisionId]);
+
   const allCourtsSelected = selectedCourtIds.length === courts.length;
 
   const stageMetaByMatchId = useMemo(() => {
@@ -100,7 +106,10 @@ export function CourtWorkspace({
 
   const divisionOptions = useMemo(() => divisions, [divisions]);
   const contentMatches = useMemo(
-    () => selectedDivision === 'all' ? matches : matches.filter((match) => match.divisionId === selectedDivision),
+    () => {
+      if (selectedDivision === 'all') return matches;
+      return matches.filter((match) => String(match.divisionId) === String(selectedDivision));
+    },
     [matches, selectedDivision],
   );
   const stageOptions = useMemo(() => {

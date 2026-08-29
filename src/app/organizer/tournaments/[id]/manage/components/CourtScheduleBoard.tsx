@@ -118,7 +118,7 @@ type MatchCardResizeState = {
   currentDurationMinutes: number;
 };
 
-const PIXELS_PER_MINUTE = 4.0; // 1 minute = 4.0px (30 mins = 120px height, full professional card with set scores and player avatars)
+const PIXELS_PER_MINUTE = 4.8; // 1 minute = 4.8px (30 mins = 144px height, high spacious grid)
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -658,217 +658,197 @@ export function CourtScheduleBoard({
     setSelectionRange(null);
   };
 
-      const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
-        const roundLabelStr = getCleanRoundLabel(item.match);
-        const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
-        const setList = extractSetScores(item.match);
-        const p1Players = getParticipantPlayers(item.match.participant1);
-        const p2Players = getParticipantPlayers(item.match.participant2);
-        const matchOrder = item.match.matchOrder || item.match.id.slice(-5);
-        const matchTimeStr = formatMatchTime(item.scheduledAt);
+  const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
+    const roundLabelStr = getCleanRoundLabel(item.match);
+    const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
+    const setList = extractSetScores(item.match);
+    const p1Players = getParticipantPlayers(item.match.participant1);
+    const p2Players = getParticipantPlayers(item.match.participant2);
+    const matchTimeStr = formatMatchTime(item.scheduledAt);
 
-        // Determine status & styling
-        const rawStatus = String((item.match as unknown as Record<string, unknown>).status || '').toUpperCase();
-        const isCompleted = rawStatus === 'COMPLETED' || rawStatus === 'FINISHED' || setList.length > 0;
-        const isLive = rawStatus === 'IN_PROGRESS' || rawStatus === 'LIVE';
+    // Determine status & styling
+    const rawStatus = String((item.match as unknown as Record<string, unknown>).status || '').toUpperCase();
+    const isCompleted = rawStatus === 'COMPLETED' || rawStatus === 'FINISHED' || setList.length > 0;
+    const isLive = rawStatus === 'IN_PROGRESS' || rawStatus === 'LIVE';
 
-        let cardTop = 0;
-        const cardHeight = Math.max(110, (item.durationMinutes || 30) * PIXELS_PER_MINUTE - 6);
-        const matchTime = new Date(item.scheduledAt || 0).getTime();
+    const matchTime = new Date(item.scheduledAt || 0).getTime();
+    const matchingRow = timelineRows.rows.find(
+      (r) => matchTime >= r.startTimestamp && matchTime < r.endTimestamp,
+    );
 
-        const matchingRow = timelineRows.rows.find(
-          (r) => matchTime >= r.startTimestamp && matchTime < r.endTimestamp,
-        );
+    const rowDuration = matchingRow?.durationMinutes ?? 30;
+    const effectiveDuration = (item.isDraft && item.durationMinutes) ? item.durationMinutes : (rowDurations[matchingRow?.index ?? -1] ?? item.durationMinutes ?? rowDuration);
 
-        if (matchingRow) {
-          const offsetMinutes = (matchTime - matchingRow.startTimestamp) / 60_000;
-          cardTop = matchingRow.top + offsetMinutes * PIXELS_PER_MINUTE + 2;
-        } else {
-          cardTop = Math.max(0, ((matchTime - timelineRows.startTimestamp) / 60_000) * PIXELS_PER_MINUTE + 2);
+    let cardTop = 0;
+    const cardHeight = Math.max(130, effectiveDuration * PIXELS_PER_MINUTE - 6);
+
+    if (matchingRow) {
+      const offsetMinutes = (matchTime - matchingRow.startTimestamp) / 60_000;
+      cardTop = matchingRow.top + offsetMinutes * PIXELS_PER_MINUTE + 2;
+    } else {
+      cardTop = Math.max(0, ((matchTime - timelineRows.startTimestamp) / 60_000) * PIXELS_PER_MINUTE + 2);
+    }
+
+    const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
+
+    return (
+      <div
+        key={item.match.id}
+        draggable
+        onDragStart={(event) => {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', item.match.id);
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenMatch(item.match.id);
+        }}
+        className={`group w-full rounded-xl border text-left transition-all cursor-pointer shadow-xs hover:shadow-md ${
+          compact
+            ? 'p-3 bg-white'
+            : 'absolute inset-x-1 z-10 overflow-hidden p-2.5'
+        } ${
+          isCompleted
+            ? 'bg-[#ecfdf5] border-emerald-300 text-emerald-950'
+            : isLive
+            ? 'bg-[#e0f2fe] border-sky-300 text-sky-950'
+            : 'bg-white border-slate-200 hover:border-orange-400 text-slate-900'
+        } ${
+          item.isDraft
+            ? 'ring-2 ring-violet-400 border-violet-400 bg-violet-50/95'
+            : item.isPreview
+            ? 'border-dashed border-blue-400 bg-blue-50/95'
+            : ''
+        } ${isCurrentlyResizing ? 'ring-2 ring-blue-500 shadow-lg' : ''}`}
+        style={
+          !compact
+            ? {
+                top: cardTop,
+                height: cardHeight,
+              }
+            : undefined
         }
-
-        const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
-
-        return (
-          <div
-            key={item.match.id}
-            draggable
-            onDragStart={(event) => {
-              event.dataTransfer.effectAllowed = 'move';
-              event.dataTransfer.setData('text/plain', item.match.id);
-            }}
-            onClick={(event) => {
-              event.stopPropagation();
-              onOpenMatch(item.match.id);
-            }}
-            className={`group w-full rounded-xl border text-left transition-all cursor-pointer shadow-xs hover:shadow-md ${
-              compact
-                ? 'p-2.5 bg-white'
-                : 'absolute inset-x-1 z-10 overflow-hidden p-2'
-            } ${
-              isCompleted
-                ? 'bg-[#ecfdf5] border-emerald-300 text-emerald-950'
-                : isLive
-                ? 'bg-[#e0f2fe] border-sky-300 text-sky-950'
-                : 'bg-white border-slate-200 hover:border-orange-400'
-            } ${
-              item.isDraft
-                ? 'ring-2 ring-violet-400 border-violet-400 bg-violet-50/95'
-                : item.isPreview
-                ? 'border-dashed border-blue-400 bg-blue-50/95'
-                : ''
-            } ${isCurrentlyResizing ? 'ring-2 ring-blue-500 shadow-lg' : ''}`}
-            style={
-              !compact
-                ? {
-                    top: cardTop,
-                    height: cardHeight,
-                  }
-                : undefined
-            }
-          >
-            <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
-              {/* Header Row: #Code | DIVISION | ✥ | 🕒 Time */}
-              <div className="flex items-center justify-between gap-1 border-b border-slate-200/70 pb-1 text-[11px] font-bold shrink-0">
-                <span className="truncate text-blue-700 tracking-tight">
-                  #{matchOrder} | {(division?.name || 'NỘI DUNG').toUpperCase()}
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0 text-slate-500 text-[10px]">
-                  <Move className="h-3 w-3 text-slate-400" />
-                  <span className="flex items-center gap-0.5 text-emerald-700 font-bold bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200/60">
-                    <Clock className="h-2.5 w-2.5" />
-                    {matchTimeStr}
-                  </span>
-                </div>
-              </div>
-
-              {/* Competitor 1 Row */}
-              <div className="flex flex-col gap-0.5 pt-1">
-                <div className="flex items-center justify-between gap-1.5 min-w-0">
-                  <div className="flex items-center gap-1 min-w-0 flex-1">
-                    <span className="text-[9px] font-semibold text-slate-400 bg-slate-100 px-1 py-0.2 rounded shrink-0">
-                      Tự do
-                    </span>
-                    <div className="flex items-center gap-1.5 truncate">
-                      {p1Players.map((player, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 truncate text-xs font-bold text-slate-900">
-                          <span className="h-4 w-4 rounded-full bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center text-[9px] shrink-0 font-extrabold">
-                            {player.charAt(0).toUpperCase()}
-                          </span>
-                          <span className="truncate">{player}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Score Badges */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {setList.length > 0 ? (
-                      setList.map((s, idx) => (
-                        <span
-                          key={idx}
-                          className="min-w-[20px] text-center rounded bg-white px-1 py-0.2 text-[11px] font-extrabold text-slate-900 border border-slate-300 shadow-2xs"
-                        >
-                          {s.s1}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="min-w-[20px] text-center rounded bg-slate-50 px-1 py-0.2 text-[11px] font-bold text-slate-400 border border-slate-200">
-                        -
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Competitor 2 Row */}
-                <div className="flex items-center justify-between gap-1.5 min-w-0">
-                  <div className="flex items-center gap-1 min-w-0 flex-1">
-                    <span className="text-[9px] font-semibold text-slate-400 bg-slate-100 px-1 py-0.2 rounded shrink-0">
-                      Tự do
-                    </span>
-                    <div className="flex items-center gap-1.5 truncate">
-                      {p2Players.map((player, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 truncate text-xs font-bold text-slate-900">
-                          <span className="h-4 w-4 rounded-full bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center text-[9px] shrink-0 font-extrabold">
-                            {player.charAt(0).toUpperCase()}
-                          </span>
-                          <span className="truncate">{player}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Score Badges */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {setList.length > 0 ? (
-                      setList.map((s, idx) => (
-                        <span
-                          key={idx}
-                          className="min-w-[20px] text-center rounded bg-white px-1 py-0.2 text-[11px] font-extrabold text-slate-900 border border-slate-300 shadow-2xs"
-                        >
-                          {s.s2}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="min-w-[20px] text-center rounded bg-slate-50 px-1 py-0.2 text-[11px] font-bold text-slate-400 border border-slate-200">
-                        -
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer Row: [BẢNG A / VÒNG 1]  [ Chi tiết ]  [ Trạng thái ▾ ] */}
-              <div className="flex items-center justify-between gap-1 pt-1 border-t border-slate-200/60 shrink-0">
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 text-[10px] font-extrabold border border-slate-200">
-                  {roundLabelStr.toUpperCase()}
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenMatch(item.match.id);
-                  }}
-                  className="pointer-events-auto rounded bg-[#c2410c] hover:bg-[#9a3412] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-2xs transition-colors"
-                >
-                  Chi tiết
-                </button>
-                <span className="text-[10px] font-medium text-slate-600">
-                  {isCompleted ? 'Đã kết thúc' : isLive ? 'Đang đấu' : 'Chưa diễn ra'}
-                </span>
-              </div>
+      >
+        <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
+          {/* Header Row: DIVISION NAME | 🕒 Time | ⏱️ Duration */}
+          <div className="flex items-center justify-between gap-1.5 border-b border-slate-200/80 pb-1.5 text-xs font-black shrink-0">
+            <span className="truncate text-blue-700 uppercase tracking-tight">
+              {(division?.name || 'NỘI DUNG').toUpperCase()}
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0 text-[11px]">
+              <span className="flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                <Clock className="h-3 w-3" />
+                {matchTimeStr}
+              </span>
+              <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                {effectiveDuration}p
+              </span>
             </div>
-
-            {/* Live Match Card Resize Handle */}
-            {!compact && (
-              <div
-                role="presentation"
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  if (!item.courtId || !item.scheduledAt) return;
-                  setDraftAssignments((current) => ({
-                    ...current,
-                    [item.match.id]: {
-                      courtId: item.courtId!,
-                      scheduledAt: item.scheduledAt!,
-                      durationMinutes: item.durationMinutes,
-                    },
-                  }));
-                  setMatchCardResize({
-                    matchId: item.match.id,
-                    startY: event.clientY,
-                    initialDurationMinutes: item.durationMinutes,
-                    currentDurationMinutes: item.durationMinutes,
-                  });
-                }}
-                className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize bg-blue-400/20 hover:bg-blue-500/50 transition-colors flex items-center justify-center group-hover:opacity-100"
-                title="Kéo lên/xuống để co giãn thời lượng theo từng phút"
-              >
-                <div className="h-0.5 w-6 rounded-full bg-slate-400 group-hover:bg-blue-600" />
-              </div>
-            )}
           </div>
-        );
-      };
+
+          {/* Competitor 1 Row */}
+          <div className="flex items-center justify-between gap-2 min-w-0 py-1">
+            <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
+              {p1Players.map((player, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1.5 truncate text-xs font-bold text-slate-900">
+                  <span className="h-6 w-6 rounded-full bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center text-xs shrink-0 font-black shadow-2xs">
+                    {player.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="truncate">{player}</span>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {setList.length > 0 ? (
+                setList.map((s, idx) => (
+                  <span
+                    key={idx}
+                    className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-white px-1 text-xs font-black text-slate-900 border border-slate-300 shadow-2xs"
+                  >
+                    {s.s1}
+                  </span>
+                ))
+              ) : (
+                <span className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-slate-50 px-1 text-xs font-bold text-slate-400 border border-slate-200">
+                  -
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Competitor 2 Row */}
+          <div className="flex items-center justify-between gap-2 min-w-0 py-1">
+            <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
+              {p2Players.map((player, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1.5 truncate text-xs font-bold text-slate-900">
+                  <span className="h-6 w-6 rounded-full bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center text-xs shrink-0 font-black shadow-2xs">
+                    {player.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="truncate">{player}</span>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {setList.length > 0 ? (
+                setList.map((s, idx) => (
+                  <span
+                    key={idx}
+                    className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-white px-1 text-xs font-black text-slate-900 border border-slate-300 shadow-2xs"
+                  >
+                    {s.s2}
+                  </span>
+                ))
+              ) : (
+                <span className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-slate-50 px-1 text-xs font-bold text-slate-400 border border-slate-200">
+                  -
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Row: [BẢNG A / VÒNG 1]  [ Trạng thái ] */}
+          <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-200/60 shrink-0 text-xs">
+            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[11px] font-black border border-slate-200">
+              {roundLabelStr.toUpperCase()}
+            </span>
+            <span className="text-[11px] font-bold text-slate-600">
+              {isCompleted ? 'Đã kết thúc' : isLive ? 'Đang đấu' : 'Chưa diễn ra'}
+            </span>
+          </div>
+        </div>
+
+        {/* Live Match Card Resize Handle */}
+        {!compact && (
+          <div
+            role="presentation"
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              if (!item.courtId || !item.scheduledAt) return;
+              setDraftAssignments((current) => ({
+                ...current,
+                [item.match.id]: {
+                  courtId: item.courtId!,
+                  scheduledAt: item.scheduledAt!,
+                  durationMinutes: effectiveDuration,
+                },
+              }));
+              setMatchCardResize({
+                matchId: item.match.id,
+                startY: event.clientY,
+                initialDurationMinutes: effectiveDuration,
+                currentDurationMinutes: effectiveDuration,
+              });
+            }}
+            className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize bg-blue-400/20 hover:bg-blue-500/50 transition-colors flex items-center justify-center group-hover:opacity-100"
+            title="Kéo lên/xuống để co giãn thời lượng theo từng phút"
+          >
+            <div className="h-0.5 w-6 rounded-full bg-slate-400 group-hover:bg-blue-600" />
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <section className="space-y-1 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>

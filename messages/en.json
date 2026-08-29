@@ -5211,6 +5211,7 @@
     "hideBannerText": "Hide overlay text on the public banner",
     "hideBannerTextDescription": "Enable this when the banner already contains its own name, logo, or text. The homepage and tournament detail banner will not overlay the tournament name, badge, date, time, or venue.",
     "galleryTitle": "Additional image gallery",
+    "tournamentGallery": "Additional image gallery",
     "galleryPlaceholder": "Enter another image URL...",
     "uploadingToCloudinary": "Uploading image to Cloudinary...",
     "addGalleryUrl": "Add URL",

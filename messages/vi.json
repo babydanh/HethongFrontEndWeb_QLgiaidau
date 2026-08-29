@@ -5211,6 +5211,7 @@
     "hideBannerText": "Ẩn chữ phủ trên banner công khai",
     "hideBannerTextDescription": "Bật tùy chọn này khi banner đã có tên/logo/text thiết kế sẵn. Trang chủ và banner trang chi tiết sẽ không phủ tên giải, badge, ngày giờ hoặc địa điểm lên ảnh.",
     "galleryTitle": "Album ảnh bổ sung (Gallery)",
+    "tournamentGallery": "Album ảnh bổ sung (Gallery)",
     "galleryPlaceholder": "Nhập URL ảnh khác...",
     "uploadingToCloudinary": "Đang tải ảnh lên Cloudinary...",
     "addGalleryUrl": "Thêm URL",

@@ -826,6 +826,15 @@ export const livestreamApi = {
     ),
 };
 
+export interface TournamentVenueWithCourts {
+  id: string;
+  name: string;
+  locationAddress: string;
+  imagesUrls?: string[];
+  isDefault?: boolean;
+  courts: TournamentCourt[];
+}
+
 export const tournamentsApi = {
   getFeesConfig: () =>
     api.get<ApiResponse<TournamentFeesConfig>>("/tournaments/fees"),
@@ -838,6 +847,61 @@ export const tournamentsApi = {
     api.get<ApiResponse<TournamentWorkspace>>("/tournaments/workspace/me"),
   getTournamentById: (id: string, params?: Record<string, unknown>) =>
     api.get<ApiResponse<Tournament>>(`/tournaments/${id}`, { params }),
+  getTournamentVenues: (id: string) =>
+    api.get<ApiResponse<TournamentVenueWithCourts[]>>(`/tournaments/${id}/venues`),
+  createTournamentVenue: (
+    id: string,
+    data: {
+      name: string;
+      locationAddress: string;
+      isDefault?: boolean;
+      initialCourtCount?: number;
+      courtPrefix?: string;
+    },
+  ) =>
+    api.post<ApiResponse<TournamentVenueWithCourts>>(
+      `/tournaments/${id}/venues`,
+      data,
+    ),
+  updateTournamentVenue: (
+    id: string,
+    venueId: string,
+    data: { name?: string; locationAddress?: string },
+  ) =>
+    api.patch<ApiResponse<TournamentVenueWithCourts>>(
+      `/tournaments/${id}/venues/${venueId}`,
+      data,
+    ),
+  setDefaultTournamentVenue: (id: string, venueId: string) =>
+    api.patch<ApiResponse<{ success: boolean; defaultVenueId: string }>>(
+      `/tournaments/${id}/venues/${venueId}/default`,
+    ),
+  deleteTournamentVenue: (id: string, venueId: string) =>
+    api.delete<ApiResponse<{ success: boolean; remainingVenueIds: string[]; defaultVenueId: string | null }>>(
+      `/tournaments/${id}/venues/${venueId}`,
+    ),
+  addVenueCourtDirect: (
+    id: string,
+    venueId: string,
+    data: { courtName: string; status?: 'AVAILABLE' | 'MAINTENANCE' },
+  ) =>
+    api.post<ApiResponse<TournamentCourt>>(
+      `/tournaments/${id}/venues/${venueId}/courts`,
+      data,
+    ),
+  addVenueCourtsBatchDirect: (
+    id: string,
+    venueId: string,
+    data: { courtCount: number; namePrefix?: string },
+  ) =>
+    api.post<ApiResponse<TournamentCourt[]>>(
+      `/tournaments/${id}/venues/${venueId}/courts/batch`,
+      data,
+    ),
+  removeVenueCourtDirect: (id: string, venueId: string, courtId: string) =>
+    api.delete<ApiResponse<TournamentCourt>>(
+      `/tournaments/${id}/venues/${venueId}/courts/${courtId}`,
+    ),
   saveTournamentVenue: (
     id: string,
     data: { name: string; locationAddress: string },

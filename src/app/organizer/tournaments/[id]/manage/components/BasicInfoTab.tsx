@@ -127,6 +127,23 @@ export function BasicInfoTab({
     toast.success(translate('contactRemoved'));
   };
 
+  const [isAddingGalleryImage, setIsAddingGalleryImage] = React.useState(false);
+
+  const handleAddGalleryImage = async () => {
+    if (!newGalleryUrl.trim()) return;
+    try {
+      setIsAddingGalleryImage(true);
+      await tournamentsApi.addTournamentGalleryImage(id, newGalleryUrl.trim());
+      toast.success(translate('galleryUploaded'));
+      setNewGalleryUrl('');
+      fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsAddingGalleryImage(false);
+    }
+  };
+
   const handleRemoveGalleryImage = async (index: number) => {
     if (!confirm(translate('removeGalleryConfirm'))) return;
     try {
@@ -326,12 +343,52 @@ export function BasicInfoTab({
                       placeholder={translate('bannerPlaceholder')}
                       className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 transition-colors duration-200"
                     />
+                    <label className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-lg cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-colors select-none shrink-0 h-11 shadow-sm">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            toast.loading(translate('uploadingBanner'), { id: 'banner-upload' });
+                            const res = await uploadApi.uploadImage(file);
+                            if (res && res.url) {
+                              setBannerUrl(res.url);
+                              await tournamentsApi.updateTournament(id, { bannerUrl: res.url });
+                              if (tournament.parentId) {
+                                await tournamentsApi.updateParentTournament(tournament.parentId, { bannerUrl: res.url });
+                              }
+                              toast.success(translate('bannerUploaded'), { id: 'banner-upload' });
+                              fetchTournamentData();
+                            }
+                          } catch (err) {
+                            toast.error(getErrorMessage(err), { id: 'banner-upload' });
+                          }
+                        }}
+                      />
+                      {translate('chooseFile')}
+                    </label>
                   </div>
+                  <p className="text-[11px] text-slate-500 font-medium">{translate('bannerGuidance')}</p>
+                  {bannerUrl ? (
+                    <div className="relative w-full max-w-xl h-44 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-50 flex items-center justify-center mt-2">
+                      <img src={bannerUrl} alt={translate('bannerPreview')} className="w-full h-full object-cover" />
+                      <div className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[9px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">
+                        Banner
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-xl h-36 rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-xs font-medium">
+                      <span>{translate('noBanner')}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Gallery */}
                 <div className="flex flex-col gap-2 border-t pt-5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{translate('tournamentGallery')}</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{translate('galleryTitle')}</label>
                   <div className="flex gap-2">
                     <input
                       value={newGalleryUrl}
@@ -339,6 +396,40 @@ export function BasicInfoTab({
                       placeholder={translate('galleryPlaceholder')}
                       className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 transition-colors duration-200"
                     />
+                    {newGalleryUrl.trim() ? (
+                      <button
+                        type="button"
+                        onClick={handleAddGalleryImage}
+                        disabled={isAddingGalleryImage}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs shrink-0 h-11 transition-colors shadow-sm disabled:opacity-50"
+                      >
+                        {isAddingGalleryImage ? translate('adding') : translate('addGalleryUrl')}
+                      </button>
+                    ) : (
+                      <label className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-lg cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-colors select-none shrink-0 h-11 shadow-sm">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              toast.loading(translate('uploadingToCloudinary'), { id: 'gallery-upload' });
+                              const res = await uploadApi.uploadImage(file);
+                              if (res && res.url) {
+                                await tournamentsApi.addTournamentGalleryImage(id, res.url);
+                                toast.success(translate('galleryUploaded'), { id: 'gallery-upload' });
+                                fetchTournamentData();
+                              }
+                            } catch (err) {
+                              toast.error(getErrorMessage(err), { id: 'gallery-upload' });
+                            }
+                          }}
+                        />
+                        {translate('chooseFile')}
+                      </label>
+                    )}
                   </div>
 
                   {tournament.galleryImages && tournament.galleryImages.length > 0 ? (

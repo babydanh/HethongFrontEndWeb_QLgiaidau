@@ -870,7 +870,7 @@ export function CourtScheduleBoard({
               );
             })}
 
-            {/* Time Labels Sidebar (Excel Row Headers with Drag-to-Resize Dividers) */}
+            {/* Time Labels Sidebar (1 line = 1 cột mốc thời gian) */}
             <div
               className="relative border-r border-slate-200 bg-slate-50/80"
               style={{ height: timelineRows.totalHeight }}
@@ -882,59 +882,77 @@ export function CourtScheduleBoard({
                   row.index <= selectionRange.endRowIndex;
 
                 return (
-                  <div
-                    key={row.index}
-                    className={`absolute inset-x-0 border-b border-slate-200/80 px-1 flex flex-col justify-between transition-colors ${
-                      isRowSelected ? 'bg-blue-100/80 text-blue-950 font-bold' : ''
-                    }`}
-                    style={{ top: row.top, height: row.height }}
-                  >
-                    <div className="flex h-full items-center justify-center text-center select-none px-1">
-                      <span className="text-xs font-bold text-slate-800 tracking-tight">
+                  <React.Fragment key={row.index}>
+                    {/* The Row Container */}
+                    <div
+                      className={`absolute inset-x-0 border-b border-slate-200/80 transition-colors ${
+                        isRowSelected ? 'bg-blue-100/60' : ''
+                      }`}
+                      style={{ top: row.top, height: row.height }}
+                    >
+                      {/* Excel Row Resize Divider Handle on the line */}
+                      <div
+                        role="presentation"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+
+                          // If multiple rows are selected, resizing this one will resize ALL selected rows together (canh đều!)
+                          const isMulti =
+                            selectionRange &&
+                            row.index >= selectionRange.startRowIndex &&
+                            row.index <= selectionRange.endRowIndex;
+
+                          const affected = isMulti
+                            ? Array.from(
+                                { length: selectionRange.endRowIndex - selectionRange.startRowIndex + 1 },
+                                (_, i) => selectionRange.startRowIndex + i,
+                              )
+                            : [row.index];
+
+                          const initDurs: Record<number, number> = {};
+                          for (const idx of affected) {
+                            initDurs[idx] = rowDurations[idx] ?? 30;
+                          }
+
+                          setRowResizeState({
+                            rowIndex: row.index,
+                            startY: e.clientY,
+                            initialDurations: initDurs,
+                            affectedRowIndices: affected,
+                          });
+                        }}
+                        className="group absolute inset-x-0 bottom-0 -mb-1.5 h-3 cursor-row-resize flex items-center justify-center hover:bg-blue-400/30 transition-colors z-30"
+                        title="Kéo đường line này để chỉnh mốc thời gian ô (1p / -1p). Tô nhiều ô sẽ canh đều toàn bộ!"
+                      >
+                        <div className="h-0.5 w-full bg-slate-300 group-hover:bg-blue-600 transition-colors" />
+                      </div>
+                    </div>
+
+                    {/* Time Marker positioned EXACTLY on the horizontal Line */}
+                    <div
+                      className="absolute inset-x-0 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20"
+                      style={{ top: row.top }}
+                    >
+                      <span className="bg-slate-50/95 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-800 tracking-tight shadow-2xs border border-slate-200/80">
                         {row.startTimeStr}
                       </span>
                     </div>
-
-                    {/* Excel Row Resize Divider Handle */}
-                    <div
-                      role="presentation"
-                      onPointerDown={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-
-                        // If multiple rows are selected, resizing this one will resize ALL selected rows together (canh đều!)
-                        const isMulti =
-                          selectionRange &&
-                          row.index >= selectionRange.startRowIndex &&
-                          row.index <= selectionRange.endRowIndex;
-
-                        const affected = isMulti
-                          ? Array.from(
-                              { length: selectionRange.endRowIndex - selectionRange.startRowIndex + 1 },
-                              (_, i) => selectionRange.startRowIndex + i,
-                            )
-                          : [row.index];
-
-                        const initDurs: Record<number, number> = {};
-                        for (const idx of affected) {
-                          initDurs[idx] = rowDurations[idx] ?? 30;
-                        }
-
-                        setRowResizeState({
-                          rowIndex: row.index,
-                          startY: e.clientY,
-                          initialDurations: initDurs,
-                          affectedRowIndices: affected,
-                        });
-                      }}
-                      className="group -mb-1 h-2.5 w-full cursor-row-resize flex items-center justify-center hover:bg-blue-400/30 transition-colors z-20"
-                      title="Kéo lên/xuống để chỉnh độ cao & thời gian ô (1p / -1p). Tô nhiều ô sẽ canh đều toàn bộ!"
-                    >
-                      <div className="h-0.5 w-full bg-slate-300 group-hover:bg-blue-600 transition-colors" />
-                    </div>
-                  </div>
+                  </React.Fragment>
                 );
               })}
+
+              {/* Final End Time Marker on the bottom-most line */}
+              {timelineRows.rows.length > 0 && (
+                <div
+                  className="absolute inset-x-0 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20"
+                  style={{ top: timelineRows.totalHeight }}
+                >
+                  <span className="bg-slate-50/95 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-800 tracking-tight shadow-2xs border border-slate-200/80">
+                    {timelineRows.rows[timelineRows.rows.length - 1].endTimeStr}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Court Grid Columns with Excel-style Cells */}

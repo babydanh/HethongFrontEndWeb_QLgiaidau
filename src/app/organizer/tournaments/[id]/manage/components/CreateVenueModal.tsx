@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { MapPin, Plus, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Region } from '@/features/regions/api';
+import { Region, regionsApi } from '@/features/regions/api';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 interface CreateVenueModalProps {
@@ -49,6 +49,23 @@ export function CreateVenueModal({
   });
 
   if (!isOpen) return null;
+
+  const handleProvinceChange = async (provCode: string) => {
+    setProvinceCode(provCode);
+    setWardCode('');
+    if (!provCode) {
+      if (setWards) setWards([]);
+      return;
+    }
+    try {
+      const res = await regionsApi.getWardsByProvince(provCode);
+      if (Array.isArray(res) && setWards) {
+        setWards(res);
+      }
+    } catch {
+      // Keep empty wards
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,10 +161,7 @@ export function CreateVenueModal({
               </label>
               <select
                 value={provinceCode}
-                onChange={(e) => {
-                  setProvinceCode(e.target.value);
-                  setWardCode('');
-                }}
+                onChange={(e) => handleProvinceChange(e.target.value)}
                 className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
               >
                 <option value="">-- Chọn Tỉnh / Thành phố --</option>

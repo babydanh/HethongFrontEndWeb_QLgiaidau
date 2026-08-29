@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Region, regionsApi } from '@/features/regions/api';
 import { TournamentVenueWithCourts } from '@/features/tournaments/api';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 interface EditVenueModalProps {
   isOpen: boolean;
@@ -32,6 +33,22 @@ export function EditVenueModal({
   const [selectedWardCode, setSelectedWardCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Auto detect province and ward from address text
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: streetAddress,
+    provinces,
+    wards,
+    onSelectProvince: (provCode) => {
+      setSelectedProvinceCode(provCode);
+    },
+    onSelectWard: (wCode) => {
+      setSelectedWardCode(wCode);
+    },
+    onWardsLoaded: (loadedWards) => {
+      if (setWards) setWards(loadedWards);
+    },
+  });
 
   useEffect(() => {
     if (venue) {
@@ -75,9 +92,9 @@ export function EditVenueModal({
     const provinceObj = provinces.find((p) => p.code === selectedProvinceCode);
     const wardObj = wards.find((w) => w.code === selectedWardCode);
 
-    if (wardObj && provinceObj && !finalAddress.includes(provinceObj.name)) {
+    if (wardObj && provinceObj && !finalAddress.toLowerCase().includes(provinceObj.name.toLowerCase())) {
       finalAddress = `${finalAddress}, ${wardObj.name}, ${provinceObj.name}`;
-    } else if (provinceObj && !finalAddress.includes(provinceObj.name)) {
+    } else if (provinceObj && !finalAddress.toLowerCase().includes(provinceObj.name.toLowerCase())) {
       finalAddress = `${finalAddress}, ${provinceObj.name}`;
     }
 
@@ -152,6 +169,12 @@ export function EditVenueModal({
               className="h-10 text-xs rounded-lg border-slate-300"
               required
             />
+            {autoDetectedAddress.isMatched && (autoDetectedAddress.province || autoDetectedAddress.ward) && (
+              <p className="mt-1.5 text-[11px] text-emerald-600 flex items-center gap-1.5 font-medium bg-emerald-50/70 border border-emerald-200/70 px-2.5 py-1 rounded-md">
+                <Sparkles className="h-3 w-3 shrink-0 text-emerald-600" />
+                Tự động nhận diện: {[autoDetectedAddress.ward?.name, autoDetectedAddress.province?.name].filter(Boolean).join(', ')}
+              </p>
+            )}
           </div>
 
           {provinces.length > 0 && (

@@ -43,9 +43,9 @@ interface CourtWorkspaceProps {
   onPreview?: (...args: any[]) => Promise<any>;
   onPreviewWithAi?: (...args: any[]) => Promise<any>;
   aiScheduleIntent?: unknown;
-  isPlanningScheduleWithAi?: boolean;
   onOpenMatch: (matchId: string) => void;
-  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string) => Promise<void>;
+  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean) => Promise<void>;
+  onRefetchData?: () => Promise<any> | void;
 }
 
 export function CourtWorkspace({
@@ -61,6 +61,7 @@ export function CourtWorkspace({
   preview,
   onOpenMatch,
   onSaveScheduleDirect,
+  onRefetchData,
 }: CourtWorkspaceProps) {
   const t = useTranslations('OrganizerManage');
 
@@ -285,6 +286,7 @@ export function CourtWorkspace({
         isFullscreen={isFullscreen}
         onOpenMatch={onOpenMatch}
         onSaveScheduleDirect={onSaveScheduleDirect}
+        onRefetchData={onRefetchData}
       />
     </div>
   );

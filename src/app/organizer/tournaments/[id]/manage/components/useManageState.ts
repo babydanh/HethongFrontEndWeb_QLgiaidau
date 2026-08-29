@@ -1787,20 +1787,24 @@ export function useManageState(id: string) {
     finally { setIsScheduling(false); }
   };
 
-  const handleSaveScheduleDirect = async (matchId: string, courtId: string, scheduledAt: string) => {
+  const handleSaveScheduleDirect = async (matchId: string, courtId: string, scheduledAt: string, silent = false) => {
     try {
       const court = courts.find((c) => c.id === courtId);
       const venueAddr = tournament?.venue?.locationAddress || customVenueAddress || null;
       await tournamentsApi.updateMatchSchedule(matchId, {
-        courtId,
+        courtId: courtId || null,
         courtName: court?.courtName || null,
         courtAddress: venueAddr,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       });
-      toast.success('Đã cập nhật lịch thi đấu!');
-      await fetchTournamentData();
+      if (!silent) {
+        toast.success('Đã cập nhật lịch thi đấu!');
+        await fetchTournamentData();
+      }
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      if (!silent) {
+        toast.error(getErrorMessage(err));
+      }
     }
   };
 

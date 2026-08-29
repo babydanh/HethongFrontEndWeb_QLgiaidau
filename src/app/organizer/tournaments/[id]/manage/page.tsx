@@ -656,6 +656,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   if (fullMatch) s.handleOpenScheduling(fullMatch);
                 }}
                 onSaveScheduleDirect={s.handleSaveScheduleDirect}
+                onRefetchData={s.refetchDivisionData}
               />
             )}
           </div>

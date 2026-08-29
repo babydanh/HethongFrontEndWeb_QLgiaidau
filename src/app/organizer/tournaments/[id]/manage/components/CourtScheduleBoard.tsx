@@ -74,7 +74,8 @@ interface CourtScheduleBoardProps {
   defaultOperatingEnd?: string;
   isFullscreen?: boolean;
   onOpenMatch: (matchId: string) => void;
-  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string) => Promise<void>;
+  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean) => Promise<void>;
+  onRefetchData?: () => Promise<any> | void;
 }
 
 type DraftAssignment = {
@@ -226,6 +227,7 @@ export function CourtScheduleBoard({
   isFullscreen = false,
   onOpenMatch,
   onSaveScheduleDirect,
+  onRefetchData,
 }: CourtScheduleBoardProps) {
   const t = useTranslations('OrganizerManage');
   const locale = useLocale();
@@ -376,15 +378,20 @@ export function CourtScheduleBoard({
     }
 
     setIsSavingDraft(true);
+    let successCount = 0;
     try {
       for (const [matchId, draft] of entries) {
         if (onSaveScheduleDirect) {
-          await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt);
+          await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true);
+          successCount++;
         }
       }
       setDraftAssignments({});
-      setSaveToast(`Đã lưu thành công ${entries.length} trận đấu!`);
+      setSaveToast(`Đã lưu thành công ${successCount} trận đấu!`);
       setTimeout(() => setSaveToast(null), 3000);
+      if (onRefetchData) {
+        await onRefetchData();
+      }
     } catch (err) {
       console.error('Failed to save drafts:', err);
       setSaveToast('Có lỗi xảy ra khi lưu lịch thi đấu.');
@@ -404,9 +411,9 @@ export function CourtScheduleBoard({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [draftAssignments, isSavingDraft]);
 
-  // Auto-Schedule All Unscheduled Matches (AI Smart Fill)
+  // Auto-Schedule All Unscheduled Matches (AI Smart Fill - Draft staging)
   const handleAutoScheduleAll = () => {
     if (unscheduledMatches.length === 0 || courts.length === 0) return;
     const newDrafts: Record<string, DraftAssignment> = {};
@@ -430,10 +437,6 @@ export function CourtScheduleBoard({
         if (isOccupied) continue;
 
         const targetMatch = unscheduledMatches[matchIdx];
-        if (onSaveScheduleDirect) {
-          void onSaveScheduleDirect(targetMatch.match.id, court.id, targetTime);
-        }
-
         newDrafts[targetMatch.match.id] = {
           courtId: court.id,
           scheduledAt: targetTime,
@@ -445,8 +448,8 @@ export function CourtScheduleBoard({
     }
 
     setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
-    setSaveToast(`Đã tự động xếp ${matchIdx} trận vào các sân trống!`);
-    setTimeout(() => setSaveToast(null), 3000);
+    setSaveToast(`Đã xếp nháp ${matchIdx} trận! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    setTimeout(() => setSaveToast(null), 3500);
   };
 
   // Reset All Rows to Default Duration
@@ -463,12 +466,15 @@ export function CourtScheduleBoard({
 
     for (const item of scheduledMatches) {
       if (onSaveScheduleDirect) {
-        void onSaveScheduleDirect(item.match.id, '', '');
+        void onSaveScheduleDirect(item.match.id, '', '', true);
       }
     }
     setDraftAssignments({});
     setSaveToast('Đã xóa toàn bộ lịch đã xếp.');
     setTimeout(() => setSaveToast(null), 2500);
+    if (onRefetchData) {
+      void onRefetchData();
+    }
   };
 
   // Handle Dragging Row Divider on Left Time Column (Excel style +1p / -1p)

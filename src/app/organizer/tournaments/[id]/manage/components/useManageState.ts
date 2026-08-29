@@ -329,19 +329,85 @@ export function useManageState(id: string) {
   }, [id]);
 
   const refetchDivisionData = useCallback(async () => {
-    if (!selectedDivisionId) return;
     const requestId = ++divisionDataRequestRef.current;
     const divisionId = selectedDivisionId;
     try {
-      const [pRes, bRes] = await Promise.all([
-        tournamentsApi.getOrganizerTournamentParticipants(id, divisionId),
-        tournamentsApi.getTournamentBracket(id, divisionId),
-      ]);
-      if (requestId !== divisionDataRequestRef.current || divisionId !== selectedDivisionId) return;
-      if (pRes.data) setParticipants(pRes.data);
-      setBracket(bRes.data || null);
+      let currentStages: BracketStage[] = [];
+      if (divisionId) {
+        const [pRes, bRes] = await Promise.all([
+          tournamentsApi.getOrganizerTournamentParticipants(id, divisionId),
+          tournamentsApi.getTournamentBracket(id, divisionId),
+        ]);
+        if (requestId !== divisionDataRequestRef.current || divisionId !== selectedDivisionId) return;
+        if (pRes.data) setParticipants(pRes.data);
+        setBracket(bRes.data || null);
+        if (bRes.data?.stages) {
+          currentStages = bRes.data.stages;
+        }
+      }
+
+      // Fetch matches from all divisions for schedule board
+      const allDivList = divisions.length > 0 ? divisions : (divisionId ? [{ id: divisionId, name: '' } as Division] : []);
+      const combinedMatches: Match[] = [];
+
+      if (allDivList.length > 0) {
+        const bracketResults = await Promise.allSettled(
+          allDivList.map(async (d) => {
+            if (d.id === divisionId && currentStages.length > 0) {
+              return { divId: d.id, stages: currentStages };
+            }
+            const res = await tournamentsApi.getTournamentBracket(id, d.id);
+            return { divId: d.id, stages: res.data?.stages || [] };
+          }),
+        );
+
+        bracketResults.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            const { divId, stages } = result.value;
+            const extracted = stages.flatMap((stage) =>
+              (stage.groups || []).flatMap((group) =>
+                (group.matches || []).map((m) => ({
+                  ...m,
+                  divisionId: m.divisionId || divId,
+                  stage: { name: stage.name, roundConfig: stage.roundConfig },
+                })),
+              ),
+            );
+            combinedMatches.push(...(extracted as unknown as Match[]));
+          }
+        });
+      } else {
+        try {
+          const res = await tournamentsApi.getTournamentBracket(id);
+          if (res.data?.stages) {
+            const extracted = res.data.stages.flatMap((stage) =>
+              (stage.groups || []).flatMap((group) =>
+                (group.matches || []).map((m) => ({
+                  ...m,
+                  stage: { name: stage.name, roundConfig: stage.roundConfig },
+                })),
+              ),
+            );
+            combinedMatches.push(...(extracted as unknown as Match[]));
+          }
+        } catch { /* silent */ }
+      }
+
+      // Also fallback if direct matches API has records
+      if (combinedMatches.length === 0) {
+        try {
+          const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 200 });
+          if (mRes.data && Array.isArray(mRes.data)) {
+            combinedMatches.push(...mRes.data);
+          }
+        } catch { /* silent */ }
+      }
+
+      if (requestId === divisionDataRequestRef.current) {
+        setMatches(combinedMatches);
+      }
     } catch { /* Preserve the last successful division snapshot on transient errors. */ }
-  }, [id, selectedDivisionId]);
+  }, [divisions, id, selectedDivisionId]);
 
   const fetchDivisions = useCallback(async (tournamentId: string) => {
     const requestId = ++divisionListRequestRef.current;

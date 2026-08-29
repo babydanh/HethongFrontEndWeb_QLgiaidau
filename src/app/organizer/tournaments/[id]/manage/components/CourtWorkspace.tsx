@@ -93,7 +93,7 @@ export function CourtWorkspace({
     return new Map(entries);
   }, [bracket]);
 
-  const divisionOptions = useMemo(() => divisions.filter((division) => matches.some((match) => match.divisionId === division.id)), [divisions, matches]);
+  const divisionOptions = useMemo(() => divisions, [divisions]);
   const contentMatches = useMemo(
     () => selectedDivision === 'all' ? matches : matches.filter((match) => match.divisionId === selectedDivision),
     [matches, selectedDivision],

@@ -7,18 +7,24 @@ import {
   CheckSquare,
   ChevronsUpDown,
   Clock,
+  Download,
+  FileSpreadsheet,
   GripVertical,
   Layers,
   Lock,
   Minus,
   Move,
   Plus,
+  RotateCcw,
+  Save,
   Search,
+  Settings2,
   Sparkles,
   Square,
   Trash2,
   X,
   Zap,
+  ZoomIn,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
@@ -224,7 +230,20 @@ export function CourtScheduleBoard({
   const t = useTranslations('OrganizerManage');
   const locale = useLocale();
 
-  // Excel Row Durations (in minutes per row, default 30 mins)
+  // Dynamic Timeline Configuration
+  const [operatingStart, setOperatingStart] = useState(defaultOperatingStart || '08:00');
+  const [operatingEnd, setOperatingEnd] = useState(defaultOperatingEnd || '22:00');
+  const [defaultStepMinutes, setDefaultStepMinutes] = useState(30);
+  const [zoomLevel, setZoomLevel] = useState<number>(1.0);
+  const [timeSettingsOpen, setTimeSettingsOpen] = useState(false);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  // Form temp state for Time Settings Modal
+  const [tempStart, setTempStart] = useState(operatingStart);
+  const [tempEnd, setTempEnd] = useState(operatingEnd);
+  const [tempStep, setTempStep] = useState(defaultStepMinutes);
+
+  // Excel Row Durations (in minutes per row, default step)
   const [rowDurations, setRowDurations] = useState<Record<number, number>>({});
   const [rowResizeState, setRowResizeState] = useState<RowResizeState | null>(null);
   const [matchCardResize, setMatchCardResize] = useState<MatchCardResizeState | null>(null);
@@ -246,6 +265,9 @@ export function CourtScheduleBoard({
 
   const boardRef = useRef<HTMLDivElement>(null);
 
+  const pendingCount = Object.keys(draftAssignments).length;
+  const currentPixelsPerMinute = PIXELS_PER_MINUTE * zoomLevel;
+
   const previewAssignmentByMatchId = useMemo(
     () => new Map(preview?.assignments.map((assignment) => [assignment.matchId, assignment]) ?? []),
     [preview],
@@ -259,11 +281,11 @@ export function CourtScheduleBoard({
       match,
       scheduledAt: draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null),
       courtId: draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null),
-      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : 30),
+      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : defaultStepMinutes),
       isPreview: !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
-  }), [draftAssignments, matches, preview, previewAssignmentByMatchId]);
+  }), [defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
 
   const scheduleDate = useMemo(() => {
     if (preview?.assignments?.[0]?.scheduledAt) {
@@ -294,31 +316,31 @@ export function CourtScheduleBoard({
 
   // Dynamic Excel Row Model
   const baseStartMinute = useMemo(() => {
-    const [h, m] = defaultOperatingStart.split(':').map(Number);
+    const [h, m] = operatingStart.split(':').map(Number);
     return (h || 8) * 60 + (m || 0);
-  }, [defaultOperatingStart]);
+  }, [operatingStart]);
 
   const baseEndMinute = useMemo(() => {
-    const [h, m] = defaultOperatingEnd.split(':').map(Number);
+    const [h, m] = operatingEnd.split(':').map(Number);
     return (h || 22) * 60 + (m || 0);
-  }, [defaultOperatingEnd]);
+  }, [operatingEnd]);
 
   const defaultTotalSlots = useMemo(() => {
-    const diff = Math.max(120, baseEndMinute - baseStartMinute);
-    return Math.ceil(diff / 30);
-  }, [baseEndMinute, baseStartMinute]);
+    const diff = Math.max(defaultStepMinutes * 2, baseEndMinute - baseStartMinute);
+    return Math.ceil(diff / defaultStepMinutes);
+  }, [baseEndMinute, baseStartMinute, defaultStepMinutes]);
 
   const timelineRows = useMemo(() => {
-    const startTimestamp = new Date(`${scheduleDate}T${defaultOperatingStart}:00`).getTime();
+    const startTimestamp = new Date(`${scheduleDate}T${operatingStart}:00`).getTime();
     const rows = [];
     let accumulatedMinutes = 0;
     let accumulatedTop = 0;
 
     for (let i = 0; i < defaultTotalSlots; i++) {
-      const duration = rowDurations[i] ?? 30; // default 30 mins
+      const duration = rowDurations[i] ?? defaultStepMinutes;
       const rowStartTimestamp = startTimestamp + accumulatedMinutes * 60_000;
       const rowEndTimestamp = rowStartTimestamp + duration * 60_000;
-      const rowHeight = duration * PIXELS_PER_MINUTE;
+      const rowHeight = duration * currentPixelsPerMinute;
 
       rows.push({
         index: i,
@@ -342,20 +364,124 @@ export function CourtScheduleBoard({
       totalHeight: accumulatedTop,
       startTimestamp,
     };
-  }, [defaultOperatingStart, defaultTotalSlots, rowDurations, scheduleDate]);
+  }, [currentPixelsPerMinute, defaultStepMinutes, defaultTotalSlots, operatingStart, rowDurations, scheduleDate]);
+
+  // Handle Save All Drafts (Manual Click or Ctrl+S)
+  const handleSaveAllDrafts = async () => {
+    const entries = Object.entries(draftAssignments);
+    if (entries.length === 0) {
+      setSaveToast('Lịch thi đấu đã ở trạng thái mới nhất!');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      for (const [matchId, draft] of entries) {
+        if (onSaveScheduleDirect) {
+          await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt);
+        }
+      }
+      setDraftAssignments({});
+      setSaveToast(`Đã lưu thành công ${entries.length} trận đấu!`);
+      setTimeout(() => setSaveToast(null), 3000);
+    } catch (err) {
+      console.error('Failed to save drafts:', err);
+      setSaveToast('Có lỗi xảy ra khi lưu lịch thi đấu.');
+      setTimeout(() => setSaveToast(null), 3000);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Keyboard shortcut: Ctrl+S / Cmd+S to Save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void handleSaveAllDrafts();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
+
+  // Auto-Schedule All Unscheduled Matches (AI Smart Fill)
+  const handleAutoScheduleAll = () => {
+    if (unscheduledMatches.length === 0 || courts.length === 0) return;
+    const newDrafts: Record<string, DraftAssignment> = {};
+    let matchIdx = 0;
+
+    for (let rIdx = 0; rIdx < timelineRows.rows.length; rIdx++) {
+      const rowInfo = timelineRows.rows[rIdx];
+      if (!rowInfo) continue;
+      const targetTime = new Date(rowInfo.startTimestamp).toISOString();
+
+      for (const court of courts) {
+        if (matchIdx >= unscheduledMatches.length) break;
+
+        // Check if court slot is already occupied
+        const isOccupied = displayMatches.some(
+          (m) =>
+            m.courtId === court.id &&
+            m.scheduledAt &&
+            new Date(m.scheduledAt).getTime() === rowInfo.startTimestamp,
+        );
+        if (isOccupied) continue;
+
+        const targetMatch = unscheduledMatches[matchIdx];
+        if (onSaveScheduleDirect) {
+          void onSaveScheduleDirect(targetMatch.match.id, court.id, targetTime);
+        }
+
+        newDrafts[targetMatch.match.id] = {
+          courtId: court.id,
+          scheduledAt: targetTime,
+          durationMinutes: rowInfo.durationMinutes,
+        };
+        matchIdx++;
+      }
+      if (matchIdx >= unscheduledMatches.length) break;
+    }
+
+    setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+    setSaveToast(`Đã tự động xếp ${matchIdx} trận vào các sân trống!`);
+    setTimeout(() => setSaveToast(null), 3000);
+  };
+
+  // Reset All Rows to Default Duration
+  const handleResetAllRowsEvenly = () => {
+    setRowDurations({});
+    setSaveToast('Đã đặt lại tất cả các mốc giờ về mặc định đều nhau!');
+    setTimeout(() => setSaveToast(null), 2500);
+  };
+
+  // Clear All Scheduled Matches
+  const handleClearAllSchedule = () => {
+    if (scheduledMatches.length === 0) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch thi đấu của tất cả các sân?')) return;
+
+    for (const item of scheduledMatches) {
+      if (onSaveScheduleDirect) {
+        void onSaveScheduleDirect(item.match.id, '', '');
+      }
+    }
+    setDraftAssignments({});
+    setSaveToast('Đã xóa toàn bộ lịch đã xếp.');
+    setTimeout(() => setSaveToast(null), 2500);
+  };
 
   // Handle Dragging Row Divider on Left Time Column (Excel style +1p / -1p)
   useEffect(() => {
     if (!rowResizeState) return;
 
     const handlePointerMove = (event: PointerEvent) => {
-      const deltaMinutes = Math.round((event.clientY - rowResizeState.startY) / PIXELS_PER_MINUTE);
-      const baseInitial = rowResizeState.initialDurations[rowResizeState.rowIndex] ?? 30;
+      const deltaMinutes = Math.round((event.clientY - rowResizeState.startY) / currentPixelsPerMinute);
+      const baseInitial = rowResizeState.initialDurations[rowResizeState.rowIndex] ?? defaultStepMinutes;
       const newDuration = Math.max(5, Math.min(180, baseInitial + deltaMinutes));
 
       setRowDurations((prev) => {
         const next = { ...prev };
-        // Sync all affected/selected rows to the exact same duration! (Excel multi-row resize behavior)
         for (const idx of rowResizeState.affectedRowIndices) {
           next[idx] = newDuration;
         }
@@ -851,7 +977,139 @@ export function CourtScheduleBoard({
   };
 
   return (
-    <section className="space-y-1 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>
+    <section className="space-y-1.5 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>
+      {/* Toast Notification */}
+      {saveToast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-slate-900 text-white px-4 py-2.5 shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <Check className="h-4 w-4 text-emerald-400" />
+          <span>{saveToast}</span>
+        </div>
+      )}
+
+      {/* Excel Ribbon Control Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white border border-slate-200 p-2 shadow-2xs shrink-0">
+        {/* Left: Save + Auto Fill + Time Config */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Save Button with Badge & Keyboard shortcut hint */}
+          <Button
+            type="button"
+            onClick={handleSaveAllDrafts}
+            disabled={isSavingDraft}
+            className={`h-8 px-3 text-xs font-black rounded-lg shadow-xs flex items-center gap-2 transition-all cursor-pointer ${
+              pendingCount > 0
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white ring-2 ring-emerald-400 ring-offset-1 animate-pulse'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+            title="Lưu tất cả thay đổi lịch (Phím tắt: Ctrl + S)"
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span>{isSavingDraft ? 'Đang lưu...' : 'Lưu lịch (Ctrl+S)'}</span>
+            {pendingCount > 0 && (
+              <span className="rounded-full bg-white text-emerald-700 px-1.5 py-0.2 text-[10px] font-black">
+                {pendingCount}
+              </span>
+            )}
+          </Button>
+
+          {/* AI / Smart Auto-Schedule */}
+          <Button
+            type="button"
+            onClick={handleAutoScheduleAll}
+            disabled={unscheduledMatches.length === 0}
+            className="h-8 px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer"
+            title="Tự động xếp toàn bộ các trận chưa xếp vào các ô sân trống"
+          >
+            <Zap className="h-3.5 w-3.5 text-amber-300" />
+            <span>Tự động xếp lịch</span>
+            {unscheduledMatches.length > 0 && (
+              <span className="rounded-full bg-blue-500/80 px-1.5 py-0.2 text-[10px]">
+                {unscheduledMatches.length}
+              </span>
+            )}
+          </Button>
+
+          {/* Time & Slot Configuration Modal Trigger */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setTempStart(operatingStart);
+              setTempEnd(operatingEnd);
+              setTempStep(defaultStepMinutes);
+              setTimeSettingsOpen(true);
+            }}
+            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg flex items-center gap-1.5 cursor-pointer"
+            title="Tùy chỉnh giờ bắt đầu, giờ kết thúc và bước nhảy thời gian"
+          >
+            <Clock className="h-3.5 w-3.5 text-blue-600" />
+            <span>{operatingStart} – {operatingEnd}</span>
+            <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1 py-0.2 rounded border border-slate-200">
+              {defaultStepMinutes}p/ô
+            </span>
+          </Button>
+
+          {/* Unscheduled Matches Queue Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setQueueOpen(true)}
+            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg flex items-center gap-1.5 cursor-pointer"
+          >
+            <Layers className="h-3.5 w-3.5 text-slate-500" />
+            <span>Trận chưa xếp</span>
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-black ${
+              unscheduledMatches.length > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-600'
+            }`}>
+              {unscheduledMatches.length}
+            </span>
+          </Button>
+        </div>
+
+        {/* Right: Zoom + Reset Rows + Clear All */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Zoom Level Selector */}
+          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold text-slate-700">
+            <span className="px-1.5 text-[10px] text-slate-400">Thu phóng:</span>
+            {[0.8, 1.0, 1.25, 1.5].map((z) => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => setZoomLevel(z)}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+                  zoomLevel === z ? 'bg-white text-blue-700 shadow-2xs border border-slate-200' : 'hover:text-slate-900'
+                }`}
+              >
+                {Math.round(z * 100)}%
+              </button>
+            ))}
+          </div>
+
+          {/* Reset Rows Evenly */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleResetAllRowsEvenly}
+            className="h-8 px-2.5 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
+            title="Đặt lại tất cả các mốc giờ về kích thước đều nhau"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>Canh đều</span>
+          </Button>
+
+          {/* Clear All Schedule */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClearAllSchedule}
+            disabled={scheduledMatches.length === 0}
+            className="h-8 px-2 text-xs font-semibold border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg cursor-pointer"
+            title="Xóa toàn bộ lịch thi đấu"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
       {/* Floating Excel-like Selection Action Bar */}
       {selectionRange && (
         <div className="sticky top-1 z-40 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-900 text-white px-3.5 py-2 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 shrink-0">
@@ -1361,10 +1619,111 @@ export function CourtScheduleBoard({
           )}
           <ModalFooter className="pt-2">
             <ModalClose asChild>
-              <Button type="button" variant="outline" className="h-8 rounded-lg text-xs font-semibold border-slate-300">
+              <Button type="button" variant="outline" className="h-8 rounded-lg text-xs font-semibold border-slate-300 cursor-pointer">
                 Đóng
               </Button>
             </ModalClose>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* POPUP MODAL: Cấu hình mốc thời gian & bước nhảy */}
+      <Modal open={timeSettingsOpen} onOpenChange={setTimeSettingsOpen}>
+        <ModalContent className="max-w-md rounded-2xl border border-slate-200 p-5 shadow-2xl">
+          <ModalHeader>
+            <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-600" />
+              Cấu hình mốc thời gian thi đấu
+            </ModalTitle>
+            <ModalDescription className="text-xs text-slate-500">
+              Thiết lập khung giờ hoạt động trong ngày và thời lượng từng bước nhảy của bảng lịch.
+            </ModalDescription>
+          </ModalHeader>
+
+          <div className="space-y-4 py-3 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Giờ bắt đầu</label>
+                <Input
+                  type="time"
+                  value={tempStart}
+                  onChange={(e) => setTempStart(e.target.value)}
+                  className="h-9 text-xs rounded-lg border-slate-300 font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Giờ kết thúc</label>
+                <Input
+                  type="time"
+                  value={tempEnd}
+                  onChange={(e) => setTempEnd(e.target.value)}
+                  className="h-9 text-xs rounded-lg border-slate-300 font-semibold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Bước nhảy thời gian mỗi ô (Duration / Slot)
+              </label>
+              <div className="grid grid-cols-5 gap-1.5">
+                {[15, 20, 30, 45, 60].map((step) => (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => setTempStep(step)}
+                    className={`py-2 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                      tempStep === step
+                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-2xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    {step}p
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900 leading-relaxed">
+              💡 <strong>Mẹo:</strong> Bạn có thể dùng chuột kéo trực tiếp viền các đường line mốc giờ ở cột màu vàng bên trái của bảng lịch để co/giãn từng phút tùy ý như Excel.
+            </div>
+          </div>
+
+          <ModalFooter className="pt-2 flex items-center justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTempStart(defaultOperatingStart || '08:00');
+                setTempEnd(defaultOperatingEnd || '22:00');
+                setTempStep(30);
+              }}
+              className="h-8 text-xs font-semibold cursor-pointer"
+            >
+              Mặc định
+            </Button>
+            <div className="flex items-center gap-2">
+              <ModalClose asChild>
+                <Button type="button" variant="outline" className="h-8 text-xs font-semibold cursor-pointer">
+                  Hủy
+                </Button>
+              </ModalClose>
+              <Button
+                type="button"
+                onClick={() => {
+                  setOperatingStart(tempStart);
+                  setOperatingEnd(tempEnd);
+                  setDefaultStepMinutes(tempStep);
+                  setRowDurations({});
+                  setTimeSettingsOpen(false);
+                  setSaveToast('Đã áp dụng cấu hình mốc giờ mới!');
+                  setTimeout(() => setSaveToast(null), 2500);
+                }}
+                className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+              >
+                Áp dụng
+              </Button>
+            </div>
           </ModalFooter>
         </ModalContent>
       </Modal>

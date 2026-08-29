@@ -1683,10 +1683,11 @@ export function useManageState(id: string) {
   const handleSaveScheduleDirect = async (matchId: string, courtId: string, scheduledAt: string) => {
     try {
       const court = courts.find((c) => c.id === courtId);
+      const venueAddr = tournament?.venue?.locationAddress || customVenueAddress || null;
       await tournamentsApi.updateMatchSchedule(matchId, {
         courtId,
         courtName: court?.courtName || null,
-        courtAddress: court?.courtAddress || null,
+        courtAddress: venueAddr,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       });
       toast.success('Đã cập nhật lịch thi đấu!');

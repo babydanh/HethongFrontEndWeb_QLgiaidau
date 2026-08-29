@@ -537,6 +537,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
                   if (fullMatch) s.handleOpenScheduling(fullMatch);
                 }}
+                onSaveScheduleDirect={s.handleSaveScheduleDirect}
               />
             )}
           </div>
@@ -578,6 +579,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
                     if (fullMatch) s.handleOpenScheduling(fullMatch);
                   }}
+                  onSaveScheduleDirect={s.handleSaveScheduleDirect}
                 />
               </div>
             </div>

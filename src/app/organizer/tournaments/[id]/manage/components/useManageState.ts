@@ -1680,6 +1680,22 @@ export function useManageState(id: string) {
     finally { setIsScheduling(false); }
   };
 
+  const handleSaveScheduleDirect = async (matchId: string, courtId: string, scheduledAt: string) => {
+    try {
+      const court = courts.find((c) => c.id === courtId);
+      await tournamentsApi.updateMatchSchedule(matchId, {
+        courtId,
+        courtName: court?.courtName || null,
+        courtAddress: court?.courtAddress || null,
+        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+      });
+      toast.success('Đã cập nhật lịch thi đấu!');
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
   const fetchTournamentData = useCallback(async () => {
     try {
       const tRes = await tournamentsApi.getTournamentById(id);
@@ -1997,7 +2013,7 @@ export function useManageState(id: string) {
     handleOpenEndModal, handleConfirmEnd,
     handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleReorderSeeds, handleApproveParticipant, handleRejectParticipant, handleKickParticipant,
     handleOpenRoundModal, handleSaveStageDetails,
-    handleOpenScheduling, handleSaveSchedule,
+    handleOpenScheduling, handleSaveSchedule, handleSaveScheduleDirect,
     handleSaveRoundRobinConfig, handleAdvanceStandings, handleSaveGskConfig,
     // helpers
     getFormatLabel, getBracketLabel, getStatusLabel, publishFeeAmount, inviteLink,

@@ -68,15 +68,9 @@ export function CourtWorkspace({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => courts.map((court) => court.id));
   const [courtPickerOpen, setCourtPickerOpen] = useState(false);
-  const [selectedDivision, setSelectedDivision] = useState<string>(defaultDivisionId || 'all');
+  const [selectedDivision, setSelectedDivision] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedRound, setSelectedRound] = useState<string>('all');
-
-  useEffect(() => {
-    if (defaultDivisionId) {
-      setSelectedDivision(defaultDivisionId);
-    }
-  }, [defaultDivisionId]);
 
   const allCourtsSelected = selectedCourtIds.length === courts.length;
 

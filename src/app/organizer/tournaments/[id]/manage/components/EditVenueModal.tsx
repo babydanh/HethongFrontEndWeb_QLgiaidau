@@ -50,8 +50,8 @@ export function EditVenueModal({
     }
     try {
       const res = await regionsApi.getWardsByProvince(provCode);
-      if (res.data && setWards) {
-        setWards(res.data);
+      if (Array.isArray(res) && setWards) {
+        setWards(res);
       }
     } catch {
       // Keep empty wards

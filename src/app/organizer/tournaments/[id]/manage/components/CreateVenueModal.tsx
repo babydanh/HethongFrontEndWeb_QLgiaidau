@@ -128,10 +128,10 @@ export function CreateVenueModal({
               className="h-10 text-xs rounded-lg border-slate-300"
               required
             />
-            {autoDetectedAddress && (
+            {autoDetectedAddress.isMatched && (autoDetectedAddress.province || autoDetectedAddress.ward) && (
               <p className="mt-1 text-[11px] text-emerald-600 flex items-center gap-1 font-medium">
                 <Sparkles className="h-3 w-3" />
-                Tự động nhận diện: {autoDetectedAddress}
+                Tự động nhận diện: {[autoDetectedAddress.ward?.name, autoDetectedAddress.province?.name].filter(Boolean).join(', ')}
               </p>
             )}
           </div>

@@ -619,9 +619,6 @@ export function CourtScheduleBoard({
       }
       return copy;
     });
-        return !(t >= minTimestamp && t < maxTimestamp);
-      }),
-    );
 
     setSelectionRange(null);
   };

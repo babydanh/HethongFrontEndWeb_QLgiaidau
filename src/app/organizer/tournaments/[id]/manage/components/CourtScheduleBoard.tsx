@@ -116,7 +116,7 @@ type MatchCardResizeState = {
   currentDurationMinutes: number;
 };
 
-const PIXELS_PER_MINUTE = 2.8; // 1 minute = 2.8px (30 mins = 84px height, ample space for score cards)
+const PIXELS_PER_MINUTE = 3.2; // 1 minute = 3.2px (30 mins = 96px height, very roomy for match score cards)
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -144,16 +144,21 @@ function formatDateLabel(value: string | null, locale: string) {
 function getCleanRoundLabel(match: ScheduleBoardMatch) {
   const rNum = match.roundNumber;
   const matchOrder = match.matchOrder;
-  const rawStage = match.roundName || match.stage?.name || match.stageName || '';
+  const rawStage = String(match.roundName || match.stage?.name || match.stageName || match.groupName || '').trim();
+  
   let clean = rawStage
-    .replace(/^stage\b/gi, '')
+    .replace(/^stage\s*\d*/gi, '')
+    .replace(/stage/gi, '')
     .replace(/vòng\s*loại\s*trực\s*tiếp/gi, '')
     .replace(/knockout/gi, '')
     .replace(/elimination/gi, '')
+    .replace(/giai\s*đoạn\s*\d*/gi, '')
     .trim();
-  clean = clean.replace(/^[•·\-\s]+|[•·\-\s]+$/g, '').trim();
+  clean = clean.replace(/^[•·\-\s:]+|[•·\-\s:]+$/g, '').trim();
 
-  if (clean && clean.toLowerCase() !== 'stage') return clean;
+  if (clean && !clean.toLowerCase().includes('stage')) {
+    return clean;
+  }
 
   if (rNum) return `Vòng ${rNum}`;
   if (matchOrder) return `Trận #${matchOrder}`;
@@ -628,11 +633,11 @@ export function CourtScheduleBoard({
     const p1 = getParticipantName(item.match.participant1);
     const p2 = getParticipantName(item.match.participant2);
     const roundLabelStr = getCleanRoundLabel(item.match);
-    const division = divisions.find((d) => d.id === item.match.divisionId);
+    const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
     const { score1, score2 } = extractMatchScores(item.match);
 
     let cardTop = 0;
-    const cardHeight = Math.max(72, (item.durationMinutes || 30) * PIXELS_PER_MINUTE - 4);
+    const cardHeight = Math.max(86, (item.durationMinutes || 30) * PIXELS_PER_MINUTE - 4);
     const matchTime = new Date(item.scheduledAt || 0).getTime();
 
     const matchingRow = timelineRows.rows.find(

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Check, GripVertical, Layers, Search, Sparkles, X } from 'lucide-react';
+import { CalendarClock, Check, GripVertical, Layers, Search, Sparkles } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -24,8 +24,13 @@ interface ScheduleBoardMatch {
   matchOrder?: number | null;
   scheduledAt?: string | null;
   courtId?: string | null;
-  participant1?: { teamName?: string | null } | null;
-  participant2?: { teamName?: string | null } | null;
+  stage?: {
+    name?: string | null;
+  } | null;
+  stageName?: string | null;
+  roundName?: string | null;
+  participant1?: { teamName?: string | null; name?: string | null } | null;
+  participant2?: { teamName?: string | null; name?: string | null } | null;
 }
 
 interface CourtScheduleBoardProps {
@@ -58,7 +63,7 @@ type AssignmentPickerState = {
   scheduledAt: string;
 };
 
-const PIXELS_PER_MINUTE = 2;
+const PIXELS_PER_MINUTE = 2; // 30 mins = 60px
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -82,11 +87,26 @@ function formatDateLabel(value: string | null, locale: string) {
   }).format(date);
 }
 
-function matchLabel(
-  match: ScheduleBoardMatch,
-  t: (key: 'teamTbd') => string,
-) {
-  return `${match.participant1?.teamName || t('teamTbd')} vs ${match.participant2?.teamName || t('teamTbd')}`;
+function getCleanRoundLabel(match: ScheduleBoardMatch) {
+  const rawStage = match.stage?.name || match.stageName || match.roundName || '';
+  // Bỏ chữ "Vòng loại trực tiếp", "Knockout", "Elimination"
+  let clean = rawStage
+    .replace(/vòng\s*loại\s*trực\s*tiếp/gi, '')
+    .replace(/knockout/gi, '')
+    .replace(/elimination/gi, '')
+    .trim();
+  clean = clean.replace(/^[•·\-\s]+|[•·\-\s]+$/g, '').trim();
+
+  if (clean) return clean;
+
+  const rNum = match.roundNumber;
+  if (rNum) return `Vòng ${rNum}`;
+  return 'Trận đấu';
+}
+
+function getParticipantName(p?: { teamName?: string | null; name?: string | null } | null) {
+  if (!p) return 'Chờ xác định';
+  return p.teamName || p.name || 'Chờ xác định';
 }
 
 export function CourtScheduleBoard({
@@ -123,7 +143,7 @@ export function CourtScheduleBoard({
       match,
       scheduledAt: draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null),
       courtId: draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null),
-      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : 60),
+      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : 30),
       isPreview: !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
@@ -200,12 +220,13 @@ export function CourtScheduleBoard({
         return false;
       }
       if (!query) return true;
-      const label = matchLabel(item.match, t).toLocaleLowerCase();
-      const roundStr = `r${item.match.roundNumber ?? ''}`.toLocaleLowerCase();
+      const p1 = getParticipantName(item.match.participant1).toLocaleLowerCase();
+      const p2 = getParticipantName(item.match.participant2).toLocaleLowerCase();
+      const roundStr = getCleanRoundLabel(item.match).toLocaleLowerCase();
       const orderStr = `#${item.match.matchOrder ?? ''}`.toLocaleLowerCase();
-      return label.includes(query) || roundStr.includes(query) || orderStr.includes(query);
+      return p1.includes(query) || p2.includes(query) || roundStr.includes(query) || orderStr.includes(query);
     });
-  }, [assignmentSearch, pickerDivisionFilter, t, unscheduledMatches]);
+  }, [assignmentSearch, pickerDivisionFilter, unscheduledMatches]);
 
   const openAssignmentPicker = (courtId: string, scheduledAt: string) => {
     const court = courts.find((c) => c.id === courtId);
@@ -270,6 +291,19 @@ export function CourtScheduleBoard({
 
   const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
     const division = divisions.find((d) => d.id === item.match.divisionId);
+    const roundLabelStr = getCleanRoundLabel(item.match);
+    const p1 = getParticipantName(item.match.participant1);
+    const p2 = getParticipantName(item.match.participant2);
+
+    // Fit precisely inside 30-min slot (60px height - 6px gap = 54px)
+    const duration = item.durationMinutes || 30;
+    const cardHeight = Math.max(54, duration * PIXELS_PER_MINUTE - 6);
+    const cardTop = Math.max(
+      0,
+      (((new Date(item.scheduledAt || 0).getTime() - (timeline?.start || 0)) / 60_000) *
+        PIXELS_PER_MINUTE) + 3,
+    );
+
     return (
       <button
         key={item.match.id}
@@ -283,58 +317,55 @@ export function CourtScheduleBoard({
           event.stopPropagation();
           onOpenMatch(item.match.id);
         }}
-        className={`group w-full rounded-lg border text-left transition-all ${
+        className={`group w-full rounded-md border text-left transition-all ${
           compact
-            ? 'border-slate-200 bg-white p-3 hover:border-blue-400 hover:shadow-xs'
-            : 'absolute inset-x-1.5 z-10 overflow-hidden p-2.5 shadow-xs hover:border-blue-500 hover:shadow-md'
+            ? 'border-slate-200 bg-white p-2.5 hover:border-blue-400 hover:shadow-xs'
+            : 'absolute inset-x-1 z-10 overflow-hidden px-2 py-1 shadow-2xs hover:border-blue-500 hover:shadow-sm'
         } ${
           item.isDraft
-            ? 'border-violet-400 bg-violet-50/90 text-violet-950'
+            ? 'border-violet-400 bg-violet-50/95 text-violet-950'
             : item.isPreview
-            ? 'border-dashed border-blue-400 bg-blue-50/90 text-blue-950'
+            ? 'border-dashed border-blue-400 bg-blue-50/95 text-blue-950'
             : 'border-slate-200 bg-white hover:border-blue-400'
         }`}
         style={
           !compact
             ? {
-                top: Math.max(
-                  0,
-                  (((new Date(item.scheduledAt || 0).getTime() - (timeline?.start || 0)) / 60_000) *
-                    PIXELS_PER_MINUTE),
-                ),
-                height: Math.max(72, item.durationMinutes * PIXELS_PER_MINUTE - 4),
+                top: cardTop,
+                height: cardHeight,
               }
             : undefined
         }
       >
-        <span className="flex items-start gap-1.5">
-          <GripVertical
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 opacity-60 group-hover:opacity-100"
-            aria-hidden="true"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center justify-between gap-1">
-              <span className="text-[11px] font-bold text-blue-700">
-                {formatMatchTime(item.scheduledAt)}
+        <div className="flex h-full flex-col justify-between overflow-hidden">
+          {/* Header of Card: Round Setting + Division Tag */}
+          <div className="flex items-center justify-between gap-1 border-b border-slate-100/90 pb-0.5">
+            <span className="truncate text-[10px] font-bold text-slate-800">
+              {roundLabelStr}
+            </span>
+            {division && (
+              <span className="truncate rounded-xs bg-slate-100 px-1 py-0 text-[9px] font-semibold text-slate-600 border border-slate-200/80">
+                {division.name}
               </span>
-              {division && (
-                <span className="truncate rounded-sm bg-slate-100 px-1.5 py-0.2 text-[9px] font-semibold text-slate-700 border border-slate-200">
-                  {division.name}
-                </span>
-              )}
-            </span>
-            <span
-              className={`mt-1 block font-bold text-slate-900 leading-snug ${
-                compact ? 'text-xs' : 'line-clamp-2 text-xs'
-              }`}
-            >
-              {matchLabel(item.match, t)}
-            </span>
-            <span className="mt-1 block text-[10px] text-slate-500 font-medium">
-              Vòng {item.match.roundNumber ?? '—'} · Trận #{item.match.matchOrder ?? '—'}
-            </span>
-          </span>
-        </span>
+            )}
+          </div>
+
+          {/* Body: 2 Participants/Teams */}
+          <div className="flex-1 flex flex-col justify-center space-y-0.5 min-w-0 pt-0.5">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+              <span className="truncate text-[10px] sm:text-[11px] font-semibold text-slate-900 leading-tight">
+                {p1}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
+              <span className="truncate text-[10px] sm:text-[11px] font-semibold text-slate-700 leading-tight">
+                {p2}
+              </span>
+            </div>
+          </div>
+        </div>
 
         {!compact && (
           <span
@@ -357,7 +388,7 @@ export function CourtScheduleBoard({
                 initialDurationMinutes: item.durationMinutes,
               });
             }}
-            className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize bg-blue-300/40 opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize bg-blue-300/40 opacity-0 transition-opacity group-hover:opacity-100"
             aria-label={t('resizeDraft')}
           />
         )}
@@ -406,7 +437,7 @@ export function CourtScheduleBoard({
           <div
             className="grid min-w-[900px]"
             style={{
-              gridTemplateColumns: `68px repeat(${courts.length}, minmax(210px, 1fr))`,
+              gridTemplateColumns: `64px repeat(${courts.length}, minmax(210px, 1fr))`,
             }}
           >
             {/* Corner header */}
@@ -420,7 +451,7 @@ export function CourtScheduleBoard({
               return (
                 <div
                   key={court.id}
-                  className="sticky top-0 z-20 border-b border-r border-slate-200 bg-slate-50/80 backdrop-blur-xs px-3 py-2.5"
+                  className="sticky top-0 z-20 border-b border-r border-slate-200 bg-slate-50/90 backdrop-blur-xs px-3 py-2.5"
                 >
                   <p className="truncate text-xs font-bold text-slate-900">{court.courtName}</p>
                   <p className="mt-0.5 text-[10px] text-slate-500">{count} trận đã xếp</p>
@@ -457,7 +488,7 @@ export function CourtScheduleBoard({
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={(event) => handleDrop(event, court.id)}
                 >
-                  {/* Clickable slot buttons for every time mark */}
+                  {/* Clickable slot buttons for every 30-min time slot */}
                   {timeline.marks.map((mark) => (
                     <button
                       key={`${court.id}-${mark.top}`}
@@ -477,7 +508,7 @@ export function CourtScheduleBoard({
                     />
                   ))}
 
-                  {/* Scheduled match cards */}
+                  {/* Scheduled match cards - precisely 54px fitting in 60px slot */}
                   {courtMatches.map((item) => renderMatchCard(item))}
                 </div>
               );
@@ -508,7 +539,7 @@ export function CourtScheduleBoard({
                   Xếp trận đấu vào {assignmentPicker?.courtName}
                 </ModalTitle>
                 <ModalDescription className="text-xs text-slate-500">
-                  Thời gian thi đấu: <strong className="text-blue-700 font-semibold">{formatMatchTime(assignmentPicker?.scheduledAt)}</strong> ({formatDateLabel(scheduleDate, locale)})
+                  Thời gian: <strong className="text-blue-700 font-semibold">{formatMatchTime(assignmentPicker?.scheduledAt)}</strong> ({formatDateLabel(scheduleDate, locale)})
                 </ModalDescription>
               </div>
             </div>
@@ -559,11 +590,14 @@ export function CourtScheduleBoard({
             />
           </div>
 
-          {/* Match cards list */}
+          {/* Match cards list - Clean framed structure matching user request */}
           {filteredPickerMatches.length > 0 ? (
             <div className="grid max-h-[50vh] gap-2 overflow-y-auto sm:grid-cols-2 pt-1">
               {filteredPickerMatches.map((item) => {
                 const div = divisions.find((d) => d.id === item.match.divisionId);
+                const roundLabelStr = getCleanRoundLabel(item.match);
+                const p1 = getParticipantName(item.match.participant1);
+                const p2 = getParticipantName(item.match.participant2);
                 return (
                   <button
                     key={item.match.id}
@@ -573,24 +607,38 @@ export function CourtScheduleBoard({
                     className="flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-3 text-left transition-all hover:border-blue-500 hover:bg-blue-50/40 hover:shadow-xs group"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="text-[10px] font-bold text-blue-600">
-                          Vòng {item.match.roundNumber ?? '—'} · #{item.match.matchOrder ?? '—'}
+                      {/* Header: Clean round setting & Division */}
+                      <div className="flex items-center justify-between gap-1 border-b border-slate-100 pb-1 mb-2">
+                        <span className="text-[11px] font-bold text-slate-800">
+                          {roundLabelStr}
                         </span>
                         {div && (
-                          <span className="rounded-sm bg-slate-100 px-1.5 py-0.2 text-[9px] font-semibold text-slate-600 border border-slate-200">
+                          <span className="rounded-xs bg-slate-100 px-1.5 py-0.2 text-[9px] font-semibold text-slate-600 border border-slate-200">
                             {div.name}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700 leading-snug">
-                        {matchLabel(item.match, t)}
-                      </p>
+
+                      {/* 2 Teams / Participants */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                          <span className="truncate text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                            {p1}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-slate-400 shrink-0" />
+                          <span className="truncate text-xs font-semibold text-slate-700">
+                            {p2}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="mt-2 flex items-center justify-end">
+                    <div className="mt-3 flex items-center justify-end border-t border-slate-100 pt-2">
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 group-hover:underline">
-                        <Check className="h-3 w-3" />
+                        <Check className="h-3.5 w-3.5" />
                         Chọn xếp vào ô này
                       </span>
                     </div>

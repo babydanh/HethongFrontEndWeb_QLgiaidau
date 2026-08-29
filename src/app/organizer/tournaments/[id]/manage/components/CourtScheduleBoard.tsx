@@ -77,8 +77,9 @@ type DraftAssignment = {
 
 type AssignmentPickerState = {
   courtId: string;
+  courtName: string;
   scheduledAt: string;
-  targetRowIndex: number;
+  rowIndex: number;
 };
 
 type ScaleOption = {
@@ -623,7 +624,7 @@ export function CourtScheduleBoard({
     setSelectionRange(null);
   };
 
-  const renderScheduledMatch = (item: ScheduledMatchCard, compact = false) => {
+  const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
     const p1 = getParticipantName(item.match.participant1);
     const p2 = getParticipantName(item.match.participant2);
     const roundLabelStr = getCleanRoundLabel(item.match);
@@ -631,8 +632,8 @@ export function CourtScheduleBoard({
     const { score1, score2 } = extractMatchScores(item.match);
 
     let cardTop = 0;
-    const cardHeight = Math.max(72, item.durationMinutes * PIXELS_PER_MINUTE - 4);
-    const matchTime = new Date(item.scheduledAt).getTime();
+    const cardHeight = Math.max(72, (item.durationMinutes || 30) * PIXELS_PER_MINUTE - 4);
+    const matchTime = new Date(item.scheduledAt || 0).getTime();
 
     const matchingRow = timelineRows.rows.find(
       (r) => matchTime >= r.startTimestamp && matchTime < r.endTimestamp,

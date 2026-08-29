@@ -164,11 +164,9 @@ export function CourtWorkspace({
   if (courts.length === 0) return null;
 
   const renderScheduleContent = () => (
-    <div className="space-y-3">
-      {/* Top Workspace Header & Filters */}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+    <div className="space-y-2 w-full h-full flex flex-col">
       {/* Single Unified High-Density Top Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-xs shrink-0">
         {/* Left: Venue & Match count */}
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">

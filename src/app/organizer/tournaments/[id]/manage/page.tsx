@@ -515,74 +515,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isSavingConfig={s.isSavingConfig}
               handleSaveScheduleDetails={s.handleSaveScheduleDetails}
             />
-            {s.courts.length > 0 && !isCourtWorkspaceFullscreen && (
-              <CourtWorkspace
-                venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
-                courts={s.courts}
-                divisions={s.divisions}
-                matches={s.matches}
-                defaultDivisionId={s.selectedDivisionId}
-                defaultDate={s.startDate}
-                defaultOperatingStart={courtOperatingStart}
-                defaultOperatingEnd={courtOperatingEnd}
-                sportRuleKind={s.sportRuleKind}
-                setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
-                preview={s.schedulePlanPreview}
-                isPreviewing={s.isPreviewingSchedulePlan}
-                onPreview={s.handlePreviewSchedulePlan}
-                onPreviewWithAi={s.handlePreviewScheduleWithAi}
-                aiScheduleIntent={s.aiScheduleIntent}
-                isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
-                onOpenMatch={(matchId) => {
-                  const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
-                  if (fullMatch) s.handleOpenScheduling(fullMatch);
-                }}
-                onSaveScheduleDirect={s.handleSaveScheduleDirect}
-              />
-            )}
-          </div>
-        )}
-
-        {s.activeTab === 'schedule' && s.courts.length > 0 && isCourtWorkspaceFullscreen && (
-          <div className="fixed inset-0 z-[70] flex min-h-screen flex-col overflow-hidden bg-slate-100" role="dialog" aria-modal="true" aria-labelledby="fullscreen-workspace-title">
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm md:px-6">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{translate('workspaceFullscreen')}</p>
-                <h2 id="fullscreen-workspace-title" className="truncate text-base font-bold text-slate-900 md:text-lg">{s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name || translate('venueNotSet')}</h2>
-              </div>
-              <Button type="button" variant="outline" onClick={() => setIsCourtWorkspaceFullscreen(false)} className="shrink-0 border-slate-300 bg-white text-slate-800">
-                <X className="mr-2 h-4 w-4" aria-hidden="true" />
-                {translate('exitWorkspace')}
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
-              <div className="mx-auto max-w-[1800px]">
-                <CourtWorkspace
-                  bracket={s.bracket}
-                  venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
-                  courts={s.courts}
-                  divisions={s.divisions}
-                  matches={s.matches}
-                  defaultDivisionId={s.selectedDivisionId}
-                  defaultDate={s.startDate}
-                  defaultOperatingStart={courtOperatingStart}
-                  defaultOperatingEnd={courtOperatingEnd}
-                  sportRuleKind={s.sportRuleKind}
-                  setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
-                  preview={s.schedulePlanPreview}
-                  isPreviewing={s.isPreviewingSchedulePlan}
-                  onPreview={s.handlePreviewSchedulePlan}
-                  onPreviewWithAi={s.handlePreviewScheduleWithAi}
-                  aiScheduleIntent={s.aiScheduleIntent}
-                  isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
-                  onOpenMatch={(matchId) => {
-                    const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
-                    if (fullMatch) s.handleOpenScheduling(fullMatch);
-                  }}
-                  onSaveScheduleDirect={s.handleSaveScheduleDirect}
-                />
-              </div>
-            </div>
           </div>
         )}
 
@@ -628,7 +560,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success(translate('toast.copiedInvite')); }} />}
 
         {s.activeTab === 'bracket' && (
-          <div ref={bracketSectionRef}>
+          <div ref={bracketSectionRef} className="space-y-6">
             <BracketTab key={s.selectedDivisionId || 'no-division'} tournament={s.tournament} bracket={s.bracket}
               selectedDivisionId={s.selectedDivisionId} participants={s.participants}
               isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
@@ -679,6 +611,77 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               defaultDate={s.startDate}
               onRefetchData={s.refetchDivisionData}
             />
+
+            {/* Bảng Lịch thi đấu & Xếp sân được tích hợp trực tiếp tại tab Sơ đồ */}
+            {s.courts.length > 0 && !isCourtWorkspaceFullscreen && (
+              <CourtWorkspace
+                venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
+                courts={s.courts}
+                divisions={s.divisions}
+                matches={s.matches}
+                defaultDivisionId={s.selectedDivisionId}
+                defaultDate={s.startDate}
+                defaultOperatingStart={courtOperatingStart}
+                defaultOperatingEnd={courtOperatingEnd}
+                sportRuleKind={s.sportRuleKind}
+                setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
+                preview={s.schedulePlanPreview}
+                isPreviewing={s.isPreviewingSchedulePlan}
+                onPreview={s.handlePreviewSchedulePlan}
+                onPreviewWithAi={s.handlePreviewScheduleWithAi}
+                aiScheduleIntent={s.aiScheduleIntent}
+                isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
+                onOpenMatch={(matchId) => {
+                  const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
+                  if (fullMatch) s.handleOpenScheduling(fullMatch);
+                }}
+                onSaveScheduleDirect={s.handleSaveScheduleDirect}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Global Fullscreen Workspace Dialog */}
+        {s.courts.length > 0 && isCourtWorkspaceFullscreen && (
+          <div className="fixed inset-0 z-[70] flex min-h-screen flex-col overflow-hidden bg-slate-100" role="dialog" aria-modal="true" aria-labelledby="fullscreen-workspace-title">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm md:px-6">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{translate('workspaceFullscreen')}</p>
+                <h2 id="fullscreen-workspace-title" className="truncate text-base font-bold text-slate-900 md:text-lg">{s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name || translate('venueNotSet')}</h2>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setIsCourtWorkspaceFullscreen(false)} className="shrink-0 border-slate-300 bg-white text-slate-800">
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
+                {translate('exitWorkspace')}
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
+              <div className="mx-auto max-w-[1800px]">
+                <CourtWorkspace
+                  bracket={s.bracket}
+                  venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
+                  courts={s.courts}
+                  divisions={s.divisions}
+                  matches={s.matches}
+                  defaultDivisionId={s.selectedDivisionId}
+                  defaultDate={s.startDate}
+                  defaultOperatingStart={courtOperatingStart}
+                  defaultOperatingEnd={courtOperatingEnd}
+                  sportRuleKind={s.sportRuleKind}
+                  setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
+                  preview={s.schedulePlanPreview}
+                  isPreviewing={s.isPreviewingSchedulePlan}
+                  onPreview={s.handlePreviewSchedulePlan}
+                  onPreviewWithAi={s.handlePreviewScheduleWithAi}
+                  aiScheduleIntent={s.aiScheduleIntent}
+                  isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
+                  onOpenMatch={(matchId) => {
+                    const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
+                    if (fullMatch) s.handleOpenScheduling(fullMatch);
+                  }}
+                  onSaveScheduleDirect={s.handleSaveScheduleDirect}
+                />
+              </div>
+            </div>
           </div>
         )}
 

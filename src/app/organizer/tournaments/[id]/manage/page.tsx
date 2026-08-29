@@ -484,24 +484,36 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         {s.activeTab === 'schedule' && (
           <div className="space-y-6">
-            <ScheduleTab tournament={s.tournament} bracket={s.bracket} venues={s.venues}
+            <ScheduleTab
+              tournament={s.tournament}
+              bracket={s.bracket}
+              venues={s.venues}
+              tournamentVenues={s.tournamentVenues}
+              handleCreateTournamentVenue={s.handleCreateTournamentVenue}
+              handleSetDefaultTournamentVenue={s.handleSetDefaultTournamentVenue}
+              handleDeleteTournamentVenue={s.handleDeleteTournamentVenue}
+              handleAddVenueCourtDirect={s.handleAddVenueCourtDirect}
+              handleAddVenueCourtsBatchDirect={s.handleAddVenueCourtsBatchDirect}
+              handleRemoveVenueCourtDirect={s.handleRemoveVenueCourtDirect}
               validationField={s.validationField}
-              customVenueName={s.customVenueName} setCustomVenueName={s.setCustomVenueName}
-              customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
-              provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
-              wardCode={s.wardCode} setWardCode={s.setWardCode}
-              provinces={s.provinces} wards={s.wards} setWards={s.setWards}
-              startDate={s.startDate} setStartDate={s.setStartDate}
-              endDate={s.endDate} setEndDate={s.setEndDate}
-              isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails}
-              courtVenue={s.venues.find((venue) => venue.id === s.tournament?.venueId) ?? null}
-              courts={s.courts} newCourtName={s.newCourtName} setNewCourtName={s.setNewCourtName}
-              isSavingCourt={s.isSavingCourt} handleAddTournamentCourt={s.handleAddTournamentCourt}
-              operatingStart={courtOperatingStart} setOperatingStart={setCourtOperatingStart}
-              operatingEnd={courtOperatingEnd} setOperatingEnd={setCourtOperatingEnd}
-              handleAddTournamentCourtsBatch={s.handleAddTournamentCourtsBatch}
-              handleRemoveTournamentCourt={s.handleRemoveTournamentCourt}
-              onCourtClick={() => setIsCourtWorkspaceFullscreen(true)} />
+              customVenueName={s.customVenueName}
+              setCustomVenueName={s.setCustomVenueName}
+              customVenueAddress={s.customVenueAddress}
+              setCustomVenueAddress={s.setCustomVenueAddress}
+              provinceCode={s.provinceCode}
+              setProvinceCode={s.setProvinceCode}
+              wardCode={s.wardCode}
+              setWardCode={s.setWardCode}
+              provinces={s.provinces}
+              wards={s.wards}
+              setWards={s.setWards}
+              startDate={s.startDate}
+              setStartDate={s.setStartDate}
+              endDate={s.endDate}
+              setEndDate={s.setEndDate}
+              isSavingConfig={s.isSavingConfig}
+              handleSaveScheduleDetails={s.handleSaveScheduleDetails}
+            />
             {s.courts.length > 0 && !isCourtWorkspaceFullscreen && (
               <CourtWorkspace
                 venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}

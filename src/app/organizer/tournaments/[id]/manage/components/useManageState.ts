@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   tournamentsApi, divisionsApi, livestreamApi, LivestreamCamera, Tournament, TournamentFeesConfig, TournamentParticipant,
   BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction, Division,
-  SchedulePlanPreview, SchedulePlanPreviewInput, AiScheduleCommandInput, AiScheduleCommandResult,
+  SchedulePlanPreview, SchedulePlanPreviewInput, AiScheduleCommandInput, AiScheduleCommandResult, TournamentVenueWithCourts,
 } from '@/features/tournaments/api';
 import { venuesApi } from '@/features/venues/api';
 import { matchesApi } from '@/features/matches/api';
@@ -158,6 +158,8 @@ export function useManageState(id: string) {
   // ── Schedule ──
   const [venueId, setVenueId] = useState('');
   const [customVenueName, setCustomVenueName] = useState('');
+  const [tournamentVenues, setTournamentVenues] = useState<TournamentVenueWithCourts[]>([]);
+  const [isFetchingVenues, setIsFetchingVenues] = useState(false);
   const [customVenueAddress, setCustomVenueAddress] = useState('');
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
@@ -362,6 +364,103 @@ export function useManageState(id: string) {
       // Keep the last successful division list visible when the API is rate-limited.
     }
   }, [searchParams]);
+
+  const fetchTournamentVenues = useCallback(async () => {
+    if (!id) return;
+    setIsFetchingVenues(true);
+    try {
+      const res = await tournamentsApi.getTournamentVenues(id);
+      if (res.data && Array.isArray(res.data)) {
+        setTournamentVenues(res.data);
+      }
+    } catch {
+      // Keep existing list on failure
+    } finally {
+      setIsFetchingVenues(false);
+    }
+  }, [id]);
+
+  const handleCreateTournamentVenue = async (data: {
+    name: string;
+    locationAddress: string;
+    isDefault?: boolean;
+    initialCourtCount?: number;
+    courtPrefix?: string;
+  }) => {
+    if (!id) return;
+    try {
+      await tournamentsApi.createTournamentVenue(id, data);
+      toast.success('Đã thêm địa điểm thi đấu mới!');
+      await fetchTournamentVenues();
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      throw err;
+    }
+  };
+
+  const handleSetDefaultTournamentVenue = async (targetVenueId: string) => {
+    if (!id) return;
+    try {
+      await tournamentsApi.setDefaultTournamentVenue(id, targetVenueId);
+      toast.success('Đã đặt làm địa điểm mặc định của giải!');
+      await fetchTournamentVenues();
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleDeleteTournamentVenue = async (targetVenueId: string) => {
+    if (!id) return;
+    try {
+      await tournamentsApi.deleteTournamentVenue(id, targetVenueId);
+      toast.success('Đã xóa địa điểm thi đấu!');
+      await fetchTournamentVenues();
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleAddVenueCourtDirect = async (targetVenueId: string, courtName: string) => {
+    if (!id) return;
+    try {
+      await tournamentsApi.addVenueCourtDirect(id, targetVenueId, { courtName, status: 'AVAILABLE' });
+      toast.success('Đã thêm sân mới!');
+      await fetchTournamentVenues();
+      await fetchVenueCourts();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      throw err;
+    }
+  };
+
+  const handleAddVenueCourtsBatchDirect = async (targetVenueId: string, count: number, prefix = 'Sân') => {
+    if (!id) return;
+    try {
+      await tournamentsApi.addVenueCourtsBatchDirect(id, targetVenueId, { courtCount: count, namePrefix: prefix });
+      toast.success(`Đã tạo nhanh ${count} sân vào địa điểm!`);
+      await fetchTournamentVenues();
+      await fetchVenueCourts();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      throw err;
+    }
+  };
+
+  const handleRemoveVenueCourtDirect = async (targetVenueId: string, courtId: string) => {
+    if (!id) return;
+    try {
+      await tournamentsApi.removeVenueCourtDirect(id, targetVenueId, courtId);
+      toast.success('Đã xóa sân khỏi địa điểm!');
+      await fetchTournamentVenues();
+      await fetchVenueCourts();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      throw err;
+    }
+  };
 
   const fetchVenueCourts = useCallback(async () => {
     try {
@@ -1615,6 +1714,7 @@ export function useManageState(id: string) {
 
         if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
         if (t.venueId) await fetchVenueCourts();
+        await fetchTournamentVenues();
         // Nạp danh sách trận đấu (dùng cho export kết quả toàn giải ở bước kết thúc)
         try {
           const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 100 });
@@ -1800,7 +1900,10 @@ export function useManageState(id: string) {
 
   return {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
-    venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
+    venues, setVenues, tournamentVenues, setTournamentVenues, isFetchingVenues, fetchTournamentVenues,
+    handleCreateTournamentVenue, handleSetDefaultTournamentVenue, handleDeleteTournamentVenue,
+    handleAddVenueCourtDirect, handleAddVenueCourtsBatchDirect, handleRemoveVenueCourtDirect,
+    categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
     newCourtName, setNewCourtName, isSavingCourt,
         schedulePlanPreview, setSchedulePlanPreview, isPreviewingSchedulePlan,
     aiScheduleIntent, setAiScheduleIntent, isPlanningScheduleWithAi,

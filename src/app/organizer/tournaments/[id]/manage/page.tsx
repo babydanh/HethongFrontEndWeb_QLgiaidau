@@ -490,6 +490,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               venues={s.venues}
               tournamentVenues={s.tournamentVenues}
               handleCreateTournamentVenue={s.handleCreateTournamentVenue}
+              handleUpdateTournamentVenue={s.handleUpdateTournamentVenue}
               handleSetDefaultTournamentVenue={s.handleSetDefaultTournamentVenue}
               handleDeleteTournamentVenue={s.handleDeleteTournamentVenue}
               handleAddVenueCourtDirect={s.handleAddVenueCourtDirect}

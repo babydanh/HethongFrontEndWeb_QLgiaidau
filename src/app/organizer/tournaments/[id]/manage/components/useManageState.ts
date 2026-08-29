@@ -399,6 +399,22 @@ export function useManageState(id: string) {
     }
   };
 
+  const handleUpdateTournamentVenue = async (
+    targetVenueId: string,
+    data: { name?: string; locationAddress?: string },
+  ) => {
+    if (!id) return;
+    try {
+      await tournamentsApi.updateTournamentVenue(id, targetVenueId, data);
+      toast.success('Đã cập nhật thông tin địa điểm!');
+      await fetchTournamentVenues();
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      throw err;
+    }
+  };
+
   const handleSetDefaultTournamentVenue = async (targetVenueId: string) => {
     if (!id) return;
     try {
@@ -1901,7 +1917,7 @@ export function useManageState(id: string) {
   return {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, tournamentVenues, setTournamentVenues, isFetchingVenues, fetchTournamentVenues,
-    handleCreateTournamentVenue, handleSetDefaultTournamentVenue, handleDeleteTournamentVenue,
+    handleCreateTournamentVenue, handleUpdateTournamentVenue, handleSetDefaultTournamentVenue, handleDeleteTournamentVenue,
     handleAddVenueCourtDirect, handleAddVenueCourtsBatchDirect, handleRemoveVenueCourtDirect,
     categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
     newCourtName, setNewCourtName, isSavingCourt,

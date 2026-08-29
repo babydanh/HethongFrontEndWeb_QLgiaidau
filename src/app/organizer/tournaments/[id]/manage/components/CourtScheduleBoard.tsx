@@ -1,7 +1,18 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Check, GripVertical, Layers, Search, Sparkles } from 'lucide-react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import {
+  CalendarClock,
+  Check,
+  GripVertical,
+  Layers,
+  Lock,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+  Zap,
+} from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -55,6 +66,7 @@ type ResizeState = {
   matchId: string;
   startY: number;
   initialDurationMinutes: number;
+  currentDurationMinutes: number;
 };
 
 type AssignmentPickerState = {
@@ -63,7 +75,22 @@ type AssignmentPickerState = {
   scheduledAt: string;
 };
 
-const PIXELS_PER_MINUTE = 2; // 30 mins = 60px
+type SelectionRange = {
+  startCourtIndex: number;
+  endCourtIndex: number;
+  startMinute: number;
+  endMinute: number;
+};
+
+type BlockedSlot = {
+  id: string;
+  courtId: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  label: string;
+};
+
+const PIXELS_PER_MINUTE = 2; // 30 mins = 60px, 1 min = 2px
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -89,7 +116,6 @@ function formatDateLabel(value: string | null, locale: string) {
 
 function getCleanRoundLabel(match: ScheduleBoardMatch) {
   const rawStage = match.stage?.name || match.stageName || match.roundName || '';
-  // Bỏ chữ "Vòng loại trực tiếp", "Knockout", "Elimination"
   let clean = rawStage
     .replace(/vòng\s*loại\s*trực\s*tiếp/gi, '')
     .replace(/knockout/gi, '')
@@ -122,6 +148,8 @@ export function CourtScheduleBoard({
 }: CourtScheduleBoardProps) {
   const t = useTranslations('OrganizerManage');
   const locale = useLocale();
+
+  // State
   const [draftAssignments, setDraftAssignments] = useState<Record<string, DraftAssignment>>({});
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [assignmentPicker, setAssignmentPicker] = useState<AssignmentPickerState | null>(null);
@@ -129,6 +157,14 @@ export function CourtScheduleBoard({
   const [pickerDivisionFilter, setPickerDivisionFilter] = useState('all');
   const [queueOpen, setQueueOpen] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+
+  // Excel-like range selection
+  const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [dragAnchor, setDragAnchor] = useState<{ courtIndex: number; minute: number } | null>(null);
+  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
+
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const previewAssignmentByMatchId = useMemo(
     () => new Map(preview?.assignments.map((assignment) => [assignment.matchId, assignment]) ?? []),
@@ -151,25 +187,33 @@ export function CourtScheduleBoard({
 
   const gridStepMinutes = preview?.minimumStartIntervalMinutes ?? preview?.gridIncrementMinutes ?? 30;
 
+  // 1-minute precision resizing handler
   useEffect(() => {
     if (!resizeState) return;
     const handlePointerMove = (event: PointerEvent) => {
-      const deltaMinutes = Math.round(((event.clientY - resizeState.startY) / PIXELS_PER_MINUTE) / gridStepMinutes) * gridStepMinutes;
-      const durationMinutes = Math.max(gridStepMinutes, resizeState.initialDurationMinutes + deltaMinutes);
+      // 1-minute precision!
+      const deltaMinutes = Math.round((event.clientY - resizeState.startY) / PIXELS_PER_MINUTE);
+      const durationMinutes = Math.max(5, resizeState.initialDurationMinutes + deltaMinutes);
+      
+      setResizeState((prev) => prev ? { ...prev, currentDurationMinutes: durationMinutes } : null);
       setDraftAssignments((current) => {
         const existing = current[resizeState.matchId];
         if (!existing) return current;
         return { ...current, [resizeState.matchId]: { ...existing, durationMinutes } };
       });
     };
-    const handlePointerUp = () => setResizeState(null);
+
+    const handlePointerUp = () => {
+      setResizeState(null);
+    };
+
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp, { once: true });
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [gridStepMinutes, resizeState]);
+  }, [resizeState]);
 
   const scheduleDate = useMemo(() => {
     if (preview?.assignments?.[0]?.scheduledAt) {
@@ -208,6 +252,7 @@ export function CourtScheduleBoard({
     const totalMinutes = Math.ceil((end - start) / 60_000);
     const marks = Array.from({ length: Math.floor(totalMinutes / increment) + 1 }, (_, index) => ({
       top: index * increment * PIXELS_PER_MINUTE,
+      minute: index * increment,
       label: formatMatchTime(new Date(start + index * increment * 60_000).toISOString()),
     }));
     return { start, end, increment, totalMinutes, marks, height: totalMinutes * PIXELS_PER_MINUTE };
@@ -289,25 +334,155 @@ export function CourtScheduleBoard({
     }));
   };
 
+  // Excel Range Selection Handlers
+  const handleCellPointerDown = (courtIndex: number, minute: number) => {
+    setIsSelecting(true);
+    setDragAnchor({ courtIndex, minute });
+    setSelectionRange({
+      startCourtIndex: courtIndex,
+      endCourtIndex: courtIndex,
+      startMinute: minute,
+      endMinute: minute + gridStepMinutes,
+    });
+  };
+
+  const handleCellPointerEnter = (courtIndex: number, minute: number) => {
+    if (!isSelecting || !dragAnchor) return;
+    const minCourt = Math.min(dragAnchor.courtIndex, courtIndex);
+    const maxCourt = Math.max(dragAnchor.courtIndex, courtIndex);
+    const minMinute = Math.min(dragAnchor.minute, minute);
+    const maxMinute = Math.max(dragAnchor.minute, minute) + gridStepMinutes;
+
+    setSelectionRange({
+      startCourtIndex: minCourt,
+      endCourtIndex: maxCourt,
+      startMinute: minMinute,
+      endMinute: maxMinute,
+    });
+  };
+
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      setIsSelecting(false);
+      setDragAnchor(null);
+    };
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
+  }, []);
+
+  // Multi-cell bulk schedule fill
+  const handleBulkScheduleSelection = async () => {
+    if (!selectionRange || !timeline) return;
+    const selectedCourtsList = courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1);
+    const unassignedList = [...unscheduledMatches];
+    if (unassignedList.length === 0) return;
+
+    let unassignedIdx = 0;
+    const newDrafts: Record<string, DraftAssignment> = {};
+
+    for (let m = selectionRange.startMinute; m < selectionRange.endMinute; m += gridStepMinutes) {
+      for (const court of selectedCourtsList) {
+        if (unassignedIdx >= unassignedList.length) break;
+        const targetMatch = unassignedList[unassignedIdx];
+        const targetTime = new Date(timeline.start + m * 60_000).toISOString();
+
+        if (onSaveScheduleDirect) {
+          void onSaveScheduleDirect(targetMatch.match.id, court.id, targetTime);
+        }
+
+        newDrafts[targetMatch.match.id] = {
+          courtId: court.id,
+          scheduledAt: targetTime,
+          durationMinutes: gridStepMinutes,
+        };
+        unassignedIdx++;
+      }
+      if (unassignedIdx >= unassignedList.length) break;
+    }
+
+    setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+    setSelectionRange(null);
+  };
+
+  // Block/Lock selected slots
+  const handleBlockSelection = () => {
+    if (!selectionRange || !timeline) return;
+    const selectedCourtsList = courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1);
+    const newBlocked: BlockedSlot[] = [];
+
+    for (const court of selectedCourtsList) {
+      const targetTime = new Date(timeline.start + selectionRange.startMinute * 60_000).toISOString();
+      newBlocked.push({
+        id: `${court.id}-${selectionRange.startMinute}-${Date.now()}`,
+        courtId: court.id,
+        scheduledAt: targetTime,
+        durationMinutes: selectionRange.endMinute - selectionRange.startMinute,
+        label: 'Giờ nghỉ / Khóa sân',
+      });
+    }
+
+    setBlockedSlots((prev) => [...prev, ...newBlocked]);
+    setSelectionRange(null);
+  };
+
+  // Clear scheduled matches in selection
+  const handleClearSelectionMatches = () => {
+    if (!selectionRange || !timeline) return;
+    const selectedCourtIds = new Set(
+      courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1).map((c) => c.id),
+    );
+
+    const matchesInSelection = displayMatches.filter((item) => {
+      if (!item.courtId || !item.scheduledAt || !selectedCourtIds.has(item.courtId)) return false;
+      const matchMin = Math.round((new Date(item.scheduledAt).getTime() - timeline.start) / 60_000);
+      return matchMin >= selectionRange.startMinute && matchMin < selectionRange.endMinute;
+    });
+
+    for (const item of matchesInSelection) {
+      if (onSaveScheduleDirect) {
+        void onSaveScheduleDirect(item.match.id, '', '');
+      }
+    }
+
+    setDraftAssignments((prev) => {
+      const copy = { ...prev };
+      for (const item of matchesInSelection) {
+        delete copy[item.match.id];
+      }
+      return copy;
+    });
+
+    setBlockedSlots((prev) =>
+      prev.filter((slot) => {
+        if (!selectedCourtIds.has(slot.courtId)) return true;
+        const slotMin = Math.round((new Date(slot.scheduledAt).getTime() - timeline.start) / 60_000);
+        return !(slotMin >= selectionRange.startMinute && slotMin < selectionRange.endMinute);
+      }),
+    );
+
+    setSelectionRange(null);
+  };
+
   const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
     const division = divisions.find((d) => d.id === item.match.divisionId);
     const roundLabelStr = getCleanRoundLabel(item.match);
     const p1 = getParticipantName(item.match.participant1);
     const p2 = getParticipantName(item.match.participant2);
 
-    // Fit precisely inside 30-min slot (60px height - 6px gap = 54px)
+    // 1-minute accurate duration rendering
     const duration = item.durationMinutes || 30;
-    const cardHeight = Math.max(54, duration * PIXELS_PER_MINUTE - 6);
+    const cardHeight = Math.max(50, duration * PIXELS_PER_MINUTE - 4);
     const cardTop = Math.max(
       0,
       (((new Date(item.scheduledAt || 0).getTime() - (timeline?.start || 0)) / 60_000) *
-        PIXELS_PER_MINUTE) + 3,
+        PIXELS_PER_MINUTE) + 2,
     );
 
+    const isCurrentlyResizing = resizeState?.matchId === item.match.id;
+
     return (
-      <button
+      <div
         key={item.match.id}
-        type="button"
         draggable
         onDragStart={(event) => {
           event.dataTransfer.effectAllowed = 'move';
@@ -317,17 +492,17 @@ export function CourtScheduleBoard({
           event.stopPropagation();
           onOpenMatch(item.match.id);
         }}
-        className={`group w-full rounded-md border text-left transition-all ${
+        className={`group w-full rounded-md border text-left transition-all cursor-pointer ${
           compact
             ? 'border-slate-200 bg-white p-2.5 hover:border-blue-400 hover:shadow-xs'
             : 'absolute inset-x-1 z-10 overflow-hidden px-2 py-1 shadow-2xs hover:border-blue-500 hover:shadow-sm'
         } ${
           item.isDraft
-            ? 'border-violet-400 bg-violet-50/95 text-violet-950'
+            ? 'border-violet-400 bg-violet-50/95 text-violet-950 ring-1 ring-violet-300'
             : item.isPreview
             ? 'border-dashed border-blue-400 bg-blue-50/95 text-blue-950'
             : 'border-slate-200 bg-white hover:border-blue-400'
-        }`}
+        } ${isCurrentlyResizing ? 'ring-2 ring-blue-500 shadow-md' : ''}`}
         style={
           !compact
             ? {
@@ -337,17 +512,22 @@ export function CourtScheduleBoard({
             : undefined
         }
       >
-        <div className="flex h-full flex-col justify-between overflow-hidden">
+        <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
           {/* Header of Card: Round Setting + Division Tag */}
           <div className="flex items-center justify-between gap-1 border-b border-slate-100/90 pb-0.5">
             <span className="truncate text-[10px] font-bold text-slate-800">
               {roundLabelStr}
             </span>
-            {division && (
-              <span className="truncate rounded-xs bg-slate-100 px-1 py-0 text-[9px] font-semibold text-slate-600 border border-slate-200/80">
-                {division.name}
+            <div className="flex items-center gap-1 shrink-0">
+              {division && (
+                <span className="truncate rounded-xs bg-slate-100 px-1 py-0 text-[9px] font-semibold text-slate-600 border border-slate-200/80">
+                  {division.name}
+                </span>
+              )}
+              <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1 rounded-xs border border-blue-100">
+                {duration}p
               </span>
-            )}
+            </div>
           </div>
 
           {/* Body: 2 Participants/Teams */}
@@ -367,8 +547,9 @@ export function CourtScheduleBoard({
           </div>
         </div>
 
+        {/* Live Resize Handle - Pull up/down by 1 minute */}
         {!compact && (
-          <span
+          <div
             role="presentation"
             onPointerDown={(event) => {
               event.stopPropagation();
@@ -386,18 +567,21 @@ export function CourtScheduleBoard({
                 matchId: item.match.id,
                 startY: event.clientY,
                 initialDurationMinutes: item.durationMinutes,
+                currentDurationMinutes: item.durationMinutes,
               });
             }}
-            className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize bg-blue-300/40 opacity-0 transition-opacity group-hover:opacity-100"
-            aria-label={t('resizeDraft')}
-          />
+            className="absolute inset-x-0 bottom-0 h-2.5 cursor-ns-resize bg-blue-400/20 hover:bg-blue-500/50 transition-colors flex items-center justify-center group-hover:opacity-100"
+            title="Kéo lên/xuống để co giãn thời lượng theo phút (1p, 5p, 10p...)"
+          >
+            <div className="h-0.5 w-6 rounded-full bg-slate-400 group-hover:bg-blue-600" />
+          </div>
         )}
-      </button>
+      </div>
     );
   };
 
   return (
-    <section className="space-y-3" aria-labelledby="schedule-board-title">
+    <section className="space-y-3 relative" aria-labelledby="schedule-board-title" ref={boardRef}>
       {/* Top Status and Queue Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
@@ -407,7 +591,7 @@ export function CourtScheduleBoard({
               {formatDateLabel(scheduleDate, locale)}
             </h3>
             <p className="text-[11px] text-slate-500">
-              Đã xếp lịch {scheduledMatches.length}/{displayMatches.length} trận đấu
+              Đã xếp {scheduledMatches.length}/{displayMatches.length} trận · Kéo quét nhiều ô để xếp hàng loạt như Excel
             </p>
           </div>
         </div>
@@ -423,13 +607,68 @@ export function CourtScheduleBoard({
         </div>
       </div>
 
+      {/* Floating Excel-like Selection Action Bar */}
+      {selectionRange && (
+        <div className="sticky top-2 z-40 flex items-center justify-between gap-3 rounded-xl bg-slate-900 text-white px-4 py-2.5 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>
+              Đã chọn{' '}
+              <strong className="text-emerald-400 font-bold">
+                {selectionRange.endCourtIndex - selectionRange.startCourtIndex + 1} sân
+              </strong>{' '}
+              (từ {formatMatchTime(new Date(timeline?.start ? timeline.start + selectionRange.startMinute * 60_000 : 0).toISOString())} đến{' '}
+              {formatMatchTime(new Date(timeline?.start ? timeline.start + selectionRange.endMinute * 60_000 : 0).toISOString())})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={handleBulkScheduleSelection}
+              disabled={unscheduledMatches.length === 0}
+              className="h-7.5 px-3 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+            >
+              <Zap className="h-3 w-3" />
+              Điền nhanh các trận
+            </Button>
+
+            <Button
+              type="button"
+              onClick={handleBlockSelection}
+              className="h-7.5 px-3 text-[11px] font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+            >
+              <Lock className="h-3 w-3" />
+              Khóa giờ
+            </Button>
+
+            <Button
+              type="button"
+              onClick={handleClearSelectionMatches}
+              className="h-7.5 px-2.5 text-[11px] font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1"
+              title="Xóa các trận trong vùng chọn"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => setSelectionRange(null)}
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {courts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-xs text-slate-500">
           Chưa có sân nào được thiết lập
         </div>
       ) : timeline ? (
         <div
-          className="max-h-[min(72vh,760px)] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs"
+          className="max-h-[min(72vh,760px)] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none"
           role="region"
           aria-label={t('matchSchedule.court')}
           tabIndex={0}
@@ -446,14 +685,21 @@ export function CourtScheduleBoard({
             </div>
 
             {/* Court column headers */}
-            {courts.map((court) => {
+            {courts.map((court, cIdx) => {
               const count = scheduledMatches.filter((item) => item.courtId === court.id).length;
+              const isColSelected =
+                selectionRange &&
+                cIdx >= selectionRange.startCourtIndex &&
+                cIdx <= selectionRange.endCourtIndex;
+
               return (
                 <div
                   key={court.id}
-                  className="sticky top-0 z-20 border-b border-r border-slate-200 bg-slate-50/90 backdrop-blur-xs px-3 py-2.5"
+                  className={`sticky top-0 z-20 border-b border-r border-slate-200 px-3 py-2.5 backdrop-blur-xs transition-colors ${
+                    isColSelected ? 'bg-blue-50/90 text-blue-900 border-b-blue-400' : 'bg-slate-50/90 text-slate-900'
+                  }`}
                 >
-                  <p className="truncate text-xs font-bold text-slate-900">{court.courtName}</p>
+                  <p className="truncate text-xs font-bold">{court.courtName}</p>
                   <p className="mt-0.5 text-[10px] text-slate-500">{count} trận đã xếp</p>
                 </div>
               );
@@ -473,13 +719,16 @@ export function CourtScheduleBoard({
             </div>
 
             {/* Court Grid Columns */}
-            {courts.map((court) => {
+            {courts.map((court, courtIndex) => {
               const courtMatches = scheduledMatches
                 .filter((item) => item.courtId === court.id && item.scheduledAt)
                 .sort(
                   (a, b) =>
                     new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime(),
                 );
+
+              const courtBlocked = blockedSlots.filter((slot) => slot.courtId === court.id);
+
               return (
                 <div
                   key={court.id}
@@ -488,27 +737,77 @@ export function CourtScheduleBoard({
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={(event) => handleDrop(event, court.id)}
                 >
-                  {/* Clickable slot buttons for every 30-min time slot */}
-                  {timeline.marks.map((mark) => (
-                    <button
-                      key={`${court.id}-${mark.top}`}
-                      type="button"
-                      className="absolute inset-x-0 z-0 border-t border-slate-100 text-left hover:bg-blue-50/50 transition-colors focus:bg-blue-50 focus:outline-hidden"
-                      style={{
-                        top: mark.top,
-                        height: gridStepMinutes * PIXELS_PER_MINUTE,
-                      }}
-                      onClick={() => {
-                        const targetTime = new Date(
-                          timeline.start + (mark.top / PIXELS_PER_MINUTE) * 60_000,
-                        ).toISOString();
-                        openAssignmentPicker(court.id, targetTime);
-                      }}
-                      title={`Bấm để chọn trận xếp vào ${court.courtName} lúc ${mark.label}`}
-                    />
-                  ))}
+                  {/* Clickable & Draggable Excel Slots */}
+                  {timeline.marks.map((mark) => {
+                    const isCellSelected =
+                      selectionRange &&
+                      courtIndex >= selectionRange.startCourtIndex &&
+                      courtIndex <= selectionRange.endCourtIndex &&
+                      mark.minute >= selectionRange.startMinute &&
+                      mark.minute < selectionRange.endMinute;
 
-                  {/* Scheduled match cards - precisely 54px fitting in 60px slot */}
+                    return (
+                      <div
+                        key={`${court.id}-${mark.top}`}
+                        className={`absolute inset-x-0 z-0 border-t border-slate-100 text-left transition-colors cursor-cell ${
+                          isCellSelected
+                            ? 'bg-blue-500/15 border-blue-400 ring-1 ring-inset ring-blue-400/50'
+                            : 'hover:bg-blue-50/40'
+                        }`}
+                        style={{
+                          top: mark.top,
+                          height: gridStepMinutes * PIXELS_PER_MINUTE,
+                        }}
+                        onPointerDown={(e) => {
+                          if (e.button !== 0) return;
+                          handleCellPointerDown(courtIndex, mark.minute);
+                        }}
+                        onPointerEnter={() => {
+                          handleCellPointerEnter(courtIndex, mark.minute);
+                        }}
+                        onClick={() => {
+                          if (!isSelecting && !selectionRange) {
+                            const targetTime = new Date(
+                              timeline.start + (mark.top / PIXELS_PER_MINUTE) * 60_000,
+                            ).toISOString();
+                            openAssignmentPicker(court.id, targetTime);
+                          }
+                        }}
+                        title={`Bấm để chọn trận xếp vào ${court.courtName} lúc ${mark.label}`}
+                      />
+                    );
+                  })}
+
+                  {/* Blocked Slots Overlay */}
+                  {courtBlocked.map((slot) => {
+                    const top = Math.max(
+                      0,
+                      (((new Date(slot.scheduledAt).getTime() - timeline.start) / 60_000) *
+                        PIXELS_PER_MINUTE) + 2,
+                    );
+                    const height = Math.max(40, slot.durationMinutes * PIXELS_PER_MINUTE - 4);
+                    return (
+                      <div
+                        key={slot.id}
+                        className="absolute inset-x-1 z-10 rounded-md border border-amber-300 bg-amber-50/90 p-2 text-amber-900 shadow-2xs flex items-center justify-between"
+                        style={{ top, height }}
+                      >
+                        <div className="flex items-center gap-1.5 text-xs font-bold truncate">
+                          <Lock className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                          <span className="truncate">{slot.label}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setBlockedSlots((prev) => prev.filter((b) => b.id !== slot.id))}
+                          className="p-0.5 rounded text-amber-700 hover:text-amber-900 hover:bg-amber-100"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* Scheduled match cards */}
                   {courtMatches.map((item) => renderMatchCard(item))}
                 </div>
               );
@@ -590,7 +889,7 @@ export function CourtScheduleBoard({
             />
           </div>
 
-          {/* Match cards list - Clean framed structure matching user request */}
+          {/* Match cards list */}
           {filteredPickerMatches.length > 0 ? (
             <div className="grid max-h-[50vh] gap-2 overflow-y-auto sm:grid-cols-2 pt-1">
               {filteredPickerMatches.map((item) => {

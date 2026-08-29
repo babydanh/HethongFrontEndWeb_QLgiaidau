@@ -335,35 +335,71 @@ export function useManageState(id: string) {
   const refetchDivisionData = useCallback(async (customDivisionId?: string, customDivList?: Division[]) => {
     const requestId = ++divisionDataRequestRef.current;
     const divisionId = customDivisionId ?? selectedDivisionIdRef.current;
-    const activeDivList = customDivList ?? divisionsRef.current;
+
+    // Always ensure active divisions list is available
+    let activeDivList = customDivList ?? divisionsRef.current;
+    if (activeDivList.length === 0) {
+      try {
+        const divRes = await divisionsApi.getDivisions(id);
+        if (divRes.data && Array.isArray(divRes.data)) {
+          activeDivList = divRes.data;
+          setDivisions(divRes.data);
+          divisionsRef.current = divRes.data;
+        }
+      } catch { /* silent */ }
+    }
+
     try {
       let currentStages: BracketStage[] = [];
-      if (divisionId) {
+      const targetDivId = divisionId || activeDivList[0]?.id;
+
+      if (targetDivId) {
         const [pResult, bResult] = await Promise.allSettled([
-          tournamentsApi.getOrganizerTournamentParticipants(id, divisionId),
-          tournamentsApi.getTournamentBracket(id, divisionId),
+          tournamentsApi.getOrganizerTournamentParticipants(id, targetDivId),
+          tournamentsApi.getTournamentBracket(id, targetDivId),
         ]);
         if (requestId === divisionDataRequestRef.current) {
           if (pResult.status === 'fulfilled' && pResult.value.data) {
             setParticipants(pResult.value.data);
           }
-          if (bResult.status === 'fulfilled' && bResult.value.data) {
-            setBracket(bResult.value.data || null);
-            if (bResult.value.data?.stages) {
-              currentStages = bResult.value.data.stages;
+          if (bResult.status === 'fulfilled' && bResult.value.data?.stages && bResult.value.data.stages.length > 0) {
+            setBracket(bResult.value.data);
+            currentStages = bResult.value.data.stages;
+          } else {
+            // Fallback to tournament-level bracket if division bracket is empty
+            try {
+              const mainBRes = await tournamentsApi.getTournamentBracket(id);
+              if (mainBRes.data?.stages && mainBRes.data.stages.length > 0) {
+                setBracket(mainBRes.data);
+                currentStages = mainBRes.data.stages;
+              } else {
+                setBracket(bResult.status === 'fulfilled' ? bResult.value.data || null : null);
+              }
+            } catch {
+              setBracket(bResult.status === 'fulfilled' ? bResult.value.data || null : null);
             }
           }
         }
+      } else {
+        // No division ID: fetch tournament level bracket
+        try {
+          const mainBRes = await tournamentsApi.getTournamentBracket(id);
+          if (requestId === divisionDataRequestRef.current) {
+            setBracket(mainBRes.data || null);
+            if (mainBRes.data?.stages) {
+              currentStages = mainBRes.data.stages;
+            }
+          }
+        } catch { /* silent */ }
       }
 
-      // Fetch matches from all divisions for schedule board
-      const allDivList = activeDivList.length > 0 ? activeDivList : (divisionId ? [{ id: divisionId, name: '' } as Division] : []);
+      // Fetch matches from ALL divisions so schedule board has every match
       const combinedMatches: Match[] = [];
 
-      if (allDivList.length > 0) {
+      if (activeDivList.length > 0) {
         const bracketResults = await Promise.allSettled(
-          allDivList.map(async (d) => {
-            if (d.id === divisionId && currentStages.length > 0) {
+          activeDivList.map(async (d) => {
+            if (d.id === targetDivId && currentStages.length > 0) {
               return { divId: d.id, stages: currentStages };
             }
             const res = await tournamentsApi.getTournamentBracket(id, d.id);
@@ -386,7 +422,10 @@ export function useManageState(id: string) {
             combinedMatches.push(...(extracted as unknown as Match[]));
           }
         });
-      } else {
+      }
+
+      // If combinedMatches is still empty, fetch from main bracket
+      if (combinedMatches.length === 0) {
         try {
           const res = await tournamentsApi.getTournamentBracket(id);
           if (res.data?.stages) {

@@ -45,6 +45,7 @@ interface ScheduleBoardMatch {
   id: string;
   divisionId?: string | null;
   roundNumber?: number | null;
+  leg?: number | null;
   matchOrder?: number | null;
   scheduledAt?: string | null;
   courtId?: string | null;
@@ -301,6 +302,20 @@ export function CourtScheduleBoard({
 
   const pendingCount = Object.keys(draftAssignments).length;
   const currentPixelsPerMinute = PIXELS_PER_MINUTE * zoomLevel;
+
+  // Compute maximum round per division to accurately resolve Knockout round names
+  const maxRoundByDivision = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of matches) {
+      const divId = item.divisionId || 'default';
+      const r = item.roundNumber || 1;
+      const current = map.get(divId) || 1;
+      if (r > current) {
+        map.set(divId, r);
+      }
+    }
+    return map;
+  }, [matches]);
 
   const previewAssignmentByMatchId = useMemo(
     () => new Map(preview?.assignments.map((assignment) => [assignment.matchId, assignment]) ?? []),
@@ -1621,7 +1636,8 @@ export function CourtScheduleBoard({
             <div className="grid max-h-[50vh] gap-2 overflow-y-auto sm:grid-cols-2 pt-1">
               {filteredPickerMatches.map((item) => {
                 const div = divisions.find((d) => d.id === item.match.divisionId);
-                const roundLabelStr = getCleanRoundLabel(item.match);
+                const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+                const roundLabelStr = getAccurateRoundLabel(item.match, maxR);
                 const p1 = getParticipantName(item.match.participant1);
                 const p2 = getParticipantName(item.match.participant2);
                 const isSelected = selectedPickerMatchIds.includes(item.match.id);

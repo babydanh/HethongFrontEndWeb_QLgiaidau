@@ -167,109 +167,107 @@ export function CourtWorkspace({
     <div className="space-y-3">
       {/* Top Workspace Header & Filters */}
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-2 text-xs font-semibold text-slate-800">
-            <CalendarRange className="h-4 w-4 shrink-0 text-blue-600" />
-            <span>
-              {selectedRound === 'all'
-                ? `Hiển thị ${scopedMatches.length} trận đấu (${scheduledMatchesCount}/${matches.length} đã xếp)`
-                : `${roundLabel(Number(selectedRound))} (${scopedMatches.length} trận)`}
-            </span>
+      {/* Single Unified High-Density Top Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-xs">
+        {/* Left: Venue & Match count */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+            <LayoutGrid className="h-4 w-4" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCourtPickerOpen(true)}
-              className="h-8 rounded-lg border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <LayoutGrid className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
-              {t('chooseCourts')} ({visibleCourts.length}/{courts.length})
-            </Button>
-
-            {isFullscreen ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFullscreen(false)}
-                className="h-8 rounded-lg border-slate-300 bg-white text-xs font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-1.5"
-              >
-                <Minimize2 className="h-3.5 w-3.5" />
-                Thu nhỏ
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => setIsFullscreen(true)}
-                className="h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-                Toàn màn hình
-              </Button>
-            )}
+          <div className="min-w-0">
+            <h3 className="truncate text-xs sm:text-sm font-bold text-slate-900 leading-tight">
+              {venueName || t('venueNotSet')}
+            </h3>
+            <p className="text-[10px] text-slate-500 leading-tight">
+              Đã xếp <strong className="text-blue-700 font-bold">{scheduledMatchesCount}/{matches.length}</strong> trận
+            </p>
           </div>
         </div>
 
-        {/* Filter dropdowns */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 pt-1 border-t border-slate-100">
-          <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-600">
-            <span>{t('divisionLabel')}</span>
+        {/* Center: Inline Compact Filter Dropdowns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            value={selectedDivision}
+            onChange={(event) => {
+              setSelectedDivision(event.target.value);
+              setSelectedStage('all');
+              setSelectedRound('all');
+            }}
+            className="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-800 outline-hidden focus:border-blue-500"
+          >
+            <option value="all">{t('allDivisions')}</option>
+            {divisionOptions.map((division) => (
+              <option key={division.id} value={division.id}>
+                {division.name}
+              </option>
+            ))}
+          </select>
+
+          {stageOptions.length > 1 && (
             <select
-              value={selectedDivision}
+              value={selectedStage}
               onChange={(event) => {
-                setSelectedDivision(event.target.value);
-                setSelectedStage('all');
+                setSelectedStage(event.target.value);
                 setSelectedRound('all');
               }}
-              className="h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-800 outline-hidden focus:border-blue-500"
+              className="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-800 outline-hidden focus:border-blue-500"
             >
-              <option value="all">{t('allDivisions')}</option>
-              {divisionOptions.map((division) => (
-                <option key={division.id} value={division.id}>
-                  {division.name}
+              <option value="all">{t('allStages')}</option>
+              {stageOptions.map((stage) => (
+                <option key={stage.id} value={stage.id}>
+                  {stage.name}
                 </option>
               ))}
             </select>
-          </label>
-
-          {stageOptions.length > 1 && (
-            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-600">
-              <span>{t('stageLabel')}</span>
-              <select
-                value={selectedStage}
-                onChange={(event) => {
-                  setSelectedStage(event.target.value);
-                  setSelectedRound('all');
-                }}
-                className="h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-800 outline-hidden focus:border-blue-500"
-              >
-                <option value="all">{t('allStages')}</option>
-                {stageOptions.map((stage) => (
-                  <option key={stage.id} value={stage.id}>
-                    {stage.name}
-                  </option>
-                ))}
-              </select>
-            </label>
           )}
 
           {roundOptions.length > 1 && (
-            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-600">
-              <span>{usesLegFilter ? t('legLabel') : t('roundLabel')}</span>
-              <select
-                value={selectedRound}
-                onChange={(event) => setSelectedRound(event.target.value)}
-                className="h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-800 outline-hidden focus:border-blue-500"
-              >
-                <option value="all">{usesLegFilter ? t('allLegs') : t('allRounds')}</option>
-                {roundOptions.map((round) => (
-                  <option key={round} value={String(round)}>
-                    {roundLabel(round)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <select
+              value={selectedRound}
+              onChange={(event) => setSelectedRound(event.target.value)}
+              className="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-800 outline-hidden focus:border-blue-500"
+            >
+              <option value="all">{usesLegFilter ? t('allLegs') : t('allRounds')}</option>
+              {roundOptions.map((round) => (
+                <option key={round} value={String(round)}>
+                  {roundLabel(round)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCourtPickerOpen(true)}
+            className="h-8 px-3 rounded-lg border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <LayoutGrid className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+            {t('chooseCourts')} ({visibleCourts.length}/{courts.length})
+          </Button>
+
+          {isFullscreen ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsFullscreen(false)}
+              className="h-8 px-3 rounded-lg border-slate-300 bg-white text-xs font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-1.5"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+              Thu nhỏ / Đóng
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              Toàn màn hình
+            </Button>
           )}
         </div>
       </div>
@@ -291,79 +289,24 @@ export function CourtWorkspace({
   );
 
   return (
-    <section aria-labelledby="court-workspace-title">
-      {/* 1. Collapsed Banner Card (Default) */}
+    <section aria-labelledby="court-workspace-title" className="w-full">
+      {/* 1. Default In-page View (renders clean unified layout) */}
       {!isFullscreen && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-slate-300">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-                <LayoutGrid className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <h3 id="court-workspace-title" className="text-base font-bold text-slate-900 truncate">
-                  Bảng Lịch thi đấu & Sân bãi · {venueName || t('venueNotSet')}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Đã xếp <strong className="text-blue-700 font-semibold">{scheduledMatchesCount}/{matches.length}</strong> trận đấu trên <strong>{courts.length}</strong> sân thi đấu
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                onClick={() => setIsFullscreen(true)}
-                className="h-10 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center gap-2"
-              >
-                <Maximize2 className="h-4 w-4" />
-                Mở bảng xếp lịch (Toàn màn hình)
-              </Button>
-            </div>
-          </div>
+        <div className="w-full">
+          {renderScheduleContent()}
         </div>
       )}
 
       {/* 2. Fullscreen Workspace Modal */}
       {isFullscreen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-slate-100 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-slate-100 animate-in fade-in duration-150 p-2 md:p-3"
           role="dialog"
           aria-modal="true"
           aria-labelledby="fullscreen-workspace-title"
         >
-          {/* Top Bar */}
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-xs md:px-6">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
-                <LayoutGrid className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <h2 id="fullscreen-workspace-title" className="truncate text-sm md:text-base font-bold text-slate-900">
-                  Lịch thi đấu · {venueName || t('venueNotSet')}
-                </h2>
-                <p className="text-[11px] text-slate-500">
-                  Đã xếp {scheduledMatchesCount}/{matches.length} trận đấu
-                </p>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsFullscreen(false)}
-              className="h-8.5 rounded-lg border-slate-300 bg-white text-xs font-bold text-slate-800 hover:bg-slate-100 flex items-center gap-1.5"
-            >
-              <Minimize2 className="h-4 w-4" />
-              Thu nhỏ / Đóng
-            </Button>
-          </div>
-
-          {/* Body */}
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 md:p-6">
-            <div className="mx-auto max-w-[1800px]">
-              {renderScheduleContent()}
-            </div>
+          <div className="w-full h-full flex flex-col">
+            {renderScheduleContent()}
           </div>
         </div>
       )}

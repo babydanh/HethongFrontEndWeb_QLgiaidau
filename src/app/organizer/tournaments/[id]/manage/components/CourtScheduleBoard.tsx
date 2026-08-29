@@ -732,26 +732,27 @@ export function CourtScheduleBoard({
   };
 
   return (
-    <section className="space-y-3 relative" aria-labelledby="schedule-board-title" ref={boardRef}>
+    <section className="space-y-2 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>
       {/* Top Status and Scale Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
-        <div className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
-          <CalendarClock className="h-4 w-4 shrink-0 text-blue-600" />
-          <div className="min-w-0">
-            <h3 id="schedule-board-title" className="truncate font-bold text-slate-900 text-xs sm:text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-xs shrink-0">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-slate-700">
+          <CalendarClock className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+          <div className="min-w-0 flex items-center gap-2">
+            <span id="schedule-board-title" className="truncate font-bold text-slate-900 text-xs">
               {formatDateLabel(scheduleDate, locale)}
-            </h3>
-            <p className="text-[11px] text-slate-500">
-              Đã xếp {scheduledMatches.length}/{displayMatches.length} trận · Kéo viền ô giờ bên trái để co/giãn thời gian từng 1 phút như Excel
-            </p>
+            </span>
+            <span className="text-[11px] text-slate-400">·</span>
+            <span className="text-[11px] text-slate-500 hidden sm:inline">
+              Kéo viền ô giờ bên trái để co/giãn thời gian từng 1 phút như Excel
+            </span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs">
           <button
             type="button"
             onClick={() => setQueueOpen(true)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-500 hover:text-blue-700 shadow-xs"
+            className="rounded-lg border border-slate-200 bg-slate-50 hover:bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-500 hover:text-blue-700 shadow-2xs"
           >
             Trận chưa xếp ({unscheduledMatches.length})
           </button>
@@ -760,7 +761,7 @@ export function CourtScheduleBoard({
 
       {/* Floating Excel-like Selection Action Bar */}
       {selectionRange && (
-        <div className="sticky top-2 z-40 flex flex-wrap items-center justify-between gap-2.5 rounded-xl bg-slate-900 text-white px-4 py-2.5 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="sticky top-1 z-40 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-900 text-white px-3.5 py-2 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 shrink-0">
           <div className="flex items-center gap-2 text-xs font-medium">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>
@@ -778,7 +779,7 @@ export function CourtScheduleBoard({
               type="button"
               onClick={handleBulkScheduleSelection}
               disabled={unscheduledMatches.length === 0}
-              className="h-7.5 px-3 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+              className="h-7 px-2.5 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
             >
               <Zap className="h-3 w-3" />
               Điền nhanh các trận
@@ -787,7 +788,7 @@ export function CourtScheduleBoard({
             <Button
               type="button"
               onClick={handleDistributeRowsEvenly}
-              className="h-7.5 px-3 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+              className="h-7 px-2.5 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
               title="Canh đều thời lượng các dòng được chọn"
             >
               <ChevronsUpDown className="h-3 w-3" />
@@ -797,7 +798,7 @@ export function CourtScheduleBoard({
             <Button
               type="button"
               onClick={handleBlockSelection}
-              className="h-7.5 px-3 text-[11px] font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+              className="h-7 px-2.5 text-[11px] font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
             >
               <Lock className="h-3 w-3" />
               Khóa giờ
@@ -806,7 +807,7 @@ export function CourtScheduleBoard({
             <Button
               type="button"
               onClick={handleClearSelectionMatches}
-              className="h-7.5 px-2.5 text-[11px] font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1"
+              className="h-7 px-2 text-[11px] font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1"
               title="Xóa các trận trong vùng chọn"
             >
               <Trash2 className="h-3 w-3" />
@@ -817,7 +818,7 @@ export function CourtScheduleBoard({
               onClick={() => setSelectionRange(null)}
               className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -831,9 +832,9 @@ export function CourtScheduleBoard({
         <div
           className={`${
             isFullscreen
-              ? 'h-[calc(100vh-170px)]'
-              : 'max-h-[min(72vh,760px)]'
-          } overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none`}
+              ? 'h-[calc(100vh-100px)]'
+              : 'h-[calc(100vh-210px)] min-h-[520px]'
+          } overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1`}
           role="region"
           aria-label={t('matchSchedule.court')}
           tabIndex={0}

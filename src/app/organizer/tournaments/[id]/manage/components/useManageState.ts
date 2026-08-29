@@ -366,18 +366,8 @@ export function useManageState(id: string) {
             setBracket(bResult.value.data);
             currentStages = bResult.value.data.stages;
           } else {
-            // Fallback to tournament-level bracket if division bracket is empty
-            try {
-              const mainBRes = await tournamentsApi.getTournamentBracket(id);
-              if (mainBRes.data?.stages && mainBRes.data.stages.length > 0) {
-                setBracket(mainBRes.data);
-                currentStages = mainBRes.data.stages;
-              } else {
-                setBracket(bResult.status === 'fulfilled' ? bResult.value.data || null : null);
-              }
-            } catch {
-              setBracket(bResult.status === 'fulfilled' ? bResult.value.data || null : null);
-            }
+            setBracket(null);
+            currentStages = [];
           }
         }
       } else {
@@ -393,15 +383,12 @@ export function useManageState(id: string) {
         } catch { /* silent */ }
       }
 
-      // Fetch matches from ALL divisions so schedule board has every match
+      // Fetch matches from ALL divisions so schedule board has every match properly mapped
       const combinedMatches: Match[] = [];
 
       if (activeDivList.length > 0) {
         const bracketResults = await Promise.allSettled(
           activeDivList.map(async (d) => {
-            if (d.id === targetDivId && currentStages.length > 0) {
-              return { divId: d.id, stages: currentStages };
-            }
             const res = await tournamentsApi.getTournamentBracket(id, d.id);
             return { divId: d.id, stages: res.data?.stages || [] };
           }),
@@ -422,10 +409,8 @@ export function useManageState(id: string) {
             combinedMatches.push(...(extracted as unknown as Match[]));
           }
         });
-      }
-
-      // If combinedMatches is still empty, fetch from main bracket
-      if (combinedMatches.length === 0) {
+      } else {
+        // No divisions configured: fetch tournament-level bracket matches
         try {
           const res = await tournamentsApi.getTournamentBracket(id);
           if (res.data?.stages) {

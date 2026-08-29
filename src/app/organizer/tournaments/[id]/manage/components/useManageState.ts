@@ -328,26 +328,32 @@ export function useManageState(id: string) {
     catch { /* silent */ }
   }, [id]);
 
-  const refetchDivisionData = useCallback(async () => {
+  const refetchDivisionData = useCallback(async (customDivisionId?: string, customDivList?: Division[]) => {
     const requestId = ++divisionDataRequestRef.current;
-    const divisionId = selectedDivisionId;
+    const divisionId = customDivisionId ?? selectedDivisionId;
+    const activeDivList = customDivList ?? divisions;
     try {
       let currentStages: BracketStage[] = [];
       if (divisionId) {
-        const [pRes, bRes] = await Promise.all([
+        const [pResult, bResult] = await Promise.allSettled([
           tournamentsApi.getOrganizerTournamentParticipants(id, divisionId),
           tournamentsApi.getTournamentBracket(id, divisionId),
         ]);
-        if (requestId !== divisionDataRequestRef.current || divisionId !== selectedDivisionId) return;
-        if (pRes.data) setParticipants(pRes.data);
-        setBracket(bRes.data || null);
-        if (bRes.data?.stages) {
-          currentStages = bRes.data.stages;
+        if (requestId === divisionDataRequestRef.current) {
+          if (pResult.status === 'fulfilled' && pResult.value.data) {
+            setParticipants(pResult.value.data);
+          }
+          if (bResult.status === 'fulfilled' && bResult.value.data) {
+            setBracket(bResult.value.data || null);
+            if (bResult.value.data?.stages) {
+              currentStages = bResult.value.data.stages;
+            }
+          }
         }
       }
 
       // Fetch matches from all divisions for schedule board
-      const allDivList = divisions.length > 0 ? divisions : (divisionId ? [{ id: divisionId, name: '' } as Division] : []);
+      const allDivList = activeDivList.length > 0 ? activeDivList : (divisionId ? [{ id: divisionId, name: '' } as Division] : []);
       const combinedMatches: Match[] = [];
 
       if (allDivList.length > 0) {
@@ -416,12 +422,15 @@ export function useManageState(id: string) {
       if (requestId !== divisionListRequestRef.current) return;
       if (r.data && Array.isArray(r.data)) {
         setDivisions(r.data);
-        setSelectedDivisionId(prev => {
-          if (r.data.length === 0) return '';
-          const reqDiv = searchParams.get('divisionId');
-          if (reqDiv && r.data.some(d => d.id === reqDiv)) return reqDiv;
-          return r.data.some(d => d.id === prev) ? prev : r.data[0].id;
-        });
+        const reqDiv = searchParams.get('divisionId');
+        let nextDivId = '';
+        if (reqDiv && r.data.some(d => d.id === reqDiv)) {
+          nextDivId = reqDiv;
+        } else if (r.data.length > 0) {
+          nextDivId = r.data[0].id;
+        }
+        setSelectedDivisionId(nextDivId);
+        void refetchDivisionData(nextDivId, r.data);
       } else {
         setDivisions([]);
         setSelectedDivisionId('');
@@ -429,7 +438,7 @@ export function useManageState(id: string) {
     } catch {
       // Keep the last successful division list visible when the API is rate-limited.
     }
-  }, [searchParams]);
+  }, [refetchDivisionData, searchParams]);
 
   const fetchTournamentVenues = useCallback(async () => {
     if (!id) return;

@@ -104,7 +104,7 @@ type MatchCardResizeState = {
   currentDurationMinutes: number;
 };
 
-const PIXELS_PER_MINUTE = 2; // 1 minute = 2px (30 mins = 60px)
+const PIXELS_PER_MINUTE = 2.6; // 1 minute = 2.6px (30 mins = 78px height, ample space for match cards)
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -732,33 +732,7 @@ export function CourtScheduleBoard({
   };
 
   return (
-    <section className="space-y-2 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>
-      {/* Top Status and Scale Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-xs shrink-0">
-        <div className="flex min-w-0 items-center gap-2 text-xs text-slate-700">
-          <CalendarClock className="h-3.5 w-3.5 shrink-0 text-blue-600" />
-          <div className="min-w-0 flex items-center gap-2">
-            <span id="schedule-board-title" className="truncate font-bold text-slate-900 text-xs">
-              {formatDateLabel(scheduleDate, locale)}
-            </span>
-            <span className="text-[11px] text-slate-400">·</span>
-            <span className="text-[11px] text-slate-500 hidden sm:inline">
-              Kéo viền ô giờ bên trái để co/giãn thời gian từng 1 phút như Excel
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => setQueueOpen(true)}
-            className="rounded-lg border border-slate-200 bg-slate-50 hover:bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-500 hover:text-blue-700 shadow-2xs"
-          >
-            Trận chưa xếp ({unscheduledMatches.length})
-          </button>
-        </div>
-      </div>
-
+    <section className="space-y-1 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>
       {/* Floating Excel-like Selection Action Bar */}
       {selectionRange && (
         <div className="sticky top-1 z-40 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-900 text-white px-3.5 py-2 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 shrink-0">
@@ -832,8 +806,8 @@ export function CourtScheduleBoard({
         <div
           className={`${
             isFullscreen
-              ? 'h-[calc(100vh-100px)]'
-              : 'h-[calc(100vh-210px)] min-h-[520px]'
+              ? 'h-[calc(100vh-64px)]'
+              : 'h-[calc(100vh-170px)] min-h-[580px]'
           } overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1`}
           role="region"
           aria-label={t('matchSchedule.court')}

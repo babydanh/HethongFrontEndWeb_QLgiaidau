@@ -124,6 +124,7 @@ type MatchCardResizeState = {
   startY: number;
   initialDurationMinutes: number;
   currentDurationMinutes: number;
+  maxAllowedDurationMinutes: number;
 };
 
 const PIXELS_PER_MINUTE = 9.6; // 1 minute = 9.6px (15 mins = 144px height, high spacious grid matching previous 30p view)
@@ -649,7 +650,8 @@ export function CourtScheduleBoard({
 
     const handlePointerMove = (event: PointerEvent) => {
       const deltaMinutes = Math.round((event.clientY - matchCardResize.startY) / currentPixelsPerMinute);
-      const durationMinutes = Math.max(3, matchCardResize.initialDurationMinutes + deltaMinutes);
+      const unclamped = matchCardResize.initialDurationMinutes + deltaMinutes;
+      const durationMinutes = Math.max(3, Math.min(matchCardResize.maxAllowedDurationMinutes, unclamped));
 
       setMatchCardResize((prev) => (prev ? { ...prev, currentDurationMinutes: durationMinutes } : null));
       setDraftAssignments((current) => {
@@ -1283,6 +1285,33 @@ export function CourtScheduleBoard({
               event.stopPropagation();
               event.preventDefault();
               if (!item.courtId || !item.scheduledAt) return;
+
+              const currentStartTimestamp = new Date(item.scheduledAt).getTime();
+              // Find all other matches on the same court scheduled after this match
+              const otherMatchesOnCourt = displayMatches.filter(
+                (m) => m.match.id !== item.match.id && m.courtId === item.courtId && m.scheduledAt,
+              );
+              const futureMatchStarts = otherMatchesOnCourt
+                .map((m) => new Date(m.scheduledAt!).getTime())
+                .filter((t) => t > currentStartTimestamp);
+
+              const futureBlockedStarts = blockedSlots
+                .filter((b) => b.courtId === item.courtId)
+                .map((b) => new Date(b.scheduledAt).getTime())
+                .filter((t) => t > currentStartTimestamp);
+
+              const dayEndTimestamp = timelineRows.rows.length > 0
+                ? timelineRows.rows[timelineRows.rows.length - 1].endTimestamp
+                : currentStartTimestamp + 360 * 60_000;
+
+              const candidates = [...futureMatchStarts, ...futureBlockedStarts, dayEndTimestamp];
+              const nextObstacleTimestamp = Math.min(...candidates);
+
+              const maxAllowedDurationMinutes = Math.max(
+                3,
+                Math.floor((nextObstacleTimestamp - currentStartTimestamp) / (60 * 1000)),
+              );
+
               setDraftAssignments((current) => ({
                 ...current,
                 [item.match.id]: {
@@ -1296,6 +1325,7 @@ export function CourtScheduleBoard({
                 startY: event.clientY,
                 initialDurationMinutes: effectiveDuration,
                 currentDurationMinutes: effectiveDuration,
+                maxAllowedDurationMinutes,
               });
             }}
             className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize bg-blue-400/20 hover:bg-blue-500/50 transition-colors flex items-center justify-center group-hover:opacity-100"

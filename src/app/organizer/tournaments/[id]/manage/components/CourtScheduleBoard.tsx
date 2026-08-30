@@ -246,16 +246,37 @@ function extractSetScores(match: ScheduleBoardMatch) {
   return setList;
 }
 
-function getParticipantPlayers(p?: { teamName?: string | null; name?: string | null } | null) {
+function getParticipantPlayers(p?: { teamName?: string | null; name?: string | null } | null): string[] {
   if (!p) return ['Chờ xác định'];
   const full = (p.teamName || p.name || 'Chờ xác định').trim();
   if (full.includes('/') || full.includes('&')) {
-    return full.split(/[/&]/).map(s => s.trim()).filter(Boolean);
+    return full.split(/[/&]/).map((s) => s.trim()).filter(Boolean);
   }
   if (full.includes(' - ')) {
-    return full.split(' - ').map(s => s.trim()).filter(Boolean);
+    return full.split(' - ').map((s) => s.trim()).filter(Boolean);
   }
   return [full];
+}
+
+function getShortTwoWords(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return name.trim();
+  return parts.slice(-2).join(' ');
+}
+
+function formatCompactPlayers(p?: { teamName?: string | null; name?: string | null } | null): {
+  players: string[];
+  displayLabel: string;
+} {
+  const players = getParticipantPlayers(p);
+  if (players.length === 1 && players[0] === 'Chờ xác định') {
+    return { players: ['?'], displayLabel: 'Chờ xác định' };
+  }
+  const shortNames = players.map(getShortTwoWords);
+  return {
+    players,
+    displayLabel: shortNames.join(' / '),
+  };
 }
 
 function getParticipantName(p?: { teamName?: string | null; name?: string | null } | null) {
@@ -1080,8 +1101,8 @@ export function CourtScheduleBoard({
     const roundLabelStr = getAccurateRoundLabel(item.match, maxRound);
     const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
     const setList = extractSetScores(item.match);
-    const p1Players = getParticipantPlayers(item.match.participant1);
-    const p2Players = getParticipantPlayers(item.match.participant2);
+    const c1 = formatCompactPlayers(item.match.participant1);
+    const c2 = formatCompactPlayers(item.match.participant2);
 
     // Determine status & styling
     const rawStatus = String((item.match as unknown as Record<string, unknown>).status || '').toUpperCase();
@@ -1125,7 +1146,7 @@ export function CourtScheduleBoard({
         }}
         className={`group w-full rounded-xl border text-left transition-all cursor-pointer ${
           compact
-            ? 'p-3 bg-white'
+            ? 'p-2.5 bg-white'
             : 'absolute inset-x-1 z-10 overflow-hidden p-2'
         } ${
           isCompleted
@@ -1151,7 +1172,7 @@ export function CourtScheduleBoard({
       >
         <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
           {/* Header Row: DIVISION NAME | BO FORMAT | 🕒 Time | ⏱️ Duration */}
-          <div className="flex items-center justify-between gap-1 border-b border-slate-200/80 pb-1 text-xs font-black shrink-0">
+          <div className="flex items-center justify-between gap-1 border-b border-slate-200/80 pb-0.5 text-xs font-black shrink-0">
             <div className="flex items-center gap-1.5 min-w-0">
               <span
                 className={`truncate uppercase tracking-tight text-[11px] ${
@@ -1189,60 +1210,80 @@ export function CourtScheduleBoard({
             </div>
           </div>
 
-          {/* Competitor 1 Row */}
-          <div className="flex items-center justify-between gap-2 min-w-0 py-1">
-            <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
-              {p1Players.map((player, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1.5 truncate text-xs font-bold text-slate-900">
-                  <span className="h-6 w-6 rounded-full bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center text-xs shrink-0 font-black shadow-2xs">
+          {/* Competitor 1 Row: Overlapping Avatars + 2-word Name + Set Scores */}
+          <div className="flex items-center justify-between gap-1.5 min-w-0 py-0.5">
+            <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+              <div className="flex -space-x-1.5 shrink-0">
+                {c1.players.map((player, idx) => (
+                  <span
+                    key={idx}
+                    className="h-5 w-5 rounded-full bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10"
+                  >
                     {player.charAt(0).toUpperCase()}
                   </span>
-                  <span className="truncate">{player}</span>
-                </span>
-              ))}
+                ))}
+              </div>
+              <span className="truncate text-xs font-bold text-slate-900" title={getParticipantName(item.match.participant1)}>
+                {c1.displayLabel}
+              </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               {setList.length > 0 ? (
-                setList.map((s, idx) => (
-                  <span
-                    key={idx}
-                    className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-white px-1 text-xs font-black text-slate-900 border border-slate-300 shadow-2xs"
-                  >
-                    {s.s1}
-                  </span>
-                ))
+                setList.map((s, idx) => {
+                  const isWinner = Number(s.s1) > Number(s.s2);
+                  return (
+                    <span
+                      key={idx}
+                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
+                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                      }`}
+                    >
+                      {s.s1}
+                    </span>
+                  );
+                })
               ) : (
-                <span className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-slate-50 px-1 text-xs font-bold text-slate-400 border border-slate-200">
+                <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded bg-slate-50 px-1 text-[11px] font-bold text-slate-400 border border-slate-200">
                   -
                 </span>
               )}
             </div>
           </div>
 
-          {/* Competitor 2 Row */}
-          <div className="flex items-center justify-between gap-2 min-w-0 py-1">
-            <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
-              {p2Players.map((player, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1.5 truncate text-xs font-bold text-slate-900">
-                  <span className="h-6 w-6 rounded-full bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center text-xs shrink-0 font-black shadow-2xs">
+          {/* Competitor 2 Row: Overlapping Avatars + 2-word Name + Set Scores */}
+          <div className="flex items-center justify-between gap-1.5 min-w-0 py-0.5">
+            <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+              <div className="flex -space-x-1.5 shrink-0">
+                {c2.players.map((player, idx) => (
+                  <span
+                    key={idx}
+                    className="h-5 w-5 rounded-full bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10"
+                  >
                     {player.charAt(0).toUpperCase()}
                   </span>
-                  <span className="truncate">{player}</span>
-                </span>
-              ))}
+                ))}
+              </div>
+              <span className="truncate text-xs font-bold text-slate-900" title={getParticipantName(item.match.participant2)}>
+                {c2.displayLabel}
+              </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               {setList.length > 0 ? (
-                setList.map((s, idx) => (
-                  <span
-                    key={idx}
-                    className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-white px-1 text-xs font-black text-slate-900 border border-slate-300 shadow-2xs"
-                  >
-                    {s.s2}
-                  </span>
-                ))
+                setList.map((s, idx) => {
+                  const isWinner = Number(s.s2) > Number(s.s1);
+                  return (
+                    <span
+                      key={idx}
+                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
+                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                      }`}
+                    >
+                      {s.s2}
+                    </span>
+                  );
+                })
               ) : (
-                <span className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-slate-50 px-1 text-xs font-bold text-slate-400 border border-slate-200">
+                <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded bg-slate-50 px-1 text-[11px] font-bold text-slate-400 border border-slate-200">
                   -
                 </span>
               )}
@@ -1250,7 +1291,7 @@ export function CourtScheduleBoard({
           </div>
 
           {/* Footer Row: [BẢNG A / VÒNG 1]  [ Trạng thái ] */}
-          <div className="flex items-center justify-between gap-1 pt-1 border-t border-slate-200/60 shrink-0 text-xs">
+          <div className="flex items-center justify-between gap-1 pt-0.5 border-t border-slate-200/60 shrink-0 text-xs">
             <span
               className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${
                 isCompleted

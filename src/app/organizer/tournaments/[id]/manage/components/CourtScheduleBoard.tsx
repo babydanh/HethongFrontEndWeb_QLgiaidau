@@ -313,6 +313,9 @@ export function CourtScheduleBoard({
   const [dragAnchor, setDragAnchor] = useState<{ courtIndex: number; rowIndex: number } | null>(null);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
 
+  const [queueSelectedMatchIds, setQueueSelectedMatchIds] = useState<string[]>([]);
+  const [queueTargetCourtId, setQueueTargetCourtId] = useState<string>(courts[0]?.id || '');
+  const [queueTargetRowIndex, setQueueTargetRowIndex] = useState<number>(0);
   const boardRef = useRef<HTMLDivElement>(null);
 
   const pendingCount = Object.keys(draftAssignments).length;
@@ -1001,6 +1004,74 @@ export function CourtScheduleBoard({
     setSelectionRange(null);
   };
 
+  // Move all matches in selection to a target court
+  const handleMoveSelectionToCourt = (targetCourtId: string) => {
+    if (!selectionRange) return;
+    const selectedCourtIds = new Set(
+      courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1).map((c) => c.id),
+    );
+    const minTimestamp = timelineRows.rows[selectionRange.startRowIndex]?.startTimestamp ?? 0;
+    const maxTimestamp = timelineRows.rows[selectionRange.endRowIndex]?.endTimestamp ?? Infinity;
+
+    const matchesInSelection = displayMatches.filter((item) => {
+      if (!item.courtId || !item.scheduledAt || !selectedCourtIds.has(item.courtId)) return false;
+      const t = new Date(item.scheduledAt).getTime();
+      return t >= minTimestamp && t < maxTimestamp;
+    });
+
+    if (matchesInSelection.length === 0) {
+      setSaveToast('Không có trận đấu nào trong vùng chọn để chuyển!');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    const newDrafts: Record<string, DraftAssignment> = {};
+    for (const item of matchesInSelection) {
+      newDrafts[item.match.id] = {
+        courtId: targetCourtId,
+        scheduledAt: item.scheduledAt!,
+        durationMinutes: item.durationMinutes,
+      };
+    }
+
+    setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+    const targetCourt = courts.find((c) => c.id === targetCourtId);
+    setSaveToast(`Đã chuyển ${matchesInSelection.length} trận sang ${targetCourt?.courtName || 'sân mới'}! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    setTimeout(() => setSaveToast(null), 3500);
+  };
+
+  // Assign multiple selected matches from the queue to a target court & start time
+  const handleAssignQueueMatches = () => {
+    if (queueSelectedMatchIds.length === 0 || !queueTargetCourtId) return;
+
+    const newDrafts: Record<string, DraftAssignment> = {};
+    let currentRowIdx = queueTargetRowIndex;
+
+    for (const matchId of queueSelectedMatchIds) {
+      const item = displayMatches.find((m) => m.match.id === matchId);
+      if (!item) continue;
+
+      const rowInfo = timelineRows.rows[currentRowIdx] || timelineRows.rows[timelineRows.rows.length - 1];
+      const targetTime = new Date(rowInfo.startTimestamp).toISOString();
+      const duration = item.durationMinutes || rowInfo.durationMinutes || defaultStepMinutes;
+
+      newDrafts[matchId] = {
+        courtId: queueTargetCourtId,
+        scheduledAt: targetTime,
+        durationMinutes: duration,
+      };
+
+      currentRowIdx++;
+    }
+
+    setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+    setQueueOpen(false);
+    setQueueSelectedMatchIds([]);
+    const targetCourt = courts.find((c) => c.id === queueTargetCourtId);
+    setSaveToast(`Đã xếp ${queueSelectedMatchIds.length} trận vào ${targetCourt?.courtName || 'sân'}! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    setTimeout(() => setSaveToast(null), 3500);
+  };
+
   const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
     const divId = item.match.divisionId || 'default';
     const maxRound = maxRoundByDivision.get(divId) || 1;
@@ -1415,6 +1486,29 @@ export function CourtScheduleBoard({
               <Lock className="h-3 w-3" />
               Khóa giờ
             </Button>
+
+            {/* Move selected matches to another court */}
+            <div className="relative">
+              <select
+                onChange={(e) => {
+                  const targetCourtId = e.target.value;
+                  if (!targetCourtId) return;
+                  handleMoveSelectionToCourt(targetCourtId);
+                  e.target.value = '';
+                }}
+                defaultValue=""
+                className="h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-bold px-2 cursor-pointer outline-hidden hover:bg-slate-700"
+              >
+                <option value="" disabled>
+                  Chuyển sang sân khác...
+                </option>
+                {courts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    Chuyển sang {c.courtName}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <Button
               type="button"
@@ -1892,32 +1986,161 @@ export function CourtScheduleBoard({
         </ModalContent>
       </Modal>
 
-      {/* POPUP MODAL: Danh sách trận chưa xếp lịch */}
+      {/* POPUP MODAL: Danh sách trận chưa xếp lịch (Multi-Select & Bulk Assign) */}
       <Modal open={queueOpen} onOpenChange={setQueueOpen}>
-        <ModalContent className="max-w-2xl rounded-xl border border-slate-200">
-          <ModalHeader>
-            <ModalTitle className="text-base font-bold text-slate-900">
-              Danh sách trận chưa xếp lịch ({unscheduledMatches.length})
-            </ModalTitle>
-            <ModalDescription className="text-xs text-slate-500">
-              Bạn có thể kéo thả trận đấu vào các ô trên bảng lịch hoặc click vào ô lưới để chọn.
-            </ModalDescription>
+        <ModalContent className="max-w-3xl rounded-xl border border-slate-200">
+          <ModalHeader className="border-b border-slate-100 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <ModalTitle className="text-base font-bold text-slate-900">
+                  Danh sách trận chưa xếp lịch ({unscheduledMatches.length})
+                </ModalTitle>
+                <ModalDescription className="text-xs text-slate-500">
+                  Tích chọn nhiều trận để xếp hàng loạt vào sân và khung giờ bạn muốn.
+                </ModalDescription>
+              </div>
+
+              {unscheduledMatches.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (queueSelectedMatchIds.length === unscheduledMatches.length) {
+                      setQueueSelectedMatchIds([]);
+                    } else {
+                      setQueueSelectedMatchIds(unscheduledMatches.map((m) => m.match.id));
+                    }
+                  }}
+                  className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-300 bg-white"
+                >
+                  {queueSelectedMatchIds.length === unscheduledMatches.length ? 'Bỏ chọn hết' : 'Chọn tất cả'}
+                </Button>
+              )}
+            </div>
           </ModalHeader>
+
           {unscheduledMatches.length > 0 ? (
-            <div className="grid max-h-[55vh] gap-2 overflow-y-auto sm:grid-cols-2 py-2">
-              {unscheduledMatches.map((item) => renderMatchCard(item, true))}
+            <div className="grid max-h-[50vh] gap-2 overflow-y-auto sm:grid-cols-2 py-2">
+              {unscheduledMatches.map((item) => {
+                const isSelected = queueSelectedMatchIds.includes(item.match.id);
+                const div = divisions.find((d) => d.id === item.match.divisionId);
+                const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+                const roundLabelStr = getAccurateRoundLabel(item.match, maxR);
+                const p1 = getParticipantName(item.match.participant1);
+                const p2 = getParticipantName(item.match.participant2);
+
+                return (
+                  <div
+                    key={item.match.id}
+                    onClick={() => {
+                      setQueueSelectedMatchIds((prev) =>
+                        isSelected ? prev.filter((id) => id !== item.match.id) : [...prev, item.match.id],
+                      );
+                    }}
+                    className={`group relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer select-none ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-50/80 shadow-xs ring-2 ring-blue-500/30'
+                        : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50/60'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1.5 pb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-[11px] font-bold text-slate-800">
+                            {roundLabelStr}
+                          </span>
+                        </div>
+                        {div && (
+                          <span className="rounded-xs bg-slate-100 px-1.5 py-0.2 text-[9px] font-semibold text-slate-600 border border-slate-200">
+                            {div.name}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1 pl-5 pt-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                          <span className="truncate text-xs font-bold text-slate-900">{p1}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-slate-400 shrink-0" />
+                          <span className="truncate text-xs font-semibold text-slate-700">{p2}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-500">
+                      <span>{item.durationMinutes || 15}p</span>
+                      <span className={`font-semibold ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
+                        {isSelected ? '✓ Đã chọn' : 'Nhấp để chọn'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center bg-slate-50">
               <p className="text-xs font-semibold text-slate-600">Tất cả các trận đã được xếp lịch!</p>
             </div>
           )}
-          <ModalFooter className="pt-2">
-            <ModalClose asChild>
-              <Button type="button" variant="outline" className="h-8 rounded-lg text-xs font-semibold border-slate-300 cursor-pointer">
-                Đóng
+
+          <ModalFooter className="border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Destination Court Selector */}
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-slate-600">Sân:</span>
+                <select
+                  value={queueTargetCourtId}
+                  onChange={(e) => setQueueTargetCourtId(e.target.value)}
+                  className="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs font-bold text-slate-800"
+                >
+                  {courts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.courtName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Start Time Selector */}
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-slate-600">Giờ bắt đầu:</span>
+                <select
+                  value={queueTargetRowIndex}
+                  onChange={(e) => setQueueTargetRowIndex(Number(e.target.value))}
+                  className="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs font-bold text-slate-800"
+                >
+                  {timelineRows.rows.map((r) => (
+                    <option key={r.index} value={r.index}>
+                      {r.startTimeStr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <ModalClose asChild>
+                <Button type="button" variant="outline" className="h-8 rounded-lg text-xs font-semibold border-slate-300 cursor-pointer">
+                  Đóng
+                </Button>
+              </ModalClose>
+              <Button
+                type="button"
+                onClick={handleAssignQueueMatches}
+                disabled={queueSelectedMatchIds.length === 0 || !queueTargetCourtId}
+                className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+              >
+                Xếp {queueSelectedMatchIds.length} trận đã chọn vào sân
               </Button>
-            </ModalClose>
+            </div>
           </ModalFooter>
         </ModalContent>
       </Modal>

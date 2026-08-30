@@ -544,9 +544,11 @@ export function CourtScheduleBoard({
   );
 
   const displayMatches = useMemo(() => matches.map((match) => {
-    const persisted = Boolean(match.scheduledAt && match.courtId);
-    const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
     const draft = draftAssignments[match.id];
+    const isExplicitlyUnassigned = draft !== undefined && (!draft.courtId || !draft.scheduledAt);
+
+    const persisted = !isExplicitlyUnassigned && Boolean(match.scheduledAt && match.courtId);
+    const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
     const matchDuration =
       draft?.durationMinutes ??
       customMatchDurations[match.id] ??
@@ -555,10 +557,10 @@ export function CourtScheduleBoard({
 
     return {
       match,
-      scheduledAt: draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null),
-      courtId: draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null),
+      scheduledAt: isExplicitlyUnassigned ? null : (draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null)),
+      courtId: isExplicitlyUnassigned ? null : (draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null)),
       durationMinutes: matchDuration,
-      isPreview: !persisted && Boolean(assignment) && !draft,
+      isPreview: !isExplicitlyUnassigned && !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
   }), [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
@@ -919,7 +921,10 @@ export function CourtScheduleBoard({
 
     const newDrafts = { ...draftAssignments };
     for (const item of matchesInSelection) {
-      delete newDrafts[item.match.id];
+      newDrafts[item.match.id] = {
+        courtId: '',
+        scheduledAt: '',
+      };
       if (onSaveScheduleDirect) {
         void onSaveScheduleDirect(item.match.id, '', '', true);
       }
@@ -1056,18 +1061,46 @@ export function CourtScheduleBoard({
   };
 
   // Unassign single match (return to queue)
-  const handleUnassignSingleMatch = (matchId: string) => {
-    if (onSaveScheduleDirect) {
-      void onSaveScheduleDirect(matchId, '', '', true);
-    }
-    const newDrafts = { ...draftAssignments };
-    delete newDrafts[matchId];
+  const handleUnassignSingleMatch = async (matchId: string) => {
+    const newDrafts = {
+      ...draftAssignments,
+      [matchId]: {
+        courtId: '',
+        scheduledAt: '',
+      },
+    };
     setDraftAssignments(newDrafts);
-    setSaveToast('🗑️ Đã hủy xếp trận đấu (đưa về hàng chờ chưa xếp).');
+    pushHistory(newDrafts);
+    setSaveToast('🗑️ Đã hủy xếp trận đấu (đưa về hàng chờ chưa xếp)!');
     setTimeout(() => setSaveToast(null), 2500);
-    if (onRefetchData) {
-      void onRefetchData();
+
+    if (onSaveScheduleDirect) {
+      await onSaveScheduleDirect(matchId, '', '', true);
     }
+  };
+
+  // Clear all scheduled matches (Reset entire schedule to queue)
+  const handleClearAllSchedule = async () => {
+    if (scheduledMatches.length === 0) return;
+    if (!confirm(`Bạn có chắc muốn hủy xếp toàn bộ ${scheduledMatches.length} trận đấu để đưa về hàng chờ?`)) return;
+
+    const newDrafts = { ...draftAssignments };
+    for (const item of scheduledMatches) {
+      newDrafts[item.match.id] = {
+        courtId: '',
+        scheduledAt: '',
+      };
+      if (onSaveScheduleDirect) {
+        void onSaveScheduleDirect(item.match.id, '', '', true);
+      }
+    }
+
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+    setBlockedSlots([]);
+    setSelectionRange(null);
+    setSaveToast(`🗑️ Đã hủy toàn bộ lịch thi đấu (${scheduledMatches.length} trận)!`);
+    setTimeout(() => setSaveToast(null), 3000);
   };
 
   // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
@@ -1146,24 +1179,6 @@ export function CourtScheduleBoard({
     setRowDurations({});
     setSaveToast('Đã đặt lại tất cả các mốc giờ về mặc định đều nhau!');
     setTimeout(() => setSaveToast(null), 2500);
-  };
-
-  // Clear All Scheduled Matches
-  const handleClearAllSchedule = () => {
-    if (scheduledMatches.length === 0) return;
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch thi đấu của tất cả các sân?')) return;
-
-    for (const item of scheduledMatches) {
-      if (onSaveScheduleDirect) {
-        void onSaveScheduleDirect(item.match.id, '', '', true);
-      }
-    }
-    setDraftAssignments({});
-    setSaveToast('Đã xóa toàn bộ lịch đã xếp.');
-    setTimeout(() => setSaveToast(null), 2500);
-    if (onRefetchData) {
-      void onRefetchData();
-    }
   };
 
   // Handle Dragging Row Divider on Left Time Column (Excel style +1p / -1p)

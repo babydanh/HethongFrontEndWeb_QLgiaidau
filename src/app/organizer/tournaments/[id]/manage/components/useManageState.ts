@@ -1791,14 +1791,33 @@ export function useManageState(id: string) {
     try {
       const court = courts.find((c) => c.id === courtId);
       const venueAddr = tournament?.venue?.locationAddress || customVenueAddress || null;
+      const targetCourtId = courtId || null;
+      const targetCourtName = court?.courtName || null;
+      const targetScheduledAt = scheduledAt ? new Date(scheduledAt).toISOString() : null;
+
+      // Optimistically update matches in local state for instant response
+      setMatches((prev) =>
+        prev.map((m) =>
+          m.id === matchId
+            ? {
+                ...m,
+                courtId: targetCourtId,
+                courtName: targetCourtName,
+                courtAddress: venueAddr,
+                scheduledAt: targetScheduledAt,
+              }
+            : m,
+        ),
+      );
+
       await tournamentsApi.updateMatchSchedule(matchId, {
-        courtId: courtId || null,
-        courtName: court?.courtName || null,
+        courtId: targetCourtId,
+        courtName: targetCourtName,
         courtAddress: venueAddr,
-        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        scheduledAt: targetScheduledAt,
       });
       if (!silent) {
-        toast.success('Đã cập nhật lịch thi đấu!');
+        toast.success(targetCourtId ? 'Đã cập nhật lịch thi đấu!' : 'Đã hủy xếp trận đấu!');
         await fetchTournamentData();
       }
     } catch (err) {

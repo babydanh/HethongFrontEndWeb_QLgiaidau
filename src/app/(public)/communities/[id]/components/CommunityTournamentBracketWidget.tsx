@@ -183,9 +183,9 @@ export default function CommunityTournamentBracketWidget({
           </div>
         </div>
 
-        {/* Embedded Interactive Bracket Tab */}
+        {/* Embedded Interactive Bracket Tab (Super Lite Preview) */}
         <div className="p-2 sm:p-4 bg-slate-50/50">
-          <BracketTab tournament={tournament} />
+          <BracketTab tournament={tournament} compact={true} />
         </div>
       </div>
 

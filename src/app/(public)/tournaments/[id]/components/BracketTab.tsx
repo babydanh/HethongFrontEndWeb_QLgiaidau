@@ -196,6 +196,7 @@ function GroupView({
   viewMode = 'paged',
   translate,
   dragHandlers,
+  compact = false,
 }: {
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
@@ -211,6 +212,7 @@ function GroupView({
   viewMode?: 'paged' | 'full';
   translate: TranslationFn;
   dragHandlers?: BracketDragHandlers;
+  compact?: boolean;
 }) {
   const { matches: groupMatches } = group;
   const overrides = dragHandlers?.participantOverrides;
@@ -292,6 +294,7 @@ function GroupView({
           onDoubleClickMatch={onDoubleClickMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
           dragHandlers={dragHandlers}
+          compact={compact}
         />
       ) : (
         <DoubleElimView
@@ -305,6 +308,7 @@ function GroupView({
           fallbackSportRuleKind={fallbackSportRuleKind}
           panEnabled={viewMode === 'full'}
           dragHandlers={dragHandlers}
+          compact={compact}
         />
       );
     }
@@ -319,6 +323,7 @@ function GroupView({
         onDoubleClickMatch={onDoubleClickMatch}
         fallbackSportRuleKind={fallbackSportRuleKind}
         dragHandlers={dragHandlers}
+        compact={compact}
       />
   ) : (
     <SingleElimView
@@ -330,6 +335,7 @@ function GroupView({
       fallbackSportRuleKind={fallbackSportRuleKind}
       panEnabled={viewMode === 'full'}
       dragHandlers={dragHandlers}
+      compact={compact}
     />
   );
 }
@@ -352,6 +358,7 @@ export default function BracketTab({
   dragHandlers,
   bracketSnapshot,
   refreshKey,
+  compact = false,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const effectiveTournamentId = tournamentId ?? tournament.id;
@@ -509,8 +516,8 @@ export default function BracketTab({
   }, [activeStageId, renderedStages, selectedMatchId]);
 
   const activeStage = renderedStages.find((s) => s.id === activeStageId);
-  const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage));
-  const effectiveViewMode = activeStageSupportsFullView ? viewMode : 'paged';
+  const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage) && !compact);
+  const effectiveViewMode = compact ? 'paged' : (activeStageSupportsFullView ? viewMode : 'paged');
   const shouldShowStageTabs =
     renderedStages.length > 1 &&
     renderedStages.some((s, _, arr) =>
@@ -618,43 +625,45 @@ export default function BracketTab({
       {activeStage && (
         <div className="flex flex-col gap-6">
           {/* Stage header with inline View Mode Switcher */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">
-                {stageNameLabel(activeStage.name, translate)}
-              </h3>
-              <p className="text-xs text-slate-400 font-semibold mt-0.5">
-                {translate("formatLabel")}: {stageTypeLabel(activeStage.type, translate)}
-              </p>
-            </div>
-
-            {activeStageSupportsFullView && (
-              <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-1 self-start sm:self-auto">
-                <button
-                  onClick={() => setViewMode('paged')}
-                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
-                    viewMode === 'paged'
-                      ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                  }`}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{translate('pagedView')}</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('full')}
-                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
-                    viewMode === 'full'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                  }`}
-                >
-                  <Maximize2 className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{translate('fullView')}</span>
-                </button>
+          {!compact && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {stageNameLabel(activeStage.name, translate)}
+                </h3>
+                <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                  {translate("formatLabel")}: {stageTypeLabel(activeStage.type, translate)}
+                </p>
               </div>
-            )}
-          </div>
+
+              {activeStageSupportsFullView && (
+                <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-1 self-start sm:self-auto">
+                  <button
+                    onClick={() => setViewMode('paged')}
+                    className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
+                      viewMode === 'paged'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                    }`}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{translate('pagedView')}</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('full')}
+                    className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer sm:text-xs ${
+                      viewMode === 'full'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                    }`}
+                  >
+                    <Maximize2 className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{translate('fullView')}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {activeStage.type === 'DOUBLE_ELIMINATION' ? (
             <div className="min-w-0 max-w-full overflow-hidden">
@@ -694,6 +703,7 @@ export default function BracketTab({
                     onDoubleClickMatch={onDoubleClickMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     dragHandlers={dragHandlers}
+                    compact={compact}
                   />
                 ) : (
                   <DoubleElimView
@@ -707,6 +717,7 @@ export default function BracketTab({
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     panEnabled={effectiveViewMode === 'full'}
                     dragHandlers={dragHandlers}
+                    compact={compact}
                   />
                 );
               })()}
@@ -734,6 +745,7 @@ export default function BracketTab({
                   viewMode={effectiveViewMode}
                   translate={translate}
                   dragHandlers={dragHandlers}
+                  compact={compact}
                 />
               </div>
             ))

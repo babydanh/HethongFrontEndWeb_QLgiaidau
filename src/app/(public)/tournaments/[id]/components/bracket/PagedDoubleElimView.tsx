@@ -31,6 +31,7 @@ interface Props {
   onDoubleClickMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   dragHandlers?: BracketDragHandlers;
+  compact?: boolean;
 }
 
 type BranchTab = 'upper' | 'lower';
@@ -45,6 +46,7 @@ export function PagedDoubleElimView({
   onDoubleClickMatch,
   fallbackSportRuleKind,
   dragHandlers,
+  compact = false,
 }: Props) {
   const translate = useTranslations('BracketView');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
@@ -392,43 +394,47 @@ export function PagedDoubleElimView({
             <ChevronRight className="h-4 w-4 shrink-0" />
           </button>
 
-          <div className="col-span-2 hidden h-px w-full bg-slate-200 sm:block sm:h-4 sm:w-px" />
+          {!compact && (
+            <>
+              <div className="col-span-2 hidden h-px w-full bg-slate-200 sm:block sm:h-4 sm:w-px" />
 
-          {/* Zoom controls */}
-          <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-2xs sm:col-span-1">
-            <button
-              onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer text-sm font-black"
-              title={translate('zoomOut')}
-            >
-              -
-            </button>
-            <span className="w-10 text-center text-[11px] select-none font-bold">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom((z) => Math.min(z + 0.1, 2.0))}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer text-sm font-black"
-              title={translate('zoomIn')}
-            >
-              +
-            </button>
-            <button
-              onClick={handleAutoFit}
-              className="px-1.5 h-7 flex items-center justify-center gap-1 hover:bg-slate-50 rounded text-[11px] font-bold text-blue-600 cursor-pointer"
-              title="Vừa màn hình"
-            >
-              <Scan className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Vừa màn hình</span>
-            </button>
-            <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-500 hover:text-slate-900 cursor-pointer"
-              title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
-            >
-              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+              {/* Zoom controls */}
+              <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-2xs sm:col-span-1">
+                <button
+                  onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
+                  className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer text-sm font-black"
+                  title={translate('zoomOut')}
+                >
+                  -
+                </button>
+                <span className="w-10 text-center text-[11px] select-none font-bold">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoom((z) => Math.min(z + 0.1, 2.0))}
+                  className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700 cursor-pointer text-sm font-black"
+                  title={translate('zoomIn')}
+                >
+                  +
+                </button>
+                <button
+                  onClick={handleAutoFit}
+                  className="px-1.5 h-7 flex items-center justify-center gap-1 hover:bg-slate-50 rounded text-[11px] font-bold text-blue-600 cursor-pointer"
+                  title="Vừa màn hình"
+                >
+                  <Scan className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Vừa màn hình</span>
+                </button>
+                <button
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-500 hover:text-slate-900 cursor-pointer"
+                  title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
+                >
+                  {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

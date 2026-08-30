@@ -32,6 +32,7 @@ interface Props {
   fallbackSportRuleKind?: SportRuleKind;
   panEnabled?: boolean;
   dragHandlers?: BracketDragHandlers;
+  compact?: boolean;
 }
 
 export function SingleElimView({
@@ -43,6 +44,7 @@ export function SingleElimView({
   fallbackSportRuleKind,
   panEnabled = true,
   dragHandlers,
+  compact = false,
 }: Props) {
   const translate = useTranslations('BracketView');
   const roundLabelTranslations = {
@@ -137,57 +139,59 @@ export function SingleElimView({
       }
     >
       {/* Zoom & Fit Controls */}
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
-        <button
-          onClick={() => setZoom((z) => Math.max(z - 0.1, 0.2))}
-          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-sm font-black"
-          title={translate('zoomOut')}
-          aria-label={translate('zoomOut')}
-        >
-          -
-        </button>
-        <span className="w-11 sm:w-12 text-center text-[11px] sm:text-xs select-none">
-          {Math.round(zoom * 100)}%
-        </span>
-        <button
-          onClick={() => setZoom((z) => Math.min(z + 0.1, 2.5))}
-          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-sm font-black"
-          title={translate('zoomIn')}
-          aria-label={translate('zoomIn')}
-        >
-          +
-        </button>
-        <button
-          onClick={handleAutoFit}
-          className="px-2 h-8 sm:h-9 flex items-center justify-center gap-1 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-[11px] font-bold text-blue-600"
-          title="Vừa màn hình"
-        >
-          <Scan className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Vừa màn hình</span>
-        </button>
-        <button
-          onClick={() => {
-            setZoom(1);
-            resetPan();
-          }}
-          className="hidden sm:flex px-2.5 h-9 items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title={translate('resetZoom')}
-        >
-          100%
-        </button>
-        <button
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
-          title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
-          aria-label={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-4 h-4" />
-          ) : (
-            <Maximize2 className="w-4 h-4" />
-          )}
-        </button>
-      </div>
+      {!compact && (
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
+          <button
+            onClick={() => setZoom((z) => Math.max(z - 0.1, 0.2))}
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-sm font-black"
+            title={translate('zoomOut')}
+            aria-label={translate('zoomOut')}
+          >
+            -
+          </button>
+          <span className="w-11 sm:w-12 text-center text-[11px] sm:text-xs select-none">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={() => setZoom((z) => Math.min(z + 0.1, 2.5))}
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-sm font-black"
+            title={translate('zoomIn')}
+            aria-label={translate('zoomIn')}
+          >
+            +
+          </button>
+          <button
+            onClick={handleAutoFit}
+            className="px-2 h-8 sm:h-9 flex items-center justify-center gap-1 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-[11px] font-bold text-blue-600"
+            title="Vừa màn hình"
+          >
+            <Scan className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Vừa màn hình</span>
+          </button>
+          <button
+            onClick={() => {
+              setZoom(1);
+              resetPan();
+            }}
+            className="hidden sm:flex px-2.5 h-9 items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+            title={translate('resetZoom')}
+          >
+            100%
+          </button>
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
+            title={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
+            aria-label={isFullscreen ? translate('exitFullscreen') : translate('fullscreen')}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="w-4 h-4" />
+            ) : (
+              <Maximize2 className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      )}
 
       <div
         ref={containerRef}

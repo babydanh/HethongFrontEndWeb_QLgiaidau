@@ -65,6 +65,8 @@ export interface BracketTabProps {
   bracketSnapshot?: { stages: BracketStage[] } | null;
   /** Changes when an external owner action requests a canonical bracket refresh. */
   refreshKey?: string | number;
+  /** Compact/lite mode for embedded post widgets (hides redundant toolbars & zoom controls) */
+  compact?: boolean;
 }
 
 export function mergeBracketMatches(

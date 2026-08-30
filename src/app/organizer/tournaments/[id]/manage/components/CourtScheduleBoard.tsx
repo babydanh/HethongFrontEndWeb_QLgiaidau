@@ -6,7 +6,9 @@ import {
   Check,
   CheckSquare,
   ChevronsUpDown,
+  Clipboard,
   Clock,
+  Copy,
   Download,
   FileSpreadsheet,
   GripVertical,
@@ -18,6 +20,7 @@ import {
   RotateCcw,
   RotateCw,
   Save,
+  Scissors,
   Search,
   Settings2,
   Sparkles,
@@ -726,7 +729,149 @@ export function CourtScheduleBoard({
     return () => clearTimeout(timer);
   }, [draftAssignments]);
 
-  // Keyboard shortcut: Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+S (Save), Ctrl+A (Select All)
+  // Clipboard state for Excel-like Cut (Ctrl+X), Copy (Ctrl+C), Paste (Ctrl+V)
+  const [clipboard, setClipboard] = useState<{
+    operation: 'cut' | 'copy';
+    items: Array<{
+      matchId: string;
+      relativeCourtIndex: number;
+      relativeRowIndex: number;
+      durationMinutes: number;
+    }>;
+  } | null>(null);
+
+  const getSelectedMatchesInGrid = () => {
+    if (!selectionRange) return [];
+    const minC = Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex);
+    const maxC = Math.max(selectionRange.startCourtIndex, selectionRange.endCourtIndex);
+    const minR = Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex);
+    const maxR = Math.max(selectionRange.startRowIndex, selectionRange.endRowIndex);
+
+    const items: Array<{
+      matchId: string;
+      relativeCourtIndex: number;
+      relativeRowIndex: number;
+      durationMinutes: number;
+    }> = [];
+
+    for (let cIdx = minC; cIdx <= maxC; cIdx++) {
+      const court = courts[cIdx];
+      if (!court) continue;
+      for (let rIdx = minR; rIdx <= maxR; rIdx++) {
+        const row = timelineRows.rows[rIdx];
+        if (!row) continue;
+        const rowStart = row.startTimestamp;
+        const rowEnd = rowStart + (rowDurations[rIdx] ?? defaultStepMinutes) * 60_000;
+
+        const foundMatch = displayMatches.find((m) => {
+          if (m.courtId !== court.id || !m.scheduledAt) return false;
+          const mStart = new Date(m.scheduledAt).getTime();
+          return mStart >= rowStart && mStart < rowEnd;
+        });
+
+        if (foundMatch && !items.some((it) => it.matchId === foundMatch.match.id)) {
+          items.push({
+            matchId: foundMatch.match.id,
+            relativeCourtIndex: cIdx - minC,
+            relativeRowIndex: rIdx - minR,
+            durationMinutes: foundMatch.durationMinutes || defaultStepMinutes,
+          });
+        }
+      }
+    }
+    return items;
+  };
+
+  const handleCut = () => {
+    const items = getSelectedMatchesInGrid();
+    if (items.length === 0) {
+      setSaveToast('✂️ Hãy quét chọn ô có trận đấu để cắt (Ctrl + X)');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    setClipboard({
+      operation: 'cut',
+      items,
+    });
+    setSaveToast(`✂️ Đã cắt ${items.length} trận đấu! Chọn ô đích và bấm Ctrl + V để dán.`);
+    setTimeout(() => setSaveToast(null), 3000);
+  };
+
+  const handleCopy = () => {
+    const items = getSelectedMatchesInGrid();
+    if (items.length === 0) {
+      setSaveToast('📋 Hãy quét chọn ô có trận đấu để sao chép (Ctrl + C)');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    setClipboard({
+      operation: 'copy',
+      items,
+    });
+    setSaveToast(`📋 Đã sao chép ${items.length} trận đấu! Chọn ô đích và bấm Ctrl + V.`);
+    setTimeout(() => setSaveToast(null), 3000);
+  };
+
+  const handlePaste = () => {
+    if (!clipboard || clipboard.items.length === 0) {
+      setSaveToast('Bộ nhớ tạm trống. Vui lòng bấm Ctrl + X (Cắt) trước.');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    if (!selectionRange) {
+      setSaveToast('Vui lòng click chọn ô đích trên bảng rồi bấm Ctrl + V để dán.');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    const targetStartCourt = Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex);
+    const targetStartRow = Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex);
+
+    const newDrafts: Record<string, DraftAssignment> = { ...draftAssignments };
+    let pastedCount = 0;
+
+    for (const item of clipboard.items) {
+      const courtIdx = targetStartCourt + item.relativeCourtIndex;
+      const rowIdx = targetStartRow + item.relativeRowIndex;
+
+      if (courtIdx >= courts.length || rowIdx >= timelineRows.rows.length) {
+        continue;
+      }
+
+      const court = courts[courtIdx];
+      const row = timelineRows.rows[rowIdx];
+      if (!court || !row) continue;
+
+      const targetTimeIso = new Date(row.startTimestamp).toISOString();
+      newDrafts[item.matchId] = {
+        courtId: court.id,
+        scheduledAt: targetTimeIso,
+        durationMinutes: item.durationMinutes,
+      };
+      pastedCount++;
+    }
+
+    if (pastedCount === 0) {
+      setSaveToast('Không thể dán ra ngoài phạm vi bảng thời gian.');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+
+    if (clipboard.operation === 'cut') {
+      setClipboard(null);
+    }
+
+    setSaveToast(`📋 Đã dán ${pastedCount} trận đấu! Đang tự động lưu...`);
+    setTimeout(() => setSaveToast(null), 3000);
+  };
+
+  // Keyboard shortcut: Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+X (Cut), Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+S (Save), Ctrl+A (Select All)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -743,6 +888,18 @@ export function CourtScheduleBoard({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         e.preventDefault();
         handleRedo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        handleCut();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        handleCopy();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        handlePaste();
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -762,7 +919,7 @@ export function CourtScheduleBoard({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [courts.length, history, historyIndex, timelineRows.rows.length]);
+  }, [clipboard, courts, defaultStepMinutes, displayMatches, draftAssignments, history, historyIndex, rowDurations, selectionRange, timelineRows.rows]);
 
   // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
   const handleAutoScheduleAll = () => {
@@ -1357,6 +1514,7 @@ export function CourtScheduleBoard({
     const boFormat = isFootball ? `${effectiveDuration}P` : getMatchBestOfFormat(item.match, division);
 
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
+    const isCut = clipboard?.operation === 'cut' && clipboard.items.some((it) => it.matchId === item.match.id);
 
     return (
       <div
@@ -1375,7 +1533,9 @@ export function CourtScheduleBoard({
             ? 'p-2.5 bg-white'
             : 'absolute inset-x-1 z-10 overflow-hidden p-2'
         } ${
-          isCompleted
+          isCut
+            ? 'opacity-40 border-dashed border-2 border-indigo-500 bg-indigo-50/80 animate-pulse'
+            : isCompleted
             ? 'bg-slate-100/95 border-slate-300 text-slate-700 shadow-2xs'
             : isLive
             ? 'bg-amber-50/95 border-amber-400 text-amber-950 shadow-md ring-2 ring-amber-400/40'
@@ -1856,6 +2016,39 @@ export function CourtScheduleBoard({
               <ChevronsUpDown className="h-3 w-3" />
               Canh đều các dòng
             </Button>
+
+            {/* Cut / Copy / Paste Buttons */}
+            <Button
+              type="button"
+              onClick={handleCut}
+              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
+              title="Cắt các trận trong vùng chọn (Phím tắt: Ctrl + X)"
+            >
+              <Scissors className="h-3 w-3 text-indigo-400" />
+              <span>Cắt (Ctrl+X)</span>
+            </Button>
+
+            <Button
+              type="button"
+              onClick={handleCopy}
+              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
+              title="Sao chép các trận trong vùng chọn (Phím tắt: Ctrl + C)"
+            >
+              <Copy className="h-3 w-3 text-blue-400" />
+              <span>Sao chép (Ctrl+C)</span>
+            </Button>
+
+            {clipboard && (
+              <Button
+                type="button"
+                onClick={handlePaste}
+                className="h-7 px-2.5 text-[11px] font-black bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-xs flex items-center gap-1 cursor-pointer animate-pulse"
+                title="Dán các trận từ bộ nhớ tạm (Phím tắt: Ctrl + V)"
+              >
+                <Clipboard className="h-3 w-3" />
+                <span>Dán ({clipboard.items.length})</span>
+              </Button>
+            )}
 
             <Button
               type="button"

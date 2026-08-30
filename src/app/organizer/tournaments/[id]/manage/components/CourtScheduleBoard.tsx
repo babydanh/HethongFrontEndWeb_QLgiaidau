@@ -207,6 +207,25 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
   return 'VÒNG ĐẤU';
 }
 
+function getMatchBestOfFormat(match: ScheduleBoardMatch, division?: { name?: string; roundConfig?: unknown } | null): string {
+  const m = match as unknown as Record<string, unknown>;
+  const matchConfig = (m.matchConfig || m.rules || {}) as Record<string, unknown>;
+  const roundConfig = (division?.roundConfig || {}) as Record<string, unknown>;
+
+  const setsToWin = Number(
+    matchConfig.setsToWin ?? matchConfig.sets_to_win ?? roundConfig.setsToWin ?? roundConfig.sets_to_win ?? roundConfig.max_sets ?? 0,
+  );
+  const bestOf = Number(
+    matchConfig.bestOf ?? matchConfig.best_of ?? roundConfig.bestOf ?? roundConfig.best_of ?? 0,
+  );
+
+  if (bestOf === 1 || setsToWin === 1) return 'BO1';
+  if (bestOf === 3 || setsToWin === 2) return 'BO3';
+  if (bestOf === 5 || setsToWin === 3) return 'BO5';
+  if (Array.isArray(m.sets) && m.sets.length > 1) return 'BO3';
+  return 'BO1';
+}
+
 function extractSetScores(match: ScheduleBoardMatch) {
   const m = match as unknown as Record<string, unknown>;
   const setList: Array<{ s1: string | number; s2: string | number }> = [];
@@ -981,6 +1000,8 @@ export function CourtScheduleBoard({
     const cardHeight = Math.max(48, effectiveDuration * currentPixelsPerMinute - 4);
     const matchTimeStr = matchingRow.startTimeStr;
 
+    const boFormat = getMatchBestOfFormat(item.match, division);
+
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
 
     return (
@@ -995,16 +1016,16 @@ export function CourtScheduleBoard({
           event.stopPropagation();
           onOpenMatch(item.match.id);
         }}
-        className={`group w-full rounded-xl border text-left transition-all cursor-pointer shadow-xs hover:shadow-md ${
+        className={`group w-full rounded-xl border text-left transition-all cursor-pointer ${
           compact
             ? 'p-3 bg-white'
-            : 'absolute inset-x-1 z-10 overflow-hidden p-2.5'
+            : 'absolute inset-x-1 z-10 overflow-hidden p-2'
         } ${
           isCompleted
-            ? 'bg-[#ecfdf5] border-emerald-300 text-emerald-950'
+            ? 'bg-slate-100/95 border-slate-300 text-slate-700 shadow-2xs'
             : isLive
-            ? 'bg-[#e0f2fe] border-sky-300 text-sky-950'
-            : 'bg-white border-slate-200 hover:border-orange-400 text-slate-900'
+            ? 'bg-amber-50/95 border-amber-400 text-amber-950 shadow-md ring-2 ring-amber-400/40'
+            : 'bg-white border-slate-200 hover:border-blue-400 text-slate-900 shadow-xs'
         } ${
           item.isDraft
             ? 'ring-2 ring-violet-400 border-violet-400 bg-violet-50/95'
@@ -1022,17 +1043,40 @@ export function CourtScheduleBoard({
         }
       >
         <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
-          {/* Header Row: DIVISION NAME | 🕒 Time | ⏱️ Duration */}
-          <div className="flex items-center justify-between gap-1.5 border-b border-slate-200/80 pb-1.5 text-xs font-black shrink-0">
-            <span className="truncate text-blue-700 uppercase tracking-tight">
-              {(division?.name || 'NỘI DUNG').toUpperCase()}
-            </span>
-            <div className="flex items-center gap-1.5 shrink-0 text-[11px]">
-              <span className="flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+          {/* Header Row: DIVISION NAME | BO FORMAT | 🕒 Time | ⏱️ Duration */}
+          <div className="flex items-center justify-between gap-1 border-b border-slate-200/80 pb-1 text-xs font-black shrink-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span
+                className={`truncate uppercase tracking-tight text-[11px] ${
+                  isCompleted ? 'text-slate-600 font-bold' : 'text-blue-700 font-black'
+                }`}
+              >
+                {(division?.name || 'NỘI DUNG').toUpperCase()}
+              </span>
+              <span
+                className={`px-1.5 py-0.2 rounded text-[10px] font-black shrink-0 ${
+                  isCompleted
+                    ? 'bg-slate-200 text-slate-600 border border-slate-300'
+                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                }`}
+              >
+                {boFormat}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0 text-[10px]">
+              <span
+                className={`flex items-center gap-1 font-bold px-1.5 py-0.2 rounded border ${
+                  isCompleted
+                    ? 'text-slate-600 bg-slate-200/70 border-slate-300'
+                    : isLive
+                    ? 'text-amber-800 bg-amber-100 border-amber-300 animate-pulse'
+                    : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                }`}
+              >
                 <Clock className="h-3 w-3" />
                 {matchTimeStr}
               </span>
-              <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+              <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
                 {effectiveDuration}p
               </span>
             </div>
@@ -1099,13 +1143,30 @@ export function CourtScheduleBoard({
           </div>
 
           {/* Footer Row: [BẢNG A / VÒNG 1]  [ Trạng thái ] */}
-          <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-200/60 shrink-0 text-xs">
-            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[11px] font-black border border-slate-200">
+          <div className="flex items-center justify-between gap-1 pt-1 border-t border-slate-200/60 shrink-0 text-xs">
+            <span
+              className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${
+                isCompleted
+                  ? 'bg-slate-200 text-slate-700 border-slate-300'
+                  : 'bg-slate-100 text-slate-800 border-slate-200'
+              }`}
+            >
               {roundLabelStr.toUpperCase()}
             </span>
-            <span className="text-[11px] font-bold text-slate-600">
-              {isCompleted ? 'Đã kết thúc' : isLive ? 'Đang đấu' : 'Chưa diễn ra'}
-            </span>
+            {isCompleted ? (
+              <span className="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-bold text-[10px]">
+                Đã kết thúc
+              </span>
+            ) : isLive ? (
+              <span className="flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-black text-[10px] animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                Đang diễn ra
+              </span>
+            ) : (
+              <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold text-[10px]">
+                Chưa diễn ra
+              </span>
+            )}
           </div>
         </div>
 

@@ -181,10 +181,10 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
     if (diff === 0) return 'CHUNG KẾT';
     if (diff === 1) return 'BÁN KẾT';
     if (diff === 2) return 'TỨ KẾT';
-    if (diff === 3) return 'VÒNG 1/8 (R16)';
-    if (diff === 4) return 'VÒNG 1/16 (R32)';
-    if (diff === 5) return 'VÒNG 1/32 (R64)';
-    if (diff === 6) return 'VÒNG 1/64 (R128)';
+    if (diff === 3) return 'VÒNG 1/8';
+    if (diff === 4) return 'VÒNG 1/16';
+    if (diff === 5) return 'VÒNG 1/32';
+    if (diff === 6) return 'VÒNG 1/64';
   }
 
   // 4. Clean custom name if valid
@@ -224,6 +224,17 @@ function getMatchBestOfFormat(match: ScheduleBoardMatch, division?: { name?: str
   if (bestOf === 5 || setsToWin === 3) return 'BO5';
   if (Array.isArray(m.sets) && m.sets.length > 1) return 'BO3';
   return 'BO1';
+}
+
+function getMatchDurationFromFormat(
+  match: ScheduleBoardMatch,
+  division?: { name?: string; roundConfig?: unknown } | null,
+  minutesPerSet = 15,
+): number {
+  const bo = getMatchBestOfFormat(match, division);
+  if (bo === 'BO5') return minutesPerSet * 5; // e.g. 75m
+  if (bo === 'BO3') return minutesPerSet * 3; // e.g. 45m
+  return minutesPerSet * 1; // BO1 = 15m
 }
 
 function extractSetScores(match: ScheduleBoardMatch) {
@@ -296,6 +307,8 @@ export function CourtScheduleBoard({
   const [tempStart, setTempStart] = useState(operatingStart);
   const [tempEnd, setTempEnd] = useState(operatingEnd);
   const [tempStep, setTempStep] = useState(15);
+  const [minutesPerSet, setMinutesPerSet] = useState(15);
+  const [tempMinutesPerSet, setTempMinutesPerSet] = useState(15);
 
   // Excel Row Durations (in minutes per row, default step)
   const [rowDurations, setRowDurations] = useState<Record<number, number>>({});
@@ -345,15 +358,18 @@ export function CourtScheduleBoard({
     const persisted = Boolean(match.scheduledAt && match.courtId);
     const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
     const draft = draftAssignments[match.id];
+    const division = divisions.find((d) => d.id === match.divisionId);
+    const calculatedDuration = getMatchDurationFromFormat(match, division, minutesPerSet);
+
     return {
       match,
       scheduledAt: draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null),
       courtId: draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null),
-      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : defaultStepMinutes),
+      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : calculatedDuration),
       isPreview: !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
-  }), [defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
+  }), [draftAssignments, matches, preview, previewAssignmentByMatchId, divisions, minutesPerSet]);
 
   const scheduleDate = useMemo(() => {
     if (preview?.assignments?.[0]?.scheduledAt) {
@@ -502,52 +518,74 @@ export function CourtScheduleBoard({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [draftAssignments, isSavingDraft]);
 
-  // Auto-Schedule All Unscheduled Matches (AI Smart Fill with full interval overlap protection)
+  // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
   const handleAutoScheduleAll = () => {
     if (unscheduledMatches.length === 0 || courts.length === 0) return;
+
+    // 1. Order unscheduled matches logically by stage & round
+    const sortedMatches = [...unscheduledMatches].sort((a, b) => {
+      // Group stage matches first
+      const aIsGroup = Boolean(a.match.groupName || a.match.leg);
+      const bIsGroup = Boolean(b.match.groupName || b.match.leg);
+      if (aIsGroup && !bIsGroup) return -1;
+      if (!aIsGroup && bIsGroup) return 1;
+
+      // Then by leg / round number ascending
+      const rA = a.match.leg || a.match.roundNumber || 1;
+      const rB = b.match.leg || b.match.roundNumber || 1;
+      if (rA !== rB) return rA - rB;
+
+      // Then by match order
+      return (a.match.matchOrder || 0) - (b.match.matchOrder || 0);
+    });
+
     const newDrafts: Record<string, DraftAssignment> = {};
-    let matchIdx = 0;
+    let scheduledCount = 0;
 
-    for (let rIdx = 0; rIdx < timelineRows.rows.length; rIdx++) {
-      const rowInfo = timelineRows.rows[rIdx];
-      if (!rowInfo) continue;
-      const slotStart = rowInfo.startTimestamp;
-      const slotEnd = slotStart + rowInfo.durationMinutes * 60_000;
-      const targetTime = new Date(slotStart).toISOString();
+    for (const targetItem of sortedMatches) {
+      const matchDuration = targetItem.durationMinutes || defaultStepMinutes;
+      let placed = false;
 
-      for (const court of courts) {
-        if (matchIdx >= unscheduledMatches.length) break;
+      // Find earliest continuous time slot across all courts
+      for (let rIdx = 0; rIdx < timelineRows.rows.length; rIdx++) {
+        const rowInfo = timelineRows.rows[rIdx];
+        if (!rowInfo) continue;
+        const slotStart = rowInfo.startTimestamp;
+        const slotEnd = slotStart + matchDuration * 60_000;
 
-        // Check if court slot is already occupied with time range overlap
-        const isOccupied =
-          Object.values(newDrafts).some((d) => {
-            if (d.courtId !== court.id) return false;
-            const dStart = new Date(d.scheduledAt).getTime();
-            const dEnd = dStart + (d.durationMinutes || defaultStepMinutes) * 60_000;
-            return slotStart < dEnd && slotEnd > dStart;
-          }) ||
-          displayMatches.some((m) => {
-            if (m.courtId !== court.id || !m.scheduledAt) return false;
-            const mStart = new Date(m.scheduledAt).getTime();
-            const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
-            return slotStart < mEnd && slotEnd > mStart;
-          });
+        for (const court of courts) {
+          // Check if court is free for the entire duration [slotStart, slotEnd]
+          const isOccupied =
+            Object.values(newDrafts).some((d) => {
+              if (d.courtId !== court.id) return false;
+              const dStart = new Date(d.scheduledAt).getTime();
+              const dEnd = dStart + (d.durationMinutes || defaultStepMinutes) * 60_000;
+              return slotStart < dEnd && slotEnd > dStart;
+            }) ||
+            displayMatches.some((m) => {
+              if (m.courtId !== court.id || !m.scheduledAt) return false;
+              const mStart = new Date(m.scheduledAt).getTime();
+              const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
+              return slotStart < mEnd && slotEnd > mStart;
+            });
 
-        if (isOccupied) continue;
-
-        const targetMatch = unscheduledMatches[matchIdx];
-        newDrafts[targetMatch.match.id] = {
-          courtId: court.id,
-          scheduledAt: targetTime,
-          durationMinutes: rowInfo.durationMinutes,
-        };
-        matchIdx++;
+          if (!isOccupied) {
+            newDrafts[targetItem.match.id] = {
+              courtId: court.id,
+              scheduledAt: new Date(slotStart).toISOString(),
+              durationMinutes: matchDuration,
+            };
+            scheduledCount++;
+            placed = true;
+            break;
+          }
+        }
+        if (placed) break;
       }
-      if (matchIdx >= unscheduledMatches.length) break;
     }
 
     setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
-    setSaveToast(`Đã xếp nháp ${matchIdx} trận! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    setSaveToast(`AI đã tự động xếp ${scheduledCount}/${sortedMatches.length} trận đấu! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
     setTimeout(() => setSaveToast(null), 3500);
   };
 
@@ -1912,6 +1950,31 @@ export function CourtScheduleBoard({
               </div>
             </div>
 
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Thời lượng ước tính 1 Set đấu (Tự động tính cho BO1, BO3, BO5)
+              </label>
+              <div className="grid grid-cols-5 gap-1.5">
+                {[10, 15, 20, 25, 30].map((mins) => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => setTempMinutesPerSet(mins)}
+                    className={`py-2 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                      tempMinutesPerSet === mins
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-2xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    {mins}p/set
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                👉 BO1 = {tempMinutesPerSet}p • BO3 = {tempMinutesPerSet * 3}p • BO5 = {tempMinutesPerSet * 5}p
+              </p>
+            </div>
+
             <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900 leading-relaxed">
               💡 <strong>Mẹo:</strong> Bạn có thể dùng chuột kéo trực tiếp viền các đường line mốc giờ ở cột màu vàng bên trái của bảng lịch để co/giãn từng phút tùy ý như Excel.
             </div>
@@ -1925,6 +1988,7 @@ export function CourtScheduleBoard({
                 setTempStart(defaultOperatingStart || '08:00');
                 setTempEnd(defaultOperatingEnd || '22:00');
                 setTempStep(15);
+                setTempMinutesPerSet(15);
               }}
               className="h-8 text-xs font-semibold cursor-pointer"
             >
@@ -1942,9 +2006,10 @@ export function CourtScheduleBoard({
                   setOperatingStart(tempStart);
                   setOperatingEnd(tempEnd);
                   setDefaultStepMinutes(tempStep);
+                  setMinutesPerSet(tempMinutesPerSet);
                   setRowDurations({});
                   setTimeSettingsOpen(false);
-                  setSaveToast('Đã áp dụng cấu hình mốc giờ mới!');
+                  setSaveToast('Đã áp dụng cấu hình mốc giờ & thời lượng set mới!');
                   setTimeout(() => setSaveToast(null), 2500);
                 }}
                 className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"

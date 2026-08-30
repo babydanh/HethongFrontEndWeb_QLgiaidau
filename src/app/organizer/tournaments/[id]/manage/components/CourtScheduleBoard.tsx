@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
+  ArrowRightLeft,
   CalendarClock,
   Check,
   CheckSquare,
@@ -10,11 +11,15 @@ import {
   Clock,
   Copy,
   Download,
+  ExternalLink,
+  Eye,
   FileSpreadsheet,
   GripVertical,
+  Info,
   Layers,
   Lock,
   Minus,
+  MoreHorizontal,
   Move,
   Plus,
   RotateCcw,
@@ -495,6 +500,18 @@ export function CourtScheduleBoard({
   const [queueTargetRowIndex, setQueueTargetRowIndex] = useState<number>(0);
   const boardRef = useRef<HTMLDivElement>(null);
 
+  // Right-Click Context Menu State
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    courtId: string;
+    courtName: string;
+    courtIndex: number;
+    rowIndex: number;
+    timeStr: string;
+    matchId?: string;
+  } | null>(null);
+
   const pendingCount = Object.keys(draftAssignments).length;
   const currentPixelsPerMinute = PIXELS_PER_MINUTE * zoomLevel;
 
@@ -920,6 +937,74 @@ export function CourtScheduleBoard({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [clipboard, courts, defaultStepMinutes, displayMatches, draftAssignments, history, historyIndex, rowDurations, selectionRange, timelineRows.rows]);
+
+  // Close Context Menu on Click Outside or Escape
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    window.addEventListener('click', handleClick);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, []);
+
+  // Set duration of a specific match
+  const handleSetMatchDuration = (matchId: string, newDuration: number) => {
+    const match = displayMatches.find((m) => m.match.id === matchId);
+    if (!match || !match.courtId || !match.scheduledAt) return;
+
+    const newDrafts = {
+      ...draftAssignments,
+      [matchId]: {
+        courtId: match.courtId,
+        scheduledAt: match.scheduledAt,
+        durationMinutes: newDuration,
+      },
+    };
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+    setSaveToast(`⏱️ Đã đặt thời lượng trận thành ${newDuration} phút!`);
+    setTimeout(() => setSaveToast(null), 2500);
+  };
+
+  // Move single match to a target court
+  const handleMoveSingleMatchToCourt = (matchId: string, targetCourtId: string) => {
+    const match = displayMatches.find((m) => m.match.id === matchId);
+    if (!match || !match.scheduledAt) return;
+
+    const newDrafts = {
+      ...draftAssignments,
+      [matchId]: {
+        courtId: targetCourtId,
+        scheduledAt: match.scheduledAt,
+        durationMinutes: match.durationMinutes,
+      },
+    };
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+    const targetCourt = courts.find((c) => c.id === targetCourtId);
+    setSaveToast(`Đã chuyển trận sang ${targetCourt?.courtName || 'sân mới'}!`);
+    setTimeout(() => setSaveToast(null), 2500);
+  };
+
+  // Unassign single match (return to queue)
+  const handleUnassignSingleMatch = (matchId: string) => {
+    if (onSaveScheduleDirect) {
+      void onSaveScheduleDirect(matchId, '', '', true);
+    }
+    const newDrafts = { ...draftAssignments };
+    delete newDrafts[matchId];
+    setDraftAssignments(newDrafts);
+    setSaveToast('🗑️ Đã hủy xếp trận đấu (đưa về hàng chờ chưa xếp).');
+    setTimeout(() => setSaveToast(null), 2500);
+    if (onRefetchData) {
+      void onRefetchData();
+    }
+  };
 
   // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
   const handleAutoScheduleAll = () => {
@@ -1527,6 +1612,29 @@ export function CourtScheduleBoard({
         onClick={(event) => {
           event.stopPropagation();
           onOpenMatch(item.match.id);
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const cIdx = courts.findIndex((c) => c.id === item.courtId);
+          if (cIdx >= 0) {
+            setSelectionRange({
+              startCourtIndex: cIdx,
+              endCourtIndex: cIdx,
+              startRowIndex: matchRowIndex,
+              endRowIndex: matchRowIndex,
+            });
+          }
+          setContextMenu({
+            x: event.clientX,
+            y: event.clientY,
+            courtId: item.courtId || '',
+            courtName: courts.find((c) => c.id === item.courtId)?.courtName || 'Sân',
+            courtIndex: cIdx >= 0 ? cIdx : 0,
+            rowIndex: matchRowIndex,
+            timeStr: matchTimeStr,
+            matchId: item.match.id,
+          });
         }}
         className={`group w-full rounded-xl border text-left transition-all cursor-pointer ${
           compact
@@ -2314,7 +2422,34 @@ export function CourtScheduleBoard({
                             openAssignmentPicker(court.id, targetTime, row.index);
                           }
                         }}
-                        title={`Click / Double click để chọn nhiều trận xếp vào ${court.courtName} lúc ${row.startTimeStr}`}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (
+                            !selectionRange ||
+                            courtIndex < selectionRange.startCourtIndex ||
+                            courtIndex > selectionRange.endCourtIndex ||
+                            row.index < selectionRange.startRowIndex ||
+                            row.index > selectionRange.endRowIndex
+                          ) {
+                            setSelectionRange({
+                              startCourtIndex: courtIndex,
+                              endCourtIndex: courtIndex,
+                              startRowIndex: row.index,
+                              endRowIndex: row.index,
+                            });
+                          }
+                          setContextMenu({
+                            x: e.clientX,
+                            y: e.clientY,
+                            courtId: court.id,
+                            courtName: court.courtName,
+                            courtIndex,
+                            rowIndex: row.index,
+                            timeStr: row.startTimeStr,
+                          });
+                        }}
+                        title={`Click / Click phải để mở menu thao tác hoặc xếp trận vào ${court.courtName} lúc ${row.startTimeStr}`}
                       />
                     );
                   })}
@@ -2844,6 +2979,286 @@ export function CourtScheduleBoard({
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* RICH DESKTOP CONTEXT MENU (Chuột phải) */}
+      {contextMenu && (() => {
+        const targetMatch = contextMenu.matchId ? displayMatches.find((m) => m.match.id === contextMenu.matchId) : undefined;
+        const menuX = Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 270 : contextMenu.x);
+        const menuY = Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 450 : contextMenu.y);
+
+        return (
+          <div
+            className="fixed z-50 min-w-[250px] max-w-[290px] rounded-xl bg-slate-900/98 text-slate-100 p-1.5 shadow-2xl border border-slate-700/80 backdrop-blur-md text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none"
+            style={{
+              left: Math.max(10, menuX),
+              top: Math.max(10, menuY),
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {/* Header info */}
+            <div className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
+              <span className="truncate flex items-center gap-1">
+                <Clock className="h-3 w-3 text-amber-400" />
+                {contextMenu.courtName} • {contextMenu.timeStr}
+              </span>
+              {targetMatch && (
+                <span className="px-1 py-0.2 rounded bg-blue-500/20 text-blue-300 text-[10px] font-black border border-blue-500/30">
+                  Trận #{targetMatch.match.matchOrder || targetMatch.match.id.slice(-3)}
+                </span>
+              )}
+            </div>
+
+            <div className="py-1 space-y-0.5">
+              {/* If right-clicked on an existing Match Card */}
+              {targetMatch ? (
+                <>
+                  {/* View / Edit Match Details */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenMatch(targetMatch.match.id);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-left font-bold"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Eye className="h-3.5 w-3.5 text-blue-400" />
+                      Xem & Cập nhật tỉ số
+                    </span>
+                    <ExternalLink className="h-3 w-3 opacity-60" />
+                  </button>
+
+                  {/* Cut match */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCut();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Scissors className="h-3.5 w-3.5 text-indigo-400" />
+                      Cắt trận đấu
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">Ctrl+X</span>
+                  </button>
+
+                  {/* Copy match */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCopy();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Copy className="h-3.5 w-3.5 text-blue-400" />
+                      Sao chép trận
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">Ctrl+C</span>
+                  </button>
+
+                  <div className="h-px bg-slate-800 my-1" />
+
+                  {/* Duration Quick Picker */}
+                  <div className="px-2.5 py-1">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1 mb-1">
+                      <Clock className="h-3 w-3 text-blue-400" />
+                      Thời lượng trận:
+                    </span>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[15, 30, 45, 60].map((dur) => (
+                        <button
+                          key={dur}
+                          type="button"
+                          onClick={() => {
+                            handleSetMatchDuration(targetMatch.match.id, dur);
+                            setContextMenu(null);
+                          }}
+                          className={`px-1.5 py-1 rounded text-[11px] font-bold border transition-colors cursor-pointer text-center ${
+                            targetMatch.durationMinutes === dur
+                              ? 'bg-blue-600 text-white border-blue-500 font-black'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                          }`}
+                        >
+                          {dur}p
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Move to another court */}
+                  {courts.length > 1 && (
+                    <div className="px-2.5 py-1">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1 mb-1">
+                        <ArrowRightLeft className="h-3 w-3 text-emerald-400" />
+                        Chuyển sang sân:
+                      </span>
+                      <div className="flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
+                        {courts
+                          .filter((c) => c.id !== targetMatch.courtId)
+                          .map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                handleMoveSingleMatchToCourt(targetMatch.match.id, c.id);
+                                setContextMenu(null);
+                              }}
+                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-300 border border-slate-700 cursor-pointer"
+                            >
+                              {c.courtName}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-slate-800 my-1" />
+
+                  {/* Unassign / Remove from schedule */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleUnassignSingleMatch(targetMatch.match.id);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-400 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer text-left font-semibold"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Hủy xếp (Đưa về hàng chờ)
+                  </button>
+                </>
+              ) : (
+                /* Right-clicked on an empty cell or slot */
+                <>
+                  {/* Paste if clipboard has items */}
+                  {clipboard && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handlePaste();
+                        setContextMenu(null);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-emerald-600/30 text-emerald-300 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer text-left font-bold"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Clipboard className="h-3.5 w-3.5" />
+                        Dán {clipboard.items.length} trận vào đây
+                      </span>
+                      <span className="text-[10px] font-mono">Ctrl+V</span>
+                    </button>
+                  )}
+
+                  {/* Pick match to assign */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const row = timelineRows.rows[contextMenu.rowIndex];
+                      if (row) {
+                        const targetTime = new Date(row.startTimestamp).toISOString();
+                        openAssignmentPicker(contextMenu.courtId, targetTime, contextMenu.rowIndex);
+                      }
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-left font-bold"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Plus className="h-3.5 w-3.5 text-blue-400" />
+                      Chọn trận xếp vào ô này...
+                    </span>
+                  </button>
+
+                  {/* Auto-fill next match into this slot */}
+                  <button
+                    type="button"
+                    disabled={unscheduledMatches.length === 0}
+                    onClick={() => {
+                      if (unscheduledMatches.length === 0) return;
+                      const nextMatch = unscheduledMatches[0];
+                      const row = timelineRows.rows[contextMenu.rowIndex];
+                      if (row) {
+                        const targetTime = new Date(row.startTimestamp).toISOString();
+                        const newDrafts = {
+                          ...draftAssignments,
+                          [nextMatch.match.id]: {
+                            courtId: contextMenu.courtId,
+                            scheduledAt: targetTime,
+                            durationMinutes: nextMatch.durationMinutes || defaultStepMinutes,
+                          },
+                        };
+                        setDraftAssignments(newDrafts);
+                        pushHistory(newDrafts);
+                        setSaveToast(`Đã xếp trận tiếp theo vào ${contextMenu.courtName} lúc ${contextMenu.timeStr}!`);
+                        setTimeout(() => setSaveToast(null), 2500);
+                      }
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-left disabled:opacity-40"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-amber-400" />
+                      Tự động điền trận tiếp theo
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {unscheduledMatches.length} còn
+                    </span>
+                  </button>
+
+                  {/* Lock / Block slot */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleBlockSelection();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-amber-300 transition-colors cursor-pointer text-left"
+                  >
+                    <Lock className="h-3.5 w-3.5 text-amber-400" />
+                    Khóa khung giờ này
+                  </button>
+
+                  <div className="h-px bg-slate-800 my-1" />
+
+                  {/* Undo & Redo */}
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      disabled={historyIndex <= 0}
+                      onClick={() => {
+                        handleUndo();
+                        setContextMenu(null);
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] disabled:opacity-40 cursor-pointer font-bold"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Hoàn tác
+                    </button>
+                    <button
+                      type="button"
+                      disabled={historyIndex >= history.length - 1}
+                      onClick={() => {
+                        handleRedo();
+                        setContextMenu(null);
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] disabled:opacity-40 cursor-pointer font-bold"
+                    >
+                      <RotateCw className="h-3 w-3" />
+                      Làm lại
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </section>
   );
 }

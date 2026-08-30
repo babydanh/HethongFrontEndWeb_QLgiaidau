@@ -488,17 +488,30 @@ export function CourtScheduleBoard({
     }
   };
 
-  // Keyboard shortcut: Ctrl+S / Cmd+S to Save
+  // Keyboard shortcut: Ctrl+S / Cmd+S to Save, Ctrl+A to Select All
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         void handleSaveAllDrafts();
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        if (courts.length > 0 && timelineRows.rows.length > 0) {
+          setSelectionRange({
+            startCourtIndex: 0,
+            endCourtIndex: courts.length - 1,
+            startRowIndex: 0,
+            endRowIndex: timelineRows.rows.length - 1,
+          });
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [draftAssignments, isSavingDraft]);
+  }, [courts.length, draftAssignments, isSavingDraft, timelineRows.rows.length]);
 
   // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
   const handleAutoScheduleAll = () => {
@@ -1443,12 +1456,25 @@ export function CourtScheduleBoard({
               gridTemplateColumns: `72px repeat(${courts.length}, minmax(310px, 1fr))`,
             }}
           >
-            {/* Corner header */}
-            <div className="sticky left-0 top-0 z-30 border-b border-r border-orange-800 bg-[#c2410c] text-white p-2.5 flex items-center justify-center">
+            {/* Corner header: Click to Select All */}
+            <div
+              onClick={() => {
+                if (courts.length > 0 && timelineRows.rows.length > 0) {
+                  setSelectionRange({
+                    startCourtIndex: 0,
+                    endCourtIndex: courts.length - 1,
+                    startRowIndex: 0,
+                    endRowIndex: timelineRows.rows.length - 1,
+                  });
+                }
+              }}
+              title="Bấm để chọn toàn bộ bảng lịch (Ctrl + A)"
+              className="sticky left-0 top-0 z-30 border-b border-r border-orange-800 bg-[#c2410c] hover:bg-orange-800 text-white p-2.5 flex items-center justify-center cursor-pointer transition-colors"
+            >
               <Clock className="h-4 w-4 text-white" />
             </div>
 
-            {/* Court column headers */}
+            {/* Court column headers: Click to Select Entire Column */}
             {courts.map((court, cIdx) => {
               const isColSelected =
                 selectionRange &&
@@ -1458,8 +1484,17 @@ export function CourtScheduleBoard({
               return (
                 <div
                   key={court.id}
-                  className={`sticky top-0 z-20 border-b border-r border-orange-800/80 px-3 py-2.5 text-center text-white transition-colors ${
-                    isColSelected ? 'bg-orange-700' : 'bg-[#c2410c]'
+                  onClick={() => {
+                    setSelectionRange({
+                      startCourtIndex: cIdx,
+                      endCourtIndex: cIdx,
+                      startRowIndex: 0,
+                      endRowIndex: timelineRows.rows.length - 1,
+                    });
+                  }}
+                  title={`Bấm để chọn toàn bộ cột ${court.courtName}`}
+                  className={`sticky top-0 z-20 border-b border-r border-orange-800/80 px-3 py-2.5 text-center text-white transition-colors cursor-pointer select-none ${
+                    isColSelected ? 'bg-orange-700 ring-2 ring-inset ring-amber-300' : 'bg-[#c2410c] hover:bg-orange-600'
                   }`}
                 >
                   <p className="truncate text-xs font-extrabold uppercase tracking-wider">{court.courtName}</p>
@@ -1480,10 +1515,19 @@ export function CourtScheduleBoard({
 
                 return (
                   <React.Fragment key={row.index}>
-                    {/* The Row Container */}
+                    {/* The Row Container: Click to Select Entire Row */}
                     <div
-                      className={`absolute inset-x-0 border-b border-amber-300/80 transition-colors ${
-                        isRowSelected ? 'bg-amber-300/80' : ''
+                      onClick={() => {
+                        setSelectionRange({
+                          startCourtIndex: 0,
+                          endCourtIndex: courts.length - 1,
+                          startRowIndex: row.index,
+                          endRowIndex: row.index,
+                        });
+                      }}
+                      title={`Bấm để chọn toàn bộ hàng lúc ${row.startTimeStr}`}
+                      className={`absolute inset-x-0 border-b border-amber-300/80 transition-colors cursor-pointer select-none ${
+                        isRowSelected ? 'bg-amber-300/80 ring-2 ring-inset ring-amber-500' : 'hover:bg-amber-200'
                       }`}
                       style={{ top: row.top, height: row.height }}
                     >

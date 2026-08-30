@@ -16,6 +16,7 @@ import {
   Move,
   Plus,
   RotateCcw,
+  RotateCw,
   Save,
   Search,
   Settings2,
@@ -472,6 +473,13 @@ export function CourtScheduleBoard({
   const [pickerDivisionFilter, setPickerDivisionFilter] = useState('all');
   const [queueOpen, setQueueOpen] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+
+  // Undo / Redo History Stack
+  const [history, setHistory] = useState<Array<{ draftAssignments: Record<string, DraftAssignment>; rowDurations: Record<number, number> }>>([
+    { draftAssignments: {}, rowDurations: {} },
+  ]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   // Excel-like rectangular multi-cell range selection
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
@@ -602,18 +610,60 @@ export function CourtScheduleBoard({
     };
   }, [currentPixelsPerMinute, defaultStepMinutes, defaultTotalSlots, operatingStart, rowDurations, scheduleDate]);
 
-  // Handle Save All Drafts (Manual Click or Ctrl+S)
-  const handleSaveAllDrafts = async () => {
+  // Undo / Redo State Helpers
+  const pushHistory = (newDrafts: Record<string, DraftAssignment>, newDurations?: Record<number, number>) => {
+    setHistory((prev) => {
+      const sliced = prev.slice(0, historyIndex + 1);
+      const nextEntry = {
+        draftAssignments: newDrafts,
+        rowDurations: newDurations ?? (sliced[sliced.length - 1]?.rowDurations || rowDurations),
+      };
+      return [...sliced, nextEntry];
+    });
+    setHistoryIndex((prev) => prev + 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex <= 0) return;
+    const newIdx = historyIndex - 1;
+    const state = history[newIdx];
+    if (state) {
+      setHistoryIndex(newIdx);
+      setDraftAssignments(state.draftAssignments);
+      setRowDurations(state.rowDurations);
+      setSaveToast('↩️ Đã hoàn tác (Undo)');
+      setTimeout(() => setSaveToast(null), 1500);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const newIdx = historyIndex + 1;
+    const state = history[newIdx];
+    if (state) {
+      setHistoryIndex(newIdx);
+      setDraftAssignments(state.draftAssignments);
+      setRowDurations(state.rowDurations);
+      setSaveToast('↪️ Đã làm lại (Redo)');
+      setTimeout(() => setSaveToast(null), 1500);
+    }
+  };
+
+  // Handle Save All Drafts (Manual Click or Auto-Save)
+  const handleSaveAllDrafts = async (silent = false) => {
     const hasRowDurationChanges = Object.keys(rowDurations).length > 0;
     const entries = Object.entries(draftAssignments);
 
     if (entries.length === 0 && !hasRowDurationChanges) {
-      setSaveToast('Lịch thi đấu đã ở trạng thái mới nhất!');
-      setTimeout(() => setSaveToast(null), 2500);
+      if (!silent) {
+        setSaveToast('Lịch thi đấu đã ở trạng thái mới nhất!');
+        setTimeout(() => setSaveToast(null), 2500);
+      }
       return;
     }
 
     setIsSavingDraft(true);
+    setAutoSaveStatus('saving');
     let successCount = 0;
     try {
       // 1. Save all draft assignments
@@ -644,30 +694,61 @@ export function CourtScheduleBoard({
       }
 
       setDraftAssignments({});
-      setSaveToast(`Đã lưu thành công lịch thi đấu!`);
-      setTimeout(() => setSaveToast(null), 3000);
+      setAutoSaveStatus('saved');
+      if (!silent) {
+        setSaveToast(`Đã lưu thành công lịch thi đấu!`);
+        setTimeout(() => setSaveToast(null), 3000);
+      }
       if (onRefetchData) {
         await onRefetchData();
       }
     } catch (err) {
       console.error('Failed to save drafts:', err);
-      setSaveToast('Có lỗi xảy ra khi lưu lịch thi đấu.');
-      setTimeout(() => setSaveToast(null), 3000);
+      setAutoSaveStatus('unsaved');
+      if (!silent) {
+        setSaveToast('Có lỗi xảy ra khi lưu lịch thi đấu.');
+        setTimeout(() => setSaveToast(null), 3000);
+      }
     } finally {
       setIsSavingDraft(false);
     }
   };
 
-  // Keyboard shortcut: Ctrl+S / Cmd+S to Save, Ctrl+A to Select All
+  // Auto-Save Effect (Debounce 1.5s after user changes schedule)
+  useEffect(() => {
+    if (Object.keys(draftAssignments).length === 0) return;
+    setAutoSaveStatus('unsaved');
+
+    const timer = setTimeout(() => {
+      void handleSaveAllDrafts(true);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [draftAssignments]);
+
+  // Keyboard shortcut: Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+S (Save), Ctrl+A (Select All)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        void handleSaveAllDrafts();
+        void handleSaveAllDrafts(false);
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-        const activeEl = document.activeElement;
-        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
         e.preventDefault();
         if (courts.length > 0 && timelineRows.rows.length > 0) {
           setSelectionRange({
@@ -681,7 +762,7 @@ export function CourtScheduleBoard({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [courts.length, draftAssignments, isSavingDraft, timelineRows.rows.length]);
+  }, [courts.length, history, historyIndex, timelineRows.rows.length]);
 
   // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
   const handleAutoScheduleAll = () => {
@@ -1572,12 +1653,12 @@ export function CourtScheduleBoard({
 
       {/* Excel Ribbon Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white border border-slate-200 p-2 shadow-2xs shrink-0">
-        {/* Left: Save + Auto Fill + Time Config */}
+        {/* Left: Save + Undo/Redo + Auto Fill + Time Config */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Save Button with Badge & Keyboard shortcut hint */}
           <Button
             type="button"
-            onClick={handleSaveAllDrafts}
+            onClick={() => handleSaveAllDrafts(false)}
             disabled={isSavingDraft}
             className={`h-8 px-3 text-xs font-black rounded-lg shadow-xs flex items-center gap-2 transition-all cursor-pointer ${
               pendingCount > 0
@@ -1594,6 +1675,52 @@ export function CourtScheduleBoard({
               </span>
             )}
           </Button>
+
+          {/* Undo Button (Ctrl+Z) */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleUndo}
+            disabled={historyIndex <= 0}
+            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-40"
+            title="Hoàn tác (Phím tắt: Ctrl + Z)"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-blue-600" />
+            <span className="hidden sm:inline">Hoàn tác</span>
+          </Button>
+
+          {/* Redo Button (Ctrl+Y) */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1}
+            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-40"
+            title="Làm lại (Phím tắt: Ctrl + Y hoặc Ctrl + Shift + Z)"
+          >
+            <RotateCw className="h-3.5 w-3.5 text-blue-600" />
+            <span className="hidden sm:inline">Làm lại</span>
+          </Button>
+
+          {/* Auto-Save Live Status Indicator */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold select-none">
+            {autoSaveStatus === 'saving' ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                <span className="text-amber-700 font-bold">Đang tự lưu...</span>
+              </>
+            ) : autoSaveStatus === 'unsaved' ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-blue-700 font-bold">Đang xếp...</span>
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-emerald-700 font-bold">Tự lưu: Bật</span>
+              </>
+            )}
+          </div>
 
           {/* AI / Smart Auto-Schedule */}
           <Button

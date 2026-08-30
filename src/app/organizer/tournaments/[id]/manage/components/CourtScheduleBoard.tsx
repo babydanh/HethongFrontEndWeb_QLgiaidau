@@ -1598,7 +1598,7 @@ export function CourtScheduleBoard({
 
     let totalDuration = 0;
     for (let r = selectionRange.startRowIndex; r <= selectionRange.endRowIndex; r++) {
-      totalDuration += rowDurations[r] ?? 30;
+      totalDuration += rowDurations[r] ?? defaultStepMinutes;
     }
 
     const evenDuration = Math.max(5, Math.floor(totalDuration / rowCount));
@@ -1610,6 +1610,9 @@ export function CourtScheduleBoard({
       }
       return next;
     });
+
+    setSaveToast(`↕️ Đã canh đều các dòng trong vùng chọn (${evenDuration}p/dòng)!`);
+    setTimeout(() => setSaveToast(null), 2500);
   };
 
   // Block/Lock selected slots

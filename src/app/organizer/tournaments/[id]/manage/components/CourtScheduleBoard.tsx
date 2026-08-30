@@ -2328,162 +2328,6 @@ export function CourtScheduleBoard({
         </div>
       </div>
 
-      {/* Floating Excel-like Selection Action Bar */}
-      {selectionRange && (
-        <div className="sticky top-1 z-40 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-900 text-white px-3.5 py-2 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 shrink-0">
-          <div className="flex items-center gap-2 text-xs font-medium">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>
-              Đã chọn{' '}
-              <strong className="text-emerald-400 font-bold">
-                {selectionRange.endCourtIndex - selectionRange.startCourtIndex + 1} sân × {selectionRange.endRowIndex - selectionRange.startRowIndex + 1} hàng
-              </strong>{' '}
-              ({timelineRows.rows[selectionRange.startRowIndex]?.startTimeStr} →{' '}
-              {timelineRows.rows[selectionRange.endRowIndex]?.endTimeStr})
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Pick Matches button */}
-            <Button
-              type="button"
-              onClick={() => openAssignmentPicker()}
-              className="h-7 px-2.5 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="h-3 w-3" />
-              Chọn trận xếp vào...
-            </Button>
-
-            {/* Quick Fill (Left-to-Right) */}
-            <Button
-              type="button"
-              onClick={handleBulkScheduleSelection}
-              disabled={unscheduledMatches.length === 0}
-              className="h-7 px-2.5 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
-              title="Điền nhanh các trận theo thứ tự từ trái sang phải"
-            >
-              <Zap className="h-3 w-3 text-amber-300" />
-              Điền nhanh ({unscheduledMatches.length})
-            </Button>
-
-            {/* Batch Duration Picker */}
-            <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-0.5 text-[11px] font-bold">
-              <span className="px-1 text-[10px] text-slate-400">Thời lượng:</span>
-              {[15, 30, 45, 60].map((dur) => (
-                <button
-                  key={dur}
-                  type="button"
-                  onClick={() => handleSetSelectionDuration(dur)}
-                  className="px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-slate-700 text-slate-200 hover:text-white transition-colors cursor-pointer"
-                  title={`Đặt thời lượng ${dur} phút cho tất cả các trận trong vùng chọn`}
-                >
-                  {dur}p
-                </button>
-              ))}
-            </div>
-
-            {/* Cut / Copy / Paste Buttons */}
-            <Button
-              type="button"
-              onClick={handleCut}
-              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
-              title="Cắt các trận trong vùng chọn (Phím tắt: Ctrl + X)"
-            >
-              <Scissors className="h-3 w-3 text-indigo-400" />
-              <span>Cắt</span>
-            </Button>
-
-            <Button
-              type="button"
-              onClick={handleCopy}
-              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
-              title="Sao chép các trận trong vùng chọn (Phím tắt: Ctrl + C)"
-            >
-              <Copy className="h-3 w-3 text-blue-400" />
-              <span>Chép</span>
-            </Button>
-
-            {clipboard && (
-              <Button
-                type="button"
-                onClick={handlePaste}
-                className="h-7 px-2.5 text-[11px] font-black bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-xs flex items-center gap-1 cursor-pointer animate-pulse"
-                title="Dán các trận từ bộ nhớ tạm (Phím tắt: Ctrl + V)"
-              >
-                <Clipboard className="h-3 w-3" />
-                <span>Dán ({clipboard.items.length})</span>
-              </Button>
-            )}
-
-            {/* Move selected matches to another court */}
-            {courts.length > 1 && (
-              <div className="relative">
-                <select
-                  onChange={(e) => {
-                    const targetCourtId = e.target.value;
-                    if (!targetCourtId) return;
-                    handleMoveSelectionToCourt(targetCourtId);
-                    e.target.value = '';
-                  }}
-                  defaultValue=""
-                  className="h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-bold px-2 cursor-pointer outline-hidden hover:bg-slate-700"
-                >
-                  <option value="" disabled>
-                    Chuyển sang sân...
-                  </option>
-                  {courts.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      Sang {c.courtName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Distribute rows evenly */}
-            <Button
-              type="button"
-              onClick={handleDistributeRowsEvenly}
-              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
-              title="Canh đều thời lượng các dòng được chọn"
-            >
-              <ChevronsUpDown className="h-3 w-3" />
-              <span>Canh đều</span>
-            </Button>
-
-            {/* Lock slot */}
-            <Button
-              type="button"
-              onClick={handleBlockSelection}
-              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-amber-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
-              title="Khóa các khung giờ trong vùng chọn"
-            >
-              <Lock className="h-3 w-3" />
-              <span>Khóa</span>
-            </Button>
-
-            {/* Delete / Clear matches in selection */}
-            <Button
-              type="button"
-              onClick={handleClearSelectionMatches}
-              className="h-7 px-2 text-[11px] font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
-              title="Hủy xếp các trận trong vùng chọn (Phím tắt: Delete / Backspace)"
-            >
-              <Trash2 className="h-3 w-3" />
-              <span>Gỡ (Del)</span>
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => setSelectionRange(null)}
-              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
-              title="Bỏ chọn (Esc)"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {courts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-xs text-slate-500">
@@ -3276,7 +3120,7 @@ export function CourtScheduleBoard({
 
         return (
           <div
-            className="fixed z-50 min-w-[250px] max-w-[290px] rounded-xl bg-white text-slate-900 p-1.5 shadow-2xl border border-slate-200/90 text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none ring-1 ring-slate-950/5"
+            className="fixed z-50 w-[270px] rounded-2xl bg-white/98 text-slate-900 p-1.5 shadow-2xl shadow-slate-900/15 border border-slate-200/90 text-xs select-none ring-1 ring-slate-950/5 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100"
             style={{
               left: Math.max(10, menuX),
               top: Math.max(10, menuY),
@@ -3288,38 +3132,44 @@ export function CourtScheduleBoard({
             }}
           >
             {/* Header info */}
-            <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 border-b border-slate-100 text-xs font-bold text-slate-900">
-              <span className="truncate flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-blue-600" />
-                {isMultiSelection && selectionRange
-                  ? `Vùng chọn (${selectionRange.endCourtIndex - selectionRange.startCourtIndex + 1} sân × ${selectionRange.endRowIndex - selectionRange.startRowIndex + 1} mốc)`
-                  : `${contextMenu.courtName} • ${contextMenu.timeStr}`}
-              </span>
+            <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/80 rounded-xl mb-1 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {isMultiSelection && selectionRange
+                    ? `Vùng chọn (${selectionRange.endCourtIndex - selectionRange.startCourtIndex + 1} sân × ${selectionRange.endRowIndex - selectionRange.startRowIndex + 1} ô)`
+                    : contextMenu.courtName}
+                </p>
+                <p className="text-xs font-black text-slate-900 truncate">
+                  {isMultiSelection && selectionRange
+                    ? `${timelineRows.rows[selectionRange.startRowIndex]?.startTimeStr} → ${timelineRows.rows[selectionRange.endRowIndex]?.endTimeStr}`
+                    : contextMenu.timeStr}
+                </p>
+              </div>
               {targetMatch && (
-                <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">
+                <span className="shrink-0 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black border border-blue-200/80">
                   #{targetMatch.match.matchOrder || targetMatch.match.id.slice(-3)}
                 </span>
               )}
             </div>
 
-            <div className="py-1 space-y-0.5">
+            <div className="space-y-0.5">
               {/* Case 1: Right-clicked on an existing Match Card */}
               {targetMatch ? (
                 <>
-                  {/* View / Edit Match Details */}
+                  {/* Primary: View / Score */}
                   <button
                     type="button"
                     onClick={() => {
                       onOpenMatch(targetMatch.match.id);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-slate-800 hover:text-blue-700 transition-colors cursor-pointer text-left font-semibold"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-50/70 hover:bg-blue-100 text-blue-800 transition-colors cursor-pointer text-left font-bold"
                   >
                     <span className="flex items-center gap-2">
-                      <Eye className="h-3.5 w-3.5 text-slate-500" />
-                      Xem & Nhập tỉ số
+                      <Eye className="h-3.5 w-3.5 text-blue-600" />
+                      Xem &amp; Nhập tỉ số
                     </span>
-                    <ExternalLink className="h-3 w-3 text-slate-400" />
+                    <ExternalLink className="h-3 w-3 text-blue-500" />
                   </button>
 
                   {/* Cut match */}
@@ -3329,13 +3179,13 @@ export function CourtScheduleBoard({
                       handleCut();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
                   >
                     <span className="flex items-center gap-2">
-                      <Scissors className="h-3.5 w-3.5 text-slate-500" />
-                      Cắt trận đấu
+                      <Scissors className="h-3.5 w-3.5 text-slate-400" />
+                      Cắt trận
                     </span>
-                    <span className="text-[10px] font-mono font-medium text-slate-400">Ctrl+X</span>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Ctrl+X</span>
                   </button>
 
                   {/* Copy match */}
@@ -3345,20 +3195,20 @@ export function CourtScheduleBoard({
                       handleCopy();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
                   >
                     <span className="flex items-center gap-2">
-                      <Copy className="h-3.5 w-3.5 text-slate-500" />
+                      <Copy className="h-3.5 w-3.5 text-slate-400" />
                       Sao chép trận
                     </span>
-                    <span className="text-[10px] font-mono font-medium text-slate-400">Ctrl+C</span>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Ctrl+C</span>
                   </button>
 
                   <div className="h-px bg-slate-100 my-1" />
 
                   {/* Duration Quick Picker */}
                   <div className="px-2.5 py-1">
-                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                       Thời lượng trận:
                     </span>
                     <div className="grid grid-cols-4 gap-1">
@@ -3385,10 +3235,10 @@ export function CourtScheduleBoard({
                   {/* Move to another court */}
                   {courts.length > 1 && (
                     <div className="px-2.5 py-1">
-                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                         Chuyển sang sân:
                       </span>
-                      <div className="flex flex-wrap gap-1 max-h-[72px] overflow-y-auto">
+                      <div className="flex flex-wrap gap-1 max-h-[60px] overflow-y-auto">
                         {courts
                           .filter((c) => c.id !== targetMatch.courtId)
                           .map((c) => (
@@ -3399,7 +3249,7 @@ export function CourtScheduleBoard({
                                 handleMoveSingleMatchToCourt(targetMatch.match.id, c.id);
                                 setContextMenu(null);
                               }}
-                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 border border-slate-200 cursor-pointer transition-colors"
+                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 border border-slate-200 cursor-pointer transition-colors"
                             >
                               {c.courtName}
                             </button>
@@ -3417,10 +3267,13 @@ export function CourtScheduleBoard({
                       handleUnassignSingleMatch(targetMatch.match.id);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left font-semibold"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left font-bold"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Hủy xếp (Đưa về hàng chờ)
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Hủy xếp (Đưa về hàng chờ)
+                    </span>
+                    <span className="text-[10px] font-mono text-rose-400 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">Del</span>
                   </button>
                 </>
               ) : isMultiSelection && selectionRange ? (
@@ -3434,14 +3287,14 @@ export function CourtScheduleBoard({
                       handleBulkScheduleSelection();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-blue-700 font-bold transition-colors cursor-pointer text-left disabled:opacity-40"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-50/70 hover:bg-blue-100 text-blue-800 font-bold transition-colors cursor-pointer text-left disabled:opacity-40"
                   >
                     <span className="flex items-center gap-2">
                       <Zap className="h-3.5 w-3.5 text-blue-600" />
-                      Điền nhanh (Trái sang phải)
+                      Điền nhanh ({unscheduledMatches.length} trận)
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-400">
-                      {unscheduledMatches.length} còn
+                    <span className="text-[10px] text-blue-600 bg-blue-100/80 px-1.5 py-0.5 rounded font-semibold">
+                      Trái → Phải
                     </span>
                   </button>
 
@@ -3455,7 +3308,7 @@ export function CourtScheduleBoard({
                     className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-800 font-semibold transition-colors cursor-pointer text-left"
                   >
                     <Plus className="h-3.5 w-3.5 text-blue-600" />
-                    Chọn danh sách trận xếp vào vùng chọn...
+                    Chọn danh sách trận xếp vào...
                   </button>
 
                   {/* 3. Cut selection */}
@@ -3465,13 +3318,13 @@ export function CourtScheduleBoard({
                       handleCut();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
                   >
                     <span className="flex items-center gap-2">
-                      <Scissors className="h-3.5 w-3.5 text-slate-500" />
-                      Cắt các trận trong vùng chọn
+                      <Scissors className="h-3.5 w-3.5 text-slate-400" />
+                      Cắt các trận đã chọn
                     </span>
-                    <span className="text-[10px] font-mono font-medium text-slate-400">Ctrl+X</span>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Ctrl+X</span>
                   </button>
 
                   {/* 4. Copy selection */}
@@ -3481,13 +3334,13 @@ export function CourtScheduleBoard({
                       handleCopy();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
                   >
                     <span className="flex items-center gap-2">
-                      <Copy className="h-3.5 w-3.5 text-slate-500" />
-                      Sao chép các trận trong vùng chọn
+                      <Copy className="h-3.5 w-3.5 text-slate-400" />
+                      Sao chép các trận
                     </span>
-                    <span className="text-[10px] font-mono font-medium text-slate-400">Ctrl+C</span>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Ctrl+C</span>
                   </button>
 
                   {/* 5. Paste if clipboard exists */}
@@ -3512,7 +3365,7 @@ export function CourtScheduleBoard({
 
                   {/* Batch Duration Picker */}
                   <div className="px-2.5 py-1">
-                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                       Đặt thời lượng cả vùng:
                     </span>
                     <div className="grid grid-cols-4 gap-1">
@@ -3535,10 +3388,10 @@ export function CourtScheduleBoard({
                   {/* Move selection to another court */}
                   {courts.length > 1 && (
                     <div className="px-2.5 py-1">
-                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                         Chuyển tất cả sang sân:
                       </span>
-                      <div className="flex flex-wrap gap-1 max-h-[72px] overflow-y-auto">
+                      <div className="flex flex-wrap gap-1 max-h-[60px] overflow-y-auto">
                         {courts.map((c) => (
                           <button
                             key={c.id}
@@ -3547,7 +3400,7 @@ export function CourtScheduleBoard({
                               handleMoveSelectionToCourt(c.id);
                               setContextMenu(null);
                             }}
-                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 border border-slate-200 cursor-pointer transition-colors"
+                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 border border-slate-200 cursor-pointer transition-colors"
                           >
                             {c.courtName}
                           </button>
@@ -3593,13 +3446,13 @@ export function CourtScheduleBoard({
                       handleClearSelectionMatches();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left font-semibold"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left font-bold"
                   >
                     <span className="flex items-center gap-2">
                       <Trash2 className="h-3.5 w-3.5" />
                       Gỡ các trận trong vùng chọn
                     </span>
-                    <span className="text-[10px] font-mono text-rose-400 font-medium">Delete</span>
+                    <span className="text-[10px] font-mono text-rose-400 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">Del</span>
                   </button>
                 </>
               ) : (
@@ -3634,7 +3487,7 @@ export function CourtScheduleBoard({
                       }
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-slate-800 hover:text-blue-700 transition-colors cursor-pointer text-left font-semibold"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-50/70 hover:bg-blue-100 text-blue-800 transition-colors cursor-pointer text-left font-bold"
                   >
                     <span className="flex items-center gap-2">
                       <Plus className="h-3.5 w-3.5 text-blue-600" />
@@ -3667,13 +3520,13 @@ export function CourtScheduleBoard({
                       }
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left disabled:opacity-40"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium disabled:opacity-40"
                   >
-                    <span className="flex items-center gap-2 font-medium">
+                    <span className="flex items-center gap-2">
                       <Zap className="h-3.5 w-3.5 text-amber-500" />
-                      Xếp 1 trận tiếp theo vào đây
+                      Xếp 1 trận tiếp theo
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">
+                    <span className="text-[10px] text-slate-400 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">
                       {unscheduledMatches.length} còn
                     </span>
                   </button>
@@ -3690,36 +3543,6 @@ export function CourtScheduleBoard({
                     <Lock className="h-3.5 w-3.5 text-slate-400" />
                     Khóa khung giờ này
                   </button>
-
-                  <div className="h-px bg-slate-100 my-1" />
-
-                  {/* Undo & Redo */}
-                  <div className="grid grid-cols-2 gap-1 px-1">
-                    <button
-                      type="button"
-                      disabled={historyIndex <= 0}
-                      onClick={() => {
-                        handleUndo();
-                        setContextMenu(null);
-                      }}
-                      className="flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 text-[11px] disabled:opacity-40 cursor-pointer font-semibold border border-slate-200"
-                    >
-                      <RotateCcw className="h-3 w-3 text-slate-500" />
-                      Hoàn tác
-                    </button>
-                    <button
-                      type="button"
-                      disabled={historyIndex >= history.length - 1}
-                      onClick={() => {
-                        handleRedo();
-                        setContextMenu(null);
-                      }}
-                      className="flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 text-[11px] disabled:opacity-40 cursor-pointer font-semibold border border-slate-200"
-                    >
-                      <RotateCw className="h-3 w-3 text-slate-500" />
-                      Làm lại
-                    </button>
-                  </div>
                 </>
               )}
             </div>

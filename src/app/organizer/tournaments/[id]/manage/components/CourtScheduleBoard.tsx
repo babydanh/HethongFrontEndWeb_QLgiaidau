@@ -949,7 +949,6 @@ export function CourtScheduleBoard({
     const setList = extractSetScores(item.match);
     const p1Players = getParticipantPlayers(item.match.participant1);
     const p2Players = getParticipantPlayers(item.match.participant2);
-    const matchTimeStr = formatMatchTime(item.scheduledAt);
 
     // Determine status & styling
     const rawStatus = String((item.match as unknown as Record<string, unknown>).status || '').toUpperCase();

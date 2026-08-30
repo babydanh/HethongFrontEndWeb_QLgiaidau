@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ArrowRightLeft,
+  ArrowUpDown,
   CalendarClock,
   Check,
   CheckSquare,
@@ -95,10 +96,12 @@ type DraftAssignment = {
 };
 
 type AssignmentPickerState = {
-  courtId: string;
+  startCourtIndex: number;
+  endCourtIndex: number;
+  startRowIndex: number;
+  endRowIndex: number;
   courtName: string;
   scheduledAt: string;
-  rowIndex: number;
 };
 
 type ScaleOption = {
@@ -728,9 +731,9 @@ export function CourtScheduleBoard({
       if (!silent) {
         setSaveToast(`Đã lưu thành công lịch thi đấu!`);
         setTimeout(() => setSaveToast(null), 3000);
-      }
-      if (onRefetchData) {
-        await onRefetchData();
+        if (onRefetchData) {
+          await onRefetchData();
+        }
       }
     } catch (err) {
       console.error('Failed to save drafts:', err);
@@ -744,14 +747,14 @@ export function CourtScheduleBoard({
     }
   };
 
-  // Auto-Save Effect (Debounce 1.5s after user changes schedule)
+  // Auto-Save Effect (Debounce 2s after user changes schedule)
   useEffect(() => {
     if (Object.keys(draftAssignments).length === 0) return;
     setAutoSaveStatus('unsaved');
 
     const timer = setTimeout(() => {
       void handleSaveAllDrafts(true);
-    }, 1500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [draftAssignments]);
@@ -1247,49 +1250,99 @@ export function CourtScheduleBoard({
     });
   }, [assignmentSearch, pickerDivisionFilter, unscheduledMatches, maxRoundByDivision]);
 
-  const openAssignmentPicker = (courtId: string, scheduledAt: string, rowIndex: number) => {
-    const court = courts.find((c) => c.id === courtId);
+  const openAssignmentPicker = (courtId?: string, scheduledAt?: string, rowIndex?: number) => {
     setAssignmentSearch('');
     setPickerDivisionFilter('all');
     setSelectedPickerMatchIds([]);
+
+    if (selectionRange) {
+      const startCourt = courts[selectionRange.startCourtIndex];
+      const endCourt = courts[selectionRange.endCourtIndex];
+      const rowInfo = timelineRows.rows[selectionRange.startRowIndex];
+      const targetTime = rowInfo ? new Date(rowInfo.startTimestamp).toISOString() : scheduledAt || new Date().toISOString();
+
+      const label =
+        selectionRange.startCourtIndex === selectionRange.endCourtIndex
+          ? startCourt?.courtName || 'Sân'
+          : `${startCourt?.courtName || 'Sân'} → ${endCourt?.courtName || 'Sân'}`;
+
+      setAssignmentPicker({
+        startCourtIndex: selectionRange.startCourtIndex,
+        endCourtIndex: selectionRange.endCourtIndex,
+        startRowIndex: selectionRange.startRowIndex,
+        endRowIndex: selectionRange.endRowIndex,
+        courtName: label,
+        scheduledAt: targetTime,
+      });
+      return;
+    }
+
+    const cIdx = courtId ? courts.findIndex((c) => c.id === courtId) : 0;
+    const resolvedCourtIndex = cIdx >= 0 ? cIdx : 0;
+    const resolvedRowIndex = typeof rowIndex === 'number' ? rowIndex : 0;
+    const court = courts[resolvedCourtIndex];
+    const rowInfo = timelineRows.rows[resolvedRowIndex];
+    const targetTime = scheduledAt || (rowInfo ? new Date(rowInfo.startTimestamp).toISOString() : new Date().toISOString());
+
     setAssignmentPicker({
-      courtId,
+      startCourtIndex: resolvedCourtIndex,
+      endCourtIndex: resolvedCourtIndex,
+      startRowIndex: resolvedRowIndex,
+      endRowIndex: resolvedRowIndex,
       courtName: court?.courtName || 'Sân',
-      scheduledAt,
-      rowIndex,
+      scheduledAt: targetTime,
     });
   };
 
-  // Assign multiple matches cascading down across rows on this court
+  // Assign multiple matches in Row-Major order (Left-to-Right across courts, then down to next row)
   const handleAssignMultipleMatches = async () => {
     if (!assignmentPicker || selectedPickerMatchIds.length === 0) return;
 
     setIsSavingDraft(true);
     try {
       const newDrafts: Record<string, DraftAssignment> = {};
-      let currentRowIdx = assignmentPicker.rowIndex;
+      let matchIdx = 0;
 
-      for (const matchId of selectedPickerMatchIds) {
-        const item = displayMatches.find((candidate) => candidate.match.id === matchId);
-        if (!item) continue;
+      const { startCourtIndex, endCourtIndex, startRowIndex } = assignmentPicker;
 
-        const rowInfo = timelineRows.rows[currentRowIdx] || timelineRows.rows[timelineRows.rows.length - 1];
+      // Iterate row-by-row, and within each row, fill left-to-right across courts
+      let rIdx = startRowIndex;
+      while (matchIdx < selectedPickerMatchIds.length && rIdx < timelineRows.rows.length) {
+        const rowInfo = timelineRows.rows[rIdx];
+        if (!rowInfo) break;
         const targetTime = new Date(rowInfo.startTimestamp).toISOString();
-        const duration = item.durationMinutes || rowInfo.durationMinutes || 30;
 
-        newDrafts[matchId] = {
-          courtId: assignmentPicker.courtId,
-          scheduledAt: targetTime,
-          durationMinutes: duration,
-        };
+        for (let cIdx = startCourtIndex; cIdx <= endCourtIndex; cIdx++) {
+          if (matchIdx >= selectedPickerMatchIds.length) break;
+          const court = courts[cIdx];
+          if (!court) continue;
 
-        currentRowIdx++;
+          const matchId = selectedPickerMatchIds[matchIdx];
+          const item = displayMatches.find((candidate) => candidate.match.id === matchId);
+          if (!item) {
+            matchIdx++;
+            continue;
+          }
+
+          const duration = customMatchDurations[matchId] || item.durationMinutes || rowInfo.durationMinutes || defaultStepMinutes;
+
+          newDrafts[matchId] = {
+            courtId: court.id,
+            scheduledAt: targetTime,
+            durationMinutes: duration,
+          };
+
+          matchIdx++;
+        }
+        rIdx++;
       }
 
       setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+      pushHistory({ ...draftAssignments, ...newDrafts });
       setAssignmentPicker(null);
       setSelectedPickerMatchIds([]);
-      setSaveToast(`Đã xếp ${selectedPickerMatchIds.length} trận! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+      setSelectionRange(null);
+      setSaveToast(`Đã xếp ${matchIdx} trận theo thứ tự từ trái sang phải! Đang tự động lưu...`);
       setTimeout(() => setSaveToast(null), 3000);
     } finally {
       setIsSavingDraft(false);
@@ -1438,12 +1491,15 @@ export function CourtScheduleBoard({
     return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
   }, []);
 
-  // Multi-cell bulk schedule fill
+  // Multi-cell bulk schedule fill (Trái sang phải qua từng sân: Sân 1 -> Sân 2 -> Sân 3..., rồi mới xuống mốc giờ tiếp theo)
   const handleBulkScheduleSelection = async () => {
     if (!selectionRange) return;
-    const selectedCourtsList = courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1);
     const unassignedList = [...unscheduledMatches];
-    if (unassignedList.length === 0) return;
+    if (unassignedList.length === 0) {
+      setSaveToast('Không còn trận đấu nào trong hàng chờ chưa xếp!');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
 
     let unassignedIdx = 0;
     const newDrafts: Record<string, DraftAssignment> = {};
@@ -1453,18 +1509,18 @@ export function CourtScheduleBoard({
       if (!rowInfo) continue;
       const targetTime = new Date(rowInfo.startTimestamp).toISOString();
 
-      for (const court of selectedCourtsList) {
+      for (let cIdx = selectionRange.startCourtIndex; cIdx <= selectionRange.endCourtIndex; cIdx++) {
         if (unassignedIdx >= unassignedList.length) break;
-        const targetMatch = unassignedList[unassignedIdx];
+        const court = courts[cIdx];
+        if (!court) continue;
 
-        if (onSaveScheduleDirect) {
-          void onSaveScheduleDirect(targetMatch.match.id, court.id, targetTime);
-        }
+        const targetMatch = unassignedList[unassignedIdx];
+        const duration = customMatchDurations[targetMatch.match.id] || targetMatch.durationMinutes || rowInfo.durationMinutes || defaultStepMinutes;
 
         newDrafts[targetMatch.match.id] = {
           courtId: court.id,
           scheduledAt: targetTime,
-          durationMinutes: rowInfo.durationMinutes,
+          durationMinutes: duration,
         };
         unassignedIdx++;
       }
@@ -1472,6 +1528,9 @@ export function CourtScheduleBoard({
     }
 
     setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+    pushHistory({ ...draftAssignments, ...newDrafts });
+    setSaveToast(`Đã điền ${unassignedIdx} trận từ trái sang phải vào các sân! Đang tự động lưu...`);
+    setTimeout(() => setSaveToast(null), 3000);
     setSelectionRange(null);
   };
 
@@ -2718,7 +2777,7 @@ export function CourtScheduleBoard({
                 <Check className="h-4 w-4" />
                 {isSavingDraft
                   ? 'Đang xếp...'
-                  : `Xếp ${selectedPickerMatchIds.length} trận nối tiếp nhau`}
+                  : `Xếp ${selectedPickerMatchIds.length} trận (Trái sang phải)`}
               </Button>
             </div>
           </ModalFooter>
@@ -3015,12 +3074,18 @@ export function CourtScheduleBoard({
       {/* MINIMALIST & LUXURIOUS DESKTOP CONTEXT MENU (Anti-Slop, Clean Typography, Tuân thủ taste-skill) */}
       {contextMenu && (() => {
         const targetMatch = contextMenu.matchId ? displayMatches.find((m) => m.match.id === contextMenu.matchId) : undefined;
-        const menuX = Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 260 : contextMenu.x);
-        const menuY = Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 460 : contextMenu.y);
+        const menuX = Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 270 : contextMenu.x);
+        const menuY = Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 480 : contextMenu.y);
+
+        const isMultiSelection = Boolean(
+          selectionRange &&
+          (selectionRange.startCourtIndex !== selectionRange.endCourtIndex ||
+           selectionRange.startRowIndex !== selectionRange.endRowIndex)
+        );
 
         return (
           <div
-            className="fixed z-50 min-w-[240px] max-w-[280px] rounded-xl bg-white text-slate-900 p-1.5 shadow-2xl border border-slate-200/90 text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none ring-1 ring-slate-950/5"
+            className="fixed z-50 min-w-[250px] max-w-[290px] rounded-xl bg-white text-slate-900 p-1.5 shadow-2xl border border-slate-200/90 text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none ring-1 ring-slate-950/5"
             style={{
               left: Math.max(10, menuX),
               top: Math.max(10, menuY),
@@ -3035,7 +3100,9 @@ export function CourtScheduleBoard({
             <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 border-b border-slate-100 text-xs font-bold text-slate-900">
               <span className="truncate flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-blue-600" />
-                {contextMenu.courtName} • {contextMenu.timeStr}
+                {isMultiSelection && selectionRange
+                  ? `Vùng chọn (${selectionRange.endCourtIndex - selectionRange.startCourtIndex + 1} sân × ${selectionRange.endRowIndex - selectionRange.startRowIndex + 1} mốc)`
+                  : `${contextMenu.courtName} • ${contextMenu.timeStr}`}
               </span>
               {targetMatch && (
                 <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">
@@ -3045,7 +3112,7 @@ export function CourtScheduleBoard({
             </div>
 
             <div className="py-1 space-y-0.5">
-              {/* If right-clicked on an existing Match Card */}
+              {/* Case 1: Right-clicked on an existing Match Card */}
               {targetMatch ? (
                 <>
                   {/* View / Edit Match Details */}
@@ -3113,7 +3180,7 @@ export function CourtScheduleBoard({
                             setContextMenu(null);
                           }}
                           className={`py-1 rounded text-[11px] font-bold border transition-all cursor-pointer text-center ${
-                            targetMatch.durationMinutes === dur
+                            (customMatchDurations[targetMatch.match.id] || targetMatch.durationMinutes) === dur
                               ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                               : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200'
                           }`}
@@ -3165,8 +3232,139 @@ export function CourtScheduleBoard({
                     Hủy xếp (Đưa về hàng chờ)
                   </button>
                 </>
+              ) : isMultiSelection && selectionRange ? (
+                /* Case 2: Right-clicked on a Multi-Cell Range */
+                <>
+                  {/* 1. Quick Fill Left-to-Right */}
+                  <button
+                    type="button"
+                    disabled={unscheduledMatches.length === 0}
+                    onClick={() => {
+                      handleBulkScheduleSelection();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-blue-700 font-bold transition-colors cursor-pointer text-left disabled:opacity-40"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-blue-600" />
+                      Điền nhanh (Trái sang phải)
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {unscheduledMatches.length} còn
+                    </span>
+                  </button>
+
+                  {/* 2. Choose matches for selection */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openAssignmentPicker();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-800 font-semibold transition-colors cursor-pointer text-left"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-blue-600" />
+                    Chọn danh sách trận xếp vào vùng chọn...
+                  </button>
+
+                  {/* 3. Cut selection */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCut();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Scissors className="h-3.5 w-3.5 text-slate-500" />
+                      Cắt các trận trong vùng chọn
+                    </span>
+                    <span className="text-[10px] font-mono font-medium text-slate-400">Ctrl+X</span>
+                  </button>
+
+                  {/* 4. Copy selection */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCopy();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Copy className="h-3.5 w-3.5 text-slate-500" />
+                      Sao chép các trận trong vùng chọn
+                    </span>
+                    <span className="text-[10px] font-mono font-medium text-slate-400">Ctrl+C</span>
+                  </button>
+
+                  {/* 5. Paste if clipboard exists */}
+                  {clipboard && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handlePaste();
+                        setContextMenu(null);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition-all cursor-pointer text-left font-bold"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Clipboard className="h-3.5 w-3.5 text-emerald-600" />
+                        Dán {clipboard.items.length} trận vào đây
+                      </span>
+                      <span className="text-[10px] font-mono font-medium text-emerald-700">Ctrl+V</span>
+                    </button>
+                  )}
+
+                  <div className="h-px bg-slate-100 my-1" />
+
+                  {/* 6. Distribute rows evenly */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDistributeRowsEvenly();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
+                  >
+                    <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+                    Canh đều thời lượng các dòng
+                  </button>
+
+                  {/* 7. Lock slots */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleBlockSelection();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-medium"
+                  >
+                    <Lock className="h-3.5 w-3.5 text-slate-400" />
+                    Khóa các khung giờ trong vùng chọn
+                  </button>
+
+                  <div className="h-px bg-slate-100 my-1" />
+
+                  {/* 8. Delete / Unassign */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleClearSelectionMatches();
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left font-semibold"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Gỡ các trận trong vùng chọn
+                    </span>
+                    <span className="text-[10px] font-mono text-rose-400 font-medium">Delete</span>
+                  </button>
+                </>
               ) : (
-                /* Right-clicked on an empty cell or slot */
+                /* Case 3: Right-clicked on a single Empty Slot */
                 <>
                   {/* Paste if clipboard has items */}
                   {clipboard && (
@@ -3234,7 +3432,7 @@ export function CourtScheduleBoard({
                   >
                     <span className="flex items-center gap-2 font-medium">
                       <Zap className="h-3.5 w-3.5 text-amber-500" />
-                      Điền trận kế tiếp
+                      Xếp 1 trận tiếp theo vào đây
                     </span>
                     <span className="text-[10px] text-slate-400 font-semibold">
                       {unscheduledMatches.length} còn

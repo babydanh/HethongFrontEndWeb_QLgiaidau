@@ -154,18 +154,31 @@ function formatDateLabel(value: string | null, locale: string) {
 
 function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
   const m = match as unknown as Record<string, unknown>;
-  const rawRoundName = String(match.roundName || m.stageName || match.stage?.name || '').trim();
+  const rawRoundName = String(match.roundName || m.stageName || match.stage?.name || m.stageType || '').trim();
   const lowerName = rawRoundName.toLowerCase();
-  
-  // 1. Check if 3rd place match
+  const bracketCode = String(m.bracketCode || m.bracket_code || m.branch || m.bracket || '').toLowerCase();
+
+  // 1. Check if Grand Final (Chung kết tổng trong nhánh thắng - nhánh thua)
+  if (lowerName.includes('grand final') || lowerName.includes('chung kết tổng') || lowerName.includes('ck tổng')) {
+    if (lowerName.includes('reset') || lowerName.includes('trận 2') || m.isResetMatch) {
+      return 'CHUNG KẾT TỔNG (TRẬN 2)';
+    }
+    return 'CHUNG KẾT TỔNG';
+  }
+
+  // 2. Check if 3rd place match
   if (lowerName.includes('tranh hạng 3') || lowerName.includes('3rd') || lowerName.includes('third')) {
     return 'TRANH HẠNG 3';
   }
 
-  // 2. Check if group stage / round robin
+  // 3. Check if Group stage / Round Robin (Vòng Bảng)
   const groupName = match.groupName || (lowerName.includes('bảng') ? rawRoundName : '');
-  if (groupName) {
-    const cleanGroup = groupName.replace(/giai\s*đoạn\s*\d*/gi, '').replace(/stage\s*\d*/gi, '').trim();
+  if (groupName || lowerName.includes('group') || lowerName.includes('vòng bảng')) {
+    const cleanGroup = (groupName || rawRoundName)
+      .replace(/giai\s*đoạn\s*\d*/gi, '')
+      .replace(/stage\s*\d*/gi, '')
+      .replace(/group\s*/gi, 'BẢNG ')
+      .trim();
     const legNum = match.leg || match.roundNumber;
     if (legNum) {
       return `${cleanGroup.toUpperCase()} • LƯỢT ${legNum}`;
@@ -173,9 +186,49 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
     return cleanGroup.toUpperCase();
   }
 
-  // 3. Check knockout by distance from final (Chung kết, Bán kết, Tứ kết, Vòng 16, 32, 64, 128)
   const rNum = match.roundNumber || 1;
-  const isKnockout = maxRound > 1 || lowerName.includes('knockout') || lowerName.includes('loại trực tiếp') || lowerName.includes('elimination');
+
+  // 4. Check Double Elimination: Nhánh Thắng (Winners / Upper Bracket)
+  const isWinners =
+    lowerName.includes('nhánh thắng') ||
+    lowerName.includes('winner') ||
+    lowerName.includes('upper') ||
+    bracketCode.includes('upper') ||
+    bracketCode.includes('wb');
+
+  if (isWinners) {
+    const diff = Math.max(0, maxRound - rNum);
+    if (diff === 0) return 'CHUNG KẾT NHÁNH THẮNG';
+    if (diff === 1) return 'BÁN KẾT NHÁNH THẮNG';
+    if (diff === 2) return 'TỨ KẾT NHÁNH THẮNG';
+    if (diff === 3) return 'NHÁNH THẮNG • VÒNG 1/8';
+    if (diff === 4) return 'NHÁNH THẮNG • VÒNG 1/16';
+    if (diff === 5) return 'NHÁNH THẮNG • VÒNG 1/32';
+    return `NHÁNH THẮNG • VÒNG ${rNum}`;
+  }
+
+  // 5. Check Double Elimination: Nhánh Thua (Losers / Lower Bracket)
+  const isLosers =
+    lowerName.includes('nhánh thua') ||
+    lowerName.includes('loser') ||
+    lowerName.includes('lower') ||
+    bracketCode.includes('lower') ||
+    bracketCode.includes('lb');
+
+  if (isLosers) {
+    const diff = Math.max(0, maxRound - rNum);
+    if (diff === 0) return 'CHUNG KẾT NHÁNH THUA';
+    if (diff === 1) return 'BÁN KẾT NHÁNH THUA';
+    if (diff === 2) return 'TỨ KẾT NHÁNH THUA';
+    return `NHÁNH THUA • VÒNG ${rNum}`;
+  }
+
+  // 6. Check standard Knockout by distance from final
+  const isKnockout =
+    maxRound > 1 ||
+    lowerName.includes('knockout') ||
+    lowerName.includes('loại trực tiếp') ||
+    lowerName.includes('elimination');
 
   if (isKnockout && maxRound >= 1) {
     const diff = maxRound - rNum;
@@ -188,7 +241,7 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
     if (diff === 6) return 'VÒNG 1/64';
   }
 
-  // 4. Clean custom name if valid
+  // 7. Clean custom name if valid
   let clean = rawRoundName
     .replace(/^stage\s*\d*/gi, '')
     .replace(/stage/gi, '')

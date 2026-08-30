@@ -126,7 +126,7 @@ type MatchCardResizeState = {
   currentDurationMinutes: number;
 };
 
-const PIXELS_PER_MINUTE = 4.8; // 1 minute = 4.8px (30 mins = 144px height, high spacious grid)
+const PIXELS_PER_MINUTE = 9.6; // 1 minute = 9.6px (15 mins = 144px height, high spacious grid matching previous 30p view)
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -938,17 +938,30 @@ export function CourtScheduleBoard({
       (r) => matchTime >= r.startTimestamp && matchTime < r.endTimestamp,
     );
 
-    const rowDuration = matchingRow?.durationMinutes ?? 30;
+    const rowDuration = matchingRow?.durationMinutes ?? defaultStepMinutes;
     const effectiveDuration = (item.isDraft && item.durationMinutes) ? item.durationMinutes : (rowDurations[matchingRow?.index ?? -1] ?? item.durationMinutes ?? rowDuration);
 
     let cardTop = 0;
-    const cardHeight = Math.max(130, effectiveDuration * PIXELS_PER_MINUTE - 6);
+    let cardHeight = 140;
 
     if (matchingRow) {
+      // Find end row to calculate precise multi-row span if effectiveDuration spans beyond 1 row
+      const matchEndTime = matchTime + effectiveDuration * 60_000;
+      const matchingEndRow = timelineRows.rows.find(
+        (r) => matchEndTime > r.startTimestamp && matchEndTime <= r.endTimestamp,
+      ) || matchingRow;
+
       const offsetMinutes = (matchTime - matchingRow.startTimestamp) / 60_000;
-      cardTop = matchingRow.top + offsetMinutes * PIXELS_PER_MINUTE + 2;
+      cardTop = matchingRow.top + offsetMinutes * currentPixelsPerMinute + 2;
+
+      if (matchingEndRow && matchingEndRow.index > matchingRow.index) {
+        cardHeight = Math.max(136, (matchingEndRow.top + matchingEndRow.height) - cardTop - 4);
+      } else {
+        cardHeight = Math.max(136, matchingRow.height - 4);
+      }
     } else {
-      cardTop = Math.max(0, ((matchTime - timelineRows.startTimestamp) / 60_000) * PIXELS_PER_MINUTE + 2);
+      cardTop = Math.max(0, ((matchTime - timelineRows.startTimestamp) / 60_000) * currentPixelsPerMinute + 2);
+      cardHeight = Math.max(136, effectiveDuration * currentPixelsPerMinute - 4);
     }
 
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;

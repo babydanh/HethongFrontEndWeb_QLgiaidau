@@ -417,8 +417,10 @@ export function CourtScheduleBoard({
 
   // Handle Save All Drafts (Manual Click or Ctrl+S)
   const handleSaveAllDrafts = async () => {
+    const hasRowDurationChanges = Object.keys(rowDurations).length > 0;
     const entries = Object.entries(draftAssignments);
-    if (entries.length === 0) {
+
+    if (entries.length === 0 && !hasRowDurationChanges) {
       setSaveToast('Lịch thi đấu đã ở trạng thái mới nhất!');
       setTimeout(() => setSaveToast(null), 2500);
       return;
@@ -427,14 +429,35 @@ export function CourtScheduleBoard({
     setIsSavingDraft(true);
     let successCount = 0;
     try {
+      // 1. Save all draft assignments
       for (const [matchId, draft] of entries) {
         if (onSaveScheduleDirect) {
           await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true);
           successCount++;
         }
       }
+
+      // 2. If row durations were resized, synchronize scheduledAt timestamps for all scheduled matches to match their row
+      if (hasRowDurationChanges) {
+        for (const item of scheduledMatches) {
+          if (!draftAssignments[item.match.id] && item.courtId && item.scheduledAt) {
+            const matchDate = new Date(item.scheduledAt);
+            const matchMinutesFromStart = (matchDate.getHours() * 60 + matchDate.getMinutes()) - baseStartMinute;
+            const rIdx = Math.max(0, Math.min(timelineRows.rows.length - 1, Math.round(matchMinutesFromStart / defaultStepMinutes)));
+            const targetRow = timelineRows.rows[rIdx];
+            if (targetRow) {
+              const updatedTime = new Date(targetRow.startTimestamp).toISOString();
+              if (updatedTime !== item.scheduledAt && onSaveScheduleDirect) {
+                await onSaveScheduleDirect(item.match.id, item.courtId, updatedTime, true);
+                successCount++;
+              }
+            }
+          }
+        }
+      }
+
       setDraftAssignments({});
-      setSaveToast(`Đã lưu thành công ${successCount} trận đấu!`);
+      setSaveToast(`Đã lưu thành công lịch thi đấu!`);
       setTimeout(() => setSaveToast(null), 3000);
       if (onRefetchData) {
         await onRefetchData();
@@ -933,36 +956,22 @@ export function CourtScheduleBoard({
     const isCompleted = rawStatus === 'COMPLETED' || rawStatus === 'FINISHED' || setList.length > 0;
     const isLive = rawStatus === 'IN_PROGRESS' || rawStatus === 'LIVE';
 
-    const matchTime = new Date(item.scheduledAt || 0).getTime();
-    const matchingRow = timelineRows.rows.find(
-      (r) => matchTime >= r.startTimestamp && matchTime < r.endTimestamp,
-    );
+    const matchDate = new Date(item.scheduledAt || 0);
 
-    const rowDuration = matchingRow?.durationMinutes ?? defaultStepMinutes;
-    const effectiveDuration = (item.isDraft && item.durationMinutes) ? item.durationMinutes : (rowDurations[matchingRow?.index ?? -1] ?? item.durationMinutes ?? rowDuration);
-
-    let cardTop = 0;
-    let cardHeight = 140;
-
-    if (matchingRow) {
-      // Find end row to calculate precise multi-row span if effectiveDuration spans beyond 1 row
-      const matchEndTime = matchTime + effectiveDuration * 60_000;
-      const matchingEndRow = timelineRows.rows.find(
-        (r) => matchEndTime > r.startTimestamp && matchEndTime <= r.endTimestamp,
-      ) || matchingRow;
-
-      const offsetMinutes = (matchTime - matchingRow.startTimestamp) / 60_000;
-      cardTop = matchingRow.top + offsetMinutes * currentPixelsPerMinute + 2;
-
-      if (matchingEndRow && matchingEndRow.index > matchingRow.index) {
-        cardHeight = Math.max(136, (matchingEndRow.top + matchingEndRow.height) - cardTop - 4);
-      } else {
-        cardHeight = Math.max(136, matchingRow.height - 4);
-      }
-    } else {
-      cardTop = Math.max(0, ((matchTime - timelineRows.startTimestamp) / 60_000) * currentPixelsPerMinute + 2);
-      cardHeight = Math.max(136, effectiveDuration * currentPixelsPerMinute - 4);
+    // In an Excel-like grid, map match to its discrete Row Slot Index
+    let matchRowIndex = 0;
+    if (item.scheduledAt) {
+      const matchMinutesFromStart = (matchDate.getHours() * 60 + matchDate.getMinutes()) - baseStartMinute;
+      matchRowIndex = Math.max(0, Math.min(timelineRows.rows.length - 1, Math.round(matchMinutesFromStart / defaultStepMinutes)));
     }
+    const matchingRow = timelineRows.rows[matchRowIndex] || timelineRows.rows[0];
+
+    const rowDuration = matchingRow.durationMinutes;
+    const effectiveDuration = (item.isDraft && item.durationMinutes) ? item.durationMinutes : (rowDurations[matchingRow.index] ?? item.durationMinutes ?? rowDuration);
+
+    const cardTop = matchingRow.top + 2;
+    const cardHeight = Math.max(136, matchingRow.height - 4);
+    const matchTimeStr = matchingRow.startTimeStr;
 
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
 

@@ -898,7 +898,50 @@ export function CourtScheduleBoard({
     setTimeout(() => setSaveToast(null), 3000);
   };
 
-  // Keyboard shortcut: Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+X (Cut), Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+S (Save), Ctrl+A (Select All)
+  // Clear scheduled matches in selection (Delete / Backspace / Trash button)
+  const handleClearSelectionMatches = () => {
+    if (!selectionRange) return;
+    const selectedCourtIds = new Set(
+      courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1).map((c) => c.id),
+    );
+
+    const minTimestamp = timelineRows.rows[selectionRange.startRowIndex]?.startTimestamp ?? 0;
+    const maxTimestamp = timelineRows.rows[selectionRange.endRowIndex]?.endTimestamp ?? Infinity;
+
+    const matchesInSelection = displayMatches.filter((item) => {
+      if (!item.courtId || !item.scheduledAt || !selectedCourtIds.has(item.courtId)) return false;
+      const t = new Date(item.scheduledAt).getTime();
+      return t >= minTimestamp && t < maxTimestamp;
+    });
+
+    const newDrafts = { ...draftAssignments };
+    for (const item of matchesInSelection) {
+      delete newDrafts[item.match.id];
+      if (onSaveScheduleDirect) {
+        void onSaveScheduleDirect(item.match.id, '', '', true);
+      }
+    }
+
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+
+    // Also clear blocked slots in selection if any
+    setBlockedSlots((prev) =>
+      prev.filter((slot) => {
+        if (!selectedCourtIds.has(slot.courtId)) return true;
+        const t = new Date(slot.scheduledAt).getTime();
+        return !(t >= minTimestamp && t < maxTimestamp);
+      }),
+    );
+
+    if (matchesInSelection.length > 0) {
+      setSaveToast(`🗑️ Đã hủy xếp ${matchesInSelection.length} trận đấu (đưa về hàng chờ)!`);
+      setTimeout(() => setSaveToast(null), 2500);
+    }
+    setSelectionRange(null);
+  };
+
+  // Keyboard shortcut: Ctrl+Z, Ctrl+Y, Ctrl+X, Ctrl+C, Ctrl+V, Ctrl+S, Ctrl+A, Delete, Backspace
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -941,6 +984,12 @@ export function CourtScheduleBoard({
             startRowIndex: 0,
             endRowIndex: timelineRows.rows.length - 1,
           });
+        }
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectionRange) {
+          e.preventDefault();
+          handleClearSelectionMatches();
         }
       }
     };
@@ -1468,39 +1517,6 @@ export function CourtScheduleBoard({
     }
 
     setBlockedSlots((prev) => [...prev, ...newBlocked]);
-    setSelectionRange(null);
-  };
-
-  // Clear scheduled matches in selection
-  const handleClearSelectionMatches = () => {
-    if (!selectionRange) return;
-    const selectedCourtIds = new Set(
-      courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1).map((c) => c.id),
-    );
-
-    const minTimestamp = timelineRows.rows[selectionRange.startRowIndex]?.startTimestamp ?? 0;
-    const maxTimestamp = timelineRows.rows[selectionRange.endRowIndex]?.endTimestamp ?? Infinity;
-
-    const matchesInSelection = displayMatches.filter((item) => {
-      if (!item.courtId || !item.scheduledAt || !selectedCourtIds.has(item.courtId)) return false;
-      const t = new Date(item.scheduledAt).getTime();
-      return t >= minTimestamp && t < maxTimestamp;
-    });
-
-    for (const item of matchesInSelection) {
-      if (onSaveScheduleDirect) {
-        void onSaveScheduleDirect(item.match.id, '', '');
-      }
-    }
-
-    setDraftAssignments((prev) => {
-      const copy = { ...prev };
-      for (const item of matchesInSelection) {
-        delete copy[item.match.id];
-      }
-      return copy;
-    });
-
     setSelectionRange(null);
   };
 

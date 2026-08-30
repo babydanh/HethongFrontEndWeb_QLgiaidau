@@ -592,14 +592,21 @@ export function CourtScheduleBoard({
     if (!matchCardResize) return;
 
     const handlePointerMove = (event: PointerEvent) => {
-      const deltaMinutes = Math.round((event.clientY - matchCardResize.startY) / PIXELS_PER_MINUTE);
-      const durationMinutes = Math.max(5, matchCardResize.initialDurationMinutes + deltaMinutes);
+      const deltaMinutes = Math.round((event.clientY - matchCardResize.startY) / currentPixelsPerMinute);
+      const durationMinutes = Math.max(3, matchCardResize.initialDurationMinutes + deltaMinutes);
 
-      setMatchCardResize((prev) => prev ? { ...prev, currentDurationMinutes: durationMinutes } : null);
+      setMatchCardResize((prev) => (prev ? { ...prev, currentDurationMinutes: durationMinutes } : null));
       setDraftAssignments((current) => {
         const existing = current[matchCardResize.matchId];
-        if (!existing) return current;
-        return { ...current, [matchCardResize.matchId]: { ...existing, durationMinutes } };
+        const matchItem = displayMatches.find((m) => m.match.id === matchCardResize.matchId);
+        return {
+          ...current,
+          [matchCardResize.matchId]: {
+            courtId: existing?.courtId ?? matchItem?.courtId ?? '',
+            scheduledAt: existing?.scheduledAt ?? matchItem?.scheduledAt ?? '',
+            durationMinutes,
+          },
+        };
       });
     };
 
@@ -613,7 +620,7 @@ export function CourtScheduleBoard({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [matchCardResize]);
+  }, [currentPixelsPerMinute, displayMatches, matchCardResize]);
 
   // Filtering for match picker
   const filteredPickerMatches = useMemo(() => {
@@ -966,10 +973,12 @@ export function CourtScheduleBoard({
     const matchingRow = timelineRows.rows[matchRowIndex] || timelineRows.rows[0];
 
     const rowDuration = matchingRow.durationMinutes;
-    const effectiveDuration = (item.isDraft && item.durationMinutes) ? item.durationMinutes : (rowDurations[matchingRow.index] ?? item.durationMinutes ?? rowDuration);
+    const effectiveDuration = (item.isDraft && item.durationMinutes)
+      ? item.durationMinutes
+      : (rowDurations[matchingRow.index] ?? item.durationMinutes ?? rowDuration);
 
     const cardTop = matchingRow.top + 2;
-    const cardHeight = Math.max(136, matchingRow.height - 4);
+    const cardHeight = Math.max(48, effectiveDuration * currentPixelsPerMinute - 4);
     const matchTimeStr = matchingRow.startTimeStr;
 
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;

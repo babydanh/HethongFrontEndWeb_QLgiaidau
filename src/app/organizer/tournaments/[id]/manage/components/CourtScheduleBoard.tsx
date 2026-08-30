@@ -1016,6 +1016,8 @@ export function CourtScheduleBoard({
     const match = displayMatches.find((m) => m.match.id === matchId);
     if (!match || !match.courtId || !match.scheduledAt) return;
 
+    setCustomMatchDurations((prev) => ({ ...prev, [matchId]: newDuration }));
+
     const newDrafts = {
       ...draftAssignments,
       [matchId]: {
@@ -1200,6 +1202,7 @@ export function CourtScheduleBoard({
       const unclamped = matchCardResize.initialDurationMinutes + deltaMinutes;
       const durationMinutes = Math.max(3, Math.min(matchCardResize.maxAllowedDurationMinutes, unclamped));
 
+      setCustomMatchDurations((prev) => ({ ...prev, [matchCardResize.matchId]: durationMinutes }));
       setMatchCardResize((prev) => (prev ? { ...prev, currentDurationMinutes: durationMinutes } : null));
       setDraftAssignments((current) => {
         const existing = current[matchCardResize.matchId];
@@ -1614,9 +1617,11 @@ export function CourtScheduleBoard({
     const matchingRow = timelineRows.rows[matchRowIndex] || timelineRows.rows[0];
 
     const rowDuration = matchingRow.durationMinutes;
-    const effectiveDuration = (item.isDraft && item.durationMinutes)
-      ? item.durationMinutes
-      : (rowDurations[matchingRow.index] ?? item.durationMinutes ?? rowDuration);
+    const effectiveDuration =
+      customMatchDurations[item.match.id] ??
+      item.durationMinutes ??
+      rowDurations[matchingRow.index] ??
+      rowDuration;
 
     const cardTop = matchingRow.top + 2;
     const cardHeight = Math.max(48, effectiveDuration * currentPixelsPerMinute - 4);

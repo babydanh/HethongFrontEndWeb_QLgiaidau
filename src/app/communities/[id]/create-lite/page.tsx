@@ -135,7 +135,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [community, setCommunity] = useState<Community | null>(null);
   const [sport, setSport] = useState<LiteSport>('badminton');
   const [name, setName] = useState('');
-  const [format, setFormat] = useState<'singles' | 'doubles' | 'mixed_doubles'>('singles');
+  const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
   const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
   const [footballTeamSize, setFootballTeamSize] = useState<5 | 7 | 11>(7);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
@@ -202,7 +202,6 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         sport,
         communityId,
         format: sport === 'football' ? 'doubles' : format,
-        ...(sport !== 'football' && format === 'mixed_doubles' ? { genderRestriction: 'MIXED' as const } : {}),
         teamSize: sport === 'football' ? footballTeamSize : undefined,
         bracketType,
         maxTeams,
@@ -479,22 +478,6 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                     <span className="text-xs font-bold">{translate('liteDoublesOption')}</span>
                     <span className="text-[10px] text-slate-400">{translate('liteDoublesHint')}</span>
                   </button>
-
-                  {isAdvancedOptionsOpen && (
-                    <button
-                      type="button"
-                      onClick={() => setFormat('mixed_doubles')}
-                      className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-2.5 text-center transition ${
-                        format === 'mixed_doubles'
-                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
-                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <Users className={`h-5 w-5 ${format === 'mixed_doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
-                      <span className="text-xs font-bold">{translate('communityTournamentMixedFormat')}</span>
-                      <span className="text-[10px] text-slate-400">{translate('liteMixedDoublesHint')}</span>
-                    </button>
-                  )}
                 </div>
               )}
             </section>

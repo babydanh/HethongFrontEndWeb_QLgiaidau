@@ -717,7 +717,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     >
                       {!isFootballTournament && <option value={MatchTypeDB.SINGLES}>{translate('matchTypeSingles')}</option>}
                       <option value={MatchTypeDB.DOUBLES}>{translate('matchTypeDoubles')}</option>
-                      {!isFootballTournament && <option value={MatchTypeDB.MIXED_DOUBLES}>{translate('matchTypeMixedDoubles')}</option>}
                     </select>
                     <Button size="sm" onClick={handleSaveMatchType} disabled={formatSettingLocked || isFootballTournament || matchTypeSaving || selectedMatchType === currentMatchType}>
                       {matchTypeSaving ? translate('saving') : translate('saveMatchType')}

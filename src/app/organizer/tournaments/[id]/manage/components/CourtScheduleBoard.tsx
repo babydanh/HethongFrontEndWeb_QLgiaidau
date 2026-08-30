@@ -1471,7 +1471,8 @@ export function CourtScheduleBoard({
   };
 
   // Excel Range Selection Handlers
-  const handleCellPointerDown = (courtIndex: number, rowIndex: number) => {
+  const handleCellPointerDown = (courtIndex: number, rowIndex: number, e?: React.PointerEvent) => {
+    if (e && e.button !== 0) return; // Only left click drags
     setIsSelecting(true);
     setDragAnchor({ courtIndex, rowIndex });
     setSelectionRange({
@@ -1482,8 +1483,83 @@ export function CourtScheduleBoard({
     });
   };
 
+  const handleTimeRowPointerDown = (rowIndex: number, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    setIsSelecting(true);
+    setDragAnchor({ courtIndex: -1, rowIndex }); // -1 indicates row header selection
+    setSelectionRange({
+      startCourtIndex: 0,
+      endCourtIndex: Math.max(0, courts.length - 1),
+      startRowIndex: rowIndex,
+      endRowIndex: rowIndex,
+    });
+  };
+
+  const handleTimeRowPointerEnter = (rowIndex: number) => {
+    if (!isSelecting || !dragAnchor) return;
+    const minRow = Math.min(dragAnchor.rowIndex, rowIndex);
+    const maxRow = Math.max(dragAnchor.rowIndex, rowIndex);
+    setSelectionRange({
+      startCourtIndex: 0,
+      endCourtIndex: Math.max(0, courts.length - 1),
+      startRowIndex: minRow,
+      endRowIndex: maxRow,
+    });
+  };
+
+  const handleCourtColPointerDown = (courtIndex: number, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    setIsSelecting(true);
+    setDragAnchor({ courtIndex, rowIndex: -1 }); // -1 indicates column header selection
+    setSelectionRange({
+      startCourtIndex: courtIndex,
+      endCourtIndex: courtIndex,
+      startRowIndex: 0,
+      endRowIndex: Math.max(0, timelineRows.rows.length - 1),
+    });
+  };
+
+  const handleCourtColPointerEnter = (courtIndex: number) => {
+    if (!isSelecting || !dragAnchor) return;
+    const minCourt = Math.min(dragAnchor.courtIndex, courtIndex);
+    const maxCourt = Math.max(dragAnchor.courtIndex, courtIndex);
+    setSelectionRange({
+      startCourtIndex: minCourt,
+      endCourtIndex: maxCourt,
+      startRowIndex: 0,
+      endRowIndex: Math.max(0, timelineRows.rows.length - 1),
+    });
+  };
+
   const handleCellPointerEnter = (courtIndex: number, rowIndex: number) => {
     if (!isSelecting || !dragAnchor) return;
+
+    if (dragAnchor.courtIndex === -1) {
+      // User started drag from Time Sidebar: select entire rows
+      const minRow = Math.min(dragAnchor.rowIndex, rowIndex);
+      const maxRow = Math.max(dragAnchor.rowIndex, rowIndex);
+      setSelectionRange({
+        startCourtIndex: 0,
+        endCourtIndex: Math.max(0, courts.length - 1),
+        startRowIndex: minRow,
+        endRowIndex: maxRow,
+      });
+      return;
+    }
+
+    if (dragAnchor.rowIndex === -1) {
+      // User started drag from Court Header: select entire columns
+      const minCourt = Math.min(dragAnchor.courtIndex, courtIndex);
+      const maxCourt = Math.max(dragAnchor.courtIndex, courtIndex);
+      setSelectionRange({
+        startCourtIndex: minCourt,
+        endCourtIndex: maxCourt,
+        startRowIndex: 0,
+        endRowIndex: Math.max(0, timelineRows.rows.length - 1),
+      });
+      return;
+    }
+
     const minCourt = Math.min(dragAnchor.courtIndex, courtIndex);
     const maxCourt = Math.max(dragAnchor.courtIndex, courtIndex);
     const minRow = Math.min(dragAnchor.rowIndex, rowIndex);
@@ -2448,7 +2524,7 @@ export function CourtScheduleBoard({
               <Clock className="h-4 w-4 text-white" />
             </div>
 
-            {/* Court column headers: Click to Select Entire Column */}
+            {/* Court column headers: Drag or Click to Select Entire Column */}
             {courts.map((court, cIdx) => {
               const isColSelected =
                 selectionRange &&
@@ -2458,15 +2534,9 @@ export function CourtScheduleBoard({
               return (
                 <div
                   key={court.id}
-                  onClick={() => {
-                    setSelectionRange({
-                      startCourtIndex: cIdx,
-                      endCourtIndex: cIdx,
-                      startRowIndex: 0,
-                      endRowIndex: timelineRows.rows.length - 1,
-                    });
-                  }}
-                  title={`Bấm để chọn toàn bộ cột ${court.courtName}`}
+                  onPointerDown={(e) => handleCourtColPointerDown(cIdx, e)}
+                  onPointerEnter={() => handleCourtColPointerEnter(cIdx)}
+                  title={`Bấm hoặc kéo ngang để chọn cột ${court.courtName}`}
                   className={`sticky top-0 z-20 border-b border-r border-orange-800/80 px-3 py-2.5 text-center text-white transition-colors cursor-pointer select-none ${
                     isColSelected ? 'bg-orange-700 ring-2 ring-inset ring-amber-300' : 'bg-[#c2410c] hover:bg-orange-600'
                   }`}
@@ -2489,17 +2559,30 @@ export function CourtScheduleBoard({
 
                 return (
                   <React.Fragment key={row.index}>
-                    {/* The Row Container: Click to Select Entire Row */}
+                    {/* The Row Container: Drag or Click to Select Rows across all courts */}
                     <div
-                      onClick={() => {
+                      onPointerDown={(e) => handleTimeRowPointerDown(row.index, e)}
+                      onPointerEnter={() => handleTimeRowPointerEnter(row.index)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setSelectionRange({
                           startCourtIndex: 0,
-                          endCourtIndex: courts.length - 1,
+                          endCourtIndex: Math.max(0, courts.length - 1),
                           startRowIndex: row.index,
                           endRowIndex: row.index,
                         });
+                        setContextMenu({
+                          x: e.clientX,
+                          y: e.clientY,
+                          courtId: courts[0]?.id || '',
+                          courtName: 'Tất cả các sân',
+                          courtIndex: 0,
+                          rowIndex: row.index,
+                          timeStr: row.startTimeStr,
+                        });
                       }}
-                      title={`Bấm để chọn toàn bộ hàng lúc ${row.startTimeStr}`}
+                      title={`Bấm hoặc kéo dọc để chọn hàng lúc ${row.startTimeStr} (Click phải để mở menu)`}
                       className={`absolute inset-x-0 border-b border-amber-300/80 transition-colors cursor-pointer select-none ${
                         isRowSelected ? 'bg-amber-300/80 ring-2 ring-inset ring-amber-500' : 'hover:bg-amber-200'
                       }`}

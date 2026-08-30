@@ -2158,132 +2158,181 @@ export function CourtScheduleBoard({
         </div>
       )}
 
-      {/* Excel Ribbon Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white border border-slate-200 p-2 shadow-2xs shrink-0">
-        {/* Left: Save + Undo/Redo + Auto Fill + Time Config */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Save Button with Badge & Keyboard shortcut hint */}
-          <Button
-            type="button"
-            onClick={() => handleSaveAllDrafts(false)}
-            disabled={isSavingDraft}
-            className={`h-8 px-3 text-xs font-black rounded-lg shadow-xs flex items-center gap-2 transition-all cursor-pointer ${
-              pendingCount > 0
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white ring-2 ring-emerald-400 ring-offset-1 animate-pulse'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-            }`}
-            title="Lưu tất cả thay đổi lịch (Phím tắt: Ctrl + S)"
-          >
-            <Save className="h-3.5 w-3.5" />
-            <span>{isSavingDraft ? 'Đang lưu...' : 'Lưu lịch (Ctrl+S)'}</span>
-            {pendingCount > 0 && (
-              <span className="rounded-full bg-white text-emerald-700 px-1.5 py-0.2 text-[10px] font-black">
-                {pendingCount}
-              </span>
-            )}
-          </Button>
+      {/* EXCEL HOME RIBBON TOOLBAR (Microsoft Excel / Google Sheets Inspired) */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs">
+        {/* Left: Functional Groups */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* GROUP 1: LƯU & LỊCH SỬ (File & History) */}
+          <div className="flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
+            <Button
+              type="button"
+              onClick={() => handleSaveAllDrafts(false)}
+              disabled={isSavingDraft || pendingCount === 0}
+              className={`h-7 px-2.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
+                pendingCount > 0
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs animate-pulse'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs'
+              }`}
+              title="Lưu lịch thi đấu (Phím tắt: Ctrl + S)"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span>Lưu</span>
+              {pendingCount > 0 && (
+                <span className="rounded-full bg-blue-700 px-1 py-0.2 text-[9px] font-black text-white">
+                  {pendingCount}
+                </span>
+              )}
+            </Button>
 
-          {/* Undo Button (Ctrl+Z) */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleUndo}
-            disabled={historyIndex <= 0}
-            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-40"
-            title="Hoàn tác (Phím tắt: Ctrl + Z)"
-          >
-            <RotateCcw className="h-3.5 w-3.5 text-blue-600" />
-            <span className="hidden sm:inline">Hoàn tác</span>
-          </Button>
-
-          {/* Redo Button (Ctrl+Y) */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleRedo}
-            disabled={historyIndex >= history.length - 1}
-            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-40"
-            title="Làm lại (Phím tắt: Ctrl + Y hoặc Ctrl + Shift + Z)"
-          >
-            <RotateCw className="h-3.5 w-3.5 text-blue-600" />
-            <span className="hidden sm:inline">Làm lại</span>
-          </Button>
-
-          {/* Auto-Save Live Status Indicator */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold select-none">
-            {autoSaveStatus === 'saving' ? (
-              <>
-                <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                <span className="text-amber-700 font-bold">Đang tự lưu...</span>
-              </>
-            ) : autoSaveStatus === 'unsaved' ? (
-              <>
-                <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                <span className="text-blue-700 font-bold">Đang xếp...</span>
-              </>
-            ) : (
-              <>
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-emerald-700 font-bold">Tự lưu: Bật</span>
-              </>
-            )}
+            {/* Undo / Redo buttons */}
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-white text-slate-700 disabled:opacity-30 cursor-pointer transition-colors"
+              title="Hoàn tác (Ctrl + Z)"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-white text-slate-700 disabled:opacity-30 cursor-pointer transition-colors"
+              title="Làm lại (Ctrl + Y)"
+            >
+              <RotateCw className="h-3.5 w-3.5" />
+            </button>
           </div>
 
-          {/* AI / Smart Auto-Schedule */}
-          <Button
-            type="button"
-            onClick={handleAutoScheduleAll}
-            disabled={unscheduledMatches.length === 0}
-            className="h-8 px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer"
-            title="Tự động xếp toàn bộ các trận chưa xếp vào các ô sân trống"
-          >
-            <Zap className="h-3.5 w-3.5 text-amber-300" />
-            <span>Tự động xếp lịch</span>
-            {unscheduledMatches.length > 0 && (
-              <span className="rounded-full bg-blue-500/80 px-1.5 py-0.2 text-[10px]">
+          <div className="h-5 w-px bg-slate-200" />
+
+          {/* GROUP 2: BẢNG TẠM & CHỈNH SỬA (Clipboard: Cut, Copy, Paste) */}
+          <div className="flex items-center gap-0.5 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
+            <button
+              type="button"
+              onClick={handleCut}
+              className="h-7 px-2 flex items-center gap-1 rounded-md text-xs font-semibold hover:bg-white text-slate-700 transition-colors cursor-pointer"
+              title="Cắt các ô/trận đã chọn (Ctrl + X)"
+            >
+              <Scissors className="h-3.5 w-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Cắt</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="h-7 px-2 flex items-center gap-1 rounded-md text-xs font-semibold hover:bg-white text-slate-700 transition-colors cursor-pointer"
+              title="Sao chép các ô/trận đã chọn (Ctrl + C)"
+            >
+              <Copy className="h-3.5 w-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Chép</span>
+            </button>
+            <button
+              type="button"
+              onClick={handlePaste}
+              disabled={!clipboard}
+              className={`h-7 px-2 flex items-center gap-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                clipboard
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 shadow-2xs animate-pulse'
+                  : 'text-slate-400 opacity-40 cursor-not-allowed'
+              }`}
+              title="Dán vào ô đã chọn (Ctrl + V)"
+            >
+              <Clipboard className="h-3.5 w-3.5" />
+              <span>Dán{clipboard ? ` (${clipboard.items.length})` : ''}</span>
+            </button>
+          </div>
+
+          <div className="h-5 w-px bg-slate-200" />
+
+          {/* GROUP 3: THỜI LƯỢNG & ĐỊNH DẠNG (Format Duration & Slots) */}
+          <div className="flex items-center gap-1.5 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
+            {/* Quick Duration Pills */}
+            <div className="flex items-center gap-0.5 px-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Thời lượng:</span>
+              {[10, 15, 20, 30, 45, 60].map((dur) => (
+                <button
+                  key={dur}
+                  type="button"
+                  onClick={() => {
+                    if (selectionRange) {
+                      handleSetSelectionDuration(dur);
+                    } else {
+                      setDefaultStepMinutes(dur);
+                      setRowDurations({});
+                      setSaveToast(`Đã đổi bước nhảy toàn bảng sang ${dur}p/ô!`);
+                      setTimeout(() => setSaveToast(null), 2500);
+                    }
+                  }}
+                  className={`h-6 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    defaultStepMinutes === dur && !selectionRange
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'hover:bg-white text-slate-700 hover:text-blue-700'
+                  }`}
+                  title={selectionRange ? `Đặt ${dur}p cho vùng chọn` : `Đặt mặc định ${dur}p/ô cho toàn bảng`}
+                >
+                  {dur}p
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Time & Slot Modal Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                setTempStart(operatingStart);
+                setTempEnd(operatingEnd);
+                setTempStep(defaultStepMinutes);
+                setTimeSettingsOpen(true);
+              }}
+              className="h-7 px-2 rounded-md bg-white border border-slate-200 text-slate-800 text-[11px] font-bold flex items-center gap-1 hover:bg-slate-100 transition-colors cursor-pointer shadow-2xs"
+              title="Tùy chỉnh giờ bắt đầu, kết thúc và bước nhảy"
+            >
+              <Clock className="h-3.5 w-3.5 text-blue-600" />
+              <span>{operatingStart} – {operatingEnd}</span>
+            </button>
+          </div>
+
+          <div className="h-5 w-px bg-slate-200" />
+
+          {/* GROUP 4: ĐIỀN LỊCH & HÀNG CHỜ (Scheduling & Queue) */}
+          <div className="flex items-center gap-1">
+            {/* Auto Schedule button */}
+            <Button
+              type="button"
+              onClick={handleAutoScheduleAll}
+              disabled={unscheduledMatches.length === 0}
+              className="h-7 px-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+              title="Tự động xếp toàn bộ các trận chưa xếp vào các ô sân trống"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-300" />
+              <span>Tự động xếp</span>
+              {unscheduledMatches.length > 0 && (
+                <span className="rounded-full bg-blue-500/90 px-1.5 py-0.2 text-[9px] font-black">
+                  {unscheduledMatches.length}
+                </span>
+              )}
+            </Button>
+
+            {/* Queue modal trigger */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setQueueOpen(true)}
+              className="h-7 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg flex items-center gap-1.5 cursor-pointer"
+            >
+              <Layers className="h-3.5 w-3.5 text-slate-500" />
+              <span>Hàng chờ</span>
+              <span className={`px-1.5 py-0.2 rounded text-[10px] font-black ${
+                unscheduledMatches.length > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-600'
+              }`}>
                 {unscheduledMatches.length}
               </span>
-            )}
-          </Button>
-
-          {/* Time & Slot Configuration Modal Trigger */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setTempStart(operatingStart);
-              setTempEnd(operatingEnd);
-              setTempStep(defaultStepMinutes);
-              setTimeSettingsOpen(true);
-            }}
-            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg flex items-center gap-1.5 cursor-pointer"
-            title="Tùy chỉnh giờ bắt đầu, giờ kết thúc và bước nhảy thời gian"
-          >
-            <Clock className="h-3.5 w-3.5 text-blue-600" />
-            <span>{operatingStart} – {operatingEnd}</span>
-            <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1 py-0.2 rounded border border-slate-200">
-              {defaultStepMinutes}p/ô
-            </span>
-          </Button>
-
-          {/* Unscheduled Matches Queue Button */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setQueueOpen(true)}
-            className="h-8 px-2.5 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg flex items-center gap-1.5 cursor-pointer"
-          >
-            <Layers className="h-3.5 w-3.5 text-slate-500" />
-            <span>Trận chưa xếp</span>
-            <span className={`px-1.5 py-0.2 rounded text-[10px] font-black ${
-              unscheduledMatches.length > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-600'
-            }`}>
-              {unscheduledMatches.length}
-            </span>
-          </Button>
+            </Button>
+          </div>
         </div>
 
-        {/* Right: Zoom + Reset Rows + Clear All */}
+        {/* Right: Layout, Zoom & Reset */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Zoom Level Selector */}
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold text-slate-700">
@@ -2293,7 +2342,7 @@ export function CourtScheduleBoard({
                 key={z}
                 type="button"
                 onClick={() => setZoomLevel(z)}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
                   zoomLevel === z ? 'bg-white text-blue-700 shadow-2xs border border-slate-200' : 'hover:text-slate-900'
                 }`}
               >
@@ -2307,11 +2356,11 @@ export function CourtScheduleBoard({
             type="button"
             variant="outline"
             onClick={handleResetAllRowsEvenly}
-            className="h-8 px-2.5 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
+            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
             title="Đặt lại tất cả các mốc giờ về kích thước đều nhau"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Canh đều</span>
+            <RotateCcw className="h-3 w-3" />
+            <span className="text-[11px]">Canh đều</span>
           </Button>
 
           {/* Clear All Schedule */}
@@ -3014,16 +3063,30 @@ export function CourtScheduleBoard({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Bước nhảy thời gian mỗi ô (Duration / Slot)
-              </label>
-              <div className="grid grid-cols-5 gap-1.5">
-                {[15, 20, 30, 45, 60].map((step) => (
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700">
+                  Bước nhảy thời gian mỗi ô (Duration / Slot)
+                </label>
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] text-slate-400 font-medium">Tùy chỉnh:</span>
+                  <input
+                    type="number"
+                    min={5}
+                    max={180}
+                    value={tempStep}
+                    onChange={(e) => setTempStep(Math.max(5, Math.min(180, Number(e.target.value) || 15)))}
+                    className="w-14 h-6 px-1.5 text-center text-xs font-bold border border-slate-300 rounded-md bg-white text-blue-700"
+                  />
+                  <span className="text-[11px] text-slate-500 font-bold">phút</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+                {[5, 10, 15, 20, 25, 30, 45, 60].map((step) => (
                   <button
                     key={step}
                     type="button"
                     onClick={() => setTempStep(step)}
-                    className={`py-2 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                    className={`py-1.5 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                       tempStep === step
                         ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-2xs'
                         : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'

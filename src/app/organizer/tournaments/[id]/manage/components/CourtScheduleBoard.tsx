@@ -2980,15 +2980,15 @@ export function CourtScheduleBoard({
         </ModalContent>
       </Modal>
 
-      {/* RICH DESKTOP CONTEXT MENU (Chuột phải) */}
+      {/* RICH DESKTOP CONTEXT MENU (Chuột phải - Sang trọng, Sáng sủa, Đầy đủ tính năng) */}
       {contextMenu && (() => {
         const targetMatch = contextMenu.matchId ? displayMatches.find((m) => m.match.id === contextMenu.matchId) : undefined;
-        const menuX = Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 270 : contextMenu.x);
-        const menuY = Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 450 : contextMenu.y);
+        const menuX = Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 280 : contextMenu.x);
+        const menuY = Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 480 : contextMenu.y);
 
         return (
           <div
-            className="fixed z-50 min-w-[250px] max-w-[290px] rounded-xl bg-slate-900/98 text-slate-100 p-1.5 shadow-2xl border border-slate-700/80 backdrop-blur-md text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none"
+            className="fixed z-50 min-w-[260px] max-w-[300px] rounded-2xl bg-white/98 text-slate-900 p-1.5 shadow-2xl border border-slate-200/90 backdrop-blur-xl text-xs font-medium animate-in fade-in zoom-in-95 duration-100 select-none ring-1 ring-black/5"
             style={{
               left: Math.max(10, menuX),
               top: Math.max(10, menuY),
@@ -3000,19 +3000,19 @@ export function CourtScheduleBoard({
             }}
           >
             {/* Header info */}
-            <div className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
-              <span className="truncate flex items-center gap-1">
-                <Clock className="h-3 w-3 text-amber-400" />
+            <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-gradient-to-r from-slate-50 to-blue-50/40 border-b border-slate-100 rounded-t-xl text-xs font-bold text-slate-800">
+              <span className="truncate flex items-center gap-1.5 font-black text-slate-900">
+                <Clock className="h-3.5 w-3.5 text-blue-600" />
                 {contextMenu.courtName} • {contextMenu.timeStr}
               </span>
               {targetMatch && (
-                <span className="px-1 py-0.2 rounded bg-blue-500/20 text-blue-300 text-[10px] font-black border border-blue-500/30">
+                <span className="px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-800 text-[10px] font-black border border-blue-200 shadow-2xs">
                   Trận #{targetMatch.match.matchOrder || targetMatch.match.id.slice(-3)}
                 </span>
               )}
             </div>
 
-            <div className="py-1 space-y-0.5">
+            <div className="p-1 space-y-0.5">
               {/* If right-clicked on an existing Match Card */}
               {targetMatch ? (
                 <>
@@ -3023,13 +3023,15 @@ export function CourtScheduleBoard({
                       onOpenMatch(targetMatch.match.id);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-left font-bold"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-blue-50 text-slate-800 hover:text-blue-700 transition-colors cursor-pointer text-left font-bold"
                   >
                     <span className="flex items-center gap-2">
-                      <Eye className="h-3.5 w-3.5 text-blue-400" />
+                      <div className="h-6 w-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shadow-2xs">
+                        <Eye className="h-3.5 w-3.5" />
+                      </div>
                       Xem & Cập nhật tỉ số
                     </span>
-                    <ExternalLink className="h-3 w-3 opacity-60" />
+                    <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
                   </button>
 
                   {/* Cut match */}
@@ -3039,13 +3041,15 @@ export function CourtScheduleBoard({
                       handleCut();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
                   >
                     <span className="flex items-center gap-2">
-                      <Scissors className="h-3.5 w-3.5 text-indigo-400" />
+                      <div className="h-6 w-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-2xs">
+                        <Scissors className="h-3.5 w-3.5" />
+                      </div>
                       Cắt trận đấu
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">Ctrl+X</span>
+                    <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Ctrl+X</span>
                   </button>
 
                   {/* Copy match */}
@@ -3055,21 +3059,23 @@ export function CourtScheduleBoard({
                       handleCopy();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left"
                   >
                     <span className="flex items-center gap-2">
-                      <Copy className="h-3.5 w-3.5 text-blue-400" />
+                      <div className="h-6 w-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shadow-2xs">
+                        <Copy className="h-3.5 w-3.5" />
+                      </div>
                       Sao chép trận
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">Ctrl+C</span>
+                    <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Ctrl+C</span>
                   </button>
 
-                  <div className="h-px bg-slate-800 my-1" />
+                  <div className="h-px bg-slate-100 my-1" />
 
                   {/* Duration Quick Picker */}
-                  <div className="px-2.5 py-1">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1 mb-1">
-                      <Clock className="h-3 w-3 text-blue-400" />
+                  <div className="px-2.5 py-1 bg-slate-50/70 rounded-xl border border-slate-100">
+                    <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-500 flex items-center gap-1 mb-1.5">
+                      <Clock className="h-3 w-3 text-blue-600" />
                       Thời lượng trận:
                     </span>
                     <div className="grid grid-cols-4 gap-1">
@@ -3081,10 +3087,10 @@ export function CourtScheduleBoard({
                             handleSetMatchDuration(targetMatch.match.id, dur);
                             setContextMenu(null);
                           }}
-                          className={`px-1.5 py-1 rounded text-[11px] font-bold border transition-colors cursor-pointer text-center ${
+                          className={`px-1.5 py-1 rounded-lg text-[11px] font-black border transition-all cursor-pointer text-center ${
                             targetMatch.durationMinutes === dur
-                              ? 'bg-blue-600 text-white border-blue-500 font-black'
-                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                              : 'bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200'
                           }`}
                         >
                           {dur}p
@@ -3095,9 +3101,9 @@ export function CourtScheduleBoard({
 
                   {/* Move to another court */}
                   {courts.length > 1 && (
-                    <div className="px-2.5 py-1">
-                      <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1 mb-1">
-                        <ArrowRightLeft className="h-3 w-3 text-emerald-400" />
+                    <div className="px-2.5 py-1 bg-slate-50/70 rounded-xl border border-slate-100 mt-1">
+                      <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-500 flex items-center gap-1 mb-1.5">
+                        <ArrowRightLeft className="h-3 w-3 text-emerald-600" />
                         Chuyển sang sân:
                       </span>
                       <div className="flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
@@ -3111,7 +3117,7 @@ export function CourtScheduleBoard({
                                 handleMoveSingleMatchToCourt(targetMatch.match.id, c.id);
                                 setContextMenu(null);
                               }}
-                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-300 border border-slate-700 cursor-pointer"
+                              className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white hover:bg-emerald-600 hover:text-white text-slate-700 border border-slate-200 cursor-pointer transition-colors shadow-2xs"
                             >
                               {c.courtName}
                             </button>
@@ -3120,7 +3126,7 @@ export function CourtScheduleBoard({
                     </div>
                   )}
 
-                  <div className="h-px bg-slate-800 my-1" />
+                  <div className="h-px bg-slate-100 my-1" />
 
                   {/* Unassign / Remove from schedule */}
                   <button
@@ -3129,9 +3135,11 @@ export function CourtScheduleBoard({
                       handleUnassignSingleMatch(targetMatch.match.id);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-400 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer text-left font-semibold"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer text-left font-bold"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <div className="h-6 w-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shadow-2xs">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </div>
                     Hủy xếp (Đưa về hàng chờ)
                   </button>
                 </>
@@ -3146,13 +3154,15 @@ export function CourtScheduleBoard({
                         handlePaste();
                         setContextMenu(null);
                       }}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-emerald-600/30 text-emerald-300 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer text-left font-bold"
+                      className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition-all cursor-pointer text-left font-black shadow-2xs"
                     >
                       <span className="flex items-center gap-2">
-                        <Clipboard className="h-3.5 w-3.5" />
+                        <div className="h-6 w-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
+                          <Clipboard className="h-3.5 w-3.5" />
+                        </div>
                         Dán {clipboard.items.length} trận vào đây
                       </span>
-                      <span className="text-[10px] font-mono">Ctrl+V</span>
+                      <span className="text-[10px] font-mono font-bold text-emerald-700 bg-white px-1.5 py-0.5 rounded border border-emerald-300">Ctrl+V</span>
                     </button>
                   )}
 
@@ -3167,10 +3177,12 @@ export function CourtScheduleBoard({
                       }
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-left font-bold"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-blue-50 text-slate-800 hover:text-blue-700 transition-colors cursor-pointer text-left font-bold"
                   >
                     <span className="flex items-center gap-2">
-                      <Plus className="h-3.5 w-3.5 text-blue-400" />
+                      <div className="h-6 w-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shadow-2xs">
+                        <Plus className="h-3.5 w-3.5" />
+                      </div>
                       Chọn trận xếp vào ô này...
                     </span>
                   </button>
@@ -3200,13 +3212,15 @@ export function CourtScheduleBoard({
                       }
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer text-left disabled:opacity-40"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-amber-50 text-slate-800 hover:text-amber-900 transition-colors cursor-pointer text-left disabled:opacity-40"
                   >
-                    <span className="flex items-center gap-2">
-                      <Zap className="h-3.5 w-3.5 text-amber-400" />
+                    <span className="flex items-center gap-2 font-bold">
+                      <div className="h-6 w-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shadow-2xs">
+                        <Zap className="h-3.5 w-3.5" />
+                      </div>
                       Tự động điền trận tiếp theo
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">
+                    <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                       {unscheduledMatches.length} còn
                     </span>
                   </button>
@@ -3218,16 +3232,18 @@ export function CourtScheduleBoard({
                       handleBlockSelection();
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-amber-300 transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-left font-semibold"
                   >
-                    <Lock className="h-3.5 w-3.5 text-amber-400" />
+                    <div className="h-6 w-6 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shadow-2xs">
+                      <Lock className="h-3.5 w-3.5" />
+                    </div>
                     Khóa khung giờ này
                   </button>
 
-                  <div className="h-px bg-slate-800 my-1" />
+                  <div className="h-px bg-slate-100 my-1" />
 
                   {/* Undo & Redo */}
-                  <div className="grid grid-cols-2 gap-1">
+                  <div className="grid grid-cols-2 gap-1 px-1">
                     <button
                       type="button"
                       disabled={historyIndex <= 0}
@@ -3235,9 +3251,9 @@ export function CourtScheduleBoard({
                         handleUndo();
                         setContextMenu(null);
                       }}
-                      className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] disabled:opacity-40 cursor-pointer font-bold"
+                      className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] disabled:opacity-40 cursor-pointer font-bold border border-slate-200 transition-colors"
                     >
-                      <RotateCcw className="h-3 w-3" />
+                      <RotateCcw className="h-3 w-3 text-blue-600" />
                       Hoàn tác
                     </button>
                     <button
@@ -3247,9 +3263,9 @@ export function CourtScheduleBoard({
                         handleRedo();
                         setContextMenu(null);
                       }}
-                      className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] disabled:opacity-40 cursor-pointer font-bold"
+                      className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] disabled:opacity-40 cursor-pointer font-bold border border-slate-200 transition-colors"
                     >
-                      <RotateCw className="h-3 w-3" />
+                      <RotateCw className="h-3 w-3 text-blue-600" />
                       Làm lại
                     </button>
                   </div>

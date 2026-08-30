@@ -279,8 +279,8 @@ export function CourtScheduleBoard({
   const locale = useLocale();
 
   // Dynamic Timeline Configuration
-  const [operatingStart, setOperatingStart] = useState(defaultOperatingStart || '08:00');
-  const [operatingEnd, setOperatingEnd] = useState(defaultOperatingEnd || '22:00');
+  const [operatingStart, setOperatingStart] = useState(defaultOperatingStart || '06:00');
+  const [operatingEnd, setOperatingEnd] = useState(defaultOperatingEnd || '24:00');
   const [defaultStepMinutes, setDefaultStepMinutes] = useState(15);
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [timeSettingsOpen, setTimeSettingsOpen] = useState(false);
@@ -383,12 +383,13 @@ export function CourtScheduleBoard({
   // Dynamic Excel Row Model
   const baseStartMinute = useMemo(() => {
     const [h, m] = operatingStart.split(':').map(Number);
-    return (h || 8) * 60 + (m || 0);
+    return (h ?? 6) * 60 + (m || 0);
   }, [operatingStart]);
 
   const baseEndMinute = useMemo(() => {
     const [h, m] = operatingEnd.split(':').map(Number);
-    return (h || 22) * 60 + (m || 0);
+    if (h === 0 || h === 24) return 24 * 60;
+    return (h || 24) * 60 + (m || 0);
   }, [operatingEnd]);
 
   const defaultTotalSlots = useMemo(() => {
@@ -1502,9 +1503,9 @@ export function CourtScheduleBoard({
               );
             })}
 
-            {/* Time Labels Sidebar (1 line = 1 cột mốc thời gian) */}
+            {/* Time Labels Sidebar (1 line = 1 cột mốc thời gian, sticky on horizontal scroll) */}
             <div
-              className="relative border-r border-amber-300 bg-[#fef08a]"
+              className="sticky left-0 z-20 border-r border-amber-300 bg-[#fef08a] shadow-xs"
               style={{ height: timelineRows.totalHeight }}
             >
               {timelineRows.rows.map((row) => {
@@ -1553,7 +1554,7 @@ export function CourtScheduleBoard({
 
                           const initDurs: Record<number, number> = {};
                           for (const idx of affected) {
-                            initDurs[idx] = rowDurations[idx] ?? 30;
+                            initDurs[idx] = rowDurations[idx] ?? defaultStepMinutes;
                           }
 
                           setRowResizeState({
@@ -1570,12 +1571,14 @@ export function CourtScheduleBoard({
                       </div>
                     </div>
 
-                    {/* Centered Time Label right on the line */}
+                    {/* Centered Time Label: Row 0 has top-1 so it is never clipped */}
                     <div
-                      className={`absolute -translate-y-1/2 left-0 right-0 px-1 text-center font-extrabold text-[11px] text-slate-800 pointer-events-none select-none z-10`}
-                      style={{ top: row.top }}
+                      className={`absolute ${row.index === 0 ? 'top-1' : '-translate-y-1/2'} left-0 right-0 px-0.5 text-center font-extrabold text-[11px] text-slate-800 pointer-events-none select-none z-10`}
+                      style={row.index === 0 ? undefined : { top: row.top }}
                     >
-                      {row.startTimeStr}
+                      <span className="inline-block bg-amber-100/95 px-1 py-0.5 rounded text-[11px] font-black text-slate-900 border border-amber-300/80 shadow-2xs">
+                        {row.startTimeStr}
+                      </span>
                     </div>
                   </React.Fragment>
                 );
@@ -1587,7 +1590,7 @@ export function CourtScheduleBoard({
                   className="absolute inset-x-0 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20"
                   style={{ top: timelineRows.totalHeight }}
                 >
-                  <span className="bg-slate-50/95 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-800 tracking-tight shadow-2xs border border-slate-200/80">
+                  <span className="bg-slate-50/95 px-1.5 py-0.5 rounded text-[11px] font-black text-slate-900 tracking-tight shadow-2xs border border-slate-200/80">
                     {timelineRows.rows[timelineRows.rows.length - 1].endTimeStr}
                   </span>
                 </div>
@@ -2011,8 +2014,8 @@ export function CourtScheduleBoard({
               type="button"
               variant="outline"
               onClick={() => {
-                setTempStart(defaultOperatingStart || '08:00');
-                setTempEnd(defaultOperatingEnd || '22:00');
+                setTempStart(defaultOperatingStart || '06:00');
+                setTempEnd(defaultOperatingEnd || '24:00');
                 setTempStep(15);
                 setTempMinutesPerSet(15);
               }}

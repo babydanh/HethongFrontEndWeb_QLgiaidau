@@ -341,7 +341,7 @@ export function CourtScheduleBoard({
     const persisted = Boolean(match.scheduledAt && match.courtId);
     const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
     const draft = draftAssignments[match.id];
-    const matchDuration = draft?.durationMinutes ?? match.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : defaultStepMinutes);
+    const matchDuration = draft?.durationMinutes ?? ((match as unknown as Record<string, unknown>).durationMinutes as number | undefined) ?? (preview ? preview.durationMinutes + preview.bufferMinutes : defaultStepMinutes);
 
     return {
       match,

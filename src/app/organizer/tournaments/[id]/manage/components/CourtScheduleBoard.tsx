@@ -1534,6 +1534,47 @@ export function CourtScheduleBoard({
     setSelectionRange(null);
   };
 
+  // Set duration of all matches / rows in the selection range
+  const handleSetSelectionDuration = (durationMinutes: number) => {
+    if (!selectionRange) return;
+    const selectedCourtIds = new Set(
+      courts.slice(selectionRange.startCourtIndex, selectionRange.endCourtIndex + 1).map((c) => c.id),
+    );
+    const minTimestamp = timelineRows.rows[selectionRange.startRowIndex]?.startTimestamp ?? 0;
+    const maxTimestamp = timelineRows.rows[selectionRange.endRowIndex]?.endTimestamp ?? Infinity;
+
+    const matchesInSelection = displayMatches.filter((item) => {
+      if (!item.courtId || !item.scheduledAt || !selectedCourtIds.has(item.courtId)) return false;
+      const t = new Date(item.scheduledAt).getTime();
+      return t >= minTimestamp && t < maxTimestamp;
+    });
+
+    const newCustoms = { ...customMatchDurations };
+    const newDrafts = { ...draftAssignments };
+
+    for (const item of matchesInSelection) {
+      newCustoms[item.match.id] = durationMinutes;
+      newDrafts[item.match.id] = {
+        courtId: item.courtId!,
+        scheduledAt: item.scheduledAt!,
+        durationMinutes,
+      };
+    }
+
+    // Also update rowDurations for selected rows so the grid rows expand/contract accordingly
+    const newRowDurations = { ...rowDurations };
+    for (let r = selectionRange.startRowIndex; r <= selectionRange.endRowIndex; r++) {
+      newRowDurations[r] = durationMinutes;
+    }
+
+    setCustomMatchDurations(newCustoms);
+    setRowDurations(newRowDurations);
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+    setSaveToast(`⏱️ Đã đặt thời lượng ${durationMinutes}p cho vùng chọn (${matchesInSelection.length} trận)!`);
+    setTimeout(() => setSaveToast(null), 2500);
+  };
+
   // Canh đều thời gian các dòng được chọn (Distribute row durations evenly)
   const handleDistributeRowsEvenly = () => {
     if (!selectionRange) return;
@@ -1707,7 +1748,14 @@ export function CourtScheduleBoard({
           event.preventDefault();
           event.stopPropagation();
           const cIdx = courts.findIndex((c) => c.id === item.courtId);
-          if (cIdx >= 0) {
+          const isInsideSelection =
+            selectionRange &&
+            cIdx >= selectionRange.startCourtIndex &&
+            cIdx <= selectionRange.endCourtIndex &&
+            matchRowIndex >= selectionRange.startRowIndex &&
+            matchRowIndex <= selectionRange.endRowIndex;
+
+          if (!isInsideSelection && cIdx >= 0) {
             setSelectionRange({
               startCourtIndex: cIdx,
               endCourtIndex: cIdx,
@@ -1715,6 +1763,12 @@ export function CourtScheduleBoard({
               endRowIndex: matchRowIndex,
             });
           }
+
+          const hasMultiSelection =
+            selectionRange &&
+            (selectionRange.startCourtIndex !== selectionRange.endCourtIndex ||
+             selectionRange.startRowIndex !== selectionRange.endRowIndex);
+
           setContextMenu({
             x: event.clientX,
             y: event.clientY,
@@ -1723,7 +1777,7 @@ export function CourtScheduleBoard({
             courtIndex: cIdx >= 0 ? cIdx : 0,
             rowIndex: matchRowIndex,
             timeStr: matchTimeStr,
-            matchId: item.match.id,
+            matchId: hasMultiSelection ? undefined : item.match.id,
           });
         }}
         className={`group w-full rounded-xl border text-left transition-all cursor-pointer ${
@@ -2195,26 +2249,44 @@ export function CourtScheduleBoard({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Pick Matches button */}
+            <Button
+              type="button"
+              onClick={() => openAssignmentPicker()}
+              className="h-7 px-2.5 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="h-3 w-3" />
+              Chọn trận xếp vào...
+            </Button>
+
+            {/* Quick Fill (Left-to-Right) */}
             <Button
               type="button"
               onClick={handleBulkScheduleSelection}
               disabled={unscheduledMatches.length === 0}
-              className="h-7 px-2.5 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+              className="h-7 px-2.5 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+              title="Điền nhanh các trận theo thứ tự từ trái sang phải"
             >
-              <Zap className="h-3 w-3" />
-              Điền nhanh các trận
+              <Zap className="h-3 w-3 text-amber-300" />
+              Điền nhanh ({unscheduledMatches.length})
             </Button>
 
-            <Button
-              type="button"
-              onClick={handleDistributeRowsEvenly}
-              className="h-7 px-2.5 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
-              title="Canh đều thời lượng các dòng được chọn"
-            >
-              <ChevronsUpDown className="h-3 w-3" />
-              Canh đều các dòng
-            </Button>
+            {/* Batch Duration Picker */}
+            <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-0.5 text-[11px] font-bold">
+              <span className="px-1 text-[10px] text-slate-400">Thời lượng:</span>
+              {[15, 30, 45, 60].map((dur) => (
+                <button
+                  key={dur}
+                  type="button"
+                  onClick={() => handleSetSelectionDuration(dur)}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-slate-700 text-slate-200 hover:text-white transition-colors cursor-pointer"
+                  title={`Đặt thời lượng ${dur} phút cho tất cả các trận trong vùng chọn`}
+                >
+                  {dur}p
+                </button>
+              ))}
+            </div>
 
             {/* Cut / Copy / Paste Buttons */}
             <Button
@@ -2224,7 +2296,7 @@ export function CourtScheduleBoard({
               title="Cắt các trận trong vùng chọn (Phím tắt: Ctrl + X)"
             >
               <Scissors className="h-3 w-3 text-indigo-400" />
-              <span>Cắt (Ctrl+X)</span>
+              <span>Cắt</span>
             </Button>
 
             <Button
@@ -2234,7 +2306,7 @@ export function CourtScheduleBoard({
               title="Sao chép các trận trong vùng chọn (Phím tắt: Ctrl + C)"
             >
               <Copy className="h-3 w-3 text-blue-400" />
-              <span>Sao chép (Ctrl+C)</span>
+              <span>Chép</span>
             </Button>
 
             {clipboard && (
@@ -2249,51 +2321,69 @@ export function CourtScheduleBoard({
               </Button>
             )}
 
+            {/* Move selected matches to another court */}
+            {courts.length > 1 && (
+              <div className="relative">
+                <select
+                  onChange={(e) => {
+                    const targetCourtId = e.target.value;
+                    if (!targetCourtId) return;
+                    handleMoveSelectionToCourt(targetCourtId);
+                    e.target.value = '';
+                  }}
+                  defaultValue=""
+                  className="h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-bold px-2 cursor-pointer outline-hidden hover:bg-slate-700"
+                >
+                  <option value="" disabled>
+                    Chuyển sang sân...
+                  </option>
+                  {courts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      Sang {c.courtName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Distribute rows evenly */}
+            <Button
+              type="button"
+              onClick={handleDistributeRowsEvenly}
+              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
+              title="Canh đều thời lượng các dòng được chọn"
+            >
+              <ChevronsUpDown className="h-3 w-3" />
+              <span>Canh đều</span>
+            </Button>
+
+            {/* Lock slot */}
             <Button
               type="button"
               onClick={handleBlockSelection}
-              className="h-7 px-2.5 text-[11px] font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-lg shadow-xs flex items-center gap-1.5"
+              className="h-7 px-2 text-[11px] font-bold bg-slate-800 hover:bg-amber-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
+              title="Khóa các khung giờ trong vùng chọn"
             >
               <Lock className="h-3 w-3" />
-              Khóa giờ
+              <span>Khóa</span>
             </Button>
 
-            {/* Move selected matches to another court */}
-            <div className="relative">
-              <select
-                onChange={(e) => {
-                  const targetCourtId = e.target.value;
-                  if (!targetCourtId) return;
-                  handleMoveSelectionToCourt(targetCourtId);
-                  e.target.value = '';
-                }}
-                defaultValue=""
-                className="h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-bold px-2 cursor-pointer outline-hidden hover:bg-slate-700"
-              >
-                <option value="" disabled>
-                  Chuyển sang sân khác...
-                </option>
-                {courts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    Chuyển sang {c.courtName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            {/* Delete / Clear matches in selection */}
             <Button
               type="button"
               onClick={handleClearSelectionMatches}
-              className="h-7 px-2 text-[11px] font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1"
-              title="Xóa các trận trong vùng chọn"
+              className="h-7 px-2 text-[11px] font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white rounded-lg shadow-xs flex items-center gap-1 border border-slate-700 cursor-pointer"
+              title="Hủy xếp các trận trong vùng chọn (Phím tắt: Delete / Backspace)"
             >
               <Trash2 className="h-3 w-3" />
+              <span>Gỡ (Del)</span>
             </Button>
 
             <button
               type="button"
               onClick={() => setSelectionRange(null)}
-              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800"
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              title="Bỏ chọn (Esc)"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -3315,6 +3405,54 @@ export function CourtScheduleBoard({
                       </span>
                       <span className="text-[10px] font-mono font-medium text-emerald-700">Ctrl+V</span>
                     </button>
+                  )}
+
+                  <div className="h-px bg-slate-100 my-1" />
+
+                  {/* Batch Duration Picker */}
+                  <div className="px-2.5 py-1">
+                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-1">
+                      Đặt thời lượng cả vùng:
+                    </span>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[15, 30, 45, 60].map((dur) => (
+                        <button
+                          key={dur}
+                          type="button"
+                          onClick={() => {
+                            handleSetSelectionDuration(dur);
+                            setContextMenu(null);
+                          }}
+                          className="py-1 rounded text-[11px] font-bold border transition-all cursor-pointer text-center bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200"
+                        >
+                          {dur}p
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Move selection to another court */}
+                  {courts.length > 1 && (
+                    <div className="px-2.5 py-1">
+                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-1">
+                        Chuyển tất cả sang sân:
+                      </span>
+                      <div className="flex flex-wrap gap-1 max-h-[72px] overflow-y-auto">
+                        {courts.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              handleMoveSelectionToCourt(c.id);
+                              setContextMenu(null);
+                            }}
+                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 border border-slate-200 cursor-pointer transition-colors"
+                          >
+                            {c.courtName}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
 
                   <div className="h-px bg-slate-100 my-1" />

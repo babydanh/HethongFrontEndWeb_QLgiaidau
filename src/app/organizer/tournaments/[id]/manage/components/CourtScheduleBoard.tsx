@@ -7,6 +7,8 @@ import {
   CalendarClock,
   Check,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   ChevronsUpDown,
   Clipboard,
   Clock,
@@ -508,6 +510,13 @@ export function CourtScheduleBoard({
   const [queueTargetCourtId, setQueueTargetCourtId] = useState<string>(courts[0]?.id || '');
   const [queueTargetRowIndex, setQueueTargetRowIndex] = useState<number>(0);
   const boardRef = useRef<HTMLDivElement>(null);
+  const boardScrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollCourts = (direction: 'left' | 'right') => {
+    if (!boardScrollContainerRef.current) return;
+    const offset = direction === 'left' ? -380 : 380;
+    boardScrollContainerRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+  };
 
   // Right-Click Context Menu State
   const [contextMenu, setContextMenu] = useState<{
@@ -2162,7 +2171,7 @@ export function CourtScheduleBoard({
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs">
         {/* Left: Functional Groups */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* GROUP 1: LƯU & LỊCH SỬ (File & History) */}
+          {/* GROUP 1: LƯU & TỰ LƯU & LỊCH SỬ (File & History) */}
           <div className="flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
             <Button
               type="button"
@@ -2183,6 +2192,26 @@ export function CourtScheduleBoard({
                 </span>
               )}
             </Button>
+
+            {/* Auto-Save Live Status Indicator */}
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-semibold select-none shadow-2xs">
+              {autoSaveStatus === 'saving' ? (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                  <span className="text-amber-700 font-bold">Đang lưu...</span>
+                </>
+              ) : autoSaveStatus === 'unsaved' ? (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="text-blue-700 font-bold">Đang xếp...</span>
+                </>
+              ) : (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="text-emerald-700 font-bold">Tự lưu: Bật</span>
+                </>
+              )}
+            </div>
 
             {/* Undo / Redo buttons */}
             <button
@@ -2245,11 +2274,40 @@ export function CourtScheduleBoard({
 
           <div className="h-5 w-px bg-slate-200" />
 
-          {/* GROUP 3: THỜI LƯỢNG & ĐỊNH DẠNG (Format Duration & Slots) */}
+          {/* GROUP 3: ĐỊNH DẠNG SET & THỜI LƯỢNG (Format by Sets & Duration) */}
           <div className="flex items-center gap-1.5 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
-            {/* Quick Duration Pills */}
+            {/* Set Formats Presets: BO1, BO3, BO5 */}
+            <div className="flex items-center gap-0.5 px-1 border-r border-slate-200">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Set:</span>
+              {[
+                { label: 'BO1', mins: 15 },
+                { label: 'BO3', mins: 45 },
+                { label: 'BO5', mins: 75 },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    if (selectionRange) {
+                      handleSetSelectionDuration(item.mins);
+                    } else {
+                      setDefaultStepMinutes(item.mins);
+                      setRowDurations({});
+                      setSaveToast(`Đã chọn định dạng ${item.label} (${item.mins}p/trận)!`);
+                      setTimeout(() => setSaveToast(null), 2500);
+                    }
+                  }}
+                  className="h-6 px-1.5 rounded text-[11px] font-bold bg-white hover:bg-blue-50 text-blue-700 border border-blue-200/80 transition-all cursor-pointer shadow-2xs"
+                  title={selectionRange ? `Đặt ${item.label} (${item.mins}p) cho vùng chọn` : `Đặt mặc định ${item.label} (${item.mins}p) cho toàn bảng`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Minutes Pills */}
             <div className="flex items-center gap-0.5 px-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Thời lượng:</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Phút:</span>
               {[10, 15, 20, 30, 45, 60].map((dur) => (
                 <button
                   key={dur}
@@ -2332,8 +2390,32 @@ export function CourtScheduleBoard({
           </div>
         </div>
 
-        {/* Right: Layout, Zoom & Reset */}
+        {/* Right: Court Scrolling + Layout, Zoom & Reset */}
         <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Quick Court Scroll Navigation Buttons (◀ Sân 1-3 | Sân 4-6 ▶) */}
+          {courts.length > 3 && (
+            <div className="flex items-center gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => handleScrollCourts('left')}
+                className="h-6 px-1.5 rounded text-[10px] font-bold text-slate-700 hover:bg-white hover:text-blue-700 flex items-center gap-0.5 transition-colors cursor-pointer"
+                title="Cuộn sang các sân bên trái"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>Sân trước</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScrollCourts('right')}
+                className="h-6 px-1.5 rounded text-[10px] font-bold text-slate-700 hover:bg-white hover:text-blue-700 flex items-center gap-0.5 transition-colors cursor-pointer"
+                title="Cuộn sang các sân bên phải"
+              >
+                <span>Sân sau</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Zoom Level Selector */}
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold text-slate-700">
             <span className="px-1.5 text-[10px] text-slate-400">Thu phóng:</span>
@@ -2369,7 +2451,7 @@ export function CourtScheduleBoard({
             variant="outline"
             onClick={handleClearAllSchedule}
             disabled={scheduledMatches.length === 0}
-            className="h-8 px-2 text-xs font-semibold border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg cursor-pointer"
+            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg cursor-pointer"
             title="Xóa toàn bộ lịch thi đấu"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -2377,18 +2459,18 @@ export function CourtScheduleBoard({
         </div>
       </div>
 
-
       {courts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-xs text-slate-500">
           Chưa có sân nào được thiết lập
         </div>
       ) : (
         <div
+          ref={boardScrollContainerRef}
           className={`${
             isFullscreen
               ? 'h-[calc(100vh-64px)]'
               : 'h-[calc(100vh-170px)] min-h-[580px]'
-          } overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1`}
+          } overflow-x-auto overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1 scrollbar-thin scrollbar-thumb-slate-300 hover:scrollbar-thumb-slate-400`}
           role="region"
           aria-label={t('matchSchedule.court')}
           tabIndex={0}

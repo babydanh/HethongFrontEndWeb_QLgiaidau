@@ -264,18 +264,109 @@ function getShortTwoWords(name: string): string {
   return parts.slice(-2).join(' ');
 }
 
-function formatCompactPlayers(p?: { teamName?: string | null; name?: string | null } | null): {
-  players: string[];
+function detectSportAndFormat(
+  match: ScheduleBoardMatch,
+  division?: { name?: string; matchFormat?: string; format?: string; sportType?: string } | null,
+) {
+  const divName = (division?.name || '').toLowerCase();
+  const formatStr = (division?.matchFormat || division?.format || '').toLowerCase();
+  const sportStr = (division?.sportType || '').toLowerCase();
+
+  const isFootball =
+    sportStr.includes('football') ||
+    sportStr.includes('soccer') ||
+    sportStr.includes('futsal') ||
+    divName.includes('bóng đá') ||
+    divName.includes('football') ||
+    divName.includes('futsal') ||
+    divName.includes('sân 5') ||
+    divName.includes('sân 7') ||
+    divName.includes('sân 11');
+
+  const isSingles =
+    !isFootball &&
+    (divName.includes('đơn') ||
+      divName.includes('singles') ||
+      formatStr.includes('single') ||
+      formatStr === '1v1');
+
+  const isDoubles =
+    !isFootball &&
+    !isSingles &&
+    (divName.includes('đôi') ||
+      divName.includes('doubles') ||
+      divName.includes('nam nữ') ||
+      formatStr.includes('double') ||
+      formatStr === '2v2');
+
+  return { isFootball, isSingles, isDoubles };
+}
+
+function formatCompetitorDisplay(
+  p?: { teamName?: string | null; name?: string | null; logo?: string | null } | null,
+  isFootball = false,
+  isSingles = false,
+): {
+  avatars: Array<{ initial: string; bg: string }>;
   displayLabel: string;
+  fullName: string;
 } {
-  const players = getParticipantPlayers(p);
-  if (players.length === 1 && players[0] === 'Chờ xác định') {
-    return { players: ['?'], displayLabel: 'Chờ xác định' };
+  if (!p) {
+    return {
+      avatars: [{ initial: '?', bg: 'bg-slate-100 border-slate-300 text-slate-600' }],
+      displayLabel: 'Chờ xác định',
+      fullName: 'Chờ xác định',
+    };
   }
-  const shortNames = players.map(getShortTwoWords);
+
+  const rawFull = (p.teamName || p.name || 'Chờ xác định').trim();
+
+  if (isFootball) {
+    const words = rawFull.split(/\s+/).filter(Boolean);
+    const shortLabel = words.length > 3 ? words.slice(-2).join(' ') : rawFull;
+    const initial =
+      words.length >= 2
+        ? (words[0][0] + words[1][0]).toUpperCase()
+        : rawFull.slice(0, 2).toUpperCase();
+
+    return {
+      avatars: [{ initial, bg: 'bg-emerald-100 border-emerald-300 text-emerald-800' }],
+      displayLabel: shortLabel,
+      fullName: rawFull,
+    };
+  }
+
+  if (isSingles) {
+    const shortName = getShortTwoWords(rawFull);
+    const initial = shortName.charAt(0).toUpperCase();
+
+    return {
+      avatars: [{ initial, bg: 'bg-blue-100 border-blue-300 text-blue-800' }],
+      displayLabel: shortName,
+      fullName: rawFull,
+    };
+  }
+
+  // Doubles / Pairs (2 players)
+  const players = getParticipantPlayers(p);
+  if (players.length >= 2) {
+    const shortNames = players.map(getShortTwoWords);
+    return {
+      avatars: [
+        { initial: players[0].charAt(0).toUpperCase(), bg: 'bg-orange-100 border-orange-300 text-orange-800' },
+        { initial: players[1].charAt(0).toUpperCase(), bg: 'bg-amber-100 border-amber-300 text-amber-800' },
+      ],
+      displayLabel: shortNames.join(' / '),
+      fullName: rawFull,
+    };
+  }
+
+  // Default: 1 player or team
+  const shortName = getShortTwoWords(rawFull);
   return {
-    players,
-    displayLabel: shortNames.join(' / '),
+    avatars: [{ initial: shortName.charAt(0).toUpperCase(), bg: 'bg-blue-100 border-blue-300 text-blue-800' }],
+    displayLabel: shortName,
+    fullName: rawFull,
   };
 }
 
@@ -1100,9 +1191,10 @@ export function CourtScheduleBoard({
     const maxRound = maxRoundByDivision.get(divId) || 1;
     const roundLabelStr = getAccurateRoundLabel(item.match, maxRound);
     const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
+    const { isFootball, isSingles, isDoubles } = detectSportAndFormat(item.match, division);
     const setList = extractSetScores(item.match);
-    const c1 = formatCompactPlayers(item.match.participant1);
-    const c2 = formatCompactPlayers(item.match.participant2);
+    const c1 = formatCompetitorDisplay(item.match.participant1, isFootball, isSingles);
+    const c2 = formatCompetitorDisplay(item.match.participant2, isFootball, isSingles);
 
     // Determine status & styling
     const rawStatus = String((item.match as unknown as Record<string, unknown>).status || '').toUpperCase();
@@ -1128,7 +1220,7 @@ export function CourtScheduleBoard({
     const cardHeight = Math.max(48, effectiveDuration * currentPixelsPerMinute - 4);
     const matchTimeStr = matchingRow.startTimeStr;
 
-    const boFormat = getMatchBestOfFormat(item.match, division);
+    const boFormat = isFootball ? `${effectiveDuration}P` : getMatchBestOfFormat(item.match, division);
 
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
 
@@ -1171,20 +1263,22 @@ export function CourtScheduleBoard({
         }
       >
         <div className="flex h-full flex-col justify-between overflow-hidden pointer-events-none">
-          {/* Header Row: DIVISION NAME | BO FORMAT | 🕒 Time | ⏱️ Duration */}
+          {/* Header Row: DIVISION NAME | FORMAT BADGE (BO1/BO3/BO5 or 90P) | 🕒 Time | ⏱️ Duration */}
           <div className="flex items-center justify-between gap-1 border-b border-slate-200/80 pb-0.5 text-xs font-black shrink-0">
             <div className="flex items-center gap-1.5 min-w-0">
               <span
                 className={`truncate uppercase tracking-tight text-[11px] ${
-                  isCompleted ? 'text-slate-600 font-bold' : 'text-blue-700 font-black'
+                  isCompleted ? 'text-slate-600 font-bold' : isFootball ? 'text-emerald-700 font-black' : 'text-blue-700 font-black'
                 }`}
               >
-                {(division?.name || 'NỘI DUNG').toUpperCase()}
+                {(division?.name || (isFootball ? 'BÓNG ĐÁ' : 'NỘI DUNG')).toUpperCase()}
               </span>
               <span
                 className={`px-1.5 py-0.2 rounded text-[10px] font-black shrink-0 ${
                   isCompleted
                     ? 'bg-slate-200 text-slate-600 border border-slate-300'
+                    : isFootball
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                 }`}
               >
@@ -1198,7 +1292,9 @@ export function CourtScheduleBoard({
                     ? 'text-slate-600 bg-slate-200/70 border-slate-300'
                     : isLive
                     ? 'text-amber-800 bg-amber-100 border-amber-300 animate-pulse'
-                    : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                    : isFootball
+                    ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                    : 'text-blue-800 bg-blue-50 border-blue-200'
                 }`}
               >
                 <Clock className="h-3 w-3" />
@@ -1210,25 +1306,41 @@ export function CourtScheduleBoard({
             </div>
           </div>
 
-          {/* Competitor 1 Row: Overlapping Avatars + 2-word Name + Set Scores */}
+          {/* Competitor 1 Row */}
           <div className="flex items-center justify-between gap-1.5 min-w-0 py-0.5">
             <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
               <div className="flex -space-x-1.5 shrink-0">
-                {c1.players.map((player, idx) => (
+                {c1.avatars.map((av, idx) => (
                   <span
                     key={idx}
-                    className="h-5 w-5 rounded-full bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10"
+                    className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10 ${av.bg}`}
                   >
-                    {player.charAt(0).toUpperCase()}
+                    {av.initial}
                   </span>
                 ))}
               </div>
-              <span className="truncate text-xs font-bold text-slate-900" title={getParticipantName(item.match.participant1)}>
+              <span className="truncate text-xs font-bold text-slate-900" title={c1.fullName}>
                 {c1.displayLabel}
               </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              {setList.length > 0 ? (
+              {isFootball ? (
+                setList.length > 0 ? (
+                  <span
+                    className={`min-w-[24px] h-[22px] px-1.5 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
+                      Number(setList[0]?.s1) > Number(setList[0]?.s2)
+                        ? 'bg-emerald-600 text-white border-emerald-700'
+                        : 'bg-white text-slate-800 border-slate-300'
+                    }`}
+                  >
+                    {setList[0]?.s1}
+                  </span>
+                ) : (
+                  <span className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-slate-50 text-xs font-bold text-slate-400 border border-slate-200">
+                    -
+                  </span>
+                )
+              ) : setList.length > 0 ? (
                 setList.map((s, idx) => {
                   const isWinner = Number(s.s1) > Number(s.s2);
                   return (
@@ -1250,25 +1362,41 @@ export function CourtScheduleBoard({
             </div>
           </div>
 
-          {/* Competitor 2 Row: Overlapping Avatars + 2-word Name + Set Scores */}
+          {/* Competitor 2 Row */}
           <div className="flex items-center justify-between gap-1.5 min-w-0 py-0.5">
             <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
               <div className="flex -space-x-1.5 shrink-0">
-                {c2.players.map((player, idx) => (
+                {c2.avatars.map((av, idx) => (
                   <span
                     key={idx}
-                    className="h-5 w-5 rounded-full bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10"
+                    className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10 ${av.bg}`}
                   >
-                    {player.charAt(0).toUpperCase()}
+                    {av.initial}
                   </span>
                 ))}
               </div>
-              <span className="truncate text-xs font-bold text-slate-900" title={getParticipantName(item.match.participant2)}>
+              <span className="truncate text-xs font-bold text-slate-900" title={c2.fullName}>
                 {c2.displayLabel}
               </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              {setList.length > 0 ? (
+              {isFootball ? (
+                setList.length > 0 ? (
+                  <span
+                    className={`min-w-[24px] h-[22px] px-1.5 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
+                      Number(setList[0]?.s2) > Number(setList[0]?.s1)
+                        ? 'bg-emerald-600 text-white border-emerald-700'
+                        : 'bg-white text-slate-800 border-slate-300'
+                    }`}
+                  >
+                    {setList[0]?.s2}
+                  </span>
+                ) : (
+                  <span className="min-w-[24px] h-[22px] flex items-center justify-center rounded bg-slate-50 text-xs font-bold text-slate-400 border border-slate-200">
+                    -
+                  </span>
+                )
+              ) : setList.length > 0 ? (
                 setList.map((s, idx) => {
                   const isWinner = Number(s.s2) > Number(s.s1);
                   return (

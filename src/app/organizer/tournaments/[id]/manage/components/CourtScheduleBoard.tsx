@@ -212,29 +212,12 @@ function getMatchBestOfFormat(match: ScheduleBoardMatch, division?: { name?: str
   const matchConfig = (m.matchConfig || m.rules || {}) as Record<string, unknown>;
   const roundConfig = (division?.roundConfig || {}) as Record<string, unknown>;
 
-  const setsToWin = Number(
-    matchConfig.setsToWin ?? matchConfig.sets_to_win ?? roundConfig.setsToWin ?? roundConfig.sets_to_win ?? roundConfig.max_sets ?? 0,
-  );
-  const bestOf = Number(
-    matchConfig.bestOf ?? matchConfig.best_of ?? roundConfig.bestOf ?? roundConfig.best_of ?? 0,
-  );
+  const setsToWin = Number(matchConfig.setsToWin ?? matchConfig.sets_to_win ?? 0);
+  const bestOf = Number(matchConfig.bestOf ?? matchConfig.best_of ?? roundConfig.bestOf ?? roundConfig.best_of ?? 0);
 
-  if (bestOf === 1 || setsToWin === 1) return 'BO1';
-  if (bestOf === 3 || setsToWin === 2) return 'BO3';
   if (bestOf === 5 || setsToWin === 3) return 'BO5';
-  if (Array.isArray(m.sets) && m.sets.length > 1) return 'BO3';
+  if (bestOf === 3 || setsToWin === 2) return 'BO3';
   return 'BO1';
-}
-
-function getMatchDurationFromFormat(
-  match: ScheduleBoardMatch,
-  division?: { name?: string; roundConfig?: unknown } | null,
-  minutesPerSet = 15,
-): number {
-  const bo = getMatchBestOfFormat(match, division);
-  if (bo === 'BO5') return minutesPerSet * 5; // e.g. 75m
-  if (bo === 'BO3') return minutesPerSet * 3; // e.g. 45m
-  return minutesPerSet * 1; // BO1 = 15m
 }
 
 function extractSetScores(match: ScheduleBoardMatch) {
@@ -358,18 +341,17 @@ export function CourtScheduleBoard({
     const persisted = Boolean(match.scheduledAt && match.courtId);
     const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
     const draft = draftAssignments[match.id];
-    const division = divisions.find((d) => d.id === match.divisionId);
-    const calculatedDuration = getMatchDurationFromFormat(match, division, minutesPerSet);
+    const matchDuration = draft?.durationMinutes ?? match.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : defaultStepMinutes);
 
     return {
       match,
       scheduledAt: draft?.scheduledAt ?? (persisted ? match.scheduledAt : assignment?.scheduledAt ?? null),
       courtId: draft?.courtId ?? (persisted ? match.courtId : assignment?.courtId ?? null),
-      durationMinutes: draft?.durationMinutes ?? (preview ? preview.durationMinutes + preview.bufferMinutes : calculatedDuration),
+      durationMinutes: matchDuration,
       isPreview: !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
-  }), [draftAssignments, matches, preview, previewAssignmentByMatchId, divisions, minutesPerSet]);
+  }), [defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
 
   const scheduleDate = useMemo(() => {
     if (preview?.assignments?.[0]?.scheduledAt) {

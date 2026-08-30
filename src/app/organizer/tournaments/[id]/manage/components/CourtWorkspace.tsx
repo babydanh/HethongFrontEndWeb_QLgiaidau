@@ -135,14 +135,33 @@ export function CourtWorkspace({
   }, [stageMatches, usesLegFilter]);
 
   const roundLabel = (round: number) => {
-    if (usesLegFilter) return t('legValue', { leg: round });
-    const maxRound = roundOptions.at(-1) ?? round;
-    const distanceFromFinal = maxRound - round;
-    if (isKnockoutStage && distanceFromFinal >= 0 && distanceFromFinal <= 4) {
-      const knockoutLabels = [t('finalRound'), t('semiFinalRound'), t('quarterFinalRound'), t('roundOf', { count: 16 }), t('roundOf', { count: 32 })];
-      return knockoutLabels[distanceFromFinal];
+    if (usesLegFilter) return `Lượt ${round}`;
+
+    // Check if group stage match exists for this round
+    const roundMatch = stageMatches.find((m) => (m.roundNumber === round || m.leg === round));
+    if (roundMatch) {
+      const rawName = String(roundMatch.roundName || roundMatch.stageName || roundMatch.stage?.name || '').trim();
+      const lower = rawName.toLowerCase();
+      if (lower.includes('tranh hạng 3') || lower.includes('3rd')) return 'Tranh hạng 3';
+      if (roundMatch.groupName || lower.includes('bảng')) {
+        const cleanGroup = (roundMatch.groupName || rawName).replace(/giai\s*đoạn\s*\d*/gi, '').replace(/stage\s*\d*/gi, '').trim();
+        return `${cleanGroup} • Lượt ${roundMatch.leg || roundMatch.roundNumber || round}`;
+      }
     }
-    return t('roundValue', { round });
+
+    const maxRound = roundOptions.at(-1) ?? round;
+    if (maxRound > 1) {
+      const diff = maxRound - round;
+      if (diff === 0) return 'Chung kết';
+      if (diff === 1) return 'Bán kết';
+      if (diff === 2) return 'Tứ kết';
+      if (diff === 3) return 'Vòng 1/8';
+      if (diff === 4) return 'Vòng 1/16';
+      if (diff === 5) return 'Vòng 1/32';
+      if (diff === 6) return 'Vòng 1/64';
+    }
+
+    return `Vòng ${round}`;
   };
 
   const scopedMatches = useMemo(

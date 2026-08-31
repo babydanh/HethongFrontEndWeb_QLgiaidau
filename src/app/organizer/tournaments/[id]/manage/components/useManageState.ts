@@ -1890,13 +1890,6 @@ export function useManageState(id: string) {
         if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
         if (t.venueId) await fetchVenueCourts();
         await fetchTournamentVenues();
-        // Nạp danh sách trận đấu (dùng cho export kết quả toàn giải ở bước kết thúc)
-        try {
-          const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 100 });
-          if (mRes.data) {
-            setMatches(mRes.data);
-          }
-        } catch { /* không chặn luồng chính */ }
       }
       return tRes.data;
     } catch { toast.error('Không thể tải thông tin giải đấu'); return null; }

@@ -438,7 +438,18 @@ export function useManageState(id: string) {
       }
 
       if (requestId === divisionDataRequestRef.current) {
-        setMatches(combinedMatches);
+        setMatches((prevMatches) => {
+          const prevMap = new Map(prevMatches.map((m) => [m.id, m]));
+          return combinedMatches.map((newMatch) => {
+            const prev = prevMap.get(newMatch.id);
+            return {
+              ...newMatch,
+              courtId: newMatch.courtId ?? prev?.courtId ?? null,
+              courtName: newMatch.courtName ?? prev?.courtName ?? null,
+              scheduledAt: newMatch.scheduledAt ?? prev?.scheduledAt ?? null,
+            };
+          });
+        });
       }
     } catch { /* Preserve the last successful division snapshot on transient errors. */ }
   }, [id]);

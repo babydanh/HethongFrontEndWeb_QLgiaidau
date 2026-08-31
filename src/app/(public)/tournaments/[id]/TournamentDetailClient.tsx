@@ -1342,6 +1342,27 @@ const commonTranslate = useTranslations('Common');
             </span>
           )}
 
+          {/* Format Badge: Đơn / Đôi (No gender clutter) */}
+          {(() => {
+            const rawFormat = (activeTournament as unknown as Record<string, unknown>)?.format ||
+              activeTournament?.divisions?.[0]?.matchType ||
+              activeTournament?.matchType ||
+              '';
+            const isDoubles = String(rawFormat).toUpperCase().includes('DOUBLES') || String(rawFormat).toLowerCase() === 'doubles';
+            const isFootball =
+              activeTournament?.category?.name?.toLowerCase().includes('bóng đá') ||
+              activeTournament?.category?.name?.toLowerCase().includes('football');
+            const formatText = isFootball
+              ? `Bóng đá ${activeTournament?.tournamentConfig?.teamSize || 7} người`
+              : isDoubles ? 'Đánh Đôi' : 'Đánh Đơn';
+
+            return (
+              <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+                {formatText}
+              </span>
+            );
+          })()}
+
           {/* Ranked / Casual Badge */}
           <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
             activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'

@@ -386,7 +386,23 @@ export function useManageState(id: string) {
       // Fetch matches from ALL divisions so schedule board has every match properly mapped
       const combinedMatches: Match[] = [];
 
-      if (activeDivList.length > 0) {
+      try {
+        const fullRes = await tournamentsApi.getTournamentBracket(id);
+        if (fullRes.data?.stages && fullRes.data.stages.length > 0) {
+          const extracted = fullRes.data.stages.flatMap((stage) =>
+            (stage.groups || []).flatMap((group) =>
+              (group.matches || []).map((m) => ({
+                ...m,
+                divisionId: (m as unknown as { divisionId?: string }).divisionId || (stage as unknown as Record<string, unknown>).tournamentDivisionId || null,
+                stage: { name: stage.name, roundConfig: stage.roundConfig },
+              })),
+            ),
+          );
+          combinedMatches.push(...(extracted as unknown as Match[]));
+        }
+      } catch { /* silent */ }
+
+      if (combinedMatches.length === 0 && activeDivList.length > 0) {
         const bracketResults = await Promise.allSettled(
           activeDivList.map(async (d) => {
             const res = await tournamentsApi.getTournamentBracket(id, d.id);
@@ -409,28 +425,12 @@ export function useManageState(id: string) {
             combinedMatches.push(...(extracted as unknown as Match[]));
           }
         });
-      } else {
-        // No divisions configured: fetch tournament-level bracket matches
-        try {
-          const res = await tournamentsApi.getTournamentBracket(id);
-          if (res.data?.stages) {
-            const extracted = res.data.stages.flatMap((stage) =>
-              (stage.groups || []).flatMap((group) =>
-                (group.matches || []).map((m) => ({
-                  ...m,
-                  stage: { name: stage.name, roundConfig: stage.roundConfig },
-                })),
-              ),
-            );
-            combinedMatches.push(...(extracted as unknown as Match[]));
-          }
-        } catch { /* silent */ }
       }
 
       // Also fallback if direct matches API has records
       if (combinedMatches.length === 0) {
         try {
-          const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 200 });
+          const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 1000 });
           if (mRes.data && Array.isArray(mRes.data)) {
             combinedMatches.push(...mRes.data);
           }

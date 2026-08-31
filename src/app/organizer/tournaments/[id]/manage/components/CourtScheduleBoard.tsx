@@ -1608,19 +1608,19 @@ export function CourtScheduleBoard({
     // 5. Extract Round Label
     let roundLabel: string | undefined;
     if (lower.includes('1/32') || lower.includes('vòng 32') || lower.includes('vòng 64')) {
-      roundLabel = unscheduledRounds.find((r) => r.includes('1/32') || r.includes('32')) || 'Vòng 1/32';
+      roundLabel = unscheduledRounds.find((r) => r.label.includes('1/32') || r.label.includes('32'))?.label || 'Vòng 1/32';
     } else if (lower.includes('1/16') || lower.includes('vòng 16')) {
-      roundLabel = unscheduledRounds.find((r) => r.includes('1/16') || r.includes('16')) || 'Vòng 1/16';
+      roundLabel = unscheduledRounds.find((r) => r.label.includes('1/16') || r.label.includes('16'))?.label || 'Vòng 1/16';
     } else if (lower.includes('1/8') || lower.includes('vòng 8')) {
-      roundLabel = unscheduledRounds.find((r) => r.includes('1/8') || r.includes('8')) || 'Vòng 1/8';
+      roundLabel = unscheduledRounds.find((r) => r.label.includes('1/8') || r.label.includes('8'))?.label || 'Vòng 1/8';
     } else if (lower.includes('tứ kết') || lower.includes('1/4') || lower.includes('quarter')) {
-      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('tứ kết') || r.includes('1/4')) || 'Tứ kết';
+      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('tứ kết') || r.label.includes('1/4'))?.label || 'Tứ kết';
     } else if (lower.includes('bán kết') || lower.includes('semi')) {
-      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('bán kết')) || 'Bán kết';
+      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('bán kết'))?.label || 'Bán kết';
     } else if (lower.includes('chung kết') || lower.includes('final') || lower.includes('ck')) {
-      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('chung kết')) || 'Chung kết';
+      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('chung kết'))?.label || 'Chung kết';
     } else if (lower.includes('vòng bảng') || lower.includes('bảng')) {
-      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('bảng')) || 'Vòng bảng';
+      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('bảng'))?.label || 'Vòng bảng';
     }
 
     // 6. Extract Division
@@ -1765,7 +1765,7 @@ export function CourtScheduleBoard({
   // Execute Voice Command Plan
   const handleExecuteVoiceCommand = (cmd: ParsedVoiceCommand) => {
     if (cmd.intent === 'clear') {
-      handleClearEntireSchedule();
+      handleClearAllSchedule();
       setAiVoiceModalOpen(false);
       return;
     }
@@ -1780,7 +1780,7 @@ export function CourtScheduleBoard({
       const eStr = `${String(eH).padStart(2, '0')}:${String(eM).padStart(2, '0')}`;
 
       const newSlots: BlockedSlot[] = [];
-      const baseDateStr = operatingDate ? operatingDate.toISOString().split('T')[0] : '2026-08-31';
+      const baseDateStr = defaultDate ? new Date(defaultDate).toISOString().split('T')[0] : '2026-08-31';
 
       for (const cId of cmd.courtIds) {
         const sTime = new Date(`${baseDateStr}T${sStr}:00`).toISOString();

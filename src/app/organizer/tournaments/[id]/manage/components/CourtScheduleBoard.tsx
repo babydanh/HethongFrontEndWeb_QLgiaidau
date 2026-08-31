@@ -494,7 +494,11 @@ export function CourtScheduleBoard({
   const [selectedPickerMatchIds, setSelectedPickerMatchIds] = useState<string[]>([]);
   const [assignmentSearch, setAssignmentSearch] = useState('');
   const [pickerDivisionFilter, setPickerDivisionFilter] = useState('all');
+  const [pickerRoundFilter, setPickerRoundFilter] = useState('all');
   const [queueOpen, setQueueOpen] = useState(false);
+  const [queueDivisionFilter, setQueueDivisionFilter] = useState('all');
+  const [queueRoundFilter, setQueueRoundFilter] = useState('all');
+  const [autoScheduleMenuOpen, setAutoScheduleMenuOpen] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
 
@@ -604,6 +608,18 @@ export function CourtScheduleBoard({
     () => displayMatches.filter((item) => !item.courtId || !item.scheduledAt),
     [displayMatches],
   );
+
+  const unscheduledRounds = useMemo(() => {
+    const map = new Map<string, { label: string; count: number }>();
+    for (const item of unscheduledMatches) {
+      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+      const label = getAccurateRoundLabel(item.match, maxR);
+      const existing = map.get(label) || { label, count: 0 };
+      existing.count += 1;
+      map.set(label, existing);
+    }
+    return Array.from(map.values());
+  }, [unscheduledMatches, maxRoundByDivision]);
 
   const [isLocalFullscreen, setIsLocalFullscreen] = useState(false);
   const [conflictsModalOpen, setConflictsModalOpen] = useState(false);
@@ -1261,12 +1277,19 @@ export function CourtScheduleBoard({
     setTimeout(() => setSaveToast(null), 3000);
   };
 
-  // Auto-Schedule All Unscheduled Matches (AI Smart Fill with progressive tournament ordering and BO duration)
-  const handleAutoScheduleAll = () => {
-    if (unscheduledMatches.length === 0 || courts.length === 0) return;
+  // Auto-Schedule Matches (AI Smart Fill with progressive tournament ordering, BO duration and athlete conflict avoidance)
+  const handleAutoScheduleAll = (filterRoundLabel?: string) => {
+    const candidateMatches = filterRoundLabel && filterRoundLabel !== 'all'
+      ? unscheduledMatches.filter((item) => {
+          const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+          return getAccurateRoundLabel(item.match, maxR) === filterRoundLabel;
+        })
+      : unscheduledMatches;
+
+    if (candidateMatches.length === 0 || courts.length === 0) return;
 
     // 1. Order unscheduled matches logically by stage & round
-    const sortedMatches = [...unscheduledMatches].sort((a, b) => {
+    const sortedMatches = [...candidateMatches].sort((a, b) => {
       // Group stage matches first
       const aIsGroup = Boolean(a.match.groupName || a.match.leg);
       const bIsGroup = Boolean(b.match.groupName || b.match.leg);
@@ -1374,7 +1397,8 @@ export function CourtScheduleBoard({
     }
 
     setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
-    setSaveToast(`AI đã tự động xếp ${scheduledCount}/${sortedMatches.length} trận đấu! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    const roundMsg = filterRoundLabel ? ` của ${filterRoundLabel}` : '';
+    setSaveToast(`AI đã tự động xếp ${scheduledCount}/${sortedMatches.length} trận${roundMsg}! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
     setTimeout(() => setSaveToast(null), 3500);
   };
 
@@ -1459,19 +1483,38 @@ export function CourtScheduleBoard({
       if (pickerDivisionFilter !== 'all' && item.match.divisionId !== pickerDivisionFilter) {
         return false;
       }
+      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+      const roundStr = getAccurateRoundLabel(item.match, maxR);
+      if (pickerRoundFilter !== 'all' && roundStr !== pickerRoundFilter) {
+        return false;
+      }
       if (!query) return true;
       const p1 = getParticipantName(item.match.participant1).toLocaleLowerCase();
       const p2 = getParticipantName(item.match.participant2).toLocaleLowerCase();
-      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-      const roundStr = getAccurateRoundLabel(item.match, maxR).toLocaleLowerCase();
       const orderStr = `#${item.match.matchOrder ?? ''}`.toLocaleLowerCase();
-      return p1.includes(query) || p2.includes(query) || roundStr.includes(query) || orderStr.includes(query);
+      return p1.includes(query) || p2.includes(query) || roundStr.toLocaleLowerCase().includes(query) || orderStr.includes(query);
     });
-  }, [assignmentSearch, pickerDivisionFilter, unscheduledMatches, maxRoundByDivision]);
+  }, [assignmentSearch, pickerDivisionFilter, pickerRoundFilter, unscheduledMatches, maxRoundByDivision]);
+
+  // Filtering for Queue Modal
+  const filteredQueueMatches = useMemo(() => {
+    return unscheduledMatches.filter((item) => {
+      if (queueDivisionFilter !== 'all' && item.match.divisionId !== queueDivisionFilter) {
+        return false;
+      }
+      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+      const roundStr = getAccurateRoundLabel(item.match, maxR);
+      if (queueRoundFilter !== 'all' && roundStr !== queueRoundFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [queueDivisionFilter, queueRoundFilter, unscheduledMatches, maxRoundByDivision]);
 
   const openAssignmentPicker = (courtId?: string, scheduledAt?: string, rowIndex?: number) => {
     setAssignmentSearch('');
     setPickerDivisionFilter('all');
+    setPickerRoundFilter('all');
     setSelectedPickerMatchIds([]);
 
     if (selectionRange) {
@@ -2520,22 +2563,80 @@ export function CourtScheduleBoard({
 
           {/* GROUP 4: ĐIỀN LỊCH & HÀNG CHỜ (Scheduling & Queue) */}
           <div className="flex items-center gap-1">
-            {/* Auto Schedule button */}
-            <Button
-              type="button"
-              onClick={handleAutoScheduleAll}
-              disabled={unscheduledMatches.length === 0}
-              className="h-7 px-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
-              title="Tự động xếp toàn bộ các trận chưa xếp vào các ô sân trống"
-            >
-              <Zap className="h-3.5 w-3.5 text-amber-300" />
-              <span>Tự động xếp</span>
-              {unscheduledMatches.length > 0 && (
-                <span className="rounded-full bg-blue-500/90 px-1.5 py-0.2 text-[9px] font-black">
-                  {unscheduledMatches.length}
-                </span>
+            {/* Auto Schedule with Quick Round Menu */}
+            <div className="relative flex items-center">
+              <Button
+                type="button"
+                onClick={() => handleAutoScheduleAll()}
+                disabled={unscheduledMatches.length === 0}
+                className={`h-7 px-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40 ${
+                  unscheduledRounds.length > 1 ? 'rounded-l-lg rounded-r-none pr-1.5' : 'rounded-lg'
+                }`}
+                title="Tự động xếp toàn bộ các trận chưa xếp vào các ô sân trống"
+              >
+                <Zap className="h-3.5 w-3.5 text-amber-300" />
+                <span>Tự động xếp</span>
+                {unscheduledMatches.length > 0 && (
+                  <span className="rounded-full bg-blue-500/90 px-1.5 py-0.2 text-[9px] font-black">
+                    {unscheduledMatches.length}
+                  </span>
+                )}
+              </Button>
+
+              {unscheduledRounds.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setAutoScheduleMenuOpen((prev) => !prev)}
+                  disabled={unscheduledMatches.length === 0}
+                  className="h-7 px-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-r-lg border-l border-blue-500/80 flex items-center justify-center cursor-pointer disabled:opacity-40"
+                  title="Chọn xếp nhanh theo từng vòng đấu cụ thể"
+                >
+                  <ChevronRight className={`h-3.5 w-3.5 transition-transform ${autoScheduleMenuOpen ? 'rotate-90' : ''}`} />
+                </button>
               )}
-            </Button>
+
+              {/* Round Dropdown Menu */}
+              {autoScheduleMenuOpen && unscheduledRounds.length > 1 && (
+                <div
+                  className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl bg-white p-1.5 shadow-2xl border border-slate-200 text-xs animate-in fade-in zoom-in-95 duration-100 ring-1 ring-slate-900/5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="px-2 py-1 border-b border-slate-100 mb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Xếp nhanh theo vòng đấu
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAutoScheduleAll();
+                      setAutoScheduleMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-blue-700 font-bold transition-colors cursor-pointer text-left"
+                  >
+                    <span>⚡ Xếp tất cả các vòng</span>
+                    <span className="bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded text-[10px]">
+                      {unscheduledMatches.length}
+                    </span>
+                  </button>
+                  <div className="h-px bg-slate-100 my-1" />
+                  {unscheduledRounds.map((r) => (
+                    <button
+                      key={r.label}
+                      type="button"
+                      onClick={() => {
+                        handleAutoScheduleAll(r.label);
+                        setAutoScheduleMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold transition-colors cursor-pointer text-left"
+                    >
+                      <span className="truncate">Xếp {r.label}</span>
+                      <span className="bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded text-[10px] font-bold">
+                        {r.count} trận
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Queue modal trigger */}
             <Button
@@ -3042,7 +3143,37 @@ export function CourtScheduleBoard({
             </div>
           )}
 
-          {/* Search bar & Bulk selection controls */}
+          {/* Round filters in Assignment Picker */}
+          {unscheduledRounds.length > 1 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-1 hide-scrollbar">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Vòng:</span>
+              <button
+                type="button"
+                onClick={() => setPickerRoundFilter('all')}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
+                  pickerRoundFilter === 'all'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Tất cả vòng
+              </button>
+              {unscheduledRounds.map((r) => (
+                <button
+                  key={r.label}
+                  type="button"
+                  onClick={() => setPickerRoundFilter(r.label)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
+                    pickerRoundFilter === r.label
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {r.label} ({r.count})
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-2 pt-1">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
@@ -3191,28 +3322,100 @@ export function CourtScheduleBoard({
                 </ModalDescription>
               </div>
 
-              {unscheduledMatches.length > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    if (queueSelectedMatchIds.length === unscheduledMatches.length) {
-                      setQueueSelectedMatchIds([]);
-                    } else {
-                      setQueueSelectedMatchIds(unscheduledMatches.map((m) => m.match.id));
-                    }
-                  }}
-                  className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-300 bg-white"
-                >
-                  {queueSelectedMatchIds.length === unscheduledMatches.length ? 'Bỏ chọn hết' : 'Chọn tất cả'}
-                </Button>
+              <div className="flex items-center gap-2">
+                {unscheduledMatches.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (queueSelectedMatchIds.length === filteredQueueMatches.length) {
+                        setQueueSelectedMatchIds([]);
+                      } else {
+                        setQueueSelectedMatchIds(filteredQueueMatches.map((m) => m.match.id));
+                      }
+                    }}
+                    className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-300 bg-white"
+                  >
+                    {queueSelectedMatchIds.length === filteredQueueMatches.length ? 'Bỏ chọn hết' : `Chọn tất cả (${filteredQueueMatches.length})`}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter controls inside Queue */}
+            <div className="space-y-1.5 pt-2">
+              {/* Division filters */}
+              {divisions.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 hide-scrollbar">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Nội dung:</span>
+                  <button
+                    type="button"
+                    onClick={() => setQueueDivisionFilter('all')}
+                    className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                      queueDivisionFilter === 'all'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Tất cả ({unscheduledMatches.length})
+                  </button>
+                  {divisions.map((d) => {
+                    const count = unscheduledMatches.filter((m) => m.match.divisionId === d.id).length;
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setQueueDivisionFilter(d.id)}
+                        className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                          queueDivisionFilter === d.id
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {d.name} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Round filters */}
+              {unscheduledRounds.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 hide-scrollbar">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Vòng:</span>
+                  <button
+                    type="button"
+                    onClick={() => setQueueRoundFilter('all')}
+                    className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                      queueRoundFilter === 'all'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Tất cả vòng
+                  </button>
+                  {unscheduledRounds.map((r) => (
+                    <button
+                      key={r.label}
+                      type="button"
+                      onClick={() => setQueueRoundFilter(r.label)}
+                      className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                        queueRoundFilter === r.label
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {r.label} ({r.count})
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </ModalHeader>
 
-          {unscheduledMatches.length > 0 ? (
+          {filteredQueueMatches.length > 0 ? (
             <div className="grid max-h-[50vh] gap-2 overflow-y-auto sm:grid-cols-2 py-2">
-              {unscheduledMatches.map((item) => {
+              {filteredQueueMatches.map((item) => {
                 const isSelected = queueSelectedMatchIds.includes(item.match.id);
                 const div = divisions.find((d) => d.id === item.match.divisionId);
                 const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;

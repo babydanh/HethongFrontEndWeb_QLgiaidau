@@ -1803,7 +1803,7 @@ export function useManageState(id: string) {
       const court = courts.find((c) => c.id === courtId);
       const venueAddr = tournament?.venue?.locationAddress || customVenueAddress || null;
       const targetCourtId = courtId || null;
-      const targetCourtName = court?.courtName || null;
+      const targetCourtName = court?.courtName || (courtId ? matches.find((m) => m.id === matchId)?.courtName : null) || null;
       const targetScheduledAt = scheduledAt ? new Date(scheduledAt).toISOString() : null;
 
       // Optimistically update matches in local state for instant response
@@ -1835,6 +1835,7 @@ export function useManageState(id: string) {
       if (!silent) {
         toast.error(getErrorMessage(err));
       }
+      throw err;
     }
   };
 

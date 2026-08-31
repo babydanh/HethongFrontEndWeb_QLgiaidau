@@ -924,15 +924,21 @@ export function CourtScheduleBoard({
     setIsSavingDraft(true);
     setAutoSaveStatus('saving');
     try {
+      const succeededMatchIds = new Set<string>();
       // 1. Save all draft assignments in parallel chunks (eliminates freeze/lag)
       if (onSaveScheduleDirect) {
         const chunkSize = 8;
         for (let i = 0; i < entries.length; i += chunkSize) {
           const chunk = entries.slice(i, i + chunkSize);
           await Promise.all(
-            chunk.map(([matchId, draft]) =>
-              onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true)
-            )
+            chunk.map(async ([matchId, draft]) => {
+              try {
+                await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true);
+                succeededMatchIds.add(matchId);
+              } catch (e) {
+                console.error(`Failed to save match ${matchId}:`, e);
+              }
+            })
           );
         }
       }
@@ -964,11 +970,26 @@ export function CourtScheduleBoard({
         await onRefetchData();
       }
 
-      setDraftAssignments({});
-      setAutoSaveStatus('saved');
-      if (!silent) {
-        setSaveToast(`Đã lưu thành công lịch thi đấu!`);
-        setTimeout(() => setSaveToast(null), 3000);
+      setDraftAssignments((prev) => {
+        const next = { ...prev };
+        for (const id of succeededMatchIds) {
+          delete next[id];
+        }
+        return next;
+      });
+
+      if (succeededMatchIds.size === entries.length) {
+        setAutoSaveStatus('saved');
+        if (!silent) {
+          setSaveToast(`Đã lưu thành công ${succeededMatchIds.size} trận đấu!`);
+          setTimeout(() => setSaveToast(null), 3000);
+        }
+      } else {
+        setAutoSaveStatus('unsaved');
+        if (!silent) {
+          setSaveToast(`Đã lưu ${succeededMatchIds.size}/${entries.length} trận đấu.`);
+          setTimeout(() => setSaveToast(null), 3500);
+        }
       }
     } catch (err) {
       console.error('Failed to save drafts:', err);

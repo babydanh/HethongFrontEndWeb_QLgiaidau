@@ -23,6 +23,8 @@ import {
   Layers,
   Lock,
   Maximize2,
+  Mic,
+  MicOff,
   Minimize2,
   Minus,
   MoreHorizontal,
@@ -34,10 +36,12 @@ import {
   Save,
   Scissors,
   Search,
+  Send,
   Settings2,
   Sparkles,
   Square,
   Trash2,
+  Volume2,
   X,
   Zap,
   ZoomIn,
@@ -128,6 +132,25 @@ type BlockedSlot = {
   scheduledAt: string;
   durationMinutes: number;
   label: string;
+};
+
+type ParsedVoiceCommand = {
+  intent: 'schedule' | 'unassign' | 'block' | 'duration' | 'clear';
+  rawText: string;
+  roundLabel?: string;
+  divisionId?: string;
+  divisionName?: string;
+  courtIds: string[];
+  courtNames: string[];
+  startHour?: number;
+  startMinute?: number;
+  endHour?: number;
+  endMinute?: number;
+  durationMinutes?: number;
+  competitorQuery?: string;
+  blockReason?: string;
+  matchedMatchIds: string[];
+  description: string;
 };
 
 type RowResizeState = {
@@ -501,6 +524,13 @@ export function CourtScheduleBoard({
   const [autoScheduleMenuOpen, setAutoScheduleMenuOpen] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+
+  // AI Voice & Natural Language Scheduling State
+  const [aiVoiceModalOpen, setAiVoiceModalOpen] = useState(false);
+  const [aiVoiceInput, setAiVoiceInput] = useState('');
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [voiceParsedResult, setVoiceParsedResult] = useState<ParsedVoiceCommand | null>(null);
 
   // Undo / Redo History Stack
   const [history, setHistory] = useState<Array<{ draftAssignments: Record<string, DraftAssignment>; rowDurations: Record<number, number> }>>([
@@ -1458,6 +1488,448 @@ export function CourtScheduleBoard({
     setRowDurations({});
     setSaveToast('Đã đặt lại tất cả các mốc giờ về mặc định đều nhau!');
     setTimeout(() => setSaveToast(null), 2500);
+  };
+
+  // VIETNAMESE NLP ENGINE FOR VOICE & NATURAL LANGUAGE SCHEDULING
+  const parseVoiceSchedulingCommand = (text: string): ParsedVoiceCommand => {
+    const raw = text.trim();
+    const lower = raw.toLowerCase();
+
+    // 1. Detect Intent
+    let intent: ParsedVoiceCommand['intent'] = 'schedule';
+    if (
+      lower.includes('khóa') ||
+      lower.includes('nghỉ trưa') ||
+      lower.includes('tạm nghỉ') ||
+      lower.includes('bảo trì') ||
+      lower.includes('tạm dừng') ||
+      lower.includes('đóng sân')
+    ) {
+      intent = 'block';
+    } else if (
+      lower.includes('hủy') ||
+      lower.includes('xóa') ||
+      lower.includes('gỡ') ||
+      lower.includes('bỏ xếp') ||
+      lower.includes('reset')
+    ) {
+      intent = lower.includes('toàn bộ') || lower.includes('tất cả') ? 'clear' : 'unassign';
+    } else if (
+      (lower.includes('thời lượng') || lower.includes('mỗi trận')) &&
+      !lower.includes('xếp') &&
+      !lower.includes('vào sân')
+    ) {
+      intent = 'duration';
+    }
+
+    // 2. Extract Duration (e.g., "15 phút", "20p", "30 phút", "45 phút", "60 phút")
+    let durationMinutes: number | undefined;
+    const durMatch = lower.match(/(\d{1,3})\s*(?:phút|p\b)/);
+    if (durMatch) {
+      durationMinutes = parseInt(durMatch[1], 10);
+    }
+
+    // 3. Extract Time (start hour & minute)
+    let startHour: number | undefined;
+    let startMinute: number | undefined;
+    let endHour: number | undefined;
+    let endMinute: number | undefined;
+
+    // Range: "từ X đến Y" or "từ X tới Y"
+    const rangeMatch = lower.match(/(?:từ\s*)(\d{1,2})(?:[h:](\d{2}))?\s*(?:đến|tới|-)\s*(\d{1,2})(?:[h:](\d{2}))?/);
+    if (rangeMatch) {
+      startHour = parseInt(rangeMatch[1], 10);
+      startMinute = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : 0;
+      endHour = parseInt(rangeMatch[3], 10);
+      endMinute = rangeMatch[4] ? parseInt(rangeMatch[4], 10) : 0;
+    } else {
+      // Single time: "lúc 8 giờ", "8h30", "8:00", "từ 8h"
+      const singleTimeMatch = lower.match(/(?:lúc|từ|vào|đầu)\s*(\d{1,2})(?:[h:](\d{2})|\s*giờ(?:\s*(\d{2}))?)?/);
+      if (singleTimeMatch) {
+        startHour = parseInt(singleTimeMatch[1], 10);
+        startMinute = singleTimeMatch[2] ? parseInt(singleTimeMatch[2], 10) : singleTimeMatch[3] ? parseInt(singleTimeMatch[3], 10) : 0;
+      }
+    }
+
+    // Adjust PM if user says "chiều" / "tối"
+    if ((lower.includes('chiều') || lower.includes('tối')) && startHour !== undefined && startHour < 12) {
+      startHour += 12;
+    }
+    if ((lower.includes('chiều') || lower.includes('tối')) && endHour !== undefined && endHour < 12) {
+      endHour += 12;
+    }
+
+    // 4. Extract Target Courts
+    let targetCourtIds: string[] = [];
+    let targetCourtNames: string[] = [];
+
+    if (
+      lower.includes('tất cả các sân') ||
+      lower.includes('toàn bộ sân') ||
+      lower.includes('mọi sân') ||
+      lower.includes('các sân')
+    ) {
+      targetCourtIds = courts.map((c) => c.id);
+      targetCourtNames = courts.map((c) => c.courtName);
+    } else {
+      // Check court range: "sân 1 đến sân 3", "sân 1 tới 4"
+      const courtRangeMatch = lower.match(/sân\s*(\d+)\s*(?:đến|tới|-)\s*(?:sân\s*)?(\d+)/);
+      if (courtRangeMatch) {
+        const fromNum = parseInt(courtRangeMatch[1], 10);
+        const toNum = parseInt(courtRangeMatch[2], 10);
+        const minNum = Math.min(fromNum, toNum);
+        const maxNum = Math.max(fromNum, toNum);
+        const matched = courts.filter((c, idx) => idx + 1 >= minNum && idx + 1 <= maxNum);
+        targetCourtIds = matched.map((c) => c.id);
+        targetCourtNames = matched.map((c) => c.courtName);
+      } else {
+        // Find individual courts mentioned
+        for (let i = 0; i < courts.length; i++) {
+          const c = courts[i];
+          const cNameLower = c.courtName.toLowerCase();
+          const courtNum = `${i + 1}`;
+          if (
+            lower.includes(cNameLower) ||
+            lower.includes(`sân ${courtNum}`) ||
+            lower.includes(`san ${courtNum}`)
+          ) {
+            targetCourtIds.push(c.id);
+            targetCourtNames.push(c.courtName);
+          }
+        }
+      }
+    }
+
+    if (targetCourtIds.length === 0) {
+      targetCourtIds = courts.map((c) => c.id);
+      targetCourtNames = courts.map((c) => c.courtName);
+    }
+
+    // 5. Extract Round Label
+    let roundLabel: string | undefined;
+    if (lower.includes('1/32') || lower.includes('vòng 32') || lower.includes('vòng 64')) {
+      roundLabel = unscheduledRounds.find((r) => r.includes('1/32') || r.includes('32')) || 'Vòng 1/32';
+    } else if (lower.includes('1/16') || lower.includes('vòng 16')) {
+      roundLabel = unscheduledRounds.find((r) => r.includes('1/16') || r.includes('16')) || 'Vòng 1/16';
+    } else if (lower.includes('1/8') || lower.includes('vòng 8')) {
+      roundLabel = unscheduledRounds.find((r) => r.includes('1/8') || r.includes('8')) || 'Vòng 1/8';
+    } else if (lower.includes('tứ kết') || lower.includes('1/4') || lower.includes('quarter')) {
+      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('tứ kết') || r.includes('1/4')) || 'Tứ kết';
+    } else if (lower.includes('bán kết') || lower.includes('semi')) {
+      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('bán kết')) || 'Bán kết';
+    } else if (lower.includes('chung kết') || lower.includes('final') || lower.includes('ck')) {
+      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('chung kết')) || 'Chung kết';
+    } else if (lower.includes('vòng bảng') || lower.includes('bảng')) {
+      roundLabel = unscheduledRounds.find((r) => r.toLowerCase().includes('bảng')) || 'Vòng bảng';
+    }
+
+    // 6. Extract Division
+    let divisionId: string | undefined;
+    let divisionName: string | undefined;
+    for (const div of divisions) {
+      if (lower.includes(div.name.toLowerCase())) {
+        divisionId = div.id;
+        divisionName = div.name;
+        break;
+      }
+    }
+
+    // 7. Extract Specific Competitor Query
+    let competitorQuery: string | undefined;
+    const compMatch = lower.match(/(?:của|vđv|đội|cặp)\s+([a-zA-Z0-9_\s/]+?)(?:\s+vào|\s+lúc|\s+từ|\s+mỗi|$)/);
+    if (compMatch) {
+      competitorQuery = compMatch[1].trim();
+    }
+
+    // 8. Match relevant matches from pool
+    const pool = intent === 'unassign' ? displayMatches.filter((m) => m.courtId && m.scheduledAt) : unscheduledMatches;
+    const matched = pool.filter((item) => {
+      if (divisionId && item.match.divisionId !== divisionId) return false;
+      if (roundLabel) {
+        const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+        const rLabel = getAccurateRoundLabel(item.match, maxR);
+        if (rLabel !== roundLabel && !rLabel.toLowerCase().includes(roundLabel.toLowerCase())) {
+          return false;
+        }
+      }
+      if (competitorQuery) {
+        const p1 = `${item.match.participant1?.teamName || ''} ${item.match.participant1?.name || ''}`.toLowerCase();
+        const p2 = `${item.match.participant2?.teamName || ''} ${item.match.participant2?.name || ''}`.toLowerCase();
+        if (!p1.includes(competitorQuery) && !p2.includes(competitorQuery)) return false;
+      }
+      if (intent === 'unassign' && targetCourtIds.length > 0) {
+        if (!targetCourtIds.includes(item.courtId || '')) return false;
+      }
+      return true;
+    });
+
+    const matchedMatches = matched.length === 0 && intent === 'schedule' && !competitorQuery && !roundLabel && !divisionId ? unscheduledMatches : matched;
+
+    // 9. Formulate Description
+    let description = '';
+    const timeStr = startHour !== undefined ? `${String(startHour).padStart(2, '0')}:${String(startMinute || 0).padStart(2, '0')}` : '08:00';
+    const courtStr = targetCourtNames.length === courts.length ? 'tất cả các sân' : targetCourtNames.join(', ');
+
+    if (intent === 'schedule') {
+      const count = matchedMatches.length;
+      const rStr = roundLabel ? ` thuộc ${roundLabel}` : '';
+      const divStr = divisionName ? ` [${divisionName}]` : '';
+      const durStr = durationMinutes ? `, mỗi trận ${durationMinutes} phút` : '';
+      description = `⚡ Xếp ${count} trận${divStr}${rStr} vào ${courtStr} bắt đầu từ ${timeStr}${durStr}.`;
+    } else if (intent === 'block') {
+      const endTimeStr = endHour !== undefined ? `${String(endHour).padStart(2, '0')}:${String(endMinute || 0).padStart(2, '0')}` : '13:00';
+      const reason = lower.includes('nghỉ trưa') ? 'Nghỉ trưa' : lower.includes('bảo trì') ? 'Bảo trì sân' : 'Tạm dừng sân';
+      description = `🔒 Khóa ${courtStr} từ ${timeStr} đến ${endTimeStr} (${reason}).`;
+    } else if (intent === 'unassign') {
+      description = `🗑️ Hủy xếp ${matchedMatches.length} trận trên ${courtStr} đưa về hàng chờ.`;
+    } else if (intent === 'clear') {
+      description = `🗑️ Hủy toàn bộ lịch thi đấu của giải đưa về hàng chờ.`;
+    } else if (intent === 'duration') {
+      description = `⏱️ Đổi thời lượng cho ${matchedMatches.length} trận thành ${durationMinutes || 20} phút.`;
+    }
+
+    return {
+      intent,
+      rawText: raw,
+      roundLabel,
+      divisionId,
+      divisionName,
+      courtIds: targetCourtIds,
+      courtNames: targetCourtNames,
+      startHour,
+      startMinute,
+      endHour,
+      endMinute,
+      durationMinutes,
+      competitorQuery,
+      blockReason: lower.includes('nghỉ trưa') ? 'Nghỉ trưa' : lower.includes('bảo trì') ? 'Bảo trì sân' : 'Tạm dừng',
+      matchedMatchIds: matchedMatches.map((m) => m.match.id),
+      description,
+    };
+  };
+
+  // Voice Recognition Handler (Web Speech API)
+  const startVoiceRecognition = () => {
+    if (typeof window === 'undefined') return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceError('Trình duyệt của bạn không hỗ trợ Web Speech API. Bạn có thể gõ câu lệnh trực tiếp vào ô bên dưới!');
+      return;
+    }
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recognition = new (SpeechRecognition as any)();
+      recognition.lang = 'vi-VN';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsVoiceListening(true);
+        setVoiceError(null);
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        const text = event.results?.[0]?.[0]?.transcript || '';
+        if (text) {
+          setAiVoiceInput(text);
+          const parsed = parseVoiceSchedulingCommand(text);
+          setVoiceParsedResult(parsed);
+        }
+        setIsVoiceListening(false);
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onerror = (event: any) => {
+        setIsVoiceListening(false);
+        if (event.error !== 'no-speech') {
+          setVoiceError(`Lỗi mic: ${event.error}. Vui lòng thử lại hoặc gõ lệnh trực tiếp.`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsVoiceListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      setIsVoiceListening(false);
+      setVoiceError('Không thể mở micro. Vui lòng cho phép quyền micro trong trình duyệt.');
+    }
+  };
+
+  // Execute Voice Command Plan
+  const handleExecuteVoiceCommand = (cmd: ParsedVoiceCommand) => {
+    if (cmd.intent === 'clear') {
+      handleClearEntireSchedule();
+      setAiVoiceModalOpen(false);
+      return;
+    }
+
+    if (cmd.intent === 'block') {
+      const sH = cmd.startHour ?? 12;
+      const sM = cmd.startMinute ?? 0;
+      const eH = cmd.endHour ?? sH + 1;
+      const eM = cmd.endMinute ?? 0;
+
+      const sStr = `${String(sH).padStart(2, '0')}:${String(sM).padStart(2, '0')}`;
+      const eStr = `${String(eH).padStart(2, '0')}:${String(eM).padStart(2, '0')}`;
+
+      const newSlots: BlockedSlot[] = [];
+      const baseDateStr = operatingDate ? operatingDate.toISOString().split('T')[0] : '2026-08-31';
+
+      for (const cId of cmd.courtIds) {
+        const sTime = new Date(`${baseDateStr}T${sStr}:00`).toISOString();
+        const eTime = new Date(`${baseDateStr}T${eStr}:00`).toISOString();
+        const durationMin = (eH * 60 + eM) - (sH * 60 + sM);
+        newSlots.push({
+          id: `block-${cId}-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+          courtId: cId,
+          scheduledAt: sTime,
+          durationMinutes: Math.max(15, durationMin),
+          label: cmd.blockReason || 'Tạm dừng sân',
+        });
+      }
+
+      setBlockedSlots((prev) => [...prev, ...newSlots]);
+      setAiVoiceModalOpen(false);
+      setSaveToast(`🔒 Đã khóa ${cmd.courtNames.length} sân từ ${sStr} đến ${eStr}!`);
+      setTimeout(() => setSaveToast(null), 3000);
+      return;
+    }
+
+    const targetMatches = displayMatches.filter((m) => cmd.matchedMatchIds.includes(m.match.id));
+
+    if (cmd.intent === 'unassign') {
+      if (targetMatches.length === 0) {
+        setSaveToast('Không tìm thấy trận nào phù hợp để hủy.');
+        setTimeout(() => setSaveToast(null), 2500);
+        return;
+      }
+      const newDrafts = { ...draftAssignments };
+      for (const m of targetMatches) {
+        newDrafts[m.match.id] = { courtId: '', scheduledAt: '' };
+        if (onSaveScheduleDirect) {
+          void onSaveScheduleDirect(m.match.id, '', '', true);
+        }
+      }
+      setDraftAssignments(newDrafts);
+      pushHistory(newDrafts);
+      setAiVoiceModalOpen(false);
+      setSaveToast(`🗑️ Đã hủy xếp ${targetMatches.length} trận đưa về hàng chờ!`);
+      setTimeout(() => setSaveToast(null), 3000);
+      return;
+    }
+
+    if (cmd.intent === 'duration') {
+      if (!cmd.durationMinutes || targetMatches.length === 0) return;
+      const newCustoms = { ...customMatchDurations };
+      const newDrafts = { ...draftAssignments };
+      for (const m of targetMatches) {
+        newCustoms[m.match.id] = cmd.durationMinutes;
+        if (m.courtId && m.scheduledAt) {
+          newDrafts[m.match.id] = {
+            courtId: m.courtId,
+            scheduledAt: m.scheduledAt,
+            durationMinutes: cmd.durationMinutes,
+          };
+        }
+      }
+      setCustomMatchDurations(newCustoms);
+      setDraftAssignments(newDrafts);
+      pushHistory(newDrafts);
+      setAiVoiceModalOpen(false);
+      setSaveToast(`⏱️ Đã đặt thời lượng ${cmd.durationMinutes}p cho ${targetMatches.length} trận!`);
+      setTimeout(() => setSaveToast(null), 3000);
+      return;
+    }
+
+    // Default intent: schedule
+    if (targetMatches.length === 0) {
+      setSaveToast('Không có trận nào trong hàng chờ phù hợp với yêu cầu.');
+      setTimeout(() => setSaveToast(null), 3000);
+      return;
+    }
+
+    let startRowIdx = 0;
+    if (cmd.startHour !== undefined) {
+      const targetMin = cmd.startHour * 60 + (cmd.startMinute || 0) - baseStartMinute;
+      startRowIdx = Math.max(0, Math.min(timelineRows.rows.length - 1, Math.round(targetMin / defaultStepMinutes)));
+    }
+
+    const targetCourts = courts.filter((c) => cmd.courtIds.includes(c.id));
+    const effectiveCourts = targetCourts.length > 0 ? targetCourts : courts;
+
+    const newDrafts: Record<string, DraftAssignment> = {};
+    const newCustoms = { ...customMatchDurations };
+    let scheduledCount = 0;
+
+    let courtCursor = 0;
+    let rowCursor = startRowIdx;
+
+    for (const targetItem of targetMatches) {
+      const matchDur = cmd.durationMinutes || targetItem.durationMinutes || defaultStepMinutes;
+      if (cmd.durationMinutes) {
+        newCustoms[targetItem.match.id] = cmd.durationMinutes;
+      }
+
+      let placed = false;
+      for (let r = rowCursor; r < timelineRows.rows.length; r++) {
+        const rowInfo = timelineRows.rows[r];
+        if (!rowInfo) continue;
+        const slotStart = rowInfo.startTimestamp;
+        const slotEnd = slotStart + matchDur * 60_000;
+
+        for (let cOffset = 0; cOffset < effectiveCourts.length; cOffset++) {
+          const cIdx = (courtCursor + cOffset) % effectiveCourts.length;
+          const court = effectiveCourts[cIdx];
+
+          const isCourtBusy =
+            Object.values(newDrafts).some((d) => {
+              if (d.courtId !== court.id) return false;
+              const dStart = new Date(d.scheduledAt).getTime();
+              const dEnd = dStart + (d.durationMinutes || defaultStepMinutes) * 60_000;
+              return slotStart < dEnd && slotEnd > dStart;
+            }) ||
+            displayMatches.some((m) => {
+              if (m.courtId !== court.id || !m.scheduledAt || newDrafts[m.match.id]) return false;
+              const mStart = new Date(m.scheduledAt).getTime();
+              const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
+              return slotStart < mEnd && slotEnd > mStart;
+            });
+
+          if (!isCourtBusy) {
+            newDrafts[targetItem.match.id] = {
+              courtId: court.id,
+              scheduledAt: new Date(slotStart).toISOString(),
+              durationMinutes: matchDur,
+            };
+            scheduledCount++;
+            placed = true;
+            courtCursor = (cIdx + 1) % effectiveCourts.length;
+            if (courtCursor === 0) {
+              rowCursor = r + 1;
+            }
+            break;
+          }
+        }
+        if (placed) break;
+      }
+    }
+
+    if (cmd.durationMinutes) {
+      setCustomMatchDurations(newCustoms);
+    }
+    const merged = { ...draftAssignments, ...newDrafts };
+    setDraftAssignments(merged);
+    pushHistory(merged);
+    setAiVoiceModalOpen(false);
+    setSaveToast(`⚡ AI đã xếp ${scheduledCount}/${targetMatches.length} trận theo lệnh! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    setTimeout(() => setSaveToast(null), 3500);
   };
 
   // Handle Dragging Row Divider on Left Time Column (Excel style +1p / -1p)
@@ -2729,6 +3201,22 @@ export function CourtScheduleBoard({
               </span>
             </Button>
 
+            {/* AI Voice & Natural Language Command Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setAiVoiceModalOpen(true);
+                setAiVoiceInput('');
+                setVoiceParsedResult(null);
+                setVoiceError(null);
+              }}
+              className="h-7 px-2.5 rounded-lg bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs group"
+              title="Ra lệnh xếp lịch bằng giọng nói AI hoặc văn bản tự nhiên"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-300 group-hover:scale-110 transition-transform" />
+              <span>Lệnh AI / Giọng nói</span>
+            </button>
+
             {/* Conflict Warning Pill */}
             {scheduleConflicts.size > 0 && (
               <button
@@ -3790,6 +4278,193 @@ export function CourtScheduleBoard({
                 Áp dụng
               </Button>
             </div>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* AI VOICE & NATURAL LANGUAGE SCHEDULING MODAL */}
+      <Modal open={aiVoiceModalOpen} onOpenChange={setAiVoiceModalOpen}>
+        <ModalContent className="max-w-xl p-6 bg-white rounded-3xl shadow-2xl border border-slate-200">
+          <ModalHeader className="border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-2xl bg-linear-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <Sparkles className="h-5 w-5 text-amber-300" />
+              </div>
+              <div>
+                <ModalTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  Lệnh Xếp Lịch Bằng Giọng Nói AI
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Voice &amp; NLP
+                  </span>
+                </ModalTitle>
+                <ModalDescription className="text-xs text-slate-500">
+                  Nói tiếng Việt hoặc gõ yêu cầu xếp lịch tự nhiên (ví dụ: &quot;Xếp vòng 1/32 vào sân 1 và 2 từ 8h&quot;)
+                </ModalDescription>
+              </div>
+            </div>
+          </ModalHeader>
+
+          <div className="py-4 space-y-4">
+            {/* Microphone Centerpiece */}
+            <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-linear-to-b from-slate-50 to-indigo-50/40 border border-indigo-100/80 text-center relative overflow-hidden">
+              <button
+                type="button"
+                onClick={startVoiceRecognition}
+                disabled={isVoiceListening}
+                className={`h-20 w-20 rounded-full flex items-center justify-center shadow-xl transition-all cursor-pointer ${
+                  isVoiceListening
+                    ? 'bg-rose-500 text-white ring-8 ring-rose-500/30 scale-110 animate-pulse'
+                    : 'bg-linear-to-tr from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white ring-4 ring-indigo-500/20 hover:scale-105'
+                }`}
+                title={isVoiceListening ? 'Đang lắng nghe bạn nói...' : 'Bấm vào đây và nói câu lệnh'}
+              >
+                {isVoiceListening ? (
+                  <Mic className="h-8 w-8 animate-bounce text-white" />
+                ) : (
+                  <Mic className="h-8 w-8 text-white" />
+                )}
+              </button>
+
+              <div className="mt-3">
+                <p className="text-xs font-bold text-slate-800">
+                  {isVoiceListening ? '🔴 Đang lắng nghe... Hãy nói câu lệnh của bạn!' : 'Bấm vào micro và nói bằng tiếng Việt'}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  (Hoặc gõ/chỉnh sửa văn bản ở ô bên dưới)
+                </p>
+              </div>
+
+              {voiceError && (
+                <div className="mt-2.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-medium max-w-sm">
+                  {voiceError}
+                </div>
+              )}
+            </div>
+
+            {/* Natural Language Text Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Nội dung câu lệnh:</span>
+                {aiVoiceInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiVoiceInput('');
+                      setVoiceParsedResult(null);
+                    }}
+                    className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    Xóa
+                  </button>
+                )}
+              </label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={aiVoiceInput}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setAiVoiceInput(val);
+                    if (val.trim()) {
+                      const parsed = parseVoiceSchedulingCommand(val);
+                      setVoiceParsedResult(parsed);
+                    } else {
+                      setVoiceParsedResult(null);
+                    }
+                  }}
+                  placeholder="Ví dụ: Xếp vòng 1/32 vào sân 1 và sân 2 từ 8 giờ sáng, mỗi trận 20 phút..."
+                  className="h-10 text-xs rounded-xl bg-white border-slate-300 font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs focus-visible:ring-indigo-500"
+                />
+                <Button
+                  type="button"
+                  disabled={!aiVoiceInput.trim()}
+                  onClick={() => {
+                    const parsed = parseVoiceSchedulingCommand(aiVoiceInput);
+                    setVoiceParsedResult(parsed);
+                  }}
+                  className="h-10 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Quick Prompt Chips */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                Gợi ý câu lệnh nhanh (Bấm để thử):
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Xếp tất cả trận vòng 1/32 vào các sân từ 8h',
+                  'Xếp vòng 1/16 vào sân 1 và sân 2 từ 9h',
+                  'Khóa tất cả sân từ 12h đến 13h nghỉ trưa',
+                  'Hủy lịch sân 1 từ 8h đến 10h',
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      setAiVoiceInput(chip);
+                      const parsed = parseVoiceSchedulingCommand(chip);
+                      setVoiceParsedResult(parsed);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] font-medium transition-colors cursor-pointer border border-slate-200/80"
+                  >
+                    💡 {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Preview Card */}
+            {voiceParsedResult && (
+              <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 space-y-2.5 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-indigo-950">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    <span>Kế hoạch AI sẽ thực hiện:</span>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-200/80 text-indigo-900">
+                    {voiceParsedResult.intent.toUpperCase()}
+                  </span>
+                </div>
+
+                <p className="text-xs font-bold text-indigo-900 bg-white/90 p-2.5 rounded-xl border border-indigo-100 leading-relaxed shadow-2xs">
+                  {voiceParsedResult.description}
+                </p>
+
+                {voiceParsedResult.matchedMatchIds.length > 0 && (
+                  <div className="flex items-center justify-between text-[11px] text-indigo-800 font-semibold px-1">
+                    <span>Trận đấu khớp: <strong>{voiceParsedResult.matchedMatchIds.length} trận</strong></span>
+                    <span>Sân áp dụng: <strong>{voiceParsedResult.courtNames.length} sân</strong></span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <ModalFooter className="border-t border-slate-100 pt-3 flex items-center justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAiVoiceModalOpen(false)}
+              className="h-9 text-xs font-semibold cursor-pointer rounded-xl"
+            >
+              Đóng
+            </Button>
+            <Button
+              type="button"
+              disabled={!voiceParsedResult}
+              onClick={() => {
+                if (voiceParsedResult) {
+                  handleExecuteVoiceCommand(voiceParsedResult);
+                }
+              }}
+              className="h-9 px-5 bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-500/20 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-300" />
+              <span>⚡ Thực hiện lệnh này</span>
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

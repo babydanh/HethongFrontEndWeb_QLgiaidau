@@ -1214,6 +1214,33 @@ export function CourtScheduleBoard({
     setTimeout(() => setSaveToast(null), 2500);
   };
 
+  // Set duration for all matches in selection
+  const handleSetSelectionDuration = (newDuration: number) => {
+    const items = getSelectedMatchesInGrid();
+    if (items.length === 0) return;
+
+    const newDrafts = { ...draftAssignments };
+    const newCustomDurs = { ...customMatchDurations };
+
+    for (const it of items) {
+      newCustomDurs[it.matchId] = newDuration;
+      const match = displayMatches.find((m) => m.match.id === it.matchId);
+      if (match && match.courtId && match.scheduledAt) {
+        newDrafts[it.matchId] = {
+          courtId: match.courtId,
+          scheduledAt: match.scheduledAt,
+          durationMinutes: newDuration,
+        };
+      }
+    }
+
+    setCustomMatchDurations(newCustomDurs);
+    setDraftAssignments(newDrafts);
+    pushHistory(newDrafts);
+    setSaveToast(`⏱️ Đã đổi thời lượng ${items.length} trận thành ${newDuration} phút!`);
+    setTimeout(() => setSaveToast(null), 2500);
+  };
+
   // Move single match to a target court
   const handleMoveSingleMatchToCourt = (matchId: string, targetCourtId: string) => {
     const match = displayMatches.find((m) => m.match.id === matchId);
@@ -2088,34 +2115,31 @@ export function CourtScheduleBoard({
         onContextMenu={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          const cIdx = courts.findIndex((c) => c.id === item.courtId);
-          const isInsideSelection =
-            selectionRange &&
-            cIdx >= selectionRange.startCourtIndex &&
-            cIdx <= selectionRange.endCourtIndex &&
-            matchRowIndex >= selectionRange.startRowIndex &&
-            matchRowIndex <= selectionRange.endRowIndex;
+          const targetCIdx = courts.findIndex((c) => c.id === item.courtId);
+          const isCurrentlyInside =
+            Boolean(selectionRange) &&
+            targetCIdx >= minC &&
+            targetCIdx <= maxC &&
+            matchRowIndex >= minR &&
+            matchRowIndex <= maxR;
 
-          if (!isInsideSelection && cIdx >= 0) {
+          if (!isCurrentlyInside && targetCIdx >= 0) {
             setSelectionRange({
-              startCourtIndex: cIdx,
-              endCourtIndex: cIdx,
+              startCourtIndex: targetCIdx,
+              endCourtIndex: targetCIdx,
               startRowIndex: matchRowIndex,
               endRowIndex: matchRowIndex,
             });
           }
 
-          const hasMultiSelection =
-            selectionRange &&
-            (selectionRange.startCourtIndex !== selectionRange.endCourtIndex ||
-             selectionRange.startRowIndex !== selectionRange.endRowIndex);
+          const hasMultiSelection = isCurrentlyInside && (minC !== maxC || minR !== maxR);
 
           setContextMenu({
             x: event.clientX,
             y: event.clientY,
             courtId: item.courtId || '',
             courtName: courts.find((c) => c.id === item.courtId)?.courtName || 'Sân',
-            courtIndex: cIdx >= 0 ? cIdx : 0,
+            courtIndex: targetCIdx >= 0 ? targetCIdx : 0,
             rowIndex: matchRowIndex,
             timeStr: matchTimeStr,
             matchId: hasMultiSelection ? undefined : item.match.id,
@@ -2128,7 +2152,9 @@ export function CourtScheduleBoard({
             ? 'absolute inset-x-1 z-10 overflow-hidden p-2.5 flex flex-col justify-between'
             : 'absolute inset-x-1 z-10 overflow-hidden p-1.5 flex flex-col justify-between'
         } ${
-          isCut
+          isInsideSelection
+            ? 'border-blue-600 bg-blue-50/95 ring-2 ring-blue-500 shadow-md z-20'
+            : isCut
             ? 'opacity-40 border-dashed border-2 border-indigo-500 bg-indigo-50/80 animate-pulse'
             : isCompleted
             ? 'bg-slate-100/95 border-slate-300 text-slate-700 shadow-2xs'
@@ -2136,9 +2162,9 @@ export function CourtScheduleBoard({
             ? 'bg-amber-50/95 border-amber-400 text-amber-950 shadow-md ring-2 ring-amber-400/40'
             : 'bg-white border-slate-200 hover:border-blue-400 text-slate-900 shadow-xs'
         } ${
-          item.isDraft
+          item.isDraft && !isInsideSelection
             ? 'ring-2 ring-violet-400 border-violet-400 bg-violet-50/95'
-            : item.isPreview
+            : item.isPreview && !isInsideSelection
             ? 'border-dashed border-blue-400 bg-blue-50/95'
             : ''
         } ${isCurrentlyResizing ? 'ring-2 ring-blue-500 shadow-lg' : ''}`}
@@ -2157,20 +2183,31 @@ export function CourtScheduleBoard({
             <div className="flex items-center gap-1.5 min-w-0">
               <span
                 className={`truncate uppercase tracking-tight text-[11px] ${
-                  isCompleted ? 'text-slate-600 font-bold' : isFootball ? 'text-emerald-700 font-black' : 'text-blue-700 font-black'
+                  isInsideSelection
+                    ? 'text-blue-800 font-black'
+                    : isCompleted
+                    ? 'text-slate-600 font-bold'
+                    : isFootball
+                    ? 'text-emerald-700 font-black'
+                    : 'text-blue-700 font-black'
                 }`}
               >
                 {(division?.name || (isFootball ? 'BÓNG ĐÁ' : 'NỘI DUNG')).toUpperCase()}
               </span>
-              <span
-                className={`px-1.5 py-0.2 rounded text-[10px] font-black shrink-0 ${
-                  isCompleted
-                    ? 'bg-slate-200 text-slate-600 border border-slate-300'
-                    : isFootball
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                }`}
-              >
+              {isInsideSelection ? (
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-blue-600 text-white shadow-2xs shrink-0">
+                  ✓ Đã chọn
+                </span>
+              ) : (
+                <span
+                  className={`px-1.5 py-0.2 rounded text-[10px] font-black shrink-0 ${
+                    isCompleted
+                      ? 'bg-slate-200 text-slate-600 border border-slate-300'
+                      : isFootball
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                  }`}
+                >
                 {boFormat}
               </span>
             </div>
@@ -2829,10 +2866,9 @@ export function CourtScheduleBoard({
 
             {/* Court column headers: Drag or Click to Select Entire Column */}
             {courts.map((court, cIdx) => {
-              const isColSelected =
-                selectionRange &&
-                cIdx >= selectionRange.startCourtIndex &&
-                cIdx <= selectionRange.endCourtIndex;
+              const minC = selectionRange ? Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+              const maxC = selectionRange ? Math.max(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+              const isColSelected = Boolean(selectionRange) && cIdx >= minC && cIdx <= maxC;
 
               return (
                 <div
@@ -2855,10 +2891,9 @@ export function CourtScheduleBoard({
               style={{ height: timelineRows.totalHeight }}
             >
               {timelineRows.rows.map((row) => {
-                const isRowSelected =
-                  selectionRange &&
-                  row.index >= selectionRange.startRowIndex &&
-                  row.index <= selectionRange.endRowIndex;
+                const minR = selectionRange ? Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+                const maxR = selectionRange ? Math.max(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+                const isRowSelected = Boolean(selectionRange) && row.index >= minR && row.index <= maxR;
 
                 return (
                   <React.Fragment key={row.index}>
@@ -2971,12 +3006,17 @@ export function CourtScheduleBoard({
                 >
                   {/* Excel Cells (1 cell per time row) */}
                   {timelineRows.rows.map((row) => {
+                    const minC = selectionRange ? Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+                    const maxC = selectionRange ? Math.max(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+                    const minR = selectionRange ? Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+                    const maxR = selectionRange ? Math.max(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+
                     const isCellSelected =
-                      selectionRange &&
-                      courtIndex >= selectionRange.startCourtIndex &&
-                      courtIndex <= selectionRange.endCourtIndex &&
-                      row.index >= selectionRange.startRowIndex &&
-                      row.index <= selectionRange.endRowIndex;
+                      Boolean(selectionRange) &&
+                      courtIndex >= minC &&
+                      courtIndex <= maxC &&
+                      row.index >= minR &&
+                      row.index <= maxR;
 
                     return (
                       <div
@@ -3010,13 +3050,14 @@ export function CourtScheduleBoard({
                         onContextMenu={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          if (
-                            !selectionRange ||
-                            courtIndex < selectionRange.startCourtIndex ||
-                            courtIndex > selectionRange.endCourtIndex ||
-                            row.index < selectionRange.startRowIndex ||
-                            row.index > selectionRange.endRowIndex
-                          ) {
+                          const isCurrentlyInside =
+                            Boolean(selectionRange) &&
+                            courtIndex >= minC &&
+                            courtIndex <= maxC &&
+                            row.index >= minR &&
+                            row.index <= maxR;
+
+                          if (!isCurrentlyInside) {
                             setSelectionRange({
                               startCourtIndex: courtIndex,
                               endCourtIndex: courtIndex,
@@ -3721,11 +3762,16 @@ export function CourtScheduleBoard({
         const menuX = Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 270 : contextMenu.x);
         const menuY = Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 480 : contextMenu.y);
 
+        const selMinC = selectionRange ? Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+        const selMaxC = selectionRange ? Math.max(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+        const selMinR = selectionRange ? Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+        const selMaxR = selectionRange ? Math.max(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+
         const isMultiSelection = Boolean(
-          selectionRange &&
-          (selectionRange.startCourtIndex !== selectionRange.endCourtIndex ||
-           selectionRange.startRowIndex !== selectionRange.endRowIndex)
+          selectionRange && (selMinC !== selMaxC || selMinR !== selMaxR)
         );
+
+        const selectedMatchesList = isMultiSelection ? getSelectedMatchesInGrid() : [];
 
         return (
           <div
@@ -3745,12 +3791,12 @@ export function CourtScheduleBoard({
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   {isMultiSelection && selectionRange
-                    ? `Vùng chọn (${selectionRange.endCourtIndex - selectionRange.startCourtIndex + 1} sân × ${selectionRange.endRowIndex - selectionRange.startRowIndex + 1} ô)`
+                    ? `Vùng chọn (${selMaxC - selMinC + 1} sân × ${selMaxR - selMinR + 1} ô)`
                     : contextMenu.courtName}
                 </p>
                 <p className="text-xs font-black text-slate-900 truncate">
                   {isMultiSelection && selectionRange
-                    ? `${timelineRows.rows[selectionRange.startRowIndex]?.startTimeStr} → ${timelineRows.rows[selectionRange.endRowIndex]?.endTimeStr}`
+                    ? `${timelineRows.rows[selMinR]?.startTimeStr} → ${timelineRows.rows[selMaxR]?.endTimeStr}${selectedMatchesList.length > 0 ? ` (${selectedMatchesList.length} trận)` : ''}`
                     : contextMenu.timeStr}
                 </p>
               </div>

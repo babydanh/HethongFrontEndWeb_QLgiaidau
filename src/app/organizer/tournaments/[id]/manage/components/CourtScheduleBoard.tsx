@@ -2581,26 +2581,26 @@ export function CourtScheduleBoard({
 
         {/* Right: Court Scrolling + Export, Print, Layout, Zoom, Fullscreen & Reset */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Quick Court Scroll Navigation Buttons (◀ Sân 1-3 | Sân 4-6 ▶) */}
-          {courts.length > 3 && (
-            <div className="flex items-center gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+          {/* Quick Court Scroll Navigation Buttons (◀ Sân trước | Sân sau ▶) */}
+          {courts.length > 1 && (
+            <div className="flex items-center gap-0.5 bg-blue-50/80 border border-blue-200 rounded-lg p-0.5 shadow-2xs">
               <button
                 type="button"
                 onClick={() => handleScrollCourts('left')}
-                className="h-6 px-1.5 rounded text-[10px] font-bold text-slate-700 hover:bg-white hover:text-blue-700 flex items-center gap-0.5 transition-colors cursor-pointer"
-                title="Cuộn sang các sân bên trái"
+                className="h-6 px-2 rounded text-[11px] font-black text-blue-800 hover:bg-blue-600 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
+                title="Cuộn ngang sang các sân trước (bên trái)"
               >
-                <ChevronLeft className="h-3.5 w-3.5" />
+                <ChevronLeft className="h-4 w-4" />
                 <span>Sân trước</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleScrollCourts('right')}
-                className="h-6 px-1.5 rounded text-[10px] font-bold text-slate-700 hover:bg-white hover:text-blue-700 flex items-center gap-0.5 transition-colors cursor-pointer"
-                title="Cuộn sang các sân bên phải"
+                className="h-6 px-2 rounded text-[11px] font-black text-blue-800 hover:bg-blue-600 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
+                title="Cuộn ngang sang các sân sau (bên phải)"
               >
                 <span>Sân sau</span>
-                <ChevronRight className="h-3.5 w-3.5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -2695,11 +2695,20 @@ export function CourtScheduleBoard({
       ) : (
         <div
           ref={boardScrollContainerRef}
+          onWheel={(e) => {
+            if (e.shiftKey && boardScrollContainerRef.current) {
+              boardScrollContainerRef.current.scrollLeft += e.deltaY;
+            }
+          }}
           className={`${
-            isFullscreen
-              ? 'h-[calc(100vh-64px)]'
-              : 'h-[calc(100vh-170px)] min-h-[580px]'
-          } overflow-x-auto overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1 scrollbar-thin scrollbar-thumb-slate-300 hover:scrollbar-thumb-slate-400`}
+            isFullscreen || isLocalFullscreen
+              ? 'flex-1 min-h-0'
+              : 'h-[calc(100vh-210px)] min-h-[500px]'
+          } overflow-x-auto overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1`}
+          style={{
+            scrollbarWidth: 'auto',
+            scrollbarColor: '#94a3b8 #f1f5f9',
+          }}
           role="region"
           aria-label={t('matchSchedule.court')}
           tabIndex={0}

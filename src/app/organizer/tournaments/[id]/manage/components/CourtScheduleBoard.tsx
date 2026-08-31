@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
+  AlertTriangle,
   ArrowRightLeft,
   ArrowUpDown,
   CalendarClock,
@@ -21,10 +22,13 @@ import {
   Info,
   Layers,
   Lock,
+  Maximize2,
+  Minimize2,
   Minus,
   MoreHorizontal,
   Move,
   Plus,
+  Printer,
   RotateCcw,
   RotateCw,
   Save,
@@ -596,10 +600,150 @@ export function CourtScheduleBoard({
     [displayMatches],
   );
 
-  const unscheduledMatches = useMemo(
-    () => displayMatches.filter((item) => !item.courtId || !item.scheduledAt),
-    [displayMatches],
-  );
+  const [isLocalFullscreen, setIsLocalFullscreen] = useState(false);
+  const [conflictsModalOpen, setConflictsModalOpen] = useState(false);
+
+  const handleToggleFullscreen = () => {
+    setIsLocalFullscreen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isLocalFullscreen) {
+        setIsLocalFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLocalFullscreen]);
+
+  // Calculate player/team conflict between scheduled matches
+  const scheduleConflicts = useMemo(() => {
+    const map = new Map<string, { otherCourtName: string; otherTimeStr: string; competitorName: string }[]>();
+    const courtNameMap = new Map(courts.map((c) => [c.id, c.courtName]));
+
+    const scheduled = displayMatches.filter((m) => m.courtId && m.scheduledAt);
+
+    for (let i = 0; i < scheduled.length; i++) {
+      const m1 = scheduled[i];
+      const t1 = new Date(m1.scheduledAt!).getTime();
+      const dur1 = (draftAssignments[m1.match.id]?.durationMinutes || rowDurations[0] || defaultStepMinutes) * 60_000;
+      const end1 = t1 + dur1;
+
+      const p1Names = [
+        m1.match.participant1?.teamName,
+        m1.match.participant1?.name,
+        m1.match.participant2?.teamName,
+        m1.match.participant2?.name,
+      ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+
+      for (let j = i + 1; j < scheduled.length; j++) {
+        const m2 = scheduled[j];
+        if (m1.courtId === m2.courtId) continue;
+
+        const t2 = new Date(m2.scheduledAt!).getTime();
+        const dur2 = (draftAssignments[m2.match.id]?.durationMinutes || rowDurations[0] || defaultStepMinutes) * 60_000;
+        const end2 = t2 + dur2;
+
+        const isOverlap = Math.max(t1, t2) < Math.min(end1, end2) + 10 * 60_000;
+        if (!isOverlap) continue;
+
+        const p2Names = [
+          m2.match.participant1?.teamName,
+          m2.match.participant1?.name,
+          m2.match.participant2?.teamName,
+          m2.match.participant2?.name,
+        ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+
+        const shared = p1Names.find((name) => p2Names.some((n2) => n2.toLowerCase() === name.toLowerCase()));
+        if (shared) {
+          const c1Name = courtNameMap.get(m1.courtId!) || 'Sân khác';
+          const c2Name = courtNameMap.get(m2.courtId!) || 'Sân khác';
+          const time1Str = formatMatchTime(m1.scheduledAt);
+          const time2Str = formatMatchTime(m2.scheduledAt);
+
+          const list1 = map.get(m1.match.id) || [];
+          list1.push({ otherCourtName: c2Name, otherTimeStr: time2Str, competitorName: shared });
+          map.set(m1.match.id, list1);
+
+          const list2 = map.get(m2.match.id) || [];
+          list2.push({ otherCourtName: c1Name, otherTimeStr: time1Str, competitorName: shared });
+          map.set(m2.match.id, list2);
+        }
+      }
+    }
+
+    return map;
+  }, [displayMatches, draftAssignments, rowDurations, defaultStepMinutes, courts]);
+
+  const handleExportExcel = () => {
+    const courtNameMap = new Map(courts.map((c) => [c.id, c.courtName]));
+    const scheduled = displayMatches
+      .filter((m) => m.courtId && m.scheduledAt)
+      .sort((a, b) => {
+        const ta = new Date(a.scheduledAt!).getTime();
+        const tb = new Date(b.scheduledAt!).getTime();
+        if (ta !== tb) return ta - tb;
+        return (courtNameMap.get(a.courtId!) || '').localeCompare(courtNameMap.get(b.courtId!) || '');
+      });
+
+    if (scheduled.length === 0) {
+      setSaveToast('Chưa có trận đấu nào được xếp lịch để xuất!');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
+
+    const rows = [
+      ['STT', 'Sân thi đấu', 'Ngày thi đấu', 'Giờ thi đấu', 'Thời lượng (phút)', 'Nội dung', 'Vòng đấu / Bảng', 'Đội 1 / VĐV 1', 'Đội 2 / VĐV 2', 'Tỷ số', 'Trạng thái'],
+    ];
+
+    scheduled.forEach((m, idx) => {
+      const courtName = courtNameMap.get(m.courtId!) || 'Sân chưa rõ';
+      const timeStr = formatMatchTime(m.scheduledAt);
+      const dateStr = formatDateLabel(m.scheduledAt || scheduleDate, locale);
+      const div = divisions?.find((d) => d.id === m.match.divisionId)?.name || 'Chung';
+      const roundStr = m.match.roundName || m.match.groupName || (m.match.roundNumber ? `Vòng ${m.match.roundNumber}` : '—');
+      const t1 = m.match.participant1?.teamName || m.match.participant1?.name || 'Chưa xác định';
+      const t2 = m.match.participant2?.teamName || m.match.participant2?.name || 'Chưa xác định';
+      const scoreStr = m.match.sets && m.match.sets.length > 0
+        ? m.match.sets.map((s) => `${s.score1 ?? s.participant1Score ?? 0}-${s.score2 ?? s.participant2Score ?? 0}`).join(', ')
+        : (m.match.score1 !== null && m.match.score1 !== undefined ? `${m.match.score1} - ${m.match.score2}` : '—');
+      const statusStr = m.match.status === 'COMPLETED' ? 'Đã kết thúc' : m.match.status === 'IN_PROGRESS' ? 'Đang diễn ra' : 'Chưa diễn ra';
+      const dur = draftAssignments[m.match.id]?.durationMinutes || defaultStepMinutes;
+
+      rows.push([
+        String(idx + 1),
+        courtName,
+        dateStr,
+        timeStr,
+        String(dur),
+        div,
+        roundStr,
+        t1,
+        t2,
+        scoreStr,
+        statusStr,
+      ]);
+    });
+
+    const csvContent = '\uFEFF' + rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `lich_thi_dau_${scheduleDate || 'sporto'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setSaveToast(`Đã xuất ${scheduled.length} trận đấu ra file Excel!`);
+    setTimeout(() => setSaveToast(null), 2500);
+  };
+
+  const handlePrintSchedule = () => {
+    window.print();
+  };
 
   // Dynamic Excel Row Model
   const baseStartMinute = useMemo(() => {
@@ -2068,6 +2212,25 @@ export function CourtScheduleBoard({
             </div>
           </div>
 
+          {/* Conflict Warning Badge if any */}
+          {(() => {
+            const conflicts = scheduleConflicts.get(item.match.id);
+            if (!conflicts || conflicts.length === 0) return null;
+            return (
+              <div
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100/95 border border-amber-300 text-[10px] font-black text-amber-900 shrink-0 pointer-events-auto cursor-pointer shadow-2xs hover:bg-amber-200 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConflictsModalOpen(true);
+                }}
+                title={`⚠️ Cảnh báo trùng lịch VĐV "${conflicts[0].competitorName}" với ${conflicts[0].otherCourtName} (${conflicts[0].otherTimeStr})`}
+              >
+                <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0" />
+                <span className="truncate">Trùng VĐV: {conflicts[0].otherCourtName} ({conflicts[0].otherTimeStr})</span>
+              </div>
+            );
+          })()}
+
           {/* Footer Row: [BẢNG A / VÒNG 1]  [ Trạng thái ] */}
           <div className="flex items-center justify-between gap-1 pt-0.5 border-t border-slate-200/60 shrink-0 text-xs">
             <span
@@ -2157,8 +2320,15 @@ export function CourtScheduleBoard({
     );
   };
 
-  return (
-    <section className="space-y-1.5 relative w-full h-full flex flex-col" aria-labelledby="schedule-board-title" ref={boardRef}>
+    <section
+      className={`relative w-full ${
+        isLocalFullscreen
+          ? 'fixed inset-0 z-50 bg-slate-100 p-3 flex flex-col overflow-hidden h-screen'
+          : 'space-y-1.5 h-full flex flex-col'
+      }`}
+      aria-labelledby="schedule-board-title"
+      ref={boardRef}
+    >
       {/* Toast Notification */}
       {saveToast && (
         <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-slate-900 text-white px-4 py-2.5 shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -2387,10 +2557,23 @@ export function CourtScheduleBoard({
                 {unscheduledMatches.length}
               </span>
             </Button>
+
+            {/* Conflict Warning Pill */}
+            {scheduleConflicts.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setConflictsModalOpen(true)}
+                className="h-7 px-2 text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-lg flex items-center gap-1 hover:bg-amber-100 transition-colors cursor-pointer animate-pulse"
+                title="Có trận đấu bị trùng giờ VĐV ở các sân khác nhau. Bấm để xem chi tiết."
+              >
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                <span>{scheduleConflicts.size} trùng lịch</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right: Court Scrolling + Layout, Zoom & Reset */}
+        {/* Right: Court Scrolling + Export, Print, Layout, Zoom, Fullscreen & Reset */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Quick Court Scroll Navigation Buttons (◀ Sân 1-3 | Sân 4-6 ▶) */}
           {courts.length > 3 && (
@@ -2415,6 +2598,46 @@ export function CourtScheduleBoard({
               </button>
             </div>
           )}
+
+          {/* Export to Excel */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportExcel}
+            disabled={scheduledMatches.length === 0}
+            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
+            title="Xuất lịch thi đấu theo sân ra file Excel (.CSV UTF-8)"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+            <span className="text-[11px] hidden sm:inline">Xuất Excel</span>
+          </Button>
+
+          {/* Print Schedule */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrintSchedule}
+            disabled={scheduledMatches.length === 0}
+            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
+            title="In lịch thi đấu ra giấy hoặc lưu PDF"
+          >
+            <Printer className="h-3.5 w-3.5 text-slate-600" />
+            <span className="text-[11px] hidden sm:inline">In lịch</span>
+          </Button>
+
+          {/* Fullscreen Toggle */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleToggleFullscreen}
+            className={`h-7 px-2 text-xs font-semibold border-slate-200 rounded-lg flex items-center gap-1 cursor-pointer ${
+              isLocalFullscreen ? 'bg-blue-50 text-blue-700 border-blue-300' : 'hover:bg-slate-50 text-slate-700'
+            }`}
+            title={isLocalFullscreen ? 'Thoát toàn màn hình (Esc)' : 'Mở toàn màn hình để dễ xếp lịch'}
+          >
+            {isLocalFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-blue-600" /> : <Maximize2 className="h-3.5 w-3.5 text-slate-600" />}
+            <span className="text-[11px] hidden sm:inline">{isLocalFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
+          </Button>
 
           {/* Zoom Level Selector */}
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold text-slate-700">
@@ -3694,6 +3917,59 @@ export function CourtScheduleBoard({
           </div>
         );
       })()}
+
+      {/* POPUP MODAL: Danh sách xung đột trùng giờ VĐV */}
+      <Modal open={conflictsModalOpen} onOpenChange={setConflictsModalOpen}>
+        <ModalContent className="max-w-xl rounded-xl border border-slate-200">
+          <ModalHeader className="border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <ModalTitle className="text-base font-bold text-slate-900">
+                  Cảnh báo trùng lịch thi đấu ({scheduleConflicts.size} trận)
+                </ModalTitle>
+                <ModalDescription className="text-xs text-slate-500">
+                  Các VĐV / cặp đấu sau đây bị xếp thi đấu trong các khung giờ sát nhau hoặc trùng giờ ở 2 sân khác nhau
+                </ModalDescription>
+              </div>
+            </div>
+          </ModalHeader>
+
+          <div className="space-y-2.5 max-h-[380px] overflow-y-auto p-1">
+            {Array.from(scheduleConflicts.entries()).map(([matchId, conflictList]) => {
+              const currentMatch = displayMatches.find((m) => m.match.id === matchId);
+              const courtName = courts.find((c) => c.id === currentMatch?.courtId)?.courtName || 'Sân hiện tại';
+              const timeStr = formatMatchTime(currentMatch?.scheduledAt);
+
+              return (
+                <div key={matchId} className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-amber-950">
+                    <span>{courtName} ({timeStr})</span>
+                    <span className="text-[11px] font-medium text-amber-800">
+                      {currentMatch?.match.participant1?.teamName || 'VĐV 1'} vs {currentMatch?.match.participant2?.teamName || 'VĐV 2'}
+                    </span>
+                  </div>
+                  {conflictList.map((c, idx) => (
+                    <div key={idx} className="text-xs text-slate-700 flex items-center gap-1.5 pl-2 border-l-2 border-amber-400">
+                      <span>⚠️ VĐV <strong>&quot;{c.competitorName}&quot;</strong> cũng đang có lịch đấu tại <strong>{c.otherCourtName}</strong> lúc <strong>{c.otherTimeStr}</strong></span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+
+          <ModalFooter className="border-t border-slate-100 pt-3">
+            <ModalClose asChild>
+              <Button type="button" variant="outline" className="w-full text-xs font-semibold">
+                Đã hiểu & Đóng
+              </Button>
+            </ModalClose>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </section>
   );
 }

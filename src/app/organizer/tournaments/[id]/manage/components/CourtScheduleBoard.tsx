@@ -1214,33 +1214,6 @@ export function CourtScheduleBoard({
     setTimeout(() => setSaveToast(null), 2500);
   };
 
-  // Set duration for all matches in selection
-  const handleSetSelectionDuration = (newDuration: number) => {
-    const items = getSelectedMatchesInGrid();
-    if (items.length === 0) return;
-
-    const newDrafts = { ...draftAssignments };
-    const newCustomDurs = { ...customMatchDurations };
-
-    for (const it of items) {
-      newCustomDurs[it.matchId] = newDuration;
-      const match = displayMatches.find((m) => m.match.id === it.matchId);
-      if (match && match.courtId && match.scheduledAt) {
-        newDrafts[it.matchId] = {
-          courtId: match.courtId,
-          scheduledAt: match.scheduledAt,
-          durationMinutes: newDuration,
-        };
-      }
-    }
-
-    setCustomMatchDurations(newCustomDurs);
-    setDraftAssignments(newDrafts);
-    pushHistory(newDrafts);
-    setSaveToast(`⏱️ Đã đổi thời lượng ${items.length} trận thành ${newDuration} phút!`);
-    setTimeout(() => setSaveToast(null), 2500);
-  };
-
   // Move single match to a target court
   const handleMoveSingleMatchToCourt = (matchId: string, targetCourtId: string) => {
     const match = displayMatches.find((m) => m.match.id === matchId);
@@ -2100,6 +2073,19 @@ export function CourtScheduleBoard({
     const isCurrentlyResizing = matchCardResize?.matchId === item.match.id;
     const isCut = clipboard?.operation === 'cut' && clipboard.items.some((it) => it.matchId === item.match.id);
 
+    const selMinC = selectionRange ? Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+    const selMaxC = selectionRange ? Math.max(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
+    const selMinR = selectionRange ? Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+    const selMaxR = selectionRange ? Math.max(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
+
+    const currentCourtIndex = courts.findIndex((c) => c.id === item.courtId);
+    const isInsideSelection =
+      Boolean(selectionRange) &&
+      currentCourtIndex >= selMinC &&
+      currentCourtIndex <= selMaxC &&
+      matchRowIndex >= selMinR &&
+      matchRowIndex <= selMaxR;
+
     return (
       <div
         key={item.match.id}
@@ -2118,10 +2104,10 @@ export function CourtScheduleBoard({
           const targetCIdx = courts.findIndex((c) => c.id === item.courtId);
           const isCurrentlyInside =
             Boolean(selectionRange) &&
-            targetCIdx >= minC &&
-            targetCIdx <= maxC &&
-            matchRowIndex >= minR &&
-            matchRowIndex <= maxR;
+            targetCIdx >= selMinC &&
+            targetCIdx <= selMaxC &&
+            matchRowIndex >= selMinR &&
+            matchRowIndex <= selMaxR;
 
           if (!isCurrentlyInside && targetCIdx >= 0) {
             setSelectionRange({
@@ -2132,7 +2118,7 @@ export function CourtScheduleBoard({
             });
           }
 
-          const hasMultiSelection = isCurrentlyInside && (minC !== maxC || minR !== maxR);
+          const hasMultiSelection = isCurrentlyInside && (selMinC !== selMaxC || selMinR !== selMaxR);
 
           setContextMenu({
             x: event.clientX,

@@ -2208,8 +2208,9 @@ export function CourtScheduleBoard({
                       : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                   }`}
                 >
-                {boFormat}
-              </span>
+                  {boFormat}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1 shrink-0 text-[10px]">
               <span

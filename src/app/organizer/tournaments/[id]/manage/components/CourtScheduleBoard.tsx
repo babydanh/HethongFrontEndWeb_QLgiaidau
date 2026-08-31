@@ -600,6 +600,11 @@ export function CourtScheduleBoard({
     [displayMatches],
   );
 
+  const unscheduledMatches = useMemo(
+    () => displayMatches.filter((item) => !item.courtId || !item.scheduledAt),
+    [displayMatches],
+  );
+
   const [isLocalFullscreen, setIsLocalFullscreen] = useState(false);
   const [conflictsModalOpen, setConflictsModalOpen] = useState(false);
 

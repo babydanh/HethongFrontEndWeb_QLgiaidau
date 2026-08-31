@@ -2450,82 +2450,25 @@ export function CourtScheduleBoard({
 
           <div className="h-5 w-px bg-slate-200" />
 
-          {/* GROUP 3: ĐỊNH DẠNG SET & THỜI LƯỢNG (Format by Sets & Duration) */}
-          <div className="flex items-center gap-1.5 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
-            {/* Set Formats Presets: BO1, BO3, BO5 */}
-            <div className="flex items-center gap-0.5 px-1 border-r border-slate-200">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Set:</span>
-              {[
-                { label: 'BO1', mins: 15 },
-                { label: 'BO3', mins: 45 },
-                { label: 'BO5', mins: 75 },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => {
-                    if (selectionRange) {
-                      handleSetSelectionDuration(item.mins);
-                    } else {
-                      setDefaultStepMinutes(item.mins);
-                      setRowDurations({});
-                      setSaveToast(`Đã chọn định dạng ${item.label} (${item.mins}p/trận)!`);
-                      setTimeout(() => setSaveToast(null), 2500);
-                    }
-                  }}
-                  className="h-6 px-1.5 rounded text-[11px] font-bold bg-white hover:bg-blue-50 text-blue-700 border border-blue-200/80 transition-all cursor-pointer shadow-2xs"
-                  title={selectionRange ? `Đặt ${item.label} (${item.mins}p) cho vùng chọn` : `Đặt mặc định ${item.label} (${item.mins}p) cho toàn bảng`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Quick Minutes Pills */}
-            <div className="flex items-center gap-0.5 px-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Phút:</span>
-              {[10, 15, 20, 30, 45, 60].map((dur) => (
-                <button
-                  key={dur}
-                  type="button"
-                  onClick={() => {
-                    if (selectionRange) {
-                      handleSetSelectionDuration(dur);
-                    } else {
-                      setDefaultStepMinutes(dur);
-                      setRowDurations({});
-                      setSaveToast(`Đã đổi bước nhảy toàn bảng sang ${dur}p/ô!`);
-                      setTimeout(() => setSaveToast(null), 2500);
-                    }
-                  }}
-                  className={`h-6 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                    defaultStepMinutes === dur && !selectionRange
-                      ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'hover:bg-white text-slate-700 hover:text-blue-700'
-                  }`}
-                  title={selectionRange ? `Đặt ${dur}p cho vùng chọn` : `Đặt mặc định ${dur}p/ô cho toàn bảng`}
-                >
-                  {dur}p
-                </button>
-              ))}
-            </div>
-
-            {/* Custom Time & Slot Modal Trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                setTempStart(operatingStart);
-                setTempEnd(operatingEnd);
-                setTempStep(defaultStepMinutes);
-                setTimeSettingsOpen(true);
-              }}
-              className="h-7 px-2 rounded-md bg-white border border-slate-200 text-slate-800 text-[11px] font-bold flex items-center gap-1 hover:bg-slate-100 transition-colors cursor-pointer shadow-2xs"
-              title="Tùy chỉnh giờ bắt đầu, kết thúc và bước nhảy"
-            >
-              <Clock className="h-3.5 w-3.5 text-blue-600" />
-              <span>{operatingStart} – {operatingEnd}</span>
-            </button>
-          </div>
+          {/* GROUP 3: CÀI ĐẶT KHUNG GIỜ & THỂ THỨC (Dedicated Settings Button) */}
+          <button
+            type="button"
+            onClick={() => {
+              setTempStart(operatingStart);
+              setTempEnd(operatingEnd);
+              setTempStep(defaultStepMinutes);
+              setTempMinutesPerSet(minutesPerSet);
+              setTimeSettingsOpen(true);
+            }}
+            className="h-7 px-2.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs group"
+            title="Tùy chỉnh giờ mở sân, bước nhảy ô và thời lượng thi đấu theo set"
+          >
+            <Settings2 className="h-3.5 w-3.5 text-blue-600 group-hover:rotate-90 transition-transform duration-300" />
+            <span>Cài đặt giờ</span>
+            <span className="text-[10px] text-blue-700 font-black bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
+              {operatingStart} – {operatingEnd} · {defaultStepMinutes}p/ô
+            </span>
+          </button>
 
           <div className="h-5 w-px bg-slate-200" />
 
@@ -3347,108 +3290,142 @@ export function CourtScheduleBoard({
         </ModalContent>
       </Modal>
 
-      {/* POPUP MODAL: Cấu hình mốc thời gian & bước nhảy */}
+      {/* POPUP MODAL: Cấu hình khung giờ & thể thức thi đấu riêng biệt */}
       <Modal open={timeSettingsOpen} onOpenChange={setTimeSettingsOpen}>
-        <ModalContent className="max-w-md rounded-2xl border border-slate-200 p-5 shadow-2xl">
-          <ModalHeader>
-            <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              Cấu hình mốc thời gian thi đấu
-            </ModalTitle>
-            <ModalDescription className="text-xs text-slate-500">
-              Thiết lập khung giờ hoạt động trong ngày và thời lượng từng bước nhảy của bảng lịch.
-            </ModalDescription>
+        <ModalContent className="max-w-lg rounded-2xl border border-slate-200 p-6 shadow-2xl">
+          <ModalHeader className="border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
+                <Settings2 className="h-5 w-5" />
+              </div>
+              <div>
+                <ModalTitle className="text-base font-bold text-slate-900">
+                  Cài đặt khung giờ &amp; Thể thức thi đấu
+                </ModalTitle>
+                <ModalDescription className="text-xs text-slate-500">
+                  Tùy chỉnh giờ mở sân, bước nhảy ô trên bảng lịch và thời lượng theo từng thể thức
+                </ModalDescription>
+              </div>
+            </div>
           </ModalHeader>
 
           <div className="space-y-4 py-3 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Giờ bắt đầu</label>
-                <Input
-                  type="time"
-                  value={tempStart}
-                  onChange={(e) => setTempStart(e.target.value)}
-                  className="h-9 text-xs rounded-lg border-slate-300 font-semibold"
-                />
+            {/* SECTION 1: KHUNG GIỜ MỞ SÂN */}
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span>1. Khung giờ mở sân trong ngày</span>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Giờ kết thúc</label>
-                <Input
-                  type="time"
-                  value={tempEnd}
-                  onChange={(e) => setTempEnd(e.target.value)}
-                  className="h-9 text-xs rounded-lg border-slate-300 font-semibold"
-                />
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Giờ bắt đầu</label>
+                  <Input
+                    type="time"
+                    value={tempStart}
+                    onChange={(e) => setTempStart(e.target.value)}
+                    className="h-9 text-xs rounded-lg border-slate-300 bg-white font-bold text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Giờ kết thúc</label>
+                  <Input
+                    type="time"
+                    value={tempEnd}
+                    onChange={(e) => setTempEnd(e.target.value)}
+                    className="h-9 text-xs rounded-lg border-slate-300 bg-white font-bold text-slate-900"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-slate-700">
-                  Bước nhảy thời gian mỗi ô (Duration / Slot)
-                </label>
+            {/* SECTION 2: BƯỚC NHẢY Ô TRÊN BẢNG LỊCH */}
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <Layers className="h-4 w-4 text-indigo-600" />
+                  <span>2. Bước nhảy ô thời gian (Mỗi ô trên bảng)</span>
+                </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-[11px] text-slate-400 font-medium">Tùy chỉnh:</span>
+                  <span className="text-[10px] text-slate-400 font-semibold">Tự nhập:</span>
                   <input
                     type="number"
                     min={5}
                     max={180}
                     value={tempStep}
                     onChange={(e) => setTempStep(Math.max(5, Math.min(180, Number(e.target.value) || 15)))}
-                    className="w-14 h-6 px-1.5 text-center text-xs font-bold border border-slate-300 rounded-md bg-white text-blue-700"
+                    className="w-12 h-6 px-1 text-center text-xs font-black border border-slate-300 rounded bg-white text-blue-700"
                   />
-                  <span className="text-[11px] text-slate-500 font-bold">phút</span>
+                  <span className="text-[10px] text-slate-500 font-bold">phút</span>
                 </div>
               </div>
-              <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-                {[5, 10, 15, 20, 25, 30, 45, 60].map((step) => (
+              <div className="grid grid-cols-6 gap-1.5 pt-1">
+                {[10, 15, 20, 30, 45, 60].map((step) => (
                   <button
                     key={step}
                     type="button"
                     onClick={() => setTempStep(step)}
                     className={`py-1.5 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                       tempStep === step
-                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-2xs'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     {step}p
                   </button>
                 ))}
               </div>
+              <p className="text-[10px] text-slate-500">
+                💡 Khuyên dùng <strong>15p</strong> hoặc <strong>20p/ô</strong> để xếp lịch chuẩn xác và dễ nhìn.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Thời lượng ước tính 1 Set đấu (Tự động tính cho BO1, BO3, BO5)
-              </label>
-              <div className="grid grid-cols-5 gap-1.5">
+            {/* SECTION 3: THỂ THỨC THI ĐẤU & SET */}
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  <span>3. Thời lượng theo Thể thức &amp; Set</span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  {tempMinutesPerSet}p / set
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1.5 pt-1">
                 {[10, 15, 20, 25, 30].map((mins) => (
                   <button
                     key={mins}
                     type="button"
                     onClick={() => setTempMinutesPerSet(mins)}
-                    className={`py-2 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                    className={`py-1.5 text-center rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                       tempMinutesPerSet === mins
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-2xs'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     {mins}p/set
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                👉 BO1 = {tempMinutesPerSet}p • BO3 = {tempMinutesPerSet * 3}p • BO5 = {tempMinutesPerSet * 5}p
-              </p>
-            </div>
 
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900 leading-relaxed">
-              💡 <strong>Mẹo:</strong> Bạn có thể dùng chuột kéo trực tiếp viền các đường line mốc giờ ở cột màu vàng bên trái của bảng lịch để co/giãn từng phút tùy ý như Excel.
+              {/* Format Preview Cards */}
+              <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                <div className="p-2 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="block text-[10px] font-black text-slate-400">BO1 (1 SET)</span>
+                  <span className="text-xs font-black text-slate-900">{tempMinutesPerSet} phút</span>
+                </div>
+                <div className="p-2 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="block text-[10px] font-black text-slate-400">BO3 (3 SETS)</span>
+                  <span className="text-xs font-black text-slate-900">{tempMinutesPerSet * 3} phút</span>
+                </div>
+                <div className="p-2 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="block text-[10px] font-black text-slate-400">BO5 (5 SETS)</span>
+                  <span className="text-xs font-black text-slate-900">{tempMinutesPerSet * 5} phút</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <ModalFooter className="pt-2 flex items-center justify-between">
+          <ModalFooter className="border-t border-slate-100 pt-3 flex items-center justify-between">
             <Button
               type="button"
               variant="outline"
@@ -3477,7 +3454,7 @@ export function CourtScheduleBoard({
                   setMinutesPerSet(tempMinutesPerSet);
                   setRowDurations({});
                   setTimeSettingsOpen(false);
-                  setSaveToast('Đã áp dụng cấu hình mốc giờ & thời lượng set mới!');
+                  setSaveToast('Đã áp dụng cấu hình khung giờ & thể thức mới!');
                   setTimeout(() => setSaveToast(null), 2500);
                 }}
                 className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"

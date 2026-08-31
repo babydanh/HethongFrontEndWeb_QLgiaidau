@@ -2320,6 +2320,7 @@ export function CourtScheduleBoard({
     );
   };
 
+  return (
     <section
       className={`relative w-full ${
         isLocalFullscreen

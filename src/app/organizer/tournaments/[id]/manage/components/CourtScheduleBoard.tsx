@@ -638,7 +638,24 @@ export function CourtScheduleBoard({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isLocalFullscreen]);
 
-  // Calculate player/team conflict between scheduled matches
+  // Helper to ignore placeholder / unassigned competitor names
+  const isPlaceholderCompetitorName = (name?: string | null) => {
+    if (!name) return true;
+    const s = name.trim().toLowerCase();
+    if (!s || s === '—' || s === '-' || s === '?' || s === 'null' || s === 'undefined') return true;
+    if (
+      s.includes('chưa xác định') ||
+      s.includes('chờ xác định') ||
+      s.includes('tbd') ||
+      s.includes('bye') ||
+      s.includes('đang chờ')
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  // Calculate player/team conflict between scheduled matches (Strict concurrent overlap)
   const scheduleConflicts = useMemo(() => {
     const map = new Map<string, { otherCourtName: string; otherTimeStr: string; competitorName: string }[]>();
     const courtNameMap = new Map(courts.map((c) => [c.id, c.courtName]));
@@ -656,7 +673,9 @@ export function CourtScheduleBoard({
         m1.match.participant1?.name,
         m1.match.participant2?.teamName,
         m1.match.participant2?.name,
-      ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+      ].filter((n): n is string => !isPlaceholderCompetitorName(n));
+
+      if (p1Names.length === 0) continue;
 
       for (let j = i + 1; j < scheduled.length; j++) {
         const m2 = scheduled[j];
@@ -666,7 +685,8 @@ export function CourtScheduleBoard({
         const dur2 = (draftAssignments[m2.match.id]?.durationMinutes || rowDurations[0] || defaultStepMinutes) * 60_000;
         const end2 = t2 + dur2;
 
-        const isOverlap = Math.max(t1, t2) < Math.min(end1, end2) + 10 * 60_000;
+        // Strict time overlap: both matches are occurring concurrently during the exact same time
+        const isOverlap = Math.max(t1, t2) < Math.min(end1, end2);
         if (!isOverlap) continue;
 
         const p2Names = [
@@ -674,7 +694,7 @@ export function CourtScheduleBoard({
           m2.match.participant1?.name,
           m2.match.participant2?.teamName,
           m2.match.participant2?.name,
-        ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+        ].filter((n): n is string => !isPlaceholderCompetitorName(n));
 
         const shared = p1Names.find((name) => p2Names.some((n2) => n2.toLowerCase() === name.toLowerCase()));
         if (shared) {
@@ -1315,7 +1335,7 @@ export function CourtScheduleBoard({
         targetItem.match.participant1?.name,
         targetItem.match.participant2?.teamName,
         targetItem.match.participant2?.name,
-      ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+      ].filter((n): n is string => !isPlaceholderCompetitorName(n));
 
       let placed = false;
 
@@ -1359,7 +1379,7 @@ export function CourtScheduleBoard({
                 otherMatch.participant1?.name,
                 otherMatch.participant2?.teamName,
                 otherMatch.participant2?.name,
-              ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+              ].filter((n): n is string => !isPlaceholderCompetitorName(n));
 
               return targetParticipants.some((name) => otherNames.some((o) => o.toLowerCase() === name.toLowerCase()));
             }) ||
@@ -1375,7 +1395,7 @@ export function CourtScheduleBoard({
                 m.match.participant1?.name,
                 m.match.participant2?.teamName,
                 m.match.participant2?.name,
-              ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+              ].filter((n): n is string => !isPlaceholderCompetitorName(n));
 
               return targetParticipants.some((name) => otherNames.some((o) => o.toLowerCase() === name.toLowerCase()));
             })

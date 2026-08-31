@@ -518,8 +518,16 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const handleResetBracket = async () => {
     setBracketLoading(true);
     try {
+      if (isPairFormat && pendingParticipants.length >= 2) {
+        try {
+          await tournamentsApi.generateLitePairs(id, { strategy: 'RANDOM' });
+        } catch (_pairErr) {
+          // If already paired or handled by backend, continue to reset bracket
+        }
+      }
       await tournamentsApi.resetLiteBracket(id, liteDivisionId);
       await fetchBracket(liteDivisionId);
+      await fetchParticipants();
       setParticipantOverrides({});
       toast.success(translate('resetBracketSuccess'));
     } catch (err) {
@@ -1063,31 +1071,58 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">{translate('rosterLockedBadgeShort')}</Badge>
                         ) : (
                           <Button variant="outline" onClick={handleConfirmRoster} disabled={rosterConfirming} className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100">
-                            {rosterConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                                    {rosterConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
                                                         {translate('lockRoster')}
 
                           </Button>
                         )}
                       </div>
-                      {!hasBracket && <>
-                        <Button
-                          onClick={handleGenerateBracket}
-                          disabled={bracketLoading || bracketEligibleCount < 2}
-                          className="w-full gap-2"
-                        >
-                        {bracketLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Swords className="w-4 h-4" />
-                        )}
-                          {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
-                        </Button>
-                        {bracketEligibleCount < 2 && (
-                          <p className="mt-2 text-center text-xs font-semibold text-amber-700">
-                            {translate('bracketMinimumParticipants', { count: 2 })}
-                          </p>
-                        )}
-                      </>}
+                      {!hasBracket ? (
+                        <>
+                          <Button
+                            onClick={handleGenerateBracket}
+                            disabled={bracketLoading || bracketEligibleCount < 2}
+                            className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm font-semibold"
+                          >
+                            {bracketLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Swords className="w-4 h-4" />
+                            )}
+                            {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
+                          </Button>
+                          {bracketEligibleCount < 2 && (
+                            <p className="mt-2 text-center text-xs font-semibold text-amber-700">
+                              {translate('bracketMinimumParticipants', { count: 2 })}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="space-y-2.5">
+                          <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50/80 border border-blue-100 text-xs text-blue-800">
+                            <span className="font-medium">💡 Nhánh đấu hiện tại vẫn giữ nguyên. Khi hoàn tất tách/ghép cặp, bạn có thể bấm <strong>&quot;Tạo lại nhánh đấu&quot;</strong> để hệ thống cập nhật sơ đồ theo các cặp đấu mới.</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={handleResetBracket}
+                              disabled={bracketLoading || tournamentDragLocked || bracketEligibleCount < 2}
+                              className="flex-1 gap-2 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-semibold"
+                            >
+                              {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 text-amber-600" />}
+                              {bracketLoading ? translate('creatingBracket') : translate('resetBracketAction')}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setActiveTab('bracket')}
+                              className="gap-2 border-slate-200 hover:bg-slate-50 font-medium"
+                            >
+                              <Swords className="w-4 h-4 text-slate-600" />
+                              {translate('viewBracket')}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>

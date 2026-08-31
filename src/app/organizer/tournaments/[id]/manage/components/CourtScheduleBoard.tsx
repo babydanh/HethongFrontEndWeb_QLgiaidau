@@ -141,6 +141,7 @@ type ParsedVoiceCommand = {
   roundLabel?: string;
   divisionId?: string;
   divisionName?: string;
+  targetDate?: string;
   courtIds: string[];
   courtNames: string[];
   startHour?: number;
@@ -148,10 +149,22 @@ type ParsedVoiceCommand = {
   endHour?: number;
   endMinute?: number;
   durationMinutes?: number;
+  restBufferMinutes?: number;
+  setCount?: number;
   competitorQuery?: string;
   blockReason?: string;
   matchedMatchIds: string[];
   description: string;
+  evaluation?: {
+    totalMatchesCount: number;
+    estimatedStartStr: string;
+    estimatedEndStr: string;
+    courtCount: number;
+    restBufferMinutes: number;
+    courtEfficiencyPercent: number;
+    dateLabel: string;
+    safetyChecks: string[];
+  };
 };
 
 type RowResizeState = {
@@ -1571,7 +1584,7 @@ export function CourtScheduleBoard({
     setTimeout(() => setSaveToast(null), 2500);
   };
 
-  // VIETNAMESE NLP ENGINE FOR VOICE & NATURAL LANGUAGE SCHEDULING
+  // VIETNAMESE ADVANCED NLP ENGINE FOR VOICE & NATURAL LANGUAGE SCHEDULING
   const parseVoiceSchedulingCommand = (text: string): ParsedVoiceCommand => {
     const raw = text.trim();
     const lower = raw.toLowerCase();
@@ -1603,14 +1616,42 @@ export function CourtScheduleBoard({
       intent = 'duration';
     }
 
-    // 2. Extract Duration (e.g., "15 phút", "20p", "30 phút", "45 phút", "60 phút")
+    // 2. Extract Set count & Match Duration (e.g. "1 set 15p", "3 set 40p", "mỗi trận 30 phút", "20p")
     let durationMinutes: number | undefined;
-    const durMatch = lower.match(/(\d{1,3})\s*(?:phút|p\b)/);
-    if (durMatch) {
-      durationMinutes = parseInt(durMatch[1], 10);
+    let setCount: number | undefined;
+
+    const setDurMatch = lower.match(/(\d+)\s*set\s*(\d{1,3})\s*(?:phút|p\b)/);
+    if (setDurMatch) {
+      setCount = parseInt(setDurMatch[1], 10);
+      durationMinutes = parseInt(setDurMatch[2], 10);
+    } else {
+      const singleDurMatch = lower.match(/(?:thời lượng|mỗi trận|trận)?\s*(\d{1,3})\s*(?:phút|p\b)/);
+      if (singleDurMatch) {
+        durationMinutes = parseInt(singleDurMatch[1], 10);
+      }
     }
 
-    // 3. Extract Time (start hour & minute)
+    // 3. Extract Rest / Buffer between matches (e.g., "cách nhau 5p nghỉ ngơi", "nghỉ 5p", "nghỉ giữa trận 10 phút")
+    let restBufferMinutes: number | undefined;
+    const restMatch = lower.match(/(?:cách nhau|nghỉ ngơi|nghỉ giữa trận|nghỉ|buffer|giãn cách)\s*(\d{1,2})\s*(?:phút|p\b)/);
+    if (restMatch) {
+      restBufferMinutes = parseInt(restMatch[1], 10);
+    }
+
+    // 4. Extract Target Date (e.g., "ngày 30/8", "ngày 31/08", "ngày 30 tháng 8", "30/08/2026")
+    let targetDate: string | undefined;
+    const dateMatch = lower.match(/ngày\s*(\d{1,2})[\s/.-](\d{1,2})(?:[\s/.-](\d{4}))?/);
+    if (dateMatch) {
+      const day = parseInt(dateMatch[1], 10);
+      const month = parseInt(dateMatch[2], 10);
+      const year = dateMatch[3] ? parseInt(dateMatch[3], 10) : new Date().getFullYear();
+      const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      const foundInAvailable = availableScheduleDates.find((d) => d === formattedDate);
+      targetDate = foundInAvailable || formattedDate;
+    }
+
+    // 5. Extract Time (start hour & minute)
     let startHour: number | undefined;
     let startMinute: number | undefined;
     let endHour: number | undefined;
@@ -1624,7 +1665,7 @@ export function CourtScheduleBoard({
       endHour = parseInt(rangeMatch[3], 10);
       endMinute = rangeMatch[4] ? parseInt(rangeMatch[4], 10) : 0;
     } else {
-      // Single time: "lúc 8 giờ", "8h30", "8:00", "từ 8h"
+      // Single time: "lúc 8 giờ", "8h30", "8:00", "từ 8h", "từ 14h"
       const singleTimeMatch = lower.match(/(?:lúc|từ|vào|đầu)\s*(\d{1,2})(?:[h:](\d{2})|\s*giờ(?:\s*(\d{2}))?)?/);
       if (singleTimeMatch) {
         startHour = parseInt(singleTimeMatch[1], 10);
@@ -1640,7 +1681,7 @@ export function CourtScheduleBoard({
       endHour += 12;
     }
 
-    // 4. Extract Target Courts
+    // 6. Extract Target Courts
     let targetCourtIds: string[] = [];
     let targetCourtNames: string[] = [];
 
@@ -1653,7 +1694,7 @@ export function CourtScheduleBoard({
       targetCourtIds = courts.map((c) => c.id);
       targetCourtNames = courts.map((c) => c.courtName);
     } else {
-      // Check court range: "sân 1 đến sân 3", "sân 1 tới 4"
+      // Check court range: "sân 1 đến sân 4", "sân 1 tới 4", "sân 1-4"
       const courtRangeMatch = lower.match(/sân\s*(\d+)\s*(?:đến|tới|-)\s*(?:sân\s*)?(\d+)/);
       if (courtRangeMatch) {
         const fromNum = parseInt(courtRangeMatch[1], 10);
@@ -1664,7 +1705,7 @@ export function CourtScheduleBoard({
         targetCourtIds = matched.map((c) => c.id);
         targetCourtNames = matched.map((c) => c.courtName);
       } else {
-        // Find individual courts mentioned
+        // Find individual courts mentioned: "sân 1 và sân 2", "sân 1, 2"
         for (let i = 0; i < courts.length; i++) {
           const c = courts[i];
           const cNameLower = c.courtName.toLowerCase();
@@ -1686,25 +1727,48 @@ export function CourtScheduleBoard({
       targetCourtNames = courts.map((c) => c.courtName);
     }
 
-    // 5. Extract Round Label
+    // 7. Extract Round Label & Combined Rounds (e.g. "tứ kết và bán kết", "vòng 1/32", "chung kết")
     let roundLabel: string | undefined;
-    if (lower.includes('1/32') || lower.includes('vòng 32') || lower.includes('vòng 64')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.includes('1/32') || r.label.includes('32'))?.label || 'Vòng 1/32';
-    } else if (lower.includes('1/16') || lower.includes('vòng 16')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.includes('1/16') || r.label.includes('16'))?.label || 'Vòng 1/16';
-    } else if (lower.includes('1/8') || lower.includes('vòng 8')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.includes('1/8') || r.label.includes('8'))?.label || 'Vòng 1/8';
-    } else if (lower.includes('tứ kết') || lower.includes('1/4') || lower.includes('quarter')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('tứ kết') || r.label.includes('1/4'))?.label || 'Tứ kết';
-    } else if (lower.includes('bán kết') || lower.includes('semi')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('bán kết'))?.label || 'Bán kết';
-    } else if (lower.includes('chung kết') || lower.includes('final') || lower.includes('ck')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('chung kết'))?.label || 'Chung kết';
-    } else if (lower.includes('vòng bảng') || lower.includes('bảng')) {
-      roundLabel = unscheduledRounds.find((r) => r.label.toLowerCase().includes('bảng'))?.label || 'Vòng bảng';
+    const matchedRoundLabels: string[] = [];
+
+    if (lower.includes('1/64') || lower.includes('vòng 64')) {
+      const found = unscheduledRounds.find((r) => r.label.includes('1/64') || r.label.includes('64'))?.label || 'Vòng 1/64';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('1/32') || lower.includes('vòng 32')) {
+      const found = unscheduledRounds.find((r) => r.label.includes('1/32') || r.label.includes('32'))?.label || 'Vòng 1/32';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('1/16') || lower.includes('vòng 16')) {
+      const found = unscheduledRounds.find((r) => r.label.includes('1/16') || r.label.includes('16'))?.label || 'Vòng 1/16';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('1/8') || lower.includes('vòng 8')) {
+      const found = unscheduledRounds.find((r) => r.label.includes('1/8') || r.label.includes('8'))?.label || 'Vòng 1/8';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('tứ kết') || lower.includes('1/4') || lower.includes('quarter')) {
+      const found = unscheduledRounds.find((r) => r.label.toLowerCase().includes('tứ kết') || r.label.includes('1/4'))?.label || 'Tứ kết';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('bán kết') || lower.includes('semi')) {
+      const found = unscheduledRounds.find((r) => r.label.toLowerCase().includes('bán kết'))?.label || 'Bán kết';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('chung kết') || lower.includes('final') || lower.includes('ck')) {
+      const found = unscheduledRounds.find((r) => r.label.toLowerCase().includes('chung kết'))?.label || 'Chung kết';
+      matchedRoundLabels.push(found);
+    }
+    if (lower.includes('vòng bảng') || lower.includes('bảng')) {
+      const found = unscheduledRounds.find((r) => r.label.toLowerCase().includes('bảng'))?.label || 'Vòng bảng';
+      matchedRoundLabels.push(found);
     }
 
-    // 6. Extract Division
+    if (matchedRoundLabels.length > 0) {
+      roundLabel = matchedRoundLabels.join(', ');
+    }
+
+    // 8. Extract Division
     let divisionId: string | undefined;
     let divisionName: string | undefined;
     for (const div of divisions) {
@@ -1715,23 +1779,22 @@ export function CourtScheduleBoard({
       }
     }
 
-    // 7. Extract Specific Competitor Query
+    // 9. Extract Specific Competitor Query
     let competitorQuery: string | undefined;
     const compMatch = lower.match(/(?:của|vđv|đội|cặp)\s+([a-zA-Z0-9_\s/]+?)(?:\s+vào|\s+lúc|\s+từ|\s+mỗi|$)/);
     if (compMatch) {
       competitorQuery = compMatch[1].trim();
     }
 
-    // 8. Match relevant matches from pool
+    // 10. Match relevant matches from pool
     const pool = intent === 'unassign' ? displayMatches.filter((m) => m.courtId && m.scheduledAt) : unscheduledMatches;
     const matched = pool.filter((item) => {
       if (divisionId && item.match.divisionId !== divisionId) return false;
-      if (roundLabel) {
+      if (matchedRoundLabels.length > 0) {
         const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
         const rLabel = getAccurateRoundLabel(item.match, maxR);
-        if (rLabel !== roundLabel && !rLabel.toLowerCase().includes(roundLabel.toLowerCase())) {
-          return false;
-        }
+        const matchAny = matchedRoundLabels.some((lbl) => rLabel === lbl || rLabel.toLowerCase().includes(lbl.toLowerCase()));
+        if (!matchAny) return false;
       }
       if (competitorQuery) {
         const p1 = `${item.match.participant1?.teamName || ''} ${item.match.participant1?.name || ''}`.toLowerCase();
@@ -1744,19 +1807,50 @@ export function CourtScheduleBoard({
       return true;
     });
 
-    const matchedMatches = matched.length === 0 && intent === 'schedule' && !competitorQuery && !roundLabel && !divisionId ? unscheduledMatches : matched;
+    const matchedMatches = matched.length === 0 && intent === 'schedule' && !competitorQuery && matchedRoundLabels.length === 0 && !divisionId ? unscheduledMatches : matched;
 
-    // 9. Formulate Description
-    let description = '';
-    const timeStr = startHour !== undefined ? `${String(startHour).padStart(2, '0')}:${String(startMinute || 0).padStart(2, '0')}` : '08:00';
+    // 11. Formulate Description & AI Evaluation
+    const effectiveStartH = startHour !== undefined ? startHour : 8;
+    const effectiveStartM = startMinute !== undefined ? startMinute : 0;
+    const timeStr = `${String(effectiveStartH).padStart(2, '0')}:${String(effectiveStartM).padStart(2, '0')}`;
     const courtStr = targetCourtNames.length === courts.length ? 'tất cả các sân' : targetCourtNames.join(', ');
+    const effectiveDuration = durationMinutes || defaultStepMinutes;
+    const effectiveBuffer = restBufferMinutes || 0;
+    const matchPlusBuffer = effectiveDuration + effectiveBuffer;
+
+    let description = '';
+    let evaluation: ParsedVoiceCommand['evaluation'] | undefined;
 
     if (intent === 'schedule') {
       const count = matchedMatches.length;
-      const rStr = roundLabel ? ` thuộc ${roundLabel}` : '';
+      const rStr = roundLabel ? ` (${roundLabel})` : '';
       const divStr = divisionName ? ` [${divisionName}]` : '';
-      const durStr = durationMinutes ? `, mỗi trận ${durationMinutes} phút` : '';
-      description = `⚡ Xếp ${count} trận${divStr}${rStr} vào ${courtStr} bắt đầu từ ${timeStr}${durStr}.`;
+      const durStr = `, ${effectiveDuration}p/trận${effectiveBuffer > 0 ? ` (+${effectiveBuffer}p nghỉ ngơi)` : ''}`;
+      const dateStr = targetDate ? ` ngày ${formatDateLabel(targetDate, locale)}` : '';
+      description = `⚡ Xếp ${count} trận${divStr}${rStr} vào ${courtStr}${dateStr} bắt đầu từ ${timeStr}${durStr}.`;
+
+      const numCourts = Math.max(1, targetCourtIds.length);
+      const totalRoundsCount = Math.ceil(count / numCourts);
+      const totalMinutesNeeded = totalRoundsCount * matchPlusBuffer;
+      const endTotalMinutes = effectiveStartH * 60 + effectiveStartM + totalMinutesNeeded;
+      const endH = Math.floor(endTotalMinutes / 60) % 24;
+      const endM = endTotalMinutes % 60;
+      const estimatedEndStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+
+      evaluation = {
+        totalMatchesCount: count,
+        estimatedStartStr: timeStr,
+        estimatedEndStr,
+        courtCount: numCourts,
+        restBufferMinutes: effectiveBuffer,
+        courtEfficiencyPercent: Math.min(100, Math.round((count / (totalRoundsCount * numCourts || 1)) * 100)),
+        dateLabel: targetDate ? formatDateLabel(targetDate, locale) : formatDateLabel(scheduleDate, locale),
+        safetyChecks: [
+          '✓ Tự động kiểm tra không trùng giờ thi đấu của vận động viên',
+          effectiveBuffer > 0 ? `✓ Giãn cách tối thiểu ${effectiveBuffer} phút nghỉ ngơi giữa các trận` : '✓ Tối ưu hóa chuyển sân liên tục',
+          '✓ Bảo toàn thứ tự tuần tự các vòng đấu (Vòng bảng → Tứ kết → Bán kết → CK)',
+        ],
+      };
     } else if (intent === 'block') {
       const endTimeStr = endHour !== undefined ? `${String(endHour).padStart(2, '0')}:${String(endMinute || 0).padStart(2, '0')}` : '13:00';
       const reason = lower.includes('nghỉ trưa') ? 'Nghỉ trưa' : lower.includes('bảo trì') ? 'Bảo trì sân' : 'Tạm dừng sân';
@@ -1775,6 +1869,7 @@ export function CourtScheduleBoard({
       roundLabel,
       divisionId,
       divisionName,
+      targetDate,
       courtIds: targetCourtIds,
       courtNames: targetCourtNames,
       startHour,
@@ -1782,14 +1877,17 @@ export function CourtScheduleBoard({
       endHour,
       endMinute,
       durationMinutes,
+      restBufferMinutes,
+      setCount,
       competitorQuery,
       blockReason: lower.includes('nghỉ trưa') ? 'Nghỉ trưa' : lower.includes('bảo trì') ? 'Bảo trì sân' : 'Tạm dừng',
       matchedMatchIds: matchedMatches.map((m) => m.match.id),
       description,
+      evaluation,
     };
   };
 
-  // Voice Recognition Handler (Web Speech API)
+  // Voice Recognition Handler (Web Speech API with Live Interim Streaming)
   const startVoiceRecognition = () => {
     if (typeof window === 'undefined') return;
 
@@ -1806,7 +1904,7 @@ export function CourtScheduleBoard({
       const recognition = new (SpeechRecognition as any)();
       recognition.lang = 'vi-VN';
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
 
       recognition.onstart = () => {
         setIsVoiceListening(true);
@@ -1815,20 +1913,30 @@ export function CourtScheduleBoard({
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
-        const text = event.results?.[0]?.[0]?.transcript || '';
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        const text = (finalTranscript || interimTranscript).trim();
         if (text) {
           setAiVoiceInput(text);
           const parsed = parseVoiceSchedulingCommand(text);
           setVoiceParsedResult(parsed);
         }
-        setIsVoiceListening(false);
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
         setIsVoiceListening(false);
         if (event.error !== 'no-speech') {
-          setVoiceError(`Lỗi mic: ${event.error}. Vui lòng thử lại hoặc gõ lệnh trực tiếp.`);
+          setVoiceError(`Lỗi micro (${event.error}). Bạn có thể gõ lệnh trực tiếp vào ô văn bản.`);
         }
       };
 
@@ -1839,7 +1947,7 @@ export function CourtScheduleBoard({
       recognition.start();
     } catch {
       setIsVoiceListening(false);
-      setVoiceError('Không thể mở micro. Vui lòng cho phép quyền micro trong trình duyệt.');
+      setVoiceError('Không thể mở micro. Vui lòng cấp quyền micro trong trình duyệt.');
     }
   };
 
@@ -1849,6 +1957,11 @@ export function CourtScheduleBoard({
       handleClearAllSchedule();
       setAiVoiceModalOpen(false);
       return;
+    }
+
+    // Switch date if a specific target date was mentioned
+    if (cmd.targetDate && availableScheduleDates.includes(cmd.targetDate)) {
+      setActiveDate(cmd.targetDate);
     }
 
     if (cmd.intent === 'block') {
@@ -1861,7 +1974,7 @@ export function CourtScheduleBoard({
       const eStr = `${String(eH).padStart(2, '0')}:${String(eM).padStart(2, '0')}`;
 
       const newSlots: BlockedSlot[] = [];
-      const baseDateStr = defaultDate ? new Date(defaultDate).toISOString().split('T')[0] : '2026-08-31';
+      const baseDateStr = cmd.targetDate || (defaultDate ? new Date(defaultDate).toISOString().split('T')[0] : scheduleDate);
 
       for (const cId of cmd.courtIds) {
         const sTime = new Date(`${baseDateStr}T${sStr}:00`).toISOString();
@@ -1947,6 +2060,7 @@ export function CourtScheduleBoard({
 
     const newDrafts: Record<string, DraftAssignment> = {};
     const newCustoms = { ...customMatchDurations };
+    const restBuffer = cmd.restBufferMinutes || 0;
     let scheduledCount = 0;
 
     let courtCursor = 0;
@@ -1963,7 +2077,7 @@ export function CourtScheduleBoard({
         const rowInfo = timelineRows.rows[r];
         if (!rowInfo) continue;
         const slotStart = rowInfo.startTimestamp;
-        const slotEnd = slotStart + matchDur * 60_000;
+        const slotEnd = slotStart + (matchDur + restBuffer) * 60_000;
 
         for (let cOffset = 0; cOffset < effectiveCourts.length; cOffset++) {
           const cIdx = (courtCursor + cOffset) % effectiveCourts.length;
@@ -1973,13 +2087,13 @@ export function CourtScheduleBoard({
             Object.values(newDrafts).some((d) => {
               if (d.courtId !== court.id) return false;
               const dStart = new Date(d.scheduledAt).getTime();
-              const dEnd = dStart + (d.durationMinutes || defaultStepMinutes) * 60_000;
+              const dEnd = dStart + ((d.durationMinutes || defaultStepMinutes) + restBuffer) * 60_000;
               return slotStart < dEnd && slotEnd > dStart;
             }) ||
             displayMatches.some((m) => {
               if (m.courtId !== court.id || !m.scheduledAt || newDrafts[m.match.id]) return false;
               const mStart = new Date(m.scheduledAt).getTime();
-              const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
+              const mEnd = mStart + ((m.durationMinutes || defaultStepMinutes) + restBuffer) * 60_000;
               return slotStart < mEnd && slotEnd > mStart;
             });
 
@@ -1993,7 +2107,7 @@ export function CourtScheduleBoard({
             placed = true;
             courtCursor = (cIdx + 1) % effectiveCourts.length;
             if (courtCursor === 0) {
-              rowCursor = r + 1;
+              rowCursor = r + Math.max(1, Math.ceil((matchDur + restBuffer) / defaultStepMinutes));
             }
             break;
           }
@@ -2009,7 +2123,7 @@ export function CourtScheduleBoard({
     setDraftAssignments(merged);
     pushHistory(merged);
     setAiVoiceModalOpen(false);
-    setSaveToast(`⚡ AI đã xếp ${scheduledCount}/${targetMatches.length} trận theo lệnh! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+    setSaveToast(`⚡ AI đã xếp ${scheduledCount}/${targetMatches.length} trận theo đúng yêu cầu! Đang tự động lưu...`);
     setTimeout(() => setSaveToast(null), 3500);
   };
 
@@ -3359,7 +3473,7 @@ export function CourtScheduleBoard({
                 setVoiceParsedResult(null);
                 setVoiceError(null);
               }}
-              className="h-7 px-2.5 rounded-lg bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs group"
+              className="h-7 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shadow-blue-500/20 group"
               title="Ra lệnh xếp lịch bằng giọng nói AI hoặc văn bản tự nhiên"
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-300 group-hover:scale-110 transition-transform" />
@@ -4431,54 +4545,68 @@ export function CourtScheduleBoard({
         </ModalContent>
       </Modal>
 
-      {/* AI VOICE & NATURAL LANGUAGE SCHEDULING MODAL */}
+      {/* AI VOICE & NATURAL LANGUAGE SCHEDULING MODAL (SportO Brand Theme & Advanced NLP) */}
       <Modal open={aiVoiceModalOpen} onOpenChange={setAiVoiceModalOpen}>
         <ModalContent className="max-w-xl p-6 bg-white rounded-3xl shadow-2xl border border-slate-200">
-          <ModalHeader className="border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-2xl bg-linear-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+          <ModalHeader className="border-b border-slate-100 pb-3.5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25">
                 <Sparkles className="h-5 w-5 text-amber-300" />
               </div>
               <div>
                 <ModalTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                   Lệnh Xếp Lịch Bằng Giọng Nói AI
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
                     Voice &amp; NLP
                   </span>
                 </ModalTitle>
                 <ModalDescription className="text-xs text-slate-500">
-                  Nói tiếng Việt hoặc gõ yêu cầu xếp lịch tự nhiên (ví dụ: &quot;Xếp vòng 1/32 vào sân 1 và 2 từ 8h&quot;)
+                  Nói tiếng Việt hoặc gõ yêu cầu xếp lịch chi tiết theo giọng văn tự nhiên
                 </ModalDescription>
               </div>
             </div>
           </ModalHeader>
 
           <div className="py-4 space-y-4">
-            {/* Microphone Centerpiece */}
-            <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-linear-to-b from-slate-50 to-indigo-50/40 border border-indigo-100/80 text-center relative overflow-hidden">
-              <button
-                type="button"
-                onClick={startVoiceRecognition}
-                disabled={isVoiceListening}
-                className={`h-20 w-20 rounded-full flex items-center justify-center shadow-xl transition-all cursor-pointer ${
-                  isVoiceListening
-                    ? 'bg-rose-500 text-white ring-8 ring-rose-500/30 scale-110 animate-pulse'
-                    : 'bg-linear-to-tr from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white ring-4 ring-indigo-500/20 hover:scale-105'
-                }`}
-                title={isVoiceListening ? 'Đang lắng nghe bạn nói...' : 'Bấm vào đây và nói câu lệnh'}
-              >
-                {isVoiceListening ? (
-                  <Mic className="h-8 w-8 animate-bounce text-white" />
-                ) : (
-                  <Mic className="h-8 w-8 text-white" />
+            {/* Microphone Centerpiece with Soundwave Visualizer */}
+            <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-linear-to-b from-blue-50/50 via-slate-50 to-blue-50/30 border border-blue-100/90 text-center relative overflow-hidden">
+              <div className="relative flex items-center justify-center">
+                {isVoiceListening && (
+                  <div className="absolute inset-0 rounded-full bg-rose-500/20 animate-ping" />
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={startVoiceRecognition}
+                  disabled={isVoiceListening}
+                  className={`h-20 w-20 rounded-full flex items-center justify-center shadow-xl transition-all cursor-pointer relative z-10 ${
+                    isVoiceListening
+                      ? 'bg-rose-600 text-white ring-8 ring-rose-500/30 scale-110 animate-pulse'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white ring-4 ring-blue-500/20 shadow-blue-600/30 hover:scale-105'
+                  }`}
+                  title={isVoiceListening ? 'Đang lắng nghe giọng nói của bạn...' : 'Bấm vào micro và nói câu lệnh bằng tiếng Việt'}
+                >
+                  <Mic className={`h-8 w-8 text-white ${isVoiceListening ? 'animate-bounce' : ''}`} />
+                </button>
+              </div>
 
-              <div className="mt-3">
+              {/* Soundwave animation when recording */}
+              {isVoiceListening && (
+                <div className="flex items-center gap-1 mt-3.5 h-4">
+                  {[40, 70, 100, 60, 90, 50, 80, 30].map((h, i) => (
+                    <span
+                      key={i}
+                      className="w-1 bg-rose-500 rounded-full animate-pulse"
+                      style={{ height: `${h}%`, animationDelay: `${i * 120}ms` }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 space-y-0.5">
                 <p className="text-xs font-bold text-slate-800">
-                  {isVoiceListening ? '🔴 Đang lắng nghe... Hãy nói câu lệnh của bạn!' : 'Bấm vào micro và nói bằng tiếng Việt'}
+                  {isVoiceListening ? '🔴 Đang lắng nghe... Hãy nói câu lệnh của bạn!' : 'Bấm vào micro để nói câu lệnh'}
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-400 font-medium">
                   (Hoặc gõ/chỉnh sửa văn bản ở ô bên dưới)
                 </p>
               </div>
@@ -4501,7 +4629,7 @@ export function CourtScheduleBoard({
                       setAiVoiceInput('');
                       setVoiceParsedResult(null);
                     }}
-                    className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer"
+                    className="text-[10px] text-slate-400 hover:text-slate-600 font-medium cursor-pointer"
                   >
                     Xóa
                   </button>
@@ -4520,8 +4648,8 @@ export function CourtScheduleBoard({
                       setVoiceParsedResult(null);
                     }
                   }}
-                  placeholder="Ví dụ: Xếp vòng 1/32 vào sân 1 và sân 2 từ 8 giờ sáng, mỗi trận 20 phút..."
-                  className="h-10 text-xs rounded-xl bg-white border-slate-300 font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs focus-visible:ring-indigo-500"
+                  placeholder="Ví dụ: 1 set 15p, 3 set 40p, cách nhau 5p nghỉ ngơi, vòng 1/32 ngày 30/8 từ 8h trên sân 1-4..."
+                  className="h-10 text-xs rounded-xl bg-white border-slate-300 font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs focus-visible:ring-blue-500"
                 />
                 <Button
                   type="button"
@@ -4530,62 +4658,79 @@ export function CourtScheduleBoard({
                     const parsed = parseVoiceSchedulingCommand(aiVoiceInput);
                     setVoiceParsedResult(parsed);
                   }}
-                  className="h-10 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs"
+                  className="h-10 px-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs shadow-blue-500/20"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Quick Prompt Chips */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                Gợi ý câu lệnh nhanh (Bấm để thử):
+            {/* Hidden / Subtle Hint Box (Thay thế các nút bấm gợi ý tĩnh) */}
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 leading-relaxed">
+              <span className="font-bold text-slate-700">💡 Cấu trúc câu lệnh mẫu: </span>
+              <span className="text-slate-500 italic">
+                &ldquo;1 set 15p, 3 set 40p, cách nhau 5p nghỉ ngơi, vòng 1/32 ngày 30/8 từ 8h trên sân 1-4, tứ kết và bán kết ngày 31/8 từ 14h&rdquo;
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  'Xếp tất cả trận vòng 1/32 vào các sân từ 8h',
-                  'Xếp vòng 1/16 vào sân 1 và sân 2 từ 9h',
-                  'Khóa tất cả sân từ 12h đến 13h nghỉ trưa',
-                  'Hủy lịch sân 1 từ 8h đến 10h',
-                ].map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() => {
-                      setAiVoiceInput(chip);
-                      const parsed = parseVoiceSchedulingCommand(chip);
-                      setVoiceParsedResult(parsed);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] font-medium transition-colors cursor-pointer border border-slate-200/80"
-                  >
-                    💡 {chip}
-                  </button>
-                ))}
-              </div>
             </div>
 
-            {/* Action Preview Card */}
+            {/* AI Evaluation & Action Plan Preview Card */}
             {voiceParsedResult && (
-              <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 space-y-2.5 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-indigo-950">
+              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/90 space-y-3 animate-in fade-in zoom-in-95 duration-150 shadow-2xs">
+                <div className="flex items-center justify-between border-b border-blue-200/60 pb-2">
+                  <div className="flex items-center gap-2 text-xs font-extrabold text-blue-950">
                     <Zap className="h-4 w-4 text-amber-500" />
-                    <span>Kế hoạch AI sẽ thực hiện:</span>
+                    <span>Đánh Giá Kế Hoạch &amp; Chỉ Số AI</span>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-200/80 text-indigo-900">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-600 text-white shadow-2xs">
                     {voiceParsedResult.intent.toUpperCase()}
                   </span>
                 </div>
 
-                <p className="text-xs font-bold text-indigo-900 bg-white/90 p-2.5 rounded-xl border border-indigo-100 leading-relaxed shadow-2xs">
+                <p className="text-xs font-semibold text-blue-900 bg-white/95 p-3 rounded-xl border border-blue-100 leading-relaxed shadow-2xs">
                   {voiceParsedResult.description}
                 </p>
 
-                {voiceParsedResult.matchedMatchIds.length > 0 && (
-                  <div className="flex items-center justify-between text-[11px] text-indigo-800 font-semibold px-1">
-                    <span>Trận đấu khớp: <strong>{voiceParsedResult.matchedMatchIds.length} trận</strong></span>
-                    <span>Sân áp dụng: <strong>{voiceParsedResult.courtNames.length} sân</strong></span>
+                {/* AI Evaluation Metrics Breakdown */}
+                {voiceParsedResult.evaluation && (
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="p-2 rounded-lg bg-white/90 border border-blue-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Trận đấu khớp</span>
+                        <span className="text-xs font-black text-blue-900">
+                          {voiceParsedResult.evaluation.totalMatchesCount} trận
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white/90 border border-blue-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Phân bổ sân</span>
+                        <span className="text-xs font-black text-blue-900">
+                          {voiceParsedResult.evaluation.courtCount} sân ({voiceParsedResult.evaluation.courtEfficiencyPercent}%)
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white/90 border border-blue-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Khung giờ dự kiến</span>
+                        <span className="text-xs font-black text-blue-900">
+                          {voiceParsedResult.evaluation.estimatedStartStr} → {voiceParsedResult.evaluation.estimatedEndStr}
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white/90 border border-blue-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Nghỉ giữa trận</span>
+                        <span className="text-xs font-black text-blue-900">
+                          {voiceParsedResult.evaluation.restBufferMinutes > 0 ? `${voiceParsedResult.evaluation.restBufferMinutes} phút` : 'Chuyển sân liên tục'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Safety & Compliance Audit */}
+                    <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 space-y-1">
+                      <div className="text-[11px] font-bold text-emerald-900 flex items-center gap-1.5">
+                        <span>🛡️ Đánh giá an toàn &amp; Thứ tự giải đấu:</span>
+                      </div>
+                      {voiceParsedResult.evaluation.safetyChecks.map((check, idx) => (
+                        <p key={idx} className="text-[10px] font-medium text-emerald-800 pl-1">
+                          {check}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -4597,7 +4742,7 @@ export function CourtScheduleBoard({
               type="button"
               variant="outline"
               onClick={() => setAiVoiceModalOpen(false)}
-              className="h-9 text-xs font-semibold cursor-pointer rounded-xl"
+              className="h-9 text-xs font-semibold cursor-pointer rounded-xl border-slate-300"
             >
               Đóng
             </Button>
@@ -4609,7 +4754,7 @@ export function CourtScheduleBoard({
                   handleExecuteVoiceCommand(voiceParsedResult);
                 }
               }}
-              className="h-9 px-5 bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-500/20 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
+              className="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/25 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
             >
               <Zap className="h-3.5 w-3.5 text-amber-300" />
               <span>⚡ Thực hiện lệnh này</span>

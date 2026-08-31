@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
+import { communitiesApi, type Community } from '@/features/communities/api';
 import type { Division, MyRegistrationResponse, Tournament, TournamentResult, TournamentSponsor } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, Clock, ArrowUpRight } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -19,6 +20,7 @@ import SponsorsTab from './components/SponsorsTab';
 import LiveMatchesTab from './components/LiveMatchesTab';
 import ResultsTab from './components/ResultsTab';
 import RegisterModal from './components/RegisterModal';
+import CommunityTournamentRosterWidget from '@/app/(public)/communities/[id]/components/CommunityTournamentRosterWidget';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import { triggerShare } from '@/utils/share.util';
@@ -579,6 +581,19 @@ const commonTranslate = useTranslations('Common');
       setIsFollowing(followed.some((t: Tournament) => t.id === tournament.id));
     }).catch(() => {});
   }, [tournament?.id, user?.id]);
+
+  const [community, setCommunity] = useState<Community | null>(null);
+
+  useEffect(() => {
+    if (tournament?.communityId) {
+      communitiesApi.getCommunityById(tournament.communityId)
+        .then((res) => {
+          const data = (res as { data?: Community })?.data || (res as unknown as Community);
+          if (data) setCommunity(data);
+        })
+        .catch(() => {});
+    }
+  }, [tournament?.communityId]);
 
   const toggleFollow = async () => {
     if (!user?.id || !tournament?.id) return;
@@ -1291,6 +1306,200 @@ const commonTranslate = useTranslations('Common');
     ) : null
   );
 
+  const renderLiteEventHeader = () => {
+    const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;
+    const isFinished = isCompleted || (hasConfirmedResults && liveMatchesCount === 0);
+    const locationLabel = getTournamentLocationLabel(activeTournament);
+    const sportLogo = getSportLogo(activeTournament.category?.name);
+
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-4">
+        {/* Badges row */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Badge */}
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+            isLive
+              ? 'bg-rose-600 text-white'
+              : isFinished
+                ? 'bg-slate-700 text-white'
+                : 'bg-emerald-600 text-white'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+            {isLive
+              ? (translate('inProgress') || 'Đang diễn ra')
+              : isFinished
+                ? (translate('completed') || 'Đã kết thúc')
+                : (translate('upcoming') || 'Sắp diễn ra')}
+          </span>
+
+          {/* Sport Badge */}
+          {activeTournament.category?.name && (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
+              {sportLogo && (
+                <img src={sportLogo} alt={activeTournament.category.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+              )}
+              {activeTournament.category.name}
+            </span>
+          )}
+
+          {/* Ranked / Casual Badge */}
+          <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+            activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+          }`}>
+            {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+          {tournament.name}
+        </h1>
+
+        {/* Key Event Details (Time, Fee, Location) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 font-medium">
+          {/* Time */}
+          <div className="flex items-start gap-2.5">
+            <Clock className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="block font-extrabold text-slate-900">
+                {activeTournament.startDate ? formatDate(activeTournament.startDate) : translate('dateNotSet')}
+                {(activeTournament as unknown as Record<string, unknown>).startTime ? ` · ${(activeTournament as unknown as Record<string, unknown>).startTime}` : ''}
+              </span>
+              {activeTournament.endDate && (
+                <span className="text-xs text-slate-500">
+                  {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Fee */}
+          <div className="flex items-start gap-2.5">
+            <CreditCard className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Lệ phí tham gia</span>
+              <span className="text-sm font-black text-slate-900">
+                {Number(activeTournament.entryFee) > 0
+                  ? `${formatCurrency(activeTournament.entryFee)} / người`
+                  : 'Miễn phí'}
+              </span>
+            </div>
+          </div>
+
+          {/* Location */}
+          {locationLabel && (
+            <div className="flex items-start gap-2.5 sm:col-span-2 pt-1 border-t border-dashed border-slate-100">
+              <MapPin className="w-4.5 h-4.5 text-rose-500 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <span className="block font-bold text-slate-900 leading-snug">{locationLabel}</span>
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(locationLabel)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline mt-0.5"
+                >
+                  <span>Xem trên bản đồ</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderLiteSidebar = () => {
+    const clubLogo = community?.logoUrl || (community as unknown as Record<string, unknown> | undefined)?.avatarUrl as string || tournament?.logoUrl || tournament?.organizer?.avatarUrl || '/sporto_v1_with_text.svg';
+    const clubName = community?.name || tournament?.organizer?.fullName || 'Câu lạc bộ';
+    const clubHref = tournament?.communityId ? `/communities/${tournament.communityId}` : '#';
+
+    return (
+      <div className="space-y-4">
+        {/* Presented by Club Card */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+            MANG ĐẾN BỞI
+          </span>
+          <Link
+            href={clubHref}
+            className="flex items-center gap-3 group"
+          >
+            <div className="h-12 w-12 rounded-full border border-slate-200 bg-slate-50 p-0.5 overflow-hidden shrink-0 group-hover:border-blue-400 transition-colors shadow-2xs">
+              <img
+                src={clubLogo}
+                alt={clubName}
+                className="h-full w-full object-contain rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                }}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                {clubName}
+              </h4>
+              <span className="text-[11px] text-blue-600 font-bold group-hover:underline inline-flex items-center gap-0.5">
+                <span>Trang Câu lạc bộ</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Slot Roster Grid Confirmation Widget */}
+        <CommunityTournamentRosterWidget
+          tournamentId={tournament.id}
+          communityId={tournament.communityId || undefined}
+          initialTournamentName={tournament.name}
+          categoryName={activeTournament.category?.name}
+          status={activeTournament.status}
+          inviteCode={activeTournament.inviteCode}
+          maxParticipants={activeTournament.maxParticipants}
+          startDate={activeTournament.startDate}
+        />
+
+        {/* Contact Info Card */}
+        {renderContactCard()}
+
+        {/* Follow & Share */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex items-center gap-2">
+          {user?.id && (
+            <Button
+              onClick={toggleFollow}
+              disabled={followLoading}
+              variant={isFollowing ? 'default' : 'outline'}
+              className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-lg ${
+                isFollowing
+                  ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
+              {isFollowing ? translate('followActive') : translate('follow')}
+            </Button>
+          )}
+          <Button
+            onClick={handleShareClick}
+            variant="outline"
+            className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-lg"
+          >
+            <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
+          </Button>
+          <ReportViolationButton
+            targetType="TOURNAMENT"
+            targetId={tournament.id}
+            targetLabel={tournament.name}
+            hidden={isOwner}
+            compact
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const isClubLite = isClubLiteTournament(activeTournament) || (Boolean(activeTournament.isLite) && Boolean(activeTournament.communityId));
+
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
       <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6">
@@ -1308,21 +1517,35 @@ const commonTranslate = useTranslations('Common');
 
         {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
-          {/* Left Column: Hero Banner + Mobile Metadata + Tabs + Tab Content (takes 7-8 cols on lg/xl) */}
+          {/* Left Column: Hero Banner / Lite Header + Mobile Metadata + Tabs + Tab Content */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
-            {/* Banner Container: Slimmer & sleek on mobile, generous & immersive on desktop */}
-            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
-              <GalleryCarousel
-                images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
-                defaultBanner={activeTournament.bannerUrl || undefined}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            {isClubLite ? (
+              <>
+                {/* Sleek Event Header for Club Lite */}
+                {renderLiteEventHeader()}
 
-            {/* Mobile Metadata Container: Show tournament info & primary CTA immediately on mobile */}
-            <div className="block lg:hidden space-y-3 sm:space-y-4">
-              {renderMetadataCard()}
-            </div>
+                {/* Mobile Lite Sidebar: Presented by & Slot Roster Grid on mobile */}
+                <div className="block lg:hidden space-y-3 sm:space-y-4">
+                  {renderLiteSidebar()}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Banner Container for standard tournaments */}
+                <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+                  <GalleryCarousel
+                    images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
+                    defaultBanner={activeTournament.bannerUrl || undefined}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Mobile Metadata Container */}
+                <div className="block lg:hidden space-y-3 sm:space-y-4">
+                  {renderMetadataCard()}
+                </div>
+              </>
+            )}
 
             {/* Horizontal Tabs */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
@@ -1506,8 +1729,14 @@ const commonTranslate = useTranslations('Common');
 
           {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
           <div className="hidden lg:block lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
-            {renderMetadataCard()}
-            {renderContactCard()}
+            {isClubLite ? (
+              renderLiteSidebar()
+            ) : (
+              <>
+                {renderMetadataCard()}
+                {renderContactCard()}
+              </>
+            )}
           </div>
         </div>
       </div>

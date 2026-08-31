@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   ArrowUpDown,
+  Calendar,
   CalendarClock,
   Check,
   CheckSquare,
@@ -191,6 +192,16 @@ function formatDateLabel(value: string | null, locale: string) {
     month: '2-digit',
     year: 'numeric',
   }).format(date);
+}
+
+function getLocalDateString(value?: string | null): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
@@ -612,26 +623,50 @@ export function CourtScheduleBoard({
     };
   }), [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
 
-  const scheduleDate = useMemo(() => {
-    if (preview?.assignments?.[0]?.scheduledAt) {
-      const match = preview.assignments[0].scheduledAt.match(/^(\d{4}-\d{2}-\d{2})/);
-      if (match?.[1]) return match[1];
+  const availableScheduleDates = useMemo(() => {
+    const dates = new Set<string>();
+    for (const item of displayMatches) {
+      if (item.scheduledAt) {
+        const d = getLocalDateString(item.scheduledAt);
+        if (d) dates.add(d);
+      }
+    }
+    if (preview?.assignments) {
+      for (const a of preview.assignments) {
+        if (a.scheduledAt) {
+          const d = getLocalDateString(a.scheduledAt);
+          if (d) dates.add(d);
+        }
+      }
     }
     if (defaultDate) {
-      const match = defaultDate.match(/^(\d{4}-\d{2}-\d{2})/);
-      if (match?.[1]) return match[1];
+      const d = getLocalDateString(defaultDate);
+      if (d) dates.add(d);
     }
-    const scheduled = matches.find((item) => item.scheduledAt)?.scheduledAt;
-    if (scheduled) {
-      const match = scheduled.match(/^(\d{4}-\d{2}-\d{2})/);
-      if (match?.[1]) return match[1];
+    if (dates.size === 0) {
+      const today = getLocalDateString(new Date().toISOString());
+      if (today) dates.add(today);
     }
-    return new Date().toISOString().slice(0, 10);
-  }, [defaultDate, matches, preview]);
+    return Array.from(dates).sort();
+  }, [defaultDate, displayMatches, preview]);
+
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+
+  const scheduleDate = useMemo(() => {
+    if (activeDate && availableScheduleDates.includes(activeDate)) {
+      return activeDate;
+    }
+    return availableScheduleDates[0] || getLocalDateString(new Date().toISOString()) || '2026-01-01';
+  }, [activeDate, availableScheduleDates]);
 
   const scheduledMatches = useMemo(
-    () => displayMatches.filter((item) => Boolean(item.courtId && item.scheduledAt)),
-    [displayMatches],
+    () =>
+      displayMatches.filter((item) => {
+        if (!item.courtId || !item.scheduledAt) return false;
+        const matchDateStr = getLocalDateString(item.scheduledAt);
+        return matchDateStr === scheduleDate;
+      }),
+    [displayMatches, scheduleDate],
   );
 
   const unscheduledMatches = useMemo(
@@ -2617,14 +2652,40 @@ export function CourtScheduleBoard({
     const isLive = rawStatus === 'IN_PROGRESS' || rawStatus === 'LIVE';
 
     const matchDate = new Date(item.scheduledAt || 0);
+    const mTimestamp = matchDate.getTime();
 
-    // In an Excel-like grid, map match to its discrete Row Slot Index
-    let matchRowIndex = 0;
-    if (item.scheduledAt) {
-      const matchMinutesFromStart = (matchDate.getHours() * 60 + matchDate.getMinutes()) - baseStartMinute;
-      matchRowIndex = Math.max(0, Math.min(timelineRows.rows.length - 1, Math.round(matchMinutesFromStart / defaultStepMinutes)));
+    // In an Excel-like grid, map match directly to its precise Row Slot in timelineRows
+    let matchingRow = timelineRows.rows.find(
+      (r) => mTimestamp >= r.startTimestamp && mTimestamp < r.endTimestamp,
+    );
+
+    if (!matchingRow && timelineRows.rows.length > 0) {
+      let minDiff = Infinity;
+      for (const r of timelineRows.rows) {
+        const diff = Math.abs(r.startTimestamp - mTimestamp);
+        if (diff < minDiff) {
+          minDiff = diff;
+          matchingRow = r;
+        }
+      }
     }
-    const matchingRow = timelineRows.rows[matchRowIndex] || timelineRows.rows[0];
+
+    let matchRowIndex = matchingRow ? matchingRow.index : 0;
+    if (!matchingRow && item.scheduledAt) {
+      const matchMinutesFromStart =
+        matchDate.getHours() * 60 + matchDate.getMinutes() - baseStartMinute;
+      matchRowIndex = Math.max(
+        0,
+        Math.min(
+          timelineRows.rows.length - 1,
+          Math.round(matchMinutesFromStart / defaultStepMinutes),
+        ),
+      );
+      matchingRow = timelineRows.rows[matchRowIndex] || timelineRows.rows[0];
+    }
+    if (!matchingRow) {
+      matchingRow = timelineRows.rows[0];
+    }
 
     const rowDuration = matchingRow.durationMinutes;
     const effectiveDuration =
@@ -2635,7 +2696,7 @@ export function CourtScheduleBoard({
 
     const cardTop = matchingRow.top + 2;
     const cardHeight = Math.max(48, effectiveDuration * currentPixelsPerMinute - 4);
-    const matchTimeStr = matchingRow.startTimeStr;
+    const matchTimeStr = formatMatchTime(item.scheduledAt) || matchingRow.startTimeStr;
 
     const boFormat = isFootball ? `${effectiveDuration}P` : getMatchBestOfFormat(item.match, division);
 
@@ -3029,6 +3090,34 @@ export function CourtScheduleBoard({
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs">
         {/* Left: Functional Groups */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* GROUP 0: NGÀY THI ĐẤU (Date Selector) */}
+          <div className="flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold text-slate-800">
+              <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <span>{formatDateLabel(scheduleDate, locale)}</span>
+            </div>
+            {availableScheduleDates.length > 1 && (
+              <div className="flex items-center gap-0.5 border-l border-slate-200 pl-1 ml-0.5">
+                {availableScheduleDates.map((dStr, idx) => (
+                  <button
+                    key={dStr}
+                    type="button"
+                    onClick={() => setActiveDate(dStr)}
+                    className={`h-6 px-2 rounded text-[11px] font-black transition-all cursor-pointer ${
+                      scheduleDate === dStr
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-white'
+                    }`}
+                  >
+                    Ngày {idx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="h-5 w-px bg-slate-200" />
+
           {/* GROUP 1: LƯU & TỰ LƯU & LỊCH SỬ (File & History) */}
           <div className="flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
             <Button

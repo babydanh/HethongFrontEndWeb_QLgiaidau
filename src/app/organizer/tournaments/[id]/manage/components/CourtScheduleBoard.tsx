@@ -1287,9 +1287,16 @@ export function CourtScheduleBoard({
 
     for (const targetItem of sortedMatches) {
       const matchDuration = targetItem.durationMinutes || defaultStepMinutes;
+      const targetParticipants = [
+        targetItem.match.participant1?.teamName,
+        targetItem.match.participant1?.name,
+        targetItem.match.participant2?.teamName,
+        targetItem.match.participant2?.name,
+      ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+
       let placed = false;
 
-      // Find earliest continuous time slot across all courts
+      // Find earliest continuous time slot across all courts where neither court nor athletes are busy
       for (let rIdx = 0; rIdx < timelineRows.rows.length; rIdx++) {
         const rowInfo = timelineRows.rows[rIdx];
         if (!rowInfo) continue;
@@ -1297,8 +1304,8 @@ export function CourtScheduleBoard({
         const slotEnd = slotStart + matchDuration * 60_000;
 
         for (const court of courts) {
-          // Check if court is free for the entire duration [slotStart, slotEnd]
-          const isOccupied =
+          // 1. Check if court is free for the entire duration [slotStart, slotEnd]
+          const isCourtOccupied =
             Object.values(newDrafts).some((d) => {
               if (d.courtId !== court.id) return false;
               const dStart = new Date(d.scheduledAt).getTime();
@@ -1306,13 +1313,52 @@ export function CourtScheduleBoard({
               return slotStart < dEnd && slotEnd > dStart;
             }) ||
             displayMatches.some((m) => {
-              if (m.courtId !== court.id || !m.scheduledAt) return false;
+              if (m.courtId !== court.id || !m.scheduledAt || newDrafts[m.match.id]) return false;
               const mStart = new Date(m.scheduledAt).getTime();
               const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
               return slotStart < mEnd && slotEnd > mStart;
             });
 
-          if (!isOccupied) {
+          if (isCourtOccupied) continue;
+
+          // 2. Check if any participant in targetItem is already playing in any court during [slotStart, slotEnd]
+          const isParticipantBusy = targetParticipants.length > 0 && (
+            Object.entries(newDrafts).some(([mId, d]) => {
+              const dStart = new Date(d.scheduledAt).getTime();
+              const dEnd = dStart + (d.durationMinutes || defaultStepMinutes) * 60_000;
+              const isTimeOverlap = slotStart < dEnd && slotEnd > dStart;
+              if (!isTimeOverlap) return false;
+
+              const otherMatch = sortedMatches.find((m) => m.match.id === mId)?.match;
+              if (!otherMatch) return false;
+              const otherNames = [
+                otherMatch.participant1?.teamName,
+                otherMatch.participant1?.name,
+                otherMatch.participant2?.teamName,
+                otherMatch.participant2?.name,
+              ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+
+              return targetParticipants.some((name) => otherNames.some((o) => o.toLowerCase() === name.toLowerCase()));
+            }) ||
+            displayMatches.some((m) => {
+              if (!m.scheduledAt || m.match.id === targetItem.match.id || newDrafts[m.match.id]) return false;
+              const mStart = new Date(m.scheduledAt).getTime();
+              const mEnd = mStart + (m.durationMinutes || defaultStepMinutes) * 60_000;
+              const isTimeOverlap = slotStart < mEnd && slotEnd > mStart;
+              if (!isTimeOverlap) return false;
+
+              const otherNames = [
+                m.match.participant1?.teamName,
+                m.match.participant1?.name,
+                m.match.participant2?.teamName,
+                m.match.participant2?.name,
+              ].filter((n): n is string => Boolean(n && n.trim() && n !== 'Chưa xác định' && n !== '—' && n !== 'TBD'));
+
+              return targetParticipants.some((name) => otherNames.some((o) => o.toLowerCase() === name.toLowerCase()));
+            })
+          );
+
+          if (!isParticipantBusy) {
             newDrafts[targetItem.match.id] = {
               courtId: court.id,
               scheduledAt: new Date(slotStart).toISOString(),

@@ -923,18 +923,23 @@ export function CourtScheduleBoard({
 
     setIsSavingDraft(true);
     setAutoSaveStatus('saving');
-    let successCount = 0;
     try {
-      // 1. Save all draft assignments
-      for (const [matchId, draft] of entries) {
-        if (onSaveScheduleDirect) {
-          await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true);
-          successCount++;
+      // 1. Save all draft assignments in parallel chunks (eliminates freeze/lag)
+      if (onSaveScheduleDirect) {
+        const chunkSize = 8;
+        for (let i = 0; i < entries.length; i += chunkSize) {
+          const chunk = entries.slice(i, i + chunkSize);
+          await Promise.all(
+            chunk.map(([matchId, draft]) =>
+              onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true)
+            )
+          );
         }
       }
 
-      // 2. If row durations were resized, synchronize scheduledAt timestamps for all scheduled matches to match their row
-      if (hasRowDurationChanges) {
+      // 2. If row durations were resized, synchronize scheduledAt timestamps for all scheduled matches
+      if (hasRowDurationChanges && onSaveScheduleDirect) {
+        const rowSyncTasks: Promise<void>[] = [];
         for (const item of scheduledMatches) {
           if (!draftAssignments[item.match.id] && item.courtId && item.scheduledAt) {
             const matchDate = new Date(item.scheduledAt);
@@ -943,13 +948,20 @@ export function CourtScheduleBoard({
             const targetRow = timelineRows.rows[rIdx];
             if (targetRow) {
               const updatedTime = new Date(targetRow.startTimestamp).toISOString();
-              if (updatedTime !== item.scheduledAt && onSaveScheduleDirect) {
-                await onSaveScheduleDirect(item.match.id, item.courtId, updatedTime, true);
-                successCount++;
+              if (updatedTime !== item.scheduledAt) {
+                rowSyncTasks.push(onSaveScheduleDirect(item.match.id, item.courtId, updatedTime, true));
               }
             }
           }
         }
+        if (rowSyncTasks.length > 0) {
+          await Promise.all(rowSyncTasks);
+        }
+      }
+
+      // 3. REFETCH BEFORE CLEARING LOCAL DRAFTS (Eliminates disappearing matches!)
+      if (onRefetchData) {
+        await onRefetchData();
       }
 
       setDraftAssignments({});
@@ -957,9 +969,6 @@ export function CourtScheduleBoard({
       if (!silent) {
         setSaveToast(`Đã lưu thành công lịch thi đấu!`);
         setTimeout(() => setSaveToast(null), 3000);
-        if (onRefetchData) {
-          await onRefetchData();
-        }
       }
     } catch (err) {
       console.error('Failed to save drafts:', err);
@@ -973,14 +982,14 @@ export function CourtScheduleBoard({
     }
   };
 
-  // Auto-Save Effect (Debounce 2s after user changes schedule)
+  // Auto-Save Effect (Debounce 3.5s after user changes schedule)
   useEffect(() => {
     if (Object.keys(draftAssignments).length === 0) return;
     setAutoSaveStatus('unsaved');
 
     const timer = setTimeout(() => {
       void handleSaveAllDrafts(true);
-    }, 2000);
+    }, 3500);
 
     return () => clearTimeout(timer);
   }, [draftAssignments]);
@@ -1328,15 +1337,31 @@ export function CourtScheduleBoard({
   };
 
   // Auto-Schedule Matches (AI Smart Fill with progressive tournament ordering, BO duration and athlete conflict avoidance)
-  const handleAutoScheduleAll = (filterRoundLabel?: string) => {
-    const candidateMatches = filterRoundLabel && filterRoundLabel !== 'all'
-      ? unscheduledMatches.filter((item) => {
-          const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-          return getAccurateRoundLabel(item.match, maxR) === filterRoundLabel;
-        })
-      : unscheduledMatches;
+  const handleAutoScheduleAll = (filterRoundLabel?: string, onlyReadyMatches = false) => {
+    let candidateMatches = unscheduledMatches;
+    if (filterRoundLabel && filterRoundLabel !== 'all') {
+      candidateMatches = candidateMatches.filter((item) => {
+        const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
+        return getAccurateRoundLabel(item.match, maxR) === filterRoundLabel;
+      });
+    }
 
-    if (candidateMatches.length === 0 || courts.length === 0) return;
+    if (onlyReadyMatches) {
+      candidateMatches = candidateMatches.filter((item) => {
+        const p1 = item.match.participant1?.teamName || item.match.participant1?.name;
+        const p2 = item.match.participant2?.teamName || item.match.participant2?.name;
+        const hasP1 = !isPlaceholderCompetitorName(p1);
+        const hasP2 = !isPlaceholderCompetitorName(p2);
+        const isRound1 = (item.match.leg || item.match.roundNumber || 1) === 1;
+        return (hasP1 && hasP2) || isRound1;
+      });
+    }
+
+    if (candidateMatches.length === 0 || courts.length === 0) {
+      setSaveToast('Không có trận nào phù hợp trong hàng chờ để xếp.');
+      setTimeout(() => setSaveToast(null), 2500);
+      return;
+    }
 
     // 1. Order unscheduled matches logically by division, stage (group first) & round ascending
     const sortedMatches = [...candidateMatches].sort((a, b) => {
@@ -3149,28 +3174,42 @@ export function CourtScheduleBoard({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="px-2 py-1 border-b border-slate-100 mb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Xếp nhanh theo vòng đấu
+                    Tùy chọn tự động xếp
                   </div>
+                  {/* Option 1: Only ready matches */}
                   <button
                     type="button"
                     onClick={() => {
-                      handleAutoScheduleAll();
+                      handleAutoScheduleAll('all', true);
+                      setAutoScheduleMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 text-emerald-700 font-bold transition-colors cursor-pointer text-left"
+                  >
+                    <span>⚡ Chỉ xếp trận sẵn sàng (Vòng 1 / Có VĐV)</span>
+                  </button>
+
+                  {/* Option 2: All rounds */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAutoScheduleAll('all', false);
                       setAutoScheduleMenuOpen(false);
                     }}
                     className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-blue-700 font-bold transition-colors cursor-pointer text-left"
                   >
-                    <span>⚡ Xếp tất cả các vòng</span>
-                    <span className="bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded text-[10px]">
-                      {unscheduledMatches.length}
-                    </span>
+                    <span>⚡ Xếp toàn bộ giải ({unscheduledMatches.length} trận)</span>
                   </button>
+
                   <div className="h-px bg-slate-100 my-1" />
+                  <div className="px-2 py-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                    Theo từng vòng:
+                  </div>
                   {unscheduledRounds.map((r) => (
                     <button
                       key={r.label}
                       type="button"
                       onClick={() => {
-                        handleAutoScheduleAll(r.label);
+                        handleAutoScheduleAll(r.label, false);
                         setAutoScheduleMenuOpen(false);
                       }}
                       className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold transition-colors cursor-pointer text-left"

@@ -1308,8 +1308,13 @@ export function CourtScheduleBoard({
 
     if (candidateMatches.length === 0 || courts.length === 0) return;
 
-    // 1. Order unscheduled matches logically by stage & round
+    // 1. Order unscheduled matches logically by division, stage (group first) & round ascending
     const sortedMatches = [...candidateMatches].sort((a, b) => {
+      // Keep division matches grouped together
+      if (a.match.divisionId !== b.match.divisionId) {
+        return (a.match.divisionId || '').localeCompare(b.match.divisionId || '');
+      }
+
       // Group stage matches first
       const aIsGroup = Boolean(a.match.groupName || a.match.leg);
       const bIsGroup = Boolean(b.match.groupName || b.match.leg);
@@ -1328,6 +1333,9 @@ export function CourtScheduleBoard({
     const newDrafts: Record<string, DraftAssignment> = {};
     let scheduledCount = 0;
 
+    // Track the latest end timestamp of each (division + round) to ensure Round K+1 starts only after Round K
+    const roundLatestEndTime = new Map<string, number>();
+
     for (const targetItem of sortedMatches) {
       const matchDuration = targetItem.durationMinutes || defaultStepMinutes;
       const targetParticipants = [
@@ -1337,6 +1345,16 @@ export function CourtScheduleBoard({
         targetItem.match.participant2?.name,
       ].filter((n): n is string => !isPlaceholderCompetitorName(n));
 
+      const divId = targetItem.match.divisionId || 'default';
+      const roundNum = targetItem.match.leg || targetItem.match.roundNumber || 1;
+
+      // Round K+1 must not start before the previous round in the same division ends
+      let earliestStartTime = 0;
+      if (roundNum > 1) {
+        const prevRoundKey = `${divId}_round_${roundNum - 1}`;
+        earliestStartTime = roundLatestEndTime.get(prevRoundKey) || 0;
+      }
+
       let placed = false;
 
       // Find earliest continuous time slot across all courts where neither court nor athletes are busy
@@ -1344,6 +1362,10 @@ export function CourtScheduleBoard({
         const rowInfo = timelineRows.rows[rIdx];
         if (!rowInfo) continue;
         const slotStart = rowInfo.startTimestamp;
+
+        // Skip slot if it occurs before the previous round has finished
+        if (slotStart < earliestStartTime) continue;
+
         const slotEnd = slotStart + matchDuration * 60_000;
 
         for (const court of courts) {
@@ -1409,6 +1431,13 @@ export function CourtScheduleBoard({
             };
             scheduledCount++;
             placed = true;
+
+            // Record latest end time for this round
+            const currentRoundKey = `${divId}_round_${roundNum}`;
+            const currentLatest = roundLatestEndTime.get(currentRoundKey) || 0;
+            if (slotEnd > currentLatest) {
+              roundLatestEndTime.set(currentRoundKey, slotEnd);
+            }
             break;
           }
         }
@@ -1416,7 +1445,9 @@ export function CourtScheduleBoard({
       }
     }
 
-    setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+    const mergedDrafts = { ...draftAssignments, ...newDrafts };
+    setDraftAssignments(mergedDrafts);
+    pushHistory(mergedDrafts);
     const roundMsg = filterRoundLabel ? ` của ${filterRoundLabel}` : '';
     setSaveToast(`AI đã tự động xếp ${scheduledCount}/${sortedMatches.length} trận${roundMsg}! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
     setTimeout(() => setSaveToast(null), 3500);

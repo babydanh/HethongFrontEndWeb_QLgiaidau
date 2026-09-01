@@ -1377,56 +1377,69 @@ const commonTranslate = useTranslations('Common');
           {tournament.name}
         </h1>
 
-        {/* Key Event Details (Time, Fee, Location) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 font-medium">
-          {/* Time */}
-          <div className="flex items-start gap-2.5">
-            <Clock className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="block font-extrabold text-slate-900">
-                {activeTournament.startDate ? formatDate(activeTournament.startDate) : translate('dateNotSet')}
-                {(activeTournament as unknown as Record<string, unknown>).startTime ? ` · ${(activeTournament as unknown as Record<string, unknown>).startTime}` : ''}
-              </span>
-              {activeTournament.endDate && (
-                <span className="text-xs text-slate-500">
-                  {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
-                </span>
+        {/* Key Event Details (Time, Fee, Location) - Only render items that have configured values */}
+        {(() => {
+          const hasDate = Boolean(activeTournament.startDate || (activeTournament as unknown as Record<string, unknown>).startTime);
+          const hasLocation = Boolean(locationLabel);
+          const hasFee = Number(activeTournament.entryFee) > 0;
+          const showEventDetails = hasDate || hasLocation || hasFee;
+
+          if (!showEventDetails) return null;
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 font-medium">
+              {/* Time */}
+              {hasDate && (
+                <div className="flex items-start gap-2.5">
+                  <Clock className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="block font-extrabold text-slate-900">
+                      {activeTournament.startDate ? formatDate(activeTournament.startDate) : ''}
+                      {(activeTournament as unknown as Record<string, unknown>).startTime ? ` · ${(activeTournament as unknown as Record<string, unknown>).startTime}` : ''}
+                    </span>
+                    {activeTournament.endDate && (
+                      <span className="text-xs text-slate-500">
+                        {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Fee */}
+              {hasFee && (
+                <div className="flex items-start gap-2.5">
+                  <CreditCard className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Lệ phí tham gia</span>
+                    <span className="text-sm font-black text-slate-900">
+                      {formatCurrency(activeTournament.entryFee)} / người
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Location */}
+              {hasLocation && (
+                <div className={`flex items-start gap-2.5 ${hasDate || hasFee ? 'sm:col-span-2 pt-1 border-t border-dashed border-slate-100' : ''}`}>
+                  <MapPin className="w-4.5 h-4.5 text-rose-500 shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <span className="block font-bold text-slate-900 leading-snug">{locationLabel}</span>
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(locationLabel)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline mt-0.5"
+                    >
+                      <span>Xem trên bản đồ</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-
-          {/* Fee */}
-          <div className="flex items-start gap-2.5">
-            <CreditCard className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Lệ phí tham gia</span>
-              <span className="text-sm font-black text-slate-900">
-                {Number(activeTournament.entryFee) > 0
-                  ? `${formatCurrency(activeTournament.entryFee)} / người`
-                  : 'Miễn phí'}
-              </span>
-            </div>
-          </div>
-
-          {/* Location */}
-          {locationLabel && (
-            <div className="flex items-start gap-2.5 sm:col-span-2 pt-1 border-t border-dashed border-slate-100">
-              <MapPin className="w-4.5 h-4.5 text-rose-500 shrink-0 mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <span className="block font-bold text-slate-900 leading-snug">{locationLabel}</span>
-                <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(locationLabel)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline mt-0.5"
-                >
-                  <span>Xem trên bản đồ</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
+          );
+        })()}
       </div>
     );
   };

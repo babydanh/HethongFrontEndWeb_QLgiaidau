@@ -39,6 +39,8 @@ interface PublicCourtScheduleBoardProps {
   isLoading?: boolean;
 }
 
+const BASE_PIXELS_PER_MINUTE = 9.6; // 1 minute = 9.6px (15 mins = 144px height, high spacious grid matching management view)
+
 function getLocalDateString(isoString?: string | null): string {
   if (!isoString) return '';
   const d = new Date(isoString);
@@ -51,6 +53,17 @@ function getLocalDateString(isoString?: string | null): string {
 
 function formatTimeLabel(hour: number, minute: number): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function formatMatchTime(isoString?: string | null): string {
+  if (!isoString) return '--:--';
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return '--:--';
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
 }
 
 function formatDayLabel(dateStr: string): string {
@@ -67,6 +80,11 @@ function getCompetitorDisplayName(participant?: { teamName?: string | null; name
   return participant.teamName || participant.name || participant.placeholder || 'Chờ xác định';
 }
 
+function getCompetitorInitial(name: string): string {
+  const clean = name.trim().replace(/^(QA\s*|Cặp\s*|Đôi\s*|VĐV\s*|Đội\s*)/i, '').trim();
+  return clean ? clean.charAt(0).toUpperCase() : '?';
+}
+
 export default function PublicCourtScheduleBoard({
   tournament,
   matches,
@@ -78,7 +96,7 @@ export default function PublicCourtScheduleBoard({
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
 
-  // 1. Resolve Tournament Schedule Settings (From tournament.tournamentConfig)
+  // 1. Resolve Tournament Schedule Settings
   const tournamentConfig = (tournament.tournamentConfig || {}) as Record<string, unknown>;
   const configuredOperatingStart = String(tournamentConfig.operatingStart || (tournament as unknown as Record<string, unknown>).operatingStart || '06:00');
   const configuredOperatingEnd = String(tournamentConfig.operatingEnd || (tournament as unknown as Record<string, unknown>).operatingEnd || '24:00');
@@ -200,15 +218,14 @@ export default function PublicCourtScheduleBoard({
     };
   }, [matches, activeDate, availableScheduleDates]);
 
-  // 5. Operating Window & Grid Metrics (Based on organizer settings)
+  // 5. Operating Window & Grid Metrics (Spacious Height: 144px per 15p row)
   const [startH] = configuredOperatingStart.split(':').map(Number);
   const [endH] = configuredOperatingEnd.split(':').map(Number);
   const operatingStartHour = Number.isFinite(startH) ? startH : 6;
   const operatingEndHour = (Number.isFinite(endH) && endH > 0) ? (endH === 0 ? 24 : endH) : 24;
 
-  const cellBaseHeight = stepMinutes === 15 ? 44 : stepMinutes === 30 ? 64 : 88;
-  const cellHeight = Math.round(cellBaseHeight * zoomLevel);
-  const pixelsPerMinute = cellHeight / stepMinutes;
+  const currentPixelsPerMinute = BASE_PIXELS_PER_MINUTE * zoomLevel;
+  const cellHeight = Math.round(stepMinutes * currentPixelsPerMinute);
 
   const totalSlots = Math.max(1, Math.floor(((operatingEndHour - operatingStartHour) * 60) / stepMinutes));
   const timeSlots = useMemo(() => {
@@ -233,12 +250,12 @@ export default function PublicCourtScheduleBoard({
   // 6. Navigation Controls
   const handleScroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const offset = direction === 'left' ? -350 : 350;
+    const offset = direction === 'left' ? -380 : 380;
     scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
   };
 
   const handleZoom = (delta: number) => {
-    setZoomLevel((prev) => Math.max(0.7, Math.min(1.5, Math.round((prev + delta) * 10) / 10)));
+    setZoomLevel((prev) => Math.max(0.7, Math.min(1.4, Math.round((prev + delta) * 10) / 10)));
   };
 
   const handleToggleFullscreen = () => {
@@ -280,7 +297,6 @@ export default function PublicCourtScheduleBoard({
     if (match.matchConfig && typeof match.matchConfig.durationMinutes === 'number' && match.matchConfig.durationMinutes > 0) {
       return match.matchConfig.durationMinutes;
     }
-    // Infer from division sets / settings
     const matchDivId = String(mRaw.divisionId || '');
     const div = divisions.find((d) => d.id === matchDivId);
     const setsToWin = div?.roundConfig?.setsToWin;
@@ -409,7 +425,7 @@ export default function PublicCourtScheduleBoard({
               <button
                 type="button"
                 onClick={() => handleZoom(0.1)}
-                disabled={zoomLevel >= 1.5}
+                disabled={zoomLevel >= 1.4}
                 className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all disabled:opacity-30 cursor-pointer"
                 title={translate('timelineZoomIn')}
               >
@@ -455,17 +471,17 @@ export default function PublicCourtScheduleBoard({
         </div>
       </div>
 
-      {/* ── 2. FULL COURT TIMELINE GRID TABLE ── */}
+      {/* ── 2. FULL COURT TIMELINE GRID TABLE (Spacious Height & Exact Management Cards) ── */}
       <div className="relative overflow-hidden bg-white">
-        <div ref={scrollRef} className="max-h-[640px] overflow-auto select-none scrollbar-thin">
+        <div ref={scrollRef} className="max-h-[680px] overflow-auto select-none scrollbar-thin">
           <div
-            className="grid min-w-[760px]"
+            className="grid min-w-[840px]"
             style={{
-              gridTemplateColumns: `80px repeat(${Math.max(1, resolvedCourts.length)}, minmax(200px, 1fr))`,
+              gridTemplateColumns: `84px repeat(${Math.max(1, resolvedCourts.length)}, minmax(260px, 1fr))`,
             }}
           >
             {/* Top-Left Corner Sticky Header */}
-            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-slate-200 bg-slate-100/95 backdrop-blur-xs p-2 text-xs font-extrabold text-slate-700 uppercase">
+            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-slate-200 bg-slate-100/95 backdrop-blur-xs p-2 text-xs font-black text-slate-700 uppercase">
               <Clock className="mr-1 h-3.5 w-3.5 text-blue-600" />
               <span>{translate('timelineHourHeader')}</span>
             </div>
@@ -476,7 +492,7 @@ export default function PublicCourtScheduleBoard({
               return (
                 <div
                   key={court.id}
-                  className="sticky top-0 z-20 flex items-center justify-between border-b border-r border-slate-200 bg-slate-50/95 backdrop-blur-xs px-3 py-2.5"
+                  className="sticky top-0 z-20 flex items-center justify-between border-b border-r border-slate-200 bg-slate-50/95 backdrop-blur-xs px-3.5 py-3"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-xs font-black text-slate-900">{court.courtName}</p>
@@ -484,14 +500,14 @@ export default function PublicCourtScheduleBoard({
                       <p className="truncate text-[10px] font-semibold text-slate-400">{court.venueName}</p>
                     )}
                   </div>
-                  <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 px-2 py-0.5 text-[9px] font-bold shrink-0 ml-1">
+                  <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 px-2 py-0.5 text-[10px] font-black shrink-0 ml-1">
                     {courtMatches.length} trận
                   </span>
                 </div>
               );
             })}
 
-            {/* Time Column (Sticky Left with slot marks) */}
+            {/* Time Column (Sticky Left with 15-minute slot marks) */}
             <div className="sticky left-0 z-10 border-r border-slate-200 bg-slate-50/95">
               {timeSlots.map((slot) => {
                 return (
@@ -520,7 +536,7 @@ export default function PublicCourtScheduleBoard({
                   className="relative border-r border-slate-200 bg-white"
                   style={{ height: `${gridTotalHeight}px` }}
                 >
-                  {/* Background Grid Cells */}
+                  {/* Background 15-minute Grid Cells */}
                   {timeSlots.map((slot) => {
                     return (
                       <div
@@ -533,21 +549,24 @@ export default function PublicCourtScheduleBoard({
                     );
                   })}
 
-                  {/* Scheduled Match Cards */}
+                  {/* Scheduled Match Cards (High Spacious Design) */}
                   {courtMatches.map((match) => {
                     if (!match.scheduledAt) return null;
                     const mDate = new Date(match.scheduledAt);
                     const matchStartMinutes = (mDate.getHours() - operatingStartHour) * 60 + mDate.getMinutes();
-                    const topPos = Math.max(0, matchStartMinutes * pixelsPerMinute);
+                    const topPos = Math.max(0, matchStartMinutes * currentPixelsPerMinute);
                     const duration = resolveMatchDuration(match);
-                    const cardHeight = Math.max(40, duration * pixelsPerMinute - 4);
+                    const cardHeight = Math.max(76, duration * currentPixelsPerMinute - 6);
 
                     const p1Name = getCompetitorDisplayName(match.participant1);
                     const p2Name = getCompetitorDisplayName(match.participant2);
-                    const isHighlighted = queryLower && (p1Name.toLowerCase().includes(queryLower) || p2Name.toLowerCase().includes(queryLower));
+                    const p1Init = getCompetitorInitial(p1Name);
+                    const p2Init = getCompetitorInitial(p2Name);
 
+                    const isHighlighted = queryLower && (p1Name.toLowerCase().includes(queryLower) || p2Name.toLowerCase().includes(queryLower));
                     const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
                     const isCompleted = match.status === 'COMPLETED';
+
                     const mRaw = match as unknown as Record<string, unknown>;
                     const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;
                     const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
@@ -555,74 +574,106 @@ export default function PublicCourtScheduleBoard({
                     const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
                     const roundTitle = (mRaw.roundName || mRaw.stageName || match.stage?.name || 'Vòng đấu') as string;
 
+                    // Match Division Name & Format
+                    const matchDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
+                    const divTitle = matchDiv?.name || (tournament.name || 'NỘI DUNG');
+                    const boFormat = duration === 15 ? '1 SET' : duration >= 45 ? 'BO3' : `${duration}P`;
+
                     return (
                       <div
                         key={match.id}
                         onClick={() => onOpenMatchDetail?.(match)}
-                        className={`absolute inset-x-1.5 z-10 flex flex-col justify-between rounded-xl border p-2 shadow-xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 ${
+                        className={`absolute inset-x-1.5 z-10 flex flex-col justify-between rounded-xl border p-2.5 shadow-xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 select-none ${
                           isLive
-                            ? 'border-rose-400 bg-rose-50/90 text-rose-950 ring-2 ring-rose-500/30 animate-pulse'
+                            ? 'border-amber-400 bg-amber-50/95 text-amber-950 ring-2 ring-amber-400/40 shadow-md'
                             : isCompleted
-                            ? 'border-slate-200 bg-slate-50/95 text-slate-800'
-                            : 'border-blue-200 bg-white text-slate-900 hover:border-blue-400'
+                            ? 'border-slate-300 bg-slate-100/95 text-slate-700 shadow-2xs'
+                            : 'border-slate-200 bg-white text-slate-900 hover:border-blue-400 shadow-xs'
                         } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.01] z-20' : ''}`}
                         style={{
-                          top: `${topPos + 2}px`,
+                          top: `${topPos + 3}px`,
                           height: `${cardHeight}px`,
                         }}
-                        title={`Trận #${match.matchOrder || ''} • ${formatTimeLabel(mDate.getHours(), mDate.getMinutes())} • Bấm để xem chi tiết`}
+                        title={`Trận #${match.matchOrder || ''} • ${formatMatchTime(match.scheduledAt)} • Bấm để xem chi tiết`}
                       >
-                        {/* Match Card Top: Time & Badges */}
-                        <div className="flex items-center justify-between gap-1 text-[10px] font-bold">
-                          <span className="flex items-center gap-1 text-blue-600 font-mono font-black">
-                            <Clock className="h-3 w-3" />
-                            {formatTimeLabel(mDate.getHours(), mDate.getMinutes())} ({duration}p)
-                          </span>
+                        {/* 1. Header: Division Name + Format Badge + Time + Duration */}
+                        <div className="flex items-center justify-between gap-1 border-b border-slate-200/80 pb-1 text-xs font-black shrink-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="truncate uppercase tracking-tight text-[11px] text-blue-700 font-black">
+                              {divTitle}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              {boFormat}
+                            </span>
+                          </div>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0 text-[10px]">
                             {isLive && (
                               <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black text-[9px] flex items-center gap-0.5 animate-pulse">
                                 <Flame className="h-2.5 w-2.5" />
                                 LIVE
                               </span>
                             )}
-                            <span className="px-1.5 py-0.2 rounded font-semibold bg-slate-100 text-slate-600">
-                              #{match.matchOrder || '—'}
+                            <span className="font-bold px-1.5 py-0.2 rounded border text-blue-800 bg-blue-50 border-blue-200">
+                              {formatMatchTime(match.scheduledAt)}
+                            </span>
+                            <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                              {duration}p
                             </span>
                           </div>
                         </div>
 
-                        {/* Competitors */}
-                        <div className="space-y-0.5 my-auto">
-                          <div className={`flex items-center justify-between text-xs font-bold truncate ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
-                            <span className="truncate flex items-center gap-1">
-                              {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                              <span className="truncate">{p1Name}</span>
-                            </span>
+                        {/* 2. Competitors with Avatars & Set Score Boxes */}
+                        <div className="space-y-1.5 my-auto py-1">
+                          {/* Competitor 1 */}
+                          <div className="flex items-center justify-between gap-1.5 min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+                              <span className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs ${
+                                isP1Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-300'
+                              }`}>
+                                {p1Init}
+                              </span>
+                              <span className={`truncate text-xs font-bold ${isP1Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`}>
+                                {p1Name}
+                              </span>
+                            </div>
                             {(p1Score !== undefined || isCompleted || isLive) && (
-                              <span className="font-mono font-black text-xs shrink-0 ml-1">
-                                {p1Score ?? '--'}
+                              <span className={`min-w-[22px] h-[20px] px-1 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
+                                isP1Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                              }`}>
+                                {p1Score ?? '-'}
                               </span>
                             )}
                           </div>
 
-                          <div className={`flex items-center justify-between text-xs font-bold truncate ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
-                            <span className="truncate flex items-center gap-1">
-                              {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                              <span className="truncate">{p2Name}</span>
-                            </span>
+                          {/* Competitor 2 */}
+                          <div className="flex items-center justify-between gap-1.5 min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+                              <span className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs ${
+                                isP2Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-300'
+                              }`}>
+                                {p2Init}
+                              </span>
+                              <span className={`truncate text-xs font-bold ${isP2Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`}>
+                                {p2Name}
+                              </span>
+                            </div>
                             {(p2Score !== undefined || isCompleted || isLive) && (
-                              <span className="font-mono font-black text-xs shrink-0 ml-1">
-                                {p2Score ?? '--'}
+                              <span className={`min-w-[22px] h-[20px] px-1 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
+                                isP2Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                              }`}>
+                                {p2Score ?? '-'}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Card Meta Footer */}
-                        <div className="flex items-center justify-between text-[9px] text-slate-400 font-semibold pt-1 border-t border-slate-100">
-                          <span className="truncate max-w-[120px]">{roundTitle}</span>
-                          <span className="text-blue-600 font-bold flex items-center gap-0.5">
+                        {/* 3. Card Footer: Round Title & Match Details Link */}
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold pt-1 border-t border-slate-200/80">
+                          <span className="truncate max-w-[130px] font-bold text-slate-600">
+                            #{match.matchOrder || '—'} · {roundTitle}
+                          </span>
+                          <span className="text-blue-600 font-bold flex items-center gap-0.5 hover:underline">
                             <span>{translate('timelineMatchDetails')}</span>
                             <ExternalLink className="h-2.5 w-2.5" />
                           </span>

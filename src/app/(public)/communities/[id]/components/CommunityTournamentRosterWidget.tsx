@@ -79,18 +79,20 @@ export default function CommunityTournamentRosterWidget({
       ]);
 
       let effectiveCommId = communityId;
-      if (tourneyRes?.data) {
-        setTournament(tourneyRes.data);
-        if (tourneyRes.data.communityId) {
-          effectiveCommId = tourneyRes.data.communityId;
+      const tourneyData = (tourneyRes as any)?.data ?? tourneyRes;
+      if (tourneyData && typeof tourneyData === 'object' && 'id' in tourneyData) {
+        setTournament(tourneyData);
+        if (tourneyData.communityId) {
+          effectiveCommId = tourneyData.communityId;
         }
       }
-      if (effectiveCommId && (!tourneyRes?.data?.logoUrl || tourneyRes.data.logoUrl === '')) {
+      const existingLogo = tourneyData?.logoUrl || (tourneyData as any)?.community?.logoUrl || (tourneyData as any)?.community?.bannerUrl;
+      if (!existingLogo && effectiveCommId) {
         communitiesApi.getCommunityById(effectiveCommId).then((cRes) => {
-          if (cRes?.data?.logoUrl) {
-            setCommunityLogo(cRes.data.logoUrl);
-          } else if (cRes?.data?.bannerUrl) {
-            setCommunityLogo(cRes.data.bannerUrl);
+          const commData = (cRes as any)?.data ?? cRes;
+          const logo = commData?.logoUrl || commData?.avatarUrl || commData?.bannerUrl || null;
+          if (logo) {
+            setCommunityLogo(logo);
           }
         }).catch(() => {});
       }
@@ -248,6 +250,7 @@ export default function CommunityTournamentRosterWidget({
                 (tournament as any)?.community?.logoUrl ||
                 (tournament as any)?.community?.bannerUrl ||
                 communityLogo ||
+                communityLogoUrl ||
                 '/sporto_v1_with_text.svg'
               }
               alt={tournamentName}

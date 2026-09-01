@@ -43,16 +43,19 @@ export default function CommunityTournamentBracketWidget({
       .getTournamentById(tournamentId)
       .then((res) => {
         if (!mounted) return;
-        if (res.data) {
-          setTournament(res.data);
+        const tourneyData = (res as any)?.data ?? res;
+        if (tourneyData && typeof tourneyData === 'object' && 'id' in tourneyData) {
+          setTournament(tourneyData);
           setError(null);
-          const commId = res.data.communityId || communityId;
-          if (commId && (!res.data.logoUrl || res.data.logoUrl === '')) {
+          const commId = tourneyData.communityId || communityId;
+          const existingLogo = tourneyData?.logoUrl || (tourneyData as any)?.community?.logoUrl || (tourneyData as any)?.community?.bannerUrl;
+          if (!existingLogo && commId) {
             communitiesApi.getCommunityById(commId).then((cRes) => {
-              if (mounted && cRes?.data?.logoUrl) {
-                setCommunityLogo(cRes.data.logoUrl);
-              } else if (mounted && cRes?.data?.bannerUrl) {
-                setCommunityLogo(cRes.data.bannerUrl);
+              if (!mounted) return;
+              const commData = (cRes as any)?.data ?? cRes;
+              const logo = commData?.logoUrl || commData?.avatarUrl || commData?.bannerUrl || null;
+              if (logo) {
+                setCommunityLogo(logo);
               }
             }).catch(() => {});
           }

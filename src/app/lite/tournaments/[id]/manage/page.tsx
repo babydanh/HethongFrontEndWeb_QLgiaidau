@@ -807,292 +807,283 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         </div>
 
         {/* Tab content */}
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-6">
           {activeTab === 'overview' && (
-            <div className="space-y-5">
-              <h3 className="text-base font-bold text-slate-900">{translate('overviewTitle')}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <InfoCard label={translate('sportLabel')} value={tournament.category?.name || translate('unknownValue')} />
-                <InfoCard label={translate('matchTypeLabel')} value={
-                  currentMatchType === 'SINGLES' ? translate('matchTypeSingles')
-                  : currentMatchType === 'DOUBLES' ? translate('matchTypeDoubles')
-                  : currentMatchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles')
-                  : currentMatchType || translate('unknownValue')
-                } />
-                <InfoCard label={translate('formatLabel')} value={
-                                    tournament.format === 'SINGLE_ELIMINATION' ? translate('formatSingleElimination')
-                  : tournament.format === 'DOUBLE_ELIMINATION' ? translate('formatDoubleElimination')
-                  : tournament.format === 'ROUND_ROBIN' ? translate('formatRoundRobin')
-                  : tournament.format === 'GROUP_STAGE_KNOCKOUT' ? translate('formatGroupStageKnockout')
-
-                  : tournament.format || translate('unknownValue')
-                } />
-                <InfoCard label={translate('maxParticipants')} value={tournament.maxParticipants?.toString() || '—'} />
-                <InfoCard label={translate('participantLabel')} value={registeredParticipantCount.toString()} />
-                <InfoCard label={translate('matchesTitle')} value={registeredMatchCount.toString()} />
-                {tournament.startDate && (
-                  <InfoCard label={translate('startDate')} value={new Date(tournament.startDate).toLocaleDateString(locale)} />
-                )}
-                {(tournament.locationAddress || tournament.tournamentConfig?.location?.display) && (
-                  <InfoCard label={translate('locationLabel')} value={tournament.locationAddress || tournament.tournamentConfig?.location?.display || '—'} />
-                )}
-              </div>
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{translate('matchTypeSettingTitle')}</h4>
-                    <p className="mt-1 text-xs text-slate-600">{translate('matchTypeSettingDescription')}</p>
-                  </div>
-                  <div className="flex flex-col items-stretch gap-2 sm:min-w-56">
-                    <select
-                      value={isFootballTournament ? MatchTypeDB.DOUBLES : selectedMatchType}
-                      onChange={(event) => setSelectedMatchType(event.target.value as MatchTypeDB)}
-                      disabled={formatSettingLocked || isFootballTournament || matchTypeSaving}
-                      className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100"
-                      aria-label={translate('matchTypeSettingTitle')}
-                    >
-                      {!isFootballTournament && <option value={MatchTypeDB.SINGLES}>{translate('matchTypeSingles')}</option>}
-                      <option value={MatchTypeDB.DOUBLES}>{translate('matchTypeDoubles')}</option>
-                    </select>
-                    <Button size="sm" onClick={handleSaveMatchType} disabled={formatSettingLocked || isFootballTournament || matchTypeSaving || selectedMatchType === currentMatchType}>
-                      {matchTypeSaving ? translate('saving') : translate('saveMatchType')}
-                    </Button>
-                  </div>
+            <div className="space-y-6">
+              {/* Header & Quick Stat Cards */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-bold text-slate-900">{translate('overviewTitle')}</h3>
+                  <Badge className="bg-slate-100 text-slate-700 font-semibold px-2.5 py-0.5">
+                    {tournament.category?.name || translate('unknownValue')}
+                  </Badge>
                 </div>
-                {formatSettingLocked && <p className="mt-3 text-xs font-semibold text-amber-700">{translate('matchTypeSettingLocked')}</p>}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <InfoCard label={translate('sportLabel')} value={tournament.category?.name || translate('unknownValue')} />
+                  <InfoCard label={translate('matchTypeLabel')} value={
+                    currentMatchType === 'SINGLES' ? translate('matchTypeSingles')
+                    : currentMatchType === 'DOUBLES' ? translate('matchTypeDoubles')
+                    : currentMatchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles')
+                    : currentMatchType || translate('unknownValue')
+                  } />
+                  <InfoCard label={translate('formatLabel')} value={
+                    tournament.format === 'SINGLE_ELIMINATION' ? translate('formatSingleElimination')
+                    : tournament.format === 'DOUBLE_ELIMINATION' ? translate('formatDoubleElimination')
+                    : tournament.format === 'ROUND_ROBIN' ? translate('formatRoundRobin')
+                    : tournament.format === 'GROUP_STAGE_KNOCKOUT' ? translate('formatGroupStageKnockout')
+                    : tournament.format || translate('unknownValue')
+                  } />
+                  <InfoCard label={translate('maxParticipants')} value={tournament.maxParticipants?.toString() || '—'} />
+                  <InfoCard label={translate('participantLabel')} value={registeredParticipantCount.toString()} />
+                  <InfoCard label={translate('matchesTitle')} value={registeredMatchCount.toString()} />
+                </div>
               </div>
 
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{translate('rulesTitle')}</h4>
-                    <p className="mt-1 text-xs text-slate-600">{translate('rulesPresetDescription')}</p>
+              {/* Section 1: Cấu hình Thi đấu & Luật điểm */}
+              <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-5 shadow-xs">
+                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/70">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                      <Trophy className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">{translate('rulesTitle')}</h4>
+                      <p className="text-xs text-slate-500">{translate('rulesPresetDescription')}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-white text-emerald-700 border-emerald-200">{translate('liteFreeBadge')}</Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRulesEditing((value) => !value)}
-                      disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                    >
-                      {rulesEditing ? translate('closeRules') : translate('editRules')}
-                    </Button>
-                  </div>
+                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
+                    {translate('liteFreeBadge')}
+                  </Badge>
                 </div>
-                {rulesEditing ? (
-                  <div className="mt-4 space-y-3 rounded-lg border border-emerald-200 bg-white p-3">
+
+                <div className="mt-4 space-y-4">
+                  {/* Match Type Row */}
+                  <div className="rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-700">{translate('matchTypeSettingTitle')}</div>
+                        <p className="mt-0.5 text-xs text-slate-500">{translate('matchTypeSettingDescription')}</p>
+                      </div>
+                      <div className="flex items-center gap-2 sm:min-w-64">
+                        <select
+                          value={isFootballTournament ? MatchTypeDB.DOUBLES : selectedMatchType}
+                          onChange={(event) => setSelectedMatchType(event.target.value as MatchTypeDB)}
+                          disabled={formatSettingLocked || isFootballTournament || matchTypeSaving}
+                          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100"
+                          aria-label={translate('matchTypeSettingTitle')}
+                        >
+                          {!isFootballTournament && <option value={MatchTypeDB.SINGLES}>{translate('matchTypeSingles')}</option>}
+                          <option value={MatchTypeDB.DOUBLES}>{translate('matchTypeDoubles')}</option>
+                        </select>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveMatchType}
+                          disabled={formatSettingLocked || isFootballTournament || matchTypeSaving || selectedMatchType === currentMatchType}
+                          className="whitespace-nowrap font-medium"
+                        >
+                          {matchTypeSaving ? translate('saving') : translate('saveMatchType')}
+                        </Button>
+                      </div>
+                    </div>
+                    {formatSettingLocked && <p className="mt-2 text-xs font-medium text-amber-600">{translate('matchTypeSettingLocked')}</p>}
+                  </div>
+
+                  {/* Sport Rules Row */}
+                  <div className="rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
+                      {translate('rulesTitle')}
+                    </div>
                     {tournament.sportRules?.kind === 'FOOTBALL' ? (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <Input label={translate('halves')} type="number" min={1} max={4} value={ruleHalves} onChange={(event) => setRuleHalves(Number(event.target.value) || 1)} />
-                        <Input label={translate('minutesPerHalf')} type="number" min={1} max={120} value={ruleHalfDuration} onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)} />
-                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleAllowDraw} onChange={(event) => setRuleAllowDraw(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> {translate('allowDraw')}</label>
+                        <Input
+                          label={translate('halves')}
+                          type="number"
+                          min={1}
+                          max={4}
+                          value={ruleHalves}
+                          onChange={(event) => setRuleHalves(Number(event.target.value) || 1)}
+                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                        />
+                        <Input
+                          label={translate('minutesPerHalf')}
+                          type="number"
+                          min={1}
+                          max={120}
+                          value={ruleHalfDuration}
+                          onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)}
+                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                        />
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={ruleAllowDraw}
+                            onChange={(event) => setRuleAllowDraw(event.target.checked)}
+                            disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
+                          />
+                          {translate('allowDraw')}
+                        </label>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        <Input label={translate('setsToWin')} type="number" min={1} max={5} value={ruleSetsToWin} onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)} />
-                        <Input label={translate('pointsPerSet')} type="number" min={1} max={99} value={rulePointsPerSet} onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)} />
-                        <Input label={translate('maxPoints')} type="number" min={1} max={199} value={ruleMaxPoints} onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)} />
-                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleWinByTwo} onChange={(event) => setRuleWinByTwo(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> {translate('winByTwoShort')}</label>
+                        <Input
+                          label={translate('setsToWin')}
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={ruleSetsToWin}
+                          onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)}
+                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                        />
+                        <Input
+                          label={translate('pointsPerSet')}
+                          type="number"
+                          min={1}
+                          max={99}
+                          value={rulePointsPerSet}
+                          onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)}
+                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                        />
+                        <Input
+                          label={translate('maxPoints')}
+                          type="number"
+                          min={1}
+                          max={199}
+                          value={ruleMaxPoints}
+                          onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)}
+                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                        />
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={ruleWinByTwo}
+                            onChange={(event) => setRuleWinByTwo(event.target.checked)}
+                            disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
+                          />
+                          {translate('winByTwoShort')}
+                        </label>
                       </div>
                     )}
-                    <div className="flex justify-end"><Button size="sm" onClick={handleSaveRules} disabled={rulesSaving}>{rulesSaving ? translate('saving') : translate('saveRules')}</Button></div>
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        size="sm"
+                        onClick={handleSaveRules}
+                        disabled={rulesSaving || ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                        className="font-medium"
+                      >
+                        {rulesSaving ? translate('saving') : translate('saveRules')}
+                      </Button>
+                    </div>
                   </div>
-                ) : tournament.sportRules?.kind === 'FOOTBALL' ? (
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                    <InfoCard label={translate('halves')} value={String(tournament.sportRules.halvesCount ?? 2)} />
-                    <InfoCard label={translate('minutesPerHalf')} value={String(tournament.sportRules.halfDuration ?? 45)} />
-                    <InfoCard label={translate('allowDraw')} value={tournament.sportRules.allowDraw === false ? translate('no') : translate('yes')} />
-                    <InfoCard label={translate('teamSize')} value={String(tournament.tournamentConfig?.teamSize ?? '—')} />
-                  </div>
-                ) : (
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                    <InfoCard label={translate('setsToWin')} value={String(tournament.sportRules?.setsToWin ?? '—')} />
-                    <InfoCard label={translate('pointsPerSet')} value={String(tournament.sportRules?.pointsPerSet ?? '—')} />
-                    <InfoCard label={translate('maxPoints')} value={String(tournament.sportRules?.maxPoints ?? '—')} />
-                    <InfoCard label={translate('winByTwoShort')} value={tournament.sportRules?.winByTwo === false ? translate('no') : translate('yes')} />
-                  </div>
-                )}
+                </div>
               </div>
 
-              {/* Location & Venue Card (Không bắt buộc) */}
-              <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <div className="p-2 bg-amber-100/80 rounded-lg text-amber-700 mt-0.5">
+              {/* Section 2: Địa điểm & Sân thi đấu (Không bắt buộc) */}
+              <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-5 shadow-xs">
+                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/70">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">{translate('locationCardTitle')}</h4>
-                      <p className="mt-0.5 text-xs text-slate-600">{translate('locationCardDescription')}</p>
+                      <p className="text-xs text-slate-500">{translate('locationCardDescription')}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (isEditingLocation) {
-                        handleCancelLocation();
-                      } else {
-                        setIsEditingLocation(true);
-                      }
-                    }}
-                  >
-                    {isEditingLocation ? translate('closeLocation') : translate('editLocation')}
-                  </Button>
                 </div>
 
-                {isEditingLocation ? (
-                  <div className="mt-4 space-y-4 rounded-lg border border-amber-200 bg-white p-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Input
-                        label={translate('venueNameLabel')}
-                        placeholder={translate('venueNamePlaceholder')}
-                        value={venueName}
-                        onChange={(e) => setVenueName(e.target.value)}
-                      />
-                      <Input
-                        label={translate('addressLabel')}
-                        placeholder={translate('addressPlaceholder')}
-                        value={locationAddress}
-                        onChange={(e) => setLocationAddress(e.target.value)}
-                      />
-                    </div>
+                <div className="mt-4 space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Input
+                      label={translate('venueNameLabel')}
+                      placeholder={translate('venueNamePlaceholder')}
+                      value={venueName}
+                      onChange={(e) => setVenueName(e.target.value)}
+                    />
+                    <Input
+                      label={translate('addressLabel')}
+                      placeholder={translate('addressPlaceholder')}
+                      value={locationAddress}
+                      onChange={(e) => setLocationAddress(e.target.value)}
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        {translate('administrativeAreaLabel')}
-                      </label>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <SearchableRegionSelect
-                            value={province}
-                            options={provinces}
-                            inputName="province"
-                            placeholder={translate('provincePlaceholder')}
-                            onChange={(value) => {
-                              setWards([]);
-                              setProvince(value);
-                              setWard('');
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <SearchableRegionSelect
-                            value={ward}
-                            options={wards}
-                            inputName="ward"
-                            disabled={!province || wards.length === 0}
-                            placeholder={!province ? translate('selectProvinceFirst') : wards.length === 0 ? translate('loadingWards') : translate('wardPlaceholder')}
-                            onChange={(value) => setWard(value)}
-                          />
-                        </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      {translate('administrativeAreaLabel')}
+                    </label>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <SearchableRegionSelect
+                          value={province}
+                          options={provinces}
+                          inputName="province"
+                          placeholder={translate('provincePlaceholder')}
+                          onChange={(value) => {
+                            setWards([]);
+                            setProvince(value);
+                            setWard('');
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <SearchableRegionSelect
+                          value={ward}
+                          options={wards}
+                          inputName="ward"
+                          disabled={!province || wards.length === 0}
+                          placeholder={!province ? translate('selectProvinceFirst') : wards.length === 0 ? translate('loadingWards') : translate('wardPlaceholder')}
+                          onChange={(value) => setWard(value)}
+                        />
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCancelLocation}
-                        disabled={isSavingLocation}
-                      >
-                        {translate('closeLocation')}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveLocation}
-                        disabled={isSavingLocation}
-                        className="bg-amber-600 hover:bg-amber-700 text-white"
-                      >
-                        {isSavingLocation ? translate('saving') : translate('saveLocation')}
-                      </Button>
-                    </div>
+                  <div className="flex justify-end pt-2 border-t border-slate-100">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveLocation}
+                      disabled={isSavingLocation}
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-medium"
+                    >
+                      {isSavingLocation ? translate('saving') : translate('saveLocation')}
+                    </Button>
                   </div>
-                ) : (
-                  <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                    <InfoCard
-                      label={translate('venueName')}
-                      value={tournament.tournamentConfig?.location?.venueName || '—'}
-                    />
-                    <InfoCard
-                      label={translate('locationLabel')}
-                      value={
-                        tournament.locationAddress ||
-                        tournament.tournamentConfig?.location?.display ||
-                        tournament.tournamentConfig?.location?.address ||
-                        translate('locationNotSet')
-                      }
-                    />
-                  </div>
-                )}
+                </div>
               </div>
 
-              {/* Tournament Description & Rules Card (RichTextEditor / EditorJS) */}
-              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <div className="p-2 bg-indigo-100/80 rounded-lg text-indigo-700 mt-0.5">
+              {/* Section 3: Mô tả & Điều lệ giải đấu (RichTextEditor) */}
+              <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-5 shadow-xs">
+                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/70">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">{translate('descriptionCardTitle')}</h4>
-                      <p className="mt-0.5 text-xs text-slate-600">{translate('descriptionCardDescription')}</p>
+                      <p className="text-xs text-slate-500">{translate('descriptionCardDescription')}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (isEditingDescription) {
-                        handleCancelDescription();
-                      } else {
-                        setIsEditingDescription(true);
-                      }
-                    }}
-                  >
-                    {isEditingDescription ? translate('closeDescription') : translate('editDescription')}
-                  </Button>
                 </div>
 
-                {isEditingDescription ? (
-                  <div className="mt-4 space-y-3 rounded-lg border border-indigo-200 bg-white p-4">
-                    <RichTextEditor
-                      value={description}
-                      onChange={(val) => setDescription(val)}
-                      placeholder={translate('descriptionPlaceholder')}
-                    />
-                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCancelDescription}
-                        disabled={isSavingDescription}
-                      >
-                        {translate('closeDescription')}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveDescription}
-                        disabled={isSavingDescription}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                      >
-                        {isSavingDescription ? translate('saving') : translate('saveDescription')}
-                      </Button>
-                    </div>
+                <div className="mt-4 space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+                  <RichTextEditor
+                    value={description}
+                    onChange={(val) => setDescription(val)}
+                    placeholder={translate('descriptionPlaceholder')}
+                  />
+                  <div className="flex justify-end pt-2 border-t border-slate-100">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveDescription}
+                      disabled={isSavingDescription}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+                    >
+                      {isSavingDescription ? translate('saving') : translate('saveDescription')}
+                    </Button>
                   </div>
-                ) : (
-                  <div className="mt-3 rounded-lg border border-indigo-100/80 bg-white p-4 text-sm">
-                    {tournament.description ? (
-                      <div
-                        className="prose prose-sm max-w-none text-slate-700 leading-relaxed font-sans [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5"
-                        dangerouslySetInnerHTML={{ __html: tournament.description }}
-                      />
-                    ) : (
-                      <p className="text-xs text-slate-400 italic">{translate('noDescription')}</p>
-                    )}
-                  </div>
-                )}
+                </div>
               </div>
             </div>
           )}

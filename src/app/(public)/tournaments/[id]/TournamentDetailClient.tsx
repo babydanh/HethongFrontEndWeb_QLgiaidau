@@ -1473,6 +1473,7 @@ const commonTranslate = useTranslations('Common');
           tournamentId={tournament.id}
           communityId={tournament.communityId || undefined}
           communityLogoUrl={clubLogo}
+          hideHeader={true}
           initialTournamentName={tournament.name}
           categoryName={activeTournament.category?.name}
           status={activeTournament.status}

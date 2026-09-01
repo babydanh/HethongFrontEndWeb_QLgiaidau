@@ -14,6 +14,8 @@ interface CommunityTournamentRosterWidgetProps {
   tournamentId: string;
   communityId?: string;
   communityLogoUrl?: string | null;
+  clubName?: string | null;
+  hideHeader?: boolean;
   initialTournamentName?: string;
   categoryName?: string | null;
   status?: string;
@@ -53,6 +55,8 @@ export default function CommunityTournamentRosterWidget({
   tournamentId,
   communityId,
   communityLogoUrl,
+  clubName,
+  hideHeader = false,
   initialTournamentName,
   categoryName,
   status,
@@ -249,43 +253,45 @@ export default function CommunityTournamentRosterWidget({
 
   return (
     <div className="mt-3.5 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md">
-      {/* Top Banner: MANG ĐẾN BỞI */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white overflow-hidden shadow-xs">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={effectiveLogo}
-              alt={tournamentName}
-              className={cn(
-                'h-full w-full rounded-full',
-                isCustomLogo ? 'object-cover' : 'object-contain p-1.5'
-              )}
-              onError={(e) => {
-                const img = e.currentTarget as HTMLImageElement;
-                img.src = '/sporto_v1_with_text.svg';
-                img.className = 'h-full w-full object-contain p-1.5 rounded-full';
-              }}
-            />
+      {/* Top Banner (hidden on tournament detail page) */}
+      {!hideHeader && (
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white overflow-hidden shadow-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={effectiveLogo}
+                alt={tournamentName}
+                className={cn(
+                  'h-full w-full rounded-full',
+                  isCustomLogo ? 'object-cover' : 'object-contain p-1.5'
+                )}
+                onError={(e) => {
+                  const img = e.currentTarget as HTMLImageElement;
+                  img.src = '/sporto_v1_with_text.svg';
+                  img.className = 'h-full w-full object-contain p-1.5 rounded-full';
+                }}
+              />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {clubName ? `MANG ĐẾN BỞI ${clubName}` : 'GIẢI ĐẤU CLB'}
+              </span>
+              <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                {tournamentName}
+              </h4>
+            </div>
           </div>
-          <div className="min-w-0">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              MANG ĐẾN BỞI
-            </span>
-            <h4 className="text-sm font-extrabold text-slate-900 truncate">
-              {tournamentName}
-            </h4>
-          </div>
-        </div>
 
-        <Link
-          href={`/tournaments/${tournamentId}`}
-          className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-colors shrink-0"
-        >
-          <span>Xem giải</span>
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
+          <Link
+            href={`/tournaments/${tournamentId}`}
+            className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-colors shrink-0"
+          >
+            <span>Xem giải</span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Main Roster Section */}
       <div className="p-4 sm:p-5">

@@ -2168,7 +2168,9 @@ export function CourtScheduleBoard({
     const handlePointerMove = (event: PointerEvent) => {
       const deltaMinutes = Math.round((event.clientY - matchCardResize.startY) / currentPixelsPerMinute);
       const unclamped = matchCardResize.initialDurationMinutes + deltaMinutes;
-      const durationMinutes = Math.max(3, Math.min(matchCardResize.maxAllowedDurationMinutes, unclamped));
+      // Snap to 5-minute steps for smooth intuitive feel (e.g. 15, 20, 25, 30, 35, 40...)
+      const snapped = event.shiftKey ? Math.max(5, unclamped) : Math.max(5, Math.round(unclamped / 5) * 5);
+      const durationMinutes = Math.min(matchCardResize.maxAllowedDurationMinutes, snapped);
 
       setCustomMatchDurations((prev) => ({ ...prev, [matchCardResize.matchId]: durationMinutes }));
       setMatchCardResize((prev) => (prev ? { ...prev, currentDurationMinutes: durationMinutes } : null));
@@ -2816,7 +2818,10 @@ export function CourtScheduleBoard({
       rowDurations[matchingRow.index] ??
       rowDuration;
 
-    const cardTop = matchingRow.top + 2;
+    const offsetMinutesInRow = matchingRow && mTimestamp > matchingRow.startTimestamp
+      ? (mTimestamp - matchingRow.startTimestamp) / 60_000
+      : 0;
+    const cardTop = matchingRow.top + (offsetMinutesInRow * currentPixelsPerMinute) + 2;
     const cardHeight = Math.max(48, effectiveDuration * currentPixelsPerMinute - 4);
     const matchTimeStr = formatMatchTime(item.scheduledAt) || matchingRow.startTimeStr;
 
@@ -3156,12 +3161,9 @@ export function CourtScheduleBoard({
                 ? timelineRows.rows[timelineRows.rows.length - 1].endTimestamp
                 : currentStartTimestamp + 360 * 60_000;
 
-              const candidates = [...futureMatchStarts, ...futureBlockedStarts, dayEndTimestamp];
-              const nextObstacleTimestamp = Math.min(...candidates);
-
               const maxAllowedDurationMinutes = Math.max(
-                3,
-                Math.floor((nextObstacleTimestamp - currentStartTimestamp) / (60 * 1000)),
+                240,
+                Math.floor((dayEndTimestamp - currentStartTimestamp) / (60 * 1000)),
               );
 
               setDraftAssignments((current) => ({

@@ -119,9 +119,9 @@ type QuickValues = {
   registrationEnd?: string;
   startDate: string;
   endDate?: string;
-  venueName: string;
-  locationAddress: string;
-  province: string;
+  venueName?: string;
+  locationAddress?: string;
+  province?: string;
   ward?: string;
   district?: string;
   genderRestriction: '' | 'MALE' | 'FEMALE' | 'MIXED';
@@ -150,9 +150,9 @@ const buildQuickSchema = (translate: QuickMessage) => z.object({
   registrationEnd: z.string().optional(),
   startDate: z.string().min(1, translate('validationStartDate')),
   endDate: z.string().optional(),
-  venueName: z.string().trim().min(1, translate('validationVenueName')),
-  locationAddress: z.string().trim().min(1, translate('validationLocation')),
-  province: z.string().trim().min(1, translate('validationProvince')),
+  venueName: z.string().trim().optional(),
+  locationAddress: z.string().trim().optional(),
+  province: z.string().trim().optional(),
   ward: z.string().trim().optional(),
   district: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
@@ -700,8 +700,12 @@ export default function QuickTournamentCreate() {
         return;
       }
 
-      const provinceName = provinces.find((item) => item.code === values.province)?.fullName ?? values.province;
-      const wardName = wards.find((item) => item.code === values.ward)?.fullName ?? values.ward;
+      const provinceName = values.province
+        ? (provinces.find((item) => item.code === values.province)?.fullName ?? values.province)
+        : undefined;
+      const wardName = values.ward
+        ? (wards.find((item) => item.code === values.ward)?.fullName ?? values.ward)
+        : undefined;
 
       // Convert the selected cards into the explicit API DTO. The UI-only
       // selectedFormats array never crosses the API boundary.
@@ -961,7 +965,7 @@ export default function QuickTournamentCreate() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      {translate('venueLabel')} <span className="text-rose-500">*</span>
+                      {translate('venueLabel')}
                     </label>
                     <input
                       data-testid="venue-name-input"
@@ -974,7 +978,7 @@ export default function QuickTournamentCreate() {
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      {translate('addressLabel')} <span className="text-rose-500">*</span>
+                      {translate('addressLabel')}
                     </label>
                     <input
                       data-testid="location-address-input"
@@ -998,7 +1002,7 @@ export default function QuickTournamentCreate() {
                 {/* Dropdowns Tỉnh/Thành ➔ Phường/Xã */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                    {translate('administrativeAreaLabel')} <span className="text-rose-500">*</span>
+                    {translate('administrativeAreaLabel')}
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>

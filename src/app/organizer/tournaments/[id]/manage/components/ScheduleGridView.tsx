@@ -113,6 +113,7 @@ export function ScheduleGridView({
   // ── 3. Draft Schedule State ──
   const [draftMatches, setDraftMatches] = useState<Record<string, { courtId: string; scheduledAt: string; durationMinutes: number }>>({});
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
   // ── 4. Cell Click / Smart Match Assignment Modal State ──
   const [activeCellModal, setActiveCellModal] = useState<{
@@ -526,7 +527,10 @@ export function ScheduleGridView({
       {/* ── MAIN SCHEDULE GRID (Excel-like) ── */}
       <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
         {/* Inner Scrollable Container */}
-        <div className="max-h-[680px] overflow-auto select-none">
+        <div
+          className="max-h-[680px] overflow-auto select-none"
+          onClick={() => setSelectedMatchId(null)}
+        >
           <div
             className="grid min-w-[760px]"
             style={{
@@ -639,14 +643,20 @@ export function ScheduleGridView({
                         onDragStart={(e) => handleDragStart(e, m.id)}
                         onClick={(e) => {
                           e.stopPropagation();
+                          setSelectedMatchId(m.id);
+                        }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
                           onOpenMatch(m.id);
                         }}
-                        className={`absolute inset-x-1.5 z-10 flex flex-col justify-between rounded-lg border p-2 shadow-xs transition-all cursor-grab active:cursor-grabbing hover:shadow-md hover:ring-2 hover:ring-blue-400 ${
-                          isConflict
+                        className={`absolute inset-x-1.5 z-10 flex flex-col justify-between rounded-lg border p-2 shadow-xs transition-all cursor-grab active:cursor-grabbing hover:shadow-md ${
+                          selectedMatchId === m.id
+                            ? 'border-blue-600 bg-blue-100/95 text-blue-950 ring-2 ring-blue-500 shadow-md z-20'
+                            : isConflict
                             ? 'border-rose-400 bg-rose-50 text-rose-950 ring-1 ring-rose-300'
                             : m.isDraft
-                              ? 'border-amber-400 bg-amber-50 text-amber-950'
-                              : 'border-blue-200 bg-blue-50/90 text-blue-950'
+                            ? 'border-amber-400 bg-amber-50 text-amber-950'
+                            : 'border-blue-200 bg-blue-50/90 text-blue-950 hover:ring-2 hover:ring-blue-400'
                         }`}
                         style={{
                           top: `${topPos + 2}px`,

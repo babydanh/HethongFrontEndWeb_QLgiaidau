@@ -2881,6 +2881,18 @@ export function CourtScheduleBoard({
         }}
         onClick={(event) => {
           event.stopPropagation();
+          const targetCIdx = courts.findIndex((c) => c.id === item.courtId);
+          if (targetCIdx >= 0 && matchRowIndex >= 0) {
+            setSelectionRange({
+              startCourtIndex: targetCIdx,
+              endCourtIndex: targetCIdx,
+              startRowIndex: matchRowIndex,
+              endRowIndex: matchRowIndex,
+            });
+          }
+        }}
+        onDoubleClick={(event) => {
+          event.stopPropagation();
           onOpenMatch(item.match.id);
         }}
         onContextMenu={(event) => {

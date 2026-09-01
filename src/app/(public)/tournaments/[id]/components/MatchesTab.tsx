@@ -7,7 +7,7 @@ import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
 
-import { Calendar, Play, Trophy, MapPin, Search, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Search, SlidersHorizontal, ChevronDown, X, Layers } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
@@ -16,6 +16,7 @@ import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
 import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
+import PublicCourtScheduleBoard, { type PublicCourtItem } from './PublicCourtScheduleBoard';
 
 interface Props {
   tournament: Tournament;
@@ -188,7 +189,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     }
   );
   
-  // States for filtering
+  // States for filtering & View Mode Switcher
+  const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
   const [selectedStageKey, setSelectedStageKey] = useState<string | 'ALL'>('ALL');
   const [selectedGroupId, setSelectedGroupId] = useState<string | 'ALL'>('ALL');
   const [selectedLeg, setSelectedLeg] = useState<number | 'ALL'>('ALL');
@@ -199,6 +201,38 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [hasDetectedRound, setHasDetectedRound] = useState(false);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Extract public courts for timeline board
+  const resolvedPublicCourts = useMemo<PublicCourtItem[]>(() => {
+    const map = new Map<string, PublicCourtItem>();
+
+    const venues = (tournament as unknown as { venues?: Array<{ name?: string; courts?: Array<{ id: string; courtName?: string; name?: string }> }> }).venues;
+    if (Array.isArray(venues)) {
+      for (const v of venues) {
+        if (Array.isArray(v.courts)) {
+          for (const c of v.courts) {
+            map.set(c.id, {
+              id: c.id,
+              courtName: c.courtName || c.name || 'Sân',
+              venueName: v.name,
+            });
+          }
+        }
+      }
+    }
+
+    for (const m of matches) {
+      if (m.courtId && !map.has(m.courtId)) {
+        map.set(m.courtId, {
+          id: m.courtId,
+          courtName: m.courtName || m.courtAddress || `Sân ${map.size + 1}`,
+          venueName: (tournament as unknown as { venueName?: string })?.venueName || tournament.locationAddress || undefined,
+        });
+      }
+    }
+
+    return Array.from(map.values());
+  }, [tournament, matches]);
 
   const MATCHES_PER_VIEW = 20;
 
@@ -660,8 +694,49 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     );
   };
 
+  if (viewMode === 'timeline') {
+    return (
+      <div className="flex flex-col gap-4">
+        <PublicCourtScheduleBoard
+          tournament={tournament}
+          matches={matches}
+          courts={resolvedPublicCourts}
+          selectedDivisionId={divisionId}
+          onSwitchToList={() => setViewMode('list')}
+          onOpenMatchDetail={(m) => {
+            if (typeof window !== 'undefined') {
+              window.location.href = `/live/${m.id}`;
+            }
+          }}
+          isLoading={isLoading}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/* View Switcher Top Bar */}
+      <div className="flex items-center justify-between gap-2 bg-white border border-slate-200/80 rounded-xl p-2.5 shadow-2xs">
+        <span className="text-xs font-bold text-slate-700">{translate('viewModeLabel')}</span>
+        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setViewMode('timeline')}
+            className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            <span>{translate('viewModeTimeline')}</span>
+          </button>
+          <button
+            type="button"
+            className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span>{translate('viewModeList')}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Filter Options Panel - Only show when there are matches available */}
       {matches.length > 0 && (

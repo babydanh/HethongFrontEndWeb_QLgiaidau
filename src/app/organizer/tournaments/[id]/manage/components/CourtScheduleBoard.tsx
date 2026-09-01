@@ -3209,7 +3209,7 @@ export function CourtScheduleBoard({
       )}
 
       {/* EXCEL HOME RIBBON TOOLBAR (Microsoft Excel / Google Sheets Inspired) */}
-      <div className="relative z-30 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs overflow-visible">
+      <div className="relative z-50 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs overflow-visible">
         {/* Left: Functional Groups */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* GROUP 0: NGÀY THI ĐẤU (Interactive Date Picker & Popover) */}
@@ -3710,7 +3710,7 @@ export function CourtScheduleBoard({
               boardScrollContainerRef.current.scrollLeft += e.deltaY;
             }
           }}
-          className={`${
+          className={`relative z-10 ${
             isFullscreen || isLocalFullscreen
               ? 'flex-1 min-h-0'
               : 'h-[calc(100vh-210px)] min-h-[500px]'

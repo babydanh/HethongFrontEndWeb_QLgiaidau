@@ -85,6 +85,114 @@ function getCompetitorInitial(name: string): string {
   return clean ? clean.charAt(0).toUpperCase() : '?';
 }
 
+function getAccurateRoundLabel(match: BracketMatch, maxRound = 1): string {
+  const m = match as unknown as Record<string, unknown>;
+  const rawRoundName = String(m.roundName || m.stageName || match.stage?.name || m.stageType || '').trim();
+  const lowerName = rawRoundName.toLowerCase();
+  const bracketCode = String(m.bracketCode || m.bracket_code || m.branch || m.bracket || '').toLowerCase();
+
+  // 1. Check if Grand Final
+  if (lowerName.includes('grand final') || lowerName.includes('chung kết tổng') || lowerName.includes('ck tổng')) {
+    if (lowerName.includes('reset') || lowerName.includes('trận 2') || m.isResetMatch) {
+      return 'CHUNG KẾT TỔNG (TRẬN 2)';
+    }
+    return 'CHUNG KẾT TỔNG';
+  }
+
+  // 2. Check if 3rd place match
+  if (lowerName.includes('tranh hạng 3') || lowerName.includes('3rd') || lowerName.includes('third')) {
+    return 'TRANH HẠNG 3';
+  }
+
+  // 3. Check if Group stage / Round Robin
+  const groupName = (m.groupName as string) || (lowerName.includes('bảng') ? rawRoundName : '');
+  if (groupName || lowerName.includes('group') || lowerName.includes('vòng bảng')) {
+    const cleanGroup = (groupName || rawRoundName)
+      .replace(/giai\s*đoạn\s*\d*/gi, '')
+      .replace(/stage\s*\d*/gi, '')
+      .replace(/group\s*/gi, 'BẢNG ')
+      .trim();
+    const legNum = (m.leg as number) || match.roundNumber;
+    if (legNum) {
+      return `${cleanGroup.toUpperCase()} • LƯỢT ${legNum}`;
+    }
+    return cleanGroup.toUpperCase();
+  }
+
+  const rNum = (match.roundNumber as number) || 1;
+
+  // 4. Check Double Elimination: Winners Bracket
+  const isWinners =
+    lowerName.includes('nhánh thắng') ||
+    lowerName.includes('winner') ||
+    lowerName.includes('upper') ||
+    bracketCode.includes('upper') ||
+    bracketCode.includes('wb');
+
+  if (isWinners) {
+    const diff = Math.max(0, maxRound - rNum);
+    if (diff === 0) return 'CHUNG KẾT NHÁNH THẮNG';
+    if (diff === 1) return 'BÁN KẾT NHÁNH THẮNG';
+    if (diff === 2) return 'TỨ KẾT NHÁNH THẮNG';
+    if (diff === 3) return 'NHÁNH THẮNG • VÒNG 1/8';
+    if (diff === 4) return 'NHÁNH THẮNG • VÒNG 1/16';
+    if (diff === 5) return 'NHÁNH THẮNG • VÒNG 1/32';
+    return `NHÁNH THẮNG • VÒNG ${rNum}`;
+  }
+
+  // 5. Check Double Elimination: Losers Bracket
+  const isLosers =
+    lowerName.includes('nhánh thua') ||
+    lowerName.includes('loser') ||
+    lowerName.includes('lower') ||
+    bracketCode.includes('lower') ||
+    bracketCode.includes('lb');
+
+  if (isLosers) {
+    const diff = Math.max(0, maxRound - rNum);
+    if (diff === 0) return 'CHUNG KẾT NHÁNH THUA';
+    if (diff === 1) return 'BÁN KẾT NHÁNH THUA';
+    if (diff === 2) return 'TỨ KẾT NHÁNH THUA';
+    return `NHÁNH THUA • VÒNG ${rNum}`;
+  }
+
+  // 6. Check standard Knockout by distance from final
+  const isKnockout =
+    maxRound > 1 ||
+    lowerName.includes('knockout') ||
+    lowerName.includes('loại trực tiếp') ||
+    lowerName.includes('elimination');
+
+  if (isKnockout && maxRound >= 1) {
+    const diff = maxRound - rNum;
+    if (diff === 0) return 'CHUNG KẾT';
+    if (diff === 1) return 'BÁN KẾT';
+    if (diff === 2) return 'TỨ KẾT';
+    if (diff === 3) return 'VÒNG 1/8';
+    if (diff === 4) return 'VÒNG 1/16';
+    if (diff === 5) return 'VÒNG 1/32';
+    if (diff === 6) return 'VÒNG 1/64';
+    return `VÒNG ${rNum}`;
+  }
+
+  // 7. Clean custom name
+  let clean = rawRoundName
+    .replace(/^stage\s*\d*/gi, '')
+    .replace(/stage/gi, '')
+    .replace(/vòng\s*loại\s*trực\s*tiếp/gi, '')
+    .replace(/knockout/gi, '')
+    .replace(/elimination/gi, '')
+    .replace(/giai\s*đoạn\s*\d*/gi, '')
+    .trim();
+  clean = clean.replace(/^[•·\-\s:]+|[•·\-\s:]+$/g, '').trim();
+
+  if (clean && !clean.toLowerCase().includes('stage')) {
+    return clean.toUpperCase();
+  }
+
+  return `VÒNG ${rNum}`;
+}
+
 export default function PublicCourtScheduleBoard({
   tournament,
   matches,
@@ -112,6 +220,16 @@ export default function PublicCourtScheduleBoard({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Compute maximum round to accurately name knockout rounds
+  const maxRound = useMemo(() => {
+    let max = 1;
+    for (const m of matches) {
+      const r = (m.roundNumber as number) || (m as unknown as { round_number?: number }).round_number || 1;
+      if (r > max) max = r;
+    }
+    return max;
+  }, [matches]);
 
   // 2. Extract Real Courts from settings, props, or matches
   const resolvedCourts = useMemo<PublicCourtItem[]>(() => {
@@ -311,12 +429,12 @@ export default function PublicCourtScheduleBoard({
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs ${
-        isFullscreen ? 'fixed inset-0 z-50 p-4 bg-white rounded-none border-none' : 'w-full'
+      className={`isolate flex flex-col bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs relative z-0 ${
+        isFullscreen ? 'fixed inset-0 !z-50 p-4 bg-white rounded-none border-none' : 'w-full'
       }`}
     >
       {/* ── 1. TOP TOOLBAR RIBBON (Date, Step Switcher, Search, Zoom, Fullscreen) ── */}
-      <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5">
+      <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5 relative z-10">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {/* Left: View Mode Pills + Date Selector Pills */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -474,7 +592,7 @@ export default function PublicCourtScheduleBoard({
       </div>
 
       {/* ── 2. FULL COURT TIMELINE GRID TABLE (Terracotta Orange Header & Soft Yellow Time Sidebar) ── */}
-      <div className="relative overflow-hidden bg-white">
+      <div className="relative overflow-hidden bg-white z-0">
         <div ref={scrollRef} className="max-h-[680px] overflow-auto select-none scrollbar-thin">
           <div
             className="grid min-w-[840px]"
@@ -483,7 +601,7 @@ export default function PublicCourtScheduleBoard({
             }}
           >
             {/* Top-Left Corner Sticky Header (Terracotta Orange) */}
-            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-orange-800 bg-[#c2410c] text-white p-2.5">
+            <div className="sticky top-0 left-0 z-20 flex items-center justify-center border-b border-r border-orange-800 bg-[#c2410c] text-white p-2.5">
               <Clock className="h-4 w-4 text-white" />
             </div>
 
@@ -492,7 +610,7 @@ export default function PublicCourtScheduleBoard({
               return (
                 <div
                   key={court.id}
-                  className="sticky top-0 z-20 border-b border-r border-orange-800/80 bg-[#c2410c] px-3.5 py-2.5 text-center text-white select-none"
+                  className="sticky top-0 z-10 border-b border-r border-orange-800/80 bg-[#c2410c] px-3.5 py-2.5 text-center text-white select-none"
                 >
                   <p className="truncate text-xs font-extrabold uppercase tracking-wider">{court.courtName}</p>
                 </div>
@@ -560,7 +678,9 @@ export default function PublicCourtScheduleBoard({
                     const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
                     const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
                     const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
-                    const roundTitle = (mRaw.roundName || mRaw.stageName || match.stage?.name || 'Vòng đấu') as string;
+                    
+                    // Accurate Round Label Calculation (e.g. VÒNG 1/32, VÒNG 1/16, TỨ KẾT, BÁN KẾT, CHUNG KẾT)
+                    const roundTitle = getAccurateRoundLabel(match, maxRound);
 
                     // Match Division Name & Format
                     const matchDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
@@ -656,7 +776,7 @@ export default function PublicCourtScheduleBoard({
                           </div>
                         </div>
 
-                        {/* 3. Card Footer: Round Title & Match Details Link */}
+                        {/* 3. Card Footer: Accurate Round Label & Match Status / Details */}
                         <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold pt-1 border-t border-slate-200/80">
                           <span className="truncate max-w-[130px] font-bold text-slate-600">
                             {roundTitle}
@@ -700,7 +820,7 @@ export default function PublicCourtScheduleBoard({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
               {filteredUnscheduledMatches.map((m) => {
                 const mRaw = m as unknown as Record<string, unknown>;
-                const stageLabel = (mRaw.roundName || mRaw.stageName || m.stage?.name || 'Vòng sau') as string;
+                const stageLabel = getAccurateRoundLabel(m, maxRound);
                 const isLive = m.status === 'ONGOING';
                 const isCompleted = m.status === 'COMPLETED';
                 const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;

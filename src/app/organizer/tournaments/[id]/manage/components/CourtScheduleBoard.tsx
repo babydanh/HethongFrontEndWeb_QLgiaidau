@@ -97,7 +97,7 @@ interface CourtScheduleBoardProps {
   defaultOperatingEnd?: string;
   isFullscreen?: boolean;
   onOpenMatch: (matchId: string) => void;
-  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean) => Promise<void>;
+  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean, durationMinutes?: number) => Promise<void>;
   onRefetchData?: () => Promise<any> | void;
 }
 
@@ -992,7 +992,8 @@ export function CourtScheduleBoard({
           await Promise.all(
             chunk.map(async ([matchId, draft]) => {
               try {
-                await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true);
+                const dur = draft.durationMinutes ?? customMatchDurations[matchId];
+                await onSaveScheduleDirect(matchId, draft.courtId, draft.scheduledAt, true, dur);
                 succeededMatchIds.add(matchId);
               } catch (e) {
                 console.error(`Failed to save match ${matchId}:`, e);
@@ -2194,6 +2195,10 @@ export function CourtScheduleBoard({
     };
 
     const handlePointerUp = () => {
+      if (matchCardResize) {
+        setSaveToast(`⏱️ Đã đổi thời lượng trận thành ${matchCardResize.currentDurationMinutes} phút! Bấm "Lưu" hoặc chờ tự lưu...`);
+        setTimeout(() => setSaveToast(null), 3000);
+      }
       setMatchCardResize(null);
     };
 

@@ -45,7 +45,7 @@ interface CourtWorkspaceProps {
   aiScheduleIntent?: unknown;
   isPlanningScheduleWithAi?: boolean;
   onOpenMatch: (matchId: string) => void;
-  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean) => Promise<void>;
+  onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean, durationMinutes?: number) => Promise<void>;
   onRefetchData?: () => Promise<any> | void;
 }
 

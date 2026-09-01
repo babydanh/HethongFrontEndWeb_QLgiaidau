@@ -1798,13 +1798,25 @@ export function useManageState(id: string) {
     finally { setIsScheduling(false); }
   };
 
-  const handleSaveScheduleDirect = async (matchId: string, courtId: string, scheduledAt: string, silent = false) => {
+  const handleSaveScheduleDirect = async (
+    matchId: string,
+    courtId: string,
+    scheduledAt: string,
+    silent = false,
+    durationMinutes?: number,
+  ) => {
     try {
       const court = courts.find((c) => c.id === courtId);
       const venueAddr = tournament?.venue?.locationAddress || customVenueAddress || null;
       const targetCourtId = courtId || null;
       const targetCourtName = court?.courtName || (courtId ? matches.find((m) => m.id === matchId)?.courtName : null) || null;
       const targetScheduledAt = scheduledAt ? new Date(scheduledAt).toISOString() : null;
+
+      const existingMatch = matches.find((m) => m.id === matchId);
+      const existingConfig = existingMatch?.matchConfig || {};
+      const updatedConfig = durationMinutes
+        ? { ...existingConfig, durationMinutes }
+        : existingConfig;
 
       // Optimistically update matches in local state for instant response
       setMatches((prev) =>
@@ -1816,6 +1828,7 @@ export function useManageState(id: string) {
                 courtName: targetCourtName,
                 courtAddress: venueAddr,
                 scheduledAt: targetScheduledAt,
+                matchConfig: updatedConfig,
               }
             : m,
         ),
@@ -1826,6 +1839,7 @@ export function useManageState(id: string) {
         courtName: targetCourtName,
         courtAddress: venueAddr,
         scheduledAt: targetScheduledAt,
+        matchConfig: Object.keys(updatedConfig).length > 0 ? updatedConfig : undefined,
       });
       if (!silent) {
         toast.success(targetCourtId ? 'Đã cập nhật lịch thi đấu!' : 'Đã hủy xếp trận đấu!');

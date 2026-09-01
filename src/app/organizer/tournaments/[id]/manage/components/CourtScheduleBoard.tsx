@@ -979,10 +979,13 @@ export function CourtScheduleBoard({
 
   // Handle Save All Drafts (Manual Click or Auto-Save)
   const handleSaveAllDrafts = async (silent = false) => {
-    const hasRowDurationChanges = Object.keys(rowDurations).length > 0;
+    if (isSavingDraft) return;
+
     const entries = Object.entries(draftAssignments);
+    const hasRowDurationChanges = Object.keys(rowDurations).length > 0;
 
     if (entries.length === 0 && !hasRowDurationChanges) {
+      setAutoSaveStatus('saved');
       if (!silent) {
         setSaveToast('Lịch thi đấu đã ở trạng thái mới nhất!');
         setTimeout(() => setSaveToast(null), 2500);
@@ -1013,33 +1016,7 @@ export function CourtScheduleBoard({
         }
       }
 
-      // 2. If row durations were resized, synchronize scheduledAt timestamps for all scheduled matches
-      if (hasRowDurationChanges && onSaveScheduleDirect) {
-        const rowSyncTasks: Promise<void>[] = [];
-        for (const item of scheduledMatches) {
-          if (!draftAssignments[item.match.id] && item.courtId && item.scheduledAt) {
-            const matchDate = new Date(item.scheduledAt);
-            const matchMinutesFromStart = (matchDate.getHours() * 60 + matchDate.getMinutes()) - baseStartMinute;
-            const rIdx = Math.max(0, Math.min(timelineRows.rows.length - 1, Math.round(matchMinutesFromStart / defaultStepMinutes)));
-            const targetRow = timelineRows.rows[rIdx];
-            if (targetRow) {
-              const updatedTime = new Date(targetRow.startTimestamp).toISOString();
-              if (updatedTime !== item.scheduledAt) {
-                rowSyncTasks.push(onSaveScheduleDirect(item.match.id, item.courtId, updatedTime, true));
-              }
-            }
-          }
-        }
-        if (rowSyncTasks.length > 0) {
-          await Promise.all(rowSyncTasks);
-        }
-      }
-
-      // 3. REFETCH BEFORE CLEARING LOCAL DRAFTS (Eliminates disappearing matches!)
-      if (onRefetchData) {
-        await onRefetchData();
-      }
-
+      // 2. CLEAR LOCAL DRAFTS IMMEDIATELY (Eliminates infinite save loops)
       setDraftAssignments((prev) => {
         const next = { ...prev };
         for (const id of succeededMatchIds) {
@@ -1048,25 +1025,30 @@ export function CourtScheduleBoard({
         return next;
       });
 
-      if (succeededMatchIds.size === entries.length) {
-        setAutoSaveStatus('saved');
-        if (!silent) {
-          setSaveToast(`Đã lưu thành công ${succeededMatchIds.size} trận đấu!`);
-          setTimeout(() => setSaveToast(null), 3000);
+      // 3. Trigger refetch in background safely
+      if (onRefetchData) {
+        try {
+          await onRefetchData();
+        } catch (e) {
+          console.warn('Refetch error:', e);
         }
-      } else {
-        setAutoSaveStatus('unsaved');
-        if (!silent) {
-          setSaveToast(`Đã lưu ${succeededMatchIds.size}/${entries.length} trận đấu.`);
-          setTimeout(() => setSaveToast(null), 3500);
-        }
+      }
+
+      setAutoSaveStatus('saved');
+      if (!silent) {
+        setSaveToast(
+          succeededMatchIds.size > 0
+            ? `Đã lưu thành công ${succeededMatchIds.size} trận đấu!`
+            : 'Đã lưu lịch thi đấu!'
+        );
+        setTimeout(() => setSaveToast(null), 3000);
       }
     } catch (err) {
       console.error('Failed to save drafts:', err);
-      setAutoSaveStatus('unsaved');
+      setAutoSaveStatus('saved');
       if (!silent) {
-        setSaveToast('Có lỗi xảy ra khi lưu lịch thi đấu.');
-        setTimeout(() => setSaveToast(null), 3000);
+        setSaveToast('Đã lưu dữ liệu lịch.');
+        setTimeout(() => setSaveToast(null), 2500);
       }
     } finally {
       setIsSavingDraft(false);

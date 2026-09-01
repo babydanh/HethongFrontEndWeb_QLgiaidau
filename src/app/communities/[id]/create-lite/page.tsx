@@ -127,6 +127,15 @@ const BRACKET_OPTIONS = [
   },
 ];
 
+const DURATION_PRESETS = [
+  { value: 30, label: '30 phút' },
+  { value: 60, label: '1 giờ' },
+  { value: 90, label: '1h 30p' },
+  { value: 120, label: '2 giờ' },
+  { value: 180, label: '3 giờ' },
+  { value: 240, label: '4 giờ' },
+];
+
 export default function CreateLiteTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: communityId } = use(params);
   const router = useRouter();
@@ -136,13 +145,15 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [sport, setSport] = useState<LiteSport>('badminton');
   const [name, setName] = useState('');
   const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
-  const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
+  const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(true);
   const [footballTeamSize, setFootballTeamSize] = useState<5 | 7 | 11>(7);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
   const [startDateTime, setStartDateTime] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState<number | null>(90);
+  const [customDurationInput, setCustomDurationInput] = useState<string>('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [isLoading, setIsLoading] = useState(true);
@@ -192,6 +203,9 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
     if (maxTeams < 2 || maxTeams > 128) return toast.error(translate('liteMaxTeamsRange'));
 
     const isoStartDate = startDateTime ? new Date(startDateTime).toISOString() : undefined;
+    const isoEndDate = startDateTime && durationMinutes
+      ? new Date(new Date(startDateTime).getTime() + durationMinutes * 60 * 1000).toISOString()
+      : undefined;
     const timeOfDay = startDateTime && startDateTime.includes('T') ? startDateTime.split('T')[1] : '18:00';
     const dayOfWeek = startDateTime ? new Date(startDateTime).getDay() : undefined;
 
@@ -211,6 +225,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         isRanked,
         startDate: isoStartDate,
         startTime: timeOfDay,
+        endDate: isoEndDate,
         isRecurring,
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
         recurringDayOfWeek: isRecurring ? dayOfWeek : undefined,
@@ -362,6 +377,67 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                 <p className="mt-1 text-[11px] text-slate-400">
                   {translate('liteDateHint')}
                 </p>
+              </div>
+
+              {/* Thời lượng thi đấu dự kiến (Đánh trong bao lâu) */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    Thời lượng dự kiến (Đánh trong bao lâu)
+                  </label>
+                  <span className="text-[11px] font-medium text-slate-400">Tùy chọn</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {DURATION_PRESETS.map((preset) => {
+                    const isSelected = durationMinutes === preset.value;
+                    return (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() => {
+                          setDurationMinutes(preset.value);
+                          setCustomDurationInput('');
+                        }}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-[11px] text-slate-500">Khác (phút):</span>
+                    <input
+                      type="number"
+                      min={10}
+                      max={1440}
+                      step={5}
+                      placeholder="90"
+                      value={customDurationInput || (DURATION_PRESETS.some((p) => p.value === durationMinutes) ? '' : durationMinutes || '')}
+                      onChange={(event) => {
+                        const val = event.target.value ? Number(event.target.value) : null;
+                        setCustomDurationInput(event.target.value);
+                        setDurationMinutes(val);
+                      }}
+                      className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Preview thời gian thi đấu */}
+                {startDateTime && durationMinutes && (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs font-semibold text-blue-900 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                    <span>
+                      Dự kiến: {formatDateTimeDisplay(startDateTime, locale)} → {formatDateTimeDisplay(new Date(new Date(startDateTime).getTime() + durationMinutes * 60 * 1000).toISOString(), locale)} ({durationMinutes >= 60 ? `${Math.floor(durationMinutes / 60)}h${durationMinutes % 60 ? ` ${durationMinutes % 60}p` : ''}` : `${durationMinutes} phút`})
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Tự động định kỳ */}

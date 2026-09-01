@@ -557,6 +557,7 @@ export function CourtScheduleBoard({
   const [queueRoundFilter, setQueueRoundFilter] = useState('all');
   const [autoScheduleMenuOpen, setAutoScheduleMenuOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [activeDurationPickerMatchId, setActiveDurationPickerMatchId] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
 
@@ -2969,9 +2970,58 @@ export function CourtScheduleBoard({
               >
                 {matchTimeStr}
               </span>
-              <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
-                {effectiveDuration}p
-              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveDurationPickerMatchId((prev) => (prev === item.match.id ? null : item.match.id));
+                  }}
+                  className="pointer-events-auto text-slate-700 hover:text-blue-700 font-extrabold bg-slate-100 hover:bg-blue-50 px-1.5 py-0.2 rounded border border-slate-200 hover:border-blue-300 transition-colors cursor-pointer flex items-center gap-0.5"
+                  title="Click để chọn nhanh thời lượng (15p, 20p, 25p, 30p...)"
+                >
+                  <span>{effectiveDuration}p</span>
+                  <ChevronDown className="h-2.5 w-2.5 opacity-60" />
+                </button>
+
+                {/* Direct Card Duration Popover */}
+                {activeDurationPickerMatchId === item.match.id && (
+                  <div
+                    className="absolute right-0 top-full mt-1 z-40 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl pointer-events-auto animate-in fade-in zoom-in-95 duration-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-slate-100 text-[11px] font-bold text-slate-700">
+                      <span>Đổi thời lượng trận:</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveDurationPickerMatchId(null)}
+                        className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[15, 20, 25, 30, 40, 45, 60, 90].map((dur) => (
+                        <button
+                          key={dur}
+                          type="button"
+                          onClick={() => {
+                            handleSetMatchDuration(item.match.id, dur);
+                            setActiveDurationPickerMatchId(null);
+                          }}
+                          className={`py-1 rounded text-[11px] font-extrabold border transition-all cursor-pointer text-center ${
+                            effectiveDuration === dur
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                              : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200'
+                          }`}
+                        >
+                          {dur}p
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -3138,25 +3188,16 @@ export function CourtScheduleBoard({
         {!compact && (
           <div
             role="presentation"
+            draggable={false}
+            onMouseDown={(event) => {
+              event.stopPropagation();
+            }}
             onPointerDown={(event) => {
               event.stopPropagation();
               event.preventDefault();
               if (!item.courtId || !item.scheduledAt) return;
 
               const currentStartTimestamp = new Date(item.scheduledAt).getTime();
-              // Find all other matches on the same court scheduled after this match
-              const otherMatchesOnCourt = displayMatches.filter(
-                (m) => m.match.id !== item.match.id && m.courtId === item.courtId && m.scheduledAt,
-              );
-              const futureMatchStarts = otherMatchesOnCourt
-                .map((m) => new Date(m.scheduledAt!).getTime())
-                .filter((t) => t > currentStartTimestamp);
-
-              const futureBlockedStarts = blockedSlots
-                .filter((b) => b.courtId === item.courtId)
-                .map((b) => new Date(b.scheduledAt).getTime())
-                .filter((t) => t > currentStartTimestamp);
-
               const dayEndTimestamp = timelineRows.rows.length > 0
                 ? timelineRows.rows[timelineRows.rows.length - 1].endTimestamp
                 : currentStartTimestamp + 360 * 60_000;
@@ -3182,10 +3223,10 @@ export function CourtScheduleBoard({
                 maxAllowedDurationMinutes,
               });
             }}
-            className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize bg-blue-400/20 hover:bg-blue-500/50 transition-colors flex items-center justify-center group-hover:opacity-100"
-            title="Kéo lên/xuống để co giãn thời lượng theo từng phút"
+            className="absolute inset-x-0 bottom-0 h-4 sm:h-5 cursor-ns-resize bg-transparent hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors flex items-center justify-center z-20 pointer-events-auto group/handle"
+            title="Giữ chuột và kéo lên/xuống để co giãn thời lượng (15p, 20p, 25p, 30p...)"
           >
-            <div className="h-0.5 w-6 rounded-full bg-slate-400 group-hover:bg-blue-600" />
+            <div className="h-1 w-8 rounded-full bg-slate-300 group-hover/handle:bg-blue-600 transition-colors shadow-xs" />
           </div>
         )}
       </div>
@@ -4970,7 +5011,7 @@ export function CourtScheduleBoard({
                       Thời lượng trận:
                     </span>
                     <div className="grid grid-cols-4 gap-1">
-                      {[15, 30, 45, 60].map((dur) => (
+                      {[15, 20, 25, 30, 40, 45, 60, 90].map((dur) => (
                         <button
                           key={dur}
                           type="button"
@@ -4978,7 +5019,7 @@ export function CourtScheduleBoard({
                             handleSetMatchDuration(targetMatch.match.id, dur);
                             setContextMenu(null);
                           }}
-                          className={`py-1 rounded text-[11px] font-bold border transition-all cursor-pointer text-center ${
+                          className={`py-1 rounded text-[11px] font-extrabold border transition-all cursor-pointer text-center ${
                             (customMatchDurations[targetMatch.match.id] || targetMatch.durationMinutes) === dur
                               ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                               : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200'
@@ -5127,7 +5168,7 @@ export function CourtScheduleBoard({
                       Đặt thời lượng cả vùng:
                     </span>
                     <div className="grid grid-cols-4 gap-1">
-                      {[15, 30, 45, 60].map((dur) => (
+                      {[15, 20, 25, 30, 40, 45, 60, 90].map((dur) => (
                         <button
                           key={dur}
                           type="button"
@@ -5135,7 +5176,7 @@ export function CourtScheduleBoard({
                             handleSetSelectionDuration(dur);
                             setContextMenu(null);
                           }}
-                          className="py-1 rounded text-[11px] font-bold border transition-all cursor-pointer text-center bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200"
+                          className="py-1 rounded text-[11px] font-extrabold border transition-all cursor-pointer text-center bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200"
                         >
                           {dur}p
                         </button>

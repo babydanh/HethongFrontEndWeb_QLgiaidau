@@ -71,14 +71,21 @@ export default function PublicCourtScheduleBoard({
   tournament,
   matches,
   courts: initialCourts = [],
+  divisions = [],
   onOpenMatchDetail,
   onSwitchToList,
 }: PublicCourtScheduleBoardProps) {
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
 
-  // 1. Controls State (Default 15 minutes per grid row according to tournament setting)
-  const [stepMinutes, setStepMinutes] = useState<number>(15);
+  // 1. Resolve Tournament Schedule Settings (From tournament.tournamentConfig)
+  const tournamentConfig = (tournament.tournamentConfig || {}) as Record<string, unknown>;
+  const configuredOperatingStart = String(tournamentConfig.operatingStart || (tournament as unknown as Record<string, unknown>).operatingStart || '06:00');
+  const configuredOperatingEnd = String(tournamentConfig.operatingEnd || (tournament as unknown as Record<string, unknown>).operatingEnd || '24:00');
+  const configuredStepMinutes = Number(tournamentConfig.stepMinutes || tournamentConfig.gridIncrementMinutes) || 15;
+  const configuredMinutesPerSet = Number(tournamentConfig.minutesPerSet) || 15;
+
+  const [stepMinutes, setStepMinutes] = useState<number>(configuredStepMinutes);
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [activeDate, setActiveDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -88,7 +95,7 @@ export default function PublicCourtScheduleBoard({
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 2. Extract Real Courts from props, tournament, or matches
+  // 2. Extract Real Courts from settings, props, or matches
   const resolvedCourts = useMemo<PublicCourtItem[]>(() => {
     const map = new Map<string, PublicCourtItem>();
 
@@ -193,14 +200,17 @@ export default function PublicCourtScheduleBoard({
     };
   }, [matches, activeDate, availableScheduleDates]);
 
-  // 5. Operating Window & Grid Metrics (06:00 to 24:00, 15p per step row)
-  const operatingStartHour = 6; // 06:00
-  const operatingEndHour = 24; // 24:00
+  // 5. Operating Window & Grid Metrics (Based on organizer settings)
+  const [startH] = configuredOperatingStart.split(':').map(Number);
+  const [endH] = configuredOperatingEnd.split(':').map(Number);
+  const operatingStartHour = Number.isFinite(startH) ? startH : 6;
+  const operatingEndHour = (Number.isFinite(endH) && endH > 0) ? (endH === 0 ? 24 : endH) : 24;
+
   const cellBaseHeight = stepMinutes === 15 ? 44 : stepMinutes === 30 ? 64 : 88;
   const cellHeight = Math.round(cellBaseHeight * zoomLevel);
   const pixelsPerMinute = cellHeight / stepMinutes;
 
-  const totalSlots = Math.floor(((operatingEndHour - operatingStartHour) * 60) / stepMinutes);
+  const totalSlots = Math.max(1, Math.floor(((operatingEndHour - operatingStartHour) * 60) / stepMinutes));
   const timeSlots = useMemo(() => {
     const slots: Array<{ label: string; hour: number; minute: number; isHour: boolean; topPx: number }> = [];
     for (let i = 0; i < totalSlots; i++) {
@@ -261,6 +271,25 @@ export default function PublicCourtScheduleBoard({
     });
   }, [unscheduledMatches, queryLower]);
 
+  // Compute dynamic match duration based on settings or matchConfig
+  const resolveMatchDuration = (match: BracketMatch) => {
+    const mRaw = match as unknown as Record<string, unknown>;
+    if (typeof mRaw.durationMinutes === 'number' && mRaw.durationMinutes > 0) {
+      return mRaw.durationMinutes;
+    }
+    if (match.matchConfig && typeof match.matchConfig.durationMinutes === 'number' && match.matchConfig.durationMinutes > 0) {
+      return match.matchConfig.durationMinutes;
+    }
+    // Infer from division sets / settings
+    const matchDivId = String(mRaw.divisionId || '');
+    const div = divisions.find((d) => d.id === matchDivId);
+    const setsToWin = div?.roundConfig?.setsToWin;
+    const sets = div?.roundConfig?.max_sets || (setsToWin ? (setsToWin * 2 - 1) : 1);
+    if (sets === 1) return configuredMinutesPerSet;
+    if (sets === 3) return configuredMinutesPerSet * 3 + 5;
+    return configuredStepMinutes;
+  };
+
   return (
     <div
       ref={containerRef}
@@ -268,7 +297,7 @@ export default function PublicCourtScheduleBoard({
         isFullscreen ? 'fixed inset-0 z-50 p-4 bg-white rounded-none border-none' : 'w-full'
       }`}
     >
-      {/* ── 1. TOP TOOLBAR RIBBON ── */}
+      {/* ── 1. TOP TOOLBAR RIBBON (Date, Step Switcher, Search, Zoom, Fullscreen) ── */}
       <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {/* Left: View Mode Pills + Date Selector Pills */}
@@ -324,7 +353,7 @@ export default function PublicCourtScheduleBoard({
 
           {/* Right: Step Interval, Search, Zoom Controls, Navigation, Fullscreen */}
           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-            {/* Step Interval Switcher (15p setting by default) */}
+            {/* Step Interval Switcher */}
             <div className="flex items-center bg-slate-50 border border-slate-200 p-0.5 rounded-lg text-[11px] font-bold text-slate-700">
               <span className="px-1.5 text-slate-400 font-semibold flex items-center gap-1">
                 <SlidersHorizontal className="h-3 w-3" />
@@ -426,7 +455,7 @@ export default function PublicCourtScheduleBoard({
         </div>
       </div>
 
-      {/* ── 2. FULL COURT TIMELINE GRID TABLE (15p Steps, Sticky Headers, Real Courts) ── */}
+      {/* ── 2. FULL COURT TIMELINE GRID TABLE ── */}
       <div className="relative overflow-hidden bg-white">
         <div ref={scrollRef} className="max-h-[640px] overflow-auto select-none scrollbar-thin">
           <div
@@ -462,7 +491,7 @@ export default function PublicCourtScheduleBoard({
               );
             })}
 
-            {/* Time Column (Sticky Left with 15-minute slot marks) */}
+            {/* Time Column (Sticky Left with slot marks) */}
             <div className="sticky left-0 z-10 border-r border-slate-200 bg-slate-50/95">
               {timeSlots.map((slot) => {
                 return (
@@ -491,7 +520,7 @@ export default function PublicCourtScheduleBoard({
                   className="relative border-r border-slate-200 bg-white"
                   style={{ height: `${gridTotalHeight}px` }}
                 >
-                  {/* Background 15-minute Grid Cells */}
+                  {/* Background Grid Cells */}
                   {timeSlots.map((slot) => {
                     return (
                       <div
@@ -510,9 +539,7 @@ export default function PublicCourtScheduleBoard({
                     const mDate = new Date(match.scheduledAt);
                     const matchStartMinutes = (mDate.getHours() - operatingStartHour) * 60 + mDate.getMinutes();
                     const topPos = Math.max(0, matchStartMinutes * pixelsPerMinute);
-                    const duration = match.matchConfig && typeof match.matchConfig.durationMinutes === 'number'
-                      ? match.matchConfig.durationMinutes
-                      : 15;
+                    const duration = resolveMatchDuration(match);
                     const cardHeight = Math.max(40, duration * pixelsPerMinute - 4);
 
                     const p1Name = getCompetitorDisplayName(match.participant1);

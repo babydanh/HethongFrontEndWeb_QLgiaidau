@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
-import { Tournament, BracketMatch, tournamentsApi } from '@/features/tournaments/api';
+import { Tournament, BracketMatch, Division, tournamentsApi } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
@@ -720,6 +720,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           tournament={tournament}
           matches={matches}
           courts={resolvedPublicCourts}
+          divisions={tournament.divisions as unknown as Division[]}
           selectedDivisionId={divisionId}
           onSwitchToList={() => setViewMode('list')}
           onOpenMatchDetail={(m) => {

@@ -13,6 +13,7 @@ import { cn } from '@/utils/cn';
 interface CommunityTournamentRosterWidgetProps {
   tournamentId: string;
   communityId?: string;
+  communityLogoUrl?: string | null;
   initialTournamentName?: string;
   categoryName?: string | null;
   status?: string;
@@ -51,6 +52,7 @@ function getColorByName(name: string): string {
 export default function CommunityTournamentRosterWidget({
   tournamentId,
   communityId,
+  communityLogoUrl,
   initialTournamentName,
   categoryName,
   status,

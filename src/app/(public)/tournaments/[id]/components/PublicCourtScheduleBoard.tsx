@@ -16,7 +16,7 @@ import {
   Flame,
   Layers,
   ExternalLink,
-  Info,
+  SlidersHorizontal,
 } from 'lucide-react';
 import type { BracketMatch, Tournament, Division } from '@/features/tournaments/api';
 import { useTranslations } from 'next-intl';
@@ -77,7 +77,8 @@ export default function PublicCourtScheduleBoard({
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
 
-  // 1. Controls State
+  // 1. Controls State (Default 15 minutes per grid row according to tournament setting)
+  const [stepMinutes, setStepMinutes] = useState<number>(15);
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [activeDate, setActiveDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -114,7 +115,6 @@ export default function PublicCourtScheduleBoard({
     const list = Array.from(map.values());
     if (list.length > 0) return list;
 
-    // Default 4 courts if none configured yet
     const defaultVenue = (tournament as unknown as { venueName?: string })?.venueName || tournament.locationAddress || 'Sân thi đấu';
     return [
       { id: 'court-1', courtName: 'Sân 1', venueName: defaultVenue },
@@ -147,7 +147,7 @@ export default function PublicCourtScheduleBoard({
     return [getLocalDateString(new Date().toISOString())];
   }, [matches, tournament.startDate, tournament.endDate]);
 
-  // Default active date: prioritize date with matches, then first date
+  // Default active date
   useEffect(() => {
     if (!activeDate && availableScheduleDates.length > 0) {
       const matchWithDate = matches.find((m) => m.scheduledAt);
@@ -193,17 +193,16 @@ export default function PublicCourtScheduleBoard({
     };
   }, [matches, activeDate, availableScheduleDates]);
 
-  // 5. Operating Window & Grid Metrics (7:00 to 23:00)
-  const operatingStartHour = 7;
-  const operatingEndHour = 23;
-  const stepMinutes = 30;
-  const cellBaseHeight = 64; // Height per 30 minutes
+  // 5. Operating Window & Grid Metrics (06:00 to 24:00, 15p per step row)
+  const operatingStartHour = 6; // 06:00
+  const operatingEndHour = 24; // 24:00
+  const cellBaseHeight = stepMinutes === 15 ? 44 : stepMinutes === 30 ? 64 : 88;
   const cellHeight = Math.round(cellBaseHeight * zoomLevel);
   const pixelsPerMinute = cellHeight / stepMinutes;
 
-  const totalSlots = ((operatingEndHour - operatingStartHour) * 60) / stepMinutes;
+  const totalSlots = Math.floor(((operatingEndHour - operatingStartHour) * 60) / stepMinutes);
   const timeSlots = useMemo(() => {
-    const slots: Array<{ label: string; hour: number; minute: number; topPx: number }> = [];
+    const slots: Array<{ label: string; hour: number; minute: number; isHour: boolean; topPx: number }> = [];
     for (let i = 0; i < totalSlots; i++) {
       const totalMin = operatingStartHour * 60 + i * stepMinutes;
       const hour = Math.floor(totalMin / 60);
@@ -212,6 +211,7 @@ export default function PublicCourtScheduleBoard({
         label: formatTimeLabel(hour, minute),
         hour,
         minute,
+        isHour: minute === 0,
         topPx: i * cellHeight,
       });
     }
@@ -228,7 +228,7 @@ export default function PublicCourtScheduleBoard({
   };
 
   const handleZoom = (delta: number) => {
-    setZoomLevel((prev) => Math.max(0.65, Math.min(1.5, Math.round((prev + delta) * 10) / 10)));
+    setZoomLevel((prev) => Math.max(0.7, Math.min(1.5, Math.round((prev + delta) * 10) / 10)));
   };
 
   const handleToggleFullscreen = () => {
@@ -268,7 +268,7 @@ export default function PublicCourtScheduleBoard({
         isFullscreen ? 'fixed inset-0 z-50 p-4 bg-white rounded-none border-none' : 'w-full'
       }`}
     >
-      {/* ── 1. TOP TOOLBAR RIBBON (Date Navigation, View Mode, Search, Zoom, Fullscreen) ── */}
+      {/* ── 1. TOP TOOLBAR RIBBON ── */}
       <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {/* Left: View Mode Pills + Date Selector Pills */}
@@ -322,10 +322,32 @@ export default function PublicCourtScheduleBoard({
             </div>
           </div>
 
-          {/* Right: Quick Search, Zoom Controls, Navigation, Fullscreen */}
+          {/* Right: Step Interval, Search, Zoom Controls, Navigation, Fullscreen */}
           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
+            {/* Step Interval Switcher (15p setting by default) */}
+            <div className="flex items-center bg-slate-50 border border-slate-200 p-0.5 rounded-lg text-[11px] font-bold text-slate-700">
+              <span className="px-1.5 text-slate-400 font-semibold flex items-center gap-1">
+                <SlidersHorizontal className="h-3 w-3" />
+                <span className="hidden sm:inline">Khung:</span>
+              </span>
+              {[15, 30, 60].map((step) => (
+                <button
+                  key={step}
+                  type="button"
+                  onClick={() => setStepMinutes(step)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition-all cursor-pointer ${
+                    stepMinutes === step
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {step}p
+                </button>
+              ))}
+            </div>
+
             {/* Quick Search */}
-            <div className="relative w-36 sm:w-48">
+            <div className="relative w-32 sm:w-44">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
@@ -341,7 +363,7 @@ export default function PublicCourtScheduleBoard({
               <button
                 type="button"
                 onClick={() => handleZoom(-0.1)}
-                disabled={zoomLevel <= 0.65}
+                disabled={zoomLevel <= 0.7}
                 className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all disabled:opacity-30 cursor-pointer"
                 title={translate('timelineZoomOut')}
               >
@@ -404,7 +426,7 @@ export default function PublicCourtScheduleBoard({
         </div>
       </div>
 
-      {/* ── 2. FULL COURT TIMELINE GRID TABLE (Identical to Management Board) ── */}
+      {/* ── 2. FULL COURT TIMELINE GRID TABLE (15p Steps, Sticky Headers, Real Courts) ── */}
       <div className="relative overflow-hidden bg-white">
         <div ref={scrollRef} className="max-h-[640px] overflow-auto select-none scrollbar-thin">
           <div
@@ -440,16 +462,15 @@ export default function PublicCourtScheduleBoard({
               );
             })}
 
-            {/* Time Column (Sticky Left) */}
+            {/* Time Column (Sticky Left with 15-minute slot marks) */}
             <div className="sticky left-0 z-10 border-r border-slate-200 bg-slate-50/95">
               {timeSlots.map((slot) => {
-                const isHourMark = slot.minute === 0;
                 return (
                   <div
                     key={slot.label}
-                    className={`flex items-start justify-end pr-2.5 border-b text-[11px] font-bold transition-colors ${
-                      isHourMark
-                        ? 'border-slate-300 text-slate-800 bg-slate-100/60 font-black'
+                    className={`flex items-start justify-end pr-2.5 border-b text-[11px] transition-colors ${
+                      slot.isHour
+                        ? 'border-slate-300 text-slate-900 bg-slate-100/70 font-black'
                         : 'border-slate-200/60 text-slate-400 font-medium'
                     }`}
                     style={{ height: `${cellHeight}px` }}
@@ -470,14 +491,13 @@ export default function PublicCourtScheduleBoard({
                   className="relative border-r border-slate-200 bg-white"
                   style={{ height: `${gridTotalHeight}px` }}
                 >
-                  {/* Background Grid Cells */}
+                  {/* Background 15-minute Grid Cells */}
                   {timeSlots.map((slot) => {
-                    const isHourMark = slot.minute === 0;
                     return (
                       <div
                         key={slot.label}
                         className={`border-b transition-colors hover:bg-blue-50/30 ${
-                          isHourMark ? 'border-slate-200' : 'border-slate-100'
+                          slot.isHour ? 'border-slate-200 bg-slate-50/20' : 'border-slate-100/80 border-dashed'
                         }`}
                         style={{ height: `${cellHeight}px` }}
                       />
@@ -492,8 +512,8 @@ export default function PublicCourtScheduleBoard({
                     const topPos = Math.max(0, matchStartMinutes * pixelsPerMinute);
                     const duration = match.matchConfig && typeof match.matchConfig.durationMinutes === 'number'
                       ? match.matchConfig.durationMinutes
-                      : 30;
-                    const cardHeight = Math.max(48, duration * pixelsPerMinute - 4);
+                      : 15;
+                    const cardHeight = Math.max(40, duration * pixelsPerMinute - 4);
 
                     const p1Name = getCompetitorDisplayName(match.participant1);
                     const p2Name = getCompetitorDisplayName(match.participant2);
@@ -546,7 +566,7 @@ export default function PublicCourtScheduleBoard({
                         </div>
 
                         {/* Competitors */}
-                        <div className="space-y-1 my-auto">
+                        <div className="space-y-0.5 my-auto">
                           <div className={`flex items-center justify-between text-xs font-bold truncate ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
                             <span className="truncate flex items-center gap-1">
                               {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}

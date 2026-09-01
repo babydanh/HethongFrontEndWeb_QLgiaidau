@@ -104,19 +104,21 @@ function getAccurateRoundLabel(match: BracketMatch, maxRound = 1): string {
     return 'TRANH HẠNG 3';
   }
 
-  // 3. Check if Group stage / Round Robin
+  // 3. Check if Group stage / Round Robin (e.g. A 1, B 2)
   const groupName = (m.groupName as string) || (lowerName.includes('bảng') ? rawRoundName : '');
   if (groupName || lowerName.includes('group') || lowerName.includes('vòng bảng')) {
     const cleanGroup = (groupName || rawRoundName)
       .replace(/giai\s*đoạn\s*\d*/gi, '')
       .replace(/stage\s*\d*/gi, '')
-      .replace(/group\s*/gi, 'BẢNG ')
+      .replace(/vòng\s*bảng\s*/gi, '')
+      .replace(/bảng\s*/gi, '')
+      .replace(/group\s*/gi, '')
       .trim();
     const legNum = (m.leg as number) || match.roundNumber;
     if (legNum) {
-      return `${cleanGroup.toUpperCase()} • LƯỢT ${legNum}`;
+      return `${cleanGroup.toUpperCase()} ${legNum}`;
     }
-    return cleanGroup.toUpperCase();
+    return cleanGroup.toUpperCase() || 'A 1';
   }
 
   const rNum = (match.roundNumber as number) || 1;
@@ -137,6 +139,9 @@ function getAccurateRoundLabel(match: BracketMatch, maxRound = 1): string {
     if (diff === 3) return 'NHÁNH THẮNG • VÒNG 1/8';
     if (diff === 4) return 'NHÁNH THẮNG • VÒNG 1/16';
     if (diff === 5) return 'NHÁNH THẮNG • VÒNG 1/32';
+    if (diff === 6) return 'NHÁNH THẮNG • VÒNG 1/64';
+    if (diff === 7) return 'NHÁNH THẮNG • VÒNG 1/128';
+    if (diff >= 8) return `NHÁNH THẮNG • VÒNG 1/${2 ** diff}`;
     return `NHÁNH THẮNG • VÒNG ${rNum}`;
   }
 
@@ -172,6 +177,9 @@ function getAccurateRoundLabel(match: BracketMatch, maxRound = 1): string {
     if (diff === 4) return 'VÒNG 1/16';
     if (diff === 5) return 'VÒNG 1/32';
     if (diff === 6) return 'VÒNG 1/64';
+    if (diff === 7) return 'VÒNG 1/128';
+    if (diff === 8) return 'VÒNG 1/256';
+    if (diff > 8) return `VÒNG 1/${2 ** diff}`;
     return `VÒNG ${rNum}`;
   }
 

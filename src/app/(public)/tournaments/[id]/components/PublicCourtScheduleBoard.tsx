@@ -209,6 +209,44 @@ function getCompetitorDisplayName(participant?: { teamName?: string | null; name
   return participant.teamName || participant.name || participant.placeholder || 'Chờ xác định';
 }
 
+function getMatchBestOfFormat(match: BracketMatch, division?: { name?: string; roundConfig?: unknown } | null): string {
+  const m = match as unknown as Record<string, unknown>;
+  const matchConfig = (m.matchConfig || m.rules || {}) as Record<string, unknown>;
+  const roundConfig = (division?.roundConfig || {}) as Record<string, unknown>;
+
+  const setsToWin = Number(matchConfig.setsToWin ?? matchConfig.sets_to_win ?? 0);
+  const bestOf = Number(matchConfig.bestOf ?? matchConfig.best_of ?? roundConfig.bestOf ?? roundConfig.best_of ?? 0);
+
+  if (bestOf === 5 || setsToWin === 3) return 'BO5';
+  if (bestOf === 3 || setsToWin === 2) return 'BO3';
+  return 'BO1';
+}
+
+function extractSetScores(match: BracketMatch) {
+  const m = match as unknown as Record<string, unknown>;
+  const setList: Array<{ s1: string | number; s2: string | number }> = [];
+
+  if (Array.isArray(m.sets) && m.sets.length > 0) {
+    for (const set of m.sets as Array<Record<string, unknown>>) {
+      const s1 = set.score1 ?? set.participant1Score ?? '';
+      const s2 = set.score2 ?? set.participant2Score ?? '';
+      if (s1 !== '' || s2 !== '') {
+        setList.push({ s1: String(s1), s2: String(s2) });
+      }
+    }
+  }
+
+  if (setList.length === 0) {
+    const s1 = m.participant1Score ?? m.score1;
+    const s2 = m.participant2Score ?? m.score2;
+    if (s1 !== undefined && s1 !== null && s1 !== '') {
+      setList.push({ s1: String(s1), s2: s2 !== undefined && s2 !== null ? String(s2) : '' });
+    }
+  }
+
+  return setList;
+}
+
 function getAccurateRoundLabel(match: BracketMatch, maxRound = 1): string {
   const m = match as unknown as Record<string, unknown>;
   const rawRoundName = String(m.roundName || m.stageName || match.stage?.name || m.stageType || '').trim();
@@ -811,9 +849,10 @@ export default function PublicCourtScheduleBoard({
                     // Match Division Name & Format
                     const matchDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
                     const divTitle = matchDiv?.name || (tournament.name || 'NỘI DUNG');
-                    const boFormat = duration === 15 ? 'BO1' : duration >= 45 ? 'BO3' : `${duration}P`;
                     const { isFootball, isSingles } = detectSportAndFormat(matchDiv);
+                    const boFormat = isFootball ? `${duration}P` : getMatchBestOfFormat(match, matchDiv);
 
+                    const setList = extractSetScores(match);
                     const c1 = formatCompetitorDisplay(match.participant1, isFootball, isSingles);
                     const c2 = formatCompetitorDisplay(match.participant2, isFootball, isSingles);
 
@@ -863,7 +902,7 @@ export default function PublicCourtScheduleBoard({
                           </div>
                         </div>
 
-                        {/* 2. Competitors with Avatars & Set Score Boxes */}
+                        {/* 2. Competitors with Avatars & Set Score Boxes (BO1, BO3, BO5) */}
                         <div className="space-y-1.5 my-auto py-1">
                           {/* Competitor 1 */}
                           <div className="flex items-center justify-between gap-1.5 min-w-0">
@@ -896,13 +935,43 @@ export default function PublicCourtScheduleBoard({
                                 {c1.displayLabel}
                               </span>
                             </div>
-                            {(p1Score !== undefined || isCompleted || isLive) && (
-                              <span className={`min-w-[22px] h-[20px] px-1 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
-                                isP1Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
-                              }`}>
-                                {p1Score ?? '-'}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {isFootball ? (
+                                setList.length > 0 ? (
+                                  <span
+                                    className={`min-w-[24px] h-[20px] px-1 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
+                                      Number(setList[0]?.s1) > Number(setList[0]?.s2)
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white text-slate-800 border-slate-300'
+                                    }`}
+                                  >
+                                    {setList[0]?.s1}
+                                  </span>
+                                ) : (
+                                  <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded bg-slate-50 text-xs font-bold text-slate-400 border border-slate-200">
+                                    -
+                                  </span>
+                                )
+                              ) : setList.length > 0 ? (
+                                setList.map((s, idx) => {
+                                  const isWinner = Number(s.s1) > Number(s.s2);
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
+                                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                                      }`}
+                                    >
+                                      {s.s1}
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded bg-slate-50 px-1 text-[11px] font-bold text-slate-400 border border-slate-200">
+                                  -
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* Competitor 2 */}
@@ -936,13 +1005,43 @@ export default function PublicCourtScheduleBoard({
                                 {c2.displayLabel}
                               </span>
                             </div>
-                            {(p2Score !== undefined || isCompleted || isLive) && (
-                              <span className={`min-w-[22px] h-[20px] px-1 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
-                                isP2Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
-                              }`}>
-                                {p2Score ?? '-'}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {isFootball ? (
+                                setList.length > 0 ? (
+                                  <span
+                                    className={`min-w-[24px] h-[20px] px-1 flex items-center justify-center rounded text-xs font-black border shadow-2xs ${
+                                      Number(setList[0]?.s2) > Number(setList[0]?.s1)
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white text-slate-800 border-slate-300'
+                                    }`}
+                                  >
+                                    {setList[0]?.s2}
+                                  </span>
+                                ) : (
+                                  <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded bg-slate-50 text-xs font-bold text-slate-400 border border-slate-200">
+                                    -
+                                  </span>
+                                )
+                              ) : setList.length > 0 ? (
+                                setList.map((s, idx) => {
+                                  const isWinner = Number(s.s2) > Number(s.s1);
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
+                                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                                      }`}
+                                    >
+                                      {s.s2}
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded bg-slate-50 px-1 text-[11px] font-bold text-slate-400 border border-slate-200">
+                                  -
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -1002,6 +1101,7 @@ export default function PublicCourtScheduleBoard({
                 const { isFootball: uIsFootball, isSingles: uIsSingles } = detectSportAndFormat(uDiv);
                 const uc1 = formatCompetitorDisplay(m.participant1, uIsFootball, uIsSingles);
                 const uc2 = formatCompetitorDisplay(m.participant2, uIsFootball, uIsSingles);
+                const uSetList = extractSetScores(m);
 
                 return (
                   <div
@@ -1034,11 +1134,22 @@ export default function PublicCourtScheduleBoard({
                             <span className="truncate">{uc1.displayLabel}</span>
                           </span>
                         </div>
-                        {(p1Score !== undefined || isCompleted || isLive) && (
-                          <span className="font-mono font-black text-xs ml-1 shrink-0">
-                            {p1Score ?? '--'}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {uSetList.length > 0 ? (
+                            uSetList.map((s, idx) => (
+                              <span
+                                key={idx}
+                                className={`min-w-[18px] h-[18px] px-0.5 flex items-center justify-center rounded text-[10px] font-black border ${
+                                  Number(s.s1) > Number(s.s2) ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-50 text-slate-800 border-slate-200'
+                                }`}
+                              >
+                                {s.s1}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="font-mono font-black text-xs text-slate-400">--</span>
+                          )}
+                        </div>
                       </div>
 
                       <div className={`flex items-center justify-between text-xs font-bold ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
@@ -1058,11 +1169,22 @@ export default function PublicCourtScheduleBoard({
                             <span className="truncate">{uc2.displayLabel}</span>
                           </span>
                         </div>
-                        {(p2Score !== undefined || isCompleted || isLive) && (
-                          <span className="font-mono font-black text-xs ml-1 shrink-0">
-                            {p2Score ?? '--'}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {uSetList.length > 0 ? (
+                            uSetList.map((s, idx) => (
+                              <span
+                                key={idx}
+                                className={`min-w-[18px] h-[18px] px-0.5 flex items-center justify-center rounded text-[10px] font-black border ${
+                                  Number(s.s2) > Number(s.s1) ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-50 text-slate-800 border-slate-200'
+                                }`}
+                              >
+                                {s.s2}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="font-mono font-black text-xs text-slate-400">--</span>
+                          )}
+                        </div>
                       </div>
                     </div>
 

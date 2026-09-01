@@ -3213,12 +3213,23 @@ export function CourtScheduleBoard({
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs">
         {/* Left: Functional Groups */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* GROUP 0: NGÀY THI ĐẤU (Date Selector) */}
+          {/* GROUP 0: NGÀY THI ĐẤU (Interactive Date Selector) */}
           <div className="flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
-            <div className="flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold text-slate-800">
+            <label className="relative flex items-center gap-1.5 px-2 py-1 text-xs font-black text-slate-800 hover:bg-white rounded-md cursor-pointer transition-all border border-transparent hover:border-slate-300 hover:shadow-2xs">
               <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
               <span>{formatDateLabel(scheduleDate, locale)}</span>
-            </div>
+              <input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setActiveDate(e.target.value);
+                  }
+                }}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                title="Bấm để chọn hoặc đổi ngày thi đấu"
+              />
+            </label>
             {availableScheduleDates.length > 1 && (
               <div className="flex items-center gap-0.5 border-l border-slate-200 pl-1 ml-0.5">
                 {availableScheduleDates.map((dStr, idx) => (
@@ -3231,6 +3242,7 @@ export function CourtScheduleBoard({
                         ? 'bg-blue-600 text-white shadow-2xs'
                         : 'text-slate-600 hover:bg-white'
                     }`}
+                    title={dStr}
                   >
                     Ngày {idx + 1}
                   </button>

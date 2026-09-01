@@ -427,15 +427,31 @@ export function useManageState(id: string) {
         });
       }
 
-      // Also fallback if direct matches API has records
-      if (combinedMatches.length === 0) {
-        try {
-          const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 1000 });
-          if (mRes.data && Array.isArray(mRes.data)) {
-            combinedMatches.push(...mRes.data);
+      // Always merge latest direct matches from matchesApi to get exact scheduled courts & timestamps
+      try {
+        const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 1000 });
+        if (mRes.data && Array.isArray(mRes.data) && mRes.data.length > 0) {
+          const directMatchMap = new Map(mRes.data.map((m) => [m.id, m]));
+          combinedMatches.forEach((m, idx) => {
+            const direct = directMatchMap.get(m.id);
+            if (direct) {
+              combinedMatches[idx] = {
+                ...m,
+                courtId: direct.courtId || m.courtId || null,
+                courtName: direct.courtName || m.courtName || null,
+                courtAddress: direct.courtAddress || m.courtAddress || null,
+                scheduledAt: direct.scheduledAt || m.scheduledAt || null,
+                matchConfig: direct.matchConfig || m.matchConfig || null,
+              };
+              directMatchMap.delete(m.id);
+            }
+          });
+          // Add any direct matches not in bracket stages
+          for (const m of directMatchMap.values()) {
+            combinedMatches.push(m);
           }
-        } catch { /* silent */ }
-      }
+        }
+      } catch { /* silent */ }
 
       if (requestId === divisionDataRequestRef.current) {
         setMatches((prevMatches) => {
@@ -444,9 +460,11 @@ export function useManageState(id: string) {
             const prev = prevMap.get(newMatch.id);
             return {
               ...newMatch,
-              courtId: newMatch.courtId ?? prev?.courtId ?? null,
-              courtName: newMatch.courtName ?? prev?.courtName ?? null,
-              scheduledAt: newMatch.scheduledAt ?? prev?.scheduledAt ?? null,
+              courtId: newMatch.courtId || prev?.courtId || null,
+              courtName: newMatch.courtName || prev?.courtName || null,
+              courtAddress: newMatch.courtAddress || prev?.courtAddress || null,
+              scheduledAt: newMatch.scheduledAt || prev?.scheduledAt || null,
+              matchConfig: newMatch.matchConfig || prev?.matchConfig || null,
             };
           });
         });

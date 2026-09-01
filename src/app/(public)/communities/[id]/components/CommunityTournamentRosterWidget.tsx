@@ -237,26 +237,34 @@ export default function CommunityTournamentRosterWidget({
   // Generate slots for current page
   const pageSlotIndices = Array.from({ length: endIndex - startIndex }, (_, idx) => startIndex + idx);
 
+  const rawLogo =
+    tournament?.logoUrl ||
+    communityLogoUrl ||
+    (tournament as any)?.community?.logoUrl ||
+    (tournament as any)?.community?.bannerUrl ||
+    communityLogo;
+
+  const isCustomLogo = Boolean(rawLogo && !rawLogo.includes('.svg'));
+  const effectiveLogo = rawLogo || '/sporto_v1_with_text.svg';
+
   return (
     <div className="mt-3.5 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md">
       {/* Top Banner: MANG ĐẾN BỞI */}
       <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white overflow-hidden shadow-xs">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={
-                tournament?.logoUrl ||
-                (tournament as any)?.community?.logoUrl ||
-                (tournament as any)?.community?.bannerUrl ||
-                communityLogo ||
-                communityLogoUrl ||
-                '/sporto_v1_with_text.svg'
-              }
+              src={effectiveLogo}
               alt={tournamentName}
-              className="h-full w-full object-cover rounded-full"
+              className={cn(
+                'h-full w-full rounded-full',
+                isCustomLogo ? 'object-cover' : 'object-contain p-1.5'
+              )}
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                const img = e.currentTarget as HTMLImageElement;
+                img.src = '/sporto_v1_with_text.svg';
+                img.className = 'h-full w-full object-contain p-1.5 rounded-full';
               }}
             />
           </div>

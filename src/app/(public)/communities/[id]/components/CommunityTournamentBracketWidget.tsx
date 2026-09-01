@@ -135,27 +135,35 @@ export default function CommunityTournamentBracketWidget({
     );
   }
 
+  const rawLogo =
+    tournament.logoUrl ||
+    communityLogoUrl ||
+    (tournament as any).community?.logoUrl ||
+    (tournament as any).community?.bannerUrl ||
+    communityLogo;
+
+  const isCustomLogo = Boolean(rawLogo && !rawLogo.includes('.svg'));
+  const effectiveLogo = rawLogo || '/sporto_v1_with_text.svg';
+
   return (
     <>
       <div className="mt-3.5 overflow-hidden rounded-2xl border border-blue-200/80 bg-gradient-to-b from-blue-50/50 via-white to-white shadow-sm transition-all duration-300 hover:border-blue-300 hover:shadow-md">
         {/* Header Ribbon */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-100 bg-white/80 backdrop-blur-xs">
           <div className="flex items-start gap-3">
-            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white overflow-hidden shadow-xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={
-                  tournament.logoUrl ||
-                  (tournament as any).community?.logoUrl ||
-                  (tournament as any).community?.bannerUrl ||
-                  communityLogo ||
-                  communityLogoUrl ||
-                  '/sporto_v1_with_text.svg'
-                }
+                src={effectiveLogo}
                 alt={tournament.name}
-                className="h-full w-full object-cover rounded-full"
+                className={cn(
+                  'h-full w-full rounded-full',
+                  isCustomLogo ? 'object-cover' : 'object-contain p-1.5'
+                )}
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                  const img = e.currentTarget as HTMLImageElement;
+                  img.src = '/sporto_v1_with_text.svg';
+                  img.className = 'h-full w-full object-contain p-1.5 rounded-full';
                 }}
               />
             </div>

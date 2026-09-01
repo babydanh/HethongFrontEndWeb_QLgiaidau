@@ -1472,7 +1472,7 @@ const commonTranslate = useTranslations('Common');
         <CommunityTournamentRosterWidget
           tournamentId={tournament.id}
           communityId={tournament.communityId || undefined}
-          communityLogoUrl={community?.logoUrl || (community as any)?.avatarUrl || (tournament as any)?.community?.logoUrl || undefined}
+          communityLogoUrl={clubLogo}
           initialTournamentName={tournament.name}
           categoryName={activeTournament.category?.name}
           status={activeTournament.status}

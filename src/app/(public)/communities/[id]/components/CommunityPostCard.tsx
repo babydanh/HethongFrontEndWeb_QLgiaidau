@@ -510,6 +510,7 @@ export default function CommunityPostCard({
             <CommunityTournamentRosterWidget
               tournamentId={post.tournamentId || post.tournament?.id || ''}
               communityId={post.communityId}
+              communityLogoUrl={post.tournament?.logoUrl || undefined}
               initialTournamentName={post.tournament?.name}
               categoryName={post.tournament?.categoryName}
               status={post.tournament?.status || undefined}
@@ -521,6 +522,7 @@ export default function CommunityPostCard({
             <CommunityTournamentBracketWidget
               tournamentId={post.tournamentId || post.tournament?.id || ''}
               communityId={post.communityId}
+              communityLogoUrl={post.tournament?.logoUrl || undefined}
               initialTournamentName={post.tournament?.name}
               categoryName={post.tournament?.categoryName}
               status={post.tournament?.status || undefined}

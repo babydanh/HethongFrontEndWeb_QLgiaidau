@@ -27,6 +27,7 @@ import { triggerShare } from '@/utils/share.util';
 import ShareModal from '@/components/common/ShareModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import toast from 'react-hot-toast';
+import { cn } from '@/utils/cn';
 import { BRAND } from '@/constants/brand';
 import { getSportLogo } from '@/constants/sports';
 import { socketClient } from '@/lib/socket';
@@ -1431,8 +1432,15 @@ const commonTranslate = useTranslations('Common');
   };
 
   const renderLiteSidebar = () => {
-    const clubLogo = community?.logoUrl || (community as unknown as Record<string, unknown> | undefined)?.avatarUrl as string || tournament?.logoUrl || tournament?.organizer?.avatarUrl || '/sporto_v1_with_text.svg';
-    const clubName = community?.name || tournament?.organizer?.fullName || 'Câu lạc bộ';
+    const isCommunityTournament = Boolean(tournament?.communityId);
+    const rawClubLogo = isCommunityTournament
+      ? (community?.logoUrl || community?.bannerUrl)
+      : (tournament?.logoUrl || tournament?.organizer?.avatarUrl);
+    const hasCustomClubLogo = Boolean(rawClubLogo && !rawClubLogo.includes('.svg'));
+    const clubLogo = rawClubLogo || '/sporto_v1_with_text.svg';
+    const clubName = isCommunityTournament
+      ? (community?.name || 'Câu lạc bộ')
+      : (tournament?.organizer?.fullName || 'Ban tổ chức');
     const clubHref = tournament?.communityId ? `/communities/${tournament.communityId}` : '#';
 
     return (
@@ -1446,13 +1454,18 @@ const commonTranslate = useTranslations('Common');
             href={clubHref}
             className="flex items-center gap-3 group"
           >
-            <div className="h-12 w-12 rounded-full border border-slate-200 bg-slate-50 p-0.5 overflow-hidden shrink-0 group-hover:border-blue-400 transition-colors shadow-2xs">
+            <div className="h-12 w-12 rounded-full border border-slate-200 bg-slate-50 overflow-hidden shrink-0 group-hover:border-blue-400 transition-colors shadow-2xs">
               <img
                 src={clubLogo}
                 alt={clubName}
-                className="h-full w-full object-contain rounded-full"
+                className={cn(
+                  'h-full w-full rounded-full',
+                  hasCustomClubLogo ? 'object-cover' : 'object-contain p-1.5'
+                )}
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                  const img = e.currentTarget as HTMLImageElement;
+                  img.src = '/sporto_v1_with_text.svg';
+                  img.className = 'h-full w-full object-contain p-1.5 rounded-full';
                 }}
               />
             </div>
@@ -1460,10 +1473,12 @@ const commonTranslate = useTranslations('Common');
               <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
                 {clubName}
               </h4>
-              <span className="text-[11px] text-blue-600 font-bold group-hover:underline inline-flex items-center gap-0.5">
-                <span>Trang Câu lạc bộ</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </span>
+              {isCommunityTournament && (
+                <span className="text-[11px] text-blue-600 font-bold group-hover:underline inline-flex items-center gap-0.5">
+                  <span>Trang Câu lạc bộ</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </span>
+              )}
             </div>
           </Link>
         </div>

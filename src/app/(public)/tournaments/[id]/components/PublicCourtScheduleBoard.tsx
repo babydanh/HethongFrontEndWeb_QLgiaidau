@@ -461,33 +461,27 @@ export default function PublicCourtScheduleBoard({
     return resolvedCourts.filter((c) => (c.venueName || 'Địa điểm chính') === selectedVenueFilter);
   }, [resolvedCourts, selectedVenueFilter]);
 
-  // 3. Extract Schedule Dates (Dates with matches + All dates in tournament range)
+  // 3. Extract Schedule Dates (Only actual configured dates in settings or scheduled matches)
   const availableScheduleDates = useMemo<string[]>(() => {
     const set = new Set<string>();
+    if (typeof tournamentConfig.scheduleDate === 'string' && tournamentConfig.scheduleDate) {
+      const dStr = getLocalDateString(tournamentConfig.scheduleDate);
+      if (dStr) set.add(dStr);
+    }
     for (const m of matches) {
       if (m.scheduledAt) {
         const dStr = getLocalDateString(m.scheduledAt);
         if (dStr) set.add(dStr);
       }
     }
-    if (tournament.startDate && tournament.endDate) {
-      const start = new Date(tournament.startDate);
-      const end = new Date(tournament.endDate);
-      if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
-        const cur = new Date(start);
-        const maxDays = 30;
-        let count = 0;
-        while (cur <= end && count < maxDays) {
-          set.add(getLocalDateString(cur.toISOString()));
-          cur.setDate(cur.getDate() + 1);
-          count++;
-        }
-      }
+    if (set.size === 0 && tournament.startDate) {
+      const startD = getLocalDateString(tournament.startDate);
+      if (startD) set.add(startD);
     }
     const sorted = Array.from(set).filter(Boolean).sort();
     if (sorted.length > 0) return sorted;
     return [getLocalDateString(new Date().toISOString())];
-  }, [matches, tournament.startDate, tournament.endDate]);
+  }, [tournamentConfig.scheduleDate, matches, tournament.startDate]);
 
   // Default active date: prioritize date that has matches
   useEffect(() => {
@@ -655,7 +649,7 @@ export default function PublicCourtScheduleBoard({
               </div>
             )}
 
-            {/* Date Selector Pills (Dates with matches & Tournament days) */}
+            {/* Date Selector Pills (Only dates in setting or with matches) */}
             <div className="flex items-center gap-1 overflow-x-auto max-w-[540px] p-0.5 scrollbar-none">
               {availableScheduleDates.map((dateStr) => {
                 const isActive = dateStr === activeDate;
@@ -827,22 +821,22 @@ export default function PublicCourtScheduleBoard({
       <div className="relative overflow-hidden bg-white z-0">
         <div ref={scrollRef} className="max-h-[680px] overflow-auto select-none scrollbar-thin">
           <div
-            className="grid min-w-[840px]"
+            className="grid min-w-[640px] sm:min-w-[800px]"
             style={{
-              gridTemplateColumns: `84px repeat(${Math.max(1, displayedCourts.length)}, minmax(260px, 1fr))`,
+              gridTemplateColumns: `54px repeat(${Math.max(1, displayedCourts.length)}, minmax(240px, 1fr))`,
             }}
           >
-            {/* Top-Left Corner Sticky Header (Terracotta Orange) */}
-            <div className="sticky top-0 left-0 z-20 flex items-center justify-center border-b border-r border-orange-800 bg-[#c2410c] text-white p-2.5">
-              <Clock className="h-4 w-4 text-white" />
+            {/* Top-Left Corner Sticky Header (Terracotta Orange z-30) */}
+            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-orange-800 bg-[#c2410c] text-white p-2">
+              <Clock className="h-3.5 w-3.5 text-white" />
             </div>
 
-            {/* Top Sticky Court Column Headers (Terracotta Orange) */}
+            {/* Top Sticky Court Column Headers (Terracotta Orange z-20) */}
             {displayedCourts.map((court) => {
               return (
                 <div
                   key={court.id}
-                  className="sticky top-0 z-10 border-b border-r border-orange-800/80 bg-[#c2410c] px-3.5 py-2.5 text-center text-white select-none"
+                  className="sticky top-0 z-20 border-b border-r border-orange-800/80 bg-[#c2410c] px-2.5 py-2 text-center text-white select-none"
                 >
                   <p className="truncate text-xs font-extrabold uppercase tracking-wider">{court.courtName}</p>
                   {court.venueName && uniqueVenues.length > 1 && (
@@ -852,16 +846,16 @@ export default function PublicCourtScheduleBoard({
               );
             })}
 
-            {/* Time Column (Sticky Left with Soft Yellow Sidebar Background #fef08a) */}
+            {/* Time Column (Sticky Left with Soft Yellow Sidebar Background #fef08a z-10) */}
             <div className="sticky left-0 z-10 border-r border-amber-300 bg-[#fef08a]">
               {timeSlots.map((slot) => {
                 return (
                   <div
                     key={slot.label}
-                    className="flex items-start justify-end pr-2.5 border-b border-amber-300/80 text-[11px] font-bold text-slate-900"
+                    className="flex items-start justify-center border-b border-amber-300/80 text-[10px] sm:text-[11px] font-black text-slate-900"
                     style={{ height: `${cellHeight}px` }}
                   >
-                    <span className="-mt-2.5 font-black">{slot.label}</span>
+                    <span className="-mt-2 font-black">{slot.label}</span>
                   </div>
                 );
               })}
@@ -927,13 +921,13 @@ export default function PublicCourtScheduleBoard({
                       <div
                         key={match.id}
                         onClick={() => onOpenMatchDetail?.(match)}
-                        className={`absolute inset-x-1 z-10 flex flex-col justify-between rounded-xl border p-2.5 shadow-2xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 select-none ${
+                        className={`absolute inset-x-1 z-[5] flex flex-col justify-between rounded-xl border p-2.5 shadow-2xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 select-none ${
                           isLive
                             ? 'border-amber-400 bg-amber-50/95 text-amber-950 ring-2 ring-amber-400/40 shadow-md'
                             : isCompleted
                             ? 'border-slate-300 bg-slate-100/95 text-slate-700 shadow-2xs'
                             : 'border-slate-200 bg-white text-slate-900 hover:border-blue-400 shadow-xs'
-                        } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.01] z-20' : ''}`}
+                        } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.01] z-[6]' : ''}`}
                         style={{
                           top: `${topPos + 2}px`,
                           height: `${cardHeight}px`,

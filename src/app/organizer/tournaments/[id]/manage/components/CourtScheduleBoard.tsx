@@ -9,6 +9,7 @@ import {
   CalendarClock,
   Check,
   CheckSquare,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
@@ -555,6 +556,7 @@ export function CourtScheduleBoard({
   const [queueDivisionFilter, setQueueDivisionFilter] = useState('all');
   const [queueRoundFilter, setQueueRoundFilter] = useState('all');
   const [autoScheduleMenuOpen, setAutoScheduleMenuOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
 
@@ -3213,23 +3215,95 @@ export function CourtScheduleBoard({
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs">
         {/* Left: Functional Groups */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* GROUP 0: NGÀY THI ĐẤU (Interactive Date Selector) */}
-          <div className="flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
-            <label className="relative flex items-center gap-1.5 px-2 py-1 text-xs font-black text-slate-800 hover:bg-white rounded-md cursor-pointer transition-all border border-transparent hover:border-slate-300 hover:shadow-2xs">
+          {/* GROUP 0: NGÀY THI ĐẤU (Interactive Date Picker & Popover) */}
+          <div className="relative flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setIsDatePickerOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-black text-slate-800 hover:bg-white rounded-md cursor-pointer transition-all border border-transparent hover:border-slate-300 hover:shadow-2xs"
+            >
               <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
               <span>{formatDateLabel(scheduleDate, locale)}</span>
-              <input
-                type="date"
-                value={scheduleDate}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setActiveDate(e.target.value);
-                  }
-                }}
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                title="Bấm để chọn hoặc đổi ngày thi đấu"
-              />
-            </label>
+              <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Date Picker Popover Menu */}
+            {isDatePickerOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsDatePickerOpen(false)}
+                />
+                <div className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                      Chọn ngày xếp lịch
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="text-slate-400 hover:text-slate-600 p-0.5 rounded-md text-xs font-bold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Input Date Native */}
+                  <div className="space-y-1.5 mb-3">
+                    <label className="text-[11px] font-semibold text-slate-500">
+                      Chọn ngày bất kỳ:
+                    </label>
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setActiveDate(e.target.value);
+                          setIsDatePickerOpen(false);
+                          setSaveToast(`Đã chuyển sang ngày ${formatDateLabel(e.target.value, locale)}`);
+                          setTimeout(() => setSaveToast(null), 3000);
+                        }
+                      }}
+                      className="w-full h-8 px-2.5 text-xs font-bold text-slate-800 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:outline-hidden"
+                    />
+                  </div>
+
+                  {/* Available Dates List */}
+                  {availableScheduleDates.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-semibold text-slate-500">
+                        Các ngày hiện có trận:
+                      </p>
+                      <div className="flex flex-col gap-1 max-h-36 overflow-y-auto pr-0.5">
+                        {availableScheduleDates.map((dStr, idx) => {
+                          const isSelected = scheduleDate === dStr;
+                          return (
+                            <button
+                              key={dStr}
+                              type="button"
+                              onClick={() => {
+                                setActiveDate(dStr);
+                                setIsDatePickerOpen(false);
+                              }}
+                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold text-left transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-blue-600 text-white shadow-2xs'
+                                  : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700'
+                              }`}
+                            >
+                              <span>Ngày {idx + 1}: {formatDateLabel(dStr, locale)}</span>
+                              {isSelected && <span>✓</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
             {availableScheduleDates.length > 1 && (
               <div className="flex items-center gap-0.5 border-l border-slate-200 pl-1 ml-0.5">
                 {availableScheduleDates.map((dStr, idx) => (

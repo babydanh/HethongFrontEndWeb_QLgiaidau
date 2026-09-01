@@ -520,6 +520,7 @@ export default function CommunityPostCard({
           ) : (
             <CommunityTournamentBracketWidget
               tournamentId={post.tournamentId || post.tournament?.id || ''}
+              communityId={post.communityId}
               initialTournamentName={post.tournament?.name}
               categoryName={post.tournament?.categoryName}
               status={post.tournament?.status || undefined}

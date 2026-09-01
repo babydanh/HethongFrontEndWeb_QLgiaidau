@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Plus, X, ArrowUpRight, Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { tournamentsApi, type Tournament, type TournamentParticipant } from '@/features/tournaments/api';
+import { communitiesApi } from '@/features/communities/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
@@ -66,6 +67,7 @@ export default function CommunityTournamentRosterWidget({
   const [isWithdrawing, setIsWithdrawing] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedUserToWithdraw, setSelectedUserToWithdraw] = useState<TournamentParticipant | null>(null);
+  const [communityLogo, setCommunityLogo] = useState<string | null>(null);
 
   const fetchTournamentAndParticipants = useCallback(async () => {
     try {
@@ -74,8 +76,21 @@ export default function CommunityTournamentRosterWidget({
         tournamentsApi.getTournamentParticipants(tournamentId).catch(() => null),
       ]);
 
+      let effectiveCommId = communityId;
       if (tourneyRes?.data) {
         setTournament(tourneyRes.data);
+        if (tourneyRes.data.communityId) {
+          effectiveCommId = tourneyRes.data.communityId;
+        }
+      }
+      if (effectiveCommId && (!tourneyRes?.data?.logoUrl || tourneyRes.data.logoUrl === '')) {
+        communitiesApi.getCommunityById(effectiveCommId).then((cRes) => {
+          if (cRes?.data?.logoUrl) {
+            setCommunityLogo(cRes.data.logoUrl);
+          } else if (cRes?.data?.bannerUrl) {
+            setCommunityLogo(cRes.data.bannerUrl);
+          }
+        }).catch(() => {});
       }
       if (partRes?.data) {
         // Filter only active participants (not withdrawn/rejected)
@@ -87,7 +102,7 @@ export default function CommunityTournamentRosterWidget({
     } finally {
       setLoading(false);
     }
-  }, [tournamentId]);
+  }, [tournamentId, communityId]);
 
   useEffect(() => {
     fetchTournamentAndParticipants();
@@ -226,9 +241,15 @@ export default function CommunityTournamentRosterWidget({
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={tournament?.logoUrl || '/sporto_v1_with_text.svg'}
+              src={
+                tournament?.logoUrl ||
+                (tournament as any)?.community?.logoUrl ||
+                (tournament as any)?.community?.bannerUrl ||
+                communityLogo ||
+                '/sporto_v1_with_text.svg'
+              }
               alt={tournamentName}
-              className="h-full w-full object-contain rounded-full"
+              className="h-full w-full object-cover rounded-full"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
               }}

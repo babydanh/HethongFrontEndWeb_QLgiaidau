@@ -5,12 +5,15 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Trophy, Maximize2, ArrowUpRight, Loader2, Sparkles } from 'lucide-react';
 import { tournamentsApi, type Tournament } from '@/features/tournaments/api';
+import { communitiesApi } from '@/features/communities/api';
 import BracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
 import TournamentBracketModal from '@/components/tournaments/TournamentBracketModal';
 import { cn } from '@/utils/cn';
 
 interface CommunityTournamentBracketWidgetProps {
   tournamentId: string;
+  communityId?: string;
+  communityLogoUrl?: string | null;
   initialTournamentName?: string;
   categoryName?: string | null;
   status?: string;
@@ -19,6 +22,8 @@ interface CommunityTournamentBracketWidgetProps {
 
 export default function CommunityTournamentBracketWidget({
   tournamentId,
+  communityId,
+  communityLogoUrl,
   initialTournamentName,
   categoryName,
   status,
@@ -26,6 +31,7 @@ export default function CommunityTournamentBracketWidget({
 }: CommunityTournamentBracketWidgetProps) {
   const translate = useTranslations('Common');
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [communityLogo, setCommunityLogo] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -40,6 +46,16 @@ export default function CommunityTournamentBracketWidget({
         if (res.data) {
           setTournament(res.data);
           setError(null);
+          const commId = res.data.communityId || communityId;
+          if (commId && (!res.data.logoUrl || res.data.logoUrl === '')) {
+            communitiesApi.getCommunityById(commId).then((cRes) => {
+              if (mounted && cRes?.data?.logoUrl) {
+                setCommunityLogo(cRes.data.logoUrl);
+              } else if (mounted && cRes?.data?.bannerUrl) {
+                setCommunityLogo(cRes.data.bannerUrl);
+              }
+            }).catch(() => {});
+          }
         } else {
           setError(translate('communityBracketLoadMissing'));
         }
@@ -55,7 +71,7 @@ export default function CommunityTournamentBracketWidget({
     return () => {
       mounted = false;
     };
-  }, [tournamentId, translate]);
+  }, [tournamentId, communityId, translate]);
 
   const currentStatus = tournament?.status || status || 'ONGOING';
   const isOngoing = currentStatus === 'ONGOING' || currentStatus === 'IN_PROGRESS';
@@ -125,9 +141,16 @@ export default function CommunityTournamentBracketWidget({
             <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-1 overflow-hidden shadow-xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={tournament.logoUrl || '/sporto_v1_with_text.svg'}
+                src={
+                  tournament.logoUrl ||
+                  (tournament as any).community?.logoUrl ||
+                  (tournament as any).community?.bannerUrl ||
+                  communityLogo ||
+                  communityLogoUrl ||
+                  '/sporto_v1_with_text.svg'
+                }
                 alt={tournament.name}
-                className="h-full w-full object-contain rounded-full"
+                className="h-full w-full object-cover rounded-full"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
                 }}

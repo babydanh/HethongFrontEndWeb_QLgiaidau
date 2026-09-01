@@ -632,9 +632,11 @@ export function CourtScheduleBoard({
 
     const persisted = !isExplicitlyUnassigned && Boolean(match.scheduledAt && match.courtId);
     const assignment = persisted ? null : previewAssignmentByMatchId.get(match.id);
+    const matchConfigDuration = ((match as unknown as Record<string, unknown>).matchConfig as Record<string, unknown> | undefined)?.durationMinutes as number | undefined;
     const matchDuration =
       draft?.durationMinutes ??
       customMatchDurations[match.id] ??
+      matchConfigDuration ??
       ((match as unknown as Record<string, unknown>).durationMinutes as number | undefined) ??
       (preview ? preview.durationMinutes + preview.bufferMinutes : defaultStepMinutes);
 
@@ -1343,7 +1345,17 @@ export function CourtScheduleBoard({
     };
     setDraftAssignments(newDrafts);
     pushHistory(newDrafts);
-    setSaveToast(`⏱️ Đã đặt thời lượng trận thành ${newDuration} phút!`);
+
+    // Save directly to backend immediately
+    onSaveScheduleDirect?.(
+      matchId,
+      match.courtId,
+      match.scheduledAt,
+      true,
+      newDuration,
+    );
+
+    setSaveToast(`⏱️ Đã lưu thời lượng trận thành ${newDuration} phút!`);
     setTimeout(() => setSaveToast(null), 2500);
   };
 
@@ -2191,7 +2203,22 @@ export function CourtScheduleBoard({
 
     const handlePointerUp = () => {
       if (matchCardResize) {
-        setSaveToast(`⏱️ Đã đổi thời lượng trận thành ${matchCardResize.currentDurationMinutes} phút! Bấm "Lưu" hoặc chờ tự lưu...`);
+        const finalDuration = matchCardResize.currentDurationMinutes;
+        const targetMatchId = matchCardResize.matchId;
+        const matchItem = displayMatches.find((m) => m.match.id === targetMatchId);
+
+        if (matchItem && matchItem.courtId && matchItem.scheduledAt) {
+          onSaveScheduleDirect?.(
+            targetMatchId,
+            matchItem.courtId,
+            matchItem.scheduledAt,
+            true,
+            finalDuration,
+          );
+        }
+
+        setCustomMatchDurations((prev) => ({ ...prev, [targetMatchId]: finalDuration }));
+        setSaveToast(`⏱️ Đã lưu thời lượng trận thành ${finalDuration} phút!`);
         setTimeout(() => setSaveToast(null), 3000);
       }
       setMatchCardResize(null);

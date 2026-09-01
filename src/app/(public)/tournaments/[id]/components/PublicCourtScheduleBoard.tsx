@@ -439,7 +439,29 @@ export default function PublicCourtScheduleBoard({
     ];
   }, [initialCourts, matches, tournament]);
 
-  // 3. Extract Schedule Dates (Only dates with scheduled matches or tournament dates)
+  const [selectedVenueFilter, setSelectedVenueFilter] = useState<string>('all');
+
+  // Extract unique venues
+  const uniqueVenues = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; courtCount: number }>();
+    for (const c of resolvedCourts) {
+      const vName = c.venueName || 'Địa điểm chính';
+      const existing = map.get(vName);
+      if (existing) {
+        existing.courtCount++;
+      } else {
+        map.set(vName, { id: vName, name: vName, courtCount: 1 });
+      }
+    }
+    return Array.from(map.values());
+  }, [resolvedCourts]);
+
+  const displayedCourts = useMemo(() => {
+    if (selectedVenueFilter === 'all') return resolvedCourts;
+    return resolvedCourts.filter((c) => (c.venueName || 'Địa điểm chính') === selectedVenueFilter);
+  }, [resolvedCourts, selectedVenueFilter]);
+
+  // 3. Extract Schedule Dates (Dates with matches + All dates in tournament range)
   const availableScheduleDates = useMemo<string[]>(() => {
     const set = new Set<string>();
     for (const m of matches) {
@@ -448,16 +470,21 @@ export default function PublicCourtScheduleBoard({
         if (dStr) set.add(dStr);
       }
     }
-    if (set.size === 0 && tournament.startDate) {
-      const startD = getLocalDateString(tournament.startDate);
-      if (startD) set.add(startD);
+    if (tournament.startDate && tournament.endDate) {
+      const start = new Date(tournament.startDate);
+      const end = new Date(tournament.endDate);
+      if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+        const cur = new Date(start);
+        const maxDays = 30;
+        let count = 0;
+        while (cur <= end && count < maxDays) {
+          set.add(getLocalDateString(cur.toISOString()));
+          cur.setDate(cur.getDate() + 1);
+          count++;
+        }
+      }
     }
-    if (set.size === 0 && tournament.endDate) {
-      const endD = getLocalDateString(tournament.endDate);
-      if (endD) set.add(endD);
-    }
-
-    const sorted = Array.from(set).sort();
+    const sorted = Array.from(set).filter(Boolean).sort();
     if (sorted.length > 0) return sorted;
     return [getLocalDateString(new Date().toISOString())];
   }, [matches, tournament.startDate, tournament.endDate]);
@@ -628,8 +655,8 @@ export default function PublicCourtScheduleBoard({
               </div>
             )}
 
-            {/* Date Selector Pills (Only dates with matches) */}
-            <div className="flex items-center gap-1 overflow-x-auto max-w-[480px] p-0.5 scrollbar-none">
+            {/* Date Selector Pills (Dates with matches & Tournament days) */}
+            <div className="flex items-center gap-1 overflow-x-auto max-w-[540px] p-0.5 scrollbar-none">
               {availableScheduleDates.map((dateStr) => {
                 const isActive = dateStr === activeDate;
                 const matchCount = matchesByDateCount[dateStr] || 0;
@@ -724,7 +751,7 @@ export default function PublicCourtScheduleBoard({
             </div>
 
             {/* Court Scroll Buttons */}
-            {resolvedCourts.length > 2 && (
+            {displayedCourts.length > 2 && (
               <div className="flex items-center gap-0.5 bg-blue-50/80 border border-blue-200 rounded-lg p-0.5 shadow-2xs">
                 <button
                   type="button"
@@ -759,6 +786,41 @@ export default function PublicCourtScheduleBoard({
             </button>
           </div>
         </div>
+
+        {/* Multi-Venue Selector Row (If tournament has >= 2 venues) */}
+        {uniqueVenues.length > 1 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-1.5 border-t border-slate-100 scrollbar-none">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5 flex items-center gap-1">
+              <MapPin className="h-3 w-3 text-orange-600" />
+              Địa điểm:
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedVenueFilter('all')}
+              className={`h-6 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                selectedVenueFilter === 'all'
+                  ? 'bg-orange-700 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Tất cả cụm sân ({resolvedCourts.length})
+            </button>
+            {uniqueVenues.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => setSelectedVenueFilter(v.id)}
+                className={`h-6 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  selectedVenueFilter === v.id
+                    ? 'bg-orange-700 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {v.name} ({v.courtCount} sân)
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── 2. FULL COURT TIMELINE GRID TABLE (Terracotta Orange Header & Soft Yellow Time Sidebar) ── */}
@@ -767,7 +829,7 @@ export default function PublicCourtScheduleBoard({
           <div
             className="grid min-w-[840px]"
             style={{
-              gridTemplateColumns: `84px repeat(${Math.max(1, resolvedCourts.length)}, minmax(260px, 1fr))`,
+              gridTemplateColumns: `84px repeat(${Math.max(1, displayedCourts.length)}, minmax(260px, 1fr))`,
             }}
           >
             {/* Top-Left Corner Sticky Header (Terracotta Orange) */}
@@ -776,13 +838,16 @@ export default function PublicCourtScheduleBoard({
             </div>
 
             {/* Top Sticky Court Column Headers (Terracotta Orange) */}
-            {resolvedCourts.map((court) => {
+            {displayedCourts.map((court) => {
               return (
                 <div
                   key={court.id}
                   className="sticky top-0 z-10 border-b border-r border-orange-800/80 bg-[#c2410c] px-3.5 py-2.5 text-center text-white select-none"
                 >
                   <p className="truncate text-xs font-extrabold uppercase tracking-wider">{court.courtName}</p>
+                  {court.venueName && uniqueVenues.length > 1 && (
+                    <p className="truncate text-[9px] font-medium text-orange-200 mt-0.5">{court.venueName}</p>
+                  )}
                 </div>
               );
             })}
@@ -803,7 +868,7 @@ export default function PublicCourtScheduleBoard({
             </div>
 
             {/* Court Grid Columns & Cells */}
-            {resolvedCourts.map((court) => {
+            {displayedCourts.map((court) => {
               const courtMatches = scheduledMatchesForDate.filter((m) => m.courtId === court.id);
 
               return (

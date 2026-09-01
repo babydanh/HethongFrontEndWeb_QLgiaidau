@@ -647,8 +647,17 @@ export function CourtScheduleBoard({
     };
   }), [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
 
+  const [customDates, setCustomDates] = useState<string[]>([]);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+
   const availableScheduleDates = useMemo(() => {
     const dates = new Set<string>();
+    for (const d of customDates) {
+      if (d) dates.add(d);
+    }
+    if (activeDate) {
+      dates.add(activeDate);
+    }
     for (const item of displayMatches) {
       if (item.scheduledAt) {
         const d = getLocalDateString(item.scheduledAt);
@@ -672,16 +681,17 @@ export function CourtScheduleBoard({
       if (today) dates.add(today);
     }
     return Array.from(dates).sort();
-  }, [defaultDate, displayMatches, preview]);
-
-  const [activeDate, setActiveDate] = useState<string | null>(null);
+  }, [activeDate, customDates, defaultDate, displayMatches, preview]);
 
   const scheduleDate = useMemo(() => {
-    if (activeDate && availableScheduleDates.includes(activeDate)) {
+    if (activeDate) {
       return activeDate;
     }
-    return availableScheduleDates[0] || getLocalDateString(new Date().toISOString()) || '2026-01-01';
-  }, [activeDate, availableScheduleDates]);
+    if (availableScheduleDates.length > 0) {
+      return availableScheduleDates[0];
+    }
+    return getLocalDateString(defaultDate || new Date().toISOString()) || '2026-01-01';
+  }, [activeDate, availableScheduleDates, defaultDate]);
 
   const scheduledMatches = useMemo(
     () =>
@@ -3217,11 +3227,11 @@ export function CourtScheduleBoard({
       )}
 
       {/* EXCEL HOME RIBBON TOOLBAR (Microsoft Excel / Google Sheets Inspired) */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs">
+      <div className="relative z-30 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs overflow-visible">
         {/* Left: Functional Groups */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* GROUP 0: NGÀY THI ĐẤU (Interactive Date Picker & Popover) */}
-          <div className="relative flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
+          <div className="relative z-[100] flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
             <button
               type="button"
               onClick={() => setIsDatePickerOpen((prev) => !prev)}
@@ -3236,14 +3246,14 @@ export function CourtScheduleBoard({
             {isDatePickerOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-[100]"
                   onClick={() => setIsDatePickerOpen(false)}
                 />
-                <div className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute left-0 top-full mt-2 z-[101] w-80 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                      Chọn ngày xếp lịch
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      Chọn ngày xếp lịch thi đấu
                     </span>
                     <button
                       type="button"
@@ -3256,31 +3266,33 @@ export function CourtScheduleBoard({
 
                   {/* Input Date Native */}
                   <div className="space-y-1.5 mb-3">
-                    <label className="text-[11px] font-semibold text-slate-500">
-                      Chọn ngày bất kỳ:
+                    <label className="text-[11px] font-bold text-slate-600">
+                      Chọn ngày bất kỳ (Tự động cập nhật hạn giải):
                     </label>
                     <input
                       type="date"
                       value={scheduleDate}
                       onChange={(e) => {
                         if (e.target.value) {
-                          setActiveDate(e.target.value);
+                          const newD = e.target.value;
+                          setActiveDate(newD);
+                          setCustomDates((prev) => Array.from(new Set([...prev, newD])).sort());
                           setIsDatePickerOpen(false);
-                          setSaveToast(`Đã chuyển sang ngày ${formatDateLabel(e.target.value, locale)}`);
+                          setSaveToast(`Đã chuyển sang ngày ${formatDateLabel(newD, locale)}!`);
                           setTimeout(() => setSaveToast(null), 3000);
                         }
                       }}
-                      className="w-full h-8 px-2.5 text-xs font-bold text-slate-800 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 text-xs font-extrabold text-slate-800 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:outline-hidden shadow-2xs"
                     />
                   </div>
 
                   {/* Available Dates List */}
                   {availableScheduleDates.length > 0 && (
                     <div className="space-y-1">
-                      <p className="text-[11px] font-semibold text-slate-500">
-                        Các ngày hiện có trận:
+                      <p className="text-[11px] font-bold text-slate-600">
+                        Các ngày hiện có:
                       </p>
-                      <div className="flex flex-col gap-1 max-h-36 overflow-y-auto pr-0.5">
+                      <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-0.5 scrollbar-thin">
                         {availableScheduleDates.map((dStr, idx) => {
                           const isSelected = scheduleDate === dStr;
                           return (
@@ -3291,14 +3303,14 @@ export function CourtScheduleBoard({
                                 setActiveDate(dStr);
                                 setIsDatePickerOpen(false);
                               }}
-                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold text-left transition-all cursor-pointer ${
+                              className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-bold text-left transition-all cursor-pointer ${
                                 isSelected
                                   ? 'bg-blue-600 text-white shadow-2xs'
                                   : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700'
                               }`}
                             >
                               <span>Ngày {idx + 1}: {formatDateLabel(dStr, locale)}</span>
-                              {isSelected && <span>✓</span>}
+                              {isSelected && <span className="font-black">✓</span>}
                             </button>
                           );
                         })}

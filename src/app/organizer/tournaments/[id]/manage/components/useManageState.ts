@@ -1841,6 +1841,27 @@ export function useManageState(id: string) {
         scheduledAt: targetScheduledAt,
         matchConfig: Object.keys(updatedConfig).length > 0 ? updatedConfig : undefined,
       });
+
+      // Auto-extend tournament startDate / endDate when matches are scheduled beyond current range
+      if (targetScheduledAt) {
+        const scheduledTime = new Date(targetScheduledAt).getTime();
+        const currentEndTime = tournament?.endDate ? new Date(tournament.endDate).getTime() : 0;
+        const currentStartTime = tournament?.startDate ? new Date(tournament.startDate).getTime() : Infinity;
+
+        const dateUpdates: Record<string, unknown> = {};
+        if (scheduledTime > currentEndTime) {
+          dateUpdates.endDate = targetScheduledAt;
+          setEndDate(targetScheduledAt.slice(0, 10));
+        }
+        if (scheduledTime < currentStartTime && currentStartTime !== Infinity) {
+          dateUpdates.startDate = targetScheduledAt;
+          setStartDate(targetScheduledAt.slice(0, 10));
+        }
+        if (Object.keys(dateUpdates).length > 0) {
+          void tournamentsApi.updateTournament(id, dateUpdates).catch(() => {});
+        }
+      }
+
       if (!silent) {
         toast.success(targetCourtId ? 'Đã cập nhật lịch thi đấu!' : 'Đã hủy xếp trận đấu!');
         await fetchTournamentData();

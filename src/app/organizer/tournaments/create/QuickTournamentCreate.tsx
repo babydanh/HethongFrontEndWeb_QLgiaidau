@@ -1171,12 +1171,10 @@ export default function QuickTournamentCreate() {
                                 <span className="inline-flex items-center rounded-md bg-slate-100/80 px-1.5 py-0.5 font-medium text-slate-600">
                                   {participantTitle}
                                 </span>
-                                {config.eloEnabled ? (
+                                {config.eloEnabled && (
                                   <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 font-bold text-amber-700">
                                     ELO {config.minElo ?? 0}–{config.maxElo ?? '∞'}
                                   </span>
-                                ) : (
-                                  <span className="text-slate-400">{translate('eloDisabled')}</span>
                                 )}
                               </div>
                             </div>

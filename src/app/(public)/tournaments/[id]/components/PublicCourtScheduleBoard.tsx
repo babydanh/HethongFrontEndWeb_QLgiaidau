@@ -621,7 +621,7 @@ export default function PublicCourtScheduleBoard({
     <div
       ref={containerRef}
       className={`isolate flex flex-col bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs relative z-0 ${
-        isFullscreen ? 'fixed inset-0 !z-50 p-4 bg-white rounded-none border-none' : 'w-full'
+        isFullscreen ? 'fixed inset-0 !z-50 bg-white rounded-none border-none h-screen w-screen' : 'w-full'
       }`}
     >
       {/* ── 1. TOP TOOLBAR RIBBON (Date, Step Switcher, Search, Zoom, Fullscreen) ── */}
@@ -818,10 +818,15 @@ export default function PublicCourtScheduleBoard({
       </div>
 
       {/* ── 2. FULL COURT TIMELINE GRID TABLE (Terracotta Orange Header & Soft Yellow Time Sidebar) ── */}
-      <div className="relative overflow-hidden bg-white z-0">
-        <div ref={scrollRef} className="max-h-[680px] overflow-auto select-none scrollbar-thin">
+      <div className="relative overflow-hidden bg-white z-0 flex-1 flex flex-col min-h-0">
+        <div
+          ref={scrollRef}
+          className={`w-full overflow-auto select-none scrollbar-thin ${
+            isFullscreen ? 'flex-1 h-full' : 'max-h-[calc(100vh-220px)] min-h-[580px]'
+          }`}
+        >
           <div
-            className="grid min-w-[640px] sm:min-w-[800px]"
+            className="grid w-full min-w-full"
             style={{
               gridTemplateColumns: `54px repeat(${Math.max(1, displayedCourts.length)}, minmax(240px, 1fr))`,
             }}

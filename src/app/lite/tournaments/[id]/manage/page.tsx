@@ -29,10 +29,9 @@ import type {
 import { getSportLogo } from '@/constants/sports';
 import {
   Trophy, Users, Swords, Calendar,
-    ExternalLink, Copy, ChevronLeft,
-
+  ExternalLink, Copy, ChevronLeft,
   AlertTriangle, CheckCircle, RefreshCw, UserPlus, Shuffle,
-  Unlink, Loader2, User, FlaskConical,
+  Unlink, Loader2, User, FlaskConical, MapPin, FileText, Edit3,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -41,6 +40,9 @@ import { getErrorMessage } from '@/utils/error';
 import type { LiteParticipant } from '@/types/tournament';
 import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
 import { buildLiteJoinUrl } from '@/features/tournaments/lite-qr';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
+import { regionsApi, type Region } from '@/features/regions/api';
 
 type LiteTab = 'overview' | 'participants' | 'bracket' | 'matches';
 
@@ -110,6 +112,41 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const liteDivisionId = tournament?.divisions?.[0]?.id;
 
+  // --- Location & Venue states ---
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
+  const [venueName, setVenueName] = useState('');
+  const [locationAddress, setLocationAddress] = useState('');
+  const [province, setProvince] = useState('');
+  const [ward, setWard] = useState('');
+  const [provinces, setProvinces] = useState<Region[]>([]);
+  const [wards, setWards] = useState<Region[]>([]);
+
+  // --- Description state ---
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    regionsApi.getProvinces().then((res) => {
+      setProvinces(res ?? []);
+    }).catch(() => {
+      setProvinces([]);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (province) {
+      regionsApi.getWards(province).then((res) => {
+        setWards(res ?? []);
+      }).catch(() => {
+        setWards([]);
+      });
+    } else {
+      setWards([]);
+    }
+  }, [province]);
+
   const fetchBracket = useCallback(async (divisionId = liteDivisionId) => {
     const response = await tournamentsApi.getTournamentBracket(id, divisionId);
     const loadedBracket = response.data ?? null;
@@ -125,6 +162,18 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         const res = await tournamentsApi.getTournamentById(id);
         const loaded = res.data ?? null;
         setTournament(loaded);
+
+        const locConfig = loaded?.tournamentConfig?.location;
+        const initialVenue = locConfig?.venueName || '';
+        const initialAddress = loaded?.locationAddress || locConfig?.address || '';
+        const initialProvince = loaded?.city || locConfig?.province || '';
+        const initialWard = locConfig?.ward || '';
+        setVenueName(initialVenue);
+        setLocationAddress(initialAddress);
+        setProvince(initialProvince);
+        setWard(initialWard);
+        setDescription(loaded?.description || '');
+
         const loadedDivision = loaded?.divisions?.[0];
         const loadedMatchType = loadedDivision?.matchType ?? loaded?.matchType;
         const normalizedLoadedMatchType = loadedMatchType?.toUpperCase();
@@ -154,6 +203,71 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     };
     fetch();
   }, [id, fetchBracket]);
+
+  const handleSaveLocation = async () => {
+    if (!tournament) return;
+    setIsSavingLocation(true);
+    try {
+      const display = [venueName, locationAddress, ward, province].filter(Boolean).join(', ');
+      const nextTournamentConfig = {
+        ...(tournament.tournamentConfig ?? {}),
+        location: {
+          venueName: venueName.trim() || undefined,
+          address: locationAddress.trim() || undefined,
+          province: province.trim() || undefined,
+          ward: ward.trim() || undefined,
+          display: display || undefined,
+        },
+      };
+
+      const updatePayload: Record<string, unknown> = {
+        locationAddress: locationAddress.trim() || undefined,
+        city: province.trim() || undefined,
+        tournamentConfig: nextTournamentConfig,
+      };
+
+      const response = await tournamentsApi.updateTournament(id, updatePayload);
+
+      if (venueName || locationAddress) {
+        try {
+          await tournamentsApi.saveTournamentVenue(id, {
+            name: venueName.trim() || 'Sân thi đấu',
+            locationAddress: locationAddress.trim() || display || '',
+          });
+        } catch {
+          // non-blocking
+        }
+      }
+
+      setTournament(response.data ?? {
+        ...tournament,
+        locationAddress: locationAddress.trim(),
+        city: province.trim(),
+        tournamentConfig: nextTournamentConfig,
+      });
+      setIsEditingLocation(false);
+      toast.success(translate('locationSaved'));
+    } catch (err) {
+      toast.error(getErrorMessage(err) || translate('locationSaveFailed'));
+    } finally {
+      setIsSavingLocation(false);
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    if (!tournament) return;
+    setIsSavingDescription(true);
+    try {
+      const response = await tournamentsApi.updateTournament(id, { description });
+      setTournament(response.data ?? { ...tournament, description });
+      setIsEditingDescription(false);
+      toast.success(translate('descriptionSaved'));
+    } catch (err) {
+      toast.error(getErrorMessage(err) || translate('descriptionSaveFailed'));
+    } finally {
+      setIsSavingDescription(false);
+    }
+  };
 
   const handleSaveRules = async () => {
     if (!tournament || ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)) {
@@ -733,6 +847,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 </div>
                 {formatSettingLocked && <p className="mt-3 text-xs font-semibold text-amber-700">{translate('matchTypeSettingLocked')}</p>}
               </div>
+
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -785,6 +900,174 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   </div>
                 )}
               </div>
+
+              {/* Location & Venue Card (Không bắt buộc) */}
+              <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="p-2 bg-amber-100/80 rounded-lg text-amber-700 mt-0.5">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">{translate('locationCardTitle')}</h4>
+                      <p className="mt-0.5 text-xs text-slate-600">{translate('locationCardDescription')}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingLocation((value) => !value)}
+                  >
+                    {isEditingLocation ? translate('closeLocation') : translate('editLocation')}
+                  </Button>
+                </div>
+
+                {isEditingLocation ? (
+                  <div className="mt-4 space-y-4 rounded-lg border border-amber-200 bg-white p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Input
+                        label={translate('venueNameLabel')}
+                        placeholder={translate('venueNamePlaceholder')}
+                        value={venueName}
+                        onChange={(e) => setVenueName(e.target.value)}
+                      />
+                      <Input
+                        label={translate('addressLabel')}
+                        placeholder={translate('addressPlaceholder')}
+                        value={locationAddress}
+                        onChange={(e) => setLocationAddress(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        {translate('administrativeAreaLabel')}
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <SearchableRegionSelect
+                            value={province}
+                            options={provinces}
+                            inputName="province"
+                            placeholder={translate('provincePlaceholder')}
+                            onChange={(value) => {
+                              setWards([]);
+                              setProvince(value);
+                              setWard('');
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <SearchableRegionSelect
+                            value={ward}
+                            options={wards}
+                            inputName="ward"
+                            disabled={!province || wards.length === 0}
+                            placeholder={!province ? translate('selectProvinceFirst') : wards.length === 0 ? translate('loadingWards') : translate('wardPlaceholder')}
+                            onChange={(value) => setWard(value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingLocation(false)}
+                        disabled={isSavingLocation}
+                      >
+                        {translate('closeLocation')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveLocation}
+                        disabled={isSavingLocation}
+                        className="bg-amber-600 hover:bg-amber-700 text-white"
+                      >
+                        {isSavingLocation ? translate('saving') : translate('saveLocation')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                    <InfoCard
+                      label={translate('venueName')}
+                      value={tournament.tournamentConfig?.location?.venueName || '—'}
+                    />
+                    <InfoCard
+                      label={translate('locationLabel')}
+                      value={
+                        tournament.locationAddress ||
+                        tournament.tournamentConfig?.location?.display ||
+                        tournament.tournamentConfig?.location?.address ||
+                        translate('locationNotSet')
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Tournament Description & Rules Card (RichTextEditor / EditorJS) */}
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="p-2 bg-indigo-100/80 rounded-lg text-indigo-700 mt-0.5">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">{translate('descriptionCardTitle')}</h4>
+                      <p className="mt-0.5 text-xs text-slate-600">{translate('descriptionCardDescription')}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingDescription((value) => !value)}
+                  >
+                    {isEditingDescription ? translate('closeDescription') : translate('editDescription')}
+                  </Button>
+                </div>
+
+                {isEditingDescription ? (
+                  <div className="mt-4 space-y-3 rounded-lg border border-indigo-200 bg-white p-4">
+                    <RichTextEditor
+                      value={description}
+                      onChange={(val) => setDescription(val)}
+                      placeholder={translate('descriptionPlaceholder')}
+                    />
+                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingDescription(false)}
+                        disabled={isSavingDescription}
+                      >
+                        {translate('closeDescription')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveDescription}
+                        disabled={isSavingDescription}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        {isSavingDescription ? translate('saving') : translate('saveDescription')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-lg border border-indigo-100/80 bg-white p-4 text-sm">
+                    {tournament.description ? (
+                      <div
+                        className="prose prose-sm max-w-none text-slate-700 leading-relaxed font-sans [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5"
+                        dangerouslySetInnerHTML={{ __html: tournament.description }}
+                      />
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">{translate('noDescription')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -792,8 +1075,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-slate-900">
-                                    {translate('participantLabel')}
-
+                  {translate('participantLabel')}
                   {!participantsLoading && (
                     <span className="ml-2 text-sm font-medium text-slate-400">
                       ({translate('participantProfiles', { count: participants.length })})

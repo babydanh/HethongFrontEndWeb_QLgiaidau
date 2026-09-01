@@ -254,6 +254,15 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }
   };
 
+  const handleCancelLocation = () => {
+    const locConfig = tournament?.tournamentConfig?.location;
+    setVenueName(locConfig?.venueName || '');
+    setLocationAddress(tournament?.locationAddress || locConfig?.address || '');
+    setProvince(tournament?.city || locConfig?.province || '');
+    setWard(locConfig?.ward || '');
+    setIsEditingLocation(false);
+  };
+
   const handleSaveDescription = async () => {
     if (!tournament) return;
     setIsSavingDescription(true);
@@ -267,6 +276,11 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     } finally {
       setIsSavingDescription(false);
     }
+  };
+
+  const handleCancelDescription = () => {
+    setDescription(tournament?.description || '');
+    setIsEditingDescription(false);
   };
 
   const handleSaveRules = async () => {
@@ -916,7 +930,13 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditingLocation((value) => !value)}
+                    onClick={() => {
+                      if (isEditingLocation) {
+                        handleCancelLocation();
+                      } else {
+                        setIsEditingLocation(true);
+                      }
+                    }}
                   >
                     {isEditingLocation ? translate('closeLocation') : translate('editLocation')}
                   </Button>
@@ -974,7 +994,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setIsEditingLocation(false)}
+                        onClick={handleCancelLocation}
                         disabled={isSavingLocation}
                       >
                         {translate('closeLocation')}
@@ -1023,7 +1043,13 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditingDescription((value) => !value)}
+                    onClick={() => {
+                      if (isEditingDescription) {
+                        handleCancelDescription();
+                      } else {
+                        setIsEditingDescription(true);
+                      }
+                    }}
                   >
                     {isEditingDescription ? translate('closeDescription') : translate('editDescription')}
                   </Button>
@@ -1040,7 +1066,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setIsEditingDescription(false)}
+                        onClick={handleCancelDescription}
                         disabled={isSavingDescription}
                       >
                         {translate('closeDescription')}

@@ -75,14 +75,138 @@ function formatDayLabel(dateStr: string): string {
   return `${weekday}, ${d}/${m}/${y}`;
 }
 
+function getParticipantPlayers(p?: { teamName?: string | null; name?: string | null } | null): string[] {
+  if (!p) return [];
+  const full = (p.teamName || p.name || '').trim();
+  if (!full) return [];
+  if (full.includes('/') || full.includes('&')) {
+    return full.split(/[/&]/).map((s) => s.trim()).filter(Boolean);
+  }
+  if (full.includes(' - ')) {
+    return full.split(' - ').map((s) => s.trim()).filter(Boolean);
+  }
+  return [full];
+}
+
+function cleanDisplayName(name: string): string {
+  return name.trim().replace(/^(QA\s*|Cặp\s*|Đôi\s*|VĐV\s*|Đội\s*)/i, '').trim();
+}
+
+function getShortTwoWords(name: string): string {
+  const cleaned = cleanDisplayName(name);
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return cleaned;
+  return parts.slice(-2).join(' ');
+}
+
+function detectSportAndFormat(
+  division?: { name?: string; matchFormat?: string; format?: string; sportType?: string } | null,
+) {
+  const divName = (division?.name || '').toLowerCase();
+  const formatStr = (division?.matchFormat || division?.format || '').toLowerCase();
+  const sportStr = (division?.sportType || '').toLowerCase();
+
+  const isFootball =
+    sportStr.includes('football') ||
+    sportStr.includes('soccer') ||
+    sportStr.includes('futsal') ||
+    divName.includes('bóng đá') ||
+    divName.includes('football') ||
+    divName.includes('futsal');
+
+  const isSingles =
+    !isFootball &&
+    (divName.includes('đơn') ||
+      divName.includes('singles') ||
+      formatStr.includes('single') ||
+      formatStr === '1v1');
+
+  const isDoubles =
+    !isFootball &&
+    !isSingles &&
+    (divName.includes('đôi') ||
+      divName.includes('doubles') ||
+      divName.includes('nam nữ') ||
+      formatStr.includes('double') ||
+      formatStr === '2v2');
+
+  return { isFootball, isSingles, isDoubles };
+}
+
+interface CompetitorDisplayData {
+  avatars: Array<{ initial: string; bg: string; imgUrl?: string }>;
+  displayLabel: string;
+  fullName: string;
+}
+
+function formatCompetitorDisplay(
+  p?: { teamName?: string | null; name?: string | null; logo?: string | null; avatarUrl?: string | null; avatar?: string | null } | null,
+  isFootball = false,
+  isSingles = false,
+): CompetitorDisplayData {
+  if (!p) {
+    return {
+      avatars: [{ initial: '?', bg: 'bg-slate-100 border-slate-300 text-slate-600' }],
+      displayLabel: 'Chờ xác định',
+      fullName: 'Chờ xác định',
+    };
+  }
+
+  const rawFull = (p.teamName || p.name || 'Chờ xác định').trim();
+  const rawLogo = p.logo || p.avatarUrl || p.avatar || undefined;
+
+  if (isFootball) {
+    const words = rawFull.split(/\s+/).filter(Boolean);
+    const shortLabel = words.length > 3 ? words.slice(-2).join(' ') : rawFull;
+    const initial =
+      words.length >= 2
+        ? (words[0][0] + words[1][0]).toUpperCase()
+        : rawFull.slice(0, 2).toUpperCase();
+
+    return {
+      avatars: [{ initial, bg: 'bg-emerald-100 border-emerald-300 text-emerald-800', imgUrl: rawLogo }],
+      displayLabel: shortLabel,
+      fullName: rawFull,
+    };
+  }
+
+  if (isSingles) {
+    const shortName = getShortTwoWords(rawFull);
+    const initial = shortName.charAt(0).toUpperCase();
+
+    return {
+      avatars: [{ initial, bg: 'bg-blue-100 border-blue-300 text-blue-800', imgUrl: rawLogo }],
+      displayLabel: shortName,
+      fullName: rawFull,
+    };
+  }
+
+  // Doubles / Pairs (2 players)
+  const players = getParticipantPlayers(p);
+  if (players.length >= 2) {
+    const shortNames = players.map(getShortTwoWords);
+    return {
+      avatars: [
+        { initial: shortNames[0].charAt(0).toUpperCase(), bg: 'bg-orange-100 border-orange-300 text-orange-800' },
+        { initial: shortNames[1].charAt(0).toUpperCase(), bg: 'bg-amber-100 border-amber-300 text-amber-800' },
+      ],
+      displayLabel: shortNames.join(' / '),
+      fullName: rawFull,
+    };
+  }
+
+  // Default: 1 player or team
+  const shortName = getShortTwoWords(rawFull);
+  return {
+    avatars: [{ initial: shortName.charAt(0).toUpperCase(), bg: 'bg-blue-100 border-blue-300 text-blue-800', imgUrl: rawLogo }],
+    displayLabel: shortName,
+    fullName: rawFull,
+  };
+}
+
 function getCompetitorDisplayName(participant?: { teamName?: string | null; name?: string | null; placeholder?: string | null } | null): string {
   if (!participant) return 'Chờ xác định';
   return participant.teamName || participant.name || participant.placeholder || 'Chờ xác định';
-}
-
-function getCompetitorInitial(name: string): string {
-  const clean = name.trim().replace(/^(QA\s*|Cặp\s*|Đôi\s*|VĐV\s*|Đội\s*)/i, '').trim();
-  return clean ? clean.charAt(0).toUpperCase() : '?';
 }
 
 function getAccurateRoundLabel(match: BracketMatch, maxRound = 1): string {
@@ -672,12 +796,6 @@ export default function PublicCourtScheduleBoard({
                     const duration = resolveMatchDuration(match);
                     const cardHeight = Math.max(76, duration * currentPixelsPerMinute - 6);
 
-                    const p1Name = getCompetitorDisplayName(match.participant1);
-                    const p2Name = getCompetitorDisplayName(match.participant2);
-                    const p1Init = getCompetitorInitial(p1Name);
-                    const p2Init = getCompetitorInitial(p2Name);
-
-                    const isHighlighted = queryLower && (p1Name.toLowerCase().includes(queryLower) || p2Name.toLowerCase().includes(queryLower));
                     const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
                     const isCompleted = match.status === 'COMPLETED';
 
@@ -694,6 +812,12 @@ export default function PublicCourtScheduleBoard({
                     const matchDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
                     const divTitle = matchDiv?.name || (tournament.name || 'NỘI DUNG');
                     const boFormat = duration === 15 ? 'BO1' : duration >= 45 ? 'BO3' : `${duration}P`;
+                    const { isFootball, isSingles } = detectSportAndFormat(matchDiv);
+
+                    const c1 = formatCompetitorDisplay(match.participant1, isFootball, isSingles);
+                    const c2 = formatCompetitorDisplay(match.participant2, isFootball, isSingles);
+
+                    const isHighlighted = queryLower && (c1.fullName.toLowerCase().includes(queryLower) || c2.fullName.toLowerCase().includes(queryLower));
 
                     return (
                       <div
@@ -744,13 +868,32 @@ export default function PublicCourtScheduleBoard({
                           {/* Competitor 1 */}
                           <div className="flex items-center justify-between gap-1.5 min-w-0">
                             <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
-                              <span className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs ${
-                                isP1Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-300'
-                              }`}>
-                                {p1Init}
-                              </span>
-                              <span className={`truncate text-xs font-bold ${isP1Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`}>
-                                {p1Name}
+                              <div className="flex -space-x-1.5 shrink-0">
+                                {c1.avatars.map((av, idx) => (
+                                  av.imgUrl ? (
+                                    <img
+                                      key={idx}
+                                      src={av.imgUrl}
+                                      alt={av.initial}
+                                      className="h-5 w-5 rounded-full object-cover border border-slate-200 shadow-2xs z-10"
+                                      onError={(e) => {
+                                        (e.target as HTMLElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <span
+                                      key={idx}
+                                      className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10 ${
+                                        isP1Winner ? 'bg-blue-600 text-white border-blue-700' : av.bg
+                                      }`}
+                                    >
+                                      {av.initial}
+                                    </span>
+                                  )
+                                ))}
+                              </div>
+                              <span className={`truncate text-xs font-bold ${isP1Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`} title={c1.fullName}>
+                                {c1.displayLabel}
                               </span>
                             </div>
                             {(p1Score !== undefined || isCompleted || isLive) && (
@@ -765,13 +908,32 @@ export default function PublicCourtScheduleBoard({
                           {/* Competitor 2 */}
                           <div className="flex items-center justify-between gap-1.5 min-w-0">
                             <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
-                              <span className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs ${
-                                isP2Winner ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-300'
-                              }`}>
-                                {p2Init}
-                              </span>
-                              <span className={`truncate text-xs font-bold ${isP2Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`}>
-                                {p2Name}
+                              <div className="flex -space-x-1.5 shrink-0">
+                                {c2.avatars.map((av, idx) => (
+                                  av.imgUrl ? (
+                                    <img
+                                      key={idx}
+                                      src={av.imgUrl}
+                                      alt={av.initial}
+                                      className="h-5 w-5 rounded-full object-cover border border-slate-200 shadow-2xs z-10"
+                                      onError={(e) => {
+                                        (e.target as HTMLElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <span
+                                      key={idx}
+                                      className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10 ${
+                                        isP2Winner ? 'bg-blue-600 text-white border-blue-700' : av.bg
+                                      }`}
+                                    >
+                                      {av.initial}
+                                    </span>
+                                  )
+                                ))}
+                              </div>
+                              <span className={`truncate text-xs font-bold ${isP2Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`} title={c2.fullName}>
+                                {c2.displayLabel}
                               </span>
                             </div>
                             {(p2Score !== undefined || isCompleted || isLive) && (
@@ -836,6 +998,11 @@ export default function PublicCourtScheduleBoard({
                 const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
                 const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
 
+                const uDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
+                const { isFootball: uIsFootball, isSingles: uIsSingles } = detectSportAndFormat(uDiv);
+                const uc1 = formatCompetitorDisplay(m.participant1, uIsFootball, uIsSingles);
+                const uc2 = formatCompetitorDisplay(m.participant2, uIsFootball, uIsSingles);
+
                 return (
                   <div
                     key={m.id}
@@ -851,10 +1018,22 @@ export default function PublicCourtScheduleBoard({
 
                     <div className="space-y-1">
                       <div className={`flex items-center justify-between text-xs font-bold ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
-                        <span className="truncate flex items-center gap-1">
-                          {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                          <span className="truncate">{getCompetitorDisplayName(m.participant1)}</span>
-                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+                          <div className="flex -space-x-1 shrink-0">
+                            {uc1.avatars.map((av, idx) => (
+                              <span
+                                key={idx}
+                                className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center text-[9px] shrink-0 font-black ${av.bg}`}
+                              >
+                                {av.initial}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="truncate flex items-center gap-1">
+                            {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
+                            <span className="truncate">{uc1.displayLabel}</span>
+                          </span>
+                        </div>
                         {(p1Score !== undefined || isCompleted || isLive) && (
                           <span className="font-mono font-black text-xs ml-1 shrink-0">
                             {p1Score ?? '--'}
@@ -863,10 +1042,22 @@ export default function PublicCourtScheduleBoard({
                       </div>
 
                       <div className={`flex items-center justify-between text-xs font-bold ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
-                        <span className="truncate flex items-center gap-1">
-                          {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                          <span className="truncate">{getCompetitorDisplayName(m.participant2)}</span>
-                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+                          <div className="flex -space-x-1 shrink-0">
+                            {uc2.avatars.map((av, idx) => (
+                              <span
+                                key={idx}
+                                className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center text-[9px] shrink-0 font-black ${av.bg}`}
+                              >
+                                {av.initial}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="truncate flex items-center gap-1">
+                            {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
+                            <span className="truncate">{uc2.displayLabel}</span>
+                          </span>
+                        </div>
                         {(p2Score !== undefined || isCompleted || isLive) && (
                           <span className="font-mono font-black text-xs ml-1 shrink-0">
                             {p2Score ?? '--'}

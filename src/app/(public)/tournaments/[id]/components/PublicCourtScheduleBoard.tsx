@@ -17,7 +17,6 @@ import {
   Layers,
   ExternalLink,
   Info,
-  Users,
 } from 'lucide-react';
 import type { BracketMatch, Tournament, Division } from '@/features/tournaments/api';
 import { useTranslations } from 'next-intl';
@@ -40,8 +39,6 @@ interface PublicCourtScheduleBoardProps {
   isLoading?: boolean;
 }
 
-const BASE_PIXELS_PER_MINUTE = 2.4;
-
 function getLocalDateString(isoString?: string | null): string {
   if (!isoString) return '';
   const d = new Date(isoString);
@@ -52,15 +49,8 @@ function getLocalDateString(isoString?: string | null): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatMatchTime(isoString?: string | null): string {
-  if (!isoString) return '--:--';
-  const d = new Date(isoString);
-  if (Number.isNaN(d.getTime())) return '--:--';
-  return new Intl.DateTimeFormat('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(d);
+function formatTimeLabel(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
 function formatDayLabel(dateStr: string): string {
@@ -87,21 +77,28 @@ export default function PublicCourtScheduleBoard({
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
 
+  // 1. Controls State
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [activeDate, setActiveDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [isQueueDrawerOpen, setIsQueueDrawerOpen] = useState<boolean>(true);
+  const [isQueueOpen, setIsQueueOpen] = useState<boolean>(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Resolved Courts from props and matches
+  // 2. Extract Real Courts from props, tournament, or matches
   const resolvedCourts = useMemo<PublicCourtItem[]>(() => {
     const map = new Map<string, PublicCourtItem>();
 
     for (const c of initialCourts) {
-      map.set(c.id, c);
+      if (c && c.id) {
+        map.set(c.id, {
+          id: c.id,
+          courtName: c.courtName || `Sân ${map.size + 1}`,
+          venueName: c.venueName || (tournament as unknown as { venueName?: string })?.venueName || tournament.locationAddress || undefined,
+        });
+      }
     }
 
     for (const m of matches) {
@@ -114,10 +111,20 @@ export default function PublicCourtScheduleBoard({
       }
     }
 
-    return Array.from(map.values());
+    const list = Array.from(map.values());
+    if (list.length > 0) return list;
+
+    // Default 4 courts if none configured yet
+    const defaultVenue = (tournament as unknown as { venueName?: string })?.venueName || tournament.locationAddress || 'Sân thi đấu';
+    return [
+      { id: 'court-1', courtName: 'Sân 1', venueName: defaultVenue },
+      { id: 'court-2', courtName: 'Sân 2', venueName: defaultVenue },
+      { id: 'court-3', courtName: 'Sân 3', venueName: defaultVenue },
+      { id: 'court-4', courtName: 'Sân 4', venueName: defaultVenue },
+    ];
   }, [initialCourts, matches, tournament]);
 
-  // 2. Extract Available Competition Dates from scheduled matches
+  // 3. Extract Schedule Dates (dates with scheduled matches or tournament dates)
   const availableScheduleDates = useMemo<string[]>(() => {
     const set = new Set<string>();
     for (const m of matches) {
@@ -126,31 +133,37 @@ export default function PublicCourtScheduleBoard({
         if (dStr) set.add(dStr);
       }
     }
+    if (tournament.startDate) {
+      const startD = getLocalDateString(tournament.startDate);
+      if (startD) set.add(startD);
+    }
+    if (tournament.endDate) {
+      const endD = getLocalDateString(tournament.endDate);
+      if (endD) set.add(endD);
+    }
 
     const sorted = Array.from(set).sort();
-    return sorted;
-  }, [matches]);
+    if (sorted.length > 0) return sorted;
+    return [getLocalDateString(new Date().toISOString())];
+  }, [matches, tournament.startDate, tournament.endDate]);
 
-  // Set default active date
+  // Default active date: prioritize date with matches, then first date
   useEffect(() => {
     if (!activeDate && availableScheduleDates.length > 0) {
-      const todayStr = getLocalDateString(new Date().toISOString());
-      const hasToday = availableScheduleDates.includes(todayStr);
-      const ongoingMatch = matches.find((m) => m.status === 'ONGOING' && m.scheduledAt);
-      if (ongoingMatch?.scheduledAt) {
-        setActiveDate(getLocalDateString(ongoingMatch.scheduledAt));
-      } else if (hasToday) {
-        setActiveDate(todayStr);
-      } else {
-        setActiveDate(availableScheduleDates[0]);
+      const matchWithDate = matches.find((m) => m.scheduledAt);
+      if (matchWithDate?.scheduledAt) {
+        const matchD = getLocalDateString(matchWithDate.scheduledAt);
+        if (matchD && availableScheduleDates.includes(matchD)) {
+          setActiveDate(matchD);
+          return;
+        }
       }
+      setActiveDate(availableScheduleDates[0]);
     }
   }, [activeDate, availableScheduleDates, matches]);
 
-  const visibleCourts = resolvedCourts;
-
-  // 3. Split matches into Scheduled (for active date) vs Unscheduled
-  const { dateScheduledMatches, unscheduledMatches, matchesByDateCount } = useMemo(() => {
+  // 4. Split matches into Scheduled vs Unscheduled
+  const { scheduledMatchesForDate, unscheduledMatches, matchesByDateCount } = useMemo(() => {
     const scheduled: BracketMatch[] = [];
     const unscheduled: BracketMatch[] = [];
     const countMap: Record<string, number> = {};
@@ -174,37 +187,40 @@ export default function PublicCourtScheduleBoard({
     }
 
     return {
-      dateScheduledMatches: scheduled,
+      scheduledMatchesForDate: scheduled,
       unscheduledMatches: unscheduled,
       matchesByDateCount: countMap,
     };
   }, [matches, activeDate, availableScheduleDates]);
 
-  // 4. Operating Window & Timeline Rows
+  // 5. Operating Window & Grid Metrics (7:00 to 23:00)
   const operatingStartHour = 7;
   const operatingEndHour = 23;
-  const totalOperatingMinutes = (operatingEndHour - operatingStartHour) * 60;
-  const currentPixelsPerMinute = BASE_PIXELS_PER_MINUTE * zoomLevel;
-  const timelineHeight = totalOperatingMinutes * currentPixelsPerMinute;
+  const stepMinutes = 30;
+  const cellBaseHeight = 64; // Height per 30 minutes
+  const cellHeight = Math.round(cellBaseHeight * zoomLevel);
+  const pixelsPerMinute = cellHeight / stepMinutes;
 
-  // Time marks (every 30 mins)
-  const timeMarks = useMemo(() => {
-    const marks: Array<{ timeStr: string; topPx: number; isHour: boolean }> = [];
-    for (let m = 0; m <= totalOperatingMinutes; m += 30) {
-      const totalMin = operatingStartHour * 60 + m;
-      const h = Math.floor(totalMin / 60);
-      const min = totalMin % 60;
-      const timeStr = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-      marks.push({
-        timeStr,
-        topPx: m * currentPixelsPerMinute,
-        isHour: min === 0,
+  const totalSlots = ((operatingEndHour - operatingStartHour) * 60) / stepMinutes;
+  const timeSlots = useMemo(() => {
+    const slots: Array<{ label: string; hour: number; minute: number; topPx: number }> = [];
+    for (let i = 0; i < totalSlots; i++) {
+      const totalMin = operatingStartHour * 60 + i * stepMinutes;
+      const hour = Math.floor(totalMin / 60);
+      const minute = totalMin % 60;
+      slots.push({
+        label: formatTimeLabel(hour, minute),
+        hour,
+        minute,
+        topPx: i * cellHeight,
       });
     }
-    return marks;
-  }, [totalOperatingMinutes, operatingStartHour, currentPixelsPerMinute]);
+    return slots;
+  }, [totalSlots, operatingStartHour, stepMinutes, cellHeight]);
 
-  // 5. Navigation Controls
+  const gridTotalHeight = totalSlots * cellHeight;
+
+  // 6. Navigation Controls
   const handleScroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
     const offset = direction === 'left' ? -350 : 350;
@@ -212,7 +228,7 @@ export default function PublicCourtScheduleBoard({
   };
 
   const handleZoom = (delta: number) => {
-    setZoomLevel((prev) => Math.max(0.65, Math.min(1.6, Math.round((prev + delta) * 10) / 10)));
+    setZoomLevel((prev) => Math.max(0.65, Math.min(1.5, Math.round((prev + delta) * 10) / 10)));
   };
 
   const handleToggleFullscreen = () => {
@@ -245,22 +261,18 @@ export default function PublicCourtScheduleBoard({
     });
   }, [unscheduledMatches, queryLower]);
 
-  const hasAnyScheduled = dateScheduledMatches.length > 0;
-  const hasCourts = visibleCourts.length > 0;
-
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col bg-white border border-slate-200/90 rounded-2xl overflow-hidden transition-all shadow-xs ${
+      className={`flex flex-col bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs ${
         isFullscreen ? 'fixed inset-0 z-50 p-4 bg-white rounded-none border-none' : 'w-full'
       }`}
     >
-      {/* 1. TOP RIBBON TOOLBAR */}
+      {/* ── 1. TOP TOOLBAR RIBBON (Date Navigation, View Mode, Search, Zoom, Fullscreen) ── */}
       <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          {/* Left: View Mode + Date Selector */}
+          {/* Left: View Mode Pills + Date Selector Pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* View Switcher Pills */}
             {onSwitchToList && (
               <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shadow-2xs">
                 <button
@@ -281,43 +293,36 @@ export default function PublicCourtScheduleBoard({
               </div>
             )}
 
-            {/* Date Selector Pills (Only dates with matches) */}
-            {availableScheduleDates.length > 0 ? (
-              <div className="flex items-center gap-1 overflow-x-auto max-w-[480px] p-0.5 scrollbar-none">
-                {availableScheduleDates.map((dateStr) => {
-                  const isActive = dateStr === activeDate;
-                  const matchCount = matchesByDateCount[dateStr] || 0;
-                  return (
-                    <button
-                      key={dateStr}
-                      type="button"
-                      onClick={() => setActiveDate(dateStr)}
-                      className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200'
-                      }`}
-                    >
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDayLabel(dateStr)}</span>
-                      {matchCount > 0 && (
-                        <span className={`px-1 py-0.2 rounded text-[10px] font-black ${isActive ? 'bg-blue-500/80 text-white' : 'bg-slate-200 text-slate-700'}`}>
-                          {matchCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/70 border border-blue-200/60 text-xs font-bold text-blue-800">
-                <Clock className="h-3.5 w-3.5 text-blue-600" />
-                <span>Toàn bộ {matches.length} trận đấu</span>
-              </div>
-            )}
+            {/* Date Selector Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto max-w-[480px] p-0.5 scrollbar-none">
+              {availableScheduleDates.map((dateStr) => {
+                const isActive = dateStr === activeDate;
+                const matchCount = matchesByDateCount[dateStr] || 0;
+                return (
+                  <button
+                    key={dateStr}
+                    type="button"
+                    onClick={() => setActiveDate(dateStr)}
+                    className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200'
+                    }`}
+                  >
+                    <Calendar className="h-3 w-3" />
+                    <span>{formatDayLabel(dateStr)}</span>
+                    {matchCount > 0 && (
+                      <span className={`px-1 py-0.2 rounded text-[10px] font-black ${isActive ? 'bg-blue-500/80 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        {matchCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Right: Search, Zoom, Court Navigation & Fullscreen */}
+          {/* Right: Quick Search, Zoom Controls, Navigation, Fullscreen */}
           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
             {/* Quick Search */}
             <div className="relative w-36 sm:w-48">
@@ -332,39 +337,37 @@ export default function PublicCourtScheduleBoard({
             </div>
 
             {/* Zoom Controls */}
-            {hasAnyScheduled && hasCourts && (
-              <div className="flex items-center gap-0.5 p-0.5 rounded-lg border shadow-2xs bg-slate-50 border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => handleZoom(-0.1)}
-                  disabled={zoomLevel <= 0.65}
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all disabled:opacity-30 cursor-pointer"
-                  title={translate('timelineZoomOut')}
-                >
-                  <ZoomOut className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setZoomLevel(1.0)}
-                  className="h-6 px-1.5 rounded text-[11px] font-bold text-slate-700 hover:bg-white transition-all cursor-pointer"
-                  title={translate('timelineZoomReset')}
-                >
-                  {Math.round(zoomLevel * 100)}%
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleZoom(0.1)}
-                  disabled={zoomLevel >= 1.6}
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all disabled:opacity-30 cursor-pointer"
-                  title={translate('timelineZoomIn')}
-                >
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg border shadow-2xs bg-slate-50 border-slate-200">
+              <button
+                type="button"
+                onClick={() => handleZoom(-0.1)}
+                disabled={zoomLevel <= 0.65}
+                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all disabled:opacity-30 cursor-pointer"
+                title={translate('timelineZoomOut')}
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomLevel(1.0)}
+                className="h-6 px-1.5 rounded text-[11px] font-bold text-slate-700 hover:bg-white transition-all cursor-pointer"
+                title={translate('timelineZoomReset')}
+              >
+                {Math.round(zoomLevel * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={() => handleZoom(0.1)}
+                disabled={zoomLevel >= 1.5}
+                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all disabled:opacity-30 cursor-pointer"
+                title={translate('timelineZoomIn')}
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
             {/* Court Scroll Buttons */}
-            {visibleCourts.length > 2 && (
+            {resolvedCourts.length > 2 && (
               <div className="flex items-center gap-0.5 bg-blue-50/80 border border-blue-200 rounded-lg p-0.5 shadow-2xs">
                 <button
                   type="button"
@@ -401,342 +404,275 @@ export default function PublicCourtScheduleBoard({
         </div>
       </div>
 
-      {/* 2. TIMELINE SCHEDULE BOARD / MATCH VIEW */}
-      {hasAnyScheduled && hasCourts ? (
-        <div className="relative flex-1 overflow-hidden min-h-[520px] flex flex-col">
-          <div ref={scrollRef} className="flex-1 overflow-auto relative scrollbar-thin">
-            <div className="inline-flex min-w-full flex-col">
-              {/* STICKY TOP COURT HEADERS */}
-              <div className="sticky top-0 z-30 flex border-b shadow-xs bg-slate-50/95 backdrop-blur-md border-slate-200">
-                {/* Left Top Corner (Time Label) */}
-                <div className="sticky left-0 z-40 w-16 sm:w-20 shrink-0 border-r flex items-center justify-center p-2.5 font-black text-xs uppercase tracking-wider bg-slate-100 border-slate-200 text-slate-500">
-                  <Clock className="h-3.5 w-3.5 mr-1 text-blue-600" />
-                  <span>{translate('timelineHourHeader')}</span>
-                </div>
+      {/* ── 2. FULL COURT TIMELINE GRID TABLE (Identical to Management Board) ── */}
+      <div className="relative overflow-hidden bg-white">
+        <div ref={scrollRef} className="max-h-[640px] overflow-auto select-none scrollbar-thin">
+          <div
+            className="grid min-w-[760px]"
+            style={{
+              gridTemplateColumns: `80px repeat(${Math.max(1, resolvedCourts.length)}, minmax(200px, 1fr))`,
+            }}
+          >
+            {/* Top-Left Corner Sticky Header */}
+            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-slate-200 bg-slate-100/95 backdrop-blur-xs p-2 text-xs font-extrabold text-slate-700 uppercase">
+              <Clock className="mr-1 h-3.5 w-3.5 text-blue-600" />
+              <span>{translate('timelineHourHeader')}</span>
+            </div>
 
-                {/* Court Column Headers */}
-                <div className="flex flex-1">
-                  {visibleCourts.map((court, idx) => {
-                    const courtMatches = dateScheduledMatches.filter((m) => m.courtId === court.id);
+            {/* Top Sticky Court Column Headers */}
+            {resolvedCourts.map((court, idx) => {
+              const courtMatches = scheduledMatchesForDate.filter((m) => m.courtId === court.id);
+              return (
+                <div
+                  key={court.id}
+                  className="sticky top-0 z-20 flex items-center justify-between border-b border-r border-slate-200 bg-slate-50/95 backdrop-blur-xs px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-black text-slate-900">{court.courtName}</p>
+                    {court.venueName && (
+                      <p className="truncate text-[10px] font-semibold text-slate-400">{court.venueName}</p>
+                    )}
+                  </div>
+                  <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 px-2 py-0.5 text-[9px] font-bold shrink-0 ml-1">
+                    {courtMatches.length} trận
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* Time Column (Sticky Left) */}
+            <div className="sticky left-0 z-10 border-r border-slate-200 bg-slate-50/95">
+              {timeSlots.map((slot) => {
+                const isHourMark = slot.minute === 0;
+                return (
+                  <div
+                    key={slot.label}
+                    className={`flex items-start justify-end pr-2.5 border-b text-[11px] font-bold transition-colors ${
+                      isHourMark
+                        ? 'border-slate-300 text-slate-800 bg-slate-100/60 font-black'
+                        : 'border-slate-200/60 text-slate-400 font-medium'
+                    }`}
+                    style={{ height: `${cellHeight}px` }}
+                  >
+                    <span className="-mt-2.5">{slot.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Court Grid Columns & Cells */}
+            {resolvedCourts.map((court) => {
+              const courtMatches = scheduledMatchesForDate.filter((m) => m.courtId === court.id);
+
+              return (
+                <div
+                  key={court.id}
+                  className="relative border-r border-slate-200 bg-white"
+                  style={{ height: `${gridTotalHeight}px` }}
+                >
+                  {/* Background Grid Cells */}
+                  {timeSlots.map((slot) => {
+                    const isHourMark = slot.minute === 0;
                     return (
                       <div
-                        key={court.id}
-                        className={`w-64 sm:w-72 shrink-0 border-r p-2.5 flex flex-col items-center justify-center text-center ${
-                          idx % 2 === 0 ? 'bg-white/80 border-slate-200' : 'bg-blue-50/30 border-slate-200'
+                        key={slot.label}
+                        className={`border-b transition-colors hover:bg-blue-50/30 ${
+                          isHourMark ? 'border-slate-200' : 'border-slate-100'
                         }`}
+                        style={{ height: `${cellHeight}px` }}
+                      />
+                    );
+                  })}
+
+                  {/* Scheduled Match Cards */}
+                  {courtMatches.map((match) => {
+                    if (!match.scheduledAt) return null;
+                    const mDate = new Date(match.scheduledAt);
+                    const matchStartMinutes = (mDate.getHours() - operatingStartHour) * 60 + mDate.getMinutes();
+                    const topPos = Math.max(0, matchStartMinutes * pixelsPerMinute);
+                    const duration = match.matchConfig && typeof match.matchConfig.durationMinutes === 'number'
+                      ? match.matchConfig.durationMinutes
+                      : 30;
+                    const cardHeight = Math.max(48, duration * pixelsPerMinute - 4);
+
+                    const p1Name = getCompetitorDisplayName(match.participant1);
+                    const p2Name = getCompetitorDisplayName(match.participant2);
+                    const isHighlighted = queryLower && (p1Name.toLowerCase().includes(queryLower) || p2Name.toLowerCase().includes(queryLower));
+
+                    const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
+                    const isCompleted = match.status === 'COMPLETED';
+                    const mRaw = match as unknown as Record<string, unknown>;
+                    const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;
+                    const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
+                    const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
+                    const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
+                    const roundTitle = (mRaw.roundName || mRaw.stageName || match.stage?.name || 'Vòng đấu') as string;
+
+                    return (
+                      <div
+                        key={match.id}
+                        onClick={() => onOpenMatchDetail?.(match)}
+                        className={`absolute inset-x-1.5 z-10 flex flex-col justify-between rounded-xl border p-2 shadow-xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 ${
+                          isLive
+                            ? 'border-rose-400 bg-rose-50/90 text-rose-950 ring-2 ring-rose-500/30 animate-pulse'
+                            : isCompleted
+                            ? 'border-slate-200 bg-slate-50/95 text-slate-800'
+                            : 'border-blue-200 bg-white text-slate-900 hover:border-blue-400'
+                        } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.01] z-20' : ''}`}
+                        style={{
+                          top: `${topPos + 2}px`,
+                          height: `${cardHeight}px`,
+                        }}
+                        title={`Trận #${match.matchOrder || ''} • ${formatTimeLabel(mDate.getHours(), mDate.getMinutes())} • Bấm để xem chi tiết`}
                       >
-                        <span className="text-xs font-black truncate max-w-full text-slate-900">
-                          {court.courtName}
-                        </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {court.venueName && (
-                            <span className="text-[10px] font-semibold text-slate-400 truncate max-w-[120px]">
-                              {court.venueName}
+                        {/* Match Card Top: Time & Badges */}
+                        <div className="flex items-center justify-between gap-1 text-[10px] font-bold">
+                          <span className="flex items-center gap-1 text-blue-600 font-mono font-black">
+                            <Clock className="h-3 w-3" />
+                            {formatTimeLabel(mDate.getHours(), mDate.getMinutes())} ({duration}p)
+                          </span>
+
+                          <div className="flex items-center gap-1">
+                            {isLive && (
+                              <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black text-[9px] flex items-center gap-0.5 animate-pulse">
+                                <Flame className="h-2.5 w-2.5" />
+                                LIVE
+                              </span>
+                            )}
+                            <span className="px-1.5 py-0.2 rounded font-semibold bg-slate-100 text-slate-600">
+                              #{match.matchOrder || '—'}
                             </span>
-                          )}
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {translate('timelineCourtMatchesCount', { count: courtMatches.length })}
+                          </div>
+                        </div>
+
+                        {/* Competitors */}
+                        <div className="space-y-1 my-auto">
+                          <div className={`flex items-center justify-between text-xs font-bold truncate ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
+                            <span className="truncate flex items-center gap-1">
+                              {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
+                              <span className="truncate">{p1Name}</span>
+                            </span>
+                            {(p1Score !== undefined || isCompleted || isLive) && (
+                              <span className="font-mono font-black text-xs shrink-0 ml-1">
+                                {p1Score ?? '--'}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className={`flex items-center justify-between text-xs font-bold truncate ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
+                            <span className="truncate flex items-center gap-1">
+                              {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
+                              <span className="truncate">{p2Name}</span>
+                            </span>
+                            {(p2Score !== undefined || isCompleted || isLive) && (
+                              <span className="font-mono font-black text-xs shrink-0 ml-1">
+                                {p2Score ?? '--'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Card Meta Footer */}
+                        <div className="flex items-center justify-between text-[9px] text-slate-400 font-semibold pt-1 border-t border-slate-100">
+                          <span className="truncate max-w-[120px]">{roundTitle}</span>
+                          <span className="text-blue-600 font-bold flex items-center gap-0.5">
+                            <span>{translate('timelineMatchDetails')}</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
                           </span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-
-              {/* TIMELINE GRID BODY */}
-              <div className="relative flex" style={{ height: `${timelineHeight}px` }}>
-                {/* STICKY LEFT TIME COLUMN */}
-                <div className="sticky left-0 z-20 w-16 sm:w-20 shrink-0 border-r select-none bg-slate-50/95 border-slate-200">
-                  {timeMarks.map((mark) => (
-                    <div
-                      key={mark.timeStr}
-                      className="absolute w-full flex items-center justify-center"
-                      style={{ top: `${mark.topPx}px` }}
-                    >
-                      <span
-                        className={`text-[10px] font-mono font-bold -translate-y-1/2 px-1 rounded ${
-                          mark.isHour ? 'text-blue-800 bg-blue-50 font-black' : 'text-slate-400'
-                        }`}
-                      >
-                        {mark.timeStr}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* HORIZONTAL GRID LINES */}
-                <div className="absolute inset-0 pointer-events-none">
-                  {timeMarks.map((mark) => (
-                    <div
-                      key={`line-${mark.timeStr}`}
-                      className={`absolute left-0 right-0 ${
-                        mark.isHour ? 'border-b border-slate-200' : 'border-b border-slate-100 border-dashed'
-                      }`}
-                      style={{ top: `${mark.topPx}px` }}
-                    />
-                  ))}
-                </div>
-
-                {/* COURT COLUMNS WITH MATCH CARDS */}
-                <div className="flex flex-1 relative">
-                  {visibleCourts.map((court, courtIdx) => {
-                    const courtMatches = dateScheduledMatches.filter((m) => m.courtId === court.id);
-
-                    return (
-                      <div
-                        key={court.id}
-                        className={`w-64 sm:w-72 shrink-0 border-r relative ${
-                          courtIdx % 2 === 0 ? 'bg-white/40 border-slate-200' : 'bg-slate-50/30 border-slate-200'
-                        }`}
-                      >
-                        {courtMatches.map((match) => {
-                          if (!match.scheduledAt) return null;
-                          const matchDate = new Date(match.scheduledAt);
-                          const matchStartMinutes = matchDate.getHours() * 60 + matchDate.getMinutes();
-                          const offsetFromStartMinutes = Math.max(0, matchStartMinutes - operatingStartHour * 60);
-                          const topPx = offsetFromStartMinutes * currentPixelsPerMinute;
-                          const durationMinutes = match.matchConfig && typeof match.matchConfig.durationMinutes === 'number'
-                            ? match.matchConfig.durationMinutes
-                            : 30;
-                          const heightPx = Math.max(52, durationMinutes * currentPixelsPerMinute);
-
-                          const p1Name = getCompetitorDisplayName(match.participant1);
-                          const p2Name = getCompetitorDisplayName(match.participant2);
-                          const isHighlighted = queryLower && (p1Name.toLowerCase().includes(queryLower) || p2Name.toLowerCase().includes(queryLower));
-
-                          const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
-                          const isCompleted = match.status === 'COMPLETED';
-                          const mRaw = match as unknown as Record<string, unknown>;
-                          const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;
-                          const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
-                          const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
-                          const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
-                          const roundTitle = (mRaw.roundName || mRaw.stageName || match.stage?.name || 'Vòng đấu') as string;
-
-                          return (
-                            <div
-                              key={match.id}
-                              onClick={() => onOpenMatchDetail?.(match)}
-                              className={`absolute left-1.5 right-1.5 rounded-xl border p-2 flex flex-col justify-between transition-all cursor-pointer select-none group shadow-xs hover:shadow-md hover:z-20 ${
-                                isLive
-                                  ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-500/30 animate-pulse text-rose-950'
-                                  : isCompleted
-                                  ? 'bg-slate-50/95 border-slate-200/90 text-slate-700'
-                                  : 'bg-white border-blue-200/90 text-slate-900 hover:border-blue-400'
-                              } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.02] z-30' : ''}`}
-                              style={{
-                                top: `${topPx}px`,
-                                height: `${heightPx}px`,
-                              }}
-                              title={`Trận #${match.matchOrder || ''} • ${formatMatchTime(match.scheduledAt)} • Bấm để xem chi tiết`}
-                            >
-                              {/* Card Header */}
-                              <div className="flex items-center justify-between gap-1 text-[10px] font-bold">
-                                <span className="flex items-center gap-1 text-blue-600 font-mono font-black">
-                                  <Clock className="h-3 w-3" />
-                                  {formatMatchTime(match.scheduledAt)}
-                                </span>
-
-                                <div className="flex items-center gap-1">
-                                  {isLive && (
-                                    <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black text-[9px] flex items-center gap-0.5 animate-pulse">
-                                      <Flame className="h-2.5 w-2.5" />
-                                      LIVE
-                                    </span>
-                                  )}
-                                  <span className="px-1 py-0.2 rounded font-semibold bg-slate-100 text-slate-600">
-                                    #{match.matchOrder || courtIdx + 1}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Competitor Rows */}
-                              <div className="space-y-1 my-auto">
-                                <div className={`flex items-center justify-between text-xs font-bold truncate ${isP1Winner ? 'text-blue-600 font-black' : ''}`}>
-                                  <span className="truncate flex items-center gap-1">
-                                    {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                                    <span className="truncate">{p1Name}</span>
-                                  </span>
-                                  {(p1Score !== undefined || isCompleted || isLive) && (
-                                    <span className="font-mono font-black text-xs ml-1 shrink-0">
-                                      {p1Score ?? '--'}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className={`flex items-center justify-between text-xs font-bold truncate ${isP2Winner ? 'text-blue-600 font-black' : ''}`}>
-                                  <span className="truncate flex items-center gap-1">
-                                    {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                                    <span className="truncate">{p2Name}</span>
-                                  </span>
-                                  {(p2Score !== undefined || isCompleted || isLive) && (
-                                    <span className="font-mono font-black text-xs ml-1 shrink-0">
-                                      {p2Score ?? '--'}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Card Footer */}
-                              <div className="flex items-center justify-between text-[9px] text-slate-400 font-medium pt-1 border-t border-slate-100/60">
-                                <span className="truncate max-w-[110px]">
-                                  {roundTitle}
-                                </span>
-                                <span className="text-blue-600 font-bold group-hover:underline flex items-center gap-0.5">
-                                  <span>{translate('timelineMatchDetails')}</span>
-                                  <ExternalLink className="h-2.5 w-2.5" />
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
-      ) : (
-        /* PROMINENT FULL MATCH GRID WHEN MATCHES ARE PENDING SCHEDULE */
-        <div className="p-4 sm:p-5 flex flex-col gap-4 bg-slate-50/40">
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/90 border border-blue-200/80 text-blue-900 text-xs font-bold">
-            <Info className="h-4 w-4 text-blue-600 shrink-0" />
-            <span>
-              {unscheduledMatches.length > 0
-                ? `Danh sách ${unscheduledMatches.length} trận đấu của nội dung đang chờ ban tổ chức xếp khung giờ sân thi đấu.`
-                : 'Chưa có trận đấu nào trong danh sách.'}
-            </span>
+      </div>
+
+      {/* ── 3. UNSCHEDULED MATCHES SECTION / DRAWER ── */}
+      {unscheduledMatches.length > 0 && (
+        <div className="border-t border-slate-200 bg-slate-50/60 p-3.5 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+              <span className="text-xs font-extrabold text-slate-800">
+                {translate('timelineUnscheduledCount', { count: unscheduledMatches.length })}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsQueueOpen((prev) => !prev)}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1"
+            >
+              <span>{isQueueOpen ? translate('timelineHideQueue') : translate('timelineShowQueue')}</span>
+              <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isQueueOpen ? 'rotate-90' : ''}`} />
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredUnscheduledMatches.map((m) => {
-              const mRaw = m as unknown as Record<string, unknown>;
-              const stageLabel = (mRaw.roundName || mRaw.stageName || m.stage?.name || 'Trận đấu') as string;
-              const isLive = m.status === 'ONGOING';
-              const isCompleted = m.status === 'COMPLETED';
-              const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;
-              const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
-              const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
-              const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
+          {isQueueOpen && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+              {filteredUnscheduledMatches.map((m) => {
+                const mRaw = m as unknown as Record<string, unknown>;
+                const stageLabel = (mRaw.roundName || mRaw.stageName || m.stage?.name || 'Vòng sau') as string;
+                const isLive = m.status === 'ONGOING';
+                const isCompleted = m.status === 'COMPLETED';
+                const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;
+                const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
+                const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
+                const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
 
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => onOpenMatchDetail?.(m)}
-                  className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between gap-3 group"
-                >
-                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 pb-1.5 border-b border-slate-100">
-                    <span className="truncate max-w-[180px] text-slate-700">
-                      #{m.matchOrder || '—'} · {stageLabel}
-                    </span>
-                    {isLive ? (
-                      <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black text-[9px] animate-pulse">
-                        LIVE
-                      </span>
-                    ) : isCompleted ? (
-                      <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 text-[10px]">
-                        {matchTranslate('statusFinished')}
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 text-[10px] border border-blue-200/60">
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => onOpenMatchDetail?.(m)}
+                    className="p-2.5 rounded-xl border border-slate-200/90 bg-white shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between gap-2 group"
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 pb-1 border-b border-slate-100">
+                      <span className="text-slate-700">#{m.matchOrder || '—'} · {stageLabel}</span>
+                      <span className="bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded text-[9px]">
                         {translate('timelinePendingAssignment')}
                       </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className={`flex items-center justify-between text-xs font-bold ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-800'}`}>
-                      <span className="truncate flex items-center gap-1">
-                        {isP1Winner && <Trophy className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
-                        <span className="truncate">{getCompetitorDisplayName(m.participant1)}</span>
-                      </span>
-                      {(p1Score !== undefined || isCompleted || isLive) && (
-                        <span className="font-mono font-black text-xs shrink-0 ml-1">
-                          {p1Score ?? '--'}
-                        </span>
-                      )}
                     </div>
 
-                    <div className={`flex items-center justify-between text-xs font-bold ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-800'}`}>
-                      <span className="truncate flex items-center gap-1">
-                        {isP2Winner && <Trophy className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
-                        <span className="truncate">{getCompetitorDisplayName(m.participant2)}</span>
-                      </span>
-                      {(p2Score !== undefined || isCompleted || isLive) && (
-                        <span className="font-mono font-black text-xs shrink-0 ml-1">
-                          {p2Score ?? '--'}
+                    <div className="space-y-1">
+                      <div className={`flex items-center justify-between text-xs font-bold ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
+                        <span className="truncate flex items-center gap-1">
+                          {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
+                          <span className="truncate">{getCompetitorDisplayName(m.participant1)}</span>
                         </span>
-                      )}
+                        {(p1Score !== undefined || isCompleted || isLive) && (
+                          <span className="font-mono font-black text-xs ml-1 shrink-0">
+                            {p1Score ?? '--'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className={`flex items-center justify-between text-xs font-bold ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
+                        <span className="truncate flex items-center gap-1">
+                          {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
+                          <span className="truncate">{getCompetitorDisplayName(m.participant2)}</span>
+                        </span>
+                        {(p2Score !== undefined || isCompleted || isLive) && (
+                          <span className="font-mono font-black text-xs ml-1 shrink-0">
+                            {p2Score ?? '--'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                      <span>Chờ xếp giờ</span>
+                      <span className="text-blue-600 font-bold group-hover:underline flex items-center gap-0.5">
+                        <span>{translate('timelineMatchDetails')}</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </span>
                     </div>
                   </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                    <span className="truncate">
-                      {m.scheduledAt ? formatMatchTime(m.scheduledAt) : 'Chưa xếp giờ'}
-                    </span>
-                    <span className="text-blue-600 font-bold group-hover:underline flex items-center gap-0.5">
-                      <span>{translate('timelineMatchDetails')}</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 3. BOTTOM FLOATING BAR (If grid has some scheduled and some unscheduled) */}
-      {hasAnyScheduled && unscheduledMatches.length > 0 && (
-        <div className="border-t border-slate-200 px-3 py-2 flex items-center justify-between text-xs z-30 shadow-md bg-white text-slate-700">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="font-bold">
-              {translate('timelineUnscheduledCount', { count: unscheduledMatches.length })}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsQueueDrawerOpen((prev) => !prev)}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1"
-          >
-            <span>{isQueueDrawerOpen ? translate('timelineHideQueue') : translate('timelineShowQueue')}</span>
-            <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isQueueDrawerOpen ? 'rotate-90' : ''}`} />
-          </button>
-        </div>
-      )}
-
-      {/* 4. UNSCHEDULED MATCHES COLLAPSIBLE DRAWER */}
-      {hasAnyScheduled && isQueueDrawerOpen && unscheduledMatches.length > 0 && (
-        <div className="p-3 border-t max-h-56 overflow-y-auto space-y-2 z-30 bg-slate-50 border-slate-200">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {filteredUnscheduledMatches.map((m) => {
-              const mRaw = m as unknown as Record<string, unknown>;
-              const stageLabel = (mRaw.roundName || mRaw.stageName || m.stage?.name || 'Vòng sau') as string;
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => onOpenMatchDetail?.(m)}
-                  className="p-2.5 rounded-xl border flex flex-col justify-between transition-all cursor-pointer bg-white border-slate-200 text-slate-800 hover:border-blue-400"
-                >
-                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 mb-1">
-                    <span>#{m.matchOrder || '—'} · {stageLabel}</span>
-                    <span className="bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded">
-                      {translate('timelinePendingAssignment')}
-                    </span>
-                  </div>
-                  <div className="text-xs font-bold space-y-0.5">
-                    <p className="truncate">{getCompetitorDisplayName(m.participant1)}</p>
-                    <p className="truncate text-slate-400 font-normal">vs</p>
-                    <p className="truncate">{getCompetitorDisplayName(m.participant2)}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

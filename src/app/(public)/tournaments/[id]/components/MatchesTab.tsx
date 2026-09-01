@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { extractMatchScores, resolveMatchSportRules } from '@/features/matches/score-display';
-import { Tournament, BracketMatch } from '@/features/tournaments/api';
+import { Tournament, BracketMatch, tournamentsApi } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
@@ -202,11 +202,30 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Fetch real tournament venues & courts from settings
+  const [tournamentVenues, setTournamentVenues] = useState<Array<{ name: string; courts?: Array<{ id: string; courtName?: string; name?: string }> }>>([]);
+
+  useEffect(() => {
+    if (!effectiveTournamentId) return;
+    let cancelled = false;
+    tournamentsApi.getTournamentVenues(effectiveTournamentId).then((res) => {
+      if (!cancelled && res.data && Array.isArray(res.data)) {
+        setTournamentVenues(res.data);
+      }
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveTournamentId]);
+
   // Extract public courts for timeline board
   const resolvedPublicCourts = useMemo<PublicCourtItem[]>(() => {
     const map = new Map<string, PublicCourtItem>();
 
-    const venues = (tournament as unknown as { venues?: Array<{ name?: string; courts?: Array<{ id: string; courtName?: string; name?: string }> }> }).venues;
+    const venues = tournamentVenues.length > 0
+      ? tournamentVenues
+      : (tournament as unknown as { venues?: Array<{ name?: string; courts?: Array<{ id: string; courtName?: string; name?: string }> }> }).venues;
+
     if (Array.isArray(venues)) {
       for (const v of venues) {
         if (Array.isArray(v.courts)) {
@@ -232,7 +251,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     }
 
     return Array.from(map.values());
-  }, [tournament, matches]);
+  }, [tournamentVenues, tournament, matches]);
 
   const MATCHES_PER_VIEW = 20;
 

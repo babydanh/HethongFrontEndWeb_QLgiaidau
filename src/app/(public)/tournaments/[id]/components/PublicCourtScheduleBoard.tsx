@@ -39,7 +39,7 @@ interface PublicCourtScheduleBoardProps {
   isLoading?: boolean;
 }
 
-const BASE_PIXELS_PER_MINUTE = 9.6; // 1 minute = 9.6px (15 mins = 144px height, high spacious grid matching management view)
+const BASE_PIXELS_PER_MINUTE = 9.6; // 1 minute = 9.6px (15 mins = 144px height)
 
 function getLocalDateString(isoString?: string | null): string {
   if (!isoString) return '';
@@ -72,7 +72,7 @@ function formatDayLabel(dateStr: string): string {
   if (!y || !m || !d) return dateStr;
   const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
   const weekday = new Intl.DateTimeFormat('vi-VN', { weekday: 'short' }).format(dateObj);
-  return `${weekday}, ${d}/${m}`;
+  return `${weekday}, ${d}/${m}/${y}`;
 }
 
 function getCompetitorDisplayName(participant?: { teamName?: string | null; name?: string | null; placeholder?: string | null } | null): string {
@@ -98,8 +98,8 @@ export default function PublicCourtScheduleBoard({
 
   // 1. Resolve Tournament Schedule Settings
   const tournamentConfig = (tournament.tournamentConfig || {}) as Record<string, unknown>;
-  const configuredOperatingStart = String(tournamentConfig.operatingStart || (tournament as unknown as Record<string, unknown>).operatingStart || '06:00');
-  const configuredOperatingEnd = String(tournamentConfig.operatingEnd || (tournament as unknown as Record<string, unknown>).operatingEnd || '24:00');
+  const configuredOperatingStart = String(tournamentConfig.operatingStart || (tournament as unknown as Record<string, unknown>).operatingStart || '08:00');
+  const configuredOperatingEnd = String(tournamentConfig.operatingEnd || (tournament as unknown as Record<string, unknown>).operatingEnd || '22:00');
   const configuredStepMinutes = Number(tournamentConfig.stepMinutes || tournamentConfig.gridIncrementMinutes) || 15;
   const configuredMinutesPerSet = Number(tournamentConfig.minutesPerSet) || 15;
 
@@ -142,14 +142,16 @@ export default function PublicCourtScheduleBoard({
 
     const defaultVenue = (tournament as unknown as { venueName?: string })?.venueName || tournament.locationAddress || 'Sân thi đấu';
     return [
-      { id: 'court-1', courtName: 'Sân 1', venueName: defaultVenue },
-      { id: 'court-2', courtName: 'Sân 2', venueName: defaultVenue },
-      { id: 'court-3', courtName: 'Sân 3', venueName: defaultVenue },
-      { id: 'court-4', courtName: 'Sân 4', venueName: defaultVenue },
+      { id: 'court-1', courtName: 'DANH', venueName: defaultVenue },
+      { id: 'court-2', courtName: 'DAN2', venueName: defaultVenue },
+      { id: 'court-3', courtName: 'SÂN 3', venueName: defaultVenue },
+      { id: 'court-4', courtName: 'SÂN 4', venueName: defaultVenue },
+      { id: 'court-5', courtName: 'SÂN 5', venueName: defaultVenue },
+      { id: 'court-6', courtName: 'SÂN 6', venueName: defaultVenue },
     ];
   }, [initialCourts, matches, tournament]);
 
-  // 3. Extract Schedule Dates (dates with scheduled matches or tournament dates)
+  // 3. Extract Schedule Dates (Only dates with scheduled matches or tournament dates)
   const availableScheduleDates = useMemo<string[]>(() => {
     const set = new Set<string>();
     for (const m of matches) {
@@ -158,11 +160,11 @@ export default function PublicCourtScheduleBoard({
         if (dStr) set.add(dStr);
       }
     }
-    if (tournament.startDate) {
+    if (set.size === 0 && tournament.startDate) {
       const startD = getLocalDateString(tournament.startDate);
       if (startD) set.add(startD);
     }
-    if (tournament.endDate) {
+    if (set.size === 0 && tournament.endDate) {
       const endD = getLocalDateString(tournament.endDate);
       if (endD) set.add(endD);
     }
@@ -172,7 +174,7 @@ export default function PublicCourtScheduleBoard({
     return [getLocalDateString(new Date().toISOString())];
   }, [matches, tournament.startDate, tournament.endDate]);
 
-  // Default active date
+  // Default active date: prioritize date that has matches
   useEffect(() => {
     if (!activeDate && availableScheduleDates.length > 0) {
       const matchWithDate = matches.find((m) => m.scheduledAt);
@@ -218,11 +220,11 @@ export default function PublicCourtScheduleBoard({
     };
   }, [matches, activeDate, availableScheduleDates]);
 
-  // 5. Operating Window & Grid Metrics (Spacious Height: 144px per 15p row)
+  // 5. Operating Window & Grid Metrics (Start at 08:00 to 22:00)
   const [startH] = configuredOperatingStart.split(':').map(Number);
   const [endH] = configuredOperatingEnd.split(':').map(Number);
-  const operatingStartHour = Number.isFinite(startH) ? startH : 6;
-  const operatingEndHour = (Number.isFinite(endH) && endH > 0) ? (endH === 0 ? 24 : endH) : 24;
+  const operatingStartHour = Number.isFinite(startH) ? startH : 8;
+  const operatingEndHour = (Number.isFinite(endH) && endH > 0) ? (endH === 0 ? 24 : endH) : 22;
 
   const currentPixelsPerMinute = BASE_PIXELS_PER_MINUTE * zoomLevel;
   const cellHeight = Math.round(stepMinutes * currentPixelsPerMinute);
@@ -338,7 +340,7 @@ export default function PublicCourtScheduleBoard({
               </div>
             )}
 
-            {/* Date Selector Pills */}
+            {/* Date Selector Pills (Only dates with matches) */}
             <div className="flex items-center gap-1 overflow-x-auto max-w-[480px] p-0.5 scrollbar-none">
               {availableScheduleDates.map((dateStr) => {
                 const isActive = dateStr === activeDate;
@@ -471,7 +473,7 @@ export default function PublicCourtScheduleBoard({
         </div>
       </div>
 
-      {/* ── 2. FULL COURT TIMELINE GRID TABLE (Spacious Height & Exact Management Cards) ── */}
+      {/* ── 2. FULL COURT TIMELINE GRID TABLE (Terracotta Orange Header & Soft Yellow Time Sidebar) ── */}
       <div className="relative overflow-hidden bg-white">
         <div ref={scrollRef} className="max-h-[680px] overflow-auto select-none scrollbar-thin">
           <div
@@ -480,47 +482,33 @@ export default function PublicCourtScheduleBoard({
               gridTemplateColumns: `84px repeat(${Math.max(1, resolvedCourts.length)}, minmax(260px, 1fr))`,
             }}
           >
-            {/* Top-Left Corner Sticky Header */}
-            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-slate-200 bg-slate-100/95 backdrop-blur-xs p-2 text-xs font-black text-slate-700 uppercase">
-              <Clock className="mr-1 h-3.5 w-3.5 text-blue-600" />
-              <span>{translate('timelineHourHeader')}</span>
+            {/* Top-Left Corner Sticky Header (Terracotta Orange) */}
+            <div className="sticky top-0 left-0 z-30 flex items-center justify-center border-b border-r border-orange-800 bg-[#c2410c] text-white p-2.5">
+              <Clock className="h-4 w-4 text-white" />
             </div>
 
-            {/* Top Sticky Court Column Headers */}
-            {resolvedCourts.map((court, idx) => {
-              const courtMatches = scheduledMatchesForDate.filter((m) => m.courtId === court.id);
+            {/* Top Sticky Court Column Headers (Terracotta Orange) */}
+            {resolvedCourts.map((court) => {
               return (
                 <div
                   key={court.id}
-                  className="sticky top-0 z-20 flex items-center justify-between border-b border-r border-slate-200 bg-slate-50/95 backdrop-blur-xs px-3.5 py-3"
+                  className="sticky top-0 z-20 border-b border-r border-orange-800/80 bg-[#c2410c] px-3.5 py-2.5 text-center text-white select-none"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-black text-slate-900">{court.courtName}</p>
-                    {court.venueName && (
-                      <p className="truncate text-[10px] font-semibold text-slate-400">{court.venueName}</p>
-                    )}
-                  </div>
-                  <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 px-2 py-0.5 text-[10px] font-black shrink-0 ml-1">
-                    {courtMatches.length} trận
-                  </span>
+                  <p className="truncate text-xs font-extrabold uppercase tracking-wider">{court.courtName}</p>
                 </div>
               );
             })}
 
-            {/* Time Column (Sticky Left with 15-minute slot marks) */}
-            <div className="sticky left-0 z-10 border-r border-slate-200 bg-slate-50/95">
+            {/* Time Column (Sticky Left with Soft Yellow Sidebar Background #fef08a) */}
+            <div className="sticky left-0 z-10 border-r border-amber-300 bg-[#fef08a]">
               {timeSlots.map((slot) => {
                 return (
                   <div
                     key={slot.label}
-                    className={`flex items-start justify-end pr-2.5 border-b text-[11px] transition-colors ${
-                      slot.isHour
-                        ? 'border-slate-300 text-slate-900 bg-slate-100/70 font-black'
-                        : 'border-slate-200/60 text-slate-400 font-medium'
-                    }`}
+                    className="flex items-start justify-end pr-2.5 border-b border-amber-300/80 text-[11px] font-bold text-slate-900"
                     style={{ height: `${cellHeight}px` }}
                   >
-                    <span className="-mt-2.5">{slot.label}</span>
+                    <span className="-mt-2.5 font-black">{slot.label}</span>
                   </div>
                 );
               })}
@@ -542,14 +530,14 @@ export default function PublicCourtScheduleBoard({
                       <div
                         key={slot.label}
                         className={`border-b transition-colors hover:bg-blue-50/30 ${
-                          slot.isHour ? 'border-slate-200 bg-slate-50/20' : 'border-slate-100/80 border-dashed'
+                          slot.isHour ? 'border-slate-200' : 'border-slate-100 border-dashed'
                         }`}
                         style={{ height: `${cellHeight}px` }}
                       />
                     );
                   })}
 
-                  {/* Scheduled Match Cards (High Spacious Design) */}
+                  {/* Scheduled Match Cards */}
                   {courtMatches.map((match) => {
                     if (!match.scheduledAt) return null;
                     const mDate = new Date(match.scheduledAt);
@@ -577,13 +565,13 @@ export default function PublicCourtScheduleBoard({
                     // Match Division Name & Format
                     const matchDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
                     const divTitle = matchDiv?.name || (tournament.name || 'NỘI DUNG');
-                    const boFormat = duration === 15 ? '1 SET' : duration >= 45 ? 'BO3' : `${duration}P`;
+                    const boFormat = duration === 15 ? 'BO1' : duration >= 45 ? 'BO3' : `${duration}P`;
 
                     return (
                       <div
                         key={match.id}
                         onClick={() => onOpenMatchDetail?.(match)}
-                        className={`absolute inset-x-1.5 z-10 flex flex-col justify-between rounded-xl border p-2.5 shadow-xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 select-none ${
+                        className={`absolute inset-x-1 z-10 flex flex-col justify-between rounded-xl border p-2.5 shadow-2xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 select-none ${
                           isLive
                             ? 'border-amber-400 bg-amber-50/95 text-amber-950 ring-2 ring-amber-400/40 shadow-md'
                             : isCompleted
@@ -591,7 +579,7 @@ export default function PublicCourtScheduleBoard({
                             : 'border-slate-200 bg-white text-slate-900 hover:border-blue-400 shadow-xs'
                         } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.01] z-20' : ''}`}
                         style={{
-                          top: `${topPos + 3}px`,
+                          top: `${topPos + 2}px`,
                           height: `${cardHeight}px`,
                         }}
                         title={`Trận #${match.matchOrder || ''} • ${formatMatchTime(match.scheduledAt)} • Bấm để xem chi tiết`}
@@ -671,10 +659,10 @@ export default function PublicCourtScheduleBoard({
                         {/* 3. Card Footer: Round Title & Match Details Link */}
                         <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold pt-1 border-t border-slate-200/80">
                           <span className="truncate max-w-[130px] font-bold text-slate-600">
-                            #{match.matchOrder || '—'} · {roundTitle}
+                            {roundTitle}
                           </span>
                           <span className="text-blue-600 font-bold flex items-center gap-0.5 hover:underline">
-                            <span>{translate('timelineMatchDetails')}</span>
+                            <span>{isCompleted ? matchTranslate('statusFinished') : translate('timelineMatchDetails')}</span>
                             <ExternalLink className="h-2.5 w-2.5" />
                           </span>
                         </div>

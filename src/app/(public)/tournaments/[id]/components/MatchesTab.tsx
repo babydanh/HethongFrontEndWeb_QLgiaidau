@@ -204,10 +204,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
   // Fetch real tournament venues & courts from settings
   const [tournamentVenues, setTournamentVenues] = useState<Array<{ name: string; courts?: Array<{ id: string; courtName?: string; name?: string }> }>>([]);
+  const [tournamentCourts, setTournamentCourts] = useState<Array<{ id: string; courtName: string; venueId?: string; status?: string }>>([]);
 
   useEffect(() => {
     if (!effectiveTournamentId) return;
     let cancelled = false;
+    tournamentsApi.getTournamentCourts(effectiveTournamentId).then((res) => {
+      if (!cancelled && res.data?.courts && Array.isArray(res.data.courts)) {
+        setTournamentCourts(res.data.courts);
+      }
+    }).catch(() => {});
     tournamentsApi.getTournamentVenues(effectiveTournamentId).then((res) => {
       if (!cancelled && res.data && Array.isArray(res.data)) {
         setTournamentVenues(res.data);
@@ -240,6 +246,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
     }
 
+    for (const c of tournamentCourts) {
+      if (!map.has(c.id)) {
+        map.set(c.id, {
+          id: c.id,
+          courtName: c.courtName || 'Sân',
+          venueName: (tournament as unknown as { venueName?: string })?.venueName || tournament.locationAddress || undefined,
+        });
+      }
+    }
+
     for (const m of matches) {
       if (m.courtId && !map.has(m.courtId)) {
         map.set(m.courtId, {
@@ -251,7 +267,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     }
 
     return Array.from(map.values());
-  }, [tournamentVenues, tournament, matches]);
+  }, [tournamentCourts, tournamentVenues, tournament, matches]);
 
   const MATCHES_PER_VIEW = 20;
 

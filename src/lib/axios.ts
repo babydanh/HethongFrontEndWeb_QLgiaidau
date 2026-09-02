@@ -256,6 +256,10 @@ api.interceptors.request.use(
         return Promise.reject(new SharedGetRequestError(existing.promise));
       }
       const deferred = createDeferred<unknown>();
+      // Attach a no-op catch so that if the request fails (e.g. 404) before any
+      // subscriber grabs deferred.promise, the browser doesn't log an
+      // "Uncaught (in promise)" UnhandledRejection.
+      deferred.promise.catch(() => {});
       inFlightGetRequests.set(key, deferred);
       managedConfig.__sharedDedupeKey = key;
     }

@@ -1,60 +1,34 @@
-/**
- * PaymentRowSkeleton
- * Mirrors a payment table row in /payments page.
- * Columns: date | tournament name | amount | method | status | action
- *
- * Skeleton rules (see SKILL.md §6).
- */
+import React from 'react';
 
-import { SkeletonText, SkeletonBadge } from "@/components/ui/Skeleton";
-
-export function PaymentRowSkeleton() {
-  return (
-    <tr className="border-b border-slate-100">
-      {/* Date */}
-      <td className="py-4 px-6">
-        <SkeletonText className="w-24 h-3" />
-      </td>
-      {/* Tournament name */}
-      <td className="py-4 px-6">
-        <SkeletonText className="w-36" />
-      </td>
-      {/* Amount */}
-      <td className="py-4 px-6">
-        <SkeletonText className="w-16 h-3.5" />
-      </td>
-      {/* Method */}
-      <td className="py-4 px-6">
-        <SkeletonBadge className="w-14" />
-      </td>
-      {/* Status */}
-      <td className="py-4 px-6">
-        <SkeletonBadge className="w-20" />
-      </td>
-      {/* Action */}
-      <td className="py-4 px-6 text-right">
-        <div className="ml-auto h-7 w-20 rounded-lg animate-pulse bg-slate-200" />
-      </td>
-    </tr>
-  );
-}
-
-/** Stats card skeleton — mirrors the 3 stat cards at the top of /payments */
 export function PaymentStatsSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4"
-        >
-          <div className="w-12 h-12 rounded-lg animate-pulse bg-slate-200 shrink-0" />
-          <div className="space-y-2 flex-1">
-            <SkeletonText className="w-2/3 h-3" />
-            <SkeletonText className="w-1/2 h-6" />
-          </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs animate-pulse">
+          <div className="h-4 bg-slate-200 rounded w-24 mb-2" />
+          <div className="h-7 bg-slate-200 rounded w-32" />
         </div>
       ))}
     </div>
   );
 }
+
+export function PaymentRowSkeleton() {
+  return (
+    <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200/80 shadow-xs animate-pulse">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-slate-200 rounded-xl" />
+        <div className="space-y-1.5">
+          <div className="h-4 bg-slate-200 rounded-md w-36" />
+          <div className="h-3 bg-slate-200 rounded-md w-24" />
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="h-5 bg-slate-200 rounded-md w-20" />
+        <div className="h-6 bg-slate-200 rounded-full w-24" />
+      </div>
+    </div>
+  );
+}
+
+export default PaymentRowSkeleton;

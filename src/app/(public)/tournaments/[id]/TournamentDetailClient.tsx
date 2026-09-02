@@ -9,7 +9,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentResult, To
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, Clock, ArrowUpRight } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -67,8 +67,19 @@ import { getRegistrationModeUi } from '../registrationMode';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
 import { isActiveMatch } from '@/utils/match-status';
 
-
-
+const getBracketFormatIcon = (format?: string) => {
+  const normalized = String(format || '').toUpperCase();
+  if (normalized.includes('ROUND_ROBIN')) {
+    return RotateCw;
+  }
+  if (normalized.includes('GROUP_STAGE') || normalized.includes('GROUP')) {
+    return GitFork;
+  }
+  if (normalized.includes('DOUBLE_ELIMINATION') || normalized.includes('DOUBLE_ELIM')) {
+    return GitMerge;
+  }
+  return GitBranch;
+};
 interface Props {
   tournamentId: string;
   initialTournament: Tournament | null;
@@ -1669,11 +1680,22 @@ const commonTranslate = useTranslations('Common');
                                 : 'bg-slate-50/60 text-slate-700 hover:bg-slate-100/70 hover:text-slate-900'
                             }`}
                           >
-                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                              isActive ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white text-slate-400 border border-slate-200/60 group-hover:text-blue-600'
-                            }`}>
-                              <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isActive ? 'rotate-90 text-white' : 'text-slate-400'}`} aria-hidden="true" />
-                            </span>
+                            {(() => {
+                              const divisionObj = division as unknown as Record<string, unknown>;
+                              const tournamentObj = tournament as unknown as Record<string, unknown>;
+                              const divTourObj = divisionTournament as unknown as Record<string, unknown>;
+                              const bracketFormat = (division.bracketType || divisionObj.format || divTourObj?.bracketType || divTourObj?.format || tournamentObj?.bracketType || tournament?.format) as string | undefined;
+                              const BracketIcon = getBracketFormatIcon(bracketFormat);
+                              return (
+                                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                  isActive
+                                    ? 'bg-blue-600 text-white shadow-2xs'
+                                    : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
+                                }`}>
+                                  <BracketIcon className="h-4 w-4" aria-hidden="true" />
+                                </span>
+                              );
+                            })()}
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
                             </span>
@@ -1688,9 +1710,10 @@ const commonTranslate = useTranslations('Common');
                             )}
                             {Boolean(completedDivisionIds[division.id] || isTournamentCompleted(division.status)) && (
                               <span
-                                className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10.5px] sm:text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/80 leading-none"
+                                className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10.5px] sm:text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs leading-none"
                               >
-                                {translate('status.completed')}
+                                <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                <span>{translate('status.completed')}</span>
                               </span>
                             )}
                             <span

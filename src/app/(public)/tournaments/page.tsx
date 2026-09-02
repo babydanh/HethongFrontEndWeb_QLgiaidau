@@ -912,37 +912,31 @@ export default function TournamentsListPage() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Cursor Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2">
+        <div className="flex justify-center items-center gap-3 mt-8">
           <button
+            type="button"
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+            disabled={page <= 1}
+            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-white shadow-2xs flex items-center gap-1.5"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
+            <span>{translate('previousPage')}</span>
           </button>
 
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => setPage(i + 1)}
-              className={`min-w-[44px] min-h-[44px] border rounded-lg font-bold text-xs transition-colors cursor-pointer ${
-                page === i + 1
-                  ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-indigo-600/15'
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+          <span className="text-xs font-bold text-slate-600 px-3.5 py-2 rounded-xl bg-slate-100/90 border border-slate-200/60 min-w-24 text-center">
+            {page} / {totalPages}
+          </span>
 
           <button
+            type="button"
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+            disabled={page >= totalPages}
+            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-white shadow-2xs flex items-center gap-1.5"
           >
-            <ChevronRight className="w-5 h-5" />
+            <span>{translate('nextPage')}</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}

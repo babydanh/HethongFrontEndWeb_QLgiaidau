@@ -845,65 +845,69 @@ const commonTranslate = useTranslations('Common');
       : []),
   ];
 
-  const renderMetadataCard = () => (
-    <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm space-y-3 sm:space-y-4">
-      {/* Organizer / Club Header */}
-      {(() => {
-        const organizer = activeTournament.organizer || tournament?.organizer;
-        const organizerId = organizer?.id || activeTournament.organizerId || tournament?.organizerId;
-        const displayLogo = activeTournament.logoUrl || organizer?.avatarUrl;
-        const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
-        const isClickable = Boolean(organizerId);
+  const hasTournamentLogo = Boolean(activeTournament.logoUrl || tournament?.logoUrl);
 
-        const handleOrganizerClick = (e: React.MouseEvent<HTMLElement>) => {
-          if (!organizerId) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
-        };
+  const renderOrganizerBlock = () => {
+    const organizer = activeTournament.organizer || tournament?.organizer;
+    const organizerId = organizer?.id || activeTournament.organizerId || tournament?.organizerId;
+    const displayAvatar = organizer?.avatarUrl;
+    const displayName = organizer?.fullName || translate('organizerDefault') || 'SPORTO Organizer';
+    const isClickable = Boolean(organizerId);
 
-        return (
-          <div
-            onClick={isClickable ? handleOrganizerClick : undefined}
-            role={isClickable ? 'button' : undefined}
-            tabIndex={isClickable ? 0 : undefined}
-            onKeyDown={isClickable ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleOrganizerClick(e as unknown as React.MouseEvent<HTMLElement>);
-              }
-            } : undefined}
-            className={`flex items-center gap-3 transition-all rounded-xl p-2 -m-2 ${
-              isClickable ? 'cursor-pointer hover:bg-slate-50 active:bg-slate-100 group' : ''
-            }`}
-            title={isClickable ? `Xem hồ sơ của ${displayName}` : displayName}
-          >
-            <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs group-hover:border-blue-400 group-hover:ring-2 group-hover:ring-blue-100 transition-all">
-              {displayLogo ? (
-                <img
-                  src={displayLogo}
-                  alt={displayName}
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : (
-                <Trophy className="w-5 h-5 text-slate-500" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
-                {translate('organizerLabel') || 'Ban tổ chức'}
-              </p>
-              <div className="flex items-center gap-1">
-                <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors" title={displayName}>
-                  {displayName}
-                </p>
-                {isClickable && (
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
-                )}
-              </div>
-            </div>
+    const handleOrganizerClick = (e: React.MouseEvent<HTMLElement>) => {
+      if (!organizerId) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
+    };
+
+    return (
+      <div
+        onClick={isClickable ? handleOrganizerClick : undefined}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        onKeyDown={isClickable ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleOrganizerClick(e as unknown as React.MouseEvent<HTMLElement>);
+          }
+        } : undefined}
+        className={`flex items-center gap-3 transition-all rounded-xl p-2 -m-1 ${
+          isClickable ? 'cursor-pointer hover:bg-slate-50 active:bg-slate-100 group' : ''
+        }`}
+        title={isClickable ? `Xem hồ sơ của ${displayName}` : displayName}
+      >
+        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs group-hover:border-blue-400 group-hover:ring-2 group-hover:ring-blue-100 transition-all">
+          {displayAvatar ? (
+            <img
+              src={displayAvatar}
+              alt={displayName}
+              className="w-full h-full object-cover rounded-full"
+            />
+          ) : (
+            <User className="w-5 h-5 text-slate-500" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
+            {translate('organizerLabel') || 'Người sáng lập giải đấu'}
+          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs sm:text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors" title={displayName}>
+              {displayName}
+            </p>
+            {isClickable && (
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
+            )}
           </div>
-        );
-      })()}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMetadataCard = () => (
+    <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-3.5">
+      {/* If tournament does NOT have custom logo -> show Organizer at top */}
+      {!hasTournamentLogo && renderOrganizerBlock()}
 
       {/* Tournament Title & Badges */}
       <div className="space-y-2.5">
@@ -1068,7 +1072,6 @@ const commonTranslate = useTranslations('Common');
                 }}
                 variant="danger"
               />
-              <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange") || 'Thời gian thi đấu có thể thay đổi theo tiến độ.'}</p>
             </div>
           );
         }
@@ -1266,57 +1269,75 @@ const commonTranslate = useTranslations('Common');
     </div>
   );
 
-  const renderContactCard = () => (
-    activeTournament.contactInfo ? (
-      <div className="bg-white rounded-xl border border-slate-200/90 p-5 flex flex-col gap-2.5 shadow-sm">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
-        {activeTournament.contactInfo.phone && (
-          <div className="flex items-center gap-2.5">
-            <Phone className="w-4 h-4 text-slate-450 shrink-0" />
-            <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
-          </div>
-        )}
-        {activeTournament.contactInfo.email && (
-          <div className="flex items-center gap-2.5">
-            <Mail className="w-4 h-4 text-slate-450 shrink-0" />
-            <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
-          </div>
-        )}
-        {Object.entries(activeTournament.contactInfo)
-          .filter(([key]) => key !== 'phone' && key !== 'email')
-          .map(([key, val]) => {
-            if (!val) return null;
-            const lowercaseKey = key.toLowerCase();
-            const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
+  const renderContactCard = () => {
+    const hasContact = Boolean(
+      activeTournament.contactInfo &&
+      Object.values(activeTournament.contactInfo).some((v) => typeof v === 'string' && v.trim().length > 0)
+    );
 
-            let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
-            let iconColor = 'text-slate-450';
+    if (!hasContact && !hasTournamentLogo) return null;
 
-            if (lowercaseKey.includes('instagram')) {
-              IconComponent = InstagramIcon;
-              iconColor = 'text-pink-600';
-            } else if (lowercaseKey.includes('zalo')) {
-              IconComponent = ZaloIcon;
-              iconColor = 'text-blue-650';
-            }
-
-            return (
-              <div key={key} className="flex items-center gap-2.5">
-                <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
-                <span className="text-xs font-bold text-slate-500">{key}:</span>
-                {isUrl ? (
-                  <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
-                    {val}
-                  </a>
-                ) : (
-                  <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
-                )}
+    return (
+      <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
+        {hasContact && (
+          <div className="space-y-2.5">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo') || 'THÔNG TIN LIÊN HỆ'}</span>
+            {activeTournament.contactInfo?.phone && (
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
               </div>
-            );
-          })}
+            )}
+            {activeTournament.contactInfo?.email && (
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
+              </div>
+            )}
+            {Object.entries(activeTournament.contactInfo || {})
+              .filter(([key]) => key !== 'phone' && key !== 'email')
+              .map(([key, val]) => {
+                if (!val) return null;
+                const lowercaseKey = key.toLowerCase();
+                const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
+
+                let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
+                let iconColor = 'text-slate-400';
+
+                if (lowercaseKey.includes('instagram')) {
+                  IconComponent = InstagramIcon;
+                  iconColor = 'text-pink-600';
+                } else if (lowercaseKey.includes('zalo')) {
+                  IconComponent = ZaloIcon;
+                  iconColor = 'text-blue-600';
+                }
+
+                return (
+                  <div key={key} className="flex items-center gap-2.5">
+                    <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
+                    <span className="text-xs font-bold text-slate-500">{key}:</span>
+                    {isUrl ? (
+                      <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
+                        {val}
+                      </a>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        )}
+
+        {/* If tournament HAS logo -> Show Creator at bottom under contact info */}
+        {hasTournamentLogo && (
+          <div className={hasContact ? "pt-3 border-t border-slate-100" : ""}>
+            {renderOrganizerBlock()}
+          </div>
+        )}
       </div>
-    ) : null
-  );
+    );
+  };
 
   const renderLiteEventHeader = () => {
     const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;

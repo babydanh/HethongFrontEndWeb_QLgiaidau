@@ -18,6 +18,7 @@ import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
 import { isLiteTournament, isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import PublicCourtScheduleBoard, { type PublicCourtItem } from './PublicCourtScheduleBoard';
+import { MatchCardSkeleton } from '@/components/skeletons/MatchCardSkeleton';
 
 interface Props {
   tournament: Tournament;
@@ -1378,6 +1379,13 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               </React.Fragment>
             );
           })}
+        </div>
+      ) : isLoading && matches.length === 0 ? (
+        /* Initial skeleton — show while first page of matches is fetching */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <MatchCardSkeleton key={i} />
+          ))}
         </div>
       ) : (
         <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl text-slate-450 bg-white">

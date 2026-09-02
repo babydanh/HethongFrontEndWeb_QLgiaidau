@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from 'next-intl';
 import { X, MessageCircle, User, CheckCircle2, Tag, Plus, Check, Loader2 } from "lucide-react";
+import { UserProfileSkeleton } from "@/components/skeletons/UserProfileSkeleton";
 import { usersApi } from "@/features/users/api";
 import { chatApi } from "@/features/chat/api";
 import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/communities/api";
@@ -240,6 +241,9 @@ export default function UserProfilePopover({
 
   if (!isOpen || !profileData || !anchorRect) return null;
 
+  // True while getPublicProfile() hasn't resolved for the current user yet
+  const isLoadingDetails = !fetchedDetails || fetchedDetails.id !== user?.id;
+
   // Calculate Popover Position
   const popoverWidth = 340;
   const popoverHeight = isEditingTags ? 380 : 310;
@@ -390,6 +394,30 @@ export default function UserProfilePopover({
       setIsSavingTags(false);
     }
   };
+
+  // While getPublicProfile() is in-flight, render the positioned shell with a skeleton
+  // so the popover appears instantly at the right position without layout shift.
+  if (isLoadingDetails) {
+    return (
+      <div
+        ref={popoverRef}
+        style={{ top: `${top}px`, left: `${left}px`, position: "absolute" }}
+        className="z-[99999] w-[340px] animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button stays accessible during loading */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={translate('close')}
+          className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60 active:scale-95"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <UserProfileSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div

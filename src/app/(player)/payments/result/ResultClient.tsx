@@ -165,9 +165,26 @@ export default function ResultClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">{translate('loading')}</p>
+      <div className="bg-slate-50 min-h-screen py-16 px-4 md:px-8">
+        <div className="max-w-md mx-auto space-y-4">
+          {/* Status card skeleton */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full animate-pulse bg-slate-200 mx-auto" />
+            <div className="h-6 w-1/2 rounded animate-pulse bg-slate-200 mx-auto" />
+            <div className="h-4 w-2/3 rounded animate-pulse bg-slate-100 mx-auto" />
+            <div className="h-px bg-slate-100 my-2" />
+            <div className="flex justify-between py-1">
+              <div className="h-4 w-20 rounded animate-pulse bg-slate-100" />
+              <div className="h-4 w-24 rounded animate-pulse bg-slate-200" />
+            </div>
+            <div className="flex justify-between py-1">
+              <div className="h-4 w-16 rounded animate-pulse bg-slate-100" />
+              <div className="h-4 w-20 rounded animate-pulse bg-slate-200" />
+            </div>
+          </div>
+          {/* CTA button skeleton */}
+          <div className="h-11 w-full rounded-xl animate-pulse bg-slate-200" />
+        </div>
       </div>
     );
   }

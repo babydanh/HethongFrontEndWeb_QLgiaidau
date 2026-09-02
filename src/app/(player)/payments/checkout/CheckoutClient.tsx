@@ -216,9 +216,27 @@ export default function CheckoutClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">{translate('loadingPaymentInfo')}</p>
+      <div className="bg-slate-50 min-h-screen py-12 px-4 md:px-8">
+        <div className="max-w-lg mx-auto space-y-4">
+          {/* Tournament info card skeleton */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div className="h-6 w-2/3 rounded animate-pulse bg-slate-200" />
+            <div className="h-4 w-1/2 rounded animate-pulse bg-slate-100" />
+            <div className="h-px bg-slate-100 my-2" />
+            <div className="flex justify-between items-center">
+              <div className="h-4 w-24 rounded animate-pulse bg-slate-100" />
+              <div className="h-6 w-28 rounded animate-pulse bg-slate-200" />
+            </div>
+          </div>
+          {/* Payment method card skeleton */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3">
+            <div className="h-5 w-32 rounded animate-pulse bg-slate-200" />
+            <div className="h-12 rounded-lg animate-pulse bg-slate-100" />
+            <div className="h-12 rounded-lg animate-pulse bg-slate-100" />
+          </div>
+          {/* Submit button skeleton */}
+          <div className="h-12 w-full rounded-xl animate-pulse bg-slate-200" />
+        </div>
       </div>
     );
   }

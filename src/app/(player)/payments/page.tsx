@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/utils/error';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { PaymentRowSkeleton, PaymentStatsSkeleton } from '@/components/skeletons/PaymentRowSkeleton';
 import { 
   Loader2, 
   CheckCircle2, 
@@ -82,9 +83,27 @@ export default function PaymentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">{translate('loadingHistory')}</p>
+      <div className="bg-slate-50 min-h-screen py-10 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8 space-y-2">
+            <div className="h-7 w-48 rounded animate-pulse bg-slate-200" />
+            <div className="h-4 w-72 rounded animate-pulse bg-slate-100" />
+          </div>
+          <PaymentStatsSkeleton />
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+              <div className="h-5 w-32 rounded animate-pulse bg-slate-200" />
+              <div className="h-5 w-20 rounded-full animate-pulse bg-slate-100" />
+            </div>
+            <table className="w-full">
+              <tbody className="divide-y divide-slate-100">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <PaymentRowSkeleton key={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }

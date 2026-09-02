@@ -2598,7 +2598,10 @@
     "promoStoreHeadline": "Trang thiết bị & Dụng cụ Thể thao chính hãng",
     "promoStoreDesc": "Ưu đãi độc quyền cho vận động viên và các câu lạc bộ trên SportO — Giảm đến 20% phụ kiện thi đấu.",
     "promoStoreCta": "Khám phá ngay",
-    "sponsoredBadge": "Tài trợ"
+    "sponsoredBadge": "Tài trợ",
+    "loadMore": "Xem thêm giải đấu",
+    "loadingMore": "Đang tải thêm...",
+    "allTournamentsLoaded": "Đã hiển thị tất cả giải đấu"
   },
   "Terms": {
     "badge": "Pháp lý & Điều khoản",

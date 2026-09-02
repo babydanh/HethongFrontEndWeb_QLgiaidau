@@ -2598,7 +2598,10 @@
     "promoStoreHeadline": "Official Sports Equipment & Accessories",
     "promoStoreDesc": "Exclusive discounts for athletes and clubs on SportO — Up to 20% off tournament gear.",
     "promoStoreCta": "Explore now",
-    "sponsoredBadge": "Sponsored"
+    "sponsoredBadge": "Sponsored",
+    "loadMore": "Load more tournaments",
+    "loadingMore": "Loading more...",
+    "allTournamentsLoaded": "All tournaments loaded"
   },
   "Terms": {
     "badge": "Legal & Terms",

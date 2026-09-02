@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocale, useTranslations } from "next-intl";
-import { Search, ChevronDown, SlidersHorizontal, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Search, ChevronDown, SlidersHorizontal, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
@@ -80,9 +80,9 @@ export default function TournamentsListPage() {
   const [endDate, setEndDate] = useState<string>(''); // Lọc đến ngày
 
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [followedTournamentIds, setFollowedTournamentIds] = useState<Set<string>>(new Set());
   const [followLoadingIds, setFollowLoadingIds] = useState<Set<string>>(new Set());
 
@@ -98,17 +98,6 @@ export default function TournamentsListPage() {
     endDate,
     selectedIsRanked,
   ].join('|');
-
-  useEffect(() => {
-    cursorByPageRef.current = { 1: null };
-    let active = true;
-    Promise.resolve().then(() => {
-      if (active) setPage((currentPage) => (currentPage === 1 ? currentPage : 1));
-    });
-    return () => {
-      active = false;
-    };
-  }, [filterKey]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -231,73 +220,110 @@ export default function TournamentsListPage() {
     return undefined;
   };
 
-  useEffect(() => {
-    const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async (isLoadMore = false, cursorToUse: string | null = null) => {
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
       setIsLoading(true);
-      try {
-        let locationQuery = selectedRegion || undefined;
-        if (selectedRegion && selectedWard) {
-          locationQuery = `${selectedWard}, ${selectedRegion}`;
-        }
+    }
 
-        // Map lựa chọn nội dung đấu sang matchType và genderRestriction
-        let matchType: string | undefined;
-        let genderRestriction: string | undefined;
-
-        if (selectedContent === 'SINGLE_MALE') {
-          matchType = 'SINGLES';
-          genderRestriction = 'MALE';
-        } else if (selectedContent === 'SINGLE_FEMALE') {
-          matchType = 'SINGLES';
-          genderRestriction = 'FEMALE';
-        } else if (selectedContent === 'DOUBLE_MALE') {
-          matchType = 'DOUBLES';
-          genderRestriction = 'MALE';
-        } else if (selectedContent === 'DOUBLE_FEMALE') {
-          matchType = 'DOUBLES';
-          genderRestriction = 'FEMALE';
-        } else if (selectedContent === 'DOUBLE_MIXED') {
-          matchType = 'MIXED_DOUBLES';
-          genderRestriction = 'MIXED';
-        }
-
-        const apiStartDate = formatDateForAPI(startDate);
-        const apiEndDate = formatDateForAPI(endDate);
-
-        let isRankedParam: boolean | undefined = undefined;
-        if (selectedIsRanked === 'true') isRankedParam = true;
-        if (selectedIsRanked === 'false') isRankedParam = false;
-
-        const cursor = cursorByPageRef.current[page] ?? null;
-        const res = await tournamentsApi.getPublicTournaments({
-          limit: 10,
-          ...(cursor ? { cursor } : {}),
-          search: searchTerm || undefined,
-          categoryId: selectedCategoryId || undefined,
-          status: selectedStatus || undefined,
-          region: locationQuery,
-          matchType,
-          genderRestriction,
-          bracketType: selectedBracketType || undefined,
-          startDate: apiStartDate,
-          endDate: apiEndDate,
-          isRanked: isRankedParam,
-        });
-        const validTournaments = (res.data || []).filter((t: Tournament) => {
-          const st = (t.status as string)?.toUpperCase();
-          return !['DRAFT', 'PENDING_APPROVAL', 'SUSPENDED', 'PENDING_DELETE'].includes(st);
-        });
-        setTournaments(sortDiscoveryTournaments(validTournaments));
-        setTotalPages(res.meta.totalPages);
-        cursorByPageRef.current[page + 1] = res.meta.nextCursor ?? null;
-      } catch (error) {
-        console.error("Failed to fetch tournaments", error);
-      } finally {
-        setIsLoading(false);
+    try {
+      let locationQuery = selectedRegion || undefined;
+      if (selectedRegion && selectedWard) {
+        locationQuery = `${selectedWard}, ${selectedRegion}`;
       }
-    };
-    fetchTournaments();
-  }, [page, filterKey]);
+
+      // Map lựa chọn nội dung đấu sang matchType và genderRestriction
+      let matchType: string | undefined;
+      let genderRestriction: string | undefined;
+
+      if (selectedContent === 'SINGLE_MALE') {
+        matchType = 'SINGLES';
+        genderRestriction = 'MALE';
+      } else if (selectedContent === 'SINGLE_FEMALE') {
+        matchType = 'SINGLES';
+        genderRestriction = 'FEMALE';
+      } else if (selectedContent === 'DOUBLE_MALE') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'MALE';
+      } else if (selectedContent === 'DOUBLE_FEMALE') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'FEMALE';
+      } else if (selectedContent === 'DOUBLE_MIXED') {
+        matchType = 'MIXED_DOUBLES';
+        genderRestriction = 'MIXED';
+      }
+
+      const apiStartDate = formatDateForAPI(startDate);
+      const apiEndDate = formatDateForAPI(endDate);
+
+      let isRankedParam: boolean | undefined = undefined;
+      if (selectedIsRanked === 'true') isRankedParam = true;
+      if (selectedIsRanked === 'false') isRankedParam = false;
+
+      const res = await tournamentsApi.getPublicTournaments({
+        limit: 10,
+        ...(cursorToUse ? { cursor: cursorToUse } : {}),
+        search: searchTerm || undefined,
+        categoryId: selectedCategoryId || undefined,
+        status: selectedStatus || undefined,
+        region: locationQuery,
+        matchType,
+        genderRestriction,
+        bracketType: selectedBracketType || undefined,
+        startDate: apiStartDate,
+        endDate: apiEndDate,
+        isRanked: isRankedParam,
+      });
+
+      const validTournaments = (res.data || []).filter((t: Tournament) => {
+        const st = (t.status as string)?.toUpperCase();
+        return !['DRAFT', 'PENDING_APPROVAL', 'SUSPENDED', 'PENDING_DELETE'].includes(st);
+      });
+
+      const sorted = sortDiscoveryTournaments(validTournaments);
+      const resNextCursor = res.meta?.nextCursor ?? null;
+      const resHasMore = Boolean(res.meta?.hasMore && resNextCursor);
+
+      if (isLoadMore) {
+        setTournaments((prev) => {
+          const existingIds = new Set(prev.map(t => t.id));
+          const uniqueNew = sorted.filter(t => !existingIds.has(t.id));
+          return [...prev, ...uniqueNew];
+        });
+      } else {
+        setTournaments(sorted);
+      }
+
+      setNextCursor(resNextCursor);
+      setHasMore(resHasMore);
+    } catch (error) {
+      console.error("Failed to fetch tournaments", error);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [
+    selectedRegion,
+    selectedWard,
+    selectedContent,
+    startDate,
+    endDate,
+    selectedIsRanked,
+    searchTerm,
+    selectedCategoryId,
+    selectedStatus,
+    selectedBracketType,
+  ]);
+
+  useEffect(() => {
+    fetchTournaments(false, null);
+  }, [fetchTournaments, filterKey]);
+
+  const handleLoadMore = () => {
+    if (!hasMore || isLoadingMore || !nextCursor) return;
+    fetchTournaments(true, nextCursor);
+  };
 
   const handleToggleFollow = async (tournament: Tournament) => {
     if (!user?.id) return;
@@ -350,7 +376,6 @@ export default function TournamentsListPage() {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
                 placeholder={translate("searchPlaceholder")}
@@ -365,7 +390,6 @@ export default function TournamentsListPage() {
                 value={selectedCategoryId}
                 onChange={(e) => {
                   setSelectedCategoryId(e.target.value);
-                  setPage(1);
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
@@ -385,7 +409,6 @@ export default function TournamentsListPage() {
                 value={selectedStatus}
                 onChange={(e) => {
                   setSelectedStatus(e.target.value);
-                  setPage(1);
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
@@ -423,7 +446,6 @@ export default function TournamentsListPage() {
                   value={selectedContent}
                   onChange={(e) => {
                     setSelectedContent(e.target.value);
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
@@ -446,7 +468,6 @@ export default function TournamentsListPage() {
                   value={selectedBracketType}
                   onChange={(e) => {
                     setSelectedBracketType(e.target.value);
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
@@ -468,7 +489,6 @@ export default function TournamentsListPage() {
                   value={selectedIsRanked}
                   onChange={(e) => {
                     setSelectedIsRanked(e.target.value);
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
@@ -493,7 +513,6 @@ export default function TournamentsListPage() {
                     if (!newRegion) {
                       setWards([]);
                     }
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
@@ -515,7 +534,6 @@ export default function TournamentsListPage() {
                   value={selectedWard}
                   onChange={(e) => {
                     setSelectedWard(e.target.value);
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100 h-10"
                 >
@@ -545,7 +563,6 @@ export default function TournamentsListPage() {
                       val = val + '/';
                     }
                     setStartDate(val);
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-955 font-bold h-10"
                 />
@@ -558,7 +575,6 @@ export default function TournamentsListPage() {
                       const parts = e.target.value.split('-');
                       if (parts.length === 3) {
                         setStartDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
-                        setPage(1);
                       }
                     }
                   }}
@@ -601,7 +617,6 @@ export default function TournamentsListPage() {
                       val = val + '/';
                     }
                     setEndDate(val);
-                    setPage(1);
                   }}
                   className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-955 font-bold h-10"
                 />
@@ -614,7 +629,6 @@ export default function TournamentsListPage() {
                       const parts = e.target.value.split('-');
                       if (parts.length === 3) {
                         setEndDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
-                        setPage(1);
                       }
                     }
                   }}
@@ -654,7 +668,6 @@ export default function TournamentsListPage() {
                   setSelectedRegion('');
                   setSelectedWard('');
                   setSearchTerm('');
-                  setPage(1);
                 }}
                 className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
                 title={translate("clearFilters")}
@@ -676,7 +689,7 @@ export default function TournamentsListPage() {
             <button
               type="button"
               aria-pressed={selectedStatus === 'COMPLETED'}
-              onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
+              onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'COMPLETED'
                   ? 'bg-slate-800 text-white shadow-sm'
@@ -688,7 +701,7 @@ export default function TournamentsListPage() {
             <button
               type="button"
               aria-pressed={selectedStatus === 'IN_PROGRESS'}
-              onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
+              onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'IN_PROGRESS'
                   ? 'bg-rose-600 text-white shadow-sm'
@@ -700,7 +713,7 @@ export default function TournamentsListPage() {
             <button
               type="button"
               aria-pressed={selectedStatus === 'REGISTRATION_OPEN'}
-              onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
+              onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'REGISTRATION_OPEN'
                   ? 'bg-emerald-600 text-white shadow-sm'
@@ -712,7 +725,7 @@ export default function TournamentsListPage() {
             <button
               type="button"
               aria-pressed={selectedStatus === 'UPCOMING'}
-              onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
+              onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'UPCOMING'
                   ? 'bg-blue-600 text-white shadow-sm'
@@ -724,7 +737,7 @@ export default function TournamentsListPage() {
             <button
               type="button"
               aria-pressed={selectedStatus === 'COMPLETED'}
-              onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
+              onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                 selectedStatus === 'COMPLETED'
                   ? 'bg-slate-900 text-white shadow-sm'
@@ -736,7 +749,7 @@ export default function TournamentsListPage() {
             {selectedStatus && (
               <button
                 type="button"
-                onClick={() => { setSelectedStatus(''); setPage(1); }}
+                onClick={() => { setSelectedStatus(''); }}
                 className="inline-flex items-center gap-1 rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-rose-700 cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -912,32 +925,35 @@ export default function TournamentsListPage() {
         </div>
       )}
 
-      {/* Cursor Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-3 mt-8">
-          <button
-            type="button"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-white shadow-2xs flex items-center gap-1.5"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>{translate('previousPage')}</span>
-          </button>
-
-          <span className="text-xs font-bold text-slate-600 px-3.5 py-2 rounded-xl bg-slate-100/90 border border-slate-200/60 min-w-24 text-center">
-            {page} / {totalPages}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-white shadow-2xs flex items-center gap-1.5"
-          >
-            <span>{translate('nextPage')}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+      {/* True Cursor Pagination: Load More / All Loaded */}
+      {!isLoading && tournaments.length > 0 && (
+        <div className="flex flex-col items-center justify-center mt-10 mb-4 gap-3">
+          {hasMore ? (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center gap-2.5 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{translate('loadingMore')}</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  <span>{translate('loadMore')}</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 text-xs font-semibold text-slate-400 py-3">
+              <span className="w-12 h-px bg-slate-200" />
+              <span>{translate('allTournamentsLoaded')}</span>
+              <span className="w-12 h-px bg-slate-200" />
+            </div>
+          )}
         </div>
       )}
 

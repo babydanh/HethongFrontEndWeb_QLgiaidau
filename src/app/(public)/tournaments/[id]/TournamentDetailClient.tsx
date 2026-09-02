@@ -845,7 +845,8 @@ const commonTranslate = useTranslations('Common');
       : []),
   ];
 
-  const hasTournamentLogo = Boolean(activeTournament.logoUrl || tournament?.logoUrl);
+  const tournamentLogo = activeTournament.logoUrl || tournament?.logoUrl;
+  const hasTournamentLogo = Boolean(tournamentLogo && typeof tournamentLogo === 'string' && tournamentLogo.trim().length > 0);
 
   const renderOrganizerBlock = () => {
     const organizer = activeTournament.organizer || tournament?.organizer;
@@ -904,61 +905,115 @@ const commonTranslate = useTranslations('Common');
     );
   };
 
-  const renderMetadataCard = () => (
-    <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-3.5">
-      {/* If tournament does NOT have custom logo -> show Organizer at top */}
-      {!hasTournamentLogo && renderOrganizerBlock()}
+  const renderMetadataCard = () => {
+    const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;
+    const isFinished = isCompleted || (hasConfirmedResults && liveMatchesCount === 0);
 
-      {/* Tournament Title & Badges */}
-      <div className="space-y-2.5">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status Badge */}
-          {(() => {
-            const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;
-            const isFinished = isCompleted || (hasConfirmedResults && liveMatchesCount === 0);
-            return (
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
-                isLive
-                  ? 'bg-rose-600 text-white'
-                  : isFinished
-                    ? 'bg-slate-700 text-white'
-                    : 'bg-emerald-600 text-white'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
-                {isLive
-                  ? (translate('inProgress') || 'Đang diễn ra')
-                  : isFinished
-                    ? (translate('completed') || 'Đã kết thúc')
-                    : (translate('upcoming') || 'Sắp diễn ra')}
-              </span>
-            );
-          })()}
+    return (
+      <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-3.5">
+        {hasTournamentLogo ? (
+          /* When tournament HAS Logo -> Display Logo + Badges + Title at Top */
+          <div className="flex items-start gap-3.5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-50 border border-slate-200/90 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+              <img
+                src={tournamentLogo || ''}
+                alt={tournament.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {/* Status Badge */}
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+                  isLive
+                    ? 'bg-rose-600 text-white'
+                    : isFinished
+                      ? 'bg-slate-700 text-white'
+                      : 'bg-emerald-600 text-white'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+                  {isLive
+                    ? (translate('inProgress') || 'Đang diễn ra')
+                    : isFinished
+                      ? (translate('completed') || 'Đã kết thúc')
+                      : (translate('upcoming') || 'Sắp diễn ra')}
+                </span>
 
-          {/* Sport Badge */}
-          {activeTournament.category?.name && (
-            <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
-              {(() => {
-                const logo = getSportLogo(activeTournament.category?.name);
-                return logo ? (
-                  <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
-                ) : null;
-              })()}
-              {activeTournament.category.name}
-            </span>
-          )}
+                {/* Sport Badge */}
+                {activeTournament.category?.name && (
+                  <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
+                    {(() => {
+                      const logo = getSportLogo(activeTournament.category?.name);
+                      return logo ? (
+                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                      ) : null;
+                    })()}
+                    {activeTournament.category.name}
+                  </span>
+                )}
 
-          {/* Ranked / Casual Badge */}
-          <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
-            activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
-          }`}>
-            {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
-          </span>
-        </div>
+                {/* Ranked / Casual Badge */}
+                <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+                  activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+                }`}>
+                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
+                </span>
+              </div>
 
-        <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
-          {tournament.name}
-        </h1>
-      </div>
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-snug">
+                {tournament.name}
+              </h1>
+            </div>
+          </div>
+        ) : (
+          /* When tournament DOES NOT have custom logo -> show Organizer at top + Title below */
+          <>
+            {renderOrganizerBlock()}
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Status Badge */}
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+                  isLive
+                    ? 'bg-rose-600 text-white'
+                    : isFinished
+                      ? 'bg-slate-700 text-white'
+                      : 'bg-emerald-600 text-white'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+                  {isLive
+                    ? (translate('inProgress') || 'Đang diễn ra')
+                    : isFinished
+                      ? (translate('completed') || 'Đã kết thúc')
+                      : (translate('upcoming') || 'Sắp diễn ra')}
+                </span>
+
+                {/* Sport Badge */}
+                {activeTournament.category?.name && (
+                  <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1.5">
+                    {(() => {
+                      const logo = getSportLogo(activeTournament.category?.name);
+                      return logo ? (
+                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                      ) : null;
+                    })()}
+                    {activeTournament.category.name}
+                  </span>
+                )}
+
+                {/* Ranked / Casual Badge */}
+                <span className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs ${
+                  activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+                }`}>
+                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
+                </span>
+              </div>
+
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
+                {tournament.name}
+              </h1>
+            </div>
+          </>
+        )}
 
       {/* Key Details Rows */}
       <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">
@@ -1267,7 +1322,8 @@ const commonTranslate = useTranslations('Common');
         />
       </div>
     </div>
-  );
+    );
+  };
 
   const renderContactCard = () => {
     const hasContact = Boolean(

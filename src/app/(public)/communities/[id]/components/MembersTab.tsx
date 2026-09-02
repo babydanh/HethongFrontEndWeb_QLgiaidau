@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag } from 'lucide-react';
+import { ClubMembersSkeleton } from '@/components/skeletons/ClubTabSkeletons';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi, MemberStreak } from '@/features/communities/api';
 import TagAssignModal from './TagAssignModal';
@@ -386,10 +387,7 @@ export default function MembersTab({
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-          <p className="text-slate-500 text-sm">{translate('loadingMembers')}</p>
-        </div>
+        <ClubMembersSkeleton />
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 space-y-8">
           {/* Section: Administrators */}

@@ -7,6 +7,7 @@ import { communitiesApi, Community } from "@/features/communities/api";
 import { JoinCommunityModal } from "@/components/shared/JoinCommunityModal";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import { Shield, Users, Trophy, MapPin, Search, Star, Loader2 } from "lucide-react";
+import { CommunityGridSkeleton } from "@/components/skeletons/CommunityCardSkeleton";
 import { getSportLogo } from "@/constants/sports";
 
 import { BRAND } from "@/constants/brand";
@@ -179,10 +180,7 @@ export default function CommunitiesPage() {
 
       {/* Grid of Community Cards */}
       {isLoading ? (
-        <div className="py-24 flex flex-col items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-          <p className="text-xs text-slate-450 font-bold animate-pulse uppercase tracking-wider">{t("loading")}</p>
-        </div>
+        <CommunityGridSkeleton count={6} />
       ) : communities.length === 0 ? (
         <div className="bg-white border border-slate-200/80 rounded-2xl p-16 text-center shadow-sm">
           <Shield className="w-12 h-12 text-slate-300 mx-auto mb-3" />

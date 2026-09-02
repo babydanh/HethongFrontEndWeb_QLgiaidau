@@ -13,6 +13,7 @@ import { buildLeaderboardStandingSlots, isLeaderboardPlaceholder } from "@/featu
 import { getRankBorderColor } from "@/components/ui/RankAvatar";
 import { getStandardRankStyles } from "@/utils/rank-style";
 import { ChevronDown, Info, Loader2, Search } from "lucide-react";
+import { LeaderboardSkeleton } from "@/components/skeletons/LeaderboardSkeleton";
 
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
 import { useAuthStore } from "@/lib/zustand/authStore";
@@ -509,10 +510,7 @@ export default function LeaderboardPage() {
                     {isFootballCategory ? (
                         <FootballTeamRankingTable rankings={footballRankings} />
                     ) : isLoading ? (
-                        <div className="bg-white rounded-lg border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
-                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-                            <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
-                        </div>
+                        <LeaderboardSkeleton />
                     ) : rankingError ? (
                         <div className="bg-white rounded-xl border border-rose-200 shadow-sm p-10 md:p-14 text-center" role="alert">
                             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">

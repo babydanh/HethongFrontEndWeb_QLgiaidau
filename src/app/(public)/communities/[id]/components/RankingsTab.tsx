@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Award, Trophy, Loader2, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ClubRankingsSkeleton } from '@/components/skeletons/ClubTabSkeletons';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking, FootballTeamRanking } from '@/features/rankings/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
@@ -225,7 +226,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
           <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={translate('teamSearchPlaceholder')} className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         {isLoading ? (
-          <div className="flex justify-center rounded-lg border border-slate-200 bg-white py-20"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
+          <ClubRankingsSkeleton />
         ) : filteredTeams.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-white p-14 text-center"><Award className="mx-auto mb-3 h-12 w-12 text-slate-300" /><p className="font-bold text-slate-800">{rankTranslate('noRankedTeams')}</p><p className="mt-1 text-xs text-slate-500">{rankTranslate('teamsAppearAfterRankedFootballMatch')}</p></div>
         ) : (
@@ -314,10 +315,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
       )}
 
       {isLoading ? (
-        <div className="py-24 flex flex-col items-center justify-center bg-white rounded-lg border border-slate-200/80 shadow-sm">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-          <p className="text-sm text-slate-450 font-bold animate-pulse">{rankTranslate('loading')}</p>
-        </div>
+        <ClubRankingsSkeleton />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200/80 overflow-hidden">
           <div className="p-16 text-center">

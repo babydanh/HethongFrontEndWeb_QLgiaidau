@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight } from 'lucide-react';
+import { PublicProfileSkeleton } from '@/components/skeletons/PublicProfileSkeleton';
 import Link from 'next/link';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
 import { formatDate } from '@/utils/format';
@@ -190,14 +191,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   }, [hasHydrated, id, router, user?.id]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-          <p className="text-slate-500 font-bold text-sm">{translate('loading')}</p>
-        </div>
-      </div>
-    );
+    return <PublicProfileSkeleton />;
   }
 
   if (error || !profile) {

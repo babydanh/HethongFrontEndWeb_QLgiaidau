@@ -10,6 +10,7 @@ import {
   Trash2,
   MapPin,
 } from "lucide-react";
+import { ClubTournamentsSkeleton } from "@/components/skeletons/ClubTabSkeletons";
 
 import { Button } from "@/components/ui/Button";
 import { TournamentTypeChoiceModal } from "@/components/TournamentTypeChoiceModal";
@@ -255,12 +256,7 @@ export default function TournamentsTab({
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-          <p className="text-slate-500 text-sm">
-            {translate("loadingTournaments")}
-          </p>
-        </div>
+        <ClubTournamentsSkeleton />
       ) : filteredTournaments.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />

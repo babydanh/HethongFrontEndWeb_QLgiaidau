@@ -1749,8 +1749,8 @@ export default function HomePage() {
                               )}
                             </div>
                           </div>
-                          {/* Matches List: 2 matches in 2 columns (1 row on md+) */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
+                          {/* Matches List: 2 matches in 2 separate rows (1 match per row) */}
+                          <div className="space-y-2.5">
                             {displayMatches.map((match) => renderCompletedMatchRow(match, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>

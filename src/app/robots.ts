@@ -19,6 +19,25 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
       {
+        userAgent: ['Googlebot', 'GoogleOther', 'Google-InspectionTool'],
+        allow: [
+          '/',
+          '/tournaments',
+          '/tournaments/*',
+          '/communities',
+          '/communities/*',
+          '/leaderboard',
+        ],
+        disallow: [
+          '/admin/*',
+          '/organizer/*',
+          '/moderation/*',
+          '/profile/*',
+          '/lite/*',
+          '/auth/*',
+        ],
+      },
+      {
         userAgent: 'Googlebot-Image',
         allow: [
           '/',

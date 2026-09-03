@@ -49,6 +49,53 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   };
 }
 
-export default function TournamentLayout({ children }: LayoutProps) {
-  return <>{children}</>;
+export default async function TournamentLayout({
+  children,
+  params,
+}: LayoutProps) {
+  const resolvedParams = await params;
+  const tournament = await getTournament(resolvedParams.id);
+
+  const eventSchema = tournament
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'SportsEvent',
+        name: tournament.name,
+        description: stripHtmlAndNormalize(tournament.description, 200) || tournament.name,
+        startDate: tournament.startDate || undefined,
+        endDate: tournament.endDate || undefined,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: {
+          '@type': 'Place',
+          name: tournament.venue?.name || tournament.locationAddress || 'Sân thi đấu thể thao',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: tournament.city || 'Việt Nam',
+            streetAddress: tournament.locationAddress || tournament.venue?.locationAddress || undefined,
+            addressCountry: 'VN',
+          },
+        },
+        image: [
+          tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_1024.png',
+        ],
+        organizer: {
+          '@type': 'SportsOrganization',
+          name: 'SportO',
+          url: 'https://sporto.asia',
+        },
+      }
+    : null;
+
+  return (
+    <>
+      {eventSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchema) }}
+        />
+      )}
+      {children}
+    </>
+  );
 }

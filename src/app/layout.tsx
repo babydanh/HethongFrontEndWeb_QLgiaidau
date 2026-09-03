@@ -97,17 +97,25 @@ export default async function RootLayout({
       '@context': 'https://schema.org',
       '@type': 'SportsOrganization',
       name: BRAND.name,
-      alternateName: `${BRAND.name} Asia`,
+      alternateName: [
+        'SportO - Chơi cùng nhau',
+        'SportO Giải Đấu',
+        'SportO Thể Thao',
+        'SportO Asia',
+      ],
+      slogan: tagline,
       url: BRAND.domain,
       logo: {
         '@type': 'ImageObject',
-        url: 'https://sporto.asia/sporto_512.png',
+        url: `${BRAND.domain}/sporto_512.png`,
         width: '512',
         height: '512',
       },
-      image: 'https://sporto.asia/sporto_1024.png',
+      image: `${BRAND.domain}/sporto_1024.png`,
       description: `${BRAND.name} - ${tagline}. ${description}`,
-      sameAs: [],
+      sameAs: [
+        'https://play.google.com/store/apps/details?id=com.sporto.app',
+      ],
     },
     {
       '@context': 'https://schema.org',
@@ -115,6 +123,14 @@ export default async function RootLayout({
       name: BRAND.name,
       alternateName: `${BRAND.name} - ${tagline}`,
       url: BRAND.domain,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${BRAND.domain}/tournaments?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
     },
   ];
 

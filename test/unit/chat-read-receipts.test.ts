@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { applyRoomReadEvent, getMessageViewers } from '../../src/features/chat/read-receipts';
-import type { ChatParticipant } from '../../src/types/chat';
+import { applyRoomReadEvent, getMessageViewers } from '@/features/chat/read-receipts';
+import type { ChatParticipant } from '@/types/chat';
 
 const message = {
   senderId: 'sender',
@@ -22,7 +22,7 @@ test('includes a viewer at the exact message timestamp boundary', () => {
     message,
     'sender',
   );
-  assert.deepEqual(viewers.map(({ id }) => id), ['viewer']);
+  assert.deepEqual(viewers.map(({ id }: ChatParticipant) => id), ['viewer']);
 });
 
 test('excludes the sender and current user', () => {
@@ -36,7 +36,7 @@ test('excludes the sender and current user', () => {
     message,
     'current',
   );
-  assert.deepEqual(viewers.map(({ id }) => id), ['viewer']);
+  assert.deepEqual(viewers.map(({ id }: ChatParticipant) => id), ['viewer']);
 });
 
 test('deduplicates viewers by user ID', () => {
@@ -75,5 +75,5 @@ test('realtime read event updates the canonical room timestamp used by derivatio
     message,
     'sender',
   );
-  assert.deepEqual(viewers.map(({ id }) => id), ['viewer']);
+  assert.deepEqual(viewers.map(({ id }: ChatParticipant) => id), ['viewer']);
 });

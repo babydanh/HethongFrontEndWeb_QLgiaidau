@@ -1,6 +1,7 @@
 import { api } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
 import type { ChatMessage } from '@/types/community-social';
+import type { ChatParticipant } from '@/types/chat';
 
 export interface InboxRoom {
   id: string;
@@ -18,7 +19,7 @@ export interface InboxRoom {
   updatedAt: string;
   canSendMessages?: boolean;
   messageRestriction?: 'STRANGER' | 'BLOCKED' | null;
-  participants: Array<{ id: string; fullName: string | null; avatarUrl: string | null; lastReadAt?: string | null }>;
+  participants: ChatParticipant[];
   lastMessage?: {
     id?: string;
     content: string;

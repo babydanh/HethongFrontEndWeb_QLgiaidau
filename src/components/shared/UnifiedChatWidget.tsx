@@ -59,6 +59,7 @@ import {
   type InboxRoomsResponse,
 } from '@/features/chat/inbox-api';
 import { chatApi } from '@/features/chat/api';
+import { applyRoomReadEvent, getMessageViewers } from '@/features/chat/read-receipts';
 import { uploadApi } from '@/features/upload/api';
 import { communitiesApi } from '@/features/communities/api';
 import { getCommunityTagDisplayName } from '@/app/(public)/communities/[id]/components/tag-display';
@@ -869,14 +870,35 @@ export default function UnifiedChatWidget() {
     };
 
     const onRoomRead = (data: { roomId: string; userId: string; readAt: string }) => {
-      if (!data?.roomId || !data?.userId) return;
-      setRoomReadStates((prev) => ({
-        ...prev,
-        [data.roomId]: {
-          ...(prev[data.roomId] || {}),
-          [data.userId]: data.readAt,
-        },
-      }));
+      if (!data?.roomId || !data?.userId || !data?.readAt) return;
+      setRoomReadStates((prev) => applyRoomReadEvent(prev, data));
+      setRooms((current) => current.map((room) => (
+        room.id === data.roomId
+          ? {
+              ...room,
+              participants: room.participants.map((participant) => (
+                participant.id === data.userId
+                  ? { ...participant, lastReadAt: data.readAt }
+                  : participant
+              )),
+            }
+          : room
+      )));
+      setSelection((current) => (
+        current.kind === 'ROOM' && current.room.id === data.roomId
+          ? {
+              ...current,
+              room: {
+                ...current.room,
+                participants: current.room.participants.map((participant) => (
+                  participant.id === data.userId
+                    ? { ...participant, lastReadAt: data.readAt }
+                    : participant
+                )),
+              },
+            }
+          : current
+      ));
     };
 
     socket.on('chat:message', onMessage);
@@ -2840,30 +2862,46 @@ export default function UnifiedChatWidget() {
                                 })()}
                               </div>
 
-                              {/* Real Read receipts / Seen indicator */}
+                              {/* Read receipts are derived only from participant.lastReadAt. */}
                               {index === roomMessages.length - 1 && message.mine && (() => {
-                                const otherParticipant = selectedRoom?.participants?.find((p) => p.id !== user?.id);
-                                const otherLastRead = selectedRoom ? (roomReadStates[selectedRoom.id]?.[otherParticipant?.id || ''] || otherParticipant?.lastReadAt) : null;
-                                const isSeen = otherLastRead ? new Date(otherLastRead).getTime() >= new Date(message.createdAt).getTime() : false;
+                                const viewers = getMessageViewers(
+                                  selectedRoom?.participants ?? [],
+                                  selectedRoom ? roomReadStates[selectedRoom.id] : undefined,
+                                  message,
+                                  user?.id,
+                                );
 
-                                if (isSeen && otherParticipant) {
+                                if (viewers.length > 0) {
+                                  const viewerNames = viewers
+                                    .map((viewer) => viewer.fullName?.trim())
+                                    .filter((name): name is string => Boolean(name))
+                                    .join(', ');
                                   return (
-                                    <div className="mt-1 flex items-center justify-end gap-1 px-1" title={translate('seenBy', { name: otherParticipant.fullName || '' })}>
-                                      <span className="text-[9px] text-slate-400 font-medium">{translate('seen')}</span>
-                                      {otherParticipant.avatarUrl ? (
-                                        <img
-                                          src={otherParticipant.avatarUrl}
-                                          alt={otherParticipant.fullName || translate('seen')}
-                                          className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
-                                        />
-                                      ) : (
-                                        <span
-                                          aria-hidden="true"
-                                          className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-100 text-[8px] font-bold text-blue-700"
-                                        >
-                                          {(otherParticipant.fullName || '?').trim().charAt(0).toUpperCase()}
-                                        </span>
-                                      )}
+                                    <div
+                                      className="mt-1 flex items-center justify-end gap-1 px-1"
+                                      title={translate('seenBy', { name: viewerNames || translate('member') })}
+                                    >
+                                      <span className="text-[9px] font-medium text-slate-400">{translate('seen')}</span>
+                                      <span className="flex -space-x-1">
+                                        {viewers.map((viewer) => (
+                                          viewer.avatarUrl ? (
+                                            <img
+                                              key={viewer.id}
+                                              src={viewer.avatarUrl}
+                                              alt={viewer.fullName || translate('member')}
+                                              className="h-3.5 w-3.5 rounded-full border border-white object-cover shadow-2xs"
+                                            />
+                                          ) : (
+                                            <span
+                                              key={viewer.id}
+                                              aria-label={viewer.fullName || translate('member')}
+                                              className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white bg-blue-100 text-[8px] font-bold text-blue-700 shadow-2xs"
+                                            >
+                                              {(viewer.fullName || '?').trim().charAt(0).toUpperCase() || '?'}
+                                            </span>
+                                          )
+                                        ))}
+                                      </span>
                                     </div>
                                   );
                                 }
@@ -2872,8 +2910,7 @@ export default function UnifiedChatWidget() {
                                   <div className="mt-1 flex items-center justify-end gap-1 px-1">
                                     <span className="flex items-center gap-0.5 text-[9px] font-medium text-slate-400">
                                       <Check className="h-3 w-3 text-blue-500" />
-                                                                            {translate('chatSent')}
-
+                                      {translate('chatSent')}
                                     </span>
                                   </div>
                                 );

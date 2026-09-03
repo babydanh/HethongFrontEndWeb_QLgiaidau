@@ -1,3 +1,10 @@
+export interface ChatParticipant {
+  id: string;
+  fullName: string | null;
+  avatarUrl?: string | null;
+  lastReadAt?: string | null;
+}
+
 export interface ChatMessage {
   id: string;
   senderId: string;
@@ -15,7 +22,7 @@ export interface ChatConversation {
   name?: string;
   type: 'DIRECT' | 'PRIVATE' | 'GROUP';
   lastMessage?: ChatMessage;
-  participants: { id: string; fullName: string; avatarUrl?: string }[];
+  participants: ChatParticipant[];
   updatedAt: string;
 }
 

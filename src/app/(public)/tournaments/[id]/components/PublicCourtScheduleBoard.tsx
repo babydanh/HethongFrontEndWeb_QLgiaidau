@@ -631,11 +631,11 @@ export default function PublicCourtScheduleBoard({
           <div className="flex items-center gap-2 flex-wrap">
             {tournament?.logoUrl && (
               <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
-                <div className="h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 p-0.5 overflow-hidden shrink-0 shadow-2xs">
+                <div className="h-8 w-8 rounded-full border border-slate-200 bg-white p-0.5 overflow-hidden shrink-0 shadow-2xs">
                   <img
                     src={tournament.logoUrl}
                     alt={tournament.name || 'Tournament logo'}
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover rounded-full"
                   />
                 </div>
                 <span className="text-xs font-black text-slate-900 hidden sm:inline max-w-[160px] truncate" title={tournament.name}>
@@ -872,10 +872,10 @@ export default function PublicCourtScheduleBoard({
                 return (
                   <div
                     key={slot.label}
-                    className="flex items-start justify-center border-b border-amber-300/80 text-[10px] sm:text-[11px] font-black text-slate-900"
+                    className="flex items-center justify-center border-b border-amber-300/80 text-[10px] sm:text-[11px] font-black text-slate-900"
                     style={{ height: `${cellHeight}px` }}
                   >
-                    <span className="-mt-2 font-black">{slot.label}</span>
+                    <span className="font-black tracking-tight">{slot.label}</span>
                   </div>
                 );
               })}
@@ -1143,144 +1143,6 @@ export default function PublicCourtScheduleBoard({
           </div>
         </div>
       </div>
-
-      {/* ── 3. UNSCHEDULED MATCHES SECTION / DRAWER ── */}
-      {unscheduledMatches.length > 0 && (
-        <div className="border-t border-slate-200 bg-slate-50/60 p-3.5 flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-              <span className="text-xs font-extrabold text-slate-800">
-                {translate('timelineUnscheduledCount', { count: unscheduledMatches.length })}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsQueueOpen((prev) => !prev)}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1"
-            >
-              <span>{isQueueOpen ? translate('timelineHideQueue') : translate('timelineShowQueue')}</span>
-              <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isQueueOpen ? 'rotate-90' : ''}`} />
-            </button>
-          </div>
-
-          {isQueueOpen && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
-              {filteredUnscheduledMatches.map((m) => {
-                const mRaw = m as unknown as Record<string, unknown>;
-                const stageLabel = getAccurateRoundLabel(m, maxRound);
-                const isLive = m.status === 'ONGOING';
-                const isCompleted = m.status === 'COMPLETED';
-                const p1Score = (mRaw.participant1Score ?? mRaw.score1) as string | number | undefined;
-                const p2Score = (mRaw.participant2Score ?? mRaw.score2) as string | number | undefined;
-                const isP1Winner = isCompleted && ((Number(p1Score) || 0) > (Number(p2Score) || 0));
-                const isP2Winner = isCompleted && ((Number(p2Score) || 0) > (Number(p1Score) || 0));
-
-                const uDiv = divisions.find((d) => d.id === (mRaw.divisionId as string));
-                const { isFootball: uIsFootball, isSingles: uIsSingles } = detectSportAndFormat(uDiv);
-                const uc1 = formatCompetitorDisplay(m.participant1, uIsFootball, uIsSingles);
-                const uc2 = formatCompetitorDisplay(m.participant2, uIsFootball, uIsSingles);
-                const uSetList = extractSetScores(m);
-
-                return (
-                  <div
-                    key={m.id}
-                    onClick={() => onOpenMatchDetail?.(m)}
-                    className="p-2.5 rounded-xl border border-slate-200/90 bg-white shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between gap-2 group"
-                  >
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 pb-1 border-b border-slate-100">
-                      <span className="text-slate-700">#{m.matchOrder || '—'} · {stageLabel}</span>
-                      <span className="bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded text-[9px]">
-                        {translate('timelinePendingAssignment')}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className={`flex items-center justify-between text-xs font-bold ${isP1Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
-                          <div className="flex -space-x-1 shrink-0">
-                            {uc1.avatars.map((av, idx) => (
-                              <span
-                                key={idx}
-                                className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center text-[9px] shrink-0 font-black ${av.bg}`}
-                              >
-                                {av.initial}
-                              </span>
-                            ))}
-                          </div>
-                          <span className="truncate flex items-center gap-1">
-                            {isP1Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                            <span className="truncate">{uc1.displayLabel}</span>
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {uSetList.length > 0 ? (
-                            uSetList.map((s, idx) => (
-                              <span
-                                key={idx}
-                                className={`min-w-[18px] h-[18px] px-0.5 flex items-center justify-center rounded text-[10px] font-black border ${
-                                  Number(s.s1) > Number(s.s2) ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-50 text-slate-800 border-slate-200'
-                                }`}
-                              >
-                                {s.s1}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="font-mono font-black text-xs text-slate-400">--</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={`flex items-center justify-between text-xs font-bold ${isP2Winner ? 'text-blue-600 font-black' : 'text-slate-900'}`}>
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
-                          <div className="flex -space-x-1 shrink-0">
-                            {uc2.avatars.map((av, idx) => (
-                              <span
-                                key={idx}
-                                className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center text-[9px] shrink-0 font-black ${av.bg}`}
-                              >
-                                {av.initial}
-                              </span>
-                            ))}
-                          </div>
-                          <span className="truncate flex items-center gap-1">
-                            {isP2Winner && <Trophy className="h-3 w-3 text-amber-500 shrink-0" />}
-                            <span className="truncate">{uc2.displayLabel}</span>
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {uSetList.length > 0 ? (
-                            uSetList.map((s, idx) => (
-                              <span
-                                key={idx}
-                                className={`min-w-[18px] h-[18px] px-0.5 flex items-center justify-center rounded text-[10px] font-black border ${
-                                  Number(s.s2) > Number(s.s1) ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-50 text-slate-800 border-slate-200'
-                                }`}
-                              >
-                                {s.s2}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="font-mono font-black text-xs text-slate-400">--</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                      <span>Chờ xếp giờ</span>
-                      <span className="text-blue-600 font-bold group-hover:underline flex items-center gap-0.5">
-                        <span>{translate('timelineMatchDetails')}</span>
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -340,8 +340,7 @@ const commonTranslate = useTranslations('Common');
       const response = await matchesApi.getMatches(
         {
           tournament_id: tournamentId,
-          division_id: selectedDivisionId || undefined,
-          status: 'ONGOING,IN_PROGRESS',
+          status: 'ONGOING,IN_PROGRESS,LIVE,PLAYING',
           limit: 100,
         },
         signal,
@@ -363,7 +362,7 @@ const commonTranslate = useTranslations('Common');
       });
       const nextCounts: Record<string, number> = {};
       for (const match of ongoing) {
-        const divisionId = match.divisionId ?? selectedDivisionId;
+        const divisionId = match.divisionId || selectedDivisionId || 'default';
         if (!divisionId) continue;
         nextCounts[divisionId] = (nextCounts[divisionId] ?? 0) + 1;
       }

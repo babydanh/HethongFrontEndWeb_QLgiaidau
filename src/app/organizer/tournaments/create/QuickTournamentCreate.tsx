@@ -38,6 +38,9 @@ import Image from 'next/image';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 import { getSportLogo } from '@/constants/sports';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { OrganizerVerificationBanner } from '@/components/organizer/OrganizerVerificationBanner';
+import Link from 'next/link';
 
 /* 4 Biểu tượng sơ đồ thể thức thi đấu chuyên nghiệp */
 const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -295,6 +298,7 @@ const quickDefaults = () => {
 export default function QuickTournamentCreate() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const user = useAuthStore((state) => state.user);
   const translate = useTranslations('OrganizerQuickCreate');
   const quickSchema = useMemo(() => buildQuickSchema(translate), [translate]);
   const getFormatLabel = (key: string) => {
@@ -813,6 +817,11 @@ export default function QuickTournamentCreate() {
           </div>
         </div>
 
+        {/* Verification Gatekeeper Banner */}
+        <OrganizerVerificationBanner
+          isEmailVerified={user?.isEmailVerified}
+          email={user?.email}
+        />
 
         {/* Form Container with 2-Column Responsive Layout */}
         <form
@@ -1448,24 +1457,45 @@ export default function QuickTournamentCreate() {
 
               {/* Card Phải 4: Action Buttons (Sticky Submit) */}
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
-                <button
-                  type="submit"
-                  data-testid="submit-quick-create-btn"
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      {translate('creatingTournament')}
-                    </>
-                  ) : (
-                    <>
-                      {translate('createTournamentNow')}
+                {!user?.isEmailVerified ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-left">
+                      <p className="text-xs font-bold text-amber-900">
+                        {translate('verificationAlertTitle')}
+                      </p>
+                      <p className="mt-1 text-[11px] font-medium text-amber-700 leading-relaxed">
+                        {translate('verificationAlertDesc')}
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/auth/verify-email"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-600 py-3 text-xs font-bold text-white shadow-md hover:bg-amber-700 transition active:scale-[0.99] cursor-pointer"
+                    >
+                      <span>{translate('verificationVerifyButton')}</span>
                       <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
+                    </Link>
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    data-testid="submit-quick-create-btn"
+                    disabled={isSubmitting}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99]"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        {translate('creatingTournament')}
+                      </>
+                    ) : (
+                      <>
+                        {translate('createTournamentNow')}
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <p className="text-center text-[11px] text-slate-400">
                   {translate('submitHint')}

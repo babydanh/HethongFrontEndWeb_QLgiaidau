@@ -1,34 +1,50 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import toast from 'react-hot-toast';
+import {
+  ChevronLeft,
+  UploadCloud,
+  X,
+  Loader2,
+  Sparkles,
+  Shield,
+  Users,
+  Lock,
+  Globe,
+  CheckCircle2,
+  Camera,
+  MapPin,
+  HelpCircle,
+  ArrowRight,
+  Trophy,
+} from 'lucide-react';
+
 import { communitiesApi } from '@/features/communities/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { uploadApi } from '@/features/upload/api';
-import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { ChevronLeft, Plus, Trash2, UploadCloud, X, Loader2, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import Image from 'next/image';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
+import { CircularImageCropModal } from '@/components/common/CircularImageCropModal';
+import { getSportLogo } from '@/constants/sports';
 
 type CreateCommunityFormValues = {
   name: string;
   description?: string;
-  rules?: string;
   provinceCode: string;
   wardCode?: string;
   locationAddress?: string;
   categoryIds: string[];
   visibility: 'PUBLIC' | 'PRIVATE' | 'RESTRICTED';
   joinMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
-  joinQuestions?: { value: string }[];
   logoUrl?: string;
   bannerUrl?: string;
 };
@@ -37,62 +53,81 @@ export default function CreateCommunityPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const translate = useTranslations('CommunityCreate');
-  const createCommunitySchema = z.object({
-    name: z.string().min(3, translate('validation.nameMin')).max(255, translate('validation.nameMax')),
-    description: z.string().max(1000, translate('validation.descriptionMax')).optional(),
-    rules: z.string().max(5000, translate('validation.rulesMax')).optional(),
-    provinceCode: z.string().min(1, translate('validation.provinceRequired')),
-    wardCode: z.string().optional(),
-    locationAddress: z.string().max(255, translate('validation.locationMax')).optional(),
-    categoryIds: z.array(z.string().uuid()).length(1, translate('validation.categoryExactOne')),
-    visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
-    joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
-    joinQuestions: z.array(z.object({ value: z.string() })).optional(),
-    logoUrl: z.string().optional(),
-    bannerUrl: z.string().optional(),
-  });
+
+  const createCommunitySchema = useMemo(
+    () =>
+      z.object({
+        name: z
+          .string()
+          .min(3, translate('validation.nameMin'))
+          .max(255, translate('validation.nameMax')),
+        description: z.string().max(1000, translate('validation.descriptionMax')).optional(),
+        provinceCode: z.string().min(1, translate('validation.provinceRequired')),
+        wardCode: z.string().optional(),
+        locationAddress: z.string().max(255, translate('validation.locationMax')).optional(),
+        categoryIds: z.array(z.string().uuid()).length(1, translate('validation.categoryExactOne')),
+        visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
+        joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
+        logoUrl: z.string().optional(),
+        bannerUrl: z.string().optional(),
+      }),
+    [translate]
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const bannerInputRef = useRef<HTMLInputElement>(null);
-
   const [categories, setCategories] = useState<Category[]>([]);
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
 
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<CreateCommunityFormValues>({
+  // Image upload & cropping states
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [rawLogoSrc, setRawLogoSrc] = useState<string>('');
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<CreateCommunityFormValues>({
     resolver: zodResolver(createCommunitySchema),
     defaultValues: {
       name: '',
       description: '',
-      rules: '',
       provinceCode: '',
       wardCode: '',
       locationAddress: '',
       categoryIds: [],
       visibility: 'PUBLIC',
       joinMode: 'OPEN',
-      joinQuestions: [],
       logoUrl: '',
       bannerUrl: '',
-    }
+    },
   });
 
-  const { fields: questionFields, append: appendQuestion, remove: removeQuestion } = useFieldArray({
-    control,
-    name: "joinQuestions",
-  });
-
+  const watchName = watch('name');
+  const watchDescription = watch('description');
   const watchProvince = watch('provinceCode');
   const watchWard = watch('wardCode');
   const watchLocationAddress = watch('locationAddress');
+  const watchVisibility = watch('visibility');
   const watchJoinMode = watch('joinMode');
   const watchCategoryIds = watch('categoryIds');
   const watchLogoUrl = watch('logoUrl');
   const watchBannerUrl = watch('bannerUrl');
 
+  // Selected Category Info for Live Preview
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === watchCategoryIds?.[0]),
+    [categories, watchCategoryIds]
+  );
+
+  // Auto address recognition
   const autoDetectedAddress = useAutoAddressParser({
     addressValue: watchLocationAddress,
     provinces,
@@ -109,17 +144,24 @@ export default function CreateCommunityPage() {
   });
 
   useEffect(() => {
-    // Load categories (filter active only)
-    categoriesApi.getCategories()
-      .then(res => {
+    // Load categories (active only)
+    categoriesApi
+      .getCategories()
+      .then((res) => {
         if (Array.isArray(res.data)) {
-          setCategories(res.data.filter(c => c.isActive !== false));
+          const activeList = res.data.filter((c) => c.isActive !== false);
+          setCategories(activeList);
+          // Pre-select first sport if not chosen
+          if (activeList.length > 0 && (!watchCategoryIds || watchCategoryIds.length === 0)) {
+            setValue('categoryIds', [activeList[0].id], { shouldValidate: true });
+          }
         }
       })
       .catch(console.error);
+
     // Load provinces
     regionsApi.getProvinces().then(setProvinces).catch(console.error);
-  }, []);
+  }, [setValue]);
 
   useEffect(() => {
     if (watchProvince) {
@@ -131,22 +173,33 @@ export default function CreateCommunityPage() {
     }
   }, [watchProvince, setValue]);
 
-  const handleCategoryToggle = (id: string) => {
-    // A club owns one primary sport. Selecting another replaces the previous one.
-    setValue('categoryIds', [id], { shouldValidate: true });
-  };
-
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Logo file selection -> Open Circular Crop Modal
+  const handleLogoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error(translate('logoTooLarge'));
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setRawLogoSrc(reader.result);
+        setCropModalOpen(true);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Crop confirm callback
+  const handleCropConfirm = async (croppedBlob: Blob) => {
+    setCropModalOpen(false);
     try {
       setIsUploadingLogo(true);
+      const file = new File([croppedBlob], 'club_logo.png', { type: 'image/png' });
       const res = await uploadApi.uploadImage(file);
       setValue('logoUrl', res.url, { shouldValidate: true });
       toast.success(translate('logoUploaded'));
@@ -158,6 +211,7 @@ export default function CreateCommunityPage() {
     }
   };
 
+  // Banner file upload
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -189,8 +243,8 @@ export default function CreateCommunityPage() {
 
     try {
       setIsSubmitting(true);
-      const provinceName = provinces.find(p => p.code === data.provinceCode)?.name || '';
-      const wardName = wards.find(w => w.code === data.wardCode)?.name || '';
+      const provinceName = provinces.find((p) => p.code === data.provinceCode)?.name || '';
+      const wardName = wards.find((w) => w.code === data.wardCode)?.name || '';
       const detailedAddress = data.locationAddress?.trim() || '';
       const combinedAddress = [detailedAddress, wardName, provinceName].filter(Boolean).join(', ');
 
@@ -201,13 +255,13 @@ export default function CreateCommunityPage() {
         locationAddress: combinedAddress,
         districtCode: null,
         wardCode: data.wardCode || null,
-        joinQuestions: data.joinQuestions?.map(q => q.value).filter(Boolean) || [],
+        joinQuestions: [],
       };
-      
+
       const res = await communitiesApi.createCommunity(payload);
       toast.success(translate('createSuccess'));
-      
-      const responseData = res as { data?: { id?: string }, id?: string };
+
+      const responseData = res as { data?: { id?: string }; id?: string };
       const communityId = responseData?.data?.id || responseData?.id;
       if (communityId) {
         router.push(`/communities/${communityId}`);
@@ -222,217 +276,373 @@ export default function CreateCommunityPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <button 
-          onClick={() => router.back()}
-          className="flex items-center text-slate-500 hover:text-slate-900 mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          {translate('back')}
-        </button>
+  const selectedProvinceName = provinces.find((p) => p.code === watchProvince)?.name || '';
 
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-blue-600 px-8 py-10 text-white text-center rounded-t-xl">
-            <h1 className="text-3xl font-bold mb-2">{translate('title')}</h1>
-            <p className="text-blue-100">{translate('subtitle')}</p>
+  return (
+    <div className="min-h-screen bg-slate-50/60 pb-16 pt-6 sm:pt-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back navigation & Header */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition shadow-2xs cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {translate('back')}
+            </button>
+            <div className="h-4 w-px bg-slate-200" />
+            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+              CLB / Community
+            </span>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-10">
-            {/* BƯỚC 1: THÔNG TIN CƠ BẢN */}
-            <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step1')}</h2>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+              {translate('title')}
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">{translate('subtitle')}</p>
+          </div>
+        </div>
+
+        {/* 2 Cột Layout: Trái (Form tinh gọn) - Phải (Preview & Media & Submit) */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
+            
+            {/* ─── CỘT TRÁI (7 CỘT): FORM THÔNG TIN TINH GỌN ─── */}
+            <div className="space-y-6 lg:col-span-7">
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {translate('clubName')} <span className="text-rose-500">*</span>
-                </label>
-                <input 
-                  {...register('name')}
-                  placeholder={translate('namePlaceholder')}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-                {errors.name && <p className="text-rose-500 text-sm mt-1">{errors.name.message}</p>}
-              </div>
+              {/* Thẻ 1: Thông tin nhận diện & Môn thể thao */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <Trophy className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                    {translate('step1')}
+                  </h2>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {translate('description')}
-                </label>
-                <textarea 
-                  {...register('description')}
-                  rows={3}
-                  placeholder={translate('descriptionPlaceholder')}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
+                {/* Tên câu lạc bộ */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    {translate('clubName')} <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    {...register('name')}
+                    placeholder={translate('namePlaceholder')}
+                    className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 ${
+                      errors.name
+                        ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+                        : 'border-slate-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                    }`}
+                  />
+                  {errors.name && (
+                    <p className="text-xs text-rose-500 font-medium mt-1">{errors.name.message}</p>
+                  )}
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {translate('rules')}
-                </label>
-                <textarea 
-                  {...register('rules')}
-                  rows={4}
-                  placeholder={translate('rulesPlaceholder')}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
-            </section>
+                {/* Môn thể thao chính */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    {translate('primarySport')} <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {categories.map((cat) => {
+                      const isSelected = watchCategoryIds?.includes(cat.id);
+                      const sportIcon = getSportLogo(cat.name);
 
-            {/* BƯỚC 2: KHU VỰC & MÔN THỂ THAO */}
-            <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step2')}</h2>
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setValue('categoryIds', [cat.id], { shouldValidate: true })}
+                          className={`flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition cursor-pointer ${
+                            isSelected
+                              ? 'border-blue-600 bg-blue-50/80 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          {sportIcon ? (
+                            <div className="relative h-6 w-6 shrink-0">
+                              <Image
+                                src={sportIcon}
+                                alt={cat.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <Trophy className="h-4 w-4 text-slate-400 shrink-0" />
+                          )}
+                          <span className="text-xs font-semibold truncate">{cat.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {errors.categoryIds && (
+                    <p className="text-xs text-rose-500 font-medium mt-1">
+                      {errors.categoryIds.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Mô tả ngắn */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    {translate('description')}
+                  </label>
+                  <textarea
+                    {...register('description')}
+                    rows={2}
+                    placeholder={translate('descriptionPlaceholder')}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  {errors.description && (
+                    <p className="text-xs text-rose-500 font-medium mt-1">
+                      {errors.description.message}
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              {/* Thẻ 2: Khu vực & Địa điểm sân bãi */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                    {translate('step2')}
+                  </h2>
+                </div>
+
+                {/* Tên sân / Địa chỉ chi tiết */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    {translate('locationAddressLabel')}
+                  </label>
+                  <input
+                    {...register('locationAddress')}
+                    placeholder={translate('locationAddressPlaceholder')}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                      <span>
+                        {translate('autoDetectedAddress')}{' '}
+                        <strong>
+                          {autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}
+                        </strong>
+                        {autoDetectedAddress.ward
+                          ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}`
+                          : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dropdowns Tỉnh / Phường */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      {translate('province')} <span className="text-rose-500">*</span>
+                    </label>
+                    <SearchableRegionSelect
+                      value={watchProvince || ''}
+                      options={provinces}
+                      inputName="provinceCode"
+                      placeholder={translate('provincePlaceholder')}
+                      onChange={(value) => {
+                        setValue('provinceCode', value, { shouldValidate: true, shouldDirty: true });
+                        setValue('wardCode', '', { shouldValidate: true, shouldDirty: true });
+                      }}
+                      error={errors.provinceCode?.message}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      {translate('ward')}
+                    </label>
+                    <SearchableRegionSelect
+                      value={watchWard || ''}
+                      options={wards}
+                      inputName="wardCode"
+                      placeholder={translate('wardPlaceholder')}
+                      disabled={!watchProvince || wards.length === 0}
+                      onChange={(value) =>
+                        setValue('wardCode', value, { shouldValidate: true, shouldDirty: true })
+                      }
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Thẻ 3: Chế độ hiển thị & Quyền riêng tư */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                    {translate('step4')}
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Chế độ hiển thị */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      {translate('visibility')}
+                    </label>
+                    <div className="space-y-2">
+                      {[
+                        {
+                          value: 'PUBLIC',
+                          label: translate('publicLabel'),
+                          desc: translate('publicDescription'),
+                          Icon: Globe,
+                        },
+                        {
+                          value: 'PRIVATE',
+                          label: translate('privateLabel'),
+                          desc: translate('privateDescription'),
+                          Icon: Lock,
+                        },
+                      ].map((item) => {
+                        const isChecked = watchVisibility === item.value;
+                        const ItemIcon = item.Icon;
+                        return (
+                          <div
+                            key={item.value}
+                            onClick={() =>
+                              setValue('visibility', item.value as 'PUBLIC' | 'PRIVATE')
+                            }
+                            className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition ${
+                              isChecked
+                                ? 'border-blue-600 bg-blue-50/70 text-blue-900 ring-1 ring-blue-600'
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <ItemIcon className="w-4 h-4 mt-0.5 shrink-0 text-slate-600" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold leading-tight text-slate-900">
+                                {item.label}
+                              </p>
+                              <p className="text-[11px] text-slate-500 leading-normal mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Chế độ duyệt thành viên */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      {translate('joinMode')}
+                    </label>
+                    <div className="space-y-2">
+                      {[
+                        {
+                          value: 'OPEN',
+                          label: translate('openLabel'),
+                          desc: translate('openDescription'),
+                          Icon: Users,
+                        },
+                        {
+                          value: 'APPROVAL',
+                          label: translate('approvalLabel'),
+                          desc: translate('approvalDescription'),
+                          Icon: Shield,
+                        },
+                      ].map((item) => {
+                        const isChecked = watchJoinMode === item.value;
+                        const ItemIcon = item.Icon;
+                        return (
+                          <div
+                            key={item.value}
+                            onClick={() =>
+                              setValue('joinMode', item.value as 'OPEN' | 'APPROVAL')
+                            }
+                            className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition ${
+                              isChecked
+                                ? 'border-blue-600 bg-blue-50/70 text-blue-900 ring-1 ring-blue-600'
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <ItemIcon className="w-4 h-4 mt-0.5 shrink-0 text-slate-600" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold leading-tight text-slate-900">
+                                {item.label}
+                              </p>
+                              <p className="text-[11px] text-slate-500 leading-normal mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+
+            {/* ─── CỘT PHẢI (5 CỘT - STICKY): PREVIEW & MEDIA UPLOAD & SUBMIT ─── */}
+            <div className="space-y-6 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {translate('locationAddressLabel')}
-                </label>
-                <input 
-                  {...register('locationAddress')}
-                  placeholder={translate('locationAddressPlaceholder')}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-                {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
-                  <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
-                    <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
-                    <span>
-                      {translate('autoDetectedAddress')} <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
-                      {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+              {/* Thẻ Xem trước CLB Thực tế (Live Visual Preview) */}
+              <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Xem trước diện mạo CLB
                     </span>
                   </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    {translate('province')} <span className="text-rose-500">*</span>
-                  </label>
-                  <SearchableRegionSelect
-                    value={watchProvince || ''}
-                    options={provinces}
-                    inputName="provinceCode"
-                    placeholder={translate('provincePlaceholder')}
-                    onChange={(value) => {
-                      setValue('provinceCode', value, { shouldValidate: true, shouldDirty: true });
-                      setValue('wardCode', '', { shouldValidate: true, shouldDirty: true });
-                    }}
-                    error={errors.provinceCode?.message}
-                  />
+                  <span className="text-[10px] font-semibold text-slate-400">Live Preview</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    {translate('ward')}
-                  </label>
-                  <SearchableRegionSelect
-                    value={watchWard || ''}
-                    options={wards}
-                    inputName="wardCode"
-                    placeholder={translate('wardPlaceholder')}
-                    disabled={!watchProvince || wards.length === 0}
-                    onChange={(value) => setValue('wardCode', value, { shouldValidate: true, shouldDirty: true })}
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
-                  {translate('primarySport')} <span className="text-rose-500">*</span>
-                </label>
-                <p className="mb-3 text-sm text-slate-500">{translate('primarySportHint')}</p>
-                <div className="flex flex-wrap gap-3">
-                  {categories.map(cat => {
-                    const isSelected = watchCategoryIds?.includes(cat.id);
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleCategoryToggle(cat.id)}
-                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                          isSelected 
-                            ? 'bg-blue-600 border-blue-600 text-white font-semibold shadow-sm'
-                            : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        {isSelected && '✓ '}{cat.name}
-                      </button>
-                    )
-                  })}
-                </div>
-                {errors.categoryIds && <p className="text-rose-500 text-sm mt-2">{errors.categoryIds.message}</p>}
-              </div>
-            </section>
-
-            {/* BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ */}
-            <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step3')}</h2>
-              <p className="text-sm text-slate-500">{translate('imagesDescription')}</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Logo Uploader */}
-                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-lg border border-slate-200">
-                  <label className="block text-sm font-semibold text-slate-700 mb-4 text-center">
-                    {translate('logoAvatar')} <span className="text-slate-400 font-normal text-xs">({translate('optional')})</span>
-                  </label>
-                  
-                  <input
-                    type="file"
-                    ref={logoInputRef}
-                    onChange={handleLogoUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  
-                  <div 
-                    onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
-                    className={`group w-32 h-32 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative ${
-                      watchLogoUrl 
-                        ? 'border-blue-500 bg-white' 
-                        : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                    }`}
+                {/* Banner & Avatar Preview Card */}
+                <div className="relative">
+                  {/* Banner Area */}
+                  <div
+                    onClick={() => !isUploadingBanner && bannerInputRef.current?.click()}
+                    className="group relative h-28 w-full bg-linear-to-r from-blue-600 via-indigo-600 to-sky-500 cursor-pointer overflow-hidden"
                   >
-                    {isUploadingLogo ? (
-                      <div className="flex flex-col items-center justify-center text-slate-500">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                        <span className="text-[10px] mt-1">{translate('loading')}</span>
-                      </div>
-                    ) : watchLogoUrl ? (
-                      <>
-                        <div className="relative w-full h-full">
-                          <Image src={watchLogoUrl} alt={translate('logoPreview')} fill className="object-cover" />
-                        </div>
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-medium transition-opacity">
-                          {translate('change')}
-                        </div>
-                      </>
+                    {watchBannerUrl ? (
+                      <Image
+                        src={watchBannerUrl}
+                        alt="Club Banner"
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-blue-500 p-4 text-center">
-                        <UploadCloud className="w-8 h-8 mb-1" />
-                        <span className="text-xs font-medium">{translate('chooseLogo')}</span>
+                      <div className="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-medium gap-1.5">
+                        <Camera className="w-4 h-4" />
+                        <span>Thêm ảnh bìa CLB</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>{watchBannerUrl ? 'Đổi ảnh bìa' : 'Tải ảnh bìa lên'}</span>
+                    </div>
+                    {isUploadingBanner && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs">
+                        <Loader2 className="w-5 h-5 animate-spin mr-1.5" />
+                        <span>{translate('loadingBanner')}</span>
                       </div>
                     )}
                   </div>
 
-                  {watchLogoUrl && !isUploadingLogo && (
-                    <button
-                      type="button"
-                      onClick={() => setValue('logoUrl', '')}
-                      className="mt-3 text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5" /> {translate('removeLogo')}
-                    </button>
-                  )}
-                  {errors.logoUrl && <p className="text-rose-500 text-sm mt-2 text-center">{errors.logoUrl.message}</p>}
-                </div>
-
-                {/* Banner Uploader */}
-                <div className="md:col-span-2 flex flex-col p-6 bg-slate-50 rounded-lg border border-slate-200">
-                  <label className="block text-sm font-semibold text-slate-700 mb-4">
-                    {translate('bannerLabel')} <span className="text-slate-400 font-normal text-xs">({translate('optional')})</span>
-                  </label>
-                  
+                  {/* Hidden inputs */}
                   <input
                     type="file"
                     ref={bannerInputRef}
@@ -440,166 +650,138 @@ export default function CreateCommunityPage() {
                     accept="image/*"
                     className="hidden"
                   />
-                  
-                  <div 
-                    onClick={() => !isUploadingBanner && bannerInputRef.current?.click()}
-                    className={`group w-full h-36 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative ${
-                      watchBannerUrl 
-                        ? 'border-blue-500 bg-white' 
-                        : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    {isUploadingBanner ? (
-                      <div className="flex flex-col items-center justify-center text-slate-500">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                        <span className="text-xs mt-1">{translate('loadingBanner')}</span>
-                      </div>
-                    ) : watchBannerUrl ? (
-                      <>
-                        <div className="relative w-full h-full">
-                          <Image src={watchBannerUrl} alt={translate('bannerPreview')} fill className="object-cover" />
-                        </div>
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-medium transition-opacity">
-                          {translate('changeBanner')}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-blue-500 p-6">
-                        <UploadCloud className="w-10 h-10 mb-2" />
-                        <span className="text-sm font-medium">{translate('dropBanner')}</span>
-                        <span className="text-xs text-slate-400 mt-1">{translate('supportedFormats')}</span>
-                      </div>
-                    )}
-                  </div>
+                  <input
+                    type="file"
+                    ref={logoInputRef}
+                    onChange={handleLogoFileSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
 
-                  {watchBannerUrl && !isUploadingBanner && (
-                    <button
-                      type="button"
-                      onClick={() => setValue('bannerUrl', '')}
-                      className="mt-3 text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium self-start transition-colors"
+                  {/* Circular Avatar / Logo (Overlap on Banner) */}
+                  <div className="px-5 -mt-8 relative flex items-end justify-between">
+                    <div
+                      onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
+                      className="group relative h-16 w-16 rounded-full border-2 border-white bg-white shadow-md cursor-pointer overflow-hidden shrink-0"
                     >
-                      <X className="w-3.5 h-3.5" /> {translate('removeBanner')}
-                    </button>
-                  )}
-                  {errors.bannerUrl && <p className="text-rose-500 text-sm mt-2">{errors.bannerUrl.message}</p>}
-                </div>
-              </div>
-            </section>
-
-
-            {/* BƯỚC 4: CÀI ĐẶT QUYỀN RIÊNG TƯ */}
-            <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step4')}</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-4">{translate('visibility')}</label>
-                  <div className="space-y-3">
-                    {[
-                      { value: 'PUBLIC', label: translate('publicLabel'), desc: translate('publicDescription') },
-                      { value: 'PRIVATE', label: translate('privateLabel'), desc: translate('privateDescription') },
-                      { value: 'RESTRICTED', label: translate('restrictedLabel'), desc: translate('restrictedDescription') }
-                    ].map(opt => (
-                      <label key={opt.value} className="flex items-start cursor-pointer group">
-                        <div className="flex items-center h-5">
-                          <input 
-                            type="radio"
-                            value={opt.value}
-                            {...register('visibility')}
-                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="ml-3 text-sm">
-                          <span className="font-medium text-slate-700 block group-hover:text-blue-600">{opt.label}</span>
-                          <span className="text-slate-500">{opt.desc}</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-4">{translate('joinMode')}</label>
-                  <div className="space-y-3">
-                    {[
-                      { value: 'OPEN', label: translate('openLabel'), desc: translate('openDescription') },
-                      { value: 'APPROVAL', label: translate('approvalLabel'), desc: translate('approvalDescription') },
-                      { value: 'INVITE_ONLY', label: translate('inviteOnlyLabel'), desc: translate('inviteOnlyDescription') }
-                    ].map(opt => (
-                      <label key={opt.value} className="flex items-start cursor-pointer group">
-                        <div className="flex items-center h-5">
-                          <input 
-                            type="radio"
-                            value={opt.value}
-                            {...register('joinMode')}
-                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="ml-3 text-sm">
-                          <span className="font-medium text-slate-700 block group-hover:text-blue-600">{opt.label}</span>
-                          <span className="text-slate-500">{opt.desc}</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {watchJoinMode === 'APPROVAL' && (
-                <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
-                  <label className="block text-sm font-semibold text-slate-800 mb-4">{translate('joinQuestions')}</label>
-                  <p className="text-sm text-slate-500 mb-4">{translate('joinQuestionsDescription')}</p>
-                  
-                  <div className="space-y-3 mb-4">
-                    {questionFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-2">
-                        <input
-                          {...register(`joinQuestions.${index}.value` as const)}
-                          placeholder={translate('questionPlaceholder', { number: index + 1 })}
-                          className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                      {watchLogoUrl ? (
+                        <Image
+                          src={watchLogoUrl}
+                          alt="Club Logo"
+                          fill
+                          className="object-cover"
                         />
+                      ) : (
+                        <div className="h-full w-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                          <Camera className="w-5 h-5" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-bold">
+                        Sửa
+                      </div>
+                      {isUploadingLogo && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick remove buttons if uploaded */}
+                    <div className="flex items-center gap-1 text-[11px]">
+                      {watchLogoUrl && (
                         <button
                           type="button"
-                          onClick={() => removeQuestion(index)}
-                          className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                          onClick={() => setValue('logoUrl', '')}
+                          className="text-slate-400 hover:text-rose-500 px-1.5 py-0.5 rounded cursor-pointer"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          Xóa logo
                         </button>
-                      </div>
-                    ))}
+                      )}
+                      {watchBannerUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setValue('bannerUrl', '')}
+                          className="text-slate-400 hover:text-rose-500 px-1.5 py-0.5 rounded cursor-pointer"
+                        >
+                          Xóa bìa
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => appendQuestion({ value: '' })}
-                    className="flex items-center text-sm text-blue-600 font-medium hover:text-blue-700"
-                  >
-                    <Plus className="w-4 h-4 mr-1" /> {translate('addQuestion')}
-                  </button>
-                </div>
-              )}
-            </section>
 
-            <div className="pt-6 border-t flex justify-end gap-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => router.back()}
-              >
-                {translate('cancel')}
-              </Button>
-              <Button 
-                type="submit" 
-                isLoading={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold min-w-[140px] shadow-md shadow-blue-500/20"
-              >
-                {translate('submit')}
-              </Button>
+                  {/* Club Info Details in Card */}
+                  <div className="p-5 pt-3 space-y-2.5">
+                    <div>
+                      <h3 className="text-base font-black text-slate-900 leading-snug">
+                        {(watchName || '').trim() || 'Tên Câu Lạc Bộ Của Bạn'}
+                      </h3>
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
+                        {(watchDescription || '').trim() || 'Giới thiệu ngắn về sân chơi thể thao của bạn...'}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                      {selectedCategory && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 border border-blue-200/80 px-2 py-0.5 font-bold text-blue-700">
+                          <Trophy className="w-3 h-3" />
+                          {selectedCategory.name}
+                        </span>
+                      )}
+
+                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                        <MapPin className="w-3 h-3 text-slate-500" />
+                        {selectedProvinceName || 'Khu vực hoạt động'}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 font-semibold text-emerald-700">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {watchVisibility === 'PUBLIC' ? 'Công khai' : 'Riêng tư'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Card Nút Bấm Tạo Câu Lạc Bộ */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99] cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <span>Đang khởi tạo câu lạc bộ...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{translate('submit')}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+
+                <p className="text-center text-[11px] text-slate-400">
+                  Nội quy & form thành viên có thể thiết lập thêm bất cứ lúc nào trong Cài đặt CLB.
+                </p>
+              </div>
+
             </div>
-          </form>
-        </div>
+
+          </div>
+        </form>
       </div>
+
+      {/* Modal cắt ảnh logo tròn chuyên nghiệp */}
+      {cropModalOpen && (
+        <CircularImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={rawLogoSrc}
+          onClose={() => setCropModalOpen(false)}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   );
 }
-

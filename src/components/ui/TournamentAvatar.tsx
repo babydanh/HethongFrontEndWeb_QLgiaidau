@@ -8,25 +8,35 @@ interface TournamentAvatarProps {
   src?: string | null;
   alt: string;
   category?: string | null;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 const sizeMap = {
+  xs: {
+    container: 'w-7 h-7',
+    icon: 'w-4 h-4',
+    text: 'text-[10px]',
+  },
   sm: {
-    container: 'w-10 h-10',
+    container: 'w-10 h-10', // 40px
     icon: 'w-5 h-5',
     text: 'text-xs',
   },
   md: {
-    container: 'w-14 h-14',
-    icon: 'w-7 h-7',
-    text: 'text-base',
+    container: 'w-12 h-12', // 48px Facebook standard card header
+    icon: 'w-6 h-6',
+    text: 'text-sm',
   },
   lg: {
-    container: 'w-16 h-16',
+    container: 'w-16 h-16', // 64px
     icon: 'w-8 h-8',
     text: 'text-lg',
+  },
+  xl: {
+    container: 'w-20 h-20', // 80px Detail header
+    icon: 'w-10 h-10',
+    text: 'text-xl',
   },
 };
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Settings, ImageIcon, Gift, Users, Handshake, Trash2, Plus, Phone, Mail, Globe } from 'lucide-react';
+import { Settings, ImageIcon, Gift, Users, Handshake, Trash2, Plus, Phone, Mail, Globe, Crop } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -14,6 +14,7 @@ import { tournamentsApi, Division } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
 import { isTournamentDraft } from '@/utils/tournament-status';
 import SponsorSettingsPanel from './SponsorSettingsPanel';
+import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 
 interface BasicInfoTabProps {
   validationField?: string | null;
@@ -96,6 +97,41 @@ export function BasicInfoTab({
   const [newContactType, setNewContactType] = React.useState('facebook');
   const [newContactLabel, setNewContactLabel] = React.useState('');
   const [newContactValue, setNewContactValue] = React.useState('');
+
+  // Logo Crop Modal States
+  const [cropModalOpen, setCropModalOpen] = React.useState(false);
+  const [pendingLogoSrc, setPendingLogoSrc] = React.useState('');
+
+  const handleSelectLogoFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setPendingLogoSrc(reader.result);
+        setCropModalOpen(true);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropConfirm = async (croppedBlob: Blob) => {
+    setCropModalOpen(false);
+    try {
+      toast.loading(translate('uploadingLogo'), { id: 'logo-upload' });
+      const file = new File([croppedBlob], 'tournament_logo.png', { type: 'image/png' });
+      const res = await uploadApi.uploadImage(file);
+      if (res && res.url) {
+        setLogoUrl(res.url);
+        await tournamentsApi.updateTournament(id, { logoUrl: res.url });
+        if (tournament.parentId) {
+          await tournamentsApi.updateParentTournament(tournament.parentId, { logoUrl: res.url });
+        }
+        toast.success(translate('logoUploaded'), { id: 'logo-upload' });
+        fetchTournamentData();
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err), { id: 'logo-upload' });
+    }
+  };
 
   const handleAddContactLink = () => {
     if (!newContactValue.trim()) {
@@ -296,41 +332,52 @@ export function BasicInfoTab({
                         type="file" 
                         accept="image/*" 
                         className="hidden" 
-                        onChange={async (e) => {
+                        onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          try {
-                            toast.loading(translate('uploadingLogo'), { id: 'logo-upload' });
-                            const res = await uploadApi.uploadImage(file);
-                            if (res && res.url) {
-                              setLogoUrl(res.url);
-                              await tournamentsApi.updateTournament(id, { logoUrl: res.url });
-                              if (tournament.parentId) {
-                                await tournamentsApi.updateParentTournament(tournament.parentId, { logoUrl: res.url });
-                              }
-                              toast.success(translate('logoUploaded'), { id: 'logo-upload' });
-                              fetchTournamentData();
-                            }
-                          } catch (err) {
-                            toast.error(getErrorMessage(err), { id: 'logo-upload' });
-                          }
+                          handleSelectLogoFile(file);
+                          e.target.value = ''; // Reset file input
                         }}
                       />
                       {translate('chooseFile')}
                     </label>
                   </div>
                   {logoUrl ? (
-                    <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white flex items-center justify-center p-2 mt-2">
-                      <img src={logoUrl} alt={translate('logoPreview')} className="max-w-full max-h-full object-contain" />
-                      <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
-                        Logo
+                    <div className="flex items-center gap-4 mt-2">
+                      {/* Circular preview */}
+                      <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-slate-200 shadow-sm bg-white flex items-center justify-center shrink-0">
+                        <img src={logoUrl} alt={translate('logoPreview')} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="text-xs font-bold text-slate-800">{translate('logoPreview')}</div>
+                        <p className="text-[11px] text-slate-400 font-medium">Hiển thị chuẩn tròn trên toàn hệ thống</p>
+                        {/* Recrop button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingLogoSrc(logoUrl);
+                            setCropModalOpen(true);
+                          }}
+                          className="w-max px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
+                        >
+                          <Crop className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Căn chỉnh lại vị trí</span>
+                        </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="w-28 h-28 rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
+                    <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
                       <span>{translate('noLogo')}</span>
                     </div>
                   )}
+
+                  {/* Circular Image Crop Modal */}
+                  <CircularImageCropModal
+                    isOpen={cropModalOpen}
+                    imageSrc={pendingLogoSrc}
+                    onClose={() => setCropModalOpen(false)}
+                    onConfirm={handleCropConfirm}
+                  />
                 </div>
 
                 {/* Banner */}

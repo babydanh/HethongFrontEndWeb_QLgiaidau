@@ -811,15 +811,6 @@ export default function QuickTournamentCreate() {
           </div>
         </div>
 
-        {/* Notice Banner */}
-        <div className="mb-8 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-amber-50/40 p-4 text-amber-950 shadow-2xs">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
-            <div className="text-xs md:text-sm leading-relaxed">
-              <strong className="font-bold text-amber-900">{translate('importantNoticeTitle')}</strong> {translate('importantNoticeBody')}
-            </div>
-          </div>
-        </div>
 
         {/* Form Container with 2-Column Responsive Layout */}
         <form

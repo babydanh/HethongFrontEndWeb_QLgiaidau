@@ -34,8 +34,10 @@ import RichTextEditor from '@/components/ui/RichTextEditor';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { DateTimePicker } from '@/components/ui/Input';
 import { toApiIsoDateTime } from '@/utils/dateTimeInput';
+import Image from 'next/image';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import { getSportLogo } from '@/constants/sports';
 
 /* 4 Biểu tượng sơ đồ thể thức thi đấu chuyên nghiệp */
 const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -847,24 +849,51 @@ export default function QuickTournamentCreate() {
                   {errors.name && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.name.message}</span>}
                 </div>
 
-                {/* Môn thể thao */}
+                {/* Môn thể thao chính */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
                     {translate('sportLabel')} <span className="text-rose-500">*</span>
                   </label>
-                  <select
-                    data-testid="sport-select"
-                    {...register('sport', {
-                      onChange: (e) => handleSportChange(e.target.value as QuickSport),
-                    })}
-                    disabled={loadingCategories}
-                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  >
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     {categories.map((category) => {
                       const value = sportFromCategory(category);
-                      return value ? <option key={category.id} value={value}>{category.name}</option> : null;
+                      if (!value) return null;
+                      const isSelected = sport === value;
+                      const sportIcon = getSportLogo(category.name);
+
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => {
+                            setValue('sport', value, { shouldValidate: true, shouldDirty: true });
+                            handleSportChange(value);
+                          }}
+                          className={`flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition cursor-pointer ${
+                            isSelected
+                              ? 'border-blue-600 bg-blue-50/80 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          {sportIcon ? (
+                            <div className="relative h-6 w-6 shrink-0">
+                              <Image
+                                src={sportIcon}
+                                alt={category.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <Trophy className="h-4 w-4 text-slate-400 shrink-0" />
+                          )}
+                          <span className="text-xs font-semibold truncate">{category.name}</span>
+                        </button>
+                      );
                     })}
-                  </select>
+                  </div>
+                  {/* Hidden input to maintain react-hook-form registration */}
+                  <input type="hidden" {...register('sport')} />
                   <span className="mt-1.5 block text-xs text-slate-500">
                     {selectedCategory ? translate('defaultRulesApplied', { sport: selectedCategory.name }) : translate('selectSportHint')}
                   </span>

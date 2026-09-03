@@ -1824,23 +1824,25 @@ export default function HomePage() {
                             </Link>
 
                             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              {/* Mini Pagination controls */}
+                              {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
                               {totalPages > 1 && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                   <button
                                     onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                     disabled={currentPage === 1}
-                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    aria-label={translate('previousPage')}
+                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                                   >
                                     <ChevronLeft className="w-3.5 h-3.5" />
                                   </button>
-                                  <span className="text-[11px] font-semibold text-slate-400 px-1">
-                                    {currentPage}/{totalPages}
+                                  <span className="min-w-6 text-center text-xs font-bold text-slate-500">
+                                    {currentPage}
                                   </span>
                                   <button
                                     onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                     disabled={currentPage === totalPages}
-                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-350 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    aria-label={translate('nextPage')}
+                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                                   >
                                     <ChevronRight className="w-3.5 h-3.5" />
                                   </button>
@@ -1910,23 +1912,25 @@ export default function HomePage() {
                             </Link>
 
                             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              {/* Mini Pagination controls */}
+                              {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
                               {totalPages > 1 && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                   <button
                                     onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                     disabled={currentPage === 1}
-                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    aria-label={translate('previousPage')}
+                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                                   >
                                     <ChevronLeft className="w-3.5 h-3.5" />
                                   </button>
-                                  <span className="text-[11px] font-semibold text-slate-400 px-1">
-                                    {currentPage}/{totalPages}
+                                  <span className="min-w-6 text-center text-xs font-bold text-slate-500">
+                                    {currentPage}
                                   </span>
                                   <button
                                     onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                     disabled={currentPage === totalPages}
-                                    className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-350 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    aria-label={translate('nextPage')}
+                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                                   >
                                     <ChevronRight className="w-3.5 h-3.5" />
                                   </button>

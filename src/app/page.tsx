@@ -60,6 +60,8 @@ interface EnrichedTournament {
   } | null;
   matchType?: string;
   genderRestriction?: string;
+  venueName?: string | null;
+  logoUrl?: string | null;
   isRanked?: boolean;
   format?: Tournament['format'];
   maxParticipants?: number;
@@ -1251,6 +1253,121 @@ export default function HomePage() {
     );
   };
 
+  const renderUpcomingMatchRow = (
+    match: BracketMatch,
+    contextMatches: BracketMatch[] = [match],
+    contextTournament?: Pick<Tournament, 'format' | 'maxParticipants'> | null,
+  ) => {
+    const roundLabel = getMatchRoundLabel({
+      match,
+      matches: contextMatches,
+      tournamentFormat: contextTournament?.format ?? rankedTournament?.format,
+      bracketSize: contextTournament?.maxParticipants ?? rankedTournament?.maxParticipants ?? null,
+      translations: roundLabelTranslations,
+    });
+
+    const courtText = match.courtName || match.tournament?.venueName;
+    const formatText = getFormatLabel(
+      (match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined,
+      (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined,
+      translate
+    );
+
+    const timeString = match.scheduledAt
+      ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+      : null;
+
+    const renderTeamRow = (
+      participant: BracketMatch['participant1'],
+      orderNumber: number,
+      side: 'p1' | 'p2',
+    ) => {
+      const rawMembers = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
+      const teamName = participant?.teamName || '';
+      const teamNameParts = teamName.includes(' / ')
+        ? teamName.split(' / ').map((p) => p.trim()).filter(Boolean)
+        : [];
+
+      const member1 = rawMembers[0] || (teamNameParts[0] ? { fullName: teamNameParts[0] } : undefined);
+      const member2 = rawMembers[1] || (teamNameParts[1] ? { fullName: teamNameParts[1] } : undefined);
+      const isDoubles = rawMembers.length === 2 || teamNameParts.length === 2;
+
+      const primaryName = isDoubles
+        ? [member1?.fullName, member2?.fullName].filter(Boolean).join(' / ') || teamName || translate('pendingTeam')
+        : rawMembers[0]?.fullName || teamName || translate('pendingTeam');
+
+      const clubOrSub = ((rawMembers[0] as unknown as Record<string, unknown>)?.clubName as string) ||
+        ((rawMembers[0] as unknown as Record<string, unknown>)?.organization as string) ||
+        (isDoubles ? '' : teamName !== primaryName ? teamName : '');
+
+      const badgeColor = side === 'p1' ? 'border-purple-200 text-purple-600 bg-purple-50/50' : 'border-amber-200 text-amber-600 bg-amber-50/50';
+
+      return (
+        <div className="flex items-center justify-between py-2 border-b border-slate-100/80 last:border-b-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+            {/* Number badge / Avatar circle */}
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${badgeColor}`}>
+              {orderNumber}
+            </div>
+
+            {/* Name + Club */}
+            <div className="min-w-0 flex-1">
+              <div className="text-xs sm:text-sm font-semibold text-slate-800 tracking-tight truncate">
+                {primaryName}
+              </div>
+              {clubOrSub && (
+                <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                  {clubOrSub}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* VS label on the right */}
+          <div className="text-xs font-semibold text-slate-300 shrink-0 select-none">
+            VS
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <Link
+        href={`/live/${match.id}`}
+        key={match.id}
+        className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 hover:border-slate-300 hover:shadow-2xs transition-all"
+      >
+        {/* Header: VÒNG ĐẤU • NỘI DUNG | Sân thi đấu ... Giờ thi đấu */}
+        <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100 text-[11px]">
+          <div className="flex items-center gap-2 font-bold text-slate-700 uppercase tracking-wider truncate">
+            <span>{roundLabel || translate('roundFallback')}</span>
+            {formatText && <span>• {formatText}</span>}
+            {courtText && <span className="text-slate-400 font-normal normal-case">| {courtText}</span>}
+          </div>
+
+          {/* Time Badge (e.g. 14:30) */}
+          <div className="shrink-0">
+            {timeString ? (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-sky-50 text-sky-600 border border-sky-100">
+                {timeString}
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-50 text-slate-500 border border-slate-200/60">
+                {translate('statusUpcoming')}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 2 Participants Rows */}
+        <div>
+          {renderTeamRow(match.participant1, 1, 'p1')}
+          {renderTeamRow(match.participant2, 2, 'p2')}
+        </div>
+      </Link>
+    );
+  };
+
   const filteredCommunities = selectedCategoryId
     ? communities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
     : communities;
@@ -1667,8 +1784,8 @@ export default function HomePage() {
                       const group = rawGroup as GroupMatchesData;
                       const tournamentId = group.id || tournamentName;
                       const currentPage = tournamentPages[tournamentId] || 1;
-                      const totalPages = Math.ceil(group.matches.length / 4);
-                      const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                      const totalPages = group.matches.length;
+                      const displayMatches = group.matches.slice(currentPage - 1, currentPage);
                       const matchedTournament = tournaments.find(t => t.id === group.id);
                       const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
@@ -1723,9 +1840,9 @@ export default function HomePage() {
                               )}
                             </div>
                           </div>
-                          {/* Matches List Grid */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-                            {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
+                          {/* Matches List: 1 match row per tournament */}
+                          <div className="space-y-2">
+                            {displayMatches.map((match) => renderUpcomingMatchRow(match, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>
                       );

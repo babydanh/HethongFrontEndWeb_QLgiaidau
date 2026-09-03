@@ -1159,8 +1159,8 @@ export default function HomePage() {
         if (uniqueMembers.length >= 2) {
           const m1 = uniqueMembers[0].fullName || '';
           const m2 = uniqueMembers[1].fullName || '';
-          primaryTitle = teamName || `${m1} / ${m2}`;
-          subTitle = teamName && teamName !== `${m1} / ${m2}` ? `${m1} • ${m2}` : '';
+          primaryTitle = teamName || `${m1} - ${m2}`;
+          subTitle = teamName && teamName !== `${m1} - ${m2}` ? `${m1} • ${m2}` : '';
         } else if (teamName) {
           primaryTitle = teamName;
         } else {
@@ -1173,16 +1173,63 @@ export default function HomePage() {
         subTitle = ''; // Đơn thì tên người trên luôn không hiện tên nhỏ
       }
 
-      const initialChar = (primaryTitle.trim().charAt(0) || '?').toUpperCase();
-      const avatarBg = side === 'p1' ? 'bg-amber-100/80 text-amber-700' : 'bg-violet-100/80 text-violet-700';
+      const avatarBg1 = side === 'p1' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-violet-100 text-violet-700 border-violet-200';
+      const avatarBg2 = side === 'p1' ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-violet-50 text-violet-800 border-violet-300';
+
+      const renderAvatar = () => {
+        if (isDoubles && uniqueMembers.length >= 2) {
+          const m1 = uniqueMembers[0];
+          const m2 = uniqueMembers[1];
+          const init1 = (m1.fullName?.trim().charAt(0) || '?').toUpperCase();
+          const init2 = (m2.fullName?.trim().charAt(0) || '?').toUpperCase();
+          return (
+            <div className="flex items-center -space-x-2 shrink-0 relative pr-1">
+              {m1.avatarUrl ? (
+                <img
+                  src={m1.avatarUrl}
+                  alt={m1.fullName || ''}
+                  className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-2xs z-20"
+                />
+              ) : (
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 border border-white shadow-2xs z-20 ${avatarBg1}`}>
+                  {init1}
+                </div>
+              )}
+              {m2.avatarUrl ? (
+                <img
+                  src={m2.avatarUrl}
+                  alt={m2.fullName || ''}
+                  className="w-6 h-6 rounded-full border-2 border-white object-cover shadow-2xs z-10"
+                />
+              ) : (
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[9px] shrink-0 border border-white shadow-2xs z-10 ${avatarBg2}`}>
+                  {init2}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Single avatar
+        const singleMember = uniqueMembers[0];
+        const initialChar = (primaryTitle.trim().charAt(0) || '?').toUpperCase();
+        return singleMember?.avatarUrl ? (
+          <img
+            src={singleMember.avatarUrl}
+            alt={primaryTitle}
+            className="w-8 h-8 rounded-full border border-slate-200 object-cover shrink-0 shadow-2xs"
+          />
+        ) : (
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${avatarBg1}`}>
+            {initialChar}
+          </div>
+        );
+      };
 
       return (
         <div className="flex items-center justify-between py-2 border-b border-slate-100/70 last:border-b-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
-            {/* Round letter avatar */}
-            <div className={`w-7.5 h-7.5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${avatarBg}`}>
-              {initialChar}
-            </div>
+            {renderAvatar()}
 
             {/* Name & Subtitle */}
             <div className="min-w-0 flex-1">
@@ -1197,17 +1244,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Scores for Sets - Vô khung màu theo vibe web */}
+          {/* Scores for Sets - Gọn gàng, nhỏ lại xíu */}
           <div className="flex items-center gap-1.5 shrink-0 text-center">
             {scores.length > 0 ? (
-              scores.slice(0, 3).map((s, idx) => {
+              scores.slice(0, 5).map((s, idx) => {
                 const scoreVal = side === 'p1' ? s.team1Score : s.team2Score;
                 const oppVal = side === 'p1' ? s.team2Score : s.team1Score;
                 const isSetWin = scoreVal > oppVal;
                 return (
                   <div
                     key={idx}
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm tabular-nums transition-colors ${
+                    className={`w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md flex items-center justify-center text-[11px] sm:text-xs tabular-nums transition-colors ${
                       isSetWin
                         ? 'bg-blue-600 text-white font-bold shadow-2xs'
                         : 'bg-slate-100 text-slate-500 font-medium'
@@ -1218,7 +1265,7 @@ export default function HomePage() {
                 );
               })
             ) : (
-              <div className="w-8 text-xs text-slate-400 italic">--</div>
+              <div className="w-6 text-xs text-slate-400 italic">--</div>
             )}
           </div>
         </div>
@@ -1231,23 +1278,23 @@ export default function HomePage() {
         key={match.id}
         className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 hover:border-slate-300 hover:shadow-2xs transition-all"
       >
-        {/* Row Header: Round name & Court | Sets column header */}
+        {/* Row Header: Bớt đậm (font-semibold), Set 1 2 viết tắt là S1 S2 S3 S4 S5 */}
         <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100 text-[11px]">
-          <div className="flex items-center gap-2 font-bold text-slate-700 uppercase tracking-wider truncate">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-600 uppercase tracking-wider truncate">
             <span>{roundLabel || translate('roundFallback')}</span>
-            {formatText && <span>• {formatText}</span>}
+            {formatText && <span className="text-slate-400 font-medium">• {formatText}</span>}
             {courtText && <span className="text-slate-400 font-normal normal-case">| {courtText}</span>}
           </div>
 
-          <div className="flex items-center gap-4 shrink-0 font-semibold text-slate-400">
+          <div className="flex items-center gap-1.5 shrink-0 font-medium text-slate-400 text-[11px]">
             {scores.length > 0 ? (
-              scores.slice(0, 3).map((_, idx) => (
-                <div key={idx} className="w-8 text-center">
-                  Set {idx + 1}
+              scores.slice(0, 5).map((_, idx) => (
+                <div key={idx} className="w-6 sm:w-6.5 text-center">
+                  S{idx + 1}
                 </div>
               ))
             ) : (
-              <div className="w-8 text-center">Tỷ số</div>
+              <div className="w-6 text-center">Tỷ số</div>
             )}
           </div>
         </div>
@@ -1605,7 +1652,7 @@ export default function HomePage() {
                                 href={group.id ? `/tournaments/${group.id}` : '#'}
                                 className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                               >
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
                                   <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                                 </div>
                                 <div className="min-w-0">
@@ -1727,7 +1774,7 @@ export default function HomePage() {
                               href={group.id ? `/tournaments/${group.id}` : '#'}
                               className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                             >
-                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
                                 <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                               </div>
                               <div className="min-w-0">
@@ -1813,7 +1860,7 @@ export default function HomePage() {
                               href={group.id ? `/tournaments/${group.id}` : '#'}
                               className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                             >
-                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
+                              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
                                 <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                               </div>
                               <div className="min-w-0">

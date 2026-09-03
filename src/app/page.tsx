@@ -953,49 +953,33 @@ export default function HomePage() {
       const logoUrl = participant?.logoUrl;
 
       const renderSingleAvatar = (
-        m: { fullName?: string | null; avatarUrl?: string | null; eloPoints?: number | null; rankTier?: string | null } | undefined,
+        m: { fullName?: string | null; avatarUrl?: string | null } | undefined,
         sizeClass: string,
-        initialSizeClass: string,
+        textSizeClass: string,
         sideFallback: 'left' | 'right',
       ) => {
         const url = m?.avatarUrl;
         const name = m?.fullName || participant?.teamName || fallbackText;
         const initial = (name.trim().charAt(0) || '?').toUpperCase();
-        const rankRing = getRankRingClass(m?.eloPoints, m?.rankTier);
+        const borderColor = sideFallback === 'left' ? 'border-[#FDE047] text-amber-800 bg-amber-50/60' : 'border-[#BAE6FD] text-sky-800 bg-sky-50/60';
 
         return (
           <div
-            className={`relative ${sizeClass} rounded-full overflow-hidden ring-2 ${
-              isCompleted && isWinner
-                ? 'ring-blue-600 ring-offset-1 ring-offset-white shadow-xs'
-                : isCompleted && isLoser
-                  ? 'ring-slate-200 opacity-80'
-                  : `${rankRing} ring-offset-1 ring-offset-white`
-            } bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs transition-all`}
+            className={`relative ${sizeClass} rounded-full overflow-hidden border-2 ${borderColor} flex items-center justify-center shrink-0 shadow-2xs`}
           >
             {url ? (
               <Image
                 src={url}
                 alt={name}
-                width={44}
-                height={44}
+                width={48}
+                height={48}
                 className="w-full h-full object-cover"
                 unoptimized
               />
             ) : (
-              <div
-                className={`w-full h-full flex items-center justify-center font-bold tracking-tight ${initialSizeClass} ${
-                  isCompleted && isWinner
-                    ? 'bg-primary-light text-content-link font-extrabold'
-                    : isCompleted && isLoser
-                      ? 'bg-slate-100 text-slate-400'
-                      : sideFallback === 'left'
-                        ? 'bg-amber-50 text-amber-800'
-                        : 'bg-sky-50 text-sky-800'
-                }`}
-              >
+              <span className={`font-semibold ${textSizeClass}`}>
                 {initial}
-              </div>
+              </span>
             )}
           </div>
         );
@@ -1006,45 +990,37 @@ export default function HomePage() {
           {/* Avatar Area */}
           <div className="relative flex items-center justify-center">
             {isDoubles ? (
-              // Doubles with light natural offset: left = "Oo", right = "oO"
               side === 'left' ? (
-                <div className="flex items-center -space-x-2">
+                <div className="flex items-center -space-x-3">
                   <div className="z-20">
-                    {renderSingleAvatar(member1, 'w-8 h-8 sm:w-9 sm:h-9', 'text-xs', 'left')}
+                    {renderSingleAvatar(member1, 'w-10 h-10 sm:w-11 sm:h-11', 'text-sm', 'left')}
                   </div>
                   <div className="z-10 mt-1">
-                    {renderSingleAvatar(member2, 'w-6.5 h-6.5 sm:w-7 sm:h-7', 'text-[10px]', 'left')}
+                    {renderSingleAvatar(member2, 'w-8 h-8 sm:w-8.5 sm:h-8.5', 'text-xs', 'left')}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center -space-x-2">
+                <div className="flex items-center -space-x-3">
                   <div className="z-10 mt-1">
-                    {renderSingleAvatar(member1, 'w-6.5 h-6.5 sm:w-7 sm:h-7', 'text-[10px]', 'right')}
+                    {renderSingleAvatar(member1, 'w-8 h-8 sm:w-8.5 sm:h-8.5', 'text-xs', 'right')}
                   </div>
                   <div className="z-20">
-                    {renderSingleAvatar(member2, 'w-8 h-8 sm:w-9 sm:h-9', 'text-xs', 'right')}
+                    {renderSingleAvatar(member2, 'w-10 h-10 sm:w-11 sm:h-11', 'text-sm', 'right')}
                   </div>
                 </div>
               )
             ) : (
-              // Singles or Single Team Avatar
               renderSingleAvatar(
                 rawMembers[0] || (logoUrl ? { avatarUrl: logoUrl, fullName: participant?.teamName } : undefined),
-                'w-9.5 h-9.5 sm:w-10.5 sm:h-10.5',
-                'text-sm',
+                'w-11 h-11 sm:w-12 sm:h-12',
+                'text-base',
                 side,
               )
             )}
           </div>
           {/* Name */}
           <span
-            className={`mt-1.5 text-xs text-center line-clamp-1 max-w-[110px] sm:max-w-[140px] tracking-tight leading-tight ${
-              isCompleted && isWinner
-                ? 'font-bold text-slate-900'
-                : isCompleted && isLoser
-                  ? 'font-medium text-slate-400'
-                  : 'font-bold text-slate-800'
-            }`}
+            className="mt-2 text-xs sm:text-[13px] text-center line-clamp-1 max-w-[120px] sm:max-w-[150px] font-semibold text-slate-700 tracking-tight"
           >
             {displayName}
           </span>
@@ -1057,38 +1033,29 @@ export default function HomePage() {
         key={match.id}
         whileHover={{ y: -2 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`bg-white text-slate-900 rounded-xl border ${
-          isLive
-            ? 'border-rose-300 shadow-sm shadow-rose-100/60'
-            : 'border-slate-200/90 shadow-2xs hover:border-slate-350'
-        } overflow-hidden flex flex-col justify-between group relative`}
+        className="bg-white text-slate-900 rounded-2xl border border-slate-100 shadow-2xs hover:border-slate-200 overflow-hidden flex flex-col justify-between group relative p-3 sm:p-4"
       >
         {/* Whole Card Link */}
         <Link href={`/live/${match.id}`} className="block flex-1">
-          {/* 1. Header Bar: Round / Stage & Live status */}
-          <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-slate-50/70 border-b border-slate-100 text-[11px]">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[11px] font-bold text-slate-700 truncate">
-                {roundLabel || translate('roundFallback')}
-              </span>
-            </div>
+          {/* 1. Header Bar: Nhánh / Vòng đấu bên trái, badge LIVE bên phải */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-xs sm:text-sm font-semibold text-slate-600 truncate">
+              {roundLabel || translate('roundFallback')}
+            </span>
 
             {/* Status Pill Badge */}
             <div className="shrink-0">
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-wider shadow-2xs">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
-                  </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF1F2] text-[#F43F5E] border border-[#FFE4E6]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F43F5E]" />
                   LIVE
                 </span>
               ) : isCompleted ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">
                   {translate('statusCompleted')}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary-light text-content-link border border-outline-subtle">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">
                   {translate('statusUpcoming')}
                 </span>
               )}
@@ -1096,59 +1063,35 @@ export default function HomePage() {
           </div>
 
           {/* 2. Opponents Face-off Arena */}
-          <div className="flex items-center justify-between gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-2.5 sm:py-3.5 bg-white">
+          <div className="flex items-center justify-between gap-2 py-1">
             {/* Participant 1 */}
             {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
             {/* Center Score / Time */}
-            <div className="flex flex-col items-center justify-center shrink-0 px-1 sm:px-2 min-w-[64px] sm:min-w-[74px]">
+            <div className="flex flex-col items-center justify-center shrink-0 px-2 min-w-[76px]">
               {isScheduled ? (
                 <>
-                  <span className="text-xs font-black tracking-wider text-slate-500 bg-slate-100/90 border border-slate-200/90 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
                     {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : 'VS'}
                   </span>
-                  <span className="text-[10.5px] font-semibold text-content-link mt-1">
+                  <span className="text-[11px] font-medium text-slate-400 mt-1">
                     {translate('statusUpcoming')}
                   </span>
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-1.5 sm:gap-2 font-sans leading-none">
-                    <span
-                      className={`text-2xl sm:text-3xl tracking-tight transition-colors ${
-                        isCompleted && isP1Winner
-                          ? 'text-content-link font-black'
-                          : isCompleted && isP2Winner
-                            ? 'text-slate-400 font-bold'
-                            : 'text-slate-900 font-black'
-                      }`}
-                    >
+                  <div className="flex items-center gap-2 font-sans leading-none">
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                       {activeSet.team1Score}
                     </span>
-                    <span className="text-slate-300 font-bold text-sm sm:text-base select-none">-</span>
-                    <span
-                      className={`text-2xl sm:text-3xl tracking-tight transition-colors ${
-                        isCompleted && isP2Winner
-                          ? 'text-content-link font-black'
-                          : isCompleted && isP1Winner
-                            ? 'text-slate-400 font-bold'
-                            : 'text-slate-900 font-black'
-                      }`}
-                    >
+                    <span className="text-slate-300 font-bold text-base select-none">-</span>
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                       {activeSet.team2Score}
                     </span>
                   </div>
-                  {isLive ? (
-                    <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 tracking-wider uppercase shadow-2xs">
-                      {setSubStatusText || 'SET 1'}
-                    </span>
-                  ) : (
-                    <span
-                      className={`text-[10.5px] sm:text-[11px] font-bold mt-1.5 tracking-tight text-slate-400`}
-                    >
-                      {setSubStatusText}
-                    </span>
-                  )}
+                  <span className="inline-block mt-2 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#FFF1F2] text-[#F43F5E] border border-[#FFE4E6] tracking-wider uppercase">
+                    {isLive ? `SET ${currentSetNum}` : setSubStatusText}
+                  </span>
                 </>
               )}
             </div>
@@ -1157,55 +1100,6 @@ export default function HomePage() {
             {renderOpponent(match.participant2, translate('pendingTeam'), 'right')}
           </div>
         </Link>
-
-        {/* 3. Footer Bar: Court / Format & Cheer / Share Actions */}
-        <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 min-w-0 text-slate-500 text-[11px] truncate">
-            <span className="font-semibold text-slate-700 shrink-0">
-              {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="truncate" title={match.courtName || match.tournament?.venueName || undefined}>
-              {match.courtName || match.tournament?.venueName || translate('courtNotAssigned')}
-            </span>
-          </div>
-
-          {/* Cheer & Share */}
-          <div className="flex items-center gap-1.5 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleHighFive(match.id);
-              }}
-              title={`${translate('cheer')} (${currentHighFives})`}
-              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
-            >
-              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
-              <span>{translate('cheer')}</span>
-              {currentHighFives > 0 && <span className="text-slate-400 font-normal">({currentHighFives})</span>}
-            </button>
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const p1Name = getTeamShortName(match.participant1?.teamName, translate('pendingTeam'));
-                const p2Name = getTeamShortName(match.participant2?.teamName, translate('pendingTeam'));
-                setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
-                setActiveShareTitle(translate('shareMatchTitleWithTeams', { p1: p1Name, p2: p2Name }));
-                setIsShareModalOpen(true);
-              }}
-              title={translate('shareMatchTitle')}
-              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-content-link hover:border-outline-strong hover:bg-primary-light text-[10.5px] font-medium transition cursor-pointer shadow-2xs"
-            >
-              <Share2 className="w-3.5 h-3.5 text-slate-400" />
-              <span>{translate('share')}</span>
-            </button>
-          </div>
-        </div>
       </motion.div>
     );
   };

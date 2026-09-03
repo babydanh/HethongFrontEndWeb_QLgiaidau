@@ -1148,29 +1148,47 @@ export default function HomePage() {
       );
       const teamName = (participant?.teamName || '').trim();
 
+      // Kiểm tra thể thức từ tournament nếu có
+      const rawMatchType = String(
+        (match as EnrichedMatch).tournament?.matchType ||
+        contextTournament?.format ||
+        ''
+      ).toUpperCase();
+      const isDoublesTournament = rawMatchType.includes('DOUBLE') || rawMatchType.includes('ĐÔI');
+
       // Xác định đánh đơn hay đánh đôi
-      const isDoubles = uniqueMembers.length >= 2 || (teamName.includes(' / ') || teamName.includes(' - '));
+      const isDoubles = isDoublesTournament || uniqueMembers.length >= 2 || teamName.includes(' / ') || teamName.includes(' - ');
 
       let primaryTitle = '';
       let subTitle = '';
 
       if (isDoubles) {
-        // ĐÁNH ĐÔI: Đội ở trên (hoặc tên cặp VĐV nối nhau), thành viên nhỏ ở dưới
-        if (uniqueMembers.length >= 2) {
+        // ĐÁNH ĐÔI:
+        // Dòng trên (lớn): TÊN ĐỘI (teamName) từ API (VD: "QA Bổ sung 19", "Đội 1", "Minh Anh - Phương Linh")
+        // Dòng dưới (nhỏ): Tên các thành viên (member1 • member2)
+        const memberNamesStr = uniqueMembers.map((m) => m.fullName).filter(Boolean).join(' • ');
+
+        if (teamName) {
+          primaryTitle = teamName;
+          // Chỉ hiện dòng phụ thành viên nếu tên thành viên không trùng 100% với tên đội
+          subTitle = memberNamesStr && memberNamesStr !== teamName && !teamName.includes(memberNamesStr)
+            ? memberNamesStr
+            : '';
+        } else if (uniqueMembers.length >= 2) {
           const m1 = uniqueMembers[0].fullName || '';
           const m2 = uniqueMembers[1].fullName || '';
-          primaryTitle = teamName || `${m1} - ${m2}`;
-          subTitle = teamName && teamName !== `${m1} - ${m2}` ? `${m1} • ${m2}` : '';
-        } else if (teamName) {
-          primaryTitle = teamName;
+          primaryTitle = `${m1} - ${m2}`;
+          subTitle = '';
         } else {
           primaryTitle = translate('pendingTeam');
+          subTitle = '';
         }
       } else {
-        // ĐÁNH ĐƠN: Tên người chơi ở trên luôn, không hiện tên nhỏ
+        // ĐÁNH ĐƠN:
+        // Tên người chơi ở trên luôn, không hiện tên nhỏ
         const singleName = uniqueMembers[0]?.fullName || teamName;
         primaryTitle = singleName || translate('pendingTeam');
-        subTitle = ''; // Đơn thì tên người trên luôn không hiện tên nhỏ
+        subTitle = '';
       }
 
       const avatarBg1 = side === 'p1' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-violet-100 text-violet-700 border-violet-200';
@@ -1341,21 +1359,34 @@ export default function HomePage() {
         (m, idx, arr) => (m.fullName || m.avatarUrl) && arr.findIndex((x) => x.fullName === m.fullName) === idx
       );
       const teamName = (participant?.teamName || '').trim();
-      const isDoubles = uniqueMembers.length >= 2 || (teamName.includes(' / ') || teamName.includes(' - '));
+
+      const rawMatchType = String(
+        (match as EnrichedMatch).tournament?.matchType ||
+        contextTournament?.format ||
+        ''
+      ).toUpperCase();
+      const isDoublesTournament = rawMatchType.includes('DOUBLE') || rawMatchType.includes('ĐÔI');
+      const isDoubles = isDoublesTournament || uniqueMembers.length >= 2 || teamName.includes(' / ') || teamName.includes(' - ');
 
       let primaryTitle = '';
       let subTitle = '';
 
       if (isDoubles) {
-        if (uniqueMembers.length >= 2) {
+        const memberNamesStr = uniqueMembers.map((m) => m.fullName).filter(Boolean).join(' • ');
+
+        if (teamName) {
+          primaryTitle = teamName;
+          subTitle = memberNamesStr && memberNamesStr !== teamName && !teamName.includes(memberNamesStr)
+            ? memberNamesStr
+            : '';
+        } else if (uniqueMembers.length >= 2) {
           const m1 = uniqueMembers[0].fullName || '';
           const m2 = uniqueMembers[1].fullName || '';
-          primaryTitle = teamName || `${m1} / ${m2}`;
-          subTitle = teamName && teamName !== `${m1} / ${m2}` ? `${m1} • ${m2}` : '';
-        } else if (teamName) {
-          primaryTitle = teamName;
+          primaryTitle = `${m1} - ${m2}`;
+          subTitle = '';
         } else {
           primaryTitle = translate('pendingTeam');
+          subTitle = '';
         }
       } else {
         const singleName = uniqueMembers[0]?.fullName || teamName;

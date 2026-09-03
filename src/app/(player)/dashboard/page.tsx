@@ -437,9 +437,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         {/* Left 2 Columns: Tabbed Interface Content */}
-        <div className="xl:col-span-2 flex flex-col gap-5">
+        <div className="xl:col-span-2 min-w-0 flex flex-col gap-5">
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="flex flex-col gap-4">
@@ -880,7 +880,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: ELO Card, Role Summary, Quick Shortcuts */}
-        <div className="xl:col-span-1 flex flex-col gap-5">
+        <div className="xl:col-span-1 min-w-0 flex flex-col gap-5">
           {bestFootballTeam && (
             <FootballTeamEloCard
               team={bestFootballTeam}

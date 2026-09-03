@@ -1779,8 +1779,8 @@ export default function HomePage() {
                       const group = rawGroup as GroupMatchesData;
                       const tournamentId = group.id || tournamentName;
                       const currentPage = tournamentPages[tournamentId] || 1;
-                      const totalPages = group.matches.length;
-                      const displayMatches = group.matches.slice(currentPage - 1, currentPage);
+                      const totalPages = Math.ceil(group.matches.length / 2);
+                      const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
                       const matchedTournament = tournaments.find(t => t.id === group.id);
                       const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
@@ -1835,8 +1835,8 @@ export default function HomePage() {
                               )}
                             </div>
                           </div>
-                          {/* Matches List: 1 match row per tournament */}
-                          <div className="space-y-2">
+                          {/* Matches List: 1 row with 2 matches side-by-side */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
                             {displayMatches.map((match) => renderUpcomingMatchRow(match, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>

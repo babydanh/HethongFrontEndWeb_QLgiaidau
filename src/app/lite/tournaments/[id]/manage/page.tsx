@@ -31,7 +31,7 @@ import {
   Trophy, Users, Swords, Calendar,
   ExternalLink, Copy, ChevronLeft,
   AlertTriangle, CheckCircle, RefreshCw, UserPlus, Shuffle,
-  Unlink, Loader2, User, FlaskConical, MapPin, FileText, Edit3,
+  Unlink, Loader2, User, FlaskConical, MapPin, FileText, Edit3, Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -43,6 +43,7 @@ import { buildLiteJoinUrl } from '@/features/tournaments/lite-qr';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { regionsApi, type Region } from '@/features/regions/api';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 
 type LiteTab = 'overview' | 'participants' | 'bracket' | 'matches';
 
@@ -121,6 +122,22 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [ward, setWard] = useState('');
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
+
+  // Tự động nhận diện Tỉnh/Thành & Phường/Xã từ địa chỉ chi tiết (AI Helper)
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: locationAddress,
+    provinces,
+    wards,
+    onSelectProvince: (provCode) => {
+      setProvince(provCode);
+    },
+    onSelectWard: (wardCode) => {
+      setWard(wardCode);
+    },
+    onWardsLoaded: (loadedWards) => {
+      setWards(loadedWards);
+    },
+  });
 
   // --- Description state ---
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -1085,12 +1102,23 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       value={venueName}
                       onChange={(e) => setVenueName(e.target.value)}
                     />
-                    <Input
-                      label={translate('addressLabel')}
-                      placeholder={translate('addressPlaceholder')}
-                      value={locationAddress}
-                      onChange={(e) => setLocationAddress(e.target.value)}
-                    />
+                    <div className="flex flex-col">
+                      <Input
+                        label={translate('addressLabel')}
+                        placeholder={translate('addressPlaceholder')}
+                        value={locationAddress}
+                        onChange={(e) => setLocationAddress(e.target.value)}
+                      />
+                      {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
+                          <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                          <span>
+                            <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                            {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>

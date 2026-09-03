@@ -395,6 +395,7 @@ export interface FootballTeamRank {
 
 export interface FootballTeamMemberCandidate {
   id: string;
+  email?: string | null;
   fullName?: string | null;
   avatarUrl?: string | null;
 }

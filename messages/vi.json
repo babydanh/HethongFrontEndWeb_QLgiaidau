@@ -5208,7 +5208,15 @@
     "memberRemoved": "Đã xóa thành viên.",
     "inviteCanceled": "Đã hủy lời mời.",
     "roleUpdated": "Đã cập nhật vai trò.",
-    "teamLogoAlt": "Logo đội"
+    "teamLogoAlt": "Logo đội",
+    "uploadingLogo": "Đang tải ảnh lên…",
+    "clickToChangeLogo": "Bấm để đổi logo",
+    "you": "Bạn",
+    "teamStats": "Thông số đội bóng",
+    "viewProfile": "Xem hồ sơ",
+    "captainBadge": "Đội trưởng",
+    "managerBadge": "Quản lý",
+    "playerBadge": "Cầu thủ"
   },
   "OrganizerBasicInfo": {
     "contactValueRequired": "Vui lòng nhập giá trị liên hệ.",

@@ -5208,7 +5208,15 @@
     "memberRemoved": "Member removed.",
     "inviteCanceled": "Invitation canceled.",
     "roleUpdated": "Role updated.",
-    "teamLogoAlt": "Team logo"
+    "teamLogoAlt": "Team logo",
+    "uploadingLogo": "Uploading image…",
+    "clickToChangeLogo": "Click to change logo",
+    "you": "You",
+    "teamStats": "Team statistics",
+    "viewProfile": "View profile",
+    "captainBadge": "Captain",
+    "managerBadge": "Manager",
+    "playerBadge": "Player"
   },
   "OrganizerBasicInfo": {
     "contactValueRequired": "Please enter a contact value.",

@@ -1152,19 +1152,22 @@ export default function HomePage() {
       const member2 = rawMembers[1] || (teamNameParts[1] ? { fullName: teamNameParts[1] } : undefined);
       const isDoubles = rawMembers.length === 2 || teamNameParts.length === 2;
 
-      const primaryName = isDoubles
-        ? [member1?.fullName, member2?.fullName].filter(Boolean).join(' / ') || teamName || translate('pendingTeam')
-        : rawMembers[0]?.fullName || teamName || translate('pendingTeam');
+      const memberNames = rawMembers.map((m) => m.fullName).filter(Boolean);
+      const primaryName = memberNames.length >= 2
+        ? memberNames.join(' - ')
+        : memberNames.length === 1 && teamName && teamName !== memberNames[0]
+          ? `${memberNames[0]} - ${teamName}`
+          : memberNames[0] || teamName || translate('pendingTeam');
 
       const initialChar = (primaryName.trim().charAt(0) || '?').toUpperCase();
       const clubOrSub = ((rawMembers[0] as unknown as Record<string, unknown>)?.clubName as string) ||
         ((rawMembers[0] as unknown as Record<string, unknown>)?.organization as string) ||
-        (isDoubles ? '' : teamName !== primaryName ? teamName : '');
+        '';
 
       const avatarBg = side === 'p1' ? 'bg-amber-100 text-amber-700' : 'bg-violet-100 text-violet-700';
 
       return (
-        <div className="flex items-center justify-between py-2 border-b border-slate-100/80 last:border-b-0">
+        <div className="flex items-center justify-between py-2.5 border-b border-slate-100/80 last:border-b-0">
           <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
             {/* Round letter avatar */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${avatarBg}`}>
@@ -1173,8 +1176,8 @@ export default function HomePage() {
 
             {/* Name + Club info */}
             <div className="min-w-0 flex-1">
-              <div className="text-xs sm:text-sm tracking-tight truncate font-bold text-slate-900">
-                <span className={isWinner ? 'text-slate-900 font-extrabold' : 'text-slate-600 font-semibold'}>
+              <div className="text-xs sm:text-sm tracking-tight font-bold text-slate-900 leading-snug">
+                <span className={isWinner ? 'text-slate-950 font-black' : 'text-slate-700 font-semibold'}>
                   {primaryName}
                 </span>
               </div>

@@ -831,7 +831,7 @@ export default function QuickTournamentCreate() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
             
             {/* ─── CỘT TRÁI (7 CỘT): THÔNG TIN CƠ BẢN, LỊCH TRÌNH, ĐỊA ĐIỂM, MÔ TẢ ─── */}
-            <div className="space-y-6 lg:col-span-7 xl:col-span-7">
+            <div className="space-y-6 lg:contents [&>section]:lg:col-span-7 [&>section]:xl:col-span-7">
               
               {/* Card 1: Thông tin cơ bản */}
               <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
@@ -1105,10 +1105,10 @@ export default function QuickTournamentCreate() {
             </div>
 
             {/* ─── CỘT PHẢI (5 CỘT - STICKY): NỘI DUNG, THỂ THỨC, ELO, QUY MÔ, HIỂN THỊ, NÚT SUBMIT ─── */}
-            <div className="space-y-5 lg:col-span-5 xl:col-span-5 lg:sticky lg:top-6 self-start">
+            <div className="space-y-5 lg:contents [&>section]:lg:col-start-8 [&>section]:lg:col-span-5 [&>section]:xl:col-start-8 [&>section]:xl:col-span-5 lg:sticky lg:top-6 lg:self-start">
               
               {/* Card Phải 1: Nội dung thi đấu */}
-              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <section className="lg:col-start-1 lg:col-span-7 lg:row-start-1 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">

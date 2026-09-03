@@ -85,59 +85,90 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
     setPan({ x: 0, y: 0 });
   };
 
-  const handleCropAndSave = () => {
+  const handleCropAndSave = async () => {
     const img = imgRef.current;
     if (!img) return;
 
-    const canvas = document.createElement('canvas');
-    const OUTPUT_SIZE = 512;
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    try {
+      const canvas = document.createElement('canvas');
+      const OUTPUT_SIZE = 512;
+      canvas.width = OUTPUT_SIZE;
+      canvas.height = OUTPUT_SIZE;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    // Viewport circular container width / height in px
-    const VIEWPORT_SIZE = 260;
+      // Viewport circular container width / height in px
+      const VIEWPORT_SIZE = 260;
 
-    // The scale of the image on screen
-    const naturalWidth = img.naturalWidth || 512;
-    const naturalHeight = img.naturalHeight || 512;
+      // Image natural bounds
+      let naturalWidth = img.naturalWidth;
+      let naturalHeight = img.naturalHeight;
 
-    // Image rendered bounds within the 260px container
-    // When rendered with max-w-none, object-cover logic
-    const scaleFactor = Math.max(VIEWPORT_SIZE / naturalWidth, VIEWPORT_SIZE / naturalHeight) * zoom;
-    const renderedWidth = naturalWidth * scaleFactor;
-    const renderedHeight = naturalHeight * scaleFactor;
+      if (!naturalWidth || !naturalHeight) {
+        // Fallback: draw directly
+        naturalWidth = 512;
+        naturalHeight = 512;
+      }
 
-    // Center offsets
-    const imgCenterX = VIEWPORT_SIZE / 2 + pan.x;
-    const imgCenterY = VIEWPORT_SIZE / 2 + pan.y;
+      // Compute rendered size with object-cover style ratio
+      const scaleFactor = Math.max(VIEWPORT_SIZE / naturalWidth, VIEWPORT_SIZE / naturalHeight) * zoom;
+      const renderedWidth = naturalWidth * scaleFactor;
+      const renderedHeight = naturalHeight * scaleFactor;
 
-    const imgTopLeftX = imgCenterX - renderedWidth / 2;
-    const imgTopLeftY = imgCenterY - renderedHeight / 2;
+      // Center offsets with pan
+      const imgCenterX = VIEWPORT_SIZE / 2 + pan.x;
+      const imgCenterY = VIEWPORT_SIZE / 2 + pan.y;
 
-    // Map viewport (260x260) onto canvas (512x512)
-    const ratio = OUTPUT_SIZE / VIEWPORT_SIZE;
+      const imgTopLeftX = imgCenterX - renderedWidth / 2;
+      const imgTopLeftY = imgCenterY - renderedHeight / 2;
 
-    // Draw image onto canvas
-    ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
-    ctx.drawImage(
-      img,
-      imgTopLeftX * ratio,
-      imgTopLeftY * ratio,
-      renderedWidth * ratio,
-      renderedHeight * ratio
-    );
+      // Map viewport (260x260) onto canvas (512x512)
+      const ratio = OUTPUT_SIZE / VIEWPORT_SIZE;
 
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          onConfirm(blob);
-        }
-      },
-      'image/png',
-      0.95
-    );
+      ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+      ctx.drawImage(
+        img,
+        imgTopLeftX * ratio,
+        imgTopLeftY * ratio,
+        renderedWidth * ratio,
+        renderedHeight * ratio
+      );
+
+      // Convert canvas to Blob (with toBlob or toDataURL fallback)
+      if (canvas.toBlob) {
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              onConfirm(blob);
+            } else {
+              // Fallback to dataURL
+              const dataUrl = canvas.toDataURL('image/png');
+              fetch(dataUrl)
+                .then((r) => r.blob())
+                .then((b) => onConfirm(b))
+                .catch((e) => console.error('DataURL blob fallback error:', e));
+            }
+          },
+          'image/png',
+          0.95
+        );
+      } else {
+        const dataUrl = canvas.toDataURL('image/png');
+        const r = await fetch(dataUrl);
+        const b = await r.blob();
+        onConfirm(b);
+      }
+    } catch (err) {
+      console.error('Canvas export error:', err);
+      // Fallback in case of CORS tainted canvas on external URL
+      try {
+        const response = await fetch(imageSrc);
+        const fallbackBlob = await response.blob();
+        onConfirm(fallbackBlob);
+      } catch (fetchErr) {
+        console.error('Fallback fetch blob error:', fetchErr);
+      }
+    }
   };
 
   return (
@@ -174,6 +205,7 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
               ref={imgRef}
               src={imageSrc}
               alt="Crop target"
+              crossOrigin="anonymous"
               onLoad={() => setImgLoaded(true)}
               draggable={false}
               className="max-w-none pointer-events-none select-none transition-transform duration-75"

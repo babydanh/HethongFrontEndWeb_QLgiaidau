@@ -866,7 +866,7 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
-  // Group completed matches by tournament name
+  // Group completed matches by tournament name - Giới hạn tối đa các trận gần nhất (tránh phình 1/17)
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -879,7 +879,10 @@ export default function HomePage() {
         matches: [],
       };
     }
-    acc[tournamentName].matches.push(match);
+    // Chỉ lấy tối đa 4 trận gần nhất cho mỗi giải ở trang chủ (tương đương tối đa 2 trang)
+    if (acc[tournamentName].matches.length < 4) {
+      acc[tournamentName].matches.push(match);
+    }
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 

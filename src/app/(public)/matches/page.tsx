@@ -17,6 +17,9 @@ import { BRAND } from '@/constants/brand';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 
+import { tournamentsApi } from '@/features/tournaments/api';
+import { TournamentAvatar } from '@/components/ui/TournamentAvatar';
+
 interface EnrichedTournament {
   id: string;
   name: string;
@@ -303,6 +306,7 @@ export default function MatchesListPage() {
   const [activeShareUrl, setActiveShareUrl] = useState('');
   const [activeShareTitle, setActiveShareTitle] = useState('');
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
+  const [tournamentLogos, setTournamentLogos] = useState<Record<string, string>>({});
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const filterKey = [
@@ -496,6 +500,38 @@ export default function MatchesListPage() {
     fetchMatches();
   }, [filterKey, page, matchesRefreshTick]);
 
+  // Làm giàu logo giải đấu từ Tournament detail API khi Match API không populate logoUrl
+  useEffect(() => {
+    if (matches.length === 0) return;
+    const missingTournamentIds = Array.from(
+      new Set(
+        matches
+          .map((m) => m.tournamentId)
+          .filter((id): id is string => Boolean(id) && !tournamentLogos[id])
+      )
+    );
+
+    if (missingTournamentIds.length === 0) return;
+
+    let isMounted = true;
+    missingTournamentIds.forEach(async (id) => {
+      try {
+        const tRes = await tournamentsApi.getTournamentById(id);
+        const data = (tRes?.data as unknown as { data?: { logoUrl?: string; bannerUrl?: string } })?.data || tRes?.data;
+        const logo = data?.logoUrl || data?.bannerUrl;
+        if (logo && isMounted) {
+          setTournamentLogos((prev) => (prev[id] === logo ? prev : { ...prev, [id]: logo }));
+        }
+      } catch (_) {
+        // Fallback component sẽ hiển thị nếu tournament không có logo
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [matches, tournamentLogos]);
+
     // The backend match projection already normalizes cheerCount to zero.
   // Counts are rendered from the match projection; local state is only for
   // immediate updates after the user sends a cheer.
@@ -598,7 +634,7 @@ export default function MatchesListPage() {
         tournamentId: tId,
         tournamentName: match.tournament?.name || translate('tournamentFallback'),
         tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || translate('categoryNotUpdated'),
-        tournamentLogoUrl: match.tournament?.logoUrl || match.tournament?.community?.logoUrl || null,
+        tournamentLogoUrl: match.tournament?.logoUrl || tournamentLogos[tId] || match.tournament?.community?.logoUrl || null,
         tournamentVenueName: match.tournament?.venueName || null,
         matches: []
       };
@@ -1054,13 +1090,14 @@ export default function MatchesListPage() {
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/tournaments/${group.tournamentId}`}
-                      className="w-14 h-14 rounded-full bg-white overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity shadow-sm"
+                      className="shrink-0 hover:opacity-85 transition-opacity"
                     >
-                      {group.tournamentLogoUrl ? (
-                        <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-10 h-10 object-contain" />
-                      ) : (
-                        <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-10 h-10 object-contain opacity-60" />
-                      )}
+                      <TournamentAvatar
+                        src={group.tournamentLogoUrl}
+                        alt={group.tournamentName}
+                        category={group.tournamentCategory}
+                        size="md"
+                      />
                     </Link>
                     <div>
                       <div className="flex flex-wrap items-center gap-2 mb-1">

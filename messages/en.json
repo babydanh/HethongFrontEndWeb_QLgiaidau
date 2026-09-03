@@ -7019,7 +7019,14 @@
     "verificationResendSuccess": "Verification email sent! Please check your inbox (and spam folder).",
     "verificationResendError": "Unable to send verification email. Please try again later.",
     "completed": "Completed",
-    "pending": "Pending"
+    "pending": "Pending",
+    "roleOrganizerRequiredTitle": "Activate Tournament Organizer Privileges",
+    "roleOrganizerRequiredDesc": "Your account is currently registered as a Player. To organize tournaments, please verify your email address to automatically activate Organizer (BTC) privileges.",
+    "upgradeToOrganizerAction": "Verify Email & Activate BTC Privileges",
+    "backToHomeAction": "Back to Home",
+    "loginRequiredTitle": "Login Required",
+    "loginRequiredDesc": "Please sign in to access the Organizer Dashboard and manage your tournaments.",
+    "loginAction": "Sign in now"
   },
   "BracketView": {
     "upperTab": "Winners bracket",

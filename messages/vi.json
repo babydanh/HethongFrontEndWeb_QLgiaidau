@@ -7019,7 +7019,14 @@
     "verificationResendSuccess": "Đã gửi email xác thực! Vui lòng kiểm tra hộp thư đến (và mục Spam).",
     "verificationResendError": "Không thể gửi email xác thực. Vui lòng thử lại sau.",
     "completed": "Đã xong",
-    "pending": "Chờ thực hiện"
+    "pending": "Chờ thực hiện",
+    "roleOrganizerRequiredTitle": "Kích hoạt quyền Ban tổ chức giải đấu",
+    "roleOrganizerRequiredDesc": "Tài khoản của bạn hiện là Người chơi. Để tự tổ chức giải đấu, bạn cần xác thực Email chính chủ để hệ thống tự động kích hoạt quyền Ban tổ chức (BTC).",
+    "upgradeToOrganizerAction": "Xác thực Email & Kích hoạt quyền BTC",
+    "backToHomeAction": "Quay lại trang chủ",
+    "loginRequiredTitle": "Yêu cầu đăng nhập",
+    "loginRequiredDesc": "Vui lòng đăng nhập để truy cập Bảng điều khiển và quản lý giải đấu của bạn.",
+    "loginAction": "Đăng nhập ngay"
   },
   "BracketView": {
     "upperTab": "Nhánh Thắng",

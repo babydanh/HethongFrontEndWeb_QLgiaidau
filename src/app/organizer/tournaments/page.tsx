@@ -16,6 +16,8 @@ import { Tournament } from '@/types/tournament';
 import { getSportLogo } from '@/constants/sports';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { OrganizerVerificationBanner } from '@/components/organizer/OrganizerVerificationBanner';
 
 interface ParentWithDivisions {
   id: string;
@@ -229,6 +231,8 @@ export default function MyTournamentsPage() {
     })}</Badge>;
   };
 
+  const user = useAuthStore((state) => state.user);
+
   if (isLoading && parents.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -243,6 +247,12 @@ export default function MyTournamentsPage() {
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-3 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
+
+        {/* Verification Status & Onboarding Banner */}
+        <OrganizerVerificationBanner
+          isEmailVerified={user?.isEmailVerified}
+          email={user?.email}
+        />
 
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">

@@ -17,6 +17,7 @@ import {
   User,
   X,
   Settings,
+  ShieldAlert,
 } from 'lucide-react';
 import { getButtonClasses } from '@/components/ui/Button';
 import { communitiesApi } from '@/features/communities/api';
@@ -645,6 +646,15 @@ export function Header() {
                       >
                         <Trophy className="h-4 w-4 text-slate-400" />
                         {t('myTournaments')}
+                      </Link>
+
+                      <Link
+                        href="/organizer/tournaments"
+                        onClick={closeOverlays}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-blue-600 font-semibold transition-colors hover:bg-blue-50/50 hover:text-blue-700"
+                      >
+                        <ShieldAlert className="h-4 w-4 text-blue-500" />
+                        {t('organizerTournaments')}
                       </Link>
 
                       <Link

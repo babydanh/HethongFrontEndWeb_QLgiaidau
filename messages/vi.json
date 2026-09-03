@@ -872,6 +872,9 @@
     "back": "Quay lại",
     "creating": "Đang tạo...",
     "createTournament": "Tạo giải đấu",
+    "verificationAlertTitle": "Yêu cầu xác minh tài khoản Ban tổ chức",
+    "verificationAlertDesc": "Tài khoản của bạn chưa xác thực Email. Để bảo đảm tính minh bạch và tránh giải đấu ảo, vui lòng xác thực Email trước khi tạo giải đấu.",
+    "verificationVerifyButton": "Xác thực Email ngay để tạo giải",
     "validationName": "Vui lòng nhập tên giải đấu.",
     "validationDescription": "Mô tả phải có ít nhất 10 ký tự.",
     "validationCategory": "Vui lòng chọn bộ môn thi đấu.",
@@ -2799,7 +2802,8 @@
     "refereeRole": "Nhận vai trò",
     "accept": "Đồng ý",
     "administration": "Quản trị",
-    "moderation": "Điều phối kiểm duyệt"
+    "moderation": "Điều phối kiểm duyệt",
+    "organizerTournaments": "Quản lý giải đấu (BTC)"
   },
   "Footer": {
     "tagline": "CHƠI CÙNG NHAU",
@@ -7000,7 +7004,19 @@
     "manage": "Quản lý",
     "viewPublic": "Xem công khai",
     "operations": "Vận hành",
-    "noRounds": "Chưa có vòng đấu"
+    "noRounds": "Chưa có vòng đấu",
+    "verificationBannerTitle": "Tài khoản Ban tổ chức chưa xác minh Email",
+    "verificationBannerDesc": "Bạn cần xác thực địa chỉ email để mở quyền công bố giải đấu công khai, kích hoạt bốc thăm nhánh đấu và nhận đăng ký từ vận động viên.",
+    "verificationStep1": "1. Đăng ký tài khoản",
+    "verificationStep2": "2. Xác minh Email chính chủ",
+    "verificationStep3": "3. Hoàn thiện hồ sơ & liên hệ BTC",
+    "verificationActionVerify": "Xác thực ngay",
+    "verificationActionResend": "Gửi lại email xác thực",
+    "verificationResending": "Đang gửi...",
+    "verificationResendSuccess": "Đã gửi email xác thực! Vui lòng kiểm tra hộp thư đến (và mục Spam).",
+    "verificationResendError": "Không thể gửi email xác thực. Vui lòng thử lại sau.",
+    "completed": "Đã xong",
+    "pending": "Chờ thực hiện"
   },
   "BracketView": {
     "upperTab": "Nhánh Thắng",

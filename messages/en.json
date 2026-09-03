@@ -872,6 +872,9 @@
     "back": "Back",
     "creating": "Creating...",
     "createTournament": "Create tournament",
+    "verificationAlertTitle": "Organizer Account Verification Required",
+    "verificationAlertDesc": "Your account has not verified its email address. To maintain transparency and prevent unverified tournaments, please verify your email before creating a tournament.",
+    "verificationVerifyButton": "Verify Email Now to Create Tournament",
     "validationName": "Please enter a tournament name.",
     "validationDescription": "The description must contain at least 10 characters.",
     "validationCategory": "Please select a sport.",
@@ -2799,7 +2802,8 @@
     "refereeRole": "Receive role",
     "accept": "Accept",
     "administration": "Administration",
-    "moderation": "Moderation"
+    "moderation": "Moderation",
+    "organizerTournaments": "Tournament Manager (BTC)"
   },
   "Footer": {
     "tagline": "PLAY TOGETHER",
@@ -7000,7 +7004,19 @@
     "manage": "Manage",
     "viewPublic": "View public",
     "operations": "Operations",
-    "noRounds": "No rounds yet"
+    "noRounds": "No rounds yet",
+    "verificationBannerTitle": "Organizer Account Email Not Verified",
+    "verificationBannerDesc": "You must verify your email address to publish tournaments publicly, generate brackets, and accept registrations from athletes.",
+    "verificationStep1": "1. Account registration",
+    "verificationStep2": "2. Email verification",
+    "verificationStep3": "3. Complete profile & organizer contacts",
+    "verificationActionVerify": "Verify now",
+    "verificationActionResend": "Resend verification email",
+    "verificationResending": "Sending...",
+    "verificationResendSuccess": "Verification email sent! Please check your inbox (and spam folder).",
+    "verificationResendError": "Unable to send verification email. Please try again later.",
+    "completed": "Completed",
+    "pending": "Pending"
   },
   "BracketView": {
     "upperTab": "Winners bracket",

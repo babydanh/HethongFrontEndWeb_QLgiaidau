@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { ChevronLeft, CheckCircle, Info, Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { ChevronLeft, CheckCircle, Info, Loader2, ShieldAlert, ArrowRight } from 'lucide-react';
 import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
 import type { CreateDivisionInput } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
@@ -16,9 +17,11 @@ import type { TournamentFeesConfig } from '@/features/tournaments/api';
 import { api } from '@/lib/axios';
 import { inboxApi } from '@/features/chat/inbox-api';
 import { toApiIsoDateTime } from '@/utils/dateTimeInput';
+import Link from 'next/link';
 
 export default function Step4ReviewSubmit() {
   const translate = useTranslations('OrganizerCreateStep4');
+  const user = useAuthStore((state) => state.user);
   const { formData, getDivisionsFromFormats, prevStep, reset, setStep, setValidationTarget } = useCreateTournamentStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig>({
@@ -411,7 +414,22 @@ export default function Step4ReviewSubmit() {
         </p>
       </div>
 
-      <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
+      {/* Kiểm tra xác thực Email của Ban tổ chức */}
+      {!user?.isEmailVerified && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-amber-900 shadow-2xs">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <h5 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+              {translate('verificationAlertTitle')}
+            </h5>
+            <p className="mt-0.5 text-xs text-amber-800 leading-relaxed font-medium">
+              {translate('verificationAlertDesc')}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between mt-4 pt-6 border-t border-slate-100 items-center gap-3">
         <Button
           type="button"
           variant="outline"
@@ -421,24 +439,34 @@ export default function Step4ReviewSubmit() {
         >
           <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
         </Button>
-        <Button
-          type="button"
-          onClick={handleCreateTournament}
-          disabled={isSubmitting}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> {translate('creating')}
-            </>
-          ) : (
-            <>
-              <CheckCircle className="w-4 h-4 mr-1.5" /> {translate('createTournament')}
-            </>
-          )}
-        </Button>
+
+        {!user?.isEmailVerified ? (
+          <Link
+            href="/auth/verify-email"
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-amber-700 transition active:scale-95 cursor-pointer"
+          >
+            <span>{translate('verificationVerifyButton')}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleCreateTournament}
+            disabled={isSubmitting}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> {translate('creating')}
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-1.5" /> {translate('createTournament')}
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
 }
-

@@ -519,7 +519,7 @@ export default function MatchesListPage() {
       try {
         const tRes = await tournamentsApi.getTournamentById(id);
         const data = (tRes?.data as unknown as { data?: { logoUrl?: string; bannerUrl?: string } })?.data || tRes?.data;
-        const logo = data?.logoUrl || data?.bannerUrl;
+        const logo = data?.logoUrl;
         if (logo && isMounted) {
           setTournamentLogos((prev) => (prev[id] === logo ? prev : { ...prev, [id]: logo }));
         }
@@ -635,7 +635,7 @@ export default function MatchesListPage() {
         tournamentId: tId,
         tournamentName: match.tournament?.name || translate('tournamentFallback'),
         tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || translate('categoryNotUpdated'),
-        tournamentLogoUrl: match.tournament?.logoUrl || tournamentLogos[tId] || match.tournament?.community?.logoUrl || null,
+        tournamentLogoUrl: match.tournament?.logoUrl || tournamentLogos[tId] || null,
         tournamentVenueName: match.tournament?.venueName || null,
         matches: []
       };
@@ -1072,8 +1072,8 @@ export default function MatchesListPage() {
       ) : (
         <div className="flex flex-col gap-6">
           {currentTournaments.map(group => {
-            // Cấu hình 3x2 (6 trận đấu trên mỗi trang của card giải đấu)
-            const MATCHES_PER_PAGE = 6;
+            // Cấu hình 1 hàng 2 trận gọn gàng (2 trận đấu trên mỗi trang của card giải đấu)
+            const MATCHES_PER_PAGE = 2;
             const groupPage = groupPages[group.tournamentId] || 1;
             const totalGroupPages = Math.ceil(group.matches.length / MATCHES_PER_PAGE);
 
@@ -1114,8 +1114,8 @@ export default function MatchesListPage() {
                   </div>
                 </div>
 
-                {/* Grid 3 cột x 2 hàng */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Grid 1 hàng x 2 trận */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {visibleMatches.map(match => {
                     const isLive = match.status === 'ONGOING';
                     const isFinished = match.status === 'COMPLETED';

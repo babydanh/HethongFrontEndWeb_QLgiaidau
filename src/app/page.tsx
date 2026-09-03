@@ -1076,12 +1076,12 @@ export default function HomePage() {
             {/* Status Pill Badge */}
             <div className="shrink-0">
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 uppercase tracking-wider shadow-2xs">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-wider shadow-2xs">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
                   </span>
-                  {translate('statusLive')}
+                  LIVE
                 </span>
               ) : isCompleted ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
@@ -1101,7 +1101,7 @@ export default function HomePage() {
             {renderOpponent(match.participant1, translate('pendingTeam'), 'left')}
 
             {/* Center Score / Time */}
-            <div className="flex flex-col items-center justify-center shrink-0 px-1 sm:px-2 min-w-[60px] sm:min-w-[68px]">
+            <div className="flex flex-col items-center justify-center shrink-0 px-1 sm:px-2 min-w-[64px] sm:min-w-[74px]">
               {isScheduled ? (
                 <>
                   <span className="text-xs font-black tracking-wider text-slate-500 bg-slate-100/90 border border-slate-200/90 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
@@ -1113,38 +1113,42 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-1 sm:gap-1.5 font-sans leading-none">
+                  <div className="flex items-center gap-1.5 sm:gap-2 font-sans leading-none">
                     <span
-                      className={`text-xl sm:text-2xl tracking-tight transition-colors ${
+                      className={`text-2xl sm:text-3xl tracking-tight transition-colors ${
                         isCompleted && isP1Winner
-                          ? 'text-content-link font-extrabold'
+                          ? 'text-content-link font-black'
                           : isCompleted && isP2Winner
                             ? 'text-slate-400 font-bold'
-                            : 'text-slate-900 font-extrabold'
+                            : 'text-slate-900 font-black'
                       }`}
                     >
                       {activeSet.team1Score}
                     </span>
-                    <span className="text-slate-300 font-bold text-xs sm:text-sm select-none">-</span>
+                    <span className="text-slate-300 font-bold text-sm sm:text-base select-none">-</span>
                     <span
-                      className={`text-xl sm:text-2xl tracking-tight transition-colors ${
+                      className={`text-2xl sm:text-3xl tracking-tight transition-colors ${
                         isCompleted && isP2Winner
-                          ? 'text-content-link font-extrabold'
+                          ? 'text-content-link font-black'
                           : isCompleted && isP1Winner
                             ? 'text-slate-400 font-bold'
-                            : 'text-slate-900 font-extrabold'
+                            : 'text-slate-900 font-black'
                       }`}
                     >
                       {activeSet.team2Score}
                     </span>
                   </div>
-                  <span
-                    className={`text-[10.5px] sm:text-[11px] font-bold mt-1.5 tracking-tight ${
-                      isLive ? 'text-rose-600 animate-pulse' : 'text-slate-400'
-                    }`}
-                  >
-                    {setSubStatusText}
-                  </span>
+                  {isLive ? (
+                    <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 tracking-wider uppercase shadow-2xs">
+                      {setSubStatusText || 'SET 1'}
+                    </span>
+                  ) : (
+                    <span
+                      className={`text-[10.5px] sm:text-[11px] font-bold mt-1.5 tracking-tight text-slate-400`}
+                    >
+                      {setSubStatusText}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -1203,6 +1207,153 @@ export default function HomePage() {
           </div>
         </div>
       </motion.div>
+    );
+  };
+
+  const renderCompletedMatchRow = (
+    match: BracketMatch,
+    contextMatches: BracketMatch[] = [match],
+    contextTournament?: Pick<Tournament, 'format' | 'maxParticipants'> | null,
+  ) => {
+    const scores = extractMatchScores(match.scoreDetails);
+    const roundLabel = getMatchRoundLabel({
+      match,
+      matches: contextMatches,
+      tournamentFormat: contextTournament?.format ?? rankedTournament?.format,
+      bracketSize: contextTournament?.maxParticipants ?? rankedTournament?.maxParticipants ?? null,
+      translations: roundLabelTranslations,
+    });
+
+    const courtText = match.courtName || match.tournament?.venueName;
+    const formatText = getFormatLabel(
+      (match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined,
+      (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined,
+      translate
+    );
+
+    const isP1Winner = Boolean(
+      (match.winnerId && match.participant1Id && match.winnerId === match.participant1Id) ||
+      (scores.length > 0 && scores[scores.length - 1].team1Score > scores[scores.length - 1].team2Score)
+    );
+    const isP2Winner = Boolean(
+      (match.winnerId && match.participant2Id && match.winnerId === match.participant2Id) ||
+      (scores.length > 0 && scores[scores.length - 1].team2Score > scores[scores.length - 1].team1Score)
+    );
+
+    const renderTeamRow = (
+      participant: BracketMatch['participant1'],
+      isWinner: boolean,
+      isLoser: boolean,
+      side: 'p1' | 'p2',
+    ) => {
+      const rawMembers = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
+      const teamName = participant?.teamName || '';
+      const teamNameParts = teamName.includes(' / ')
+        ? teamName.split(' / ').map((p) => p.trim()).filter(Boolean)
+        : [];
+
+      const member1 = rawMembers[0] || (teamNameParts[0] ? { fullName: teamNameParts[0] } : undefined);
+      const member2 = rawMembers[1] || (teamNameParts[1] ? { fullName: teamNameParts[1] } : undefined);
+      const isDoubles = rawMembers.length === 2 || teamNameParts.length === 2;
+
+      const primaryName = isDoubles
+        ? [member1?.fullName, member2?.fullName].filter(Boolean).join(' / ') || teamName || translate('pendingTeam')
+        : rawMembers[0]?.fullName || teamName || translate('pendingTeam');
+
+      const initialChar = (primaryName.trim().charAt(0) || '?').toUpperCase();
+      const clubOrSub = ((rawMembers[0] as unknown as Record<string, unknown>)?.clubName as string) ||
+        ((rawMembers[0] as unknown as Record<string, unknown>)?.organization as string) ||
+        (isDoubles ? '' : teamName !== primaryName ? teamName : '');
+
+      const avatarBg = side === 'p1' ? 'bg-amber-100 text-amber-700' : 'bg-violet-100 text-violet-700';
+
+      return (
+        <div className="flex items-center justify-between py-2 border-b border-slate-100/80 last:border-b-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+            {/* Round letter avatar */}
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${avatarBg}`}>
+              {initialChar}
+            </div>
+
+            {/* Name + Club info */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-xs sm:text-sm tracking-tight truncate ${isWinner ? 'font-bold text-slate-900' : 'font-medium text-slate-500'}`}>
+                  {primaryName}
+                </span>
+                {isWinner && (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    Thắng
+                  </span>
+                )}
+              </div>
+              {clubOrSub && (
+                <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                  {clubOrSub}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Scores for Sets */}
+          <div className="flex items-center gap-4 shrink-0 text-center">
+            {scores.length > 0 ? (
+              scores.slice(0, 3).map((s, idx) => {
+                const scoreVal = side === 'p1' ? s.team1Score : s.team2Score;
+                const oppVal = side === 'p1' ? s.team2Score : s.team1Score;
+                const isSetWin = scoreVal > oppVal;
+                return (
+                  <div
+                    key={idx}
+                    className={`w-8 text-center text-xs sm:text-sm tabular-nums ${
+                      isSetWin ? 'font-bold text-slate-900' : 'font-medium text-slate-400'
+                    }`}
+                  >
+                    {scoreVal}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-xs text-slate-400 italic">--</div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <Link
+        href={`/live/${match.id}`}
+        key={match.id}
+        className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 hover:border-slate-300 hover:shadow-2xs transition-all"
+      >
+        {/* Row Header: Round name & Court | Sets column header */}
+        <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100 text-[11px]">
+          <div className="flex items-center gap-2 font-bold text-slate-700 uppercase tracking-wider truncate">
+            <span>{roundLabel || translate('roundFallback')}</span>
+            {formatText && <span>• {formatText}</span>}
+            {courtText && <span className="text-slate-400 font-normal normal-case">| {courtText}</span>}
+          </div>
+
+          <div className="flex items-center gap-4 shrink-0 font-semibold text-slate-400">
+            {scores.length > 0 ? (
+              scores.slice(0, 3).map((_, idx) => (
+                <div key={idx} className="w-8 text-center">
+                  Set {idx + 1}
+                </div>
+              ))
+            ) : (
+              <div className="w-8 text-center">Tỷ số</div>
+            )}
+          </div>
+        </div>
+
+        {/* 2 Participants Rows */}
+        <div>
+          {renderTeamRow(match.participant1, isP1Winner, isP2Winner, 'p1')}
+          {renderTeamRow(match.participant2, isP2Winner, isP1Winner, 'p2')}
+        </div>
+      </Link>
     );
   };
 
@@ -1388,11 +1539,13 @@ export default function HomePage() {
           {(isLoading || liveMatches.length > 0) && (
             <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
               <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+                  </span>
+                </div>
               </div>
               <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
                 {isLoading ? (
@@ -1534,8 +1687,8 @@ export default function HomePage() {
                       const group = rawGroup as GroupMatchesData;
                       const tournamentId = group.id || tournamentName;
                       const currentPage = tournamentPages[tournamentId] || 1;
-                      const totalPages = Math.ceil(group.matches.length / 4);
-                      const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                      const totalPages = group.matches.length;
+                      const displayMatches = group.matches.slice(currentPage - 1, currentPage);
                       const matchedTournament = tournaments.find(t => t.id === group.id);
                       const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
@@ -1590,9 +1743,9 @@ export default function HomePage() {
                               )}
                             </div>
                           </div>
-                          {/* Matches List Grid */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-                            {displayMatches.map((match) => renderMatchCard(match, false, group.matches, matchedTournament ?? null))}
+                          {/* Matches List: 1 match row per tournament */}
+                          <div className="space-y-2">
+                            {displayMatches.map((match) => renderCompletedMatchRow(match, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>
                       );

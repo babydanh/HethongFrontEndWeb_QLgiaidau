@@ -1787,10 +1787,10 @@ const commonTranslate = useTranslations('Common');
                             )}
                             {Boolean(completedDivisionIds[division.id] || isTournamentCompleted(division.status)) && (
                               <span
-                                className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10.5px] sm:text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs leading-none"
+                                title={translate('status.completed')}
+                                className="inline-flex shrink-0 items-center justify-center rounded-full p-1 bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                <span>{translate('status.completed')}</span>
                               </span>
                             )}
                             <span

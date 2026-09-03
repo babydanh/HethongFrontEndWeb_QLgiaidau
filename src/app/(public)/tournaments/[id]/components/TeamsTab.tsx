@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
-import { ChevronDown, User, Award, ShieldCheck, XCircle, CheckCircle, Search } from 'lucide-react';
+import { ChevronDown, User, Award, ShieldCheck, XCircle, CheckCircle, Search, Clock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -220,16 +220,33 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
                           <div className="flex min-w-0 flex-wrap items-center gap-1.5 leading-normal sm:gap-2">
                             {!isExpandable ? (
-                              <div className="flex min-w-0 items-center gap-2">
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500" aria-hidden="true">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const singleUserId = inlineSingleMember?.userId || team.registeredBy?.id || team.id;
+                                  openUserProfile(
+                                    {
+                                      id: singleUserId,
+                                      fullName: inlineSingleName,
+                                      avatarUrl: inlineSingleAvatar,
+                                    },
+                                    rect,
+                                    tournament.communityId || undefined,
+                                  );
+                                }}
+                                className="flex min-w-0 items-center gap-2 text-left hover:opacity-85 transition-opacity cursor-pointer group"
+                              >
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 group-hover:border-blue-400 transition-colors" aria-hidden="true">
                                   {inlineSingleAvatar ? (
                                     <img src={inlineSingleAvatar} alt="" className="h-full w-full object-cover" />
                                   ) : (
                                     inlineSingleName.charAt(0).toUpperCase()
                                   )}
                                 </span>
-                                <span className="min-w-0 truncate" title={inlineSingleName}>{inlineSingleName}</span>
-                              </div>
+                                <span className="min-w-0 truncate group-hover:text-blue-600 transition-colors" title={inlineSingleName}>{inlineSingleName}</span>
+                              </button>
                             ) : (
                               <span>{team.teamName}</span>
                             )}
@@ -238,12 +255,18 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
                           <div className="flex flex-wrap items-center gap-2">
                             {team.isPaid ? (
-                              <span className="bg-emerald-600 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap shadow-2xs">
-                                {translate("paymentPaid")}
+                              <span
+                                title={translate("paymentPaid")}
+                                className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
                               </span>
                             ) : (
-                              <span className="bg-amber-600 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap shadow-2xs">
-                                {translate("paymentPending")}
+                              <span
+                                title={translate("paymentPending")}
+                                className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs"
+                              >
+                                <Clock className="w-3.5 h-3.5" />
                               </span>
                             )}
                             {!team.isPaid && user?.id && (team.registeredBy?.id === user.id || team.members?.some(m => m.userId === user.id)) && Number(tournament.entryFee ?? 0) > 0 && (
@@ -266,12 +289,32 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                 event.stopPropagation();
                                 toggleExpand(team.id);
                               }}
-                              className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px] transition-colors"
+                              className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px] transition-colors cursor-pointer"
                             >
                               <ChevronDown className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200", isExpanded && "rotate-180 text-blue-600")} />
                             </button>
                           ) : (
-                            <User className="ml-auto h-4 w-4 text-slate-400" aria-hidden="true" />
+                            <button
+                              type="button"
+                              aria-label={translate('detailsHeader')}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const rect = event.currentTarget.getBoundingClientRect();
+                                const singleUserId = inlineSingleMember?.userId || team.registeredBy?.id || team.id;
+                                openUserProfile(
+                                  {
+                                    id: singleUserId,
+                                    fullName: inlineSingleName,
+                                    avatarUrl: inlineSingleAvatar,
+                                  },
+                                  rect,
+                                  tournament.communityId || undefined,
+                                );
+                              }}
+                              className="text-slate-400 hover:text-blue-600 p-1 sm:p-2 min-w-[36px] transition-colors cursor-pointer ml-auto block"
+                            >
+                              <User className="h-4 w-4" aria-hidden="true" />
+                            </button>
                           )}
                         </td>
                       </tr>

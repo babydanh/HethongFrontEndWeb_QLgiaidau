@@ -585,8 +585,8 @@ export default function ProfilePage() {
 
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-        {/* Cover Photo */}
-        <div className="h-56 bg-slate-900 relative group overflow-hidden">
+        {/* Cover Photo Banner */}
+        <div className="h-48 sm:h-64 md:h-72 lg:h-80 bg-slate-950 relative group overflow-hidden select-none">
           <input
             type="file"
             accept="image/*"
@@ -598,25 +598,58 @@ export default function ProfilePage() {
             <img
               src={displayUser.coverUrl}
               alt="Cover"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-650 to-purple-650 opacity-90"></div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a192f] to-[#0f2d59] overflow-hidden">
+              {/* Dynamic Glow Orbs */}
+              <div className="absolute -top-24 -left-20 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-1/2 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 left-1/3 w-72 h-72 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
 
+              {/* Sports Grid & Court Lines Pattern */}
+              <svg
+                className="absolute inset-0 w-full h-full opacity-20"
+                xmlns="http://www.w3.org/2000/svg"
+                width="100%"
+                height="100%"
+              >
+                <defs>
+                  <pattern id="sporto-court-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                    <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1" />
+                    <circle cx="30" cy="30" r="1.5" fill="rgba(56, 189, 248, 0.6)" />
+                  </pattern>
+                  <linearGradient id="sporto-court-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                  </linearGradient>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#sporto-court-grid)" />
+                {/* Court stylized vectors */}
+                <circle cx="85%" cy="30%" r="140" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="2" strokeDasharray="6 6" />
+                <circle cx="85%" cy="30%" r="200" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="1.5" opacity="0.6" />
+                <path d="M -50 280 L 400 -100" stroke="url(#sporto-court-grad)" strokeWidth="1.5" strokeDasharray="8 8" />
+              </svg>
+            </div>
+          )}
+
+          {/* Multi-layer Vignette & Bottom Blend */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
+
+          {/* Edit Cover Action Button */}
           <button
             type="button"
             onClick={handleCoverClick}
             disabled={isUploadingCover}
-            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/10 shadow-lg cursor-pointer"
+            className="absolute top-4 right-4 bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer z-10"
           >
             {isUploadingCover ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
             ) : (
-              <Camera className="w-3.5 h-3.5" />
+              <Camera className="w-3.5 h-3.5 text-blue-400" />
             )}
-            {translate("editCover")}
+            <span>{translate("editCover")}</span>
           </button>
         </div>
 

@@ -10,38 +10,29 @@ import Image from 'next/image';
 import toast from 'react-hot-toast';
 import {
   ChevronLeft,
-  UploadCloud,
-  X,
   Loader2,
   Sparkles,
   Shield,
   Users,
   Lock,
   Globe,
-  CheckCircle2,
   Camera,
   MapPin,
-  HelpCircle,
   ArrowRight,
   Trophy,
 } from 'lucide-react';
 
 import { communitiesApi } from '@/features/communities/api';
 import { categoriesApi, Category } from '@/features/categories/api';
-import { regionsApi, Region } from '@/features/regions/api';
 import { uploadApi } from '@/features/upload/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
-import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { CircularImageCropModal } from '@/components/common/CircularImageCropModal';
 import { getSportLogo } from '@/constants/sports';
+import { BRAND } from '@/constants/brand';
 
 type CreateCommunityFormValues = {
   name: string;
   description?: string;
-  provinceCode: string;
-  wardCode?: string;
-  locationAddress?: string;
   categoryIds: string[];
   visibility: 'PUBLIC' | 'PRIVATE' | 'RESTRICTED';
   joinMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
@@ -62,9 +53,6 @@ export default function CreateCommunityPage() {
           .min(3, translate('validation.nameMin'))
           .max(255, translate('validation.nameMax')),
         description: z.string().max(1000, translate('validation.descriptionMax')).optional(),
-        provinceCode: z.string().min(1, translate('validation.provinceRequired')),
-        wardCode: z.string().optional(),
-        locationAddress: z.string().max(255, translate('validation.locationMax')).optional(),
         categoryIds: z.array(z.string().uuid()).length(1, translate('validation.categoryExactOne')),
         visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
         joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
@@ -76,8 +64,6 @@ export default function CreateCommunityPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [provinces, setProvinces] = useState<Region[]>([]);
-  const [wards, setWards] = useState<Region[]>([]);
 
   // Image upload & cropping states
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -99,9 +85,6 @@ export default function CreateCommunityPage() {
     defaultValues: {
       name: '',
       description: '',
-      provinceCode: '',
-      wardCode: '',
-      locationAddress: '',
       categoryIds: [],
       visibility: 'PUBLIC',
       joinMode: 'OPEN',
@@ -112,9 +95,6 @@ export default function CreateCommunityPage() {
 
   const watchName = watch('name');
   const watchDescription = watch('description');
-  const watchProvince = watch('provinceCode');
-  const watchWard = watch('wardCode');
-  const watchLocationAddress = watch('locationAddress');
   const watchVisibility = watch('visibility');
   const watchJoinMode = watch('joinMode');
   const watchCategoryIds = watch('categoryIds');
@@ -126,22 +106,6 @@ export default function CreateCommunityPage() {
     () => categories.find((c) => c.id === watchCategoryIds?.[0]),
     [categories, watchCategoryIds]
   );
-
-  // Auto address recognition
-  const autoDetectedAddress = useAutoAddressParser({
-    addressValue: watchLocationAddress,
-    provinces,
-    wards,
-    onSelectProvince: (provCode) => {
-      setValue('provinceCode', provCode, { shouldValidate: true, shouldDirty: true });
-    },
-    onSelectWard: (wardCode) => {
-      setValue('wardCode', wardCode, { shouldValidate: true, shouldDirty: true });
-    },
-    onWardsLoaded: (loadedWards) => {
-      setWards(loadedWards);
-    },
-  });
 
   useEffect(() => {
     // Load categories (active only)
@@ -158,20 +122,7 @@ export default function CreateCommunityPage() {
         }
       })
       .catch(console.error);
-
-    // Load provinces
-    regionsApi.getProvinces().then(setProvinces).catch(console.error);
   }, [setValue]);
-
-  useEffect(() => {
-    if (watchProvince) {
-      regionsApi.getWardsByProvince(watchProvince).then(setWards).catch(console.error);
-      setValue('wardCode', '');
-    } else {
-      setWards([]);
-      setValue('wardCode', '');
-    }
-  }, [watchProvince, setValue]);
 
   // Logo file selection -> Open Circular Crop Modal
   const handleLogoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,19 +194,14 @@ export default function CreateCommunityPage() {
 
     try {
       setIsSubmitting(true);
-      const provinceName = provinces.find((p) => p.code === data.provinceCode)?.name || '';
-      const wardName = wards.find((w) => w.code === data.wardCode)?.name || '';
-      const detailedAddress = data.locationAddress?.trim() || '';
-      const combinedAddress = [detailedAddress, wardName, provinceName].filter(Boolean).join(', ');
-
       const payload = {
-        ...data,
+        name: data.name.trim(),
+        description: data.description?.trim() || undefined,
+        categoryIds: data.categoryIds,
+        visibility: data.visibility,
+        joinMode: data.joinMode,
         logoUrl: data.logoUrl?.trim() ? data.logoUrl : undefined,
         bannerUrl: data.bannerUrl?.trim() ? data.bannerUrl : undefined,
-        locationAddress: combinedAddress,
-        districtCode: null,
-        wardCode: data.wardCode || null,
-        joinQuestions: [],
       };
 
       const res = await communitiesApi.createCommunity(payload);
@@ -275,8 +221,6 @@ export default function CreateCommunityPage() {
       setIsSubmitting(false);
     }
   };
-
-  const selectedProvinceName = provinces.find((p) => p.code === watchProvince)?.name || '';
 
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16 pt-6 sm:pt-8">
@@ -306,11 +250,11 @@ export default function CreateCommunityPage() {
           </div>
         </div>
 
-        {/* 2 Cột Layout: Trái (Form tinh gọn) - Phải (Preview & Media & Submit) */}
+        {/* 2 Cột Layout: Trái (Form tinh gọn) - Phải (Preview thật như Card CLB & Media & Submit) */}
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
             
-            {/* ─── CỘT TRÁI (7 CỘT): FORM THÔNG TIN TINH GỌN ─── */}
+            {/* ─── CỘT TRÁI (7 CỘT): FORM THÔNG TIN CỐT LÕI ─── */}
             <div className="space-y-6 lg:col-span-7">
               
               {/* Thẻ 1: Thông tin nhận diện & Môn thể thao */}
@@ -320,7 +264,7 @@ export default function CreateCommunityPage() {
                     <Trophy className="h-4 w-4" />
                   </div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                    {translate('step1')}
+                    Thông tin câu lạc bộ
                   </h2>
                 </div>
 
@@ -407,88 +351,14 @@ export default function CreateCommunityPage() {
                 </div>
               </section>
 
-              {/* Thẻ 2: Khu vực & Địa điểm sân bãi */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                    {translate('step2')}
-                  </h2>
-                </div>
-
-                {/* Tên sân / Địa chỉ chi tiết */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    {translate('locationAddressLabel')}
-                  </label>
-                  <input
-                    {...register('locationAddress')}
-                    placeholder={translate('locationAddressPlaceholder')}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                  {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium">
-                      <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
-                      <span>
-                        {translate('autoDetectedAddress')}{' '}
-                        <strong>
-                          {autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}
-                        </strong>
-                        {autoDetectedAddress.ward
-                          ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}`
-                          : ''}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Dropdowns Tỉnh / Phường */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      {translate('province')} <span className="text-rose-500">*</span>
-                    </label>
-                    <SearchableRegionSelect
-                      value={watchProvince || ''}
-                      options={provinces}
-                      inputName="provinceCode"
-                      placeholder={translate('provincePlaceholder')}
-                      onChange={(value) => {
-                        setValue('provinceCode', value, { shouldValidate: true, shouldDirty: true });
-                        setValue('wardCode', '', { shouldValidate: true, shouldDirty: true });
-                      }}
-                      error={errors.provinceCode?.message}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      {translate('ward')}
-                    </label>
-                    <SearchableRegionSelect
-                      value={watchWard || ''}
-                      options={wards}
-                      inputName="wardCode"
-                      placeholder={translate('wardPlaceholder')}
-                      disabled={!watchProvince || wards.length === 0}
-                      onChange={(value) =>
-                        setValue('wardCode', value, { shouldValidate: true, shouldDirty: true })
-                      }
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Thẻ 3: Chế độ hiển thị & Quyền riêng tư */}
+              {/* Thẻ 2: Chế độ hiển thị & Quyền riêng tư */}
               <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <Shield className="h-4 w-4" />
                   </div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                    {translate('step4')}
+                    Quyền riêng tư & Chế độ tham gia
                   </h2>
                 </div>
 
@@ -595,152 +465,213 @@ export default function CreateCommunityPage() {
 
             </div>
 
-            {/* ─── CỘT PHẢI (5 CỘT - STICKY): PREVIEW & MEDIA UPLOAD & SUBMIT ─── */}
+            {/* ─── CỘT PHẢI (5 CỘT - STICKY): PREVIEW CHUẨN CARD CLB & MEDIA UPLOAD & SUBMIT ─── */}
             <div className="space-y-6 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
               
-              {/* Thẻ Xem trước CLB Thực tế (Live Visual Preview) */}
-              <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Xem trước diện mạo CLB
-                    </span>
+              {/* Thẻ Xem trước đúng 100% tỷ lệ và diện mạo của Card Câu Lạc Bộ ngoài danh sách */}
+              <div>
+                <div className="mb-2 flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Xem trước Card CLB</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-400">Live Preview</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Live Card Preview</span>
                 </div>
 
-                {/* Banner & Avatar Preview Card */}
-                <div className="relative">
-                  {/* Banner Area */}
+                {/* Card Câu Lạc Bộ Thực Tế (Giống y hệt ngoài trang /communities) */}
+                <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_4px_20px_rgba(15,23,42,0.06)] flex flex-col justify-between group">
+                  {/* Header Banner - Cho phép nhấp trực tiếp để upload */}
                   <div
                     onClick={() => !isUploadingBanner && bannerInputRef.current?.click()}
-                    className="group relative h-28 w-full bg-linear-to-r from-blue-600 via-indigo-600 to-sky-500 cursor-pointer overflow-hidden"
+                    className="h-44 sm:h-48 bg-slate-100 relative overflow-hidden shrink-0 cursor-pointer group/banner"
                   >
                     {watchBannerUrl ? (
                       <Image
-                        src={watchBannerUrl}
-                        alt="Club Banner"
+                        src={watchBannerUrl.split(',')[0]}
+                        alt="Banner Preview"
                         fill
-                        className="object-cover transition-transform group-hover:scale-105"
+                        className="object-cover group-hover/banner:scale-105 transition-transform duration-500 ease-out"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-medium gap-1.5">
-                        <Camera className="w-4 h-4" />
-                        <span>Thêm ảnh bìa CLB</span>
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-sky-500 flex items-center justify-center p-6 group-hover/banner:opacity-95 transition-opacity">
+                        <div className="flex flex-col items-center justify-center text-white/90 gap-1 text-center">
+                          <Camera className="w-6 h-6 opacity-80" />
+                          <span className="text-xs font-bold">Thêm ảnh bìa câu lạc bộ</span>
+                          <span className="text-[10px] text-white/70">JPG, PNG (tối đa 10MB)</span>
+                        </div>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>{watchBannerUrl ? 'Đổi ảnh bìa' : 'Tải ảnh bìa lên'}</span>
+
+                    {/* Hover overlay for banner */}
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                      <Camera className="w-4 h-4" />
+                      <span>{watchBannerUrl ? 'Thay đổi ảnh bìa' : 'Tải ảnh bìa lên'}</span>
                     </div>
+
                     {isUploadingBanner && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs">
-                        <Loader2 className="w-5 h-5 animate-spin mr-1.5" />
-                        <span>{translate('loadingBanner')}</span>
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Đang tải ảnh bìa...</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Hidden inputs */}
-                  <input
-                    type="file"
-                    ref={bannerInputRef}
-                    onChange={handleBannerUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <input
-                    type="file"
-                    ref={logoInputRef}
-                    onChange={handleLogoFileSelect}
-                    accept="image/*"
-                    className="hidden"
-                  />
-
-                  {/* Circular Avatar / Logo (Overlap on Banner) */}
-                  <div className="px-5 -mt-8 relative flex items-end justify-between">
-                    <div
-                      onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
-                      className="group relative h-16 w-16 rounded-full border-2 border-white bg-white shadow-md cursor-pointer overflow-hidden shrink-0"
-                    >
-                      {watchLogoUrl ? (
+                  {/* Card Info (White Area) */}
+                  <div className="p-4 pt-2.5 flex flex-col justify-between bg-white">
+                    <div className="flex items-start gap-3 relative">
+                      {/* Circular Logo - Half overlap on Banner, click to crop/upload */}
+                      <div
+                        onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
+                        className="w-16 h-16 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-10 z-10 shrink-0 relative flex items-center justify-center cursor-pointer group/logo"
+                      >
                         <Image
-                          src={watchLogoUrl}
-                          alt="Club Logo"
+                          src={watchLogoUrl || BRAND.assets.defaultCommunityLogo}
+                          alt="Logo Preview"
                           fill
-                          className="object-cover"
+                          className={`transition-transform duration-300 ${watchLogoUrl ? 'object-cover' : 'object-contain p-2'}`}
                         />
-                      ) : (
-                        <div className="h-full w-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                          <Camera className="w-5 h-5" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-bold">
+                          Đổi
                         </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-bold">
-                        Sửa
+                        {isUploadingLogo && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          </div>
+                        )}
                       </div>
-                      {isUploadingLogo && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
-                          <Loader2 className="w-4 h-4 animate-spin" />
+
+                      {/* Text info next to logo */}
+                      <div className="flex-grow min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="text-sm font-bold text-slate-900 line-clamp-1 leading-snug">
+                            {(watchName || '').trim() || 'Tên Câu Lạc Bộ Của Bạn'}
+                          </h4>
                         </div>
-                      )}
+
+                        {/* Stats row directly below title */}
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-semibold flex-wrap">
+                          <span className="flex items-center gap-0.5">
+                            <Users className="w-3 h-3 text-slate-400" />
+                            1 thành viên
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-0.5">
+                            <Trophy className="w-3 h-3 text-slate-400" />
+                            0 giải đấu
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Nút xóa nhanh Logo/Bìa */}
+                      <div className="flex items-center gap-1 text-[10px] shrink-0">
+                        {watchLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setValue('logoUrl', '');
+                            }}
+                            className="text-slate-400 hover:text-rose-500 px-1 py-0.5 rounded cursor-pointer"
+                          >
+                            Xóa logo
+                          </button>
+                        )}
+                        {watchBannerUrl && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setValue('bannerUrl', '');
+                            }}
+                            className="text-slate-400 hover:text-rose-500 px-1 py-0.5 rounded cursor-pointer"
+                          >
+                            Xóa bìa
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Quick remove buttons if uploaded */}
-                    <div className="flex items-center gap-1 text-[11px]">
-                      {watchLogoUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setValue('logoUrl', '')}
-                          className="text-slate-400 hover:text-rose-500 px-1.5 py-0.5 rounded cursor-pointer"
-                        >
-                          Xóa logo
-                        </button>
-                      )}
-                      {watchBannerUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setValue('bannerUrl', '')}
-                          className="text-slate-400 hover:text-rose-500 px-1.5 py-0.5 rounded cursor-pointer"
-                        >
-                          Xóa bìa
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Club Info Details in Card */}
-                  <div className="p-5 pt-3 space-y-2.5">
-                    <div>
-                      <h3 className="text-base font-black text-slate-900 leading-snug">
-                        {(watchName || '').trim() || 'Tên Câu Lạc Bộ Của Bạn'}
-                      </h3>
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
-                        {(watchDescription || '').trim() || 'Giới thiệu ngắn về sân chơi thể thao của bạn...'}
+                    {/* Mô tả ngắn nếu có */}
+                    {(watchDescription || '').trim() && (
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-2 leading-relaxed">
+                        {watchDescription}
                       </p>
-                    </div>
+                    )}
 
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
-                      {selectedCategory && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 border border-blue-200/80 px-2 py-0.5 font-bold text-blue-700">
-                          <Trophy className="w-3 h-3" />
+                    {/* Badges / Tags Row */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
+                      {/* Category Sport Badge */}
+                      {selectedCategory ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] sm:text-[9px] font-bold uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
+                          {(() => {
+                            const logo = getSportLogo(selectedCategory.name);
+                            return logo ? (
+                              <img src={logo} alt={selectedCategory.name} className="w-2.5 h-2.5 object-contain" />
+                            ) : (
+                              <span className="w-1 h-1 rounded-full bg-white" />
+                            );
+                          })()}
                           {selectedCategory.name}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-100 bg-slate-50 text-slate-500 text-[10px] sm:text-[9px] font-bold uppercase tracking-wider">
+                          <span className="w-1 h-1 rounded-full bg-slate-400" />
+                          Thể thao
                         </span>
                       )}
 
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                        <MapPin className="w-3 h-3 text-slate-500" />
-                        {selectedProvinceName || 'Khu vực hoạt động'}
+                      {/* Visibility Badge */}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 text-[10px] sm:text-[9px] font-semibold">
+                        {watchVisibility === 'PUBLIC' ? (
+                          <>
+                            <Globe className="w-2.5 h-2.5 text-blue-500 shrink-0" />
+                            <span>Công khai</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-2.5 h-2.5 text-slate-500 shrink-0" />
+                            <span>Riêng tư</span>
+                          </>
+                        )}
                       </span>
 
-                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 font-semibold text-emerald-700">
-                        <CheckCircle2 className="w-3 h-3" />
-                        {watchVisibility === 'PUBLIC' ? 'Công khai' : 'Riêng tư'}
+                      {/* Join Mode Badge */}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[9px] font-bold uppercase tracking-wider shadow-2xs ${
+                          watchJoinMode === 'INVITE_ONLY'
+                            ? 'bg-rose-600 text-white'
+                            : watchJoinMode === 'APPROVAL'
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-emerald-600 text-white'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                        {watchJoinMode === 'INVITE_ONLY'
+                          ? 'Chỉ mời'
+                          : watchJoinMode === 'APPROVAL'
+                            ? 'Cần duyệt'
+                            : 'Mở tự do'}
                       </span>
                     </div>
                   </div>
                 </div>
-              </section>
+              </div>
+
+              {/* Hidden file inputs for Logo & Banner */}
+              <input
+                type="file"
+                ref={bannerInputRef}
+                onChange={handleBannerUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              <input
+                type="file"
+                ref={logoInputRef}
+                onChange={handleLogoFileSelect}
+                accept="image/*"
+                className="hidden"
+              />
 
               {/* Card Nút Bấm Tạo Câu Lạc Bộ */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3">
@@ -752,7 +683,7 @@ export default function CreateCommunityPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>Đang khởi tạo câu lạc bộ...</span>
+                      <span>Đang tạo câu lạc bộ...</span>
                     </>
                   ) : (
                     <>
@@ -763,7 +694,7 @@ export default function CreateCommunityPage() {
                 </button>
 
                 <p className="text-center text-[11px] text-slate-400">
-                  Nội quy & form thành viên có thể thiết lập thêm bất cứ lúc nào trong Cài đặt CLB.
+                  Địa chỉ sân bãi, nội quy & form thành viên có thể thiết lập thêm bất cứ lúc nào trong Cài đặt CLB.
                 </p>
               </div>
 

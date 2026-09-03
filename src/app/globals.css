@@ -90,6 +90,7 @@
 html {
   font-size: 14.5px;
   scroll-padding-top: var(--app-header-height);
+  scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

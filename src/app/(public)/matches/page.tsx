@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useLocale, useTranslations } from 'next-intl';
-import { Search, ChevronDown, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -1472,32 +1472,21 @@ export default function MatchesListPage() {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            aria-label={translate('previousPage')}
+            className="p-1.5 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
-            {translate('previousPage')}
+            <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <button
-            className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
-          >
-            {translate('pageLabel', { page })}
-          </button>
-
-          {hasMoreMatches && (
-            <button
-              onClick={() => setPage(page + 1)}
-              className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-350 hover:text-slate-900 cursor-pointer"
-            >
-              {translate('pageLabel', { page: page + 1 })}
-            </button>
-          )}
+          <span className="min-w-8 text-center text-xs font-bold text-slate-500">{page}</span>
 
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={!hasMoreMatches}
-            className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            aria-label={translate('nextPage')}
+            className="p-1.5 text-white bg-blue-600 border border-blue-200 hover:bg-blue-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
-            {translate('nextPage')}
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       )}

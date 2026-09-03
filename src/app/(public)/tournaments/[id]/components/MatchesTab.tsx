@@ -7,7 +7,7 @@ import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
 
-import { Calendar, Play, Trophy, MapPin, Search, SlidersHorizontal, ChevronDown, X, Layers } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, X, Layers } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
@@ -201,7 +201,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [matchPage, setMatchPage] = useState(1);
   const [hasDetectedRound, setHasDetectedRound] = useState(false);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
@@ -273,7 +272,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     return Array.from(map.values());
   }, [tournamentCourts, tournamentVenues, tournament, matches]);
 
-  const MATCHES_PER_VIEW = 20;
 
   // Find bracket size for the current division or tournament
   const getBracketSize = () => {
@@ -298,7 +296,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       setSelectedRoundKey('ALL');
       setStatusFilter('ALL');
       setSearchQuery('');
-      setMatchPage(1);
       setHasDetectedRound(false);
       void resetAndFetch();
     });
@@ -613,12 +610,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     });
   }, [getScheduleSection, matches, matchViewMetadata, roundOptions, selectedStageKey, selectedGroupId, selectedLeg, selectedRoundKey, statusFilter, searchQuery]);
 
-  const matchPageCount = Math.max(1, Math.ceil(filteredMatches.length / MATCHES_PER_VIEW));
-  const currentMatchPage = Math.min(matchPage, matchPageCount);
-  const visibleMatches = useMemo(
-    () => filteredMatches.slice((currentMatchPage - 1) * MATCHES_PER_VIEW, currentMatchPage * MATCHES_PER_VIEW),
-    [filteredMatches, currentMatchPage],
-  );
+  const visibleMatches = filteredMatches;
 
   const localizedLoadError = isHttpStatusError(error, 429)
     ? (() => {
@@ -1393,50 +1385,28 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         </div>
       )}
 
-      {filteredMatches.length > MATCHES_PER_VIEW && (
-        <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
-          <button
-            type="button"
-            onClick={() => setMatchPage((current) => Math.max(1, current - 1))}
-            disabled={currentMatchPage <= 1}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {matchTranslate('previousPage')}
-          </button>
-          <span className="min-w-20 text-center text-xs font-bold text-slate-500">
-            {matchTranslate('pageCount', { page: currentMatchPage, totalPages: matchPageCount })}
-          </span>
-          <button
-            type="button"
-            onClick={() => setMatchPage((current) => Math.min(matchPageCount, current + 1))}
-            disabled={currentMatchPage >= matchPageCount}
-            className="rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {matchTranslate('nextPage')}
-          </button>
-        </div>
-      )}
-
       {matches.length > 0 && (hasMore || canGoPrevious) && (
-        <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
+        <div className="flex items-center justify-center gap-1.5 border-t border-slate-200 pt-4">
           <button
             type="button"
             onClick={() => void fetchPreviousPage()}
             disabled={!canGoPrevious || isLoading}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label={matchTranslate('previousPage')}
+            className="rounded-lg border border-slate-200 bg-white p-1.5 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {matchTranslate('previousPage')}
+            <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="min-w-20 text-center text-xs font-bold text-slate-500">
-            {matchTranslate('reportPageCount', { page })}
+          <span className="min-w-8 text-center text-xs font-bold text-slate-500">
+            {page}
           </span>
           <button
             type="button"
             onClick={() => void fetchNextPage()}
             disabled={!hasMore || isLoading}
-            className="rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label={matchTranslate('nextPage')}
+            className="rounded-lg border border-blue-200 bg-blue-600 p-1.5 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {matchTranslate('nextPage')}
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       )}

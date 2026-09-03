@@ -1085,6 +1085,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="info"
+                size="md"
               />
             </div>
           );
@@ -1102,6 +1103,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="warning"
+                size="md"
               />
             </div>
           );
@@ -1119,6 +1121,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="danger"
+                size="md"
               />
             </div>
           );
@@ -1136,6 +1139,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="danger"
+                size="md"
               />
             </div>
           );

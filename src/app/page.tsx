@@ -408,6 +408,8 @@ export default function HomePage() {
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
   const [liveMatchPage, setLiveMatchPage] = useState(1);
+  const [completedMatchPage, setCompletedMatchPage] = useState(1);
+  const [upcomingMatchPage, setUpcomingMatchPage] = useState(1);
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>({});
@@ -704,6 +706,8 @@ export default function HomePage() {
         setIsLoading(false);
         setIsLoadingRanked(false);
         setLiveMatchPage(1);
+        setCompletedMatchPage(1);
+        setUpcomingMatchPage(1);
         feedRequestInFlightRef.current = false;
         if (feedRefreshQueuedRef.current) {
           feedRefreshQueuedRef.current = false;
@@ -852,7 +856,8 @@ export default function HomePage() {
   const totalLivePages = Math.ceil(liveTournamentEntries.length / LIVE_TOURNAMENTS_PER_PAGE);
   const paginatedLiveTournamentEntries = liveTournamentEntries.slice((liveMatchPage - 1) * LIVE_TOURNAMENTS_PER_PAGE, liveMatchPage * LIVE_TOURNAMENTS_PER_PAGE);
 
-  // Group upcoming matches by tournament name
+  // Group upcoming matches by tournament name & Pagination (Max 2 tournaments per page)
+  const UPCOMING_TOURNAMENTS_PER_PAGE = 2;
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -869,7 +874,12 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
-  // Group completed matches by tournament name
+  const upcomingTournamentEntries = Object.entries(upcomingMatchesByTournament);
+  const totalUpcomingPages = Math.ceil(upcomingTournamentEntries.length / UPCOMING_TOURNAMENTS_PER_PAGE);
+  const paginatedUpcomingTournamentEntries = upcomingTournamentEntries.slice((upcomingMatchPage - 1) * UPCOMING_TOURNAMENTS_PER_PAGE, upcomingMatchPage * UPCOMING_TOURNAMENTS_PER_PAGE);
+
+  // Group completed matches by tournament name & Pagination (Max 2 tournaments per page)
+  const COMPLETED_TOURNAMENTS_PER_PAGE = 2;
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -885,6 +895,10 @@ export default function HomePage() {
     acc[tournamentName].matches.push(match);
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
+
+  const completedTournamentEntries = Object.entries(completedMatchesByTournament);
+  const totalCompletedPages = Math.ceil(completedTournamentEntries.length / COMPLETED_TOURNAMENTS_PER_PAGE);
+  const paginatedCompletedTournamentEntries = completedTournamentEntries.slice((completedMatchPage - 1) * COMPLETED_TOURNAMENTS_PER_PAGE, completedMatchPage * COMPLETED_TOURNAMENTS_PER_PAGE);
 
   const renderMatchCard = (
     match: BracketMatch,
@@ -1791,75 +1805,120 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {Object.entries(completedMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
-                      const group = rawGroup as GroupMatchesData;
-                      const tournamentId = group.id || tournamentName;
-                      const currentPage = tournamentPages[tournamentId] || 1;
-                      const totalPages = Math.ceil(group.matches.length / 2);
-                      const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
-                      const matchedTournament = tournaments.find(t => t.id === group.id);
-                      const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
+                    <motion.div
+                      key={completedMatchPage}
+                      initial={{ opacity: 0, x: 12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="space-y-4"
+                    >
+                      {paginatedCompletedTournamentEntries.map(([tournamentName, rawGroup]) => {
+                        const group = rawGroup as GroupMatchesData;
+                        const tournamentId = group.id || tournamentName;
+                        const currentPage = tournamentPages[tournamentId] || 1;
+                        const totalPages = Math.ceil(group.matches.length / 2);
+                        const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
+                        const matchedTournament = tournaments.find(t => t.id === group.id);
+                        const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
-                      return (
-                        <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
-                          {/* Group Tournament Header */}
-                          <div className="flex items-center justify-between">
-                            <Link
-                              href={group.id ? `/tournaments/${group.id}` : '#'}
-                              className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                            >
-                              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                <TournamentLogoAvatar src={group.logoUrl || matchedTournament?.logoUrl} alt={group.name} />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
-                                    {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                  </span>
-                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
-                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
-                                  </span>
+                        return (
+                          <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
+                            {/* Group Tournament Header */}
+                            <div className="flex items-center justify-between">
+                              <Link
+                                href={group.id ? `/tournaments/${group.id}` : '#'}
+                                className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                              >
+                                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
+                                  <TournamentLogoAvatar src={group.logoUrl || matchedTournament?.logoUrl} alt={group.name} />
                                 </div>
-                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
-                                  {group.name}
-                                </h3>
-                              </div>
-                            </Link>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
+                                      {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                                    </span>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
+                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
+                                    </span>
+                                  </div>
+                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
+                                    {group.name}
+                                  </h3>
+                                </div>
+                              </Link>
 
-                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
-                              {totalPages > 1 && (
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                    disabled={currentPage === 1}
-                                    aria-label={translate('previousPage')}
-                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                  >
-                                    <ChevronLeft className="w-3.5 h-3.5" />
-                                  </button>
-                                  <span className="min-w-6 text-center text-xs font-bold text-slate-500">
-                                    {currentPage}
-                                  </span>
-                                  <button
-                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                    disabled={currentPage === totalPages}
-                                    aria-label={translate('nextPage')}
-                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                  >
-                                    <ChevronRight className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
+                                {totalPages > 1 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                      disabled={currentPage === 1}
+                                      aria-label={translate('previousPage')}
+                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    >
+                                      <ChevronLeft className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="min-w-6 text-center text-xs font-bold text-slate-500">
+                                      {currentPage}
+                                    </span>
+                                    <button
+                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                      disabled={currentPage === totalPages}
+                                      aria-label={translate('nextPage')}
+                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    >
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {/* Matches List: 2 matches in 2 separate rows (1 match per row) */}
+                            <div className="space-y-2.5">
+                              {displayMatches.map((match) => renderCompletedMatchRow(match, group.matches, matchedTournament ?? null))}
                             </div>
                           </div>
-                          {/* Matches List: 2 matches in 2 separate rows (1 match per row) */}
-                          <div className="space-y-2.5">
-                            {displayMatches.map((match) => renderCompletedMatchRow(match, group.matches, matchedTournament ?? null))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Pagination Controls */}
+                    {totalCompletedPages > 1 && (
+                      <div className="flex items-center justify-center gap-1.5 pt-1">
+                        <button
+                          onClick={() => setCompletedMatchPage(p => Math.max(1, p - 1))}
+                          disabled={completedMatchPage === 1}
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        >
+                          {translate('previous')}
+                        </button>
+                        {Array.from({ length: totalCompletedPages }).map((_, idx) => {
+                          const pageNum = idx + 1;
+                          const isCurrent = pageNum === completedMatchPage;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCompletedMatchPage(pageNum)}
+                              className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
+                                isCurrent
+                                  ? 'bg-action-primary text-white border-transparent shadow-sm'
+                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => setCompletedMatchPage(p => Math.min(totalCompletedPages, p + 1))}
+                          disabled={completedMatchPage === totalCompletedPages}
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        >
+                          {translate('next')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1879,75 +1938,120 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {Object.entries(upcomingMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
-                      const group = rawGroup as GroupMatchesData;
-                      const tournamentId = group.id || tournamentName;
-                      const currentPage = tournamentPages[tournamentId] || 1;
-                      const totalPages = Math.ceil(group.matches.length / 2);
-                      const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
-                      const matchedTournament = tournaments.find(t => t.id === group.id);
-                      const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
+                    <motion.div
+                      key={upcomingMatchPage}
+                      initial={{ opacity: 0, x: 12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="space-y-4"
+                    >
+                      {paginatedUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
+                        const group = rawGroup as GroupMatchesData;
+                        const tournamentId = group.id || tournamentName;
+                        const currentPage = tournamentPages[tournamentId] || 1;
+                        const totalPages = Math.ceil(group.matches.length / 2);
+                        const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
+                        const matchedTournament = tournaments.find(t => t.id === group.id);
+                        const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
-                      return (
-                        <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
-                          {/* Group Tournament Header */}
-                          <div className="flex items-center justify-between">
-                            <Link
-                              href={group.id ? `/tournaments/${group.id}` : '#'}
-                              className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                            >
-                              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
-                                    {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                  </span>
-                                  <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
-                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
-                                  </span>
+                        return (
+                          <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
+                            {/* Group Tournament Header */}
+                            <div className="flex items-center justify-between">
+                              <Link
+                                href={group.id ? `/tournaments/${group.id}` : '#'}
+                                className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
+                              >
+                                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
+                                  <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                                 </div>
-                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
-                                  {group.name}
-                                </h3>
-                              </div>
-                            </Link>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
+                                      {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                                    </span>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
+                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
+                                    </span>
+                                  </div>
+                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
+                                    {group.name}
+                                  </h3>
+                                </div>
+                              </Link>
 
-                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
-                              {totalPages > 1 && (
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                    disabled={currentPage === 1}
-                                    aria-label={translate('previousPage')}
-                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                  >
-                                    <ChevronLeft className="w-3.5 h-3.5" />
-                                  </button>
-                                  <span className="min-w-6 text-center text-xs font-bold text-slate-500">
-                                    {currentPage}
-                                  </span>
-                                  <button
-                                    onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                    disabled={currentPage === totalPages}
-                                    aria-label={translate('nextPage')}
-                                    className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                  >
-                                    <ChevronRight className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
+                                {totalPages > 1 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                      disabled={currentPage === 1}
+                                      aria-label={translate('previousPage')}
+                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    >
+                                      <ChevronLeft className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="min-w-6 text-center text-xs font-bold text-slate-500">
+                                      {currentPage}
+                                    </span>
+                                    <button
+                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                      disabled={currentPage === totalPages}
+                                      aria-label={translate('nextPage')}
+                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                                    >
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {/* Matches List: 1 row with 2 matches side-by-side */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
+                              {displayMatches.map((match) => renderUpcomingMatchRow(match, group.matches, matchedTournament ?? null))}
                             </div>
                           </div>
-                          {/* Matches List: 1 row with 2 matches side-by-side */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
-                            {displayMatches.map((match) => renderUpcomingMatchRow(match, group.matches, matchedTournament ?? null))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Pagination Controls */}
+                    {totalUpcomingPages > 1 && (
+                      <div className="flex items-center justify-center gap-1.5 pt-1">
+                        <button
+                          onClick={() => setUpcomingMatchPage(p => Math.max(1, p - 1))}
+                          disabled={upcomingMatchPage === 1}
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        >
+                          {translate('previous')}
+                        </button>
+                        {Array.from({ length: totalUpcomingPages }).map((_, idx) => {
+                          const pageNum = idx + 1;
+                          const isCurrent = pageNum === upcomingMatchPage;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setUpcomingMatchPage(pageNum)}
+                              className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
+                                isCurrent
+                                  ? 'bg-action-primary text-white border-transparent shadow-sm'
+                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => setUpcomingMatchPage(p => Math.min(totalUpcomingPages, p + 1))}
+                          disabled={upcomingMatchPage === totalUpcomingPages}
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        >
+                          {translate('next')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

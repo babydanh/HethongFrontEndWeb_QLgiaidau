@@ -65,6 +65,12 @@ export const getTournament = cache(async (id: string): Promise<Tournament | null
       },
     });
     if (!response.ok) {
+      if (response.status === 403) {
+        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+        const err = new Error(payload?.message || 'FORBIDDEN_CLUB_INTERNAL');
+        (err as any).statusCode = 403;
+        throw err;
+      }
       if (response.status >= 400 && response.status < 500 && response.status !== 429) {
         return null;
       }
@@ -73,6 +79,9 @@ export const getTournament = cache(async (id: string): Promise<Tournament | null
     const res = await response.json();
     return res.data ?? null;
   } catch (error) {
+    if ((error as any)?.statusCode === 403) {
+      throw error;
+    }
     console.error('Failed to fetch tournament:', error);
     throw error;
   }

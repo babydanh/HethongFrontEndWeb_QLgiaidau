@@ -127,6 +127,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [isSavingDescription, setIsSavingDescription] = useState(false);
   const [description, setDescription] = useState('');
 
+  // --- Max Participants state ---
+  const [maxParticipantsInput, setMaxParticipantsInput] = useState<number>(16);
+  const [isSavingMaxParticipants, setIsSavingMaxParticipants] = useState(false);
+
   useEffect(() => {
     regionsApi.getProvinces().then((res) => {
       setProvinces(res ?? []);
@@ -173,6 +177,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         setProvince(initialProvince);
         setWard(initialWard);
         setDescription(loaded?.description || '');
+        setMaxParticipantsInput(loaded?.maxParticipants ?? 16);
 
         const loadedDivision = loaded?.divisions?.[0];
         const loadedMatchType = loadedDivision?.matchType ?? loaded?.matchType;
@@ -332,11 +337,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
 
     setMatchTypeSaving(true);
     try {
-      const participantsResponse = await tournamentsApi.getLiteParticipants(id);
-      if ((participantsResponse.data ?? []).length > 0) {
-        toast.error(translate('matchTypeSaveBlocked'));
-        return;
-      }
       await tournamentsApi.updateDivisionConfig(id, divisionId, {
         matchType: selectedMatchType,
         genderRestriction: selectedMatchType === MatchTypeDB.MIXED_DOUBLES
@@ -356,6 +356,42 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       toast.error(getErrorMessage(error));
     } finally {
       setMatchTypeSaving(false);
+    }
+  };
+
+  const handleSaveMaxParticipants = async () => {
+    if (!tournament || hasBracket || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status)) {
+      toast.error(translate('rulesSaveBlocked') || 'Không thể thay đổi số lượng khi giải đã diễn ra hoặc đã tạo bảng đấu.');
+      return;
+    }
+    const val = Number(maxParticipantsInput);
+    if (!val || val < 2 || val > 128) {
+      toast.error('Số lượng tham gia tối đa từ 2 đến 128');
+      return;
+    }
+
+    setIsSavingMaxParticipants(true);
+    try {
+      const divisionId = tournament.divisions?.[0]?.id;
+      // Cập nhật cả Tournament và Division chính
+      await tournamentsApi.updateTournament(id, { maxParticipants: val });
+      if (divisionId) {
+        try {
+          await tournamentsApi.updateDivisionConfig(id, divisionId, { maxParticipants: val });
+        } catch {
+          // non-blocking
+        }
+      }
+      setTournament((current) => current ? {
+        ...current,
+        maxParticipants: val,
+        divisions: current.divisions?.map((d) => d.id === divisionId ? { ...d, maxParticipants: val } : d),
+      } : current);
+      toast.success('Cập nhật số lượng tối đa thành công!');
+    } catch (err) {
+      toast.error(getErrorMessage(err) || 'Không thể lưu số lượng tối đa');
+    } finally {
+      setIsSavingMaxParticipants(false);
     }
   };
 
@@ -716,7 +752,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const formatSettingLocked = Boolean(
     hasBracket ||
     tournament.isRegistrationLocked ||
-    (tournament.divisions?.[0]?._count?.participants ?? 0) > 0 ||
     ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status),
   );
   const isFootballTournament = tournament.sportRules?.kind === 'FOOTBALL';
@@ -885,7 +920,56 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                         </Button>
                       </div>
                     </div>
-                    {formatSettingLocked && <p className="mt-2 text-xs font-medium text-amber-600">{translate('matchTypeSettingLocked')}</p>}
+                    {formatSettingLocked && (
+                      <p className="mt-2 text-xs font-medium text-amber-600">
+                        {hasBracket
+                          ? 'Thể thức đã khóa vì giải đấu đã tạo bracket / bảng đấu.'
+                          : 'Thể thức đã khóa vì giải đấu đang diễn ra hoặc đã kết thúc.'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Max Participants Row */}
+                  <div className="rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                          {translate('maxParticipants')}
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Số lượng người chơi / đội tham gia tối đa cho giải đấu này (2 - 128).
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 sm:min-w-64">
+                        <Input
+                          type="number"
+                          min={2}
+                          max={128}
+                          value={maxParticipantsInput}
+                          onChange={(e) => setMaxParticipantsInput(Number(e.target.value) || 2)}
+                          disabled={hasBracket || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status) || isSavingMaxParticipants}
+                          className="w-28 text-sm font-medium"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleSaveMaxParticipants}
+                          disabled={
+                            hasBracket ||
+                            ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status) ||
+                            isSavingMaxParticipants ||
+                            maxParticipantsInput === tournament.maxParticipants
+                          }
+                          className="whitespace-nowrap font-medium"
+                        >
+                          {isSavingMaxParticipants ? translate('saving') : 'Lưu số lượng'}
+                        </Button>
+                      </div>
+                    </div>
+                    {hasBracket && (
+                      <p className="mt-2 text-xs font-medium text-amber-600">
+                        Số lượng đã khóa vì giải đấu đã tạo nhánh đấu (bracket).
+                      </p>
+                    )}
                   </div>
 
                   {/* Sport Rules Row */}

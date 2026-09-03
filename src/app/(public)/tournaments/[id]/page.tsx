@@ -85,11 +85,15 @@ function mapEventStatus(status?: string): string {
   }
 }
 
+import ForbiddenClubTournamentView from './components/ForbiddenClubTournamentView';
+
 export default async function TournamentDetailPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
-  let tournament: Awaited<ReturnType<typeof getTournament>>;
+  let tournament: Awaited<ReturnType<typeof getTournament>> = null;
   let divisions: Awaited<ReturnType<typeof getTournamentDivisions>> = [];
+  let isForbidden = false;
+  let forbiddenMessage: string | null = null;
   try {
     const [t, d] = await Promise.all([
       getTournament(resolvedParams.id),
@@ -97,10 +101,19 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
     ]);
     tournament = t;
     divisions = d;
-  } catch {
-    // Preserve Next.js error handling for transient API/5xx failures instead of
-    // turning an outage into a misleading not-found page.
-    throw new Error('Tournament detail is temporarily unavailable');
+  } catch (err: unknown) {
+    if ((err as any)?.statusCode === 403) {
+      isForbidden = true;
+      forbiddenMessage = (err as Error)?.message || null;
+    } else {
+      // Preserve Next.js error handling for transient API/5xx failures instead of
+      // turning an outage into a misleading not-found page.
+      throw new Error('Tournament detail is temporarily unavailable');
+    }
+  }
+
+  if (isForbidden) {
+    return <ForbiddenClubTournamentView customMessage={forbiddenMessage} />;
   }
 
   if (!tournament) {

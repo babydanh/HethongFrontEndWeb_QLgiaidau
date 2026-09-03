@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Plus, X, ArrowUpRight, Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { tournamentsApi, type Tournament, type TournamentParticipant } from '@/features/tournaments/api';
 import { communitiesApi } from '@/features/communities/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { getErrorMessage } from '@/utils/error';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 
@@ -163,19 +164,22 @@ export default function CommunityTournamentRosterWidget({
   const startIndex = (safePage - 1) * SLOTS_PER_PAGE;
   const endIndex = Math.min(startIndex + SLOTS_PER_PAGE, totalSlots);
 
+  const locale = useLocale();
+  const isVi = locale !== 'en';
+
   const handleJoin = async () => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để xác nhận tham gia giải đấu');
+      toast.error(isVi ? 'Vui lòng đăng nhập để xác nhận tham gia giải đấu' : 'Please sign in to join the tournament');
       return;
     }
 
     if (isUserRegistered) {
-      toast('Bạn đã có tên trong danh sách tham gia');
+      toast(isVi ? 'Bạn đã có tên trong danh sách tham gia' : 'You are already registered');
       return;
     }
 
     if (participants.length >= effectiveMaxParticipants) {
-      toast.error('Giải đấu đã đủ số lượng người tham gia');
+      toast.error(isVi ? 'Giải đấu đã đủ số lượng người tham gia' : 'Tournament is full');
       return;
     }
 
@@ -188,11 +192,17 @@ export default function CommunityTournamentRosterWidget({
           teamName: user.fullName || 'VĐV',
         });
       }
-      toast.success('Đã xác nhận tham gia giải đấu!');
+      toast.success(isVi ? 'Đã xác nhận tham gia giải đấu!' : 'Joined tournament successfully!');
       await fetchTournamentAndParticipants();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể đăng ký tham gia';
-      toast.error(msg);
+      toast.error(
+        getErrorMessage(
+          err,
+          isVi
+            ? 'Giải đấu nội bộ chỉ dành cho thành viên của câu lạc bộ. Vui lòng tham gia CLB trước.'
+            : 'This internal tournament is only open to club members. Please join the club first.'
+        )
+      );
     } finally {
       setIsJoining(false);
     }
@@ -203,12 +213,13 @@ export default function CommunityTournamentRosterWidget({
     try {
       setIsWithdrawing(true);
       await tournamentsApi.withdraw(tournamentId);
-      toast.success('Đã hủy tham gia giải đấu');
+      toast.success(isVi ? 'Đã hủy tham gia giải đấu' : 'Withdrawn successfully');
       setSelectedUserToWithdraw(null);
       await fetchTournamentAndParticipants();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể hủy tham gia';
-      toast.error(msg);
+      toast.error(
+        getErrorMessage(err, isVi ? 'Không thể hủy tham gia' : 'Failed to withdraw')
+      );
     } finally {
       setIsWithdrawing(false);
     }

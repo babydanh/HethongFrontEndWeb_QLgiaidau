@@ -608,6 +608,10 @@ export default function LiveMatchPage({ params }: Props) {
 
   const ensureCanControlLiveMatch = () => {
     if (canControlLiveMatch) {
+      if (!match?.participant1Id || !match?.participant2Id) {
+        toast.error(translate('opponentsNotReady'));
+        return false;
+      }
       return true;
     }
 

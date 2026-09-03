@@ -5,11 +5,12 @@ import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Plus, X, ArrowUpRight, Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { tournamentsApi, type Tournament, type TournamentParticipant } from '@/features/tournaments/api';
-import { communitiesApi } from '@/features/communities/api';
+import { communitiesApi, type Community } from '@/features/communities/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
+import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
 
 interface CommunityTournamentRosterWidgetProps {
   tournamentId: string;
@@ -75,6 +76,9 @@ export default function CommunityTournamentRosterWidget({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedUserToWithdraw, setSelectedUserToWithdraw] = useState<TournamentParticipant | null>(null);
   const [communityLogo, setCommunityLogo] = useState<string | null>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [membershipStatus, setMembershipStatus] = useState<string | null>(null);
+  const [isJoinCommunityOpen, setIsJoinCommunityOpen] = useState(false);
 
   const fetchTournamentAndParticipants = useCallback(async () => {
     try {
@@ -89,6 +93,14 @@ export default function CommunityTournamentRosterWidget({
         setTournament(tourneyData);
         if (tourneyData.communityId) {
           effectiveCommId = tourneyData.communityId;
+        }
+      }
+      if (effectiveCommId) {
+        const communityResponse = await communitiesApi.getCommunityById(effectiveCommId);
+        setCommunity(communityResponse.data);
+        if (user?.id) {
+          const membershipResponse = await communitiesApi.getMyMembership(effectiveCommId).catch(() => null);
+          setMembershipStatus(membershipResponse?.data?.status ?? null);
         }
       }
       const existingLogo = tourneyData?.logoUrl || (tourneyData as any)?.community?.logoUrl || (tourneyData as any)?.community?.bannerUrl;
@@ -111,7 +123,7 @@ export default function CommunityTournamentRosterWidget({
     } finally {
       setLoading(false);
     }
-  }, [tournamentId, communityId]);
+  }, [tournamentId, communityId, user]);
 
   useEffect(() => {
     fetchTournamentAndParticipants();
@@ -152,7 +164,7 @@ export default function CommunityTournamentRosterWidget({
       const isMember = p.members?.some((m) => m.userId === user.id);
       return isReg || isMember;
     });
-  }, [participants, user?.id]);
+  }, [participants, user]);
 
   const isUserRegistered = currentParticipantIndex >= 0;
   const userPage = isUserRegistered ? Math.floor(currentParticipantIndex / SLOTS_PER_PAGE) + 1 : null;
@@ -175,6 +187,11 @@ export default function CommunityTournamentRosterWidget({
 
     if (isUserRegistered) {
       toast(isVi ? 'Bạn đã có tên trong danh sách tham gia' : 'You are already registered');
+      return;
+    }
+
+    if (tournament?.communityId && membershipStatus !== 'JOINED') {
+      setIsJoinCommunityOpen(true);
       return;
     }
 
@@ -248,6 +265,23 @@ export default function CommunityTournamentRosterWidget({
 
   const tournamentName = tournament?.name || initialTournamentName || 'Giải đấu';
   const effectiveCategory = tournament?.category?.name || categoryName;
+  const requiresClubMembership = Boolean(tournament?.communityId && membershipStatus !== 'JOINED');
+
+  if (requiresClubMembership) {
+    return (
+      <>
+        <div className="mt-3.5 flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <AlertCircle className="h-8 w-8 text-amber-500" />
+          <div>
+            <h3 className="text-base font-extrabold text-slate-900">Tham gia CLB để xem giải</h3>
+            <p className="mt-1 text-sm text-slate-600">Bạn cần là thành viên CLB trước khi xem danh sách và đăng ký giải này.</p>
+          </div>
+          {community && <button type="button" onClick={() => setIsJoinCommunityOpen(true)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Tham gia CLB</button>}
+        </div>
+        {community && <JoinCommunityModal community={community} isOpen={isJoinCommunityOpen} onClose={() => setIsJoinCommunityOpen(false)} onSuccess={async () => { setMembershipStatus(community.joinMode === 'APPROVAL' ? 'PENDING' : 'JOINED'); await fetchTournamentAndParticipants(); }} />}
+      </>
+    );
+  }
 
   // Generate slots for current page
   const pageSlotIndices = Array.from({ length: endIndex - startIndex }, (_, idx) => startIndex + idx);

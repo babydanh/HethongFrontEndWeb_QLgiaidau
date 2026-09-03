@@ -2015,6 +2015,7 @@
     "achievementsEmptyTitle": "No achievements yet",
     "achievementsEmptyDescription": "Join public ELO tournaments and finish in the top three to show achievement badges here.",
     "opponentUnknown": "Unknown opponent",
+    "opponentsNotReady": "Both opponents are not assigned yet. Wait for the previous bracket match to resolve.",
     "tournamentFallback": "Tournament",
     "round": "Round {number}",
     "opponent": "Opponent",

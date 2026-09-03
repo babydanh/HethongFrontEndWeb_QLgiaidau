@@ -1954,6 +1954,7 @@
     "achievementsEmptyTitle": "Chưa có danh hiệu thành tích",
     "achievementsEmptyDescription": "Khi tham gia giải public ELO và vào top 3, badge sẽ tự hiện ở đây.",
     "opponentUnknown": "Chưa xác định",
+    "opponentsNotReady": "Chưa đủ hai đối thủ để chốt trận. Hãy chờ nhánh trước xác định đủ người.",
     "tournamentFallback": "Giải đấu",
     "round": "Vòng {number}",
     "opponent": "Đối thủ",

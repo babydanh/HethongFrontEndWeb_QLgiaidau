@@ -130,12 +130,12 @@ const getShortName = (fullName: string | null | undefined): string => {
 const getTeamShortName = (teamName: string | null | undefined, unknownLabel: string): string => {
   if (!teamName) return unknownLabel;
   if (teamName.includes(' / ')) {
-    return teamName.split(' / ').map(name => getShortName(name)).join(' / ');
+    return teamName.split(' / ').map(name => name.trim()).join(' / ');
   }
   if (teamName.includes(' - ')) {
-    return teamName.split(' - ').map(name => getShortName(name)).join(' - ');
+    return teamName.split(' - ').map(name => name.trim()).join(' - ');
   }
-  return getShortName(teamName);
+  return teamName.trim();
 };
 
 const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, defaultBg: string, defaultText: string) => {
@@ -464,7 +464,6 @@ export default function MatchesListPage() {
         const res = await matchesApi.getMatches({
           limit: 100,
           publicOnly: true,
-          isPublicOnly: true,
           ...(cursor ? { cursor } : {}),
           search: debouncedSearchTerm || undefined,
                     categoryId: selectedCategoryId || undefined,
@@ -1104,7 +1103,10 @@ export default function MatchesListPage() {
                     const friendlyRoundName = getMatchRoundLabel({
                       match,
                       matches: group.matches,
-                      tournamentFormat: match.stage?.type,
+                      // Some legacy match payloads omit stage metadata but still
+                      // carry a group. Treat those records as round-robin so the
+                      // scheduler's internal roundNumber cannot become "Final".
+                      tournamentFormat: match.stage?.type ?? match.group?.stage?.type ?? (match.group ? 'ROUND_ROBIN' : undefined),
                       translations: roundLabelTranslations,
                     });
 

@@ -272,23 +272,6 @@ export const getKnockoutRoundLabel = <TMatch extends RoundLabelMatch>(
     else baseLabel = translations.roundOf(match.roundNumber);
   }
 
-  // For Losers bracket, since there are two rounds for each slot size (e.g. Losers Round 2 & Losers Round 3 both have 4 matches),
-  // we add "Lượt 1" or "Lượt 2" suffix to make them unique.
-  if (branch === 'LOSERS' && matches) {
-    const stageMatches = matches.filter(
-      (candidate) =>
-        getComparableStageKey(candidate) === getComparableStageKey(match) &&
-        getRoundSlotCount(candidate, matches) === slotCount
-    );
-    const roundNumbers = Array.from(new Set(stageMatches.map((m) => m.roundNumber))).sort((a, b) => a - b);
-    if (roundNumbers.length > 1) {
-      const index = roundNumbers.indexOf(match.roundNumber);
-      if (index !== -1) {
-        return `${baseLabel} - ${translations.legSuffix(index + 1)}`;
-      }
-    }
-  }
-
   return baseLabel;
 };
 

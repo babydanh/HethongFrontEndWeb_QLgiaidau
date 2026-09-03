@@ -339,7 +339,12 @@ const commonTranslate = useTranslations('Common');
     liveRefreshInFlightRef.current = true;
     try {
       const response = await matchesApi.getMatches(
-        { tournament_id: tournamentId, status: 'ONGOING', limit: 100 },
+        {
+          tournament_id: tournamentId,
+          division_id: selectedDivisionId || undefined,
+          status: 'ONGOING',
+          limit: 100,
+        },
         signal,
       );
       const rawRes = response as unknown;
@@ -353,8 +358,9 @@ const commonTranslate = useTranslations('Common');
       const ongoing = (list as Match[]).filter(isActiveMatch);
       const nextCounts: Record<string, number> = {};
       for (const match of ongoing) {
-        if (!match.divisionId) continue;
-        nextCounts[match.divisionId] = (nextCounts[match.divisionId] ?? 0) + 1;
+        const divisionId = match.divisionId ?? selectedDivisionId;
+        if (!divisionId) continue;
+        nextCounts[divisionId] = (nextCounts[divisionId] ?? 0) + 1;
       }
       setLiveCountsByDivision(nextCounts);
     } catch {
@@ -363,7 +369,7 @@ const commonTranslate = useTranslations('Common');
     } finally {
       liveRefreshInFlightRef.current = false;
     }
-  }, [tournamentId]);
+  }, [selectedDivisionId, tournamentId]);
 
   // Reconcile once immediately, then periodically. Socket updates only schedule
   // one bounded refresh so rapid score/status events cannot create request storms.

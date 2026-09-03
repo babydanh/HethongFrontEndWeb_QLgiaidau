@@ -194,7 +194,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const isLite = isLiteTournament(tournament) || isClubLiteTournament(tournament);
   
   // States for filtering & View Mode Switcher
-  const [viewMode, setViewMode] = useState<'timeline' | 'list'>(() => (isLite ? 'list' : 'timeline'));
+  const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
   const [selectedStageKey, setSelectedStageKey] = useState<string | 'ALL'>('ALL');
   const [selectedGroupId, setSelectedGroupId] = useState<string | 'ALL'>('ALL');
   const [selectedLeg, setSelectedLeg] = useState<number | 'ALL'>('ALL');
@@ -733,7 +733,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     );
   };
 
-  if (viewMode === 'timeline' && !isLite) {
+  if (viewMode === 'timeline') {
     return (
       <div className="flex flex-col gap-4">
         <PublicCourtScheduleBoard
@@ -756,29 +756,27 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
   return (
     <div className="flex flex-col gap-6">
-      {/* View Switcher Top Bar - Only for standard tournaments with courts */}
-      {!isLite && resolvedPublicCourts.length > 0 && (
-        <div className="flex items-center justify-between gap-2 bg-white border border-slate-200/80 rounded-xl p-2.5 shadow-2xs">
-          <span className="text-xs font-bold text-slate-700">{translate('viewModeLabel')}</span>
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('timeline')}
-              className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{translate('viewModeTimeline')}</span>
-            </button>
-            <button
-              type="button"
-              className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span>{translate('viewModeList')}</span>
-            </button>
-          </div>
+      {/* View Switcher Top Bar */}
+      <div className="flex items-center justify-between gap-2 bg-white border border-slate-200/80 rounded-xl p-2.5 shadow-2xs">
+        <span className="text-xs font-bold text-slate-700">{translate('viewModeLabel')}</span>
+        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setViewMode('timeline')}
+            className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            <span>{translate('viewModeTimeline')}</span>
+          </button>
+          <button
+            type="button"
+            className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span>{translate('viewModeList')}</span>
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Filter Options Panel - Only show when there are matches available */}
       {matches.length > 0 && (

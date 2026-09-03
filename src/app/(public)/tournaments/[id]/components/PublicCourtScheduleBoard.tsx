@@ -627,15 +627,30 @@ export default function PublicCourtScheduleBoard({
       {/* ── 1. TOP TOOLBAR RIBBON (Date, Step Switcher, Search, Zoom, Fullscreen) ── */}
       <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5 relative z-10">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          {/* Left: View Mode Pills + Date Selector Pills */}
+          {/* Left: Tournament Logo + View Mode Pills + Date Selector Pills */}
           <div className="flex items-center gap-2 flex-wrap">
+            {tournament?.logoUrl && (
+              <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
+                <div className="h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 p-0.5 overflow-hidden shrink-0 shadow-2xs">
+                  <img
+                    src={tournament.logoUrl}
+                    alt={tournament.name || 'Tournament logo'}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <span className="text-xs font-black text-slate-900 hidden sm:inline max-w-[160px] truncate" title={tournament.name}>
+                  {tournament.name}
+                </span>
+              </div>
+            )}
+
             {onSwitchToList && (
               <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shadow-2xs">
                 <button
                   type="button"
                   className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <MapPin className="h-3.5 w-3.5" />
+                  <Calendar className="h-3.5 w-3.5" />
                   <span>{translate('viewModeTimeline')}</span>
                 </button>
                 <button

@@ -635,7 +635,7 @@ export default function MatchesListPage() {
         tournamentId: tId,
         tournamentName: match.tournament?.name || translate('tournamentFallback'),
         tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || translate('categoryNotUpdated'),
-        tournamentLogoUrl: match.tournament?.logoUrl || tournamentLogos[tId] || null,
+        tournamentLogoUrl: (tId ? tournamentLogos[tId] : null) || match.tournament?.logoUrl || match.tournament?.community?.logoUrl || null,
         tournamentVenueName: match.tournament?.venueName || null,
         matches: []
       };

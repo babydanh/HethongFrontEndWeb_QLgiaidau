@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { Trophy } from 'lucide-react';
@@ -38,6 +38,12 @@ export const TournamentAvatar: React.FC<TournamentAvatarProps> = ({
   className = '',
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setHasError(false);
+  }
+
   const sportLogo = getSportLogo(category);
   const sizeConfig = sizeMap[size];
 

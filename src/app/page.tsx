@@ -1684,7 +1684,7 @@ export default function HomePage() {
                                 className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                               >
                                 <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                  <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                                  <TournamentLogoAvatar src={group.logoUrl || matchedTournament?.logoUrl} alt={group.name} />
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
@@ -1806,7 +1806,7 @@ export default function HomePage() {
                               className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                             >
                               <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                                <TournamentLogoAvatar src={group.logoUrl || matchedTournament?.logoUrl} alt={group.name} />
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
@@ -1983,7 +1983,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Column (3/12) */}
-          <div className="lg:col-span-3 flex flex-col gap-6">
+          <div className="lg:col-span-3 flex flex-col gap-6 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] lg:self-start">
 
           {!isClient ? (
              <div className="animate-pulse bg-slate-200 h-[180px] rounded-2xl w-full"></div>

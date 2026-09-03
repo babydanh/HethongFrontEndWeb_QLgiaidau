@@ -1245,7 +1245,7 @@ export default function HomePage() {
       };
 
       return (
-        <div className="flex items-center justify-between py-2 border-b border-slate-100/70 last:border-b-0">
+        <div className="flex items-center justify-between py-1.5">
           <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
             {renderAvatar()}
 
@@ -1294,17 +1294,17 @@ export default function HomePage() {
       <Link
         href={`/live/${match.id}`}
         key={match.id}
-        className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 hover:border-slate-300 hover:shadow-2xs transition-all"
+        className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-3.5 hover:border-slate-300 hover:shadow-2xs transition-all"
       >
-        {/* Row Header: Bớt đậm (font-semibold), Set 1 2 viết tắt là S1 S2 S3 S4 S5 */}
-        <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100 text-[11px]">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-600 uppercase tracking-wider truncate">
-            <span>{roundLabel || translate('roundFallback')}</span>
-            {formatText && <span className="text-slate-400 font-medium">• {formatText}</span>}
+        {/* Row Header: Gọn lại, nhỏ lại (text-[10px]), Set 1 2 viết tắt là S1 S2 S3 S4 S5 */}
+        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 text-[10.5px]">
+          <div className="flex items-center gap-1.5 font-medium text-slate-500 uppercase tracking-wider truncate">
+            <span className="font-semibold text-slate-600">{roundLabel || translate('roundFallback')}</span>
+            {formatText && <span className="text-slate-400">• {formatText}</span>}
             {courtText && <span className="text-slate-400 font-normal normal-case">| {courtText}</span>}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0 font-medium text-slate-400 text-[11px]">
+          <div className="flex items-center gap-1.5 shrink-0 font-medium text-slate-400 text-[10px]">
             {scores.length > 0 ? (
               scores.slice(0, 5).map((_, idx) => (
                 <div key={idx} className="w-6 sm:w-6.5 text-center">
@@ -1397,7 +1397,7 @@ export default function HomePage() {
       const badgeColor = side === 'p1' ? 'border-purple-200 text-purple-600 bg-purple-50/50' : 'border-amber-200 text-amber-600 bg-amber-50/50';
 
       return (
-        <div className="flex items-center justify-between py-2 border-b border-slate-100/70 last:border-b-0">
+        <div className="flex items-center justify-between py-1.5">
           <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
             {/* Number badge / Avatar circle */}
             <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${badgeColor}`}>
@@ -1429,10 +1429,10 @@ export default function HomePage() {
       <Link
         href={`/live/${match.id}`}
         key={match.id}
-        className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 hover:border-slate-300 hover:shadow-2xs transition-all"
+        className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-3.5 hover:border-slate-300 hover:shadow-2xs transition-all"
       >
         {/* Header: VÒNG ĐẤU • NỘI DUNG | Sân thi đấu ... Giờ thi đấu */}
-        <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100 text-[11px]">
+        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 text-[10.5px]">
           <div className="flex items-center gap-2 font-bold text-slate-700 uppercase tracking-wider truncate">
             <span>{roundLabel || translate('roundFallback')}</span>
             {formatText && <span>• {formatText}</span>}

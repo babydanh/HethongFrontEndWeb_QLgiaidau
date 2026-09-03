@@ -1258,8 +1258,7 @@ export default function QuickTournamentCreate() {
                   <span className="text-xs text-slate-400">{translate('chooseOne')}</span>
                 </div>
 
-                {/* 4 Icon thể thức trên 1 hàng */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 gap-2.5">
                   {BRACKET_OPTIONS.map((opt) => {
                     const isSelected = bracketType === opt.id;
                     const { Icon } = opt;
@@ -1268,45 +1267,38 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex flex-col items-center justify-center gap-1.5 rounded-xl border p-2.5 text-center transition-all cursor-pointer ${
+                        className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/90 shadow-2xs ring-1 ring-blue-500/30'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                            ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
                         }`}
-                        title={translate(opt.labelKey)}
                       >
                         <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition ${
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
                             isSelected
                               ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600 group-hover:bg-white'
+                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
                           }`}
                         >
                           <Icon className="h-4 w-4" />
                         </div>
-                        <span className={`text-[11px] font-bold leading-tight line-clamp-1 transition ${isSelected ? 'text-blue-950 font-black' : 'text-slate-700'}`}>
-                          {translate(opt.labelKey)}
-                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                              {translate(opt.labelKey)}
+                            </span>
+                            {isSelected && (
+                              <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
+                            )}
+                          </div>
+                          <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
+                            {translate(opt.descKey)}
+                          </p>
+                        </div>
                       </button>
                     );
                   })}
                 </div>
-
-                {/* Khung Note giải thích chi tiết cho thể thức đang chọn */}
-                {(() => {
-                  const selectedOption = BRACKET_OPTIONS.find((opt) => opt.id === bracketType) || BRACKET_OPTIONS[0];
-                  return (
-                    <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900 transition-all">
-                      <span className="shrink-0 mt-0.5 text-blue-600">💡</span>
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-blue-950">{translate(selectedOption.labelKey)}:</span>
-                        <p className="text-[11px] leading-relaxed text-blue-800">
-                          {translate(selectedOption.descKey)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
                 {errors.bracketType && <span className="block text-xs text-rose-600">{errors.bracketType.message}</span>}
               </section>
 

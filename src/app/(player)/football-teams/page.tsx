@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/utils/error';
 import { uploadApi } from '@/features/upload/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { Shield, Users, Plus, Search, UserPlus, Save, Trash2, Camera, Loader2, Trophy, Flame } from 'lucide-react';
+import { RankAvatar } from '@/components/ui/RankAvatar';
+import { Shield, Users, Plus, Search, UserPlus, Save, Trash2, Camera, Loader2, Trophy, Flame, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function FootballTeamsPage() {
@@ -31,7 +32,8 @@ export default function FootballTeamsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selected = useMemo(() => teams.find((team) => team.id === selectedId) ?? null, [teams, selectedId]);
-  const currentUserId = useAuthStore((state) => state.user?.id);
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUserId = currentUser?.id;
   const allMembers = selected?.members ?? [];
   const currentMembershipRole = selected?.members?.find((member) => member.userId === currentUserId)?.role ?? selected?.membership?.role;
   const canManageTeam = currentMembershipRole === 'CAPTAIN' || currentMembershipRole === 'MANAGER';
@@ -119,7 +121,7 @@ export default function FootballTeamsPage() {
       return;
     }
 
-    // Hiển thị preview ngay lập tức để người dùng thấy phản hồi tức thì
+    // Hiển thị preview ngay lập tức
     const localUrl = URL.createObjectURL(file);
     setLogoPreview(localUrl);
     setUploadingLogo(true);
@@ -197,6 +199,8 @@ export default function FootballTeamsPage() {
 
   const currentLogo = logoPreview || selected?.logoUrl;
   const captainMember = allMembers.find((m) => m.role === 'CAPTAIN');
+  const isCaptainCurrentUser = captainMember?.userId === currentUserId;
+  const captainDisplayName = captainMember?.profile?.fullName || (isCaptainCurrentUser ? (currentUser?.fullName || 'Bạn') : 'Đội trưởng');
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
@@ -295,33 +299,25 @@ export default function FootballTeamsPage() {
             <>
               {/* Card Header Đội bóng & Đổi Logo */}
               <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-xs">
+                {/* Hidden File Input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  disabled={uploadingLogo || !canManageTeam}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void uploadLogo(file);
+                    event.currentTarget.value = '';
+                  }}
+                />
+
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    {/* Nút Upload / Đổi Logo đội */}
-                    <div className="relative group">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        disabled={uploadingLogo || !canManageTeam}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) void uploadLogo(file);
-                          event.currentTarget.value = '';
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingLogo || !canManageTeam}
-                        title={canManageTeam ? translate('clickToChangeLogo') : undefined}
-                        className={`relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 transition-all ${
-                          canManageTeam
-                            ? 'border-blue-300 hover:border-blue-500 cursor-pointer shadow-sm hover:shadow-md'
-                            : 'border-slate-200 cursor-default'
-                        } bg-linear-to-br from-blue-500 to-indigo-600`}
-                      >
+                    {/* Team Logo Badge */}
+                    <div className="relative shrink-0">
+                      <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border-2 border-blue-200 bg-linear-to-br from-blue-500 to-indigo-600 shadow-sm">
                         {currentLogo ? (
                           <img
                             src={currentLogo}
@@ -329,26 +325,31 @@ export default function FootballTeamsPage() {
                             className="h-full w-full object-cover bg-white"
                           />
                         ) : (
-                          <span className="text-lg font-black text-white tracking-wider">
+                          <span className="text-2xl font-black text-white tracking-wider">
                             {selected.name.slice(0, 2).toUpperCase()}
                           </span>
                         )}
 
-                        {/* Overlay khi hover hoặc đang upload */}
-                        {uploadingLogo ? (
-                          <span className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 text-[9px] font-bold text-white">
+                        {uploadingLogo && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 text-[9px] font-bold text-white">
                             <Loader2 className="h-5 w-5 animate-spin mb-0.5" />
                             Đang lưu…
-                          </span>
-                        ) : (
-                          canManageTeam && (
-                            <span className="absolute inset-0 hidden items-center justify-center bg-slate-950/60 text-[10px] font-bold text-white backdrop-blur-2xs group-hover:flex transition-opacity">
-                              <Camera className="h-4 w-4 mr-1" />
-                              {translate('changeLogo')}
-                            </span>
-                          )
+                          </div>
                         )}
-                      </button>
+                      </div>
+
+                      {/* Nút bấm Camera nhỏ đè ở góc Logo */}
+                      {canManageTeam && (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingLogo}
+                          title={translate('clickToChangeLogo')}
+                          className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-transform active:scale-95"
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
 
                     <div>
@@ -359,13 +360,33 @@ export default function FootballTeamsPage() {
                         {captainMember && (
                           <span className="text-[11px] font-semibold text-slate-500">
                             · Đội trưởng:{' '}
-                            <b className="text-slate-800">
-                              {captainMember.profile?.fullName || (captainMember.userId === currentUserId ? 'Bạn' : 'Đội trưởng')}
-                            </b>
+                            <b className="text-slate-800">{captainDisplayName}</b>
+                            {isCaptainCurrentUser && (
+                              <span className="ml-1 rounded bg-blue-100 px-1 py-0.2 text-[9px] font-bold text-blue-700">
+                                {translate('you')}
+                              </span>
+                            )}
                           </span>
                         )}
                       </div>
                       <h2 className="mt-0.5 text-2xl font-black text-slate-950 tracking-tight">{selected.name}</h2>
+                      
+                      {/* Nút "Đổi logo đội" rõ ràng công khai */}
+                      {canManageTeam && (
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={uploadingLogo}
+                            onClick={() => fileInputRef.current?.click()}
+                            className="h-7 text-xs font-bold gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            {uploadingLogo ? 'Đang tải lên…' : 'Đổi logo đội'}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -424,9 +445,9 @@ export default function FootballTeamsPage() {
                   {allMembers.map((member) => {
                     const invited = member.status !== undefined && member.status !== 'ACTIVE';
                     const isCurrentUser = member.userId === currentUserId;
-                    const displayName =
-                      member.profile?.fullName ||
-                      (isCurrentUser ? 'Bạn' : `Cầu thủ #${member.userId.slice(0, 6)}`);
+                    const realName = member.profile?.fullName || (isCurrentUser ? currentUser?.fullName : null);
+                    const displayName = realName || `Cầu thủ #${member.userId.slice(0, 6)}`;
+                    const avatarUrl = member.profile?.avatarUrl || (isCurrentUser ? currentUser?.avatarUrl : null);
                     const isCaptain = member.role === 'CAPTAIN';
 
                     return (
@@ -440,15 +461,15 @@ export default function FootballTeamsPage() {
                               : 'border-slate-200 bg-white'
                         }`}
                       >
-                        {/* Avatar & Captain Armband */}
+                        {/* Avatar & Captain Armband Badge */}
                         <div className="relative shrink-0">
-                          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 shadow-2xs">
-                            {member.profile?.avatarUrl ? (
-                              <img src={member.profile.avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                            ) : (
-                              displayName.slice(0, 2).toUpperCase()
-                            )}
-                          </span>
+                          <RankAvatar
+                            src={avatarUrl}
+                            name={displayName}
+                            size="md"
+                            className="h-11 w-11 shadow-xs"
+                            ringClassName="ring-1 ring-blue-100"
+                          />
                           {isCaptain && (
                             <span
                               className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-amber-500 text-[9px] font-black text-slate-950 shadow-xs"
@@ -503,71 +524,72 @@ export default function FootballTeamsPage() {
                         </div>
 
                         {/* Thao tác xóa / hủy */}
-                        {invited && canManageTeam ? (
-                          <button
-                            type="button"
-                            onClick={() => void cancelInvite(member.userId)}
-                            className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 transition-colors"
-                            aria-label={translate('cancelInvite')}
-                            title={translate('cancelInvite')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        ) : !invited && canManageTeam && !isCurrentUser && member.role !== 'CAPTAIN' ? (
-                          <button
-                            type="button"
-                            onClick={() => void remove(member.userId)}
-                            className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 transition-colors"
-                            aria-label={translate('removeMember')}
-                            title={translate('removeMember')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        ) : null}
+                        {canManageTeam && !isCurrentUser && (
+                          <div className="flex items-center gap-1">
+                            {invited ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void cancelInvite(member.userId)}
+                                className="h-7 text-[11px] text-amber-700 hover:bg-amber-100"
+                              >
+                                {translate('cancelInvite')}
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => void remove(member.userId)}
+                                className="h-7 w-7 p-0"
+                                title={translate('removeMember')}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Khu vực tìm kiếm và mời thành viên */}
+              {/* Khu vực mời thành viên */}
               {canManageTeam && (
                 <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-xs">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
                     <UserPlus className="h-5 w-5 text-blue-600" />
                     <h2 className="font-black text-slate-950 text-base tracking-tight">{translate('inviteMembers')}</h2>
                   </div>
+
                   <div className="mt-4 flex gap-2">
                     <Input
                       value={candidateQuery}
                       onChange={(event) => setCandidateQuery(event.target.value)}
                       placeholder={translate('searchPlaceholder')}
-                      className="text-xs"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          void search();
-                        }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') void search();
                       }}
                     />
                     <Button onClick={search} className="gap-1.5 font-bold">
-                      <Search className="h-4 w-4" /> {translate('search')}
+                      <Search className="h-4 w-4" />
+                      {translate('search')}
                     </Button>
                   </div>
+
                   {candidates.length > 0 && (
-                    <div className="mt-3 space-y-2">
+                    <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
                       {candidates.map((candidate) => (
                         <div
                           key={candidate.id}
                           className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 hover:bg-slate-50 transition-colors"
                         >
-                          <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                            {candidate.avatarUrl ? (
-                              <img src={candidate.avatarUrl} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              (candidate.fullName || candidate.email || candidate.id).slice(0, 2).toUpperCase()
-                            )}
-                          </span>
+                          <RankAvatar
+                            src={candidate.avatarUrl}
+                            name={candidate.fullName || candidate.email || candidate.id}
+                            size="sm"
+                            className="h-8 w-8"
+                          />
                           <div className="min-w-0 flex-1">
                             <b className="block truncate text-xs font-bold text-slate-900">
                               {candidate.fullName || 'Người dùng'}

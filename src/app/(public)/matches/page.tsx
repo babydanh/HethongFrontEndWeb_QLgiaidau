@@ -1438,25 +1438,25 @@ export default function MatchesListPage() {
                   })}
                 </div>
 
-                {/* Sub-pagination per tournament card (Page x of y) */}
+                {/* Compact presentation pagination for matches already loaded by cursor */}
                 {totalGroupPages > 1 && (
                   <div className="flex justify-center items-center gap-2 mt-4 pt-4 border-t border-slate-100">
                     <button
                       onClick={() => setGroupPages(prev => ({ ...prev, [group.tournamentId]: Math.max(1, groupPage - 1) }))}
                       disabled={groupPage === 1}
-                      className="px-3 py-1 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                      aria-label={translate('previousPage')}
+                      className="p-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
-                      {translate('previousPage')}
+                      <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="text-xs font-bold text-slate-500 px-2">
-                      {translate('pageOf', { page: groupPage, total: totalGroupPages })}
-                    </span>
+                    <span className="min-w-8 text-center text-xs font-bold text-slate-500">{groupPage}</span>
                     <button
                       onClick={() => setGroupPages(prev => ({ ...prev, [group.tournamentId]: Math.min(totalGroupPages, groupPage + 1) }))}
                       disabled={groupPage === totalGroupPages}
-                      className="px-3 py-1 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                      aria-label={translate('nextPage')}
+                      className="p-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
-                      {translate('nextPage')}
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 )}

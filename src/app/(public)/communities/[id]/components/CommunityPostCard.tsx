@@ -58,9 +58,6 @@ export default function CommunityPostCard({
 
   const commentCount = overrideCommentCount ?? (post.commentCount ?? 0);
   const tournamentStatus = post.tournament?.status?.toUpperCase();
-  const shouldShowTournamentBracket =
-    post.type === 'TOURNAMENT_BRACKET' || Boolean(post.tournament?.hasBracket);
-
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
 
@@ -506,7 +503,7 @@ export default function CommunityPostCard({
 
         {/* Tournament Bracket / Roster Grid / Poll Area */}
         {(post.tournamentId || post.tournament?.id) ? (
-          !shouldShowTournamentBracket && (tournamentStatus === 'REGISTRATION_OPEN' || tournamentStatus === 'UPCOMING' || !tournamentStatus) ? (
+          (tournamentStatus === 'REGISTRATION_OPEN' || tournamentStatus === 'UPCOMING' || !tournamentStatus) ? (
             <CommunityTournamentRosterWidget
               tournamentId={post.tournamentId || post.tournament?.id || ''}
               communityId={post.communityId}

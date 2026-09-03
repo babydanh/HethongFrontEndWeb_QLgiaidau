@@ -65,7 +65,6 @@ import {
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from '../registrationMode';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
-import { isActiveMatch } from '@/utils/match-status';
 
 const getBracketFormatIcon = (format?: string) => {
   const normalized = String(format || '').toUpperCase();

@@ -48,12 +48,12 @@ export default function CommunityTournamentBracketWidget({
           setTournament(tourneyData);
           setError(null);
           const commId = tourneyData.communityId || communityId;
-          const existingLogo = tourneyData?.logoUrl || (tourneyData as any)?.community?.logoUrl || (tourneyData as any)?.community?.bannerUrl;
+          const existingLogo = tourneyData?.logoUrl;
           if (!existingLogo && commId) {
             communitiesApi.getCommunityById(commId).then((cRes) => {
               if (!mounted) return;
               const commData = (cRes as any)?.data ?? cRes;
-              const logo = commData?.logoUrl || commData?.avatarUrl || commData?.bannerUrl || null;
+              const logo = commData?.logoUrl || null;
               if (logo) {
                 setCommunityLogo(logo);
               }
@@ -137,10 +137,7 @@ export default function CommunityTournamentBracketWidget({
 
   const rawLogo =
     tournament.logoUrl ||
-    communityLogoUrl ||
-    (tournament as any).community?.logoUrl ||
-    (tournament as any).community?.bannerUrl ||
-    communityLogo;
+    null;
 
   const isCustomLogo = Boolean(rawLogo && !rawLogo.includes('.svg'));
   const effectiveLogo = rawLogo || '/sporto_v1_with_text.svg';

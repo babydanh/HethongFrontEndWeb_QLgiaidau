@@ -299,7 +299,7 @@ export default function MatchesListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMoreMatches, setHasMoreMatches] = useState(false);
   const [groupPages, setGroupPages] = useState<Record<string, number>>({});
   const [cheerCounts, setCheerCounts] = useState<Record<string, number>>({});
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -415,6 +415,7 @@ export default function MatchesListPage() {
   // a new cursor chain at page 1, while the UI still shows numbered pages.
   useEffect(() => {
     cursorByPageRef.current = { 1: null };
+    setHasMoreMatches(false);
     let active = true;
     Promise.resolve().then(() => {
       if (!active) return;
@@ -483,7 +484,7 @@ export default function MatchesListPage() {
 
         const feed = readMatchFeed(res);
         setMatches(feed.matches);
-        setTotalPages(feed.totalPages);
+        setHasMoreMatches(feed.hasMore || Boolean(feed.nextCursor));
         cursorByPageRef.current[page + 1] = feed.nextCursor;
       } catch (error) {
         console.error('Failed to fetch matches', error);
@@ -685,7 +686,6 @@ export default function MatchesListPage() {
   ].filter(Boolean).length;
 
   // The API page is cursor-backed; grouping remains a presentation detail.
-  const totalTournamentsPages = totalPages;
   const currentTournaments = groupedMatches;
 
   return (
@@ -1467,7 +1467,7 @@ export default function MatchesListPage() {
       )}
 
       {/* Main Pagination (for Tournaments List: Shows when there are > 5 tournaments) */}
-      {totalTournamentsPages > 1 && (
+      {(page > 1 || hasMoreMatches) && (
         <div className="flex items-center justify-center gap-1.5 pt-4">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -1483,7 +1483,7 @@ export default function MatchesListPage() {
             {translate('pageLabel', { page })}
           </button>
 
-          {page < totalTournamentsPages && (
+          {hasMoreMatches && (
             <button
               onClick={() => setPage(page + 1)}
               className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-350 hover:text-slate-900 cursor-pointer"
@@ -1493,8 +1493,8 @@ export default function MatchesListPage() {
           )}
 
           <button
-            onClick={() => setPage(p => Math.min(totalTournamentsPages, p + 1))}
-            disabled={page === totalTournamentsPages}
+            onClick={() => setPage(p => p + 1)}
+            disabled={!hasMoreMatches}
             className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             {translate('nextPage')}

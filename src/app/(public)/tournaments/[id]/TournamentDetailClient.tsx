@@ -342,7 +342,7 @@ const commonTranslate = useTranslations('Common');
         {
           tournament_id: tournamentId,
           division_id: selectedDivisionId || undefined,
-          status: 'ONGOING',
+          status: 'ONGOING,IN_PROGRESS',
           limit: 100,
         },
         signal,

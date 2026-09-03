@@ -3008,6 +3008,8 @@
     "signInNow": "Sign in now",
     "matchLabel": "Match",
     "previous": "Previous",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
     "stageElimination": "Knockout stage",
     "stageGroup": "Group stage",
     "stageRoundRobin": "Round robin",

@@ -1142,55 +1142,63 @@ export default function HomePage() {
       isLoser: boolean,
       side: 'p1' | 'p2',
     ) => {
-      const rawMembers = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
-      const teamName = participant?.teamName || '';
-      const teamNameParts = teamName.includes(' / ')
-        ? teamName.split(' / ').map((p) => p.trim()).filter(Boolean)
-        : [];
+      // Lấy danh sách thành viên không trùng lặp
+      const uniqueMembers = (participant?.members ?? []).filter(
+        (m, idx, arr) => (m.fullName || m.avatarUrl) && arr.findIndex((x) => x.fullName === m.fullName) === idx
+      );
+      const teamName = (participant?.teamName || '').trim();
 
-      const member1 = rawMembers[0] || (teamNameParts[0] ? { fullName: teamNameParts[0] } : undefined);
-      const member2 = rawMembers[1] || (teamNameParts[1] ? { fullName: teamNameParts[1] } : undefined);
-      const isDoubles = rawMembers.length === 2 || teamNameParts.length === 2;
+      // Xác định đánh đơn hay đánh đôi
+      const isDoubles = uniqueMembers.length >= 2 || (teamName.includes(' / ') || teamName.includes(' - '));
 
-      const memberNames = rawMembers.map((m) => m.fullName).filter(Boolean);
-      const primaryName = memberNames.length >= 2
-        ? memberNames.join(' - ')
-        : memberNames.length === 1 && teamName && teamName !== memberNames[0]
-          ? `${memberNames[0]} - ${teamName}`
-          : memberNames[0] || teamName || translate('pendingTeam');
+      let primaryTitle = '';
+      let subTitle = '';
 
-      const initialChar = (primaryName.trim().charAt(0) || '?').toUpperCase();
-      const clubOrSub = ((rawMembers[0] as unknown as Record<string, unknown>)?.clubName as string) ||
-        ((rawMembers[0] as unknown as Record<string, unknown>)?.organization as string) ||
-        '';
+      if (isDoubles) {
+        // ĐÁNH ĐÔI: Đội ở trên (hoặc tên cặp VĐV nối nhau), thành viên nhỏ ở dưới
+        if (uniqueMembers.length >= 2) {
+          const m1 = uniqueMembers[0].fullName || '';
+          const m2 = uniqueMembers[1].fullName || '';
+          primaryTitle = teamName || `${m1} / ${m2}`;
+          subTitle = teamName && teamName !== `${m1} / ${m2}` ? `${m1} • ${m2}` : '';
+        } else if (teamName) {
+          primaryTitle = teamName;
+        } else {
+          primaryTitle = translate('pendingTeam');
+        }
+      } else {
+        // ĐÁNH ĐƠN: Tên người chơi ở trên luôn, không hiện tên nhỏ
+        const singleName = uniqueMembers[0]?.fullName || teamName;
+        primaryTitle = singleName || translate('pendingTeam');
+        subTitle = ''; // Đơn thì tên người trên luôn không hiện tên nhỏ
+      }
 
-      const avatarBg = side === 'p1' ? 'bg-amber-100 text-amber-700' : 'bg-violet-100 text-violet-700';
+      const initialChar = (primaryTitle.trim().charAt(0) || '?').toUpperCase();
+      const avatarBg = side === 'p1' ? 'bg-amber-100/80 text-amber-700' : 'bg-violet-100/80 text-violet-700';
 
       return (
-        <div className="flex items-center justify-between py-2.5 border-b border-slate-100/80 last:border-b-0">
-          <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+        <div className="flex items-center justify-between py-2 border-b border-slate-100/70 last:border-b-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
             {/* Round letter avatar */}
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${avatarBg}`}>
+            <div className={`w-7.5 h-7.5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${avatarBg}`}>
               {initialChar}
             </div>
 
-            {/* Name + Club info */}
+            {/* Name & Subtitle */}
             <div className="min-w-0 flex-1">
-              <div className="text-xs sm:text-sm tracking-tight font-bold text-slate-900 leading-snug">
-                <span className={isWinner ? 'text-slate-950 font-black' : 'text-slate-700 font-semibold'}>
-                  {primaryName}
-                </span>
+              <div className={`text-xs sm:text-sm tracking-tight truncate ${isWinner ? 'text-slate-900 font-bold' : 'text-slate-600 font-semibold'}`}>
+                {primaryTitle}
               </div>
-              {clubOrSub && (
+              {subTitle && (
                 <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
-                  {clubOrSub}
+                  {subTitle}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Scores for Sets */}
-          <div className="flex items-center gap-4 shrink-0 text-center">
+          {/* Scores for Sets - Vô khung màu theo vibe web */}
+          <div className="flex items-center gap-1.5 shrink-0 text-center">
             {scores.length > 0 ? (
               scores.slice(0, 3).map((s, idx) => {
                 const scoreVal = side === 'p1' ? s.team1Score : s.team2Score;
@@ -1199,8 +1207,10 @@ export default function HomePage() {
                 return (
                   <div
                     key={idx}
-                    className={`w-8 text-center text-xs sm:text-sm tabular-nums ${
-                      isSetWin ? 'font-black text-slate-950 text-sm sm:text-base' : 'font-medium text-slate-400'
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm tabular-nums transition-colors ${
+                      isSetWin
+                        ? 'bg-blue-600 text-white font-bold shadow-2xs'
+                        : 'bg-slate-100 text-slate-500 font-medium'
                     }`}
                   >
                     {scoreVal}
@@ -1208,7 +1218,7 @@ export default function HomePage() {
                 );
               })
             ) : (
-              <div className="text-xs text-slate-400 italic">--</div>
+              <div className="w-8 text-xs text-slate-400 italic">--</div>
             )}
           </div>
         </div>
@@ -1280,42 +1290,50 @@ export default function HomePage() {
       orderNumber: number,
       side: 'p1' | 'p2',
     ) => {
-      const rawMembers = (participant?.members ?? []).filter((m) => m.fullName || m.avatarUrl);
-      const teamName = participant?.teamName || '';
-      const teamNameParts = teamName.includes(' / ')
-        ? teamName.split(' / ').map((p) => p.trim()).filter(Boolean)
-        : [];
+      const uniqueMembers = (participant?.members ?? []).filter(
+        (m, idx, arr) => (m.fullName || m.avatarUrl) && arr.findIndex((x) => x.fullName === m.fullName) === idx
+      );
+      const teamName = (participant?.teamName || '').trim();
+      const isDoubles = uniqueMembers.length >= 2 || (teamName.includes(' / ') || teamName.includes(' - '));
 
-      const member1 = rawMembers[0] || (teamNameParts[0] ? { fullName: teamNameParts[0] } : undefined);
-      const member2 = rawMembers[1] || (teamNameParts[1] ? { fullName: teamNameParts[1] } : undefined);
-      const isDoubles = rawMembers.length === 2 || teamNameParts.length === 2;
+      let primaryTitle = '';
+      let subTitle = '';
 
-      const primaryName = isDoubles
-        ? [member1?.fullName, member2?.fullName].filter(Boolean).join(' / ') || teamName || translate('pendingTeam')
-        : rawMembers[0]?.fullName || teamName || translate('pendingTeam');
-
-      const clubOrSub = ((rawMembers[0] as unknown as Record<string, unknown>)?.clubName as string) ||
-        ((rawMembers[0] as unknown as Record<string, unknown>)?.organization as string) ||
-        (isDoubles ? '' : teamName !== primaryName ? teamName : '');
+      if (isDoubles) {
+        if (uniqueMembers.length >= 2) {
+          const m1 = uniqueMembers[0].fullName || '';
+          const m2 = uniqueMembers[1].fullName || '';
+          primaryTitle = teamName || `${m1} / ${m2}`;
+          subTitle = teamName && teamName !== `${m1} / ${m2}` ? `${m1} • ${m2}` : '';
+        } else if (teamName) {
+          primaryTitle = teamName;
+        } else {
+          primaryTitle = translate('pendingTeam');
+        }
+      } else {
+        const singleName = uniqueMembers[0]?.fullName || teamName;
+        primaryTitle = singleName || translate('pendingTeam');
+        subTitle = '';
+      }
 
       const badgeColor = side === 'p1' ? 'border-purple-200 text-purple-600 bg-purple-50/50' : 'border-amber-200 text-amber-600 bg-amber-50/50';
 
       return (
-        <div className="flex items-center justify-between py-2 border-b border-slate-100/80 last:border-b-0">
-          <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+        <div className="flex items-center justify-between py-2 border-b border-slate-100/70 last:border-b-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
             {/* Number badge / Avatar circle */}
             <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${badgeColor}`}>
               {orderNumber}
             </div>
 
-            {/* Name + Club */}
+            {/* Name + Subtitle */}
             <div className="min-w-0 flex-1">
               <div className="text-xs sm:text-sm font-semibold text-slate-800 tracking-tight truncate">
-                {primaryName}
+                {primaryTitle}
               </div>
-              {clubOrSub && (
-                <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                  {clubOrSub}
+              {subTitle && (
+                <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
+                  {subTitle}
                 </div>
               )}
             </div>

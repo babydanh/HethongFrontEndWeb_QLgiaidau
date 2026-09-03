@@ -821,14 +821,14 @@ export default function QuickTournamentCreate() {
             toast.error(firstError || translate('requiredFieldsError'));
           })}
         >
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 items-start">
             
             {/* ─── CỘT TRÁI (7 CỘT): THÔNG TIN CƠ BẢN, LỊCH TRÌNH, ĐỊA ĐIỂM, MÔ TẢ ─── */}
-            <div className="space-y-6 lg:col-span-7">
+            <div className="space-y-4 lg:col-span-7">
               
               {/* Card 1: Thông tin cơ bản */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <Trophy className="h-4 w-4" />
                   </div>
@@ -843,7 +843,7 @@ export default function QuickTournamentCreate() {
                   <input
                     data-testid="tournament-name-input"
                     {...register('name')}
-                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     placeholder={translate('tournamentNamePlaceholder')}
                   />
                   {errors.name && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.name.message}</span>}
@@ -854,7 +854,7 @@ export default function QuickTournamentCreate() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
                     {translate('sportLabel')} <span className="text-rose-500">*</span>
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {categories.map((category) => {
                       const value = sportFromCategory(category);
                       if (!value) return null;
@@ -869,14 +869,14 @@ export default function QuickTournamentCreate() {
                             setValue('sport', value, { shouldValidate: true, shouldDirty: true });
                             handleSportChange(value);
                           }}
-                          className={`flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition cursor-pointer ${
+                          className={`flex items-center gap-2 rounded-xl border p-2 text-left transition cursor-pointer ${
                             isSelected
                               ? 'border-blue-600 bg-blue-50/80 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                           }`}
                         >
                           {sportIcon ? (
-                            <div className="relative h-6 w-6 shrink-0">
+                            <div className="relative h-5 w-5 shrink-0">
                               <Image
                                 src={sportIcon}
                                 alt={category.name}
@@ -894,7 +894,7 @@ export default function QuickTournamentCreate() {
                   </div>
                   {/* Hidden input to maintain react-hook-form registration */}
                   <input type="hidden" {...register('sport')} />
-                  <span className="mt-1.5 block text-xs text-slate-500">
+                  <span className="mt-1 block text-[11px] text-slate-500">
                     {selectedCategory ? translate('defaultRulesApplied', { sport: selectedCategory.name }) : translate('selectSportHint')}
                   </span>
                 </div>
@@ -916,9 +916,9 @@ export default function QuickTournamentCreate() {
                   <button
                     type="button"
                     onClick={() => setIsDescriptionEditorOpen(true)}
-                    className="mt-2 flex min-h-36 w-full items-start rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-left text-sm transition hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="mt-1.5 flex min-h-20 w-full items-start rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-left text-sm transition hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
                   >
-                    <span className={description ? 'line-clamp-6 text-slate-800' : 'text-slate-400'}>
+                    <span className={description ? 'line-clamp-3 text-slate-800' : 'text-slate-400'}>
                       {description ? description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : translate('descriptionPlaceholder')}
                     </span>
                   </button>
@@ -927,7 +927,7 @@ export default function QuickTournamentCreate() {
               </section>
 
               {/* Card 2: Lịch trình thời gian */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                     <Calendar className="h-4 w-4" />
@@ -1125,10 +1125,10 @@ export default function QuickTournamentCreate() {
             </div>
 
             {/* ─── CỘT PHẢI (5 CỘT - STICKY): NỘI DUNG, THỂ THỨC, ELO, QUY MÔ, HIỂN THỊ, NÚT SUBMIT ─── */}
-            <div className="space-y-6 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
+            <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
               
               {/* Card Phải 1: Nội dung thi đấu */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-4">
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3.5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -1258,7 +1258,8 @@ export default function QuickTournamentCreate() {
                   <span className="text-xs text-slate-400">{translate('chooseOne')}</span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5">
+                {/* 4 Icon thể thức trên 1 hàng */}
+                <div className="grid grid-cols-4 gap-2">
                   {BRACKET_OPTIONS.map((opt) => {
                     const isSelected = bracketType === opt.id;
                     const { Icon } = opt;
@@ -1267,38 +1268,45 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                        className={`group flex flex-col items-center justify-center gap-1.5 rounded-xl border p-2.5 text-center transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                            ? 'border-blue-600 bg-blue-50/90 shadow-2xs ring-1 ring-blue-500/30'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                         }`}
+                        title={translate(opt.labelKey)}
                       >
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition ${
                             isSelected
                               ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
+                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600 group-hover:bg-white'
                           }`}
                         >
                           <Icon className="h-4 w-4" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
-                              {translate(opt.labelKey)}
-                            </span>
-                            {isSelected && (
-                              <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
-                            )}
-                          </div>
-                          <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
-                            {translate(opt.descKey)}
-                          </p>
-                        </div>
+                        <span className={`text-[11px] font-bold leading-tight line-clamp-1 transition ${isSelected ? 'text-blue-950 font-black' : 'text-slate-700'}`}>
+                          {translate(opt.labelKey)}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
+
+                {/* Khung Note giải thích chi tiết cho thể thức đang chọn */}
+                {(() => {
+                  const selectedOption = BRACKET_OPTIONS.find((opt) => opt.id === bracketType) || BRACKET_OPTIONS[0];
+                  return (
+                    <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900 transition-all">
+                      <span className="shrink-0 mt-0.5 text-blue-600">💡</span>
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-blue-950">{translate(selectedOption.labelKey)}:</span>
+                        <p className="text-[11px] leading-relaxed text-blue-800">
+                          {translate(selectedOption.descKey)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {errors.bracketType && <span className="block text-xs text-rose-600">{errors.bracketType.message}</span>}
               </section>
 

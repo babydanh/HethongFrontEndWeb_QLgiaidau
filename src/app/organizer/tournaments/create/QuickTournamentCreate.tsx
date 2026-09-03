@@ -1123,7 +1123,7 @@ export default function QuickTournamentCreate() {
                   </span>
                 </div>
 
-                <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                <div className="space-y-2">
                   {formatConfigs
                     .filter((config) => (sport === 'football' ? config.key.startsWith('FOOTBALL_') : !config.key.startsWith('FOOTBALL_')))
                     .map((config) => {
@@ -1131,19 +1131,20 @@ export default function QuickTournamentCreate() {
                       const isSelected = selectedFormats.includes(formatId);
                       const activeBracketId = config.bracketType ?? bracketType;
                       const activeBracketOption = BRACKET_OPTIONS.find((item) => item.id === activeBracketId);
+                      const BracketIcon = activeBracketOption?.Icon ?? SingleEliminationIcon;
                       const bracketTitle = activeBracketOption
                         ? translate(activeBracketOption.labelKey)
                         : translate('bracketSingleLabel');
-                      const participantTitle = config.maxParticipantsOverride && config.maxParticipants
-                        ? translate('participantLimit', { count: config.maxParticipants })
-                        : translate('participantScale', { count: maxTeams });
+                      const participantCount = config.maxParticipantsOverride && config.maxParticipants
+                        ? config.maxParticipants
+                        : maxTeams;
 
                       return (
                         <div
                           key={formatId}
-                          className={`group flex items-center justify-between rounded-xl border p-3.5 md:p-4 transition ${
+                          className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 transition-all ${
                             isSelected
-                              ? 'border-blue-500 bg-blue-50/80 text-blue-800 shadow-2xs'
+                              ? 'border-blue-500 bg-blue-50/75 text-blue-950 shadow-2xs'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/70'
                           }`}
                         >
@@ -1151,52 +1152,61 @@ export default function QuickTournamentCreate() {
                             type="button"
                             data-testid={`format-option-${formatId}`}
                             onClick={() => toggleFormat(formatId)}
-                            className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
+                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left cursor-pointer"
                           >
                             <span
-                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold leading-none ${
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold leading-none transition-colors ${
                                 isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected ? '✓' : ''}
                             </span>
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <span className="block truncate text-xs md:text-sm font-bold text-slate-900">
+                            <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                              {/* Tên nội dung thi đấu - không gian rộng rãi tối đa */}
+                              <span className="truncate text-xs sm:text-sm font-bold text-slate-900">
                                 {config.label}
                               </span>
-                              <div className="flex flex-wrap items-center gap-1.5 text-[10.5px]">
-                                <span className="inline-flex items-center rounded-md bg-white border border-slate-200 px-2 py-0.5 font-semibold text-slate-700 shadow-2xs">
-                                  {bracketTitle}
+
+                              {/* Badges tinh gọn: Icon thể thức + Icon người và số lượng (bỏ chữ trình, chữ đội) */}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {/* Thể thức thi đấu dạng icon */}
+                                <span
+                                  title={bracketTitle}
+                                  className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-slate-100/90 text-slate-600 border border-slate-200/80 shadow-2xs hover:bg-slate-200/80 transition-colors"
+                                >
+                                  <BracketIcon className="h-3.5 w-3.5" />
                                 </span>
-                                <span className="inline-flex items-center rounded-md bg-slate-100/80 px-1.5 py-0.5 font-medium text-slate-600">
-                                  {participantTitle}
+
+                                {/* Số lượng dạng icon người + số */}
+                                <span
+                                  title={`${translate('participantLimitUnit')}: ${participantCount}`}
+                                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100/90 border border-slate-200/80 px-2 py-0.5 text-xs font-bold text-slate-700 shadow-2xs"
+                                >
+                                  <Users className="h-3.5 w-3.5 text-slate-500" />
+                                  <span>{participantCount}</span>
                                 </span>
-                                {config.eloEnabled && (
-                                  <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 font-bold text-amber-700">
-                                    ELO {config.minElo ?? 0}–{config.maxElo ?? '∞'}
-                                  </span>
-                                )}
                               </div>
                             </div>
                           </button>
-                          <div className="ml-2 flex items-center gap-1 shrink-0">
+                          <div className="ml-1.5 flex items-center gap-1 shrink-0">
                             <button
                               type="button"
                               onClick={() => openFormatModal(formatId)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700 cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 cursor-pointer shadow-2xs"
+                              title={translate('editFormat')}
                               aria-label={translate('editFormatAria', { label: config.label })}
                             >
-                              <Settings2 className="h-3.5 w-3.5" /> {translate('editFormat')}
+                              <Settings2 className="h-3.5 w-3.5" />
                             </button>
                             {config.isCustom && (
                               <button
                                 type="button"
                                 onClick={() => removeFormat(formatId)}
-                                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 cursor-pointer shadow-2xs"
+                                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 cursor-pointer shadow-2xs"
                                 title={translate('removeFormatTitle')}
                                 aria-label={translate('removeFormatAria', { label: config.label })}
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                               </button>
                             )}
                           </div>

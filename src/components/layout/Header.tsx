@@ -198,7 +198,15 @@ export function Header() {
       setPendingNotificationAction(actionKey);
       await tournamentsApi.respondToRefereeInvite(tournamentId, refereeId, action);
       await markNotificationAsRead(notificationId);
-      toast.success(action === 'ACCEPT' ? t('refereeInviteAccepted') : t('refereeInviteDeclined'));
+      if (action === 'ACCEPT') {
+        if (!user?.isEmailVerified) {
+          toast.success(t('refereeInviteAcceptedUnverified'), { duration: 5000 });
+        } else {
+          toast.success(t('refereeInviteAccepted'));
+        }
+      } else {
+        toast.success(t('refereeInviteDeclined'));
+      }
     } catch (error) {
       toast.error(
         getErrorMessage(

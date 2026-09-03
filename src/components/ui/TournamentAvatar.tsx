@@ -82,25 +82,16 @@ export const TournamentAvatar: React.FC<TournamentAvatarProps> = ({
     );
   }
 
-  if (sportLogo) {
-    return (
-      <div
-        className={`relative rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs ${sizeConfig.container} ${className}`}
-      >
-        <img
-          src={sportLogo}
-          alt={category || 'Sport'}
-          className={`${sizeConfig.icon} object-contain`}
-        />
-      </div>
-    );
-  }
-
+  // Fallback chuẩn nhận diện SportO SVG khi giải không có logo hoặc lỗi ảnh
   return (
     <div
-      className={`relative rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold tracking-tight shrink-0 shadow-2xs ${sizeConfig.container} ${sizeConfig.text} ${className}`}
+      className={`relative rounded-full bg-white border border-slate-200/90 flex items-center justify-center shrink-0 shadow-2xs p-1.5 ${sizeConfig.container} ${className}`}
     >
-      {initials ? initials : <Trophy className={`${sizeConfig.icon} text-white/90`} />}
+      <img
+        src="/sporto_v1.svg"
+        alt="SportO"
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 };

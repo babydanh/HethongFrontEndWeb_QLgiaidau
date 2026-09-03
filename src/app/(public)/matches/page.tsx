@@ -1277,7 +1277,9 @@ export default function MatchesListPage() {
                                           key={idx}
                                           className={`w-6.5 h-6.5 rounded text-[11px] flex items-center justify-center border transition-all ${
                                             isLeadingOrWon
-                                              ? 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
+                                              ? isLive
+                                                ? 'bg-rose-600 text-white font-bold border-rose-600 shadow-xs scale-105 animate-pulse'
+                                                : 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
                                               : isLosing
                                               ? 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
                                               : isLive
@@ -1360,7 +1362,9 @@ export default function MatchesListPage() {
                                           key={idx}
                                           className={`w-6.5 h-6.5 rounded text-[11px] flex items-center justify-center border transition-all ${
                                             isLeadingOrWon
-                                              ? 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
+                                              ? isLive
+                                                ? 'bg-rose-600 text-white font-bold border-rose-600 shadow-xs scale-105 animate-pulse'
+                                                : 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
                                               : isLosing
                                               ? 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
                                               : isLive

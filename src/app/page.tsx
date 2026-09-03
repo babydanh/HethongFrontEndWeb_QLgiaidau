@@ -254,7 +254,7 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 }
 
 function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = BRAND.assets.defaultFallback;
+  const fallbackSrc = '/sporto_v1.svg';
   const [imgError, setImgError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   if (prevSrc !== src) {
@@ -263,15 +263,18 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
   }
 
   const imageSrc = (!imgError && src?.trim()) ? src : fallbackSrc;
+  const isFallback = imageSrc === fallbackSrc;
 
   return (
     <Image
       src={imageSrc}
       alt={alt}
       fill
-      className={`object-contain p-2 group-hover:scale-105 transition-transform duration-500 ${imageSrc === fallbackSrc ? 'p-3' : ''}`}
+      className={`group-hover:scale-105 transition-transform duration-500 ${
+        isFallback ? 'object-contain p-2.5' : 'object-cover'
+      }`}
       onError={() => setImgError(true)}
-      unoptimized={imageSrc === fallbackSrc}
+      unoptimized={isFallback}
     />
   );
 }

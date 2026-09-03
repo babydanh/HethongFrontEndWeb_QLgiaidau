@@ -353,7 +353,22 @@ function extractSetScores(match: ScheduleBoardMatch) {
   const m = match as unknown as Record<string, unknown>;
   const setList: Array<{ s1: string | number; s2: string | number }> = [];
 
-  if (Array.isArray(m.sets) && m.sets.length > 0) {
+  // ScoringPanel persists the canonical result in scoreDetails. The court
+  // board must read that shape too; otherwise completed matches show '-' and
+  // are incorrectly treated as unfinished.
+  const scoreDetails = (m.scoreDetails && typeof m.scoreDetails === 'object'
+    ? m.scoreDetails
+    : null) as Record<string, unknown> | null;
+  const detailSets = scoreDetails?.sets;
+  if (Array.isArray(detailSets)) {
+    for (const set of detailSets as Array<Record<string, unknown>>) {
+      const s1 = set.team1Score ?? set.score1 ?? set.participant1Score ?? '';
+      const s2 = set.team2Score ?? set.score2 ?? set.participant2Score ?? '';
+      if (s1 !== '' || s2 !== '') setList.push({ s1: String(s1), s2: String(s2) });
+    }
+  }
+
+  if (setList.length === 0 && Array.isArray(m.sets) && m.sets.length > 0) {
     for (const set of m.sets as Array<Record<string, unknown>>) {
       const s1 = set.score1 ?? set.participant1Score ?? '';
       const s2 = set.score2 ?? set.participant2Score ?? '';
@@ -364,8 +379,8 @@ function extractSetScores(match: ScheduleBoardMatch) {
   }
 
   if (setList.length === 0) {
-    const s1 = m.participant1Score ?? m.score1;
-    const s2 = m.participant2Score ?? m.score2;
+    const s1 = scoreDetails?.participant1Score ?? scoreDetails?.team1Score ?? m.participant1Score ?? m.score1;
+    const s2 = scoreDetails?.participant2Score ?? scoreDetails?.team2Score ?? m.participant2Score ?? m.score2;
     if (s1 !== undefined && s1 !== null && s1 !== '') {
       setList.push({ s1: String(s1), s2: s2 !== undefined && s2 !== null ? String(s2) : '' });
     }

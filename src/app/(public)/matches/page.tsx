@@ -518,8 +518,9 @@ export default function MatchesListPage() {
     missingTournamentIds.forEach(async (id) => {
       try {
         const tRes = await tournamentsApi.getTournamentById(id);
-        const data = (tRes?.data as unknown as { data?: { logoUrl?: string; bannerUrl?: string } })?.data || tRes?.data;
-        const logo = data?.logoUrl;
+        const raw = tRes as unknown as Record<string, unknown>;
+        const data = (raw?.data && typeof raw.data === 'object') ? (raw.data as Record<string, unknown>) : raw;
+        const logo = (data?.logoUrl || raw?.logoUrl) as string | undefined;
         if (logo && isMounted) {
           setTournamentLogos((prev) => (prev[id] === logo ? prev : { ...prev, [id]: logo }));
         }
@@ -1265,17 +1266,23 @@ export default function MatchesListPage() {
                                 {match.status !== 'SCHEDULED' && (
                                   <div className="flex items-center gap-1 shrink-0">
                                     {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
-                                      const isSetDone = set.isFinished;
-                                      const isWinner = isSetDone && (Number(set.team1Score) > Number(set.team2Score));
+                                      const s1 = Number(set.team1Score ?? 0);
+                                      const s2 = Number(set.team2Score ?? 0);
+                                      const isSetDone = Boolean(set.isFinished);
+                                      const isLeadingOrWon = isSetDone ? s1 > s2 : (s1 > s2 && s1 > 0);
+                                      const isLosing = isSetDone ? s1 < s2 : (s2 > s1 && s2 > 0);
+
                                       return (
                                         <div
                                           key={idx}
-                                          className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
-                                            isLive
-                                              ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
-                                              : isWinner
-                                              ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
-                                              : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
+                                          className={`w-6.5 h-6.5 rounded text-[11px] flex items-center justify-center border transition-all ${
+                                            isLeadingOrWon
+                                              ? 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
+                                              : isLosing
+                                              ? 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
+                                              : isLive
+                                              ? 'bg-rose-50 text-rose-600 border-rose-200 font-bold'
+                                              : 'bg-slate-50 text-slate-600 border-slate-200 font-medium'
                                           }`}
                                         >
                                           {set.team1Score}
@@ -1342,17 +1349,23 @@ export default function MatchesListPage() {
                                 {match.status !== 'SCHEDULED' && (
                                   <div className="flex items-center gap-1 shrink-0">
                                     {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
-                                      const isSetDone = set.isFinished;
-                                      const isWinner = isSetDone && (Number(set.team2Score) > Number(set.team1Score));
+                                      const s1 = Number(set.team1Score ?? 0);
+                                      const s2 = Number(set.team2Score ?? 0);
+                                      const isSetDone = Boolean(set.isFinished);
+                                      const isLeadingOrWon = isSetDone ? s2 > s1 : (s2 > s1 && s2 > 0);
+                                      const isLosing = isSetDone ? s2 < s1 : (s1 > s2 && s1 > 0);
+
                                       return (
                                         <div
                                           key={idx}
-                                          className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
-                                            isLive
-                                              ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
-                                              : isWinner
-                                              ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
-                                              : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
+                                          className={`w-6.5 h-6.5 rounded text-[11px] flex items-center justify-center border transition-all ${
+                                            isLeadingOrWon
+                                              ? 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
+                                              : isLosing
+                                              ? 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
+                                              : isLive
+                                              ? 'bg-rose-50 text-rose-600 border-rose-200 font-bold'
+                                              : 'bg-slate-50 text-slate-600 border-slate-200 font-medium'
                                           }`}
                                         >
                                           {set.team2Score}

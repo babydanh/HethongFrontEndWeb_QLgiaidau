@@ -1173,18 +1173,13 @@ export default function HomePage() {
 
             {/* Name + Club info */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs sm:text-sm tracking-tight truncate ${isWinner ? 'font-bold text-slate-900' : 'font-medium text-slate-500'}`}>
+              <div className="text-xs sm:text-sm tracking-tight truncate font-bold text-slate-900">
+                <span className={isWinner ? 'text-slate-900 font-extrabold' : 'text-slate-600 font-semibold'}>
                   {primaryName}
                 </span>
-                {isWinner && (
-                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                    Thắng
-                  </span>
-                )}
               </div>
               {clubOrSub && (
-                <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
                   {clubOrSub}
                 </div>
               )}
@@ -1202,7 +1197,7 @@ export default function HomePage() {
                   <div
                     key={idx}
                     className={`w-8 text-center text-xs sm:text-sm tabular-nums ${
-                      isSetWin ? 'font-bold text-slate-900' : 'font-medium text-slate-400'
+                      isSetWin ? 'font-black text-slate-950 text-sm sm:text-base' : 'font-medium text-slate-400'
                     }`}
                   >
                     {scoreVal}
@@ -1698,8 +1693,8 @@ export default function HomePage() {
                       const group = rawGroup as GroupMatchesData;
                       const tournamentId = group.id || tournamentName;
                       const currentPage = tournamentPages[tournamentId] || 1;
-                      const totalPages = group.matches.length;
-                      const displayMatches = group.matches.slice(currentPage - 1, currentPage);
+                      const totalPages = Math.ceil(group.matches.length / 2);
+                      const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
                       const matchedTournament = tournaments.find(t => t.id === group.id);
                       const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
@@ -1754,8 +1749,8 @@ export default function HomePage() {
                               )}
                             </div>
                           </div>
-                          {/* Matches List: 1 match row per tournament */}
-                          <div className="space-y-2">
+                          {/* Matches List: 2 matches in 2 columns (1 row on md+) */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
                             {displayMatches.map((match) => renderCompletedMatchRow(match, group.matches, matchedTournament ?? null))}
                           </div>
                         </div>

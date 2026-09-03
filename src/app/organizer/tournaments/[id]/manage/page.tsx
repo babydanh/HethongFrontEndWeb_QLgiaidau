@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, User, Users, Video, Zap, Pencil, MapPin } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, User, Users, Video, Zap, Pencil, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -277,9 +277,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 COMPLETED: translate('status.statusCompleted'),
                 CANCELLED: translate('status.statusCancelled'),
               })}
-              {s.draftStatus === 'saving' && <span className="text-[10px] font-semibold text-slate-400">{translate('status.savingDraft')}</span>}
-              {s.draftStatus === 'saved' && <span className="text-[10px] font-semibold text-emerald-600">{translate('status.draftSaved')}</span>}
-              {s.draftStatus === 'restored' && <span className="text-[10px] font-semibold text-amber-600">{translate('status.draftRestored')}</span>}
+              {s.draftStatus === 'saving' && (
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/80 animate-pulse shadow-2xs">
+                  <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                  <span>{translate('status.autoSaving')}</span>
+                </div>
+              )}
+              {s.draftStatus === 'saved' && (
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200/80 shadow-2xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span>{translate('status.autoSaved')}</span>
+                </div>
+              )}
+              {s.draftStatus === 'error' && (
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-semibold border border-rose-200/80 shadow-2xs">
+                  <AlertCircle className="w-3 h-3 text-rose-600" />
+                  <span>{translate('status.autoSaveError')}</span>
+                </div>
+              )}
+              {s.draftStatus === 'restored' && (
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-200/80 shadow-2xs">
+                  <span>{translate('status.draftRestored')}</span>
+                </div>
+              )}
             </div>
             <h1 data-testid="tournament-title" className="text-xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
             <p className="text-slate-500 font-medium text-xs md:text-sm flex items-center gap-1">
@@ -635,6 +655,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               </div>
             ) : (
               <CourtWorkspace
+                tournamentStatus={s.tournament?.status}
                 venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
                 courts={s.courts}
                 divisions={s.divisions}
@@ -678,6 +699,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
               <div className="mx-auto max-w-[1800px]">
                 <CourtWorkspace
+                  tournamentStatus={s.tournament?.status}
                   bracket={s.bracket}
                   venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
                   courts={s.courts}

@@ -36,6 +36,7 @@ interface CourtWorkspaceProps {
   defaultDate?: string | null;
   defaultOperatingStart?: string;
   defaultOperatingEnd?: string;
+  tournamentStatus?: string | null;
   sportRuleKind?: string;
   setsToWin?: number;
   preview?: SchedulePlanPreview | null;
@@ -59,6 +60,7 @@ export function CourtWorkspace({
   defaultDate,
   defaultOperatingStart = '06:00',
   defaultOperatingEnd = '24:00',
+  tournamentStatus,
   preview,
   onOpenMatch,
   onSaveScheduleDirect,
@@ -303,6 +305,7 @@ export function CourtWorkspace({
         defaultDate={defaultDate}
         defaultOperatingStart={defaultOperatingStart}
         defaultOperatingEnd={defaultOperatingEnd}
+        tournamentStatus={tournamentStatus}
         isFullscreen={isFullscreen}
         onOpenMatch={onOpenMatch}
         onSaveScheduleDirect={onSaveScheduleDirect}

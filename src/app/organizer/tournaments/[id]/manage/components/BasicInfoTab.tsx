@@ -658,14 +658,9 @@ export function BasicInfoTab({
             </Button>
           )}
         </div>
-        <Button
-          data-testid="save-basic-info-btn"
-          onClick={handleSaveBasicInfo}
-          disabled={isSavingConfig}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-md shadow-blue-500/10"
-        >
-          {isSavingConfig ? translate('saving') : translate('saveInfo')}
-        </Button>
+        <div className="text-xs text-slate-400 font-medium flex items-center gap-1">
+          <span>✨ Các thay đổi thông tin giải đấu được tự động lưu</span>
+        </div>
       </div>
     </div>
   );

@@ -78,6 +78,7 @@ interface ScheduleBoardMatch {
   roundName?: string | null;
   groupName?: string | null;
   status?: string | null;
+  winnerId?: string | null;
   score1?: number | string | null;
   score2?: number | string | null;
   participant1Score?: number | string | null;
@@ -95,6 +96,7 @@ interface CourtScheduleBoardProps {
   defaultDate?: string | null;
   defaultOperatingStart?: string;
   defaultOperatingEnd?: string;
+  tournamentStatus?: string | null;
   isFullscreen?: boolean;
   onOpenMatch: (matchId: string) => void;
   onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean, durationMinutes?: number) => Promise<void>;
@@ -531,6 +533,7 @@ export function CourtScheduleBoard({
   defaultDate,
   defaultOperatingStart = '08:00',
   defaultOperatingEnd = '22:00',
+  tournamentStatus,
   isFullscreen = false,
   onOpenMatch,
   onSaveScheduleDirect,
@@ -642,6 +645,10 @@ export function CourtScheduleBoard({
   );
 
   const displayMatches = useMemo(() => matches.map((match) => {
+    const tournamentIsCompleted = String(tournamentStatus || '').toUpperCase() === 'COMPLETED';
+    const hasNoResolvedParticipants = !match.participant1 && !match.participant2;
+    if (tournamentIsCompleted && hasNoResolvedParticipants) return null;
+
     const draft = draftAssignments[match.id];
     const isExplicitlyUnassigned = draft !== undefined && (!draft.courtId || !draft.scheduledAt);
 
@@ -663,7 +670,7 @@ export function CourtScheduleBoard({
       isPreview: !isExplicitlyUnassigned && !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
-  }), [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId]);
+  }).filter((item): item is NonNullable<typeof item> => item !== null), [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId, tournamentStatus]);
 
   const [customDates, setCustomDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);

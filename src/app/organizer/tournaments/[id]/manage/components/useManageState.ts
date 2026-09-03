@@ -200,7 +200,7 @@ export function useManageState(id: string) {
   const manageDraftKey = `sporto:tournament-manage-draft:${id}`;
   const manageDraftReadyRef = useRef(false);
   const manageDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'restored'>('idle');
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'restored' | 'error'>('idle');
 
   const clearManageDraft = useCallback(() => {
     if (typeof window !== 'undefined') window.localStorage.removeItem(manageDraftKey);
@@ -2027,22 +2027,63 @@ export function useManageState(id: string) {
     });
   }, [isLoading, tournament, manageDraftKey, name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress, provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate, genderRestriction]);
 
-  // Debounced autosave for the fields people most often forget to save.
+  // Debounced server auto-save for tournament management fields
   useEffect(() => {
     if (!manageDraftReadyRef.current || !tournament || typeof window === 'undefined') return;
+
+    // Đánh dấu đang có thay đổi cần lưu
+    setDraftStatus('saving');
+
     if (manageDraftTimerRef.current) clearTimeout(manageDraftTimerRef.current);
-    manageDraftTimerRef.current = setTimeout(() => {
-      const draft = {
-        tournamentId: tournament.id, updatedAt: new Date().toISOString(),
-        name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress,
-        provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate,
-        visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType, eloEnabled,
-      };
-      window.localStorage.setItem(manageDraftKey, JSON.stringify(draft));
-      setDraftStatus('saved');
-    }, 700);
+    manageDraftTimerRef.current = setTimeout(async () => {
+      try {
+        // 1. Lưu backup localStorage
+        const draft = {
+          tournamentId: tournament.id, updatedAt: new Date().toISOString(),
+          name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress,
+          provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate,
+          visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType, eloEnabled,
+        };
+        window.localStorage.setItem(manageDraftKey, JSON.stringify(draft));
+
+        // 2. Tự động đồng bộ lên Server API nếu có id
+        if (id && name.trim()) {
+          await tournamentsApi.updateTournament(id, {
+            name: name.trim(),
+            categoryId: categoryId || undefined,
+            description,
+            bannerUrl: bannerUrl || null,
+            logoUrl: logoUrl || null,
+            prizeDescription: prizeDescription || null,
+            contactInfo,
+            visibility,
+            registrationMode,
+            maxParticipants,
+            entryFee,
+            genderRestriction: genderRestriction || null,
+            tournamentConfig: {
+              ...tournament?.tournamentConfig,
+              hideFeaturedCardText,
+              mode: isLiteMode ? 'LITE' : 'STRICT',
+            },
+          });
+        }
+
+        setDraftStatus('saved');
+      } catch (err) {
+        console.error('Auto-save error:', err);
+        setDraftStatus('error');
+      }
+    }, 1000);
+
     return () => { if (manageDraftTimerRef.current) clearTimeout(manageDraftTimerRef.current); };
-  }, [tournament, manageDraftKey, name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress, provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate, visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType, eloEnabled]);
+  }, [
+    tournament, id, manageDraftKey, name, categoryId, description, bannerUrl, logoUrl,
+    prizeDescription, contactInfo, customVenueName, customVenueAddress,
+    provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate,
+    visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType,
+    eloEnabled, hideFeaturedCardText, isLiteMode,
+  ]);
 
   const currentDivisionIdRef = useRef<string>('');
 

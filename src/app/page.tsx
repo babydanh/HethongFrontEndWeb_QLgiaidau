@@ -1048,9 +1048,9 @@ export default function HomePage() {
             {/* Status Pill Badge */}
             <div className="shrink-0">
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF1F2] text-[#F43F5E] border border-[#FFE4E6]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F43F5E]" />
-                  LIVE
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
                 </span>
               ) : isCompleted ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">

@@ -355,7 +355,13 @@ const commonTranslate = useTranslations('Common');
           : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
             ? (rawRes as { data: { data: Match[] } }).data.data
             : [];
-      const ongoing = (list as Match[]).filter(isActiveMatch);
+      const ongoing = (list as Match[]).filter((match) => {
+        const status = String(match.status ?? '').toUpperCase();
+        return ['ONGOING', 'IN_PROGRESS', 'LIVE', 'PLAYING'].includes(status)
+          && !match.isBye
+          && !match.completedAt
+          && !match.winnerId;
+      });
       const nextCounts: Record<string, number> = {};
       for (const match of ongoing) {
         const divisionId = match.divisionId ?? selectedDivisionId;

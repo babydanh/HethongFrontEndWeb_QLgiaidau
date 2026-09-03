@@ -66,8 +66,8 @@ export default function CountdownTimer({
 
   const colors = {
     info: 'bg-blue-50 border-blue-200 text-blue-700',
-    warning: 'bg-amber-50 border-amber-200 text-amber-700',
-    danger: 'bg-rose-50 border-slate-200 text-rose-700',
+    warning: 'bg-amber-50 border-amber-200 text-amber-750',
+    danger: 'bg-rose-50 border-rose-200 text-rose-700',
   };
 
   const dotColors = {
@@ -76,13 +76,13 @@ export default function CountdownTimer({
     danger: 'bg-rose-500 animate-pulse',
   };
 
-  const padding = size === 'sm' ? 'p-2.5' : 'p-3';
+  const padding = size === 'sm' ? 'py-2.5 px-3' : size === 'lg' ? 'py-3.5 px-4' : 'py-3 px-3.5';
 
   return (
-    <div className={`mt-2 ${padding} border rounded-lg ${colors[variant]}`}>
-      <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${dotColors[variant]}`} />
-        <span className={`font-semibold ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
+    <div className={`mt-2 ${padding} border rounded-xl shadow-2xs ${colors[variant]}`}>
+      <div className="flex items-center gap-2.5">
+        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColors[variant]}`} />
+        <span className={`font-bold tracking-tight ${size === 'sm' ? 'text-xs sm:text-[13px]' : size === 'lg' ? 'text-base sm:text-lg' : 'text-sm sm:text-[15px]'}`}>
           {display}
         </span>
       </div>

@@ -924,11 +924,11 @@ const commonTranslate = useTranslations('Common');
         {hasTournamentLogo ? (
           /* When tournament HAS Logo -> Display Logo + Badges + Title at Top */
           <div className="flex items-start gap-3.5">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-50 border border-slate-200/90 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-2 border-white shadow-md p-0.5 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200/80">
               <img
                 src={tournamentLogo || ''}
                 alt={tournament.name}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -1269,35 +1269,25 @@ const commonTranslate = useTranslations('Common');
         )}
       </div>
 
-      {/* Registration Timeline Table */}
-      <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
-        <div className="flex items-center justify-between text-slate-600">
-          <span className="font-medium">{translate('regStart') || 'Mở đăng ký'}:</span>
-          <span className="font-bold text-slate-800">
-            {activeTournament.registrationStartDate ? formatDate(activeTournament.registrationStartDate) : translate('notUpdated')}
-          </span>
+      {/* Fee & Registration Lock Status (Timeline đã có đồng hồ đếm ngược trực quan ở trên) */}
+      {(isRegistrationLocked || Number(activeTournament.entryFee) > 0) && (
+        <div className="pt-3 border-t border-slate-100 space-y-2.5">
+          {isRegistrationLocked && (
+            <div className="flex items-center justify-between text-xs font-bold text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
+              <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
+              <span>🔒</span>
+            </div>
+          )}
+          {Number(activeTournament.entryFee) > 0 && (
+            <div className="flex items-center justify-between text-slate-700 pt-0.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{translate('entryFee') || 'Lệ phí tham gia'}:</span>
+              <span className="font-black text-blue-600 text-base sm:text-lg tracking-tight">
+                {formatCurrency(activeTournament.entryFee)}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="flex items-center justify-between text-slate-600">
-          <span className="font-medium">{translate('regEnd') || 'Thời hạn đăng ký'}:</span>
-          <span className="font-bold text-slate-800">
-            {activeTournament.registrationEndDate ? formatDate(activeTournament.registrationEndDate) : translate('notUpdated')}
-          </span>
-        </div>
-        {isRegistrationLocked && (
-          <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200">
-            <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
-            <span>🔒</span>
-          </div>
-        )}
-        {Number(activeTournament.entryFee) > 0 && (
-          <div className="flex items-center justify-between text-slate-600 pt-1.5 border-t border-dashed border-slate-100">
-            <span className="font-medium">{translate('entryFee') || 'Lệ phí'}:</span>
-            <span className="font-black text-blue-600 text-sm">
-              {formatCurrency(activeTournament.entryFee)}
-            </span>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Secondary Utility Actions (Follow, Share, Report) */}
       <div className="pt-3 border-t border-slate-100 flex items-center gap-2">

@@ -55,6 +55,9 @@ export function Header() {
   const canAccessModeration = Boolean(
     user?.roles?.includes('ADMIN') || user?.roles?.includes('MODERATOR'),
   );
+  const canAccessOrganizer = Boolean(
+    user?.roles?.includes('ADMIN') || user?.roles?.includes('ORGANIZER'),
+  );
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -656,14 +659,16 @@ export function Header() {
                         {t('myTournaments')}
                       </Link>
 
-                      <Link
-                        href="/organizer/tournaments"
-                        onClick={closeOverlays}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-blue-600 font-semibold transition-colors hover:bg-blue-50/50 hover:text-blue-700"
-                      >
-                        <ShieldAlert className="h-4 w-4 text-blue-500" />
-                        {t('organizerTournaments')}
-                      </Link>
+                      {canAccessOrganizer && (
+                        <Link
+                          href="/organizer/tournaments"
+                          onClick={closeOverlays}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-blue-600 font-semibold transition-colors hover:bg-blue-50/50 hover:text-blue-700"
+                        >
+                          <ShieldAlert className="h-4 w-4 text-blue-500" />
+                          {t('organizerTournaments')}
+                        </Link>
+                      )}
 
                       <Link
                         href="/profile/edit"

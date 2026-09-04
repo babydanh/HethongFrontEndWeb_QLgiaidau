@@ -24,6 +24,7 @@ import {
   Flame,
   X,
   Sparkles,
+  Home,
 } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
@@ -299,6 +300,9 @@ export default function QuickTournamentCreate() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((state) => state.user);
+  const hasOrganizerRole = Boolean(
+    user?.roles?.some((role) => role === 'ORGANIZER' || role === 'ADMIN'),
+  );
   const translate = useTranslations('OrganizerQuickCreate');
   const quickSchema = useMemo(() => buildQuickSchema(translate), [translate]);
   const getFormatLabel = (key: string) => {
@@ -1457,7 +1461,26 @@ export default function QuickTournamentCreate() {
 
               {/* Card Phải 4: Action Buttons (Sticky Submit) */}
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
-                {!user?.isEmailVerified ? (
+                {!hasOrganizerRole ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-left">
+                      <p className="text-xs font-bold text-rose-900">
+                        {translate('roleRequiredAlertTitle')}
+                      </p>
+                      <p className="mt-1 text-[11px] font-medium text-rose-700 leading-relaxed">
+                        {translate('roleRequiredAlertDesc')}
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-700 py-3 text-xs font-bold text-white shadow-md hover:bg-slate-800 transition active:scale-[0.99] cursor-pointer"
+                    >
+                      <Home className="h-4 w-4" />
+                      <span>{translate('backToHomeAction') || 'Quay lại'}</span>
+                    </Link>
+                  </div>
+                ) : !user?.isEmailVerified ? (
                   <div className="space-y-3">
                     <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-left">
                       <p className="text-xs font-bold text-amber-900">

@@ -22,6 +22,9 @@ import Link from 'next/link';
 export default function Step4ReviewSubmit() {
   const translate = useTranslations('OrganizerCreateStep4');
   const user = useAuthStore((state) => state.user);
+  const hasOrganizerRole = Boolean(
+    user?.roles?.some((role) => role === 'ORGANIZER' || role === 'ADMIN'),
+  );
   const { formData, getDivisionsFromFormats, prevStep, reset, setStep, setValidationTarget } = useCreateTournamentStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig>({
@@ -414,8 +417,20 @@ export default function Step4ReviewSubmit() {
         </p>
       </div>
 
-      {/* Kiểm tra xác thực Email của Ban tổ chức */}
-      {!user?.isEmailVerified && (
+      {/* Kiểm tra quyền Ban tổ chức (ORGANIZER) và xác thực Email */}
+      {!hasOrganizerRole ? (
+        <div className="flex items-start gap-3 rounded-xl border border-rose-300 bg-rose-50/90 p-4 text-rose-900 shadow-2xs">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-rose-600 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <h5 className="text-xs font-bold text-rose-950 uppercase tracking-wider">
+              {translate('roleRequiredAlertTitle')}
+            </h5>
+            <p className="mt-0.5 text-xs text-rose-800 leading-relaxed font-medium">
+              {translate('roleRequiredAlertDesc')}
+            </p>
+          </div>
+        </div>
+      ) : !user?.isEmailVerified ? (
         <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-amber-900 shadow-2xs">
           <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
           <div className="min-w-0 flex-1">
@@ -427,7 +442,7 @@ export default function Step4ReviewSubmit() {
             </p>
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="flex justify-between mt-4 pt-6 border-t border-slate-100 items-center gap-3">
         <Button
@@ -440,7 +455,14 @@ export default function Step4ReviewSubmit() {
           <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
         </Button>
 
-        {!user?.isEmailVerified ? (
+        {!hasOrganizerRole ? (
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-slate-800 transition active:scale-95 cursor-pointer"
+          >
+            <span>{translate('back')}</span>
+          </Link>
+        ) : !user?.isEmailVerified ? (
           <Link
             href="/auth/verify-email"
             className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-amber-700 transition active:scale-95 cursor-pointer"

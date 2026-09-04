@@ -69,17 +69,43 @@ export default function OrganizerLayout({
     );
   }
 
-  // Nếu user chưa có role ORGANIZER và chưa xác thực email, hiển thị giao diện kích hoạt thay vì đá văng
-  if (!hasOrganizerRole && !user.isEmailVerified) {
+  // Nếu user chưa có role ORGANIZER hoặc ADMIN: Chặn truy cập và thông báo cần quyền Ban tổ chức
+  if (!hasOrganizerRole) {
+    return (
+      <section className="min-h-[calc(100vh-9rem)] bg-slate-50 py-16 px-4">
+        <div className="mx-auto max-w-lg text-center bg-white p-8 rounded-2xl border border-rose-200 shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500 text-white mb-4 shadow-sm">
+            <ShieldAlert className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-900">{translate('roleOrganizerNotAssignedTitle')}</h2>
+          <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+            {translate('roleOrganizerNotAssignedDesc')}
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm"
+            >
+              <Home className="h-4 w-4" />
+              {translate('backToHomeAction')}
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Nếu user đã có role ORGANIZER nhưng chưa xác thực email
+  if (!user.isEmailVerified) {
     return (
       <section className="min-h-[calc(100vh-9rem)] bg-slate-50 py-16 px-4">
         <div className="mx-auto max-w-lg text-center bg-white p-8 rounded-2xl border border-amber-200 shadow-sm">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500 text-white mb-4 shadow-sm">
             <ShieldAlert className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-extrabold text-slate-900">{translate('roleOrganizerRequiredTitle')}</h2>
+          <h2 className="text-xl font-extrabold text-slate-900">{translate('verificationBannerTitle')}</h2>
           <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-            {translate('roleOrganizerRequiredDesc')}
+            {translate('roleOrganizerVerifyEmailFirstDesc')}
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link

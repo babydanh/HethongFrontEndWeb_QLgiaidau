@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState, useCallback } from 'react';
+import { use, useEffect, useState, useCallback, useRef } from 'react';
 
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
@@ -152,7 +152,11 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [startDate, setStartDate] = useState<string>(''); // YYYY-MM-DD
   const [startTime, setStartTime] = useState<string>('08:00'); // HH:mm
   const [durationHours, setDurationHours] = useState<number>(4);
-  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+  const [durationMinutes, setDurationMinutes] = useState<number>(0);
+  const [scheduleSaveStatus, setScheduleSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [descSaveStatus, setDescSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [locSaveStatus, setLocSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const hasLoadedTournament = useRef(false);
 
   useEffect(() => {
     regionsApi.getProvinces().then((res) => {
@@ -217,11 +221,20 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             if (loaded?.endDate) {
               const eDate = new Date(loaded.endDate);
               if (!isNaN(eDate.getTime()) && eDate.getTime() > sDate.getTime()) {
-                const diffHours = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60 * 60));
-                setDurationHours(Math.max(1, diffHours));
+                const totalDiffMinutes = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60));
+                const h = Math.floor(totalDiffMinutes / 60);
+                const m = totalDiffMinutes % 60;
+                setDurationHours(Math.max(0, h));
+                setDurationMinutes(Math.max(0, m));
               }
-            } else if (loaded?.tournamentConfig?.recurring && typeof loaded.tournamentConfig.recurring === 'object') {
-              // fallback
+            } else if ((loaded?.tournamentConfig as Record<string, unknown> | undefined)?.durationMinutes) {
+              const dm = Number((loaded!.tournamentConfig as Record<string, unknown>).durationMinutes) || 240;
+              setDurationHours(Math.floor(dm / 60));
+              setDurationMinutes(dm % 60);
+            } else if ((loaded?.tournamentConfig as Record<string, unknown> | undefined)?.durationHours) {
+              const dh = Number((loaded!.tournamentConfig as Record<string, unknown>).durationHours) || 4;
+              setDurationHours(Math.floor(dh));
+              setDurationMinutes(Math.round((dh % 1) * 60));
             }
           }
         }
@@ -251,14 +264,18 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         setTournament(null);
       } finally {
         setIsLoading(false);
+        setTimeout(() => {
+          hasLoadedTournament.current = true;
+        }, 300);
       }
     };
     fetch();
   }, [id, fetchBracket]);
 
-  const handleSaveLocation = async () => {
+  const handleSaveLocation = async (isSilent: boolean = false) => {
     if (!tournament) return;
     setIsSavingLocation(true);
+    setLocSaveStatus('saving');
     try {
       const display = [venueName, locationAddress, ward, province].filter(Boolean).join(', ');
       const nextTournamentConfig = {
@@ -298,9 +315,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         tournamentConfig: nextTournamentConfig,
       });
       setIsEditingLocation(false);
-      toast.success(translate('locationSaved'));
+      setLocSaveStatus('saved');
+      if (!isSilent) toast.success(translate('locationSaved'));
+      setTimeout(() => setLocSaveStatus('idle'), 2500);
     } catch (err) {
-      toast.error(getErrorMessage(err) || translate('locationSaveFailed'));
+      setLocSaveStatus('idle');
+      if (!isSilent) toast.error(getErrorMessage(err) || translate('locationSaveFailed'));
     } finally {
       setIsSavingLocation(false);
     }
@@ -315,16 +335,20 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     setIsEditingLocation(false);
   };
 
-  const handleSaveDescription = async () => {
+  const handleSaveDescription = async (isSilent: boolean = false) => {
     if (!tournament) return;
     setIsSavingDescription(true);
+    setDescSaveStatus('saving');
     try {
       const response = await tournamentsApi.updateTournament(id, { description });
       setTournament(response.data ?? { ...tournament, description });
       setIsEditingDescription(false);
-      toast.success(translate('descriptionSaved'));
+      setDescSaveStatus('saved');
+      if (!isSilent) toast.success(translate('descriptionSaved'));
+      setTimeout(() => setDescSaveStatus('idle'), 2500);
     } catch (err) {
-      toast.error(getErrorMessage(err) || translate('descriptionSaveFailed'));
+      setDescSaveStatus('idle');
+      if (!isSilent) toast.error(getErrorMessage(err) || translate('descriptionSaveFailed'));
     } finally {
       setIsSavingDescription(false);
     }
@@ -442,10 +466,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }
   };
 
-  const handleSaveSchedule = async () => {
+  const handleSaveSchedule = async (isSilent: boolean = false) => {
     if (!tournament) return;
     if (!startDate) {
-      toast.error('Vui lòng chọn ngày bắt đầu.');
+      if (!isSilent) toast.error('Vui lòng chọn ngày bắt đầu.');
       return;
     }
     const timeStr = startTime || '08:00';
@@ -453,15 +477,16 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     const [yyyy, mm, dd] = startDate.split('-');
     const startIso = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), 0).toISOString();
     
-    const duration = Math.max(1, durationHours || 4);
-    const endIso = new Date(new Date(startIso).getTime() + duration * 60 * 60 * 1000).toISOString();
+    const totalMinutes = Math.max(15, (durationHours || 0) * 60 + (durationMinutes || 0));
+    const endIso = new Date(new Date(startIso).getTime() + totalMinutes * 60 * 1000).toISOString();
 
-    setIsSavingSchedule(true);
+    setScheduleSaveStatus('saving');
     try {
       const divisionId = tournament.divisions?.[0]?.id;
       const nextTournamentConfig = {
         ...(tournament.tournamentConfig ?? {}),
-        durationHours: duration,
+        durationHours: Number((totalMinutes / 60).toFixed(1)),
+        durationMinutes: totalMinutes,
       };
 
       const payload: Record<string, unknown> = {
@@ -488,13 +513,41 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         endDate: endIso,
         tournamentConfig: nextTournamentConfig,
       });
-      toast.success('Cập nhật lịch thi đấu thành công!');
+      setScheduleSaveStatus('saved');
+      if (!isSilent) toast.success('Đã lưu thời gian thi đấu!');
+      setTimeout(() => setScheduleSaveStatus('idle'), 2500);
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Không thể lưu thời gian');
-    } finally {
-      setIsSavingSchedule(false);
+      setScheduleSaveStatus('idle');
+      if (!isSilent) toast.error(getErrorMessage(err) || 'Không thể lưu thời gian');
     }
   };
+
+  // Auto-save: Schedule (startDate, startTime, durationHours, durationMinutes)
+  useEffect(() => {
+    if (!hasLoadedTournament.current || !tournament || !startDate) return;
+    const timer = setTimeout(() => {
+      void handleSaveSchedule(true);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [startDate, startTime, durationHours, durationMinutes]);
+
+  // Auto-save: Location (venueName, locationAddress, province, ward)
+  useEffect(() => {
+    if (!hasLoadedTournament.current || !tournament) return;
+    const timer = setTimeout(() => {
+      void handleSaveLocation(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [venueName, locationAddress, province, ward]);
+
+  // Auto-save: Description
+  useEffect(() => {
+    if (!hasLoadedTournament.current || !tournament) return;
+    const timer = setTimeout(() => {
+      void handleSaveDescription(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [description]);
 
   // --- Participants / pairing state ---
   const [participants, setParticipants] = useState<LiteParticipant[]>([]);
@@ -1070,82 +1123,123 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       <div className="w-2 h-2 rounded-full bg-indigo-600" />
                       <h4 className="text-sm font-bold text-slate-900">Thời gian & Thời lượng</h4>
                     </div>
-                    {tournament.startDate && (
-                      <span className="text-xs font-medium text-slate-500">
-                        Hiện tại: {new Date(tournament.startDate).toLocaleDateString('vi-VN')} {new Date(tournament.startDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {scheduleSaveStatus === 'saving' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 font-medium">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Đang tự động lưu...
+                        </span>
+                      )}
+                      {scheduleSaveStatus === 'saved' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                          <CheckCircle className="w-3 h-3" /> Đã lưu
+                        </span>
+                      )}
+                      {tournament.startDate && scheduleSaveStatus === 'idle' && (
+                        <span className="text-xs font-medium text-slate-500">
+                          Bắt đầu: {new Date(tournament.startDate).toLocaleDateString('vi-VN')} {new Date(tournament.startDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Ngày bắt đầu (dd/mm/yyyy) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Cột 1: Ngày bắt đầu & Giờ bắt đầu (Chung 1 cột) */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Ngày bắt đầu (dd/mm/yyyy)
+                        Thời gian bắt đầu (Ngày dd/mm/yyyy & Giờ)
                       </label>
-                      <DatePicker
-                        value={startDate}
-                        onChange={(val) => setStartDate(val)}
-                      />
-                    </div>
-
-                    {/* Giờ bắt đầu */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Giờ bắt đầu
-                      </label>
-                      <div className="relative">
-                        <Input
-                          type="time"
-                          value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
-                          className="text-sm font-medium pr-8"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <DatePicker
+                          value={startDate}
+                          onChange={(val) => setStartDate(val)}
                         />
-                        <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <div className="relative">
+                          <Input
+                            type="time"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            className="text-sm font-medium pr-8"
+                          />
+                          <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
                       </div>
+                      <p className="text-xs text-slate-500">
+                        Chọn ngày khởi tranh và giờ bắt đầu trận đấu đầu tiên.
+                      </p>
                     </div>
 
-                    {/* Thời lượng / Trong bao lâu */}
+                    {/* Cột 2: Thời lượng thi đấu (Cho phép nhập giờ & phút linh hoạt, ví dụ 1h30m) */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Dự kiến trong bao lâu
+                        Thời lượng thi đấu dự kiến
                       </label>
-                      <select
-                        value={durationHours}
-                        onChange={(e) => setDurationHours(Number(e.target.value) || 1)}
-                        className="h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      >
-                        <option value={1}>1 giờ</option>
-                        <option value={2}>2 giờ</option>
-                        <option value={3}>3 giờ</option>
-                        <option value={4}>4 giờ (Nửa ngày)</option>
-                        <option value={6}>6 giờ</option>
-                        <option value={8}>8 giờ (Cả ngày)</option>
-                        <option value={12}>12 giờ</option>
-                        <option value={24}>1 ngày (24 giờ)</option>
-                        <option value={48}>2 ngày (48 giờ)</option>
-                        <option value={72}>3 ngày (72 giờ)</option>
-                      </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={168}
+                            value={durationHours}
+                            onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value) || 0))}
+                            className="text-sm font-medium"
+                            placeholder="Giờ"
+                          />
+                          <span className="text-xs font-bold text-slate-500 shrink-0">giờ</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={59}
+                            step={5}
+                            value={durationMinutes}
+                            onChange={(e) => setDurationMinutes(Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
+                            className="text-sm font-medium"
+                            placeholder="Phút"
+                          />
+                          <span className="text-xs font-bold text-slate-500 shrink-0">phút</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Tổng thời lượng: <strong className="text-slate-700">{durationHours} giờ {durationMinutes > 0 ? `${durationMinutes} phút` : ''}</strong> (Hệ thống tự động lưu).
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-1">
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs text-slate-400 italic">
+                      Thay đổi sẽ tự động lưu sau 1s hoặc nhấn nút để lưu ngay.
+                    </span>
                     <Button
                       size="sm"
-                      onClick={handleSaveSchedule}
-                      disabled={isSavingSchedule}
+                      onClick={() => void handleSaveSchedule(false)}
+                      disabled={scheduleSaveStatus === 'saving'}
                       className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4"
                     >
-                      {isSavingSchedule ? translate('saving') : 'Lưu thời gian'}
+                      {scheduleSaveStatus === 'saving' ? translate('saving') : 'Lưu thời gian'}
                     </Button>
                   </div>
                 </div>
 
                 {/* 3. Địa điểm thi đấu & Sân */}
                 <div className="p-5 sm:p-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
-                    <h4 className="text-sm font-bold text-slate-900">{translate('locationCardTitle')}</h4>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-amber-500" />
+                      <h4 className="text-sm font-bold text-slate-900">{translate('locationCardTitle')}</h4>
+                    </div>
+                    <div>
+                      {locSaveStatus === 'saving' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Đang tự động lưu...
+                        </span>
+                      )}
+                      {locSaveStatus === 'saved' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                          <CheckCircle className="w-3 h-3" /> Đã lưu
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1205,10 +1299,13 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-1">
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs text-slate-400 italic">
+                      Địa điểm sẽ tự động lưu khi chỉnh sửa.
+                    </span>
                     <Button
                       size="sm"
-                      onClick={handleSaveLocation}
+                      onClick={() => void handleSaveLocation(false)}
                       disabled={isSavingLocation}
                       className="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4"
                     >
@@ -1219,9 +1316,23 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
 
                 {/* 4. Mô tả & Điều lệ giải */}
                 <div className="p-5 sm:p-6 space-y-4 bg-slate-50/20">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-400" />
-                    <h4 className="text-sm font-bold text-slate-900">{translate('descriptionCardTitle')}</h4>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-slate-400" />
+                      <h4 className="text-sm font-bold text-slate-900">{translate('descriptionCardTitle')}</h4>
+                    </div>
+                    <div>
+                      {descSaveStatus === 'saving' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-600 font-medium">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Đang tự động lưu...
+                        </span>
+                      )}
+                      {descSaveStatus === 'saved' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                          <CheckCircle className="w-3 h-3" /> Đã lưu
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <RichTextEditor
@@ -1230,10 +1341,13 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     placeholder={translate('descriptionPlaceholder')}
                   />
 
-                  <div className="flex justify-end pt-1">
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs text-slate-400 italic">
+                      Mô tả tự động lưu sau khi gõ xong.
+                    </span>
                     <Button
                       size="sm"
-                      onClick={handleSaveDescription}
+                      onClick={() => void handleSaveDescription(false)}
                       disabled={isSavingDescription}
                       className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4"
                     >

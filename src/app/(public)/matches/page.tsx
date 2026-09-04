@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useLocale, useTranslations } from 'next-intl';
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -297,9 +297,10 @@ export default function MatchesListPage() {
   const [selectedWard, setSelectedWard] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);
-  const [page, setPage] = useState(1);
   const [hasMoreMatches, setHasMoreMatches] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [groupPages, setGroupPages] = useState<Record<string, number>>({});
   const [cheerCounts, setCheerCounts] = useState<Record<string, number>>({});
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -308,7 +309,6 @@ export default function MatchesListPage() {
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
   const [tournamentLogos, setTournamentLogos] = useState<Record<string, string>>({});
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const filterKey = [
     debouncedSearchTerm,
     selectedCategoryId,
@@ -411,34 +411,27 @@ export default function MatchesListPage() {
     return undefined;
   };
 
-  // Cursor state belongs to the active filter set. Any filter change starts
-  // a new cursor chain at page 1, while the UI still shows numbered pages.
+  // Filter changes reset state and fetch the first page
   useEffect(() => {
-    cursorByPageRef.current = { 1: null };
-    setHasMoreMatches(false);
-    let active = true;
-    Promise.resolve().then(() => {
-      if (!active) return;
-      setPage((currentPage) => (currentPage === 1 ? currentPage : 1));
-      setGroupPages((currentPages) => (Object.keys(currentPages).length === 0 ? currentPages : {}));
-    });
-    return () => {
-      active = false;
-    };
+    setGroupPages({});
   }, [filterKey]);
 
-  // Fetch danh sách trận đấu dựa trên bộ lọc
-  useEffect(() => {
-    if (matchesRequestInFlightRef.current) {
-      matchesRefreshQueuedRef.current = true;
-      return;
-    }
-    matchesRequestInFlightRef.current = true;
+  // Fetch matches logic supporting initial load and cursor-based "load more"
+  const fetchMatches = useCallback(
+    async (isLoadMore = false, cursorToUse: string | null = null) => {
+      if (matchesRequestInFlightRef.current && !isLoadMore) {
+        matchesRefreshQueuedRef.current = true;
+        return;
+      }
+      matchesRequestInFlightRef.current = true;
 
-    const fetchMatches = async () => {
-      // Keep the last successful feed visible during background refreshes.
-      setIsLoading(matches.length === 0);
+      if (isLoadMore) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(matches.length === 0);
+      }
       setIsRateLimited(false);
+
       try {
         // Map lựa chọn nội dung đấu sang matchType + genderRestriction
         let matchType: string | undefined;
@@ -465,41 +458,71 @@ export default function MatchesListPage() {
         const apiStartDate = formatDateForAPI(startDate);
         const apiEndDate = formatDateForAPI(endDate);
 
-        const cursor = cursorByPageRef.current[page] ?? null;
         const res = await matchesApi.getMatches({
           limit: 100,
           publicOnly: true,
-          ...(cursor ? { cursor } : {}),
+          ...(cursorToUse ? { cursor: cursorToUse } : {}),
           search: debouncedSearchTerm || undefined,
-                    categoryId: selectedCategoryId || undefined,
+          categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
           matchType,
           genderRestriction,
           city: selectedProvince || undefined,
-
           isRanked: isRanked === 'true' ? true : isRanked === 'false' ? false : undefined,
           startDate: apiStartDate,
           endDate: apiEndDate,
         });
 
         const feed = readMatchFeed(res);
-        setMatches(feed.matches);
-        setHasMoreMatches(feed.hasMore || Boolean(feed.nextCursor));
-        cursorByPageRef.current[page + 1] = feed.nextCursor;
+        const resNextCursor = feed.nextCursor ?? null;
+        const resHasMore = Boolean(feed.hasMore && resNextCursor);
+
+        if (isLoadMore) {
+          setMatches((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const uniqueNew = feed.matches.filter((m) => !existingIds.has(m.id));
+            return [...prev, ...uniqueNew];
+          });
+        } else {
+          setMatches(feed.matches);
+        }
+
+        setNextCursor(resNextCursor);
+        setHasMoreMatches(resHasMore);
       } catch (error) {
         console.error('Failed to fetch matches', error);
         setIsRateLimited(getHttpStatus(error) === 429);
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
         matchesRequestInFlightRef.current = false;
         if (matchesRefreshQueuedRef.current) {
           matchesRefreshQueuedRef.current = false;
           setMatchesRefreshTick((value) => value + 1);
         }
       }
-    };
-    fetchMatches();
-  }, [filterKey, page, matchesRefreshTick]);
+    },
+    [
+      selectedContent,
+      startDate,
+      endDate,
+      debouncedSearchTerm,
+      selectedCategoryId,
+      selectedStatus,
+      selectedProvince,
+      isRanked,
+      matches.length,
+    ]
+  );
+
+  useEffect(() => {
+    fetchMatches(false, null);
+  }, [fetchMatches, filterKey, matchesRefreshTick]);
+
+  const handleLoadMore = () => {
+    if (!hasMoreMatches || isLoadingMore || !nextCursor) return;
+    fetchMatches(true, nextCursor);
+  };
 
   // Làm giàu logo giải đấu từ Tournament detail API khi Match API không populate logoUrl
   useEffect(() => {
@@ -705,7 +728,6 @@ export default function MatchesListPage() {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
                 placeholder={translate("searchPlaceholder")}
@@ -721,7 +743,6 @@ export default function MatchesListPage() {
                 value={selectedCategoryId}
                 onChange={(e) => {
                   setSelectedCategoryId(e.target.value);
-                  setPage(1);
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
@@ -742,7 +763,6 @@ export default function MatchesListPage() {
                 value={selectedStatus}
                 onChange={(e) => {
                   setSelectedStatus(e.target.value);
-                  setPage(1);
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
@@ -784,7 +804,7 @@ export default function MatchesListPage() {
             return (
               <button
                 key={chip.value}
-                onClick={() => { setSelectedStatus(isActive ? '' : chip.value); setPage(1); }}
+                onClick={() => { setSelectedStatus(isActive ? '' : chip.value); }}
                 className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${isActive ? chip.activeClass : chip.inactiveClass}`}
               >
                 {chip.label}
@@ -792,7 +812,7 @@ export default function MatchesListPage() {
             );
           })}
           {selectedStatus && (
-            <button onClick={() => { setSelectedStatus(''); setPage(1); }}
+            <button onClick={() => { setSelectedStatus(''); }}
               className="text-slate-400 font-bold text-xs hover:text-rose-500 transition-colors ml-1 cursor-pointer">
               ✕ {translate('clearStatusFilter')}
             </button>
@@ -810,7 +830,6 @@ export default function MatchesListPage() {
                     value={selectedBracketType}
                     onChange={(e) => {
                       setSelectedBracketType(e.target.value);
-                      setPage(1);
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
@@ -832,7 +851,6 @@ export default function MatchesListPage() {
                     value={selectedContent}
                     onChange={(e) => {
                       setSelectedContent(e.target.value);
-                      setPage(1);
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
@@ -855,7 +873,6 @@ export default function MatchesListPage() {
                     value={isRanked}
                     onChange={(e) => {
                       setIsRanked(e.target.value);
-                      setPage(1);
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
@@ -880,7 +897,6 @@ export default function MatchesListPage() {
                       const selected = provinces.find((province) => province.code === code);
                       setSelectedProvince(selected ? selected.name.replace(/^(Thành phố|Tỉnh)\s+/i, '') : '');
                       setSelectedWard('');
-                      setPage(1);
                     }}
                   />
               </div>
@@ -898,7 +914,6 @@ export default function MatchesListPage() {
                     onChange={(code) => {
                       const selected = wards.find((ward) => ward.code === code);
                       setSelectedWard(selected?.name || '');
-                      setPage(1);
                     }}
                   />
               </div>
@@ -920,7 +935,6 @@ export default function MatchesListPage() {
                         val = val + '/';
                       }
                       setStartDate(val);
-                      setPage(1);
                     }}
                     className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                   />
@@ -933,7 +947,6 @@ export default function MatchesListPage() {
                         const parts = e.target.value.split('-');
                         if (parts.length === 3) {
                           setStartDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
-                          setPage(1);
                         }
                       }
                     }}
@@ -976,7 +989,6 @@ export default function MatchesListPage() {
                         val = val + '/';
                       }
                       setEndDate(val);
-                      setPage(1);
                     }}
                     className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                   />
@@ -989,7 +1001,6 @@ export default function MatchesListPage() {
                         const parts = e.target.value.split('-');
                         if (parts.length === 3) {
                           setEndDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
-                          setPage(1);
                         }
                       }
                     }}
@@ -1029,7 +1040,6 @@ export default function MatchesListPage() {
                     setSelectedWard('');
                     setSearchTerm('');
                     setIsRanked('');
-                    setPage(1);
                   }}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
                   title={translate('clearAll')}
@@ -1483,28 +1493,35 @@ export default function MatchesListPage() {
         </div>
       )}
 
-      {/* Main Pagination (for Tournaments List: Shows when there are > 5 tournaments) */}
-      {(page > 1 || hasMoreMatches) && (
-        <div className="flex items-center justify-center gap-1.5 pt-4">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            aria-label={translate('previousPage')}
-            className="p-1.5 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-
-          <span className="min-w-8 text-center text-xs font-bold text-slate-500">{page}</span>
-
-          <button
-            onClick={() => setPage(p => p + 1)}
-            disabled={!hasMoreMatches}
-            aria-label={translate('nextPage')}
-            className="p-1.5 text-white bg-blue-600 border border-blue-200 hover:bg-blue-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+      {/* True Cursor Pagination: Load More / All Loaded */}
+      {!isLoading && matches.length > 0 && (
+        <div className="flex flex-col items-center justify-center mt-10 mb-4 gap-3">
+          {hasMoreMatches ? (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center gap-2.5 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{translate('loadingMore')}</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  <span>{translate('loadMore')}</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 text-xs font-semibold text-slate-400 py-3">
+              <span className="w-12 h-px bg-slate-200" />
+              <span>{translate('allMatchesLoaded')}</span>
+              <span className="w-12 h-px bg-slate-200" />
+            </div>
+          )}
         </div>
       )}
 

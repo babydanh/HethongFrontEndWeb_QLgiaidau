@@ -124,6 +124,7 @@ export default function UserProfilePopover({
 
   const [userClubRank, setUserClubRank] = useState<PlayerRanking | null>(null);
   const [clubMatchesStats, setClubMatchesStats] = useState<{ total: number; wins: number } | null>(null);
+  const [clubCategory, setClubCategory] = useState<string | null>(null);
 
   // Fetch additional details from public profile API and community members
   useEffect(() => {
@@ -158,6 +159,16 @@ export default function UserProfilePopover({
 
     // 2. Fetch community member role, streak, and tags if inside a community
     if (communityId) {
+      communitiesApi
+        .getCommunityById(communityId)
+        .then((res) => {
+          if (!isMounted) return;
+          const comm = res.data;
+          const catName = comm?.categories?.[0]?.name || null;
+          if (catName) setClubCategory(catName);
+        })
+        .catch(() => {});
+
       communitiesApi
         .getTagPresets(communityId)
         .then((res) => {
@@ -512,9 +523,21 @@ export default function UserProfilePopover({
             name={displayName}
             size="lg"
             className="h-16 w-16"
-            elo={communityId ? (userClubRank?.eloPoints ?? null) : primaryRank?.eloPoints}
-            tierName={communityId ? (userClubRank?.tierName ?? userClubRank?.tier?.name ?? null) : primaryRank?.tierName}
-            categoryName={communityId ? (userClubRank?.categoryName ?? null) : primaryRank?.categoryName}
+            elo={
+              communityId
+                ? ((userClubRank?.matchesPlayed ?? 0) > 0 || (clubMatchesStats?.total ?? 0) > 0)
+                  ? (userClubRank?.eloPoints ?? null)
+                  : null
+                : primaryRank?.eloPoints
+            }
+            tierName={
+              communityId
+                ? ((userClubRank?.matchesPlayed ?? 0) > 0 || (clubMatchesStats?.total ?? 0) > 0)
+                  ? (userClubRank?.tierName ?? userClubRank?.tier?.name ?? null)
+                  : null
+                : primaryRank?.tierName
+            }
+            categoryName={communityId ? (userClubRank?.categoryName || clubCategory || null) : primaryRank?.categoryName}
             matchesPlayed={communityId ? (userClubRank?.matchesPlayed ?? clubMatchesStats?.total ?? 0) : primaryRank?.matchesPlayed}
             ringClassName="ring-4 ring-white shadow-md"
           />
@@ -566,93 +589,99 @@ export default function UserProfilePopover({
           </p>
 
           {/* 🏆 Club Specific Standing HUD (When in Club Context) */}
-          {/* 🏆 Club Specific Standing HUD (When in Club Context) */}
-          {communityId && (
-            <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <EloTierBadge
-                    elo={userClubRank?.eloPoints ?? 1000}
-                    tierName={userClubRank?.tierName || userClubRank?.tier?.name}
-                    categoryName={userClubRank?.categoryName}
-                    size="sm"
-                  />
-                  <span className="text-xs font-black font-mono text-slate-800">
-                    {userClubRank?.eloPoints ?? 1000} ELO
-                  </span>
+          {communityId && (() => {
+            const matchesPlayedCount = userClubRank?.matchesPlayed ?? clubMatchesStats?.total ?? 0;
+            const matchesWonCount = userClubRank?.matchesWon ?? clubMatchesStats?.wins ?? 0;
+            const isRankedInClub = Boolean(userClubRank?.eloPoints && matchesPlayedCount > 0);
+            const sportCategory = userClubRank?.categoryName || clubCategory || undefined;
+
+            return (
+              <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    {isRankedInClub ? (
+                      <>
+                        <EloTierBadge
+                          elo={userClubRank!.eloPoints}
+                          tierName={userClubRank?.tierName || userClubRank?.tier?.name}
+                          categoryName={sportCategory}
+                          size="sm"
+                        />
+                        <span className="text-xs font-black font-mono text-slate-800">
+                          {userClubRank!.eloPoints} ELO
+                        </span>
+                      </>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-slate-200/70 px-2 py-0.5 text-[11px] font-semibold text-slate-600 border border-slate-300/60">
+                        Chưa xếp hạng
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Streak Badge (only when player has streak & has played) */}
+                  {matchesPlayedCount > 0 && (
+                    profileData.streak?.count && profileData.streak.count > 0 ? (
+                      <span
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                          profileData.streak.type === "WIN"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                        }`}
+                      >
+                        <Flame className="w-2.5 h-2.5" />
+                        {profileData.streak.type === "WIN"
+                          ? `W${profileData.streak.count}`
+                          : `L${profileData.streak.count}`}
+                      </span>
+                    ) : userClubRank?.winStreak && userClubRank.winStreak > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <Flame className="w-2.5 h-2.5" />
+                        W{userClubRank.winStreak}
+                      </span>
+                    ) : null
+                  )}
                 </div>
 
-                {/* Streak Badge */}
-                {profileData.streak?.count && profileData.streak.count > 0 ? (
-                  <span
-                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                      profileData.streak.type === "WIN"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-rose-50 text-rose-700 border-rose-200"
-                    }`}
-                  >
-                    <Flame className="w-2.5 h-2.5" />
-                    {profileData.streak.type === "WIN"
-                      ? `W${profileData.streak.count}`
-                      : `L${profileData.streak.count}`}
-                  </span>
-                ) : userClubRank?.winStreak && userClubRank.winStreak > 0 ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <Flame className="w-2.5 h-2.5" />
-                    W{userClubRank.winStreak}
-                  </span>
-                ) : null}
+                {/* Clean 2-Column Telemetry: Trận thắng & Tỷ lệ thắng (Bỏ bộ môn vì trong CLB đã rõ) */}
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-white p-2 border border-slate-100 text-center">
+                  <div className="min-w-0">
+                    <div className="truncate text-[10px] font-semibold uppercase text-slate-400">Trận thắng</div>
+                    <div className="text-xs font-bold text-slate-800 font-mono mt-0.5">
+                      {matchesWonCount}/{matchesPlayedCount}
+                    </div>
+                  </div>
+                  <div className="min-w-0 border-l border-slate-100">
+                    <div className="truncate text-[10px] font-semibold uppercase text-slate-400">Tỷ lệ thắng</div>
+                    <div className="text-xs font-bold text-emerald-600 font-mono mt-0.5">
+                      {matchesPlayedCount > 0 ? `${Math.round((matchesWonCount / matchesPlayedCount) * 100)}%` : '0%'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action: View club member matches */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent('sporto:view-club-member-matches', {
+                        detail: { communityId, query: displayName },
+                      }),
+                    );
+                    window.dispatchEvent(
+                      new CustomEvent('sporto:filter-club-matches', {
+                        detail: { query: displayName },
+                      }),
+                    );
+                    onClose();
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 border border-slate-200 shadow-2xs hover:bg-slate-50 hover:text-blue-600 transition active:scale-98"
+                >
+                  <Trophy className="w-3 h-3 text-blue-500" />
+                  <span>Xem các trận trong CLB</span>
+                </button>
               </div>
-
-              {/* 3-Column Telemetry matching world rank format */}
-              <div className="grid grid-cols-3 gap-1 rounded-lg bg-white p-1.5 border border-slate-100 text-center">
-                <div className="min-w-0">
-                  <div className="truncate text-[9px] font-semibold uppercase text-slate-400">Bộ môn</div>
-                  <div className="text-xs font-bold text-slate-800 truncate">
-                    {userClubRank?.categoryName || 'CLB'}
-                  </div>
-                </div>
-                <div className="min-w-0 border-x border-slate-100">
-                  <div className="truncate text-[9px] font-semibold uppercase text-slate-400">Trận thắng</div>
-                  <div className="text-xs font-bold text-slate-800 font-mono">
-                    {userClubRank?.matchesWon ?? clubMatchesStats?.wins ?? 0}/{userClubRank?.matchesPlayed ?? clubMatchesStats?.total ?? 0}
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-[9px] font-semibold uppercase text-slate-400">Tỷ lệ thắng</div>
-                  <div className="text-xs font-bold text-emerald-600 font-mono">
-                    {(() => {
-                      const total = userClubRank?.matchesPlayed ?? clubMatchesStats?.total ?? 0;
-                      const wins = userClubRank?.matchesWon ?? clubMatchesStats?.wins ?? 0;
-                      return total > 0 ? `${Math.round((wins / total) * 100)}%` : '0%';
-                    })()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action: View club member matches */}
-              <button
-                type="button"
-                onClick={() => {
-                  window.dispatchEvent(
-                    new CustomEvent('sporto:view-club-member-matches', {
-                      detail: { communityId, query: displayName },
-                    }),
-                  );
-                  window.dispatchEvent(
-                    new CustomEvent('sporto:filter-club-matches', {
-                      detail: { query: displayName },
-                    }),
-                  );
-                  onClose();
-                }}
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 border border-slate-200 shadow-2xs hover:bg-slate-50 hover:text-blue-600 transition active:scale-98"
-              >
-                <Trophy className="w-3 h-3 text-blue-500" />
-                <span>Xem các trận trong CLB</span>
-              </button>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ELO Tier Badges for each sport with Smart Overflow (World/Public Rank) - ONLY when NOT in club */}
           {!communityId && (

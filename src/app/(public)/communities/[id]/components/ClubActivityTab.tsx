@@ -159,230 +159,6 @@ function ClubActivitySkeleton() {
   );
 }
 
-/**
- * Minimalist Streak Micro-Pill (Anti-slop)
- */
-function StreakPill({ streak }: { streak: TeamStreakRecord | null }) {
-  if (!streak || streak.count <= 0) return null;
-
-  const isWin = streak.type === 'W';
-  const label = isWin ? `W${streak.count}` : `L${streak.count}`;
-  const title = isWin
-    ? `Chuỗi ${streak.count} trận thắng liên tiếp`
-    : `Chuỗi ${streak.count} trận thua liên tiếp`;
-
-  return (
-    <span
-      title={title}
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium tracking-tight select-none ${
-        isWin
-          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
-          : 'bg-slate-100 text-slate-600 border border-slate-200'
-      }`}
-    >
-      {label}
-    </span>
-  );
-}
-
-const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
-  {
-    id: 'mock-match-1',
-    groupId: 'mock-g1',
-    tournamentId: 'mock-t1',
-    tournamentName: 'Giải Vô Địch CLB Hè 2026',
-    status: 'COMPLETED',
-    roundNumber: 3,
-    matchOrder: 5,
-    bracketBranch: 'WINNERS',
-    isBye: false,
-    scheduledAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    startedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    courtName: 'Sân Trung Tâm',
-    participant1Id: 'mock-user-1',
-    participant2Id: 'mock-user-2',
-    winnerId: 'mock-user-1',
-    participant1: {
-      id: 'mock-user-1',
-      teamName: 'Nguyễn Minh Danh',
-      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80' }],
-    },
-    participant2: {
-      id: 'mock-user-2',
-      teamName: 'Nguyễn Minh Kha',
-      members: [{ userId: 'mock-user-2', fullName: 'Nguyễn Minh Kha', avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80' }],
-    },
-    p1SetsWon: 2,
-    p2SetsWon: 1,
-    scoreDetails: {
-      eloDelta: 16,
-      sets: [
-        { team1Score: 21, team2Score: 19, isFinished: true },
-        { team1Score: 18, team2Score: 21, isFinished: true },
-        { team1Score: 21, team2Score: 16, isFinished: true },
-      ],
-    },
-  },
-  {
-    id: 'mock-match-2',
-    groupId: 'mock-g1',
-    tournamentId: 'mock-t2',
-    tournamentName: 'Giao Lưu Pickleball Cuối Tuần',
-    status: 'ONGOING',
-    roundNumber: 2,
-    matchOrder: 3,
-    bracketBranch: 'MAIN',
-    isBye: false,
-    scheduledAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    startedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    courtName: 'Sân 2',
-    participant1Id: 'mock-user-3',
-    participant2Id: 'mock-user-4',
-    participant1: {
-      id: 'mock-user-3',
-      teamName: 'Tiến Minh / Hải Đăng',
-      members: [
-        { userId: 'mock-user-3a', fullName: 'Tiến Minh', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80' },
-        { userId: 'mock-user-3b', fullName: 'Hải Đăng' },
-      ],
-    },
-    participant2: {
-      id: 'mock-user-4',
-      teamName: 'Văn Hùng / Tuấn Kiệt',
-      members: [
-        { userId: 'mock-user-4a', fullName: 'Văn Hùng', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80' },
-        { userId: 'mock-user-4b', fullName: 'Tuấn Kiệt' },
-      ],
-    },
-    p1SetsWon: 1,
-    p2SetsWon: 0,
-    scoreDetails: {
-      sets: [
-        { team1Score: 11, team2Score: 8, isFinished: true },
-        { team1Score: 9, team2Score: 7, isFinished: false },
-      ],
-    },
-  },
-  {
-    id: 'mock-match-3',
-    groupId: 'mock-g1',
-    tournamentId: 'mock-t1',
-    tournamentName: 'Giải Vô Địch CLB Hè 2026',
-    status: 'COMPLETED',
-    roundNumber: 2,
-    matchOrder: 2,
-    bracketBranch: 'WINNERS',
-    isBye: false,
-    scheduledAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-    startedAt: new Date(Date.now() - 110 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 75 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 75 * 60 * 1000).toISOString(),
-    courtName: 'Sân 1',
-    participant1Id: 'mock-user-1',
-    participant2Id: 'mock-user-5',
-    winnerId: 'mock-user-1',
-    participant1: {
-      id: 'mock-user-1',
-      teamName: 'Nguyễn Minh Danh',
-      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80' }],
-    },
-    participant2: {
-      id: 'mock-user-5',
-      teamName: 'Trần Hoàng Nam',
-      members: [{ userId: 'mock-user-5', fullName: 'Trần Hoàng Nam', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80' }],
-    },
-    p1SetsWon: 2,
-    p2SetsWon: 0,
-    scoreDetails: {
-      eloDelta: 14,
-      sets: [
-        { team1Score: 21, team2Score: 15, isFinished: true },
-        { team1Score: 21, team2Score: 13, isFinished: true },
-      ],
-    },
-  },
-  {
-    id: 'mock-match-4',
-    groupId: 'mock-g1',
-    tournamentId: 'mock-t1',
-    tournamentName: 'Giải Vô Địch CLB Hè 2026',
-    status: 'COMPLETED',
-    roundNumber: 1,
-    matchOrder: 1,
-    bracketBranch: 'WINNERS',
-    isBye: false,
-    scheduledAt: new Date(Date.now() - 240 * 60 * 1000).toISOString(),
-    startedAt: new Date(Date.now() - 230 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 190 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 190 * 60 * 1000).toISOString(),
-    courtName: 'Sân 3',
-    participant1Id: 'mock-user-1',
-    participant2Id: 'mock-user-6',
-    winnerId: 'mock-user-1',
-    participant1: {
-      id: 'mock-user-1',
-      teamName: 'Nguyễn Minh Danh',
-      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80' }],
-    },
-    participant2: {
-      id: 'mock-user-6',
-      teamName: 'Lê Quốc Bảo',
-      members: [{ userId: 'mock-user-6', fullName: 'Lê Quốc Bảo', avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80' }],
-    },
-    p1SetsWon: 2,
-    p2SetsWon: 0,
-    scoreDetails: {
-      eloDelta: 18,
-      sets: [
-        { team1Score: 21, team2Score: 11, isFinished: true },
-        { team1Score: 21, team2Score: 14, isFinished: true },
-      ],
-    },
-  },
-  {
-    id: 'mock-match-5',
-    groupId: 'mock-g1',
-    tournamentId: 'mock-t1',
-    tournamentName: 'Giải Vô Địch CLB Hè 2026',
-    status: 'COMPLETED',
-    roundNumber: 1,
-    matchOrder: 4,
-    bracketBranch: 'LOSERS',
-    isBye: false,
-    scheduledAt: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
-    startedAt: new Date(Date.now() - 175 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 130 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 130 * 60 * 1000).toISOString(),
-    courtName: 'Sân 2',
-    participant1Id: 'mock-user-2',
-    participant2Id: 'mock-user-7',
-    winnerId: 'mock-user-2',
-    participant1: {
-      id: 'mock-user-2',
-      teamName: 'Nguyễn Minh Kha',
-      members: [{ userId: 'mock-user-2', fullName: 'Nguyễn Minh Kha', avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80' }],
-    },
-    participant2: {
-      id: 'mock-user-7',
-      teamName: 'Phạm Nhật Minh',
-      members: [{ userId: 'mock-user-7', fullName: 'Phạm Nhật Minh', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=80' }],
-    },
-    p1SetsWon: 2,
-    p2SetsWon: 1,
-    scoreDetails: {
-      eloDelta: 15,
-      sets: [
-        { team1Score: 19, team2Score: 21, isFinished: true },
-        { team1Score: 21, team2Score: 18, isFinished: true },
-        { team1Score: 21, team2Score: 17, isFinished: true },
-      ],
-    },
-  },
-];
-
 export default function ClubActivityTab({ communityId }: Props) {
   const searchInputId = useId();
   const matchTranslate = useTranslations('Match');
@@ -393,7 +169,6 @@ export default function ClubActivityTab({ communityId }: Props) {
   const [filter, setFilter] = useState<TimelineFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const roundLabelTranslations = useMemo<RoundLabelTranslations>(() => ({
     roundGrandFinal: matchTranslate('roundGrandFinal'),
@@ -591,19 +366,8 @@ export default function ClubActivityTab({ communityId }: Props) {
     };
   }, []);
 
-  // Active matches list: if demo mode is enabled or if no real matches found, use MOCK_CLUB_MATCHES
-  const effectiveMatches = useMemo(() => {
-    if (isDemoMode) return MOCK_CLUB_MATCHES;
-    if (matches.length === 0 && !isLoading) return MOCK_CLUB_MATCHES;
-    return matches;
-  }, [matches, isDemoMode, isLoading]);
-
-  const isShowingMock = (isDemoMode || (matches.length === 0 && !isLoading)) && effectiveMatches.length > 0;
-
-  // Streaks map
-  const streaksMap = useMemo(() => {
-    return computeChronologicalStreaks(effectiveMatches);
-  }, [effectiveMatches]);
+  // Active matches list: direct from API
+  const effectiveMatches = matches;
 
   // Filter and sort for timeline view
   const timelineMatches = useMemo(() => {
@@ -769,32 +533,14 @@ export default function ClubActivityTab({ communityId }: Props) {
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
               {effectiveMatches.length} trận đấu
             </span>
-            {isShowingMock && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
-                Dữ liệu mẫu (Demo Mock)
-              </span>
-            )}
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Dòng sự kiện trận đấu và chuỗi phong độ (Streak) của các thành viên trong câu lạc bộ
+            Dòng sự kiện trận đấu của các thành viên trong câu lạc bộ
           </p>
         </div>
 
         {/* Filter & Search Bar */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Demo Mode toggle button */}
-          <button
-            type="button"
-            onClick={() => setIsDemoMode((prev) => !prev)}
-            className={`px-2.5 py-1 text-xs rounded-lg border font-semibold transition-all ${
-              isDemoMode
-                ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            {isDemoMode ? 'Đang bật Mock' : 'Xem Mock'}
-          </button>
-
           {/* Status Filter buttons */}
           <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium text-slate-600">
             <button
@@ -905,10 +651,6 @@ export default function ClubActivityTab({ communityId }: Props) {
 
             const isP1Winner = isCompleted && match.winnerId === p1Id;
             const isP2Winner = isCompleted && match.winnerId === p2Id;
-
-            const streaks = streaksMap.get(match.id);
-            const p1Streak = streaks?.p1Streak || null;
-            const p2Streak = streaks?.p2Streak || null;
 
             const roundLabel = getMatchRoundLabel({
               match,

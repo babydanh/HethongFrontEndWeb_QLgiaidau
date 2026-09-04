@@ -14,6 +14,7 @@ import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-r
 import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import {
   Clock,
   MapPin,
@@ -456,6 +457,7 @@ export default function ClubActivityTab({ communityId }: Props) {
   }, [communityId]);
 
   const { user } = useAuthStore();
+  const { openUserProfile } = useUserProfileModalStore();
   const [userMembership, setUserMembership] = useState<{
     role: string;
     status: string;
@@ -568,6 +570,22 @@ export default function ClubActivityTab({ communityId }: Props) {
       socket.off('match:score', handleMatchUpdate);
     };
   }, [tournaments]);
+
+  // Listen for filter request from UserProfilePopover
+  useEffect(() => {
+    const handleFilterMatches = (event: Event) => {
+      const customEvent = event as CustomEvent<{ query?: string }>;
+      if (customEvent.detail?.query) {
+        setSearchQuery(customEvent.detail.query);
+        setFilter('ALL');
+      }
+    };
+
+    window.addEventListener('sporto:filter-club-matches', handleFilterMatches);
+    return () => {
+      window.removeEventListener('sporto:filter-club-matches', handleFilterMatches);
+    };
+  }, []);
 
   // Active matches list: if demo mode is enabled or if no real matches found, use MOCK_CLUB_MATCHES
   const effectiveMatches = useMemo(() => {
@@ -988,24 +1006,55 @@ export default function ClubActivityTab({ communityId }: Props) {
                     {/* Team 1 Row */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const targetUserId = p1Id || match.participant1?.members?.[0]?.userId;
+                            if (targetUserId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              openUserProfile(
+                                {
+                                  id: targetUserId,
+                                  fullName: p1?.teamName || matchTranslate('unknownTeam'),
+                                },
+                                rect,
+                                communityId,
+                              );
+                            }
+                          }}
+                          title={`Xem hồ sơ ${p1?.teamName || ''}`}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer ${
                             isP1Winner
-                              ? 'bg-blue-600 text-white shadow-2xs'
-                              : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              ? 'bg-blue-600 text-white shadow-2xs hover:bg-blue-700'
+                              : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
                           }`}
                         >
                           {p1?.teamName ? p1.teamName.charAt(0).toUpperCase() : '1'}
-                        </div>
+                        </button>
                         <div className="min-w-0 flex-1 flex items-center gap-2">
-                          <span
-                            className={`truncate text-sm ${
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              const targetUserId = p1Id || match.participant1?.members?.[0]?.userId;
+                              if (targetUserId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                openUserProfile(
+                                  {
+                                    id: targetUserId,
+                                    fullName: p1?.teamName || matchTranslate('unknownTeam'),
+                                  },
+                                  rect,
+                                  communityId,
+                                );
+                              }
+                            }}
+                            className={`truncate text-sm text-left hover:underline cursor-pointer ${
                               isP1Winner ? 'font-bold text-slate-900' : 'font-medium text-slate-700'
                             }`}
                             title={p1?.teamName || matchTranslate('unknownTeam')}
                           >
                             {p1?.teamName || matchTranslate('unknownTeam')}
-                          </span>
+                          </button>
                           {/* Win/Lose Streak Pill */}
                           <StreakPill streak={p1Streak} />
                         </div>
@@ -1042,24 +1091,55 @@ export default function ClubActivityTab({ communityId }: Props) {
                     {/* Team 2 Row */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const targetUserId = p2Id || match.participant2?.members?.[0]?.userId;
+                            if (targetUserId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              openUserProfile(
+                                {
+                                  id: targetUserId,
+                                  fullName: p2?.teamName || matchTranslate('unknownTeam'),
+                                },
+                                rect,
+                                communityId,
+                              );
+                            }
+                          }}
+                          title={`Xem hồ sơ ${p2?.teamName || ''}`}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer ${
                             isP2Winner
-                              ? 'bg-blue-600 text-white shadow-2xs'
-                              : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              ? 'bg-blue-600 text-white shadow-2xs hover:bg-blue-700'
+                              : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
                           }`}
                         >
                           {p2?.teamName ? p2.teamName.charAt(0).toUpperCase() : '2'}
-                        </div>
+                        </button>
                         <div className="min-w-0 flex-1 flex items-center gap-2">
-                          <span
-                            className={`truncate text-sm ${
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              const targetUserId = p2Id || match.participant2?.members?.[0]?.userId;
+                              if (targetUserId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                openUserProfile(
+                                  {
+                                    id: targetUserId,
+                                    fullName: p2?.teamName || matchTranslate('unknownTeam'),
+                                  },
+                                  rect,
+                                  communityId,
+                                );
+                              }
+                            }}
+                            className={`truncate text-sm text-left hover:underline cursor-pointer ${
                               isP2Winner ? 'font-bold text-slate-900' : 'font-medium text-slate-700'
                             }`}
                             title={p2?.teamName || matchTranslate('unknownTeam')}
                           >
                             {p2?.teamName || matchTranslate('unknownTeam')}
-                          </span>
+                          </button>
                           {/* Win/Lose Streak Pill */}
                           <StreakPill streak={p2Streak} />
                         </div>

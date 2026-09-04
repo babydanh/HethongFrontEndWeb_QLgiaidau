@@ -155,6 +155,9 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [customDurationInput, setCustomDurationInput] = useState<string>('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [recurringDayOfWeek, setRecurringDayOfWeek] = useState<number>(6);
+  const [recurringTimeOfDay, setRecurringTimeOfDay] = useState<string>('18:00');
+  const [recurringAdvanceDays, setRecurringAdvanceDays] = useState<number>(3);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -227,8 +230,13 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         endDate: isoEndDate,
         isRecurring,
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
-        recurringDayOfWeek: isRecurring ? dayOfWeek : undefined,
-        recurringTimeOfDay: isRecurring ? timeOfDay : undefined,
+        recurringDayOfWeek: isRecurring
+          ? (recurringFrequency === 'WEEKLY' || recurringFrequency === 'BIWEEKLY'
+              ? recurringDayOfWeek
+              : dayOfWeek)
+          : undefined,
+        recurringTimeOfDay: isRecurring ? (recurringTimeOfDay || timeOfDay) : undefined,
+        recurringAdvanceDays: isRecurring ? recurringAdvanceDays : undefined,
       });
       toast.success(translate('liteCreatedSuccess'));
       if (result?.id) router.push(`/lite/tournaments/${result.id}/manage`);
@@ -467,17 +475,87 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                 </div>
 
                 {isRecurring && (
-                  <div className="border-t border-slate-200/80 pt-2.5 flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-700">{translate('liteRecurringCycle')}</label>
-                    <select
-                      value={recurringFrequency}
-                      onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)}
-                      className="h-9.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
-                    >
-                      <option value="WEEKLY">{translate('frequencyWeekly')}</option>
-                      <option value="BIWEEKLY">{translate('frequencyBiweekly')}</option>
-                      <option value="MONTHLY">{translate('frequencyMonthly')}</option>
-                    </select>
+                  <div className="border-t border-slate-200/80 pt-3 flex flex-col gap-3">
+                    {/* Tần suất */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-700">{translate('liteRecurringCycle')}</label>
+                      <select
+                        value={recurringFrequency}
+                        onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)}
+                        className="h-9.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                      >
+                        <option value="WEEKLY">{translate('frequencyWeekly')}</option>
+                        <option value="BIWEEKLY">{translate('frequencyBiweekly')}</option>
+                        <option value="MONTHLY">{translate('frequencyMonthly')}</option>
+                      </select>
+                    </div>
+
+                    {/* Chọn thứ trong tuần (nếu chọn WEEKLY hoặc BIWEEKLY) */}
+                    {(recurringFrequency === 'WEEKLY' || recurringFrequency === 'BIWEEKLY') && (
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                          <span>{translate('liteStartDateTime')} (Thứ trong tuần)</span>
+                        </label>
+                        <div className="grid grid-cols-7 gap-1">
+                          {[
+                            { day: 1, label: translate('monday') || 'T2' },
+                            { day: 2, label: translate('tuesday') || 'T3' },
+                            { day: 3, label: translate('wednesday') || 'T4' },
+                            { day: 4, label: translate('thursday') || 'T5' },
+                            { day: 5, label: translate('friday') || 'T6' },
+                            { day: 6, label: translate('saturday') || 'T7' },
+                            { day: 0, label: translate('sunday') || 'CN' },
+                          ].map(({ day, label }) => {
+                            const isSelected = recurringDayOfWeek === day;
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => setRecurringDayOfWeek(day)}
+                                className={`h-8.5 rounded-lg border text-xs font-bold transition flex items-center justify-center ${
+                                  isSelected
+                                    ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Giờ thi đấu định kỳ & Mở đăng ký trước */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Giờ thi đấu định kỳ</span>
+                        </label>
+                        <input
+                          type="time"
+                          value={recurringTimeOfDay}
+                          onChange={(e) => setRecurringTimeOfDay(e.target.value)}
+                          className="h-9.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-slate-700">Mở đăng ký trước</label>
+                        <select
+                          value={recurringAdvanceDays}
+                          onChange={(e) => setRecurringAdvanceDays(Number(e.target.value))}
+                          className="h-9.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                        >
+                          <option value={0}>{translate('advanceSameDay') || 'Cùng ngày thi đấu'}</option>
+                          <option value={1}>{translate('advanceOneDay') || 'Trước 1 ngày (24h)'}</option>
+                          <option value={2}>{translate('advanceTwoDays') || 'Trước 2 ngày (48h)'}</option>
+                          <option value={3}>{translate('advanceThreeDays') || 'Trước 3 ngày'}</option>
+                          <option value={7}>{translate('advanceOneWeek') || 'Trước 1 tuần (7 ngày)'}</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

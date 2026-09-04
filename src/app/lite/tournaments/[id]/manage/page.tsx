@@ -4,7 +4,7 @@ import { use, useEffect, useState, useCallback } from 'react';
 
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, DatePicker } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import {
@@ -31,7 +31,7 @@ import {
   Trophy, Users, Swords, Calendar,
   ExternalLink, Copy, ChevronLeft,
   AlertTriangle, CheckCircle, RefreshCw, UserPlus, Shuffle,
-  Unlink, Loader2, User, FlaskConical, MapPin, FileText, Edit3, Sparkles,
+  Unlink, Loader2, User, FlaskConical, MapPin, FileText, Edit3, Sparkles, Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -148,6 +148,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [maxParticipantsInput, setMaxParticipantsInput] = useState<number>(16);
   const [isSavingMaxParticipants, setIsSavingMaxParticipants] = useState(false);
 
+  // --- Schedule & Duration states ---
+  const [startDate, setStartDate] = useState<string>(''); // YYYY-MM-DD
+  const [startTime, setStartTime] = useState<string>('08:00'); // HH:mm
+  const [durationHours, setDurationHours] = useState<number>(4);
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
   useEffect(() => {
     regionsApi.getProvinces().then((res) => {
       setProvinces(res ?? []);
@@ -195,6 +201,30 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         setWard(initialWard);
         setDescription(loaded?.description || '');
         setMaxParticipantsInput(loaded?.maxParticipants ?? 16);
+
+        // Populate schedule states
+        if (loaded?.startDate) {
+          const sDate = new Date(loaded.startDate);
+          if (!isNaN(sDate.getTime())) {
+            const yyyy = sDate.getFullYear();
+            const mm = String(sDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(sDate.getDate()).padStart(2, '0');
+            setStartDate(`${yyyy}-${mm}-${dd}`);
+            const hh = String(sDate.getHours()).padStart(2, '0');
+            const min = String(sDate.getMinutes()).padStart(2, '0');
+            setStartTime(`${hh}:${min}`);
+
+            if (loaded?.endDate) {
+              const eDate = new Date(loaded.endDate);
+              if (!isNaN(eDate.getTime()) && eDate.getTime() > sDate.getTime()) {
+                const diffHours = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60 * 60));
+                setDurationHours(Math.max(1, diffHours));
+              }
+            } else if (loaded?.tournamentConfig?.recurring && typeof loaded.tournamentConfig.recurring === 'object') {
+              // fallback
+            }
+          }
+        }
 
         const loadedDivision = loaded?.divisions?.[0];
         const loadedMatchType = loadedDivision?.matchType ?? loaded?.matchType;
@@ -409,6 +439,60 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       toast.error(getErrorMessage(err) || 'Không thể lưu số lượng tối đa');
     } finally {
       setIsSavingMaxParticipants(false);
+    }
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!tournament) return;
+    if (!startDate) {
+      toast.error('Vui lòng chọn ngày bắt đầu.');
+      return;
+    }
+    const timeStr = startTime || '08:00';
+    const [hh, min] = timeStr.split(':');
+    const [yyyy, mm, dd] = startDate.split('-');
+    const startIso = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), 0).toISOString();
+    
+    const duration = Math.max(1, durationHours || 4);
+    const endIso = new Date(new Date(startIso).getTime() + duration * 60 * 60 * 1000).toISOString();
+
+    setIsSavingSchedule(true);
+    try {
+      const divisionId = tournament.divisions?.[0]?.id;
+      const nextTournamentConfig = {
+        ...(tournament.tournamentConfig ?? {}),
+        durationHours: duration,
+      };
+
+      const payload: Record<string, unknown> = {
+        startDate: startIso,
+        endDate: endIso,
+        tournamentConfig: nextTournamentConfig,
+      };
+
+      const response = await tournamentsApi.updateTournament(id, payload);
+      if (divisionId) {
+        try {
+          await tournamentsApi.updateDivisionConfig(id, divisionId, {
+            startDate: startIso,
+            endDate: endIso,
+          });
+        } catch {
+          // non-blocking
+        }
+      }
+
+      setTournament(response.data ?? {
+        ...tournament,
+        startDate: startIso,
+        endDate: endIso,
+        tournamentConfig: nextTournamentConfig,
+      });
+      toast.success('Cập nhật lịch thi đấu thành công!');
+    } catch (err) {
+      toast.error(getErrorMessage(err) || 'Không thể lưu thời gian');
+    } finally {
+      setIsSavingSchedule(false);
     }
   };
 
@@ -862,15 +946,18 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Header & Quick Stat Cards */}
-              <div>
+              {/* Header & Quick Stat Bar */}
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-bold text-slate-900">{translate('overviewTitle')}</h3>
-                  <Badge className="bg-slate-100 text-slate-700 font-semibold px-2.5 py-0.5">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-blue-600" />
+                    <h3 className="text-sm font-bold text-slate-900">{translate('overviewTitle')}</h3>
+                  </div>
+                  <Badge className="bg-white text-slate-700 border border-slate-200 font-semibold px-2.5 py-0.5 shadow-2xs">
                     {tournament.category?.name || translate('unknownValue')}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                   <InfoCard label={translate('sportLabel')} value={tournament.category?.name || translate('unknownValue')} />
                   <InfoCard label={translate('matchTypeLabel')} value={
                     currentMatchType === 'SINGLES' ? translate('matchTypeSingles')
@@ -891,37 +978,33 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 </div>
               </div>
 
-              {/* Section 1: Cấu hình Thi đấu & Luật điểm */}
-              <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-5 shadow-xs">
-                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/70">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
-                      <Trophy className="w-4 h-4" />
+              {/* Main Consolidated Settings Form */}
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs divide-y divide-slate-100">
+                
+                {/* 1. Cấu hình Thể thức & Quy mô giải đấu */}
+                <div className="p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-600" />
+                      <h4 className="text-sm font-bold text-slate-900">Thể thức & Quy mô giải</h4>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">{translate('rulesTitle')}</h4>
-                      <p className="text-xs text-slate-500">{translate('rulesPresetDescription')}</p>
-                    </div>
+                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium text-xs">
+                      Tự do (Lite)
+                    </Badge>
                   </div>
-                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
-                    {translate('liteFreeBadge')}
-                  </Badge>
-                </div>
 
-                <div className="mt-4 space-y-4">
-                  {/* Match Type Row */}
-                  <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-700">{translate('matchTypeSettingTitle')}</div>
-                        <p className="mt-0.5 text-xs text-slate-500">{translate('matchTypeSettingDescription')}</p>
-                      </div>
-                      <div className="flex items-center gap-2 sm:min-w-64">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Chọn thể thức */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        {translate('matchTypeSettingTitle')}
+                      </label>
+                      <div className="flex items-center gap-2">
                         <select
                           value={isFootballTournament ? MatchTypeDB.DOUBLES : selectedMatchType}
                           onChange={(event) => setSelectedMatchType(event.target.value as MatchTypeDB)}
                           disabled={formatSettingLocked || isFootballTournament || matchTypeSaving}
-                          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100"
+                          className="flex-1 h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-100 transition-colors"
                           aria-label={translate('matchTypeSettingTitle')}
                         >
                           {!isFootballTournament && <option value={MatchTypeDB.SINGLES}>{translate('matchTypeSingles')}</option>}
@@ -931,33 +1014,24 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           size="sm"
                           onClick={handleSaveMatchType}
                           disabled={formatSettingLocked || isFootballTournament || matchTypeSaving || selectedMatchType === currentMatchType}
-                          className="whitespace-nowrap font-medium"
+                          className="h-11 px-4 whitespace-nowrap font-medium text-xs"
                         >
                           {matchTypeSaving ? translate('saving') : translate('saveMatchType')}
                         </Button>
                       </div>
-                    </div>
-                    {formatSettingLocked && (
-                      <p className="mt-2 text-xs font-medium text-amber-600">
-                        {hasBracket
-                          ? 'Thể thức đã khóa vì giải đấu đã tạo bracket / bảng đấu.'
-                          : 'Thể thức đã khóa vì giải đấu đang diễn ra hoặc đã kết thúc.'}
+                      <p className="text-xs text-slate-500">
+                        {formatSettingLocked
+                          ? (hasBracket ? 'Đã khóa vì giải đã tạo bảng đấu.' : 'Đã khóa vì giải đang diễn ra.')
+                          : 'Chỉ có thể đổi khi chưa có người đăng ký và chưa tạo bracket.'}
                       </p>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Max Participants Row */}
-                  <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                          {translate('maxParticipants')}
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          Số lượng người chơi / đội tham gia tối đa cho giải đấu này (2 - 128).
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 sm:min-w-64">
+                    {/* Số lượng tham gia tối đa */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        {translate('maxParticipants')}
+                      </label>
+                      <div className="flex items-center gap-2">
                         <Input
                           type="number"
                           min={2}
@@ -965,7 +1039,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           value={maxParticipantsInput}
                           onChange={(e) => setMaxParticipantsInput(Number(e.target.value) || 2)}
                           disabled={hasBracket || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status) || isSavingMaxParticipants}
-                          className="w-28 text-sm font-medium"
+                          className="text-sm font-medium"
+                          placeholder="16"
                         />
                         <Button
                           size="sm"
@@ -976,126 +1051,104 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                             isSavingMaxParticipants ||
                             maxParticipantsInput === tournament.maxParticipants
                           }
-                          className="whitespace-nowrap font-medium"
+                          className="h-11 px-4 whitespace-nowrap font-medium text-xs"
                         >
                           {isSavingMaxParticipants ? translate('saving') : 'Lưu số lượng'}
                         </Button>
                       </div>
-                    </div>
-                    {hasBracket && (
-                      <p className="mt-2 text-xs font-medium text-amber-600">
-                        Số lượng đã khóa vì giải đấu đã tạo nhánh đấu (bracket).
+                      <p className="text-xs text-slate-500">
+                        {hasBracket ? 'Đã khóa vì giải đã tạo nhánh đấu (bracket).' : 'Số lượng người chơi hoặc cặp/đội tham gia (2 - 128).'}
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Thời gian & Thời lượng thi đấu */}
+                <div className="p-5 sm:p-6 space-y-4 bg-slate-50/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                      <h4 className="text-sm font-bold text-slate-900">Thời gian & Thời lượng</h4>
+                    </div>
+                    {tournament.startDate && (
+                      <span className="text-xs font-medium text-slate-500">
+                        Hiện tại: {new Date(tournament.startDate).toLocaleDateString('vi-VN')} {new Date(tournament.startDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     )}
                   </div>
 
-                  {/* Sport Rules Row */}
-                  <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
-                      {translate('rulesTitle')}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Ngày bắt đầu (dd/mm/yyyy) */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Ngày bắt đầu (dd/mm/yyyy)
+                      </label>
+                      <DatePicker
+                        value={startDate}
+                        onChange={(val) => setStartDate(val)}
+                      />
                     </div>
-                    {tournament.sportRules?.kind === 'FOOTBALL' ? (
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+                    {/* Giờ bắt đầu */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Giờ bắt đầu
+                      </label>
+                      <div className="relative">
                         <Input
-                          label={translate('halves')}
-                          type="number"
-                          min={1}
-                          max={4}
-                          value={ruleHalves}
-                          onChange={(event) => setRuleHalves(Number(event.target.value) || 1)}
-                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                          type="time"
+                          value={startTime}
+                          onChange={(e) => setStartTime(e.target.value)}
+                          className="text-sm font-medium pr-8"
                         />
-                        <Input
-                          label={translate('minutesPerHalf')}
-                          type="number"
-                          min={1}
-                          max={120}
-                          value={ruleHalfDuration}
-                          onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)}
-                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                        />
-                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={ruleAllowDraw}
-                            onChange={(event) => setRuleAllowDraw(event.target.checked)}
-                            disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
-                          />
-                          {translate('allowDraw')}
-                        </label>
+                        <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        <Input
-                          label={translate('setsToWin')}
-                          type="number"
-                          min={1}
-                          max={5}
-                          value={ruleSetsToWin}
-                          onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)}
-                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                        />
-                        <Input
-                          label={translate('pointsPerSet')}
-                          type="number"
-                          min={1}
-                          max={99}
-                          value={rulePointsPerSet}
-                          onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)}
-                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                        />
-                        <Input
-                          label={translate('maxPoints')}
-                          type="number"
-                          min={1}
-                          max={199}
-                          value={ruleMaxPoints}
-                          onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)}
-                          disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                        />
-                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={ruleWinByTwo}
-                            onChange={(event) => setRuleWinByTwo(event.target.checked)}
-                            disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
-                          />
-                          {translate('winByTwoShort')}
-                        </label>
-                      </div>
-                    )}
-                    <div className="mt-3 flex justify-end">
-                      <Button
-                        size="sm"
-                        onClick={handleSaveRules}
-                        disabled={rulesSaving || ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
-                        className="font-medium"
+                    </div>
+
+                    {/* Thời lượng / Trong bao lâu */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Dự kiến trong bao lâu
+                      </label>
+                      <select
+                        value={durationHours}
+                        onChange={(e) => setDurationHours(Number(e.target.value) || 1)}
+                        className="h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       >
-                        {rulesSaving ? translate('saving') : translate('saveRules')}
-                      </Button>
+                        <option value={1}>1 giờ</option>
+                        <option value={2}>2 giờ</option>
+                        <option value={3}>3 giờ</option>
+                        <option value={4}>4 giờ (Nửa ngày)</option>
+                        <option value={6}>6 giờ</option>
+                        <option value={8}>8 giờ (Cả ngày)</option>
+                        <option value={12}>12 giờ</option>
+                        <option value={24}>1 ngày (24 giờ)</option>
+                        <option value={48}>2 ngày (48 giờ)</option>
+                        <option value={72}>3 ngày (72 giờ)</option>
+                      </select>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Section 2: Địa điểm & Sân thi đấu (Không bắt buộc) */}
-              <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-5 shadow-xs">
-                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/70">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">{translate('locationCardTitle')}</h4>
-                      <p className="text-xs text-slate-500">{translate('locationCardDescription')}</p>
-                    </div>
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveSchedule}
+                      disabled={isSavingSchedule}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4"
+                    >
+                      {isSavingSchedule ? translate('saving') : 'Lưu thời gian'}
+                    </Button>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-4 rounded-lg border border-slate-200 bg-white p-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* 3. Địa điểm thi đấu & Sân */}
+                <div className="p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                    <h4 className="text-sm font-bold text-slate-900">{translate('locationCardTitle')}</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                       label={translate('venueNameLabel')}
                       placeholder={translate('venueNamePlaceholder')}
@@ -1152,50 +1205,43 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-2 border-t border-slate-100">
+                  <div className="flex justify-end pt-1">
                     <Button
                       size="sm"
                       onClick={handleSaveLocation}
                       disabled={isSavingLocation}
-                      className="bg-amber-600 hover:bg-amber-700 text-white font-medium"
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4"
                     >
                       {isSavingLocation ? translate('saving') : translate('saveLocation')}
                     </Button>
                   </div>
                 </div>
-              </div>
 
-              {/* Section 3: Mô tả & Điều lệ giải đấu (RichTextEditor) */}
-              <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-5 shadow-xs">
-                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/70">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">{translate('descriptionCardTitle')}</h4>
-                      <p className="text-xs text-slate-500">{translate('descriptionCardDescription')}</p>
-                    </div>
+                {/* 4. Mô tả & Điều lệ giải */}
+                <div className="p-5 sm:p-6 space-y-4 bg-slate-50/20">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-400" />
+                    <h4 className="text-sm font-bold text-slate-900">{translate('descriptionCardTitle')}</h4>
                   </div>
-                </div>
 
-                <div className="mt-4 space-y-3 rounded-lg border border-slate-200 bg-white p-4">
                   <RichTextEditor
                     value={description}
                     onChange={(val) => setDescription(val)}
                     placeholder={translate('descriptionPlaceholder')}
                   />
-                  <div className="flex justify-end pt-2 border-t border-slate-100">
+
+                  <div className="flex justify-end pt-1">
                     <Button
                       size="sm"
                       onClick={handleSaveDescription}
                       disabled={isSavingDescription}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4"
                     >
                       {isSavingDescription ? translate('saving') : translate('saveDescription')}
                     </Button>
                   </div>
                 </div>
+
               </div>
             </div>
           )}

@@ -8,7 +8,7 @@ import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRul
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
-  Plus, Bell, Mail, ChevronRight, ChevronLeft, UserPlus, Star, Loader2, MessageSquare,
+  Plus, Bell, Mail, ChevronRight, ChevronLeft, ChevronDown, UserPlus, Star, Loader2, MessageSquare,
   Hourglass, Coins, Sparkles
 } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
@@ -407,9 +407,9 @@ export default function HomePage() {
 
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
-  const [liveMatchPage, setLiveMatchPage] = useState(1);
-  const [completedMatchPage, setCompletedMatchPage] = useState(1);
-  const [upcomingMatchPage, setUpcomingMatchPage] = useState(1);
+  const [visibleLiveCount, setVisibleLiveCount] = useState(2);
+  const [visibleCompletedCount, setVisibleCompletedCount] = useState(2);
+  const [visibleUpcomingCount, setVisibleUpcomingCount] = useState(2);
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>({});
@@ -705,9 +705,9 @@ export default function HomePage() {
       } finally {
         setIsLoading(false);
         setIsLoadingRanked(false);
-        setLiveMatchPage(1);
-        setCompletedMatchPage(1);
-        setUpcomingMatchPage(1);
+        setVisibleLiveCount(2);
+        setVisibleCompletedCount(2);
+        setVisibleUpcomingCount(2);
         feedRequestInFlightRef.current = false;
         if (feedRefreshQueuedRef.current) {
           feedRefreshQueuedRef.current = false;
@@ -850,14 +850,12 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
-  // Pagination for live tournaments (Max 2 tournaments per page)
-  const LIVE_TOURNAMENTS_PER_PAGE = 2;
+  // Progressive slice for live tournaments (Start with 2 tournaments, load more as user expands)
   const liveTournamentEntries = Object.entries(liveMatchesByTournament);
-  const totalLivePages = Math.ceil(liveTournamentEntries.length / LIVE_TOURNAMENTS_PER_PAGE);
-  const paginatedLiveTournamentEntries = liveTournamentEntries.slice((liveMatchPage - 1) * LIVE_TOURNAMENTS_PER_PAGE, liveMatchPage * LIVE_TOURNAMENTS_PER_PAGE);
+  const visibleLiveTournamentEntries = liveTournamentEntries.slice(0, visibleLiveCount);
+  const canShowMoreLive = liveTournamentEntries.length > visibleLiveCount;
 
-  // Group upcoming matches by tournament name & Pagination (Max 2 tournaments per page)
-  const UPCOMING_TOURNAMENTS_PER_PAGE = 2;
+  // Group upcoming matches by tournament name & Progressive slice
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -875,11 +873,10 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const upcomingTournamentEntries = Object.entries(upcomingMatchesByTournament);
-  const totalUpcomingPages = Math.ceil(upcomingTournamentEntries.length / UPCOMING_TOURNAMENTS_PER_PAGE);
-  const paginatedUpcomingTournamentEntries = upcomingTournamentEntries.slice((upcomingMatchPage - 1) * UPCOMING_TOURNAMENTS_PER_PAGE, upcomingMatchPage * UPCOMING_TOURNAMENTS_PER_PAGE);
+  const visibleUpcomingTournamentEntries = upcomingTournamentEntries.slice(0, visibleUpcomingCount);
+  const canShowMoreUpcoming = upcomingTournamentEntries.length > visibleUpcomingCount;
 
-  // Group completed matches by tournament name & Pagination (Max 2 tournaments per page)
-  const COMPLETED_TOURNAMENTS_PER_PAGE = 2;
+  // Group completed matches by tournament name & Progressive slice
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -897,8 +894,8 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const completedTournamentEntries = Object.entries(completedMatchesByTournament);
-  const totalCompletedPages = Math.ceil(completedTournamentEntries.length / COMPLETED_TOURNAMENTS_PER_PAGE);
-  const paginatedCompletedTournamentEntries = completedTournamentEntries.slice((completedMatchPage - 1) * COMPLETED_TOURNAMENTS_PER_PAGE, completedMatchPage * COMPLETED_TOURNAMENTS_PER_PAGE);
+  const visibleCompletedTournamentEntries = completedTournamentEntries.slice(0, visibleCompletedCount);
+  const canShowMoreCompleted = completedTournamentEntries.length > visibleCompletedCount;
 
   const renderMatchCard = (
     match: BracketMatch,
@@ -1678,13 +1675,12 @@ export default function HomePage() {
                 ) : (
                   <div className="space-y-4">
                     <motion.div
-                      key={liveMatchPage}
-                      initial={{ opacity: 0, x: 12 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="space-y-4"
                     >
-                      {paginatedLiveTournamentEntries.map(([tournamentName, rawGroup]) => {
+                      {visibleLiveTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
                         const tournamentId = group.id || tournamentName;
                         const currentPage = tournamentPages[tournamentId] || 1;
@@ -1752,40 +1748,25 @@ export default function HomePage() {
                       })}
                     </motion.div>
 
-                    {/* Pagination Controls */}
-                    {totalLivePages > 1 && (
-                      <div className="flex items-center justify-center gap-1.5 pt-1">
+                    {/* Cursor Load More Trigger */}
+                    <div className="flex flex-col items-center justify-center pt-2 gap-2">
+                      {canShowMoreLive ? (
                         <button
-                          onClick={() => setLiveMatchPage(p => Math.max(1, p - 1))}
-                          disabled={liveMatchPage === 1}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
-                          {translate('previous')}
+                          type="button"
+                          onClick={() => setVisibleLiveCount(prev => prev + 2)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>{translate('loadMore')}</span>
                         </button>
-                        {Array.from({ length: totalLivePages }).map((_, idx) => {
-                          const pageNum = idx + 1;
-                          const isCurrent = pageNum === liveMatchPage;
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => setLiveMatchPage(pageNum)}
-                              className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
-                                isCurrent
-                                  ? 'bg-action-primary text-white border-transparent shadow-sm'
-                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          );
-                        })}
-                        <button
-                          onClick={() => setLiveMatchPage(p => Math.min(totalLivePages, p + 1))}
-                          disabled={liveMatchPage === totalLivePages}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
-                          {translate('next')}
-                        </button>
-                      </div>
-                    )}
+                      ) : liveTournamentEntries.length > 2 ? (
+                        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-400 py-1">
+                          <span className="w-8 h-px bg-slate-200" />
+                          <span>{translate('allMatchesLoaded')}</span>
+                          <span className="w-8 h-px bg-slate-200" />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1806,13 +1787,12 @@ export default function HomePage() {
                 ) : (
                   <div className="space-y-4">
                     <motion.div
-                      key={completedMatchPage}
-                      initial={{ opacity: 0, x: 12 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="space-y-4"
                     >
-                      {paginatedCompletedTournamentEntries.map(([tournamentName, rawGroup]) => {
+                      {visibleCompletedTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
                         const tournamentId = group.id || tournamentName;
                         const currentPage = tournamentPages[tournamentId] || 1;
@@ -1883,42 +1863,25 @@ export default function HomePage() {
                       })}
                     </motion.div>
 
-                    {/* Pagination Controls */}
-                    {totalCompletedPages > 1 && (
-                      <div className="flex items-center justify-center gap-1.5 pt-1">
+                    {/* Cursor Load More Trigger */}
+                    <div className="flex flex-col items-center justify-center pt-2 gap-2">
+                      {canShowMoreCompleted ? (
                         <button
-                          onClick={() => setCompletedMatchPage(p => Math.max(1, p - 1))}
-                          disabled={completedMatchPage === 1}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          type="button"
+                          onClick={() => setVisibleCompletedCount(prev => prev + 2)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer"
                         >
-                          {translate('previous')}
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>{translate('loadMore')}</span>
                         </button>
-                        {Array.from({ length: totalCompletedPages }).map((_, idx) => {
-                          const pageNum = idx + 1;
-                          const isCurrent = pageNum === completedMatchPage;
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => setCompletedMatchPage(pageNum)}
-                              className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
-                                isCurrent
-                                  ? 'bg-action-primary text-white border-transparent shadow-sm'
-                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          );
-                        })}
-                        <button
-                          onClick={() => setCompletedMatchPage(p => Math.min(totalCompletedPages, p + 1))}
-                          disabled={completedMatchPage === totalCompletedPages}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                        >
-                          {translate('next')}
-                        </button>
-                      </div>
-                    )}
+                      ) : completedTournamentEntries.length > 2 ? (
+                        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-400 py-1">
+                          <span className="w-8 h-px bg-slate-200" />
+                          <span>{translate('allMatchesLoaded')}</span>
+                          <span className="w-8 h-px bg-slate-200" />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1939,13 +1902,12 @@ export default function HomePage() {
                 ) : (
                   <div className="space-y-4">
                     <motion.div
-                      key={upcomingMatchPage}
-                      initial={{ opacity: 0, x: 12 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="space-y-4"
                     >
-                      {paginatedUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
+                      {visibleUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
                         const tournamentId = group.id || tournamentName;
                         const currentPage = tournamentPages[tournamentId] || 1;
@@ -2016,42 +1978,25 @@ export default function HomePage() {
                       })}
                     </motion.div>
 
-                    {/* Pagination Controls */}
-                    {totalUpcomingPages > 1 && (
-                      <div className="flex items-center justify-center gap-1.5 pt-1">
+                    {/* Cursor Load More Trigger */}
+                    <div className="flex flex-col items-center justify-center pt-2 gap-2">
+                      {canShowMoreUpcoming ? (
                         <button
-                          onClick={() => setUpcomingMatchPage(p => Math.max(1, p - 1))}
-                          disabled={upcomingMatchPage === 1}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          type="button"
+                          onClick={() => setVisibleUpcomingCount(prev => prev + 2)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer"
                         >
-                          {translate('previous')}
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>{translate('loadMore')}</span>
                         </button>
-                        {Array.from({ length: totalUpcomingPages }).map((_, idx) => {
-                          const pageNum = idx + 1;
-                          const isCurrent = pageNum === upcomingMatchPage;
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => setUpcomingMatchPage(pageNum)}
-                              className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
-                                isCurrent
-                                  ? 'bg-action-primary text-white border-transparent shadow-sm'
-                                  : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          );
-                        })}
-                        <button
-                          onClick={() => setUpcomingMatchPage(p => Math.min(totalUpcomingPages, p + 1))}
-                          disabled={upcomingMatchPage === totalUpcomingPages}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                        >
-                          {translate('next')}
-                        </button>
-                      </div>
-                    )}
+                      ) : upcomingTournamentEntries.length > 2 ? (
+                        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-400 py-1">
+                          <span className="w-8 h-px bg-slate-200" />
+                          <span>{translate('allMatchesLoaded')}</span>
+                          <span className="w-8 h-px bg-slate-200" />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               </div>

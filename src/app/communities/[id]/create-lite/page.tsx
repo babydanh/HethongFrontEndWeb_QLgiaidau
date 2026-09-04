@@ -144,8 +144,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [community, setCommunity] = useState<Community | null>(null);
   const [sport, setSport] = useState<LiteSport>('badminton');
   const [name, setName] = useState('');
-  const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
-  const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(true);
+  const [format, setFormat] = useState<'singles' | 'doubles'>('doubles');
   const [footballTeamSize, setFootballTeamSize] = useState<5 | 7 | 11>(7);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
@@ -336,10 +335,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
               </div>
             </section>
 
-            {isAdvancedOptionsOpen && (
-              <>
-                {/* Card 2: Thời gian bắt đầu giải & Định kỳ */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
+            {/* Card 2: Thời gian bắt đầu giải & Định kỳ */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Calendar className="h-4 w-4" />
@@ -485,8 +482,6 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                 )}
               </div>
                 </section>
-              </>
-            )}
           </div>
 
           {/* CỘT PHẢI: Nội dung thi đấu, 4 Thể thức bảng đấu & Quy mô ELO */}
@@ -558,9 +553,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
               )}
             </section>
 
-            {isAdvancedOptionsOpen && (
-              <>
-                {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
+            {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2">
@@ -705,31 +698,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   />
                 </button>
               </div>
-                </section>
-              </>
-            )}
+            </section>
           </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setIsAdvancedOptionsOpen((value) => !value)}
-            className="flex w-full items-center justify-between gap-3 text-left"
-            aria-expanded={isAdvancedOptionsOpen}
-          >
-            <span>
-              <span className="block text-sm font-bold text-slate-800">
-                {translate('liteAdvancedOptions')}
-              </span>
-              <span className="mt-0.5 block text-xs text-slate-500">
-                {translate('liteAdvancedOptionsDescription')}
-              </span>
-            </span>
-            <span className="shrink-0 text-xs font-bold text-blue-600">
-              {isAdvancedOptionsOpen ? translate('liteHideAdvancedOptions') : translate('liteShowAdvancedOptions')}
-            </span>
-          </button>
         </div>
 
         {/* Bottom Tip & Action Buttons */}

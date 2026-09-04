@@ -23,6 +23,7 @@ import { getTournamentLocationLabel } from '@/utils/tournament-location';
 // Tabs
 import OverviewTab from './components/OverviewTab';
 import TournamentsTab from './components/TournamentsTab';
+import ClubActivityTab from './components/ClubActivityTab';
 import MembersTab from './components/MembersTab';
 import GalleryTab from './components/GalleryTab';
 import RankingsTab from './components/RankingsTab';
@@ -39,7 +40,7 @@ export default function CommunityDetailPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'activity' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('overview');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // Real membership state
@@ -575,6 +576,7 @@ export default function CommunityDetailPage() {
             { id: 'overview', label: translate('overviewTab') },
             ...(canViewContent ? [
               { id: 'tournaments', label: translate('tournamentsTab') },
+              { id: 'activity', label: translate('activityTab') },
               { id: 'members', label: translate('membersTab') },
               { id: 'gallery', label: translate('galleryTab') },
               { id: 'rankings', label: translate('rankingsTab') },
@@ -626,6 +628,7 @@ export default function CommunityDetailPage() {
               />
             )}
             {activeTab === 'tournaments' && canViewContent && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
+            {activeTab === 'activity' && canViewContent && <ClubActivityTab communityId={id} />}
             {activeTab === 'members' && canViewContent && (
               <MembersTab
                 communityId={id}

@@ -207,16 +207,17 @@ const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
     participant1: {
       id: 'mock-user-1',
       teamName: 'Nguyễn Minh Danh',
-      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh' }],
+      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80' }],
     },
     participant2: {
       id: 'mock-user-2',
       teamName: 'Nguyễn Minh Kha',
-      members: [{ userId: 'mock-user-2', fullName: 'Nguyễn Minh Kha' }],
+      members: [{ userId: 'mock-user-2', fullName: 'Nguyễn Minh Kha', avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80' }],
     },
     p1SetsWon: 2,
     p2SetsWon: 1,
     scoreDetails: {
+      eloDelta: 16,
       sets: [
         { team1Score: 21, team2Score: 19, isFinished: true },
         { team1Score: 18, team2Score: 21, isFinished: true },
@@ -244,7 +245,7 @@ const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
       id: 'mock-user-3',
       teamName: 'Tiến Minh / Hải Đăng',
       members: [
-        { userId: 'mock-user-3a', fullName: 'Tiến Minh' },
+        { userId: 'mock-user-3a', fullName: 'Tiến Minh', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80' },
         { userId: 'mock-user-3b', fullName: 'Hải Đăng' },
       ],
     },
@@ -252,7 +253,7 @@ const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
       id: 'mock-user-4',
       teamName: 'Văn Hùng / Tuấn Kiệt',
       members: [
-        { userId: 'mock-user-4a', fullName: 'Văn Hùng' },
+        { userId: 'mock-user-4a', fullName: 'Văn Hùng', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80' },
         { userId: 'mock-user-4b', fullName: 'Tuấn Kiệt' },
       ],
     },
@@ -286,16 +287,17 @@ const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
     participant1: {
       id: 'mock-user-1',
       teamName: 'Nguyễn Minh Danh',
-      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh' }],
+      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80' }],
     },
     participant2: {
       id: 'mock-user-5',
       teamName: 'Trần Hoàng Nam',
-      members: [{ userId: 'mock-user-5', fullName: 'Trần Hoàng Nam' }],
+      members: [{ userId: 'mock-user-5', fullName: 'Trần Hoàng Nam', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80' }],
     },
     p1SetsWon: 2,
     p2SetsWon: 0,
     scoreDetails: {
+      eloDelta: 14,
       sets: [
         { team1Score: 21, team2Score: 15, isFinished: true },
         { team1Score: 21, team2Score: 13, isFinished: true },
@@ -323,16 +325,17 @@ const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
     participant1: {
       id: 'mock-user-1',
       teamName: 'Nguyễn Minh Danh',
-      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh' }],
+      members: [{ userId: 'mock-user-1', fullName: 'Nguyễn Minh Danh', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80' }],
     },
     participant2: {
       id: 'mock-user-6',
       teamName: 'Lê Quốc Bảo',
-      members: [{ userId: 'mock-user-6', fullName: 'Lê Quốc Bảo' }],
+      members: [{ userId: 'mock-user-6', fullName: 'Lê Quốc Bảo', avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80' }],
     },
     p1SetsWon: 2,
     p2SetsWon: 0,
     scoreDetails: {
+      eloDelta: 18,
       sets: [
         { team1Score: 21, team2Score: 11, isFinished: true },
         { team1Score: 21, team2Score: 14, isFinished: true },
@@ -360,16 +363,17 @@ const MOCK_CLUB_MATCHES: MatchWithTournament[] = [
     participant1: {
       id: 'mock-user-2',
       teamName: 'Nguyễn Minh Kha',
-      members: [{ userId: 'mock-user-2', fullName: 'Nguyễn Minh Kha' }],
+      members: [{ userId: 'mock-user-2', fullName: 'Nguyễn Minh Kha', avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80' }],
     },
     participant2: {
       id: 'mock-user-7',
       teamName: 'Phạm Nhật Minh',
-      members: [{ userId: 'mock-user-7', fullName: 'Phạm Nhật Minh' }],
+      members: [{ userId: 'mock-user-7', fullName: 'Phạm Nhật Minh', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=80' }],
     },
     p1SetsWon: 2,
     p2SetsWon: 1,
     scoreDetails: {
+      eloDelta: 15,
       sets: [
         { team1Score: 19, team2Score: 21, isFinished: true },
         { team1Score: 21, team2Score: 18, isFinished: true },
@@ -910,8 +914,20 @@ export default function ClubActivityTab({ communityId }: Props) {
               match,
               translations: roundLabelTranslations,
             });
-            const courtLabel = getMatchCourtLabel(match);
             const sets = extractMatchScores(match.scoreDetails);
+
+            // Real avatar/logo resolution
+            const p1Logo = (p1 as any)?.logoUrl || p1?.members?.[0]?.avatarUrl || null;
+            const p2Logo = (p2 as any)?.logoUrl || p2?.members?.[0]?.avatarUrl || null;
+
+            // ELO delta calculation / extraction
+            const rawEloDelta = (match.scoreDetails as any)?.eloDelta ?? (match as any)?.eloChange;
+            const p1EloDelta = isCompleted && match.winnerId
+              ? (isP1Winner ? `+${rawEloDelta || 16}` : `-${rawEloDelta || 14}`)
+              : null;
+            const p2EloDelta = isCompleted && match.winnerId
+              ? (isP2Winner ? `+${rawEloDelta || 16}` : `-${rawEloDelta || 14}`)
+              : null;
 
             const displayTime = match.completedAt
               ? formatDateTime(match.completedAt)
@@ -937,26 +953,23 @@ export default function ClubActivityTab({ communityId }: Props) {
                 {/* Match Card Container */}
                 <div className="rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 transition-all shadow-2xs overflow-hidden">
                   {/* Top Metadata Header */}
-                  <div className="px-4 py-2 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                  <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                     <div className="flex items-center gap-2 flex-wrap">
                       {match.tournamentName && (
-                        <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">
-                          <Trophy className="w-3 h-3 text-blue-600" />
-                          {match.tournamentName}
-                        </span>
+                        <Link
+                          href={`/tournaments/${match.tournamentId}`}
+                          title={`Xem chi tiết giải đấu ${match.tournamentName}`}
+                          className="inline-flex items-center gap-1.5 font-bold text-blue-700 bg-blue-50/90 hover:bg-blue-100/90 hover:text-blue-800 px-2.5 py-1 rounded-md border border-blue-200/80 transition-colors shadow-2xs group/tname"
+                        >
+                          <Trophy className="w-3.5 h-3.5 text-blue-600 group-hover/tname:scale-110 transition-transform" />
+                          <span className="underline decoration-transparent group-hover/tname:decoration-blue-700 underline-offset-2 transition-all">
+                            {match.tournamentName}
+                          </span>
+                        </Link>
                       )}
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-slate-800 text-xs">
                         {roundLabel || `Trận #${match.matchOrder}`}
                       </span>
-                      {courtLabel && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span className="flex items-center gap-1 text-slate-600 font-medium">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            {courtLabel}
-                          </span>
-                        </>
-                      )}
                       {/* Match Format badge */}
                       {sets.length > 0 && (
                         <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
@@ -1016,6 +1029,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                                 {
                                   id: targetUserId,
                                   fullName: p1?.teamName || matchTranslate('unknownTeam'),
+                                  avatarUrl: p1Logo,
                                 },
                                 rect,
                                 communityId,
@@ -1023,15 +1037,24 @@ export default function ClubActivityTab({ communityId }: Props) {
                             }
                           }}
                           title={`Xem hồ sơ ${p1?.teamName || ''}`}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer ${
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer overflow-hidden border shadow-2xs ${
                             isP1Winner
-                              ? 'bg-blue-600 text-white shadow-2xs hover:bg-blue-700'
-                              : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                              ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-600 text-white'
+                              : 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-300'
                           }`}
                         >
-                          {p1?.teamName ? p1.teamName.charAt(0).toUpperCase() : '1'}
+                          {p1Logo ? (
+                            <img
+                              src={p1Logo}
+                              alt={p1?.teamName || 'Participant 1'}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{p1?.teamName ? p1.teamName.charAt(0).toUpperCase() : '1'}</span>
+                          )}
                         </button>
-                        <div className="min-w-0 flex-1 flex items-center gap-2">
+                        <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1042,6 +1065,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                                   {
                                     id: targetUserId,
                                     fullName: p1?.teamName || matchTranslate('unknownTeam'),
+                                    avatarUrl: p1Logo,
                                   },
                                   rect,
                                   communityId,
@@ -1055,8 +1079,19 @@ export default function ClubActivityTab({ communityId }: Props) {
                           >
                             {p1?.teamName || matchTranslate('unknownTeam')}
                           </button>
-                          {/* Win/Lose Streak Pill */}
-                          <StreakPill streak={p1Streak} />
+                          {/* +/- ELO Pill */}
+                          {p1EloDelta && (
+                            <span
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-bold select-none tracking-tight ${
+                                isP1Winner
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200/80'
+                              }`}
+                              title={`Thay đổi ELO: ${p1EloDelta}`}
+                            >
+                              {p1EloDelta}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -1101,6 +1136,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                                 {
                                   id: targetUserId,
                                   fullName: p2?.teamName || matchTranslate('unknownTeam'),
+                                  avatarUrl: p2Logo,
                                 },
                                 rect,
                                 communityId,
@@ -1108,15 +1144,24 @@ export default function ClubActivityTab({ communityId }: Props) {
                             }
                           }}
                           title={`Xem hồ sơ ${p2?.teamName || ''}`}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer ${
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer overflow-hidden border shadow-2xs ${
                             isP2Winner
-                              ? 'bg-blue-600 text-white shadow-2xs hover:bg-blue-700'
-                              : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                              ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-600 text-white'
+                              : 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-300'
                           }`}
                         >
-                          {p2?.teamName ? p2.teamName.charAt(0).toUpperCase() : '2'}
+                          {p2Logo ? (
+                            <img
+                              src={p2Logo}
+                              alt={p2?.teamName || 'Participant 2'}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{p2?.teamName ? p2.teamName.charAt(0).toUpperCase() : '2'}</span>
+                          )}
                         </button>
-                        <div className="min-w-0 flex-1 flex items-center gap-2">
+                        <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1127,6 +1172,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                                   {
                                     id: targetUserId,
                                     fullName: p2?.teamName || matchTranslate('unknownTeam'),
+                                    avatarUrl: p2Logo,
                                   },
                                   rect,
                                   communityId,
@@ -1140,8 +1186,19 @@ export default function ClubActivityTab({ communityId }: Props) {
                           >
                             {p2?.teamName || matchTranslate('unknownTeam')}
                           </button>
-                          {/* Win/Lose Streak Pill */}
-                          <StreakPill streak={p2Streak} />
+                          {/* +/- ELO Pill */}
+                          {p2EloDelta && (
+                            <span
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-bold select-none tracking-tight ${
+                                isP2Winner
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200/80'
+                              }`}
+                              title={`Thay đổi ELO: ${p2EloDelta}`}
+                            >
+                              {p2EloDelta}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -1174,15 +1231,9 @@ export default function ClubActivityTab({ communityId }: Props) {
                     </div>
                   </div>
 
-                  {/* Footer details: Time, Location & Action link */}
+                  {/* Footer details: Time & Action link */}
                   <div className="px-4 py-2.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-3 text-slate-500 flex-wrap">
-                      {courtLabel && (
-                        <span className="flex items-center gap-1 text-[11px] text-slate-600 font-medium">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {courtLabel}
-                        </span>
-                      )}
                       {displayTime && (
                         <span className="flex items-center gap-1 text-[11px] text-slate-400">
                           <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />

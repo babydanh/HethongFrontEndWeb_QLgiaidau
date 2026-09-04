@@ -399,6 +399,7 @@ export default function HomePage() {
     return category.name || slug;
   };
   const [isClient, setIsClient] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -512,6 +513,7 @@ export default function HomePage() {
     const refreshWhenReady = () => {
       if (document.visibilityState === 'visible') {
         setFeedRefreshTick((value) => value + 1);
+        setNow(Date.now());
       }
     };
 
@@ -930,8 +932,8 @@ export default function HomePage() {
     );
 
     const startedAtTime = (match as unknown as { startedAt?: string | null }).startedAt || match.scheduledAt;
-    const elapsedMinutes = startedAtTime && isLive
-      ? Math.max(1, Math.floor((Date.now() - new Date(startedAtTime).getTime()) / 60000))
+    const elapsedMinutes = isClient && startedAtTime && isLive
+      ? Math.max(1, Math.floor((now - new Date(startedAtTime).getTime()) / 60000))
       : null;
     const durationText = elapsedMinutes && elapsedMinutes < 300 ? `${elapsedMinutes}'` : '';
 
@@ -1503,8 +1505,6 @@ export default function HomePage() {
     || categories.find((c) => c.id === prominentCategoryId)?.name
     || '';
 
-  const [now] = useState(() => Date.now());
-
   const recentCompletedTournaments = useMemo(() => {
     return tournaments.filter(t => {
       if (t.status !== 'COMPLETED') return false;
@@ -1749,21 +1749,21 @@ export default function HomePage() {
                     </motion.div>
 
                     {/* Cursor Load More Trigger */}
-                    <div className="flex flex-col items-center justify-center pt-2 gap-2">
+                    <div className="flex flex-col items-center justify-center pt-1.5 gap-2">
                       {canShowMoreLive ? (
                         <button
                           type="button"
                           onClick={() => setVisibleLiveCount(prev => prev + 2)}
-                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 active:scale-98 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer"
                         >
                           <ChevronDown className="w-3.5 h-3.5" />
                           <span>{translate('loadMore')}</span>
                         </button>
                       ) : liveTournamentEntries.length > 2 ? (
-                        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-400 py-1">
-                          <span className="w-8 h-px bg-slate-200" />
+                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 py-0.5">
+                          <span className="w-6 h-px bg-slate-200" />
                           <span>{translate('allMatchesLoaded')}</span>
-                          <span className="w-8 h-px bg-slate-200" />
+                          <span className="w-6 h-px bg-slate-200" />
                         </div>
                       ) : null}
                     </div>
@@ -1864,21 +1864,21 @@ export default function HomePage() {
                     </motion.div>
 
                     {/* Cursor Load More Trigger */}
-                    <div className="flex flex-col items-center justify-center pt-2 gap-2">
+                    <div className="flex flex-col items-center justify-center pt-1.5 gap-2">
                       {canShowMoreCompleted ? (
                         <button
                           type="button"
                           onClick={() => setVisibleCompletedCount(prev => prev + 2)}
-                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 active:scale-98 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer"
                         >
                           <ChevronDown className="w-3.5 h-3.5" />
                           <span>{translate('loadMore')}</span>
                         </button>
                       ) : completedTournamentEntries.length > 2 ? (
-                        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-400 py-1">
-                          <span className="w-8 h-px bg-slate-200" />
+                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 py-0.5">
+                          <span className="w-6 h-px bg-slate-200" />
                           <span>{translate('allMatchesLoaded')}</span>
-                          <span className="w-8 h-px bg-slate-200" />
+                          <span className="w-6 h-px bg-slate-200" />
                         </div>
                       ) : null}
                     </div>
@@ -1979,21 +1979,21 @@ export default function HomePage() {
                     </motion.div>
 
                     {/* Cursor Load More Trigger */}
-                    <div className="flex flex-col items-center justify-center pt-2 gap-2">
+                    <div className="flex flex-col items-center justify-center pt-1.5 gap-2">
                       {canShowMoreUpcoming ? (
                         <button
                           type="button"
                           onClick={() => setVisibleUpcomingCount(prev => prev + 2)}
-                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 active:scale-98 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer"
                         >
                           <ChevronDown className="w-3.5 h-3.5" />
                           <span>{translate('loadMore')}</span>
                         </button>
                       ) : upcomingTournamentEntries.length > 2 ? (
-                        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-400 py-1">
-                          <span className="w-8 h-px bg-slate-200" />
+                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 py-0.5">
+                          <span className="w-6 h-px bg-slate-200" />
                           <span>{translate('allMatchesLoaded')}</span>
-                          <span className="w-8 h-px bg-slate-200" />
+                          <span className="w-6 h-px bg-slate-200" />
                         </div>
                       ) : null}
                     </div>

@@ -3814,6 +3814,7 @@
       "teams": "Teams",
       "bracket": "Bracket",
       "matches": "Schedule",
+      "activity": "Activity",
       "sponsors": "Sponsors"
     },
     "sponsors": {

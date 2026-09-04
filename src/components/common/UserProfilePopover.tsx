@@ -495,21 +495,19 @@ export default function UserProfilePopover({
 
       {/* Profile Body */}
       <div className="relative px-4 pb-4 pt-0">
-        {/* Avatar positioned over header cleanly */}
+        {/* Avatar positioned over header cleanly with official RankAvatar ring and shadow */}
         <div className="-mt-12 mb-3 flex items-end justify-between">
-          <div className="relative rounded-full ring-4 ring-white shadow-md bg-white overflow-hidden shrink-0 w-16 h-16">
-            {profileData.avatarUrl ? (
-              <img
-                src={profileData.avatarUrl}
-                alt={displayName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-slate-900 text-white flex items-center justify-center font-bold text-lg">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
+          <RankAvatar
+            src={profileData.avatarUrl}
+            name={displayName}
+            size="lg"
+            className="h-16 w-16"
+            elo={primaryRank?.eloPoints}
+            tierName={primaryRank?.tierName}
+            categoryName={primaryRank?.categoryName}
+            matchesPlayed={primaryRank?.matchesPlayed}
+            ringClassName="ring-4 ring-white shadow-md"
+          />
 
           <div className="flex flex-wrap items-center gap-1.5 justify-end">
             {/* Community Role Badge */}
@@ -839,73 +837,51 @@ export default function UserProfilePopover({
         )}
 
         {/* Quick Action Buttons */}
-        <div className="mt-3.5 space-y-2 pt-2.5 border-t border-slate-100">
-          {/* Quick link to filter matches by this user in Club Activity */}
-          {communityId && (
+        <div className="mt-3.5 flex gap-2 pt-2.5 border-t border-slate-100">
+          {!isSelf && canMessage && (
             <button
               type="button"
-              onClick={() => {
-                onClose();
-                // Dispatch event to focus / filter on this player in ClubActivityTab
-                window.dispatchEvent(
-                  new CustomEvent('sporto:filter-club-matches', {
-                    detail: { query: displayName },
-                  }),
-                );
+              disabled={isOpeningChat || !canMessage}
+              onClick={async () => {
+                if (!profileData.id || isOpeningChat) return;
+                if (!canMessage) {
+                  toast.error(translate('strangerMessagesDisabled'));
+                  return;
+                }
+                setIsOpeningChat(true);
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent('sporto:open-direct-chat', {
+                      detail: { userId: profileData.id },
+                    }),
+                  );
+                  setIsOpeningChat(false);
+                  onClose();
+                } catch {
+                  setIsOpeningChat(false);
+                }
               }}
-              className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-2 text-xs font-bold text-blue-700 transition active:scale-98"
+              title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Trophy className="h-3.5 w-3.5 text-blue-600" />
-              <span>Xem các trận trong CLB</span>
+              <MessageCircle className="h-3.5 w-3.5" />
+              {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : translate('strangerMessagesShort')}
             </button>
           )}
 
-          <div className="flex gap-2">
-            {!isSelf && canMessage && (
-              <button
-                type="button"
-                disabled={isOpeningChat || !canMessage}
-                onClick={async () => {
-                  if (!profileData.id || isOpeningChat) return;
-                  if (!canMessage) {
-                    toast.error(translate('strangerMessagesDisabled'));
-                    return;
-                  }
-                  setIsOpeningChat(true);
-                  try {
-                    window.dispatchEvent(
-                      new CustomEvent('sporto:open-direct-chat', {
-                        detail: { userId: profileData.id },
-                      }),
-                    );
-                    setIsOpeningChat(false);
-                    onClose();
-                  } catch {
-                    setIsOpeningChat(false);
-                  }
-                }}
-                title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : translate('strangerMessagesShort')}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                if (profileData.id) {
-                  router.push(`/users/${profileData.id}`);
-                }
-              }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
-            >
-              <User className="h-3.5 w-3.5" />
-              {translate('profile')}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              if (profileData.id) {
+                router.push(`/users/${profileData.id}`);
+              }
+            }}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
+          >
+            <User className="h-3.5 w-3.5" />
+            {translate('profile')}
+          </button>
         </div>
       </div>
     </div>

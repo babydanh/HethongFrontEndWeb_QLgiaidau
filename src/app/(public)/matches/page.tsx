@@ -725,105 +725,107 @@ export default function MatchesListPage() {
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
 
-      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
-        {/* Hàng bộ lọc chính */}
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
+      {/* Ultra-compact Seamless Filter Bar */}
+      <div className="flex flex-col gap-2.5">
+        {/* Hàng bộ lọc chính: Gọn gàng, không viền card bao quanh, nút lọc thêm dạng icon */}
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
           {/* Tìm kiếm */}
-          <div className="flex-grow w-full">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("search")}</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
-                placeholder={translate("searchPlaceholder")}
-              />
-            </div>
+          <div className="relative flex-grow min-w-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9.5 pr-4 py-2 bg-slate-100 hover:bg-slate-100/80 focus:bg-white border border-transparent focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all h-10 shadow-2xs"
+              placeholder={translate("searchPlaceholder")}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Môn thể thao */}
-          <div className="w-full sm:w-48 shrink-0">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("sport")}</label>
-            <div className="relative">
-              <select
-                value={selectedCategoryId}
-                onChange={(e) => {
-                  setSelectedCategoryId(e.target.value);
-                }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
-              >
-                <option value="">{translate("all")}</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4.5 h-4.5 pointer-events-none" />
-            </div>
+          <div className="relative w-full sm:w-44 shrink-0">
+            <select
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-100/80 focus:bg-white border border-transparent focus:border-blue-500 rounded-xl text-xs font-bold text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all h-10 cursor-pointer shadow-2xs"
+            >
+              <option value="">{translate("sport")}: {translate("all")}</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
           </div>
 
           {/* Trạng thái */}
-          <div className="w-full sm:w-48 shrink-0">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("status")}</label>
-            <div className="relative">
-              <select
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value);
-                }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
-              >
-                <option value="">{translate("all")}</option>
-                <option value="ONGOING">{translate("ongoing")}</option>
-                <option value="SCHEDULED">{translate("scheduled")}</option>
-                <option value="COMPLETED">{translate("completed")}</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4.5 h-4.5 pointer-events-none" />
-            </div>
+          <div className="relative w-full sm:w-40 shrink-0">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-100/80 focus:bg-white border border-transparent focus:border-blue-500 rounded-xl text-xs font-bold text-slate-800 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all h-10 cursor-pointer shadow-2xs"
+            >
+              <option value="">{translate("status")}: {translate("all")}</option>
+              <option value="ONGOING">{translate("ongoing")}</option>
+              <option value="SCHEDULED">{translate("scheduled")}</option>
+              <option value="COMPLETED">{translate("completed")}</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
           </div>
 
-          {/* Lọc thêm button */}
+          {/* Lọc thêm button (Icon Button cực gọn) */}
           <button
+            type="button"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
+            title={translate("moreFilters")}
+            aria-label={translate("moreFilters")}
+            className={`w-full sm:w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer shrink-0 border relative ${
               showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedWard || startDate || endDate
-                ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm'
-                : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/25'
+                : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border-transparent'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            {translate("moreFilters")}
             {activeFilterCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 bg-blue-200 text-blue-800 text-[9px] rounded-full font-bold">{activeFilterCount}</span>
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-rose-500 text-white text-[9px] rounded-full font-bold shadow-xs">
+                {activeFilterCount}
+              </span>
             )}
           </button>
         </div>
 
-        {/* Status Chips — bên trong khung filter */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">{translate("quickFilters")}</span>
+        {/* Status Chips — Inline gọn nhẹ sát thanh tìm kiếm */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs font-semibold">
           {[
-            { label: translate('quickFinished'), value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs', inactiveClass: 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300' },
-            { label: translate('quickOngoing'), value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs', inactiveClass: 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200' },
-            { label: translate('quickUpcoming'), value: 'SCHEDULED', activeClass: 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs', inactiveClass: 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200' },
+            { label: translate('quickOngoing'), value: 'ONGOING', activeClass: 'bg-blue-600 text-white border-blue-600 shadow-xs', inactiveClass: 'bg-blue-50/80 text-blue-700 border-blue-200/80 hover:bg-blue-100' },
+            { label: translate('quickUpcoming'), value: 'SCHEDULED', activeClass: 'bg-amber-500 text-white border-amber-500 shadow-xs', inactiveClass: 'bg-amber-50/80 text-amber-700 border-amber-200/80 hover:bg-amber-100' },
+            { label: translate('quickFinished'), value: 'COMPLETED', activeClass: 'bg-slate-800 text-white border-slate-800 shadow-xs', inactiveClass: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' },
           ].map((chip) => {
             const isActive = selectedStatus === chip.value;
             return (
               <button
                 key={chip.value}
-                onClick={() => { setSelectedStatus(isActive ? '' : chip.value); }}
-                className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${isActive ? chip.activeClass : chip.inactiveClass}`}
+                type="button"
+                onClick={() => setSelectedStatus(isActive ? '' : chip.value)}
+                className={`rounded-full px-3 py-1 text-[11px] font-bold border transition-all cursor-pointer shadow-2xs ${isActive ? chip.activeClass : chip.inactiveClass}`}
               >
                 {chip.label}
               </button>
             );
           })}
           {selectedStatus && (
-            <button onClick={() => { setSelectedStatus(''); }}
-              className="text-slate-400 font-bold text-xs hover:text-rose-500 transition-colors ml-1 cursor-pointer">
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('')}
+              className="text-slate-400 font-bold text-[11px] hover:text-rose-500 transition-colors ml-1 cursor-pointer"
+            >
               ✕ {translate('clearStatusFilter')}
             </button>
           )}
@@ -831,7 +833,7 @@ export default function MatchesListPage() {
 
         {/* Advanced filters panel */}
         {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3 p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
               {/* Thể thức */}
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("format")}</label>

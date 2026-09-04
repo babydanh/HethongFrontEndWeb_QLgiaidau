@@ -308,6 +308,7 @@ export default function MatchesListPage() {
   const [activeShareTitle, setActiveShareTitle] = useState('');
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
   const [tournamentLogos, setTournamentLogos] = useState<Record<string, string>>({});
+  const [visibleTournamentCount, setVisibleTournamentCount] = useState<number>(4);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const filterKey = [
     debouncedSearchTerm,
@@ -454,7 +455,7 @@ export default function MatchesListPage() {
         setIsRateLimited(false);
 
         const res = await matchesApi.getMatches({
-          limit: 20,
+          limit: 50,
           publicOnly: true,
           ...(cursorToUse ? { cursor: cursorToUse } : {}),
           search: debouncedSearchTerm || undefined,
@@ -481,6 +482,7 @@ export default function MatchesListPage() {
         } else {
           setMatches(feed.matches);
           setGroupPages({});
+          setVisibleTournamentCount(4);
         }
 
         setNextCursor(resNextCursor);
@@ -522,8 +524,13 @@ export default function MatchesListPage() {
   }, [fetchMatches, filterKey, matchesRefreshTick]);
 
   const handleLoadMore = () => {
-    if (!hasMoreMatches || isLoadingMore || !nextCursor) return;
-    fetchMatches(true, nextCursor);
+    if (isLoadingMore) return;
+    if (groupedMatches.length > visibleTournamentCount) {
+      setVisibleTournamentCount((prev) => prev + 4);
+    } else if (hasMoreMatches && nextCursor) {
+      setVisibleTournamentCount((prev) => prev + 4);
+      fetchMatches(true, nextCursor);
+    }
   };
 
   // Làm giàu logo giải đấu từ Tournament detail API khi Match API không populate logoUrl
@@ -711,8 +718,9 @@ export default function MatchesListPage() {
     isRanked,
   ].filter(Boolean).length;
 
-  // The API page is cursor-backed; grouping remains a presentation detail.
-  const currentTournaments = groupedMatches;
+  // Grouping into tournaments: display 4 tournaments at a time
+  const currentTournaments = groupedMatches.slice(0, visibleTournamentCount);
+  const canShowMoreTournaments = groupedMatches.length > visibleTournamentCount || hasMoreMatches;
 
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
@@ -1495,10 +1503,10 @@ export default function MatchesListPage() {
         </div>
       )}
 
-      {/* True Cursor Pagination: Load More / All Loaded */}
+      {/* True Cursor & Tournament Pagination: Load More / All Loaded */}
       {!isLoading && matches.length > 0 && (
         <div className="flex flex-col items-center justify-center mt-10 mb-4 gap-3">
-          {hasMoreMatches ? (
+          {canShowMoreTournaments ? (
             <button
               type="button"
               onClick={handleLoadMore}

@@ -389,10 +389,11 @@ export default function ClubActivityTab({ communityId }: Props) {
   }), [matchTranslate]);
 
   // Fetch all matches across all tournaments of this community
-  const fetchClubMatches = useCallback(async (quiet = false) => {
+  const fetchClubMatches = useCallback(async (isRefresh = false) => {
     if (!communityId) return;
-    if (!quiet) setIsLoading(true);
-    else setIsRefreshing(true);
+    if (isRefresh) {
+      setIsRefreshing(true);
+    }
 
     try {
       // 1. Get community tournaments
@@ -440,7 +441,17 @@ export default function ClubActivityTab({ communityId }: Props) {
   }, [communityId]);
 
   useEffect(() => {
-    void fetchClubMatches();
+    let active = true;
+
+    void (async () => {
+      if (active) {
+        await fetchClubMatches();
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, [fetchClubMatches]);
 
   // Socket updates for realtime score/match events

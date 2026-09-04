@@ -449,12 +449,12 @@ export default function MatchesListPage() {
         if (isLoadMore) {
           setIsLoadingMore(true);
         } else {
-          setIsLoading(matches.length === 0);
+          setIsLoading(true);
         }
         setIsRateLimited(false);
 
         const res = await matchesApi.getMatches({
-          limit: 100,
+          limit: 20,
           publicOnly: true,
           ...(cursorToUse ? { cursor: cursorToUse } : {}),
           search: debouncedSearchTerm || undefined,
@@ -507,7 +507,6 @@ export default function MatchesListPage() {
       selectedStatus,
       selectedProvince,
       isRanked,
-      matches.length,
     ]
   );
 

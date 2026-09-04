@@ -16,7 +16,6 @@ import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
 import BracketTab from './components/BracketTab';
 import MatchesTab from './components/MatchesTab';
-import ActivityTimelineTab from './components/ActivityTimelineTab';
 import SponsorsTab from './components/SponsorsTab';
 import LiveMatchesTab from './components/LiveMatchesTab';
 import ResultsTab from './components/ResultsTab';
@@ -89,7 +88,7 @@ interface Props {
   initialCompletedDivisionIds?: Record<string, boolean>;
 }
 
-type TournamentDetailTab = 'live' | 'results' | 'overview' | 'teams' | 'bracket' | 'matches' | 'activity' | 'sponsors';
+type TournamentDetailTab = 'live' | 'results' | 'overview' | 'teams' | 'bracket' | 'matches' | 'sponsors';
 
 const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'overview',
@@ -97,7 +96,6 @@ const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'teams',
   'bracket',
   'matches',
-  'activity',
   'sponsors',
 ];
 
@@ -173,7 +171,7 @@ const commonTranslate = useTranslations('Common');
   const { openUserById, openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
-    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'activity' || tabParam === 'sponsors' || tabParam === 'results' || tabParam === 'live') {
+    if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results' || tabParam === 'live') {
       return tabParam as TournamentDetailTab;
     }
     if (initialHasResults || isTournamentCompleted(initialTournament?.status)) {
@@ -436,7 +434,9 @@ const commonTranslate = useTranslations('Common');
   useEffect(() => {
     if (activeTab === 'live' && liveMatchesCount === 0) {
       const fallbackTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
-      setActiveTab(fallbackTab);
+      Promise.resolve().then(() => {
+        setActiveTab(fallbackTab);
+      });
       if (typeof window !== 'undefined') {
         const currentUrl = new URL(window.location.href);
         if (currentUrl.searchParams.get('tab') === 'live') {
@@ -719,7 +719,9 @@ const commonTranslate = useTranslations('Common');
 
   useEffect(() => {
     if (showResultsTab && !hasUserNavigatedRef.current && !searchParams.get('tab')) {
-      setActiveTab('results');
+      Promise.resolve().then(() => {
+        setActiveTab('results');
+      });
     }
   }, [showResultsTab, searchParams]);
 
@@ -854,7 +856,6 @@ const commonTranslate = useTranslations('Common');
     { id: 'teams' as const, label: translate('tabs.teams') },
     { id: 'bracket' as const, label: translate('tabs.bracket') },
     ...(!isClubLite ? [{ id: 'matches' as const, label: translate('tabs.matches') }] : []),
-    { id: 'activity' as const, label: translate('tabs.activity') },
     ...(publicSponsors.length > 0
       ? [{ id: 'sponsors' as const, label: translate('tabs.sponsors') }]
       : []),
@@ -1876,14 +1877,6 @@ const commonTranslate = useTranslations('Common');
                                   )}
                                   {activeTab === 'matches' && (
                                     <MatchesTab
-                                      key={division.id}
-                                      tournament={divisionTournament}
-                                      tournamentId={tournament.id}
-                                      divisionId={division.id}
-                                    />
-                                  )}
-                                  {activeTab === 'activity' && (
-                                    <ActivityTimelineTab
                                       key={division.id}
                                       tournament={divisionTournament}
                                       tournamentId={tournament.id}

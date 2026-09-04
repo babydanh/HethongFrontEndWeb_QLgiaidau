@@ -535,8 +535,8 @@ export default function CommunityPostCard({
           )
         )}
 
-        {/* Images Grid with Click to Open Lightbox */}
-        {post.imageUrls.length > 0 && (
+        {/* Images Grid with Click to Open Lightbox (only for non-tournament posts to prevent duplicate huge banner) */}
+        {!post.tournamentId && !post.tournament?.id && post.imageUrls.length > 0 && (
           <div
             className={cn(
               "mt-3.5 gap-2 overflow-hidden rounded-xl",

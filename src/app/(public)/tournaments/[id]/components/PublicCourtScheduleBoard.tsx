@@ -383,7 +383,6 @@ export default function PublicCourtScheduleBoard({
 
   const [stepMinutes, setStepMinutes] = useState<number>(configuredStepMinutes);
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
-  const [activeDate, setActiveDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isQueueOpen, setIsQueueOpen] = useState<boolean>(true);
@@ -461,6 +460,8 @@ export default function PublicCourtScheduleBoard({
     return resolvedCourts.filter((c) => (c.venueName || 'Địa điểm chính') === selectedVenueFilter);
   }, [resolvedCourts, selectedVenueFilter]);
 
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
   // 3. Extract Schedule Dates (Only actual configured dates in settings or scheduled matches)
   const availableScheduleDates = useMemo<string[]>(() => {
     const set = new Set<string>();
@@ -484,19 +485,21 @@ export default function PublicCourtScheduleBoard({
   }, [tournamentConfig.scheduleDate, matches, tournament.startDate]);
 
   // Default active date: prioritize date that has matches
-  useEffect(() => {
-    if (!activeDate && availableScheduleDates.length > 0) {
-      const matchWithDate = matches.find((m) => m.scheduledAt);
-      if (matchWithDate?.scheduledAt) {
-        const matchD = getLocalDateString(matchWithDate.scheduledAt);
-        if (matchD && availableScheduleDates.includes(matchD)) {
-          setActiveDate(matchD);
-          return;
-        }
+  const defaultScheduleDate = useMemo(() => {
+    if (availableScheduleDates.length === 0) return '';
+    const matchWithDate = matches.find((m) => m.scheduledAt);
+    if (matchWithDate?.scheduledAt) {
+      const matchD = getLocalDateString(matchWithDate.scheduledAt);
+      if (matchD && availableScheduleDates.includes(matchD)) {
+        return matchD;
       }
-      setActiveDate(availableScheduleDates[0]);
     }
-  }, [activeDate, availableScheduleDates, matches]);
+    return availableScheduleDates[0] || '';
+  }, [availableScheduleDates, matches]);
+
+  const activeDate = (selectedDate && availableScheduleDates.includes(selectedDate))
+    ? selectedDate
+    : defaultScheduleDate;
 
   // 4. Split matches into Scheduled vs Unscheduled
   const { scheduledMatchesForDate, unscheduledMatches, matchesByDateCount } = useMemo(() => {
@@ -673,7 +676,7 @@ export default function PublicCourtScheduleBoard({
                   <button
                     key={dateStr}
                     type="button"
-                    onClick={() => setActiveDate(dateStr)}
+                    onClick={() => setSelectedDate(dateStr)}
                     className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-2xs'

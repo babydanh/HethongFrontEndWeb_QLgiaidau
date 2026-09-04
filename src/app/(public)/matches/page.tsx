@@ -411,11 +411,6 @@ export default function MatchesListPage() {
     return undefined;
   };
 
-  // Filter changes reset state and fetch the first page
-  useEffect(() => {
-    setGroupPages({});
-  }, [filterKey]);
-
   // Fetch matches logic supporting initial load and cursor-based "load more"
   const fetchMatches = useCallback(
     async (isLoadMore = false, cursorToUse: string | null = null) => {
@@ -425,38 +420,38 @@ export default function MatchesListPage() {
       }
       matchesRequestInFlightRef.current = true;
 
-      if (isLoadMore) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(matches.length === 0);
+      // Map lựa chọn nội dung đấu sang matchType + genderRestriction
+      let matchType: string | undefined;
+      let genderRestriction: string | undefined;
+
+      if (selectedContent === 'SINGLE_MALE') {
+        matchType = 'SINGLES';
+        genderRestriction = 'MALE';
+      } else if (selectedContent === 'SINGLE_FEMALE') {
+        matchType = 'SINGLES';
+        genderRestriction = 'FEMALE';
+      } else if (selectedContent === 'DOUBLE_MALE') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'MALE';
+      } else if (selectedContent === 'DOUBLE_FEMALE') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'FEMALE';
+      } else if (selectedContent === 'DOUBLE_MIXED') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'MIXED';
       }
-      setIsRateLimited(false);
+
+      // Convert dd/mm/yyyy → yyyy-mm-dd trước khi gửi API
+      const apiStartDate = formatDateForAPI(startDate);
+      const apiEndDate = formatDateForAPI(endDate);
 
       try {
-        // Map lựa chọn nội dung đấu sang matchType + genderRestriction
-        let matchType: string | undefined;
-        let genderRestriction: string | undefined;
-
-        if (selectedContent === 'SINGLE_MALE') {
-          matchType = 'SINGLES';
-          genderRestriction = 'MALE';
-        } else if (selectedContent === 'SINGLE_FEMALE') {
-          matchType = 'SINGLES';
-          genderRestriction = 'FEMALE';
-        } else if (selectedContent === 'DOUBLE_MALE') {
-          matchType = 'DOUBLES';
-          genderRestriction = 'MALE';
-        } else if (selectedContent === 'DOUBLE_FEMALE') {
-          matchType = 'DOUBLES';
-          genderRestriction = 'FEMALE';
-        } else if (selectedContent === 'DOUBLE_MIXED') {
-          matchType = 'DOUBLES';
-          genderRestriction = 'MIXED';
+        if (isLoadMore) {
+          setIsLoadingMore(true);
+        } else {
+          setIsLoading(matches.length === 0);
         }
-
-        // Convert dd/mm/yyyy → yyyy-mm-dd trước khi gửi API
-        const apiStartDate = formatDateForAPI(startDate);
-        const apiEndDate = formatDateForAPI(endDate);
+        setIsRateLimited(false);
 
         const res = await matchesApi.getMatches({
           limit: 100,
@@ -485,6 +480,7 @@ export default function MatchesListPage() {
           });
         } else {
           setMatches(feed.matches);
+          setGroupPages({});
         }
 
         setNextCursor(resNextCursor);
@@ -516,7 +512,14 @@ export default function MatchesListPage() {
   );
 
   useEffect(() => {
-    fetchMatches(false, null);
+    let ignore = false;
+    void (async () => {
+      await fetchMatches(false, null);
+      if (ignore) return;
+    })();
+    return () => {
+      ignore = true;
+    };
   }, [fetchMatches, filterKey, matchesRefreshTick]);
 
   const handleLoadMore = () => {

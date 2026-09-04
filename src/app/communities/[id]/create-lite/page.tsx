@@ -149,7 +149,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
-  const [isRanked, setIsRanked] = useState(false);
+  const [isRanked, setIsRanked] = useState(true);
   const [startDateTime, setStartDateTime] = useState('');
   const [durationMinutes, setDurationMinutes] = useState<number | null>(90);
   const [customDurationInput, setCustomDurationInput] = useState<string>('');

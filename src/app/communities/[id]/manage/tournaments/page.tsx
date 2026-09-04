@@ -103,7 +103,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteRecurringDaysOfWeek, setLiteRecurringDaysOfWeek] = useState<number[]>([6]);
   const [liteRecurringTimeOfDay, setLiteRecurringTimeOfDay] = useState('18:00');
   const [liteRecurringAdvanceDays, setLiteRecurringAdvanceDays] = useState<number>(0);
-  const [liteIsRanked, setLiteIsRanked] = useState(false);
+  const [liteIsRanked, setLiteIsRanked] = useState(true);
 
   const getCategoryDisplayName = (category?: { slug?: string; name?: string } | null) => {
     if (!category) return translate('communityTournamentSportFallback');

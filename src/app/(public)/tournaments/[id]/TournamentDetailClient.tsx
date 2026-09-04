@@ -832,6 +832,8 @@ const commonTranslate = useTranslations('Common');
   }
   const registerHref = `/tournaments/${activeTournament.id}/register${registerParams.toString() ? `?${registerParams.toString()}` : ''}`;
 
+  const isClubLite = isClubLiteTournament(activeTournament) || (Boolean(activeTournament.isLite) && Boolean(activeTournament.communityId));
+
   const formatDateRange = (start?: string, end?: string) => {
     if (!start && !end) return translate('notUpdated');
     const sStr = start ? formatDate(start) : '...';
@@ -846,10 +848,10 @@ const commonTranslate = useTranslations('Common');
     ...(showResultsTab
       ? [{ id: 'results' as const, label: translate('resultsTabLabel'), isGolden: true }]
       : []),
-    { id: 'overview', label: translate('overview') },
-    { id: 'teams', label: translate('tabs.teams') },
-    { id: 'bracket', label: translate('tabs.bracket') },
-    { id: 'matches', label: translate('tabs.matches') },
+    { id: 'overview' as const, label: translate('overview') },
+    { id: 'teams' as const, label: translate('tabs.teams') },
+    { id: 'bracket' as const, label: translate('tabs.bracket') },
+    ...(!isClubLite ? [{ id: 'matches' as const, label: translate('tabs.matches') }] : []),
     ...(publicSponsors.length > 0
       ? [{ id: 'sponsors' as const, label: translate('tabs.sponsors') }]
       : []),
@@ -1641,8 +1643,6 @@ const commonTranslate = useTranslations('Common');
     );
   };
 
-  const isClubLite = isClubLiteTournament(activeTournament) || (Boolean(activeTournament.isLite) && Boolean(activeTournament.communityId));
-
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
       <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6">
@@ -1777,9 +1777,27 @@ const commonTranslate = useTranslations('Common');
                                 </span>
                               );
                             })()}
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold sm:text-base">{division.name}</span>
-                            </span>
+                              {/* Title */}
+                              {(() => {
+                                let displayName = division.name;
+                                if (isClubLite) {
+                                  const isFootball =
+                                    activeTournament?.category?.name?.toLowerCase().includes('bóng đá') ||
+                                    activeTournament?.category?.name?.toLowerCase().includes('football');
+                                  if (isFootball) {
+                                    displayName = `Bóng đá ${activeTournament?.tournamentConfig?.teamSize || 7} người`;
+                                  } else {
+                                    const rawFormat = division.matchType || '';
+                                    const isDoubles = String(rawFormat).toUpperCase().includes('DOUBLES') || String(division.name).toLowerCase().includes('đôi');
+                                    displayName = isDoubles ? 'Đánh Đôi' : 'Đánh Đơn';
+                                  }
+                                }
+                                return (
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-sm font-bold sm:text-base">{displayName}</span>
+                                  </span>
+                                );
+                              })()}
                             {liveCount > 0 && (
                               <span
                                 aria-label={translate('divisionLiveCount', { count: liveCount })}

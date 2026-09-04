@@ -455,7 +455,7 @@ export default function MatchesListPage() {
         setIsRateLimited(false);
 
         const res = await matchesApi.getMatches({
-          limit: 50,
+          limit: 100,
           publicOnly: true,
           ...(cursorToUse ? { cursor: cursorToUse } : {}),
           search: debouncedSearchTerm || undefined,

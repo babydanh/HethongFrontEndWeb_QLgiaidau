@@ -12,6 +12,8 @@ import { socketClient } from '@/lib/socket';
 import { formatDateTime } from '@/utils/format';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import { getMatchCourtLabel } from '@/utils/tournament-location';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import {
   Clock,
   MapPin,
@@ -20,13 +22,18 @@ import {
   Activity,
   ChevronRight,
   Trophy,
+  Crown,
+  ShieldCheck,
+  User,
+  Flame,
+  Sparkles,
 } from 'lucide-react';
 
 interface Props {
   communityId: string;
 }
 
-type TimelineFilter = 'ALL' | 'COMPLETED' | 'ONGOING';
+type TimelineFilter = 'ALL' | 'MY_MATCHES' | 'COMPLETED' | 'ONGOING';
 
 interface TeamStreakRecord {
   type: 'W' | 'L';
@@ -111,29 +118,37 @@ function ClubActivitySkeleton() {
             <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs animate-pulse space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="h-4 bg-slate-200 rounded-md w-36" />
-                <div className="h-4 bg-slate-200 rounded-md w-20" />
+                <div className="h-4 bg-slate-200 rounded-md w-24" />
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-slate-200" />
                     <div className="h-4 bg-slate-200 rounded-md w-40" />
                     <div className="h-4.5 bg-slate-200 rounded-full w-9" />
                   </div>
-                  <div className="h-6 bg-slate-200 rounded-md w-8" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-7 h-7 bg-slate-200 rounded-md" />
+                    <div className="w-7 h-7 bg-slate-200 rounded-md" />
+                    <div className="w-7 h-7 bg-slate-200 rounded-md" />
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-slate-200" />
                     <div className="h-4 bg-slate-200 rounded-md w-36" />
                     <div className="h-4.5 bg-slate-200 rounded-full w-9" />
                   </div>
-                  <div className="h-6 bg-slate-200 rounded-md w-8" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-7 h-7 bg-slate-200 rounded-md" />
+                    <div className="w-7 h-7 bg-slate-200 rounded-md" />
+                    <div className="w-7 h-7 bg-slate-200 rounded-md" />
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <div className="h-3 bg-slate-200 rounded-md w-28" />
-                <div className="h-7 bg-slate-200 rounded-lg w-20" />
+              <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
+                <div className="h-3.5 bg-slate-200 rounded-md w-32" />
+                <div className="h-7 bg-slate-200 rounded-lg w-24" />
               </div>
             </div>
           </div>
@@ -440,6 +455,71 @@ export default function ClubActivityTab({ communityId }: Props) {
     }
   }, [communityId]);
 
+  const { user } = useAuthStore();
+  const [userMembership, setUserMembership] = useState<{
+    role: string;
+    status: string;
+    tags?: string[];
+  } | null>(null);
+  const [userRanking, setUserRanking] = useState<PlayerRanking | null>(null);
+  const [isLoadingUserClubInfo, setIsLoadingUserClubInfo] = useState(false);
+
+  // Fetch current user info in this community
+  useEffect(() => {
+    if (!communityId || !user?.id) {
+      setUserMembership(null);
+      setUserRanking(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingUserClubInfo(true);
+
+    Promise.allSettled([
+      communitiesApi.getMyMembership(communityId),
+      rankingsApi.getUserRankings(user.id),
+      communitiesApi.getMembers(communityId, { limit: 100 }),
+    ]).then(([membershipRes, rankingRes, membersRes]) => {
+      if (!isMounted) return;
+
+      // Parse membership & tags
+      let role = 'MEMBER';
+      let status = 'JOINED';
+      let tags: string[] = [];
+
+      if (membershipRes.status === 'fulfilled') {
+        const payload = (membershipRes.value as unknown as { data?: { role?: string; status?: string } }).data
+          ?? (membershipRes.value as unknown as { role?: string; status?: string });
+        if (payload?.role) role = payload.role;
+        if (payload?.status) status = payload.status;
+      }
+
+      if (membersRes.status === 'fulfilled') {
+        const memberList = membersRes.value?.data || [];
+        const found = memberList.find((m) => m.member?.userId === user.id);
+        if (found?.member?.tags) {
+          tags = found.member.tags;
+        }
+      }
+
+      setUserMembership({ role, status, tags });
+
+      // Parse user rankings in this club
+      if (rankingRes.status === 'fulfilled') {
+        const ownRank = rankingRes.value.communityRanks?.find(
+          (r) => r.communityId === communityId
+        );
+        setUserRanking(ownRank || null);
+      }
+    }).finally(() => {
+      if (isMounted) setIsLoadingUserClubInfo(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [communityId, user?.id]);
+
   useEffect(() => {
     let active = true;
 
@@ -506,11 +586,25 @@ export default function ClubActivityTab({ communityId }: Props) {
   // Filter and sort for timeline view
   const timelineMatches = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    const currentUserId = user?.id;
+    const currentUserName = (user?.fullName || '').toLowerCase();
 
     return effectiveMatches
       .filter((m) => {
         if (filter === 'COMPLETED' && m.status !== 'COMPLETED') return false;
         if (filter === 'ONGOING' && m.status !== 'ONGOING') return false;
+
+        if (filter === 'MY_MATCHES') {
+          if (!currentUserId && !currentUserName) return false;
+          const p1Id = m.participant1Id || m.participant1?.id;
+          const p2Id = m.participant2Id || m.participant2?.id;
+          const isP1 = p1Id === currentUserId || (m.participant1?.members || []).some((mem) => mem.userId === currentUserId);
+          const isP2 = p2Id === currentUserId || (m.participant2?.members || []).some((mem) => mem.userId === currentUserId);
+          const t1Name = (m.participant1?.teamName || '').toLowerCase();
+          const t2Name = (m.participant2?.teamName || '').toLowerCase();
+          const nameMatch = currentUserName && (t1Name.includes(currentUserName) || t2Name.includes(currentUserName));
+          if (!isP1 && !isP2 && !nameMatch) return false;
+        }
 
         if (query) {
           const t1 = (m.participant1?.teamName || '').toLowerCase();
@@ -532,10 +626,117 @@ export default function ClubActivityTab({ communityId }: Props) {
         const timeB = new Date(b.completedAt || b.updatedAt || b.startedAt || b.scheduledAt || 0).getTime();
         return timeB - timeA;
       });
-  }, [effectiveMatches, filter, searchQuery]);
+  }, [effectiveMatches, filter, searchQuery, user?.id, user?.fullName]);
+
+  // Compute user matches count in this club
+  const userMatchesCount = useMemo(() => {
+    if (!user?.id && !user?.fullName) return 0;
+    const currentUserId = user?.id;
+    const currentUserName = (user?.fullName || '').toLowerCase();
+
+    return effectiveMatches.filter((m) => {
+      const p1Id = m.participant1Id || m.participant1?.id;
+      const p2Id = m.participant2Id || m.participant2?.id;
+      const isP1 = p1Id === currentUserId || (m.participant1?.members || []).some((mem) => mem.userId === currentUserId);
+      const isP2 = p2Id === currentUserId || (m.participant2?.members || []).some((mem) => mem.userId === currentUserId);
+      const t1Name = (m.participant1?.teamName || '').toLowerCase();
+      const t2Name = (m.participant2?.teamName || '').toLowerCase();
+      return isP1 || isP2 || (currentUserName && (t1Name.includes(currentUserName) || t2Name.includes(currentUserName)));
+    }).length;
+  }, [effectiveMatches, user?.id, user?.fullName]);
 
   return (
     <div className="space-y-6">
+      {/* 🏅 My Club Profile Banner (Linear / Clean Anti-Slop HUD) */}
+      {user?.id && (
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Left: User Identity, Role, Tags */}
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="relative shrink-0">
+                <div className="w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-base shadow-xs overflow-hidden">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.fullName || 'Me'} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}</span>
+                  )}
+                </div>
+                {userMembership?.role === 'OWNER' && (
+                  <span title="Chủ nhiệm CLB" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center ring-2 ring-white shadow-2xs">
+                    <Crown className="w-3 h-3" />
+                  </span>
+                )}
+                {userMembership?.role === 'MODERATOR' && (
+                  <span title="Quản trị viên CLB" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white shadow-2xs">
+                    <ShieldCheck className="w-3 h-3" />
+                  </span>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-slate-900 text-sm sm:text-base truncate">
+                    {user.fullName || 'Thành viên'}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
+                    {userMembership?.role === 'OWNER'
+                      ? 'Chủ nhiệm'
+                      : userMembership?.role === 'MODERATOR'
+                      ? 'Ban quản trị'
+                      : 'Thành viên'}
+                  </span>
+                  {/* Member Tags */}
+                  {userMembership?.tags && userMembership.tags.length > 0 && (
+                    userMembership.tags.map((t, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200/60"
+                      >
+                        {t}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Hồ sơ và thông số thi đấu của bạn trong câu lạc bộ
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Quick Telemetry Pills (Anti-slop Monospace Metrics) */}
+            <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              {/* ELO Telemetry */}
+              <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Điểm CLB</p>
+                <p className="text-sm font-black font-mono text-blue-700">
+                  {userRanking?.eloPoints ? `${userRanking.eloPoints} ELO` : 'Chưa xếp hạng'}
+                </p>
+              </div>
+
+              {/* Matches Record */}
+              <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Trận trong CLB</p>
+                <p className="text-sm font-black font-mono text-slate-800">
+                  {userMatchesCount} trận
+                </p>
+              </div>
+
+              {/* Win Streak / Form */}
+              {userRanking && typeof userRanking.winStreak === 'number' && userRanking.winStreak > 0 && (
+                <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200/80 text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1 justify-end">
+                    <Flame className="w-3 h-3" /> Phong độ
+                  </p>
+                  <p className="text-sm font-black font-mono text-emerald-700">
+                    W{userRanking.winStreak}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header bar: Title & Subtitle + Search & Filter Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200">
         <div>
@@ -585,6 +786,24 @@ export default function ClubActivityTab({ communityId }: Props) {
             >
               Tất cả
             </button>
+            {user?.id && (
+              <button
+                type="button"
+                onClick={() => setFilter('MY_MATCHES')}
+                className={`px-2.5 py-1 rounded-md transition-colors flex items-center gap-1 ${
+                  filter === 'MY_MATCHES'
+                    ? 'bg-white text-blue-700 shadow-2xs font-semibold'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                <span>Trận của tôi</span>
+                {userMatchesCount > 0 && (
+                  <span className={`text-[10px] px-1 rounded-full ${filter === 'MY_MATCHES' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'}`}>
+                    {userMatchesCount}
+                  </span>
+                )}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setFilter('ONGOING')}
@@ -621,7 +840,7 @@ export default function ClubActivityTab({ communityId }: Props) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tên VĐV, đội, giải..."
-              className="pl-8 pr-3 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-400 transition-colors w-40 sm:w-48"
+              className="pl-8 pr-3 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-400 transition-colors w-36 sm:w-44"
             />
           </div>
 
@@ -646,7 +865,9 @@ export default function ClubActivityTab({ communityId }: Props) {
           <Activity className="w-8 h-8 text-slate-300 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700">Chưa có hoạt động trận đấu nào</p>
           <p className="text-xs text-slate-400 mt-0.5">
-            Khi các giải đấu trong câu lạc bộ khởi tranh và diễn ra, diễn biến trận đấu sẽ hiển thị tại đây.
+            {filter === 'MY_MATCHES'
+              ? 'Bạn chưa tham gia trận đấu nào trong câu lạc bộ này.'
+              : 'Khi các giải đấu trong câu lạc bộ khởi tranh và diễn ra, diễn biến trận đấu sẽ hiển thị tại đây.'}
           </p>
         </div>
       ) : (
@@ -718,6 +939,12 @@ export default function ClubActivityTab({ communityId }: Props) {
                           </span>
                         </>
                       )}
+                      {/* Match Format badge */}
+                      {sets.length > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                          {sets.length > 1 ? `Bo${sets.length}` : '1 Set'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -726,6 +953,17 @@ export default function ClubActivityTab({ communityId }: Props) {
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping" />
                           Đang diễn ra
                         </span>
+                      )}
+                      {/* Match Duration if completed */}
+                      {isCompleted && match.startedAt && match.completedAt && (
+                        (() => {
+                          const durationMin = Math.max(1, Math.round((new Date(match.completedAt).getTime() - new Date(match.startedAt).getTime()) / 60000));
+                          return (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium bg-slate-50 text-slate-500 border border-slate-200/80">
+                              {durationMin} phút
+                            </span>
+                          );
+                        })()
                       )}
                       {displayTime && (
                         <span className="flex items-center gap-1 text-[11px] text-slate-400">
@@ -736,15 +974,24 @@ export default function ClubActivityTab({ communityId }: Props) {
                     </div>
                   </div>
 
-                  {/* Teams & Score Layout */}
+                  {/* Teams & Set Scores Panel */}
                   <div className="p-4 space-y-3">
+                    {/* Header showing S1, S2, S3... above score columns */}
+                    {sets.length > 0 && (
+                      <div className="flex justify-end gap-1.5 pr-0.5 font-mono text-[9px] font-bold text-slate-400">
+                        {sets.map((_, index) => (
+                          <span key={index} className="w-7 text-center">S{index + 1}</span>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Team 1 Row */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div
                           className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
                             isP1Winner
-                              ? 'bg-slate-900 text-white'
+                              ? 'bg-blue-600 text-white shadow-2xs'
                               : 'bg-slate-100 text-slate-600 border border-slate-200'
                           }`}
                         >
@@ -764,17 +1011,31 @@ export default function ClubActivityTab({ communityId }: Props) {
                         </div>
                       </div>
 
-                      {/* Sets won display */}
-                      <div className="flex items-center gap-1 font-mono text-sm font-semibold tabular-nums">
-                        <span
-                          className={`min-w-6 text-center px-1.5 py-0.5 rounded ${
-                            isP1Winner
-                              ? 'bg-slate-900 text-white font-bold'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}
-                        >
-                          {match.p1SetsWon ?? 0}
-                        </span>
+                      {/* Set Scores for Team 1 */}
+                      <div className="flex items-center gap-1.5 shrink-0 font-mono">
+                        {sets.length > 0 ? (
+                          sets.map((s, idx) => {
+                            const s1 = s.team1Score;
+                            const s2 = s.team2Score;
+                            const isSetWinner = typeof s1 === 'number' && typeof s2 === 'number' && s1 > s2;
+                            return (
+                              <span
+                                key={idx}
+                                className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
+                                  isSetWinner
+                                    ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                                    : 'bg-slate-100 text-slate-700 font-semibold'
+                                }`}
+                              >
+                                {s1 ?? '-'}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="w-7 h-7 flex items-center justify-center text-xs font-bold rounded bg-slate-100 text-slate-700">
+                            {match.p1SetsWon ?? 0}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -784,7 +1045,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                         <div
                           className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
                             isP2Winner
-                              ? 'bg-slate-900 text-white'
+                              ? 'bg-blue-600 text-white shadow-2xs'
                               : 'bg-slate-100 text-slate-600 border border-slate-200'
                           }`}
                         >
@@ -804,47 +1065,59 @@ export default function ClubActivityTab({ communityId }: Props) {
                         </div>
                       </div>
 
-                      {/* Sets won display */}
-                      <div className="flex items-center gap-1 font-mono text-sm font-semibold tabular-nums">
-                        <span
-                          className={`min-w-6 text-center px-1.5 py-0.5 rounded ${
-                            isP2Winner
-                              ? 'bg-slate-900 text-white font-bold'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}
-                        >
-                          {match.p2SetsWon ?? 0}
-                        </span>
+                      {/* Set Scores for Team 2 */}
+                      <div className="flex items-center gap-1.5 shrink-0 font-mono">
+                        {sets.length > 0 ? (
+                          sets.map((s, idx) => {
+                            const s1 = s.team1Score;
+                            const s2 = s.team2Score;
+                            const isSetWinner = typeof s1 === 'number' && typeof s2 === 'number' && s2 > s1;
+                            return (
+                              <span
+                                key={idx}
+                                className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
+                                  isSetWinner
+                                    ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                                    : 'bg-slate-100 text-slate-700 font-semibold'
+                                }`}
+                              >
+                                {s2 ?? '-'}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="w-7 h-7 flex items-center justify-center text-xs font-bold rounded bg-slate-100 text-slate-700">
+                            {match.p2SetsWon ?? 0}
+                          </span>
+                        )}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Breakdown of Set Scores if Available */}
-                    {sets.length > 0 && (
-                      <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500 tabular-nums">
-                          <span className="text-slate-400 font-sans text-[10px] uppercase font-bold tracking-wider">
-                            Điểm set:
-                          </span>
-                          {sets.map((s, idx) => (
-                            <span
-                              key={idx}
-                              className="px-1.5 py-0.5 rounded bg-slate-50 border border-slate-150 text-slate-700 font-medium"
-                            >
-                              {s.team1Score}-{s.team2Score}
-                            </span>
-                          ))}
-                        </div>
+                  {/* Footer details: Time, Location & Action link */}
+                  <div className="px-4 py-2.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-3 text-slate-500 flex-wrap">
+                      {courtLabel && (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-600 font-medium">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          {courtLabel}
+                        </span>
+                      )}
+                      {displayTime && (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-400">
+                          <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          {displayTime}
+                        </span>
+                      )}
+                    </div>
 
-                        {/* View Match Details Link */}
-                        <Link
-                          href={`/live/${match.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors ml-auto group/btn"
-                        >
-                          <span>{matchTranslate('detailsAction') || 'Xem trận'}</span>
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600 transition-all" />
-                        </Link>
-                      </div>
-                    )}
+                    <Link
+                      href={`/live/${match.id}`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors group/btn shrink-0"
+                    >
+                      <span>{matchTranslate('detailsAction') || 'Chi tiết'}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600 transition-all" />
+                    </Link>
                   </div>
                 </div>
               </div>

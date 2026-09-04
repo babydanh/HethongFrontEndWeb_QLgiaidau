@@ -147,6 +147,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   // --- Max Participants state ---
   const [maxParticipantsInput, setMaxParticipantsInput] = useState<number>(16);
   const [isSavingMaxParticipants, setIsSavingMaxParticipants] = useState(false);
+  const [maxPartSaveStatus, setMaxPartSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // --- Schedule & Duration states ---
   const [startDate, setStartDate] = useState<string>(''); // YYYY-MM-DD
@@ -430,18 +431,19 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }
   };
 
-  const handleSaveMaxParticipants = async () => {
+  const handleSaveMaxParticipants = async (isSilent: boolean = false) => {
     if (!tournament || hasBracket || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status)) {
-      toast.error(translate('rulesSaveBlocked') || 'Không thể thay đổi số lượng khi giải đã diễn ra hoặc đã tạo bảng đấu.');
+      if (!isSilent) toast.error(translate('rulesSaveBlocked') || 'Không thể thay đổi số lượng khi giải đã diễn ra hoặc đã tạo bảng đấu.');
       return;
     }
     const val = Number(maxParticipantsInput);
     if (!val || val < 2 || val > 128) {
-      toast.error('Số lượng tham gia tối đa từ 2 đến 128');
+      if (!isSilent) toast.error('Số lượng tham gia tối đa từ 2 đến 128');
       return;
     }
 
     setIsSavingMaxParticipants(true);
+    setMaxPartSaveStatus('saving');
     try {
       const divisionId = tournament.divisions?.[0]?.id;
       // Cập nhật cả Tournament và Division chính
@@ -458,9 +460,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         maxParticipants: val,
         divisions: current.divisions?.map((d) => d.id === divisionId ? { ...d, maxParticipants: val } : d),
       } : current);
-      toast.success('Cập nhật số lượng tối đa thành công!');
+      setMaxPartSaveStatus('saved');
+      if (!isSilent) toast.success('Cập nhật số lượng tối đa thành công!');
+      setTimeout(() => setMaxPartSaveStatus('idle'), 2500);
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Không thể lưu số lượng tối đa');
+      setMaxPartSaveStatus('idle');
+      if (!isSilent) toast.error(getErrorMessage(err) || 'Không thể lưu số lượng tối đa');
     } finally {
       setIsSavingMaxParticipants(false);
     }
@@ -539,6 +544,17 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     }, 1500);
     return () => clearTimeout(timer);
   }, [venueName, locationAddress, province, ward]);
+
+  // Auto-save: Max Participants
+  useEffect(() => {
+    if (!hasLoadedTournament.current || !tournament) return;
+    if (maxParticipantsInput === tournament.maxParticipants) return;
+    if (maxParticipantsInput < 2 || maxParticipantsInput > 128) return;
+    const timer = setTimeout(() => {
+      void handleSaveMaxParticipants(true);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [maxParticipantsInput]);
 
   // Auto-save: Description
   useEffect(() => {
@@ -1081,9 +1097,21 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
 
                     {/* Số lượng tham gia tối đa */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        {translate('maxParticipants')}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                          {translate('maxParticipants')}
+                        </label>
+                        {maxPartSaveStatus === 'saving' && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-blue-600 font-medium">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Lưu...
+                          </span>
+                        )}
+                        {maxPartSaveStatus === 'saved' && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+                            <CheckCircle className="w-2.5 h-2.5" /> Đã lưu
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
                         <Input
                           type="number"
@@ -1097,7 +1125,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                         />
                         <Button
                           size="sm"
-                          onClick={handleSaveMaxParticipants}
+                          onClick={() => void handleSaveMaxParticipants(false)}
                           disabled={
                             hasBracket ||
                             ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status) ||

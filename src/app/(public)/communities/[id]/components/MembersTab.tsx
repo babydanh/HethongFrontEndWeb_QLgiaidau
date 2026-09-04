@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag } from 'lucide-react';
+import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag, Edit3 } from 'lucide-react';
 import { ClubMembersSkeleton } from '@/components/skeletons/ClubTabSkeletons';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi, MemberStreak } from '@/features/communities/api';
 import TagAssignModal from './TagAssignModal';
+import MemberEloAdjustModal, { type EloOperation } from './MemberEloAdjustModal';
 import { getCommunityTagDisplayName, isSameCommunityTag } from './tag-display';
 import { usersApi } from '@/features/users/api';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
@@ -92,6 +93,14 @@ export default function MembersTab({
   const [tagAssignTarget, setTagAssignTarget] = useState<MemberData | null>(null);
   const [isSavingTags, setIsSavingTags] = useState(false);
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
+
+  // Member ELO Adjust state
+  const [eloAdjustTarget, setEloAdjustTarget] = useState<{
+    userId: string;
+    fullName: string;
+    currentElo: number;
+  } | null>(null);
+  const [isSavingElo, setIsSavingElo] = useState(false);
 
   useEffect(() => {
     if (!communityId) return;
@@ -234,6 +243,25 @@ export default function MembersTab({
       toast.error(getErrorMessage(error, translate('inviteMemberFailed')));
     } finally {
       setIsInvitingId(null);
+    }
+  };
+
+  const handleAdjustMemberElo = async (payload: {
+    userId: string;
+    operation: EloOperation;
+    points: number;
+    reason: string;
+  }) => {
+    try {
+      setIsSavingElo(true);
+      await communitiesApi.adjustMemberElo(communityId, payload);
+      toast.success('Cập nhật ELO thành công!');
+      setEloAdjustTarget(null);
+      fetchMembers();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật ELO thành viên.'));
+    } finally {
+      setIsSavingElo(false);
     }
   };
 
@@ -582,6 +610,19 @@ export default function MembersTab({
                                   <hr className="my-1 border-slate-100" />
                                 </>
                               )}
+                               <button
+                                onClick={() => {
+                                  setEloAdjustTarget({
+                                    userId: item.user.id,
+                                    fullName: item.user.fullName,
+                                    currentElo: 1200,
+                                  });
+                                  setActiveMenuUserId(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors font-medium"
+                              >
+                                <Edit3 className="w-4 h-4 text-blue-600" /> Chỉnh ELO
+                              </button>
                               <button
                                 onClick={() => setTagAssignTarget(item)}
                                 className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
@@ -793,6 +834,17 @@ export default function MembersTab({
         presets={tagPresets}
         isSaving={isSavingTags}
         onSave={handleSaveTags}
+      />
+
+      {/* Member ELO Adjust Modal */}
+      <MemberEloAdjustModal
+        open={eloAdjustTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setEloAdjustTarget(null);
+        }}
+        member={eloAdjustTarget}
+        isSaving={isSavingElo}
+        onConfirm={handleAdjustMemberElo}
       />
     </div>
   );

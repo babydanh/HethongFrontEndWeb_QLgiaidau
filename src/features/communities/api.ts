@@ -347,4 +347,19 @@ export const communitiesApi = {
       role: string;
       notificationPreference: 'ALL' | 'MENTIONS_ONLY' | 'MUTED';
     }>>>('/communities/my/notification-preferences').then((res) => res.data),
+
+  // Club Member ELO Adjustment
+  adjustMemberElo: (
+    communityId: string,
+    data: {
+      userId: string;
+      operation: 'ADD' | 'SUBTRACT' | 'SET';
+      points: number;
+      reason: string;
+    }
+  ) =>
+    api.post<ApiResponse<{ userId: string; newElo: number; changedPoints: number }>>(
+      `/communities/${communityId}/members/${data.userId}/elo`,
+      data
+    ),
 };

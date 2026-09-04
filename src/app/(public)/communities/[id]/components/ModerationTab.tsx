@@ -20,6 +20,10 @@ import { getErrorMessage } from '@/utils/error';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import CommunityAvatar from './CommunityAvatar';
+import MemberEloAdjustModal, { type EloOperation } from './MemberEloAdjustModal';
+import { EloTierBadge } from '@/components/ui/EloTierBadge';
+import { rankingsApi } from '@/features/rankings/api';
+import { Edit3, Award } from 'lucide-react';
 
 interface UserSearchResult {
   id: string;
@@ -54,6 +58,16 @@ export default function ModerationTab({
   const [pendingPosts, setPendingPosts] = useState<CommunityPost[]>([]);
   const [reports, setReports] = useState<CommunityReport[]>([]);
 
+  // Member ELO coordination state (Chủ CLB điều phối ELO)
+  const [eloAdjustTarget, setEloAdjustTarget] = useState<{
+    userId: string;
+    fullName: string;
+    currentElo: number;
+  } | null>(null);
+  const [isSavingElo, setIsSavingElo] = useState(false);
+  const [memberEloMap, setMemberEloMap] = useState<Record<string, number>>({});
+  const [eloSearchQuery, setEloSearchQuery] = useState('');
+
   const joinedMembers = useMemo(
     () => memberRecords.filter((item) => item.member?.status === 'JOINED'),
     [memberRecords],
@@ -73,11 +87,12 @@ export default function ModerationTab({
 
     const loadData = async () => {
       try {
-        const [reqRes, memRes, pendingRes, reportRes] = await Promise.all([
+        const [reqRes, memRes, pendingRes, reportRes, rankingRes] = await Promise.all([
           communitiesApi.getJoinRequests(communityId),
           communitiesApi.getMembers(communityId, { limit: 200 }),
           communitiesApi.getPendingPosts(communityId),
           communitiesApi.getCommunityReports(communityId, 'OPEN'),
+          rankingsApi.getRankings({ scope: 'COMMUNITY', communityId, limit: 100 }).catch(() => ({ data: [] })),
         ]);
 
         if (!active) {
@@ -89,6 +104,17 @@ export default function ModerationTab({
         setRequests(reqRes.data || []);
         setInvitedMembers(allMembers.filter((m) => m.member?.status === 'INVITED'));
         setBannedMembers(allMembers.filter((m) => m.member?.status === 'BANNED'));
+
+        // Map member ELOs from community rankings
+        const eloMap: Record<string, number> = {};
+        (rankingRes.data || []).forEach((r) => {
+          const uid = r.userId || r.user?.id;
+          if (uid && typeof r.eloPoints === 'number') {
+            eloMap[uid] = r.eloPoints;
+          }
+        });
+        setMemberEloMap(eloMap);
+
         setPendingPosts((pendingRes.data || []).map((post) => ({
           id: post.id,
           communityId: post.communityId,
@@ -216,6 +242,36 @@ export default function ModerationTab({
       toast.success(status === 'DISMISSED' ? translate('reportDismissed') : translate('reportResolved'));
     } catch (error) {
       toast.error(getErrorMessage(error, translate('reportUpdateFailed')));
+    }
+  };
+
+  const handleAdjustMemberElo = async (payload: {
+    userId: string;
+    operation: EloOperation;
+    points: number;
+    reason: string;
+  }) => {
+    try {
+      setIsSavingElo(true);
+      await communitiesApi.adjustMemberElo(communityId, payload);
+      toast.success('Cập nhật ELO thành công!');
+
+      // Update local state immediately for instant responsive feedback
+      setMemberEloMap((prev) => {
+        const current = prev[payload.userId] ?? 1200;
+        let nextElo = current;
+        if (payload.operation === 'ADD') nextElo = current + payload.points;
+        else if (payload.operation === 'SUBTRACT') nextElo = Math.max(0, current - payload.points);
+        else if (payload.operation === 'SET') nextElo = payload.points;
+        return { ...prev, [payload.userId]: nextElo };
+      });
+
+      setEloAdjustTarget(null);
+      triggerRefresh();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật ELO thành viên. Vui lòng thử lại.'));
+    } finally {
+      setIsSavingElo(false);
     }
   };
 
@@ -611,6 +667,125 @@ export default function ModerationTab({
             </div>
           )}
         </section>
+
+        {/* Section: Điều phối ELO Thành viên (Dành cho Chủ CLB / BQT) */}
+        <section className="rounded-xl border border-blue-200/80 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                <Award className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Điều phối ELO Thành viên</h3>
+                <p className="text-xs text-slate-500">
+                  Thêm, bớt, cập nhật điểm ELO nội bộ CLB. Hệ thống tự động xếp hạng HT/LT.
+                </p>
+              </div>
+            </div>
+            <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-bold text-blue-700">
+              {joinedMembers.length} thành viên
+            </span>
+          </div>
+
+          {/* Quick Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={eloSearchQuery}
+              onChange={(e) => setEloSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm thành viên để chỉnh ELO..."
+              className="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50/50"
+            />
+          </div>
+
+          {isLoading ? (
+            <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> Đang tải danh sách thành viên...
+            </div>
+          ) : joinedMembers.length === 0 ? (
+            <div className="py-6 text-center text-xs text-slate-400">Chưa có thành viên nào tham gia.</div>
+          ) : (
+            <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+              {joinedMembers
+                .filter((item) => {
+                  if (!eloSearchQuery.trim()) return true;
+                  const q = eloSearchQuery.toLowerCase();
+                  return (
+                    item.user?.fullName?.toLowerCase().includes(q) ||
+                    item.user?.email?.toLowerCase().includes(q)
+                  );
+                })
+                .map((item) => {
+                  const targetUserId = item.user?.id || item.member?.userId || '';
+                  const fullName = item.user?.fullName || item.user?.email || 'Thành viên';
+                  const avatarUrl = item.user?.avatarUrl;
+                  const memberElo = memberEloMap[targetUserId] ?? 1200;
+
+                  return (
+                    <div
+                      key={targetUserId}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50/40 p-3 text-xs hover:bg-slate-100/50 transition-colors shadow-2xs"
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          if (targetUserId) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            openUserProfile(
+                              {
+                                id: targetUserId,
+                                fullName,
+                                avatarUrl,
+                                role: item.member?.role,
+                                joinedAt: item.member?.joinedAt,
+                              },
+                              rect,
+                              communityId,
+                            );
+                          }
+                        }}
+                        className="flex items-center gap-2.5 min-w-0 flex-1 text-left group focus:outline-none"
+                      >
+                        <CommunityAvatar src={avatarUrl} name={fullName} size={34} />
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                            {fullName}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <EloTierBadge
+                              elo={memberElo}
+                              size="sm"
+                              showFullName={false}
+                            />
+                            <span className="font-mono text-[11px] font-bold text-slate-700">
+                              {memberElo} ELO
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEloAdjustTarget({
+                            userId: targetUserId,
+                            fullName,
+                            currentElo: memberElo,
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-blue-50 text-blue-600 border border-slate-200 hover:border-blue-200 shadow-2xs transition-all shrink-0"
+                        title="Điều phối ELO"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+                        Chỉnh ELO
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </section>
       </div>
       {/* Cancel Invite Confirmation Modal */}
       <ConfirmModal
@@ -652,6 +827,17 @@ export default function ModerationTab({
             handleUnbanMember(userId);
           }
         }}
+      />
+
+      {/* Member ELO Adjust Modal */}
+      <MemberEloAdjustModal
+        open={eloAdjustTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setEloAdjustTarget(null);
+        }}
+        member={eloAdjustTarget}
+        isSaving={isSavingElo}
+        onConfirm={handleAdjustMemberElo}
       />
     </div>
   );

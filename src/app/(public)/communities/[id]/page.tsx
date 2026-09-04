@@ -261,6 +261,20 @@ export default function CommunityDetailPage() {
     }
   }, [id]);
 
+  // Listen for viewing club member matches to switch to activity tab
+  useEffect(() => {
+    const handleSwitchTab = (e: Event) => {
+      const customEvent = e as CustomEvent<{ communityId?: string; query?: string }>;
+      if (!customEvent.detail?.communityId || customEvent.detail.communityId === id) {
+        setActiveTab('activity');
+      }
+    };
+    window.addEventListener('sporto:view-club-member-matches', handleSwitchTab);
+    return () => {
+      window.removeEventListener('sporto:view-club-member-matches', handleSwitchTab);
+    };
+  }, [id]);
+
   useEffect(() => {
     if (id && user) {
       Promise.resolve().then(() => {

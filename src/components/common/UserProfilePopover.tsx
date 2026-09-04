@@ -87,12 +87,10 @@ export default function UserProfilePopover({
 
   useEffect(() => {
     if (!isOpen || !user?.id || !currentUser?.id || currentUser.id === user.id) {
-      setDirectMessagePolicy(null);
       return;
     }
 
     let isMounted = true;
-    setDirectMessagePolicy(null);
     chatApi
       .getDirectMessagePolicy(user.id)
       .then((policy) => {
@@ -105,6 +103,7 @@ export default function UserProfilePopover({
 
     return () => {
       isMounted = false;
+      setDirectMessagePolicy(null);
     };
   }, [isOpen, user?.id, currentUser?.id]);
 

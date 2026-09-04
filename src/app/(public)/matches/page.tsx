@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useLocale, useTranslations } from 'next-intl';
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Trophy, Heart, Share2, SlidersHorizontal, Eye, EyeOff, MapPin, Loader2, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';

@@ -98,6 +98,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   });
   const [liteStartTime, setLiteStartTime] = useState('18:00');
+  const [liteDurationHours, setLiteDurationHours] = useState<number>(1);
+  const [liteDurationMinutes, setLiteDurationMinutes] = useState<number>(30);
   const [liteIsRecurring, setLiteIsRecurring] = useState(false);
   const [liteRecurringFrequency, setLiteRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [liteRecurringDaysOfWeek, setLiteRecurringDaysOfWeek] = useState<number[]>([6]);
@@ -177,6 +179,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         isRanked: liteIsRanked,
         startDate: liteStartDate || undefined,
         startTime: liteStartTime || undefined,
+        durationMinutes: (liteDurationHours * 60) + liteDurationMinutes,
+        durationHours: liteDurationHours + (liteDurationMinutes / 60),
         isRecurring: liteIsRecurring,
         recurringFrequency: liteIsRecurring ? liteRecurringFrequency : undefined,
         recurringDayOfWeek: liteIsRecurring ? (liteRecurringDaysOfWeek[0] ?? 6) : undefined,
@@ -712,6 +716,42 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Thời lượng thi đấu dự kiến
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={168}
+                        value={liteDurationHours}
+                        onChange={(e) => setLiteDurationHours(Math.max(0, Number(e.target.value) || 0))}
+                        className="text-sm font-medium"
+                        placeholder="Giờ"
+                      />
+                      <span className="text-xs font-bold text-slate-500 shrink-0">giờ</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={59}
+                        step={5}
+                        value={liteDurationMinutes}
+                        onChange={(e) => setLiteDurationMinutes(Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
+                        className="text-sm font-medium"
+                        placeholder="Phút"
+                      />
+                      <span className="text-xs font-bold text-slate-500 shrink-0">phút</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Tổng thời lượng: <strong className="text-slate-700">{liteDurationHours} giờ {liteDurationMinutes > 0 ? `${liteDurationMinutes} phút` : ''}</strong>
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">

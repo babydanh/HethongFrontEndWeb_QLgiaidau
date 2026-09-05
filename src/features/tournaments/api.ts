@@ -1391,6 +1391,8 @@ export const tournamentsApi = {
     startDate?: string;
     endDate?: string;
     startTime?: string;
+    durationMinutes?: number;
+    durationHours?: number;
     registrationStartDate?: string;
     registrationEndDate?: string;
     isRecurring?: boolean;

@@ -219,7 +219,16 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             const min = String(sDate.getMinutes()).padStart(2, '0');
             setStartTime(`${hh}:${min}`);
 
-            if (loaded?.endDate) {
+            const cfg = (loaded?.tournamentConfig as Record<string, unknown> | undefined);
+            if (cfg?.durationMinutes && Number(cfg.durationMinutes) > 0) {
+              const dm = Number(cfg.durationMinutes);
+              setDurationHours(Math.floor(dm / 60));
+              setDurationMinutes(dm % 60);
+            } else if (cfg?.durationHours && Number(cfg.durationHours) > 0) {
+              const dh = Number(cfg.durationHours);
+              setDurationHours(Math.floor(dh));
+              setDurationMinutes(Math.round((dh % 1) * 60));
+            } else if (loaded?.endDate) {
               const eDate = new Date(loaded.endDate);
               if (!isNaN(eDate.getTime()) && eDate.getTime() > sDate.getTime()) {
                 const totalDiffMinutes = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60));
@@ -228,14 +237,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 setDurationHours(Math.max(0, h));
                 setDurationMinutes(Math.max(0, m));
               }
-            } else if ((loaded?.tournamentConfig as Record<string, unknown> | undefined)?.durationMinutes) {
-              const dm = Number((loaded!.tournamentConfig as Record<string, unknown>).durationMinutes) || 90;
-              setDurationHours(Math.floor(dm / 60));
-              setDurationMinutes(dm % 60);
-            } else if ((loaded?.tournamentConfig as Record<string, unknown> | undefined)?.durationHours) {
-              const dh = Number((loaded!.tournamentConfig as Record<string, unknown>).durationHours) || 1.5;
-              setDurationHours(Math.floor(dh));
-              setDurationMinutes(Math.round((dh % 1) * 60));
             }
           }
         }
@@ -267,7 +268,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         setIsLoading(false);
         setTimeout(() => {
           hasLoadedTournament.current = true;
-        }, 300);
+        }, 600);
       }
     };
     fetch();

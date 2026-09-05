@@ -5458,7 +5458,15 @@
     "submit": "Create club",
     "locationAddressLabel": "Detailed address / Main venue",
     "locationAddressPlaceholder": "Example: 123 Hoa Su Street, Ward 7, Phu Nhuan District, Ho Chi Minh City...",
-    "autoDetectedAddress": "Detected automatically:"
+    "autoDetectedAddress": "Detected automatically:",
+    "recurringTitle": "Session Schedule & Recurring Tournaments (Cron)",
+    "recurringSubtitle": "The system automatically creates mini tournaments and opens internal registration for weekly club sessions.",
+    "recurringToggle": "Enable automatic recurring tournaments",
+    "recurringSlotsTitle": "Weekly session slots",
+    "recurringAddSlot": "Add session slot",
+    "recurringDay": "Day of week",
+    "recurringTime": "Start time",
+    "recurringDuration": "Duration"
   },
   "OrganizerFinance": {
     "bankNameRequired": "Please enter the bank name",

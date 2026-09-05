@@ -5458,7 +5458,15 @@
     "submit": "Tạo Câu Lạc Bộ",
     "locationAddressLabel": "Địa chỉ chi tiết / Sân sinh hoạt chính",
     "locationAddressPlaceholder": "Ví dụ: Số 123 Đường Hoa Sứ, P. 7, Q. Phú Nhuận, TP.HCM...",
-    "autoDetectedAddress": "Đã tự nhận diện:"
+    "autoDetectedAddress": "Đã tự nhận diện:",
+    "recurringTitle": "Lịch sinh hoạt & Tự động tạo giải định kỳ (Cron)",
+    "recurringSubtitle": "Hệ thống tự động kích hoạt tạo giải mini và mở đăng ký nội bộ theo các ca sinh hoạt hàng tuần.",
+    "recurringToggle": "Kích hoạt tự động tạo giải định kỳ",
+    "recurringSlotsTitle": "Các ca sinh hoạt hàng tuần",
+    "recurringAddSlot": "Thêm ca sinh hoạt",
+    "recurringDay": "Thứ trong tuần",
+    "recurringTime": "Giờ bắt đầu",
+    "recurringDuration": "Thời lượng"
   },
   "OrganizerFinance": {
     "bankNameRequired": "Vui lòng nhập tên ngân hàng",

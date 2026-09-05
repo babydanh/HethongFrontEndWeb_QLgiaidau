@@ -20,9 +20,14 @@ import {
   MapPin,
   ArrowRight,
   Trophy,
+  RotateCw,
+  Clock,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 import { communitiesApi } from '@/features/communities/api';
+import { tournamentsApi } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { uploadApi } from '@/features/upload/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -73,6 +78,12 @@ export default function CreateCommunityPage() {
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  // Recurring cron tournament slots
+  const [enableRecurring, setEnableRecurring] = useState(false);
+  const [recurringSlots, setRecurringSlots] = useState<
+    { dayOfWeek: number; startTime: string; durationHours: number }[]
+  >([{ dayOfWeek: 6, startTime: '18:00', durationHours: 2 }]);
 
   const {
     register,
@@ -209,6 +220,41 @@ export default function CreateCommunityPage() {
 
       const responseData = res as { data?: { id?: string }; id?: string };
       const communityId = responseData?.data?.id || responseData?.id;
+
+      if (enableRecurring && communityId && recurringSlots.length > 0) {
+        try {
+          const selectedCat = categories.find((c) => c.id === data.categoryIds[0]);
+          const slug = (selectedCat?.slug || selectedCat?.name || '').toLowerCase();
+          let sport = 'badminton';
+          if (slug.includes('badminton') || slug.includes('cầu lông') || slug.includes('cau long')) sport = 'badminton';
+          else if (slug.includes('tennis') || slug.includes('quần vợt') || slug.includes('quan vot')) sport = 'tennis';
+          else if (slug.includes('pickleball')) sport = 'pickleball';
+          else if (slug.includes('table_tennis') || slug.includes('bóng bàn') || slug.includes('bong ban')) sport = 'table_tennis';
+          else if (slug.includes('football') || slug.includes('soccer') || slug.includes('bóng đá') || slug.includes('bong da')) sport = 'football';
+
+          const slot = recurringSlots[0];
+          const allDays = Array.from(new Set(recurringSlots.map((s) => s.dayOfWeek)));
+
+          await tournamentsApi.createLiteTournament({
+            name: `Giao hữu ${data.name.trim()}`,
+            sport: sport as any,
+            communityId,
+            format: 'doubles',
+            bracketType: 'single_elimination',
+            maxTeams: 16,
+            isRanked: true,
+            isRecurring: true,
+            recurringFrequency: 'WEEKLY',
+            recurringDayOfWeek: allDays[0],
+            recurringDaysOfWeek: allDays,
+            recurringTimeOfDay: slot.startTime || '18:00',
+            recurringAdvanceDays: 0,
+          });
+        } catch (templateErr) {
+          console.warn('Không thể tự tạo giải định kỳ mẫu:', templateErr);
+        }
+      }
+
       if (communityId) {
         router.push(`/communities/${communityId}`);
       } else {
@@ -461,6 +507,169 @@ export default function CreateCommunityPage() {
                     </div>
                   </div>
                 </div>
+              </section>
+
+              {/* ─── SECTION 3: LỊCH SINH HOẠT & TỰ ĐỘNG TẠO GIẢI ĐỊNH KỲ (CRON) ─── */}
+              <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_12px_rgba(15,23,42,0.04)] space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                      <RotateCw className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">
+                        {translate('recurringTitle')}
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {translate('recurringSubtitle')}
+                      </p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={enableRecurring}
+                      onChange={(e) => setEnableRecurring(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                {enableRecurring && (
+                  <div className="pt-4 border-t border-slate-100 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">
+                        {translate('recurringSlotsTitle')}
+                      </span>
+                      {recurringSlots.length < 7 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setRecurringSlots((prev) => [
+                              ...prev,
+                              { dayOfWeek: 0, startTime: '18:00', durationHours: 2 },
+                            ])
+                          }
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          {translate('recurringAddSlot')}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {recurringSlots.map((slot, index) => {
+                        const daysOfWeek = [
+                          { val: 1, label: 'T2' },
+                          { val: 2, label: 'T3' },
+                          { val: 3, label: 'T4' },
+                          { val: 4, label: 'T5' },
+                          { val: 5, label: 'T6' },
+                          { val: 6, label: 'T7' },
+                          { val: 0, label: 'CN' },
+                        ];
+
+                        return (
+                          <div
+                            key={index}
+                            className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-blue-700">
+                                Ca #{index + 1}
+                              </span>
+                              {recurringSlots.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRecurringSlots((prev) =>
+                                      prev.filter((_, i) => i !== index)
+                                    )
+                                  }
+                                  className="text-slate-400 hover:text-rose-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Ngày trong tuần */}
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-500 block mb-1.5">
+                                {translate('recurringDay')}
+                              </label>
+                              <div className="flex flex-wrap gap-1.5">
+                                {daysOfWeek.map((d) => {
+                                  const isSelected = slot.dayOfWeek === d.val;
+                                  return (
+                                    <button
+                                      key={d.val}
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = [...recurringSlots];
+                                        updated[index].dayOfWeek = d.val;
+                                        setRecurringSlots(updated);
+                                      }}
+                                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                                        isSelected
+                                          ? 'bg-blue-600 text-white shadow-xs'
+                                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      {d.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Giờ bắt đầu & Thời lượng */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                                  {translate('recurringTime')}
+                                </label>
+                                <div className="relative">
+                                  <input
+                                    type="time"
+                                    value={slot.startTime}
+                                    onChange={(e) => {
+                                      const updated = [...recurringSlots];
+                                      updated[index].startTime = e.target.value;
+                                      setRecurringSlots(updated);
+                                    }}
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                                  {translate('recurringDuration')}
+                                </label>
+                                <select
+                                  value={slot.durationHours}
+                                  onChange={(e) => {
+                                    const updated = [...recurringSlots];
+                                    updated[index].durationHours = Number(e.target.value);
+                                    setRecurringSlots(updated);
+                                  }}
+                                  className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-none"
+                                >
+                                  <option value={1}>1 giờ</option>
+                                  <option value={2}>2 giờ</option>
+                                  <option value={3}>3 giờ</option>
+                                  <option value={4}>4 giờ</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </section>
 
             </div>

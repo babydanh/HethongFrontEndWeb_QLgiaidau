@@ -1525,15 +1525,24 @@ const commonTranslate = useTranslations('Common');
                   <div className="flex items-start gap-2.5">
                     <Clock className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
                     <div>
-                      <span className="block font-extrabold text-slate-900">
-                        {sDate ? formatDate(sDate) : ''}
-                        {timeStr ? ` · ${timeStr}` : ''}
-                        {durationStr ? ` (${durationStr})` : ''}
-                      </span>
-                      {!isClubLite && activeTournament.endDate && (
-                        <span className="text-xs text-slate-500">
-                          {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
+                      {isClubLite ? (
+                        <span className="block font-extrabold text-slate-900">
+                          {sDate ? formatDate(sDate) : ''}
+                          {timeStr ? ` · ${timeStr}` : ''}
+                          {durationStr ? ` (${durationStr})` : ''}
                         </span>
+                      ) : (
+                        <>
+                          <span className="block font-extrabold text-slate-900">
+                            {activeTournament.startDate ? formatDate(activeTournament.startDate) : ''}
+                            {timeStr ? ` · ${timeStr}` : ''}
+                          </span>
+                          {activeTournament.endDate && (
+                            <span className="text-xs text-slate-500">
+                              {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

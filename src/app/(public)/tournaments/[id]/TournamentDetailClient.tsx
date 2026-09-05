@@ -1503,22 +1503,25 @@ const commonTranslate = useTranslations('Common');
                   }
                 }
 
-                // Compute duration in hours/minutes if both start and end dates exist
+                // Compute duration in hours/minutes: prioritize actual start and end dates
                 let durationStr = '';
                 const cfg = (activeTournament.tournamentConfig || {}) as Record<string, unknown>;
-                if (typeof cfg.durationHours === 'number' && cfg.durationHours > 0) {
-                  durationStr = `${cfg.durationHours}h`;
-                } else if (typeof cfg.durationMinutes === 'number' && cfg.durationMinutes > 0) {
-                  const h = Math.floor(cfg.durationMinutes / 60);
-                  const m = cfg.durationMinutes % 60;
-                  durationStr = h > 0 ? (m > 0 ? `${h}h${m}p` : `${h}h`) : `${m}p`;
-                } else if (sDate && eDate && !isNaN(sDate.getTime()) && !isNaN(eDate.getTime())) {
+                if (sDate && eDate && !isNaN(sDate.getTime()) && !isNaN(eDate.getTime()) && eDate.getTime() > sDate.getTime()) {
                   const diffMinutes = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60));
                   if (diffMinutes > 0 && diffMinutes < 24 * 60) {
                     const h = Math.floor(diffMinutes / 60);
                     const m = diffMinutes % 60;
                     durationStr = h > 0 ? (m > 0 ? `${h}h${m}p` : `${h}h`) : `${m}p`;
                   }
+                } else if (typeof cfg.durationMinutes === 'number' && cfg.durationMinutes > 0) {
+                  const h = Math.floor(cfg.durationMinutes / 60);
+                  const m = cfg.durationMinutes % 60;
+                  durationStr = h > 0 ? (m > 0 ? `${h}h${m}p` : `${h}h`) : `${m}p`;
+                } else if (typeof cfg.durationHours === 'number' && cfg.durationHours > 0) {
+                  const totalMin = Math.round(cfg.durationHours * 60);
+                  const h = Math.floor(totalMin / 60);
+                  const m = totalMin % 60;
+                  durationStr = h > 0 ? (m > 0 ? `${h}h${m}p` : `${h}h`) : `${m}p`;
                 }
 
                 return (

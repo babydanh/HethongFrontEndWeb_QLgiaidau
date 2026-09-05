@@ -152,8 +152,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   // --- Schedule & Duration states ---
   const [startDate, setStartDate] = useState<string>(''); // YYYY-MM-DD
   const [startTime, setStartTime] = useState<string>('08:00'); // HH:mm
-  const [durationHours, setDurationHours] = useState<number>(4);
-  const [durationMinutes, setDurationMinutes] = useState<number>(0);
+  const [durationHours, setDurationHours] = useState<number>(1);
+  const [durationMinutes, setDurationMinutes] = useState<number>(30);
   const [scheduleSaveStatus, setScheduleSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [descSaveStatus, setDescSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [locSaveStatus, setLocSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -229,11 +229,11 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 setDurationMinutes(Math.max(0, m));
               }
             } else if ((loaded?.tournamentConfig as Record<string, unknown> | undefined)?.durationMinutes) {
-              const dm = Number((loaded!.tournamentConfig as Record<string, unknown>).durationMinutes) || 240;
+              const dm = Number((loaded!.tournamentConfig as Record<string, unknown>).durationMinutes) || 90;
               setDurationHours(Math.floor(dm / 60));
               setDurationMinutes(dm % 60);
             } else if ((loaded?.tournamentConfig as Record<string, unknown> | undefined)?.durationHours) {
-              const dh = Number((loaded!.tournamentConfig as Record<string, unknown>).durationHours) || 4;
+              const dh = Number((loaded!.tournamentConfig as Record<string, unknown>).durationHours) || 1.5;
               setDurationHours(Math.floor(dh));
               setDurationMinutes(Math.round((dh % 1) * 60));
             }

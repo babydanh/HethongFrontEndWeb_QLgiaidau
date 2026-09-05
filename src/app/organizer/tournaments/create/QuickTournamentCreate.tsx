@@ -762,6 +762,12 @@ export default function QuickTournamentCreate() {
         registrationEndDate: toApiIsoDateTime(values.registrationEnd) ?? undefined,
         startDate: toApiIsoDateTime(values.startDate) ?? undefined,
         endDate: toApiIsoDateTime(values.endDate) ?? undefined,
+        durationMinutes: values.startDate && values.endDate
+          ? Math.max(15, Math.round((new Date(values.endDate).getTime() - new Date(values.startDate).getTime()) / 60000))
+          : undefined,
+        durationHours: values.startDate && values.endDate
+          ? Number((Math.max(15, Math.round((new Date(values.endDate).getTime() - new Date(values.startDate).getTime()) / 60000)) / 60).toFixed(1))
+          : undefined,
         venueName: values.venueName ? values.venueName.trim() : undefined,
         locationAddress: values.locationAddress ? values.locationAddress.trim() : undefined,
         province: provinceName || undefined,

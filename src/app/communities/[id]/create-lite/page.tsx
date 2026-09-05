@@ -228,6 +228,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         startDate: isoStartDate,
         startTime: timeOfDay,
         endDate: isoEndDate,
+        durationMinutes: durationMinutes ? Number(durationMinutes) : 90,
+        durationHours: durationMinutes ? Number((Number(durationMinutes) / 60).toFixed(1)) : 1.5,
         isRecurring,
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
         recurringDayOfWeek: isRecurring

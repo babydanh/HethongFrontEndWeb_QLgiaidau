@@ -1443,9 +1443,10 @@ const commonTranslate = useTranslations('Common');
 
           {/* Format Badge: Đơn / Đôi (No gender clutter) */}
           {(() => {
-            const rawFormat = (activeTournament as unknown as Record<string, unknown>)?.format ||
-              activeTournament?.divisions?.[0]?.matchType ||
+            const rawFormat =
               activeTournament?.matchType ||
+              activeTournament?.divisions?.[0]?.matchType ||
+              (activeTournament as unknown as Record<string, unknown>)?.format ||
               '';
             const isDoubles = String(rawFormat).toUpperCase().includes('DOUBLES') || String(rawFormat).toLowerCase() === 'doubles';
             const isFootball =
@@ -1495,7 +1496,7 @@ const commonTranslate = useTranslations('Common');
                       {activeTournament.startDate ? formatDate(activeTournament.startDate) : ''}
                       {(activeTournament as unknown as Record<string, unknown>).startTime ? ` · ${(activeTournament as unknown as Record<string, unknown>).startTime}` : ''}
                     </span>
-                    {activeTournament.endDate && (
+                    {!isClubLite && activeTournament.endDate && (
                       <span className="text-xs text-slate-500">
                         {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
                       </span>

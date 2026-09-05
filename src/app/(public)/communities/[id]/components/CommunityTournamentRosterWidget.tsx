@@ -138,9 +138,10 @@ export default function CommunityTournamentRosterWidget({
 
   // Format badge: Đơn vs Đôi vs Bóng đá (NO redundant gender tags)
   const formatBadge = useMemo(() => {
-    const rawFormat = (tournament as unknown as Record<string, unknown>)?.format ||
-      tournament?.divisions?.[0]?.matchType ||
+    const rawFormat =
       tournament?.matchType ||
+      tournament?.divisions?.[0]?.matchType ||
+      (tournament as unknown as Record<string, unknown>)?.format ||
       '';
     const isDoubles = String(rawFormat).toUpperCase().includes('DOUBLES') || String(rawFormat).toLowerCase() === 'doubles';
     const isFootball =

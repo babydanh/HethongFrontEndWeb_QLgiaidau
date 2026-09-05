@@ -3868,7 +3868,8 @@
       "registrationClosed": "Registration closed",
       "inProgress": "In progress",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "startDate": "Schedule:"
     },
     "summary": {
       "resultsTitle": "Tournament results",

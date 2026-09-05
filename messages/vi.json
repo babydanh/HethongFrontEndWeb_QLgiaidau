@@ -3868,7 +3868,8 @@
       "registrationClosed": "Đã khóa đăng ký",
       "inProgress": "Đang thi đấu",
       "completed": "Đã kết thúc",
-      "cancelled": "Đã hủy"
+      "cancelled": "Đã hủy",
+      "startDate": "Thời gian thi đấu:"
     },
     "summary": {
       "resultsTitle": "Kết quả giải đấu",

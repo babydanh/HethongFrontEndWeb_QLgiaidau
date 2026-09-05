@@ -1449,14 +1449,18 @@ export const tournamentsApi = {
 
   generateLiteBracket: (id: string, divisionId?: string) =>
     api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(
-      `/tournaments/lite/${id}/bracket`,
+      `/tournaments/${id}/bracket`,
       divisionId ? { divisionId } : undefined,
     ),
   resetLiteBracket: (id: string, divisionId?: string) =>
     api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(
-      `/tournaments/lite/${id}/bracket/reset`,
+      `/tournaments/${id}/bracket/reset`,
       divisionId ? { divisionId } : undefined,
     ),
+  toggleRecurringTournament: (id: string, enabled: boolean) =>
+    api.patch<ApiResponse<Tournament>>(`/tournaments/${id}/recurring/toggle`, { enabled }),
+  deleteRecurringTournament: (id: string) =>
+    api.delete<ApiResponse<Tournament>>(`/tournaments/${id}/recurring`),
 };
 
 export const divisionsApi = {

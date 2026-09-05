@@ -448,8 +448,20 @@ const commonTranslate = useTranslations('Common');
           window.history.replaceState(null, '', currentUrl.pathname + currentUrl.search);
         }
       }
+    } else if (
+      !hasAutoOpenedLiveRef.current &&
+      !hasUserNavigatedRef.current &&
+      liveMatchesCount > 0 &&
+      !searchParams?.get('tab')
+    ) {
+      // Khi vừa vào trang giải đấu đang có trận Live và URL không chỉ định tab cụ thể,
+      // tự động chuyển sang tab 'live' giống như trải nghiệm trên App!
+      hasAutoOpenedLiveRef.current = true;
+      Promise.resolve().then(() => {
+        setActiveTab('live');
+      });
     }
-  }, [activeTab, liveMatchesCount, showResultsTab]);
+  }, [activeTab, liveMatchesCount, searchParams, showResultsTab]);
 
   useEffect(() => {
     if (!debouncedDivisionId || searchParams.get('divisionId') === debouncedDivisionId) return;

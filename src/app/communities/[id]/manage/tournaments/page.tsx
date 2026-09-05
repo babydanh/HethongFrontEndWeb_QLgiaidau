@@ -12,7 +12,7 @@ import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getSportLogo } from '@/constants/sports';
-import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock, Clock, RotateCw } from 'lucide-react';
+import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock, Clock, RotateCw, Play, Pause, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -214,6 +214,33 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
     }
   };
 
+  const handleToggleRecurring = async (tournamentId: string, currentEnabled: boolean) => {
+    try {
+      await tournamentsApi.toggleRecurringTournament(tournamentId, !currentEnabled);
+      toast.success(
+        !currentEnabled
+          ? translate('communityRecurringResume')
+          : translate('communityRecurringPause')
+      );
+      await fetchData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleDeleteRecurring = async (tournamentId: string) => {
+    if (!window.confirm(translate('communityRecurringDeleteConfirm'))) {
+      return;
+    }
+    try {
+      await tournamentsApi.deleteRecurringTournament(tournamentId);
+      toast.success(translate('communityRecurringDelete'));
+      await fetchData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
   const handleCreateClubTournament = async () => {
     if (!newTourneyName.trim()) {
       toast.error(translate('communityTournamentNameRequired'));
@@ -387,6 +414,206 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             </p>
           </div>
         </div>
+
+        {/* Recurring Schedules Management (Cron) */}
+        {(() => {
+          const recurringTemplates = tournaments.filter((t) =>
+            Boolean((t.tournamentConfig as Record<string, any>)?.recurring)
+          );
+
+          return (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <RotateCw className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      {translate('communityRecurringSchedulesTitle')}
+                      {recurringTemplates.length > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
+                          {recurringTemplates.length}
+                        </span>
+                      )}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {translate('communityRecurringSchedulesDesc')}
+                    </p>
+                  </div>
+                </div>
+                {canCreateClubLite && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/communities/${community.id}/create-lite`)}
+                    className="text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50 self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    {translate('communityTournamentQuickButton')}
+                  </Button>
+                )}
+              </div>
+
+              {recurringTemplates.length === 0 ? (
+                <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                  <Clock className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-slate-600">
+                    {translate('communityRecurringEmpty')}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {translate('communityRecurringEmptyHint')}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recurringTemplates.map((t) => {
+                    const rec = (t.tournamentConfig as Record<string, any>)?.recurring;
+                    const isEnabled = Boolean(rec?.enabled);
+                    const days = Array.isArray(rec?.daysOfWeek) ? rec.daysOfWeek : [rec?.dayOfWeek ?? 6];
+                    const timeOfDay = rec?.timeOfDay || '18:00';
+                    const advanceDays = rec?.advanceDays ?? 0;
+                    const nextRunAt = rec?.nextRunAt ? new Date(rec.nextRunAt) : null;
+                    const dayLabels: Record<number, string> = {
+                      1: 'T2',
+                      2: 'T3',
+                      3: 'T4',
+                      4: 'T5',
+                      5: 'T6',
+                      6: 'T7',
+                      0: 'CN',
+                    };
+
+                    return (
+                      <div
+                        key={`recurring-${t.id}`}
+                        className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-lg border transition-colors ${
+                          isEnabled
+                            ? 'bg-slate-50/70 border-slate-200'
+                            : 'bg-slate-100/60 border-slate-200 opacity-75'
+                        }`}
+                      >
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sm text-slate-900 truncate">
+                              {t.name}
+                            </span>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                isEnabled
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {isEnabled ? (
+                                <>
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {translate('communityRecurringActive')}
+                                </>
+                              ) : (
+                                <>
+                                  <Pause className="w-3 h-3" />
+                                  {translate('communityRecurringPaused')}
+                                </>
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-400 font-medium">
+                                {translate('communityRecurringDays')}
+                              </span>
+                              <div className="flex gap-1">
+                                {DAYS_OF_WEEK.map((d) => {
+                                  const isSelected = days.includes(d.value);
+                                  return (
+                                    <span
+                                      key={d.value}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                        isSelected
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-slate-200 text-slate-400'
+                                      }`}
+                                    >
+                                      {dayLabels[d.value]}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <span className="text-slate-300">•</span>
+                            <span className="font-semibold text-slate-700 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              {timeOfDay}
+                            </span>
+
+                            {nextRunAt && (
+                              <>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-slate-500">
+                                  {translate('communityRecurringNextRun')}{' '}
+                                  <strong className="text-slate-700">
+                                    {nextRunAt.toLocaleString(
+                                      locale === 'vi' ? 'vi-VN' : 'en-US',
+                                      {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                      }
+                                    )}
+                                  </strong>
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {canCreateClubLite && (
+                          <div className="flex items-center gap-2 self-end md:self-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleToggleRecurring(t.id, isEnabled)}
+                              className={`text-xs font-bold flex items-center gap-1 ${
+                                isEnabled
+                                  ? 'text-amber-700 border-amber-300 hover:bg-amber-50'
+                                  : 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                              }`}
+                            >
+                              {isEnabled ? (
+                                <>
+                                  <Pause className="w-3.5 h-3.5" />
+                                  {translate('communityRecurringPause')}
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-3.5 h-3.5" />
+                                  {translate('communityRecurringResume')}
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteRecurring(t.id)}
+                              className="text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50 flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              {translate('communityRecurringDelete')}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Tournaments Grid */}
         {tournaments.length === 0 ? (

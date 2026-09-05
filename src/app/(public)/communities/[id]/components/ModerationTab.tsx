@@ -35,9 +35,11 @@ interface UserSearchResult {
 export default function ModerationTab({
   communityId,
   isOwner,
+  categoryName = 'Pickleball',
 }: {
   communityId: string;
   isOwner: boolean;
+  categoryName?: string;
 }) {
   const translate = useTranslations('Common');
   const locale = useLocale();
@@ -258,7 +260,7 @@ export default function ModerationTab({
 
       // Update local state immediately for instant responsive feedback
       setMemberEloMap((prev) => {
-        const current = prev[payload.userId] ?? 1200;
+        const current = prev[payload.userId] ?? 1000;
         let nextElo = current;
         if (payload.operation === 'ADD') nextElo = current + payload.points;
         else if (payload.operation === 'SUBTRACT') nextElo = Math.max(0, current - payload.points);
@@ -720,7 +722,7 @@ export default function ModerationTab({
                   const targetUserId = item.user?.id || item.member?.userId || '';
                   const fullName = item.user?.fullName || item.user?.email || 'Thành viên';
                   const avatarUrl = item.user?.avatarUrl;
-                  const memberElo = memberEloMap[targetUserId] ?? 1200;
+                  const memberElo = memberEloMap[targetUserId] ?? 1000;
 
                   return (
                     <div
@@ -755,6 +757,7 @@ export default function ModerationTab({
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <EloTierBadge
                               elo={memberElo}
+                              categoryName={categoryName}
                               size="sm"
                               showFullName={false}
                             />
@@ -836,6 +839,7 @@ export default function ModerationTab({
           if (!open) setEloAdjustTarget(null);
         }}
         member={eloAdjustTarget}
+        categoryName={categoryName}
         isSaving={isSavingElo}
         onConfirm={handleAdjustMemberElo}
       />

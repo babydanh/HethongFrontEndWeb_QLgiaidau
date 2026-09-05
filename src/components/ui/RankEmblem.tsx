@@ -312,8 +312,8 @@ export function SportBadgeIcon({
   sportName?: string | null;
   sizePx?: number;
 }) {
-  const sportLogo = getSportLogo(sportName);
-  const accentColor = getSportAccentColor(sportName);
+  const sportLogo = getSportLogo(sportName) || '/images/Pickleball.png';
+  const accentColor = getSportAccentColor(sportName || 'Pickleball');
 
   return (
     <span

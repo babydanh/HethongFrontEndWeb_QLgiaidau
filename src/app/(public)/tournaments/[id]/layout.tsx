@@ -11,7 +11,12 @@ interface LayoutProps {
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
   const resolvedParams = await params;
   const translate = await getTranslations('TournamentDetail');
-  const tournament = await getTournament(resolvedParams.id);
+  let tournament: Awaited<ReturnType<typeof getTournament>> = null;
+  try {
+    tournament = await getTournament(resolvedParams.id);
+  } catch {
+    // Access control and transient API failures are handled by the page.
+  }
 
   if (tournament) {
     const title = `${tournament.name} | SportO`;
@@ -54,7 +59,12 @@ export default async function TournamentLayout({
   params,
 }: LayoutProps) {
   const resolvedParams = await params;
-  const tournament = await getTournament(resolvedParams.id);
+  let tournament: Awaited<ReturnType<typeof getTournament>> = null;
+  try {
+    tournament = await getTournament(resolvedParams.id);
+  } catch {
+    // The page renders the club-access state; layout schema is optional.
+  }
 
   const eventSchema = tournament
     ? {

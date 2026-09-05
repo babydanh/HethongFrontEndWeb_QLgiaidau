@@ -50,10 +50,11 @@ const getSportKey = (categoryName?: string | null): string | null => {
   return null;
 };
 
-/** Ordered tier definitions used by badges, legends and progress bars. */
-export function getRankTierDefinitions(categoryName?: string | null): readonly RankStyle[] {
-  const sportKey = getSportKey(categoryName);
-  return sportKey ? SPORT_TIERS[sportKey] : STANDARD_TIERS;
+/** Ordered tier definitions used by badges, legends and progress bars.
+ * Standardized across the entire SportO ecosystem: Low Tier D (0) -> Tier S (1800+).
+ */
+export function getRankTierDefinitions(_categoryName?: string | null): readonly RankStyle[] {
+  return STANDARD_TIERS;
 }
 
 const matchesTierName = (tier: TierDefinition, tierName: string): boolean => {

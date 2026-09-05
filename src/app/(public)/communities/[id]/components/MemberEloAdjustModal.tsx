@@ -48,7 +48,7 @@ export default function MemberEloAdjustModal({
   const [amount, setAmount] = useState<string>('25');
   const [reason, setReason] = useState<string>('');
 
-  const currentElo = member?.currentElo ?? 1200;
+  const currentElo = member?.currentElo ?? 1000;
   const numAmount = Math.max(0, parseInt(amount, 10) || 0);
 
   // Tính ELO dự kiến sau khi áp dụng thao tác
@@ -193,7 +193,7 @@ export default function MemberEloAdjustModal({
               max="5000"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder={operation === 'SET' ? '1200' : '25'}
+              placeholder={operation === 'SET' ? '1000' : '25'}
               className="w-full px-3.5 py-2 text-sm font-semibold rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-900 bg-white"
             />
           </div>
@@ -250,8 +250,8 @@ export default function MemberEloAdjustModal({
               <p className="text-[11px] font-medium text-amber-700 flex items-center gap-1 mt-1">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                 Hạng tự động đổi từ{' '}
-                <strong>{currentRank.name}</strong> sang{' '}
-                <strong>{previewRank.name}</strong>.
+                <strong>{currentRank.name} ({currentShort})</strong> sang{' '}
+                <strong>{previewRank.name} ({previewShort})</strong>.
               </p>
             )}
           </div>

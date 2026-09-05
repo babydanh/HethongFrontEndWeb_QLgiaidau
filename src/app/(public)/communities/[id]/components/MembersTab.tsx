@@ -48,12 +48,14 @@ export default function MembersTab({
   isOwnerOrMod, 
   isOwner, 
   userId, 
+  categoryName = 'Pickleball',
   onMembershipChange 
 }: { 
   communityId: string; 
   isOwnerOrMod: boolean; 
   isOwner: boolean; 
   userId?: string;
+  categoryName?: string;
   onMembershipChange?: () => void;
 }) {
   const router = useRouter();
@@ -615,7 +617,7 @@ export default function MembersTab({
                                   setEloAdjustTarget({
                                     userId: item.user.id,
                                     fullName: item.user.fullName,
-                                    currentElo: 1200,
+                                    currentElo: 1000,
                                   });
                                   setActiveMenuUserId(null);
                                 }}
@@ -843,6 +845,7 @@ export default function MembersTab({
           if (!open) setEloAdjustTarget(null);
         }}
         member={eloAdjustTarget}
+        categoryName={categoryName}
         isSaving={isSavingElo}
         onConfirm={handleAdjustMemberElo}
       />

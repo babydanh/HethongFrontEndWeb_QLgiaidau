@@ -649,6 +649,7 @@ export default function CommunityDetailPage() {
                 isOwnerOrMod={isOwnerOrMod}
                 isOwner={isOwner}
                 userId={user?.id}
+                categoryName={community?.categories?.[0]?.name || (community as unknown as { category?: { name?: string } })?.category?.name || 'Pickleball'}
                 onMembershipChange={() => {
                   fetchMembership();
                   fetchCommunity();
@@ -658,7 +659,11 @@ export default function CommunityDetailPage() {
             {activeTab === 'gallery' && canViewContent && <GalleryTab communityId={id} community={community} isOwnerOrMod={isOwnerOrMod} />}
             {activeTab === 'rankings' && canViewContent && <RankingsTab communityId={id} categories={community?.categories || []} onGoToTournaments={() => setActiveTab('tournaments')} />}
             {activeTab === 'moderation' && isOwnerOrMod && (
-              <ModerationTab communityId={id} isOwner={isOwner} />
+              <ModerationTab
+                communityId={id}
+                isOwner={isOwner}
+                categoryName={community?.categories?.[0]?.name || (community as unknown as { category?: { name?: string } })?.category?.name || 'Pickleball'}
+              />
             )}
             {activeTab === 'settings' && isOwner && <SettingsTab community={community} />}
           </div>

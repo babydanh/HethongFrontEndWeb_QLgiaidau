@@ -93,8 +93,10 @@ export const isTournamentPendingApproval = (status?: string | null) =>
 export const isTournamentPendingDelete = (status?: string | null) =>
   normalizeTournamentStatus(status) === 'PENDING_DELETE';
 
-export const isTournamentUpcoming = (status?: string | null) =>
-  normalizeTournamentStatus(status) === 'UPCOMING';
+export const isTournamentUpcoming = (status?: string | null) => {
+  const normalized = normalizeTournamentStatus(status);
+  return normalized === 'UPCOMING' || normalized === 'REGISTRATION_CLOSED';
+};
 
 export const isTournamentRegistrationClosed = (status?: string | null) =>
   normalizeTournamentStatus(status) === 'REGISTRATION_CLOSED';

@@ -205,10 +205,11 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
     if (maxTeams < 2 || maxTeams > 128) return toast.error(translate('liteMaxTeamsRange'));
 
     const isoStartDate = startDateTime ? new Date(startDateTime).toISOString() : undefined;
-    const isoEndDate = startDateTime && durationMinutes
-      ? new Date(new Date(startDateTime).getTime() + durationMinutes * 60 * 1000).toISOString()
+    const finalDurationMinutes = durationMinutes && Number(durationMinutes) > 0 ? Number(durationMinutes) : 90;
+    const isoEndDate = startDateTime && finalDurationMinutes
+      ? new Date(new Date(startDateTime).getTime() + finalDurationMinutes * 60 * 1000).toISOString()
       : undefined;
-    const timeOfDay = startDateTime && startDateTime.includes('T') ? startDateTime.split('T')[1] : '18:00';
+    const timeOfDay = startDateTime && startDateTime.includes('T') ? startDateTime.split('T')[1] : undefined;
     const dayOfWeek = startDateTime ? new Date(startDateTime).getDay() : undefined;
 
     try {
@@ -228,8 +229,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         startDate: isoStartDate,
         startTime: timeOfDay,
         endDate: isoEndDate,
-        durationMinutes: durationMinutes ? Number(durationMinutes) : 90,
-        durationHours: durationMinutes ? Number((Number(durationMinutes) / 60).toFixed(1)) : 1.5,
+        durationMinutes: finalDurationMinutes,
+        durationHours: Number((finalDurationMinutes / 60).toFixed(1)),
         isRecurring,
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
         recurringDayOfWeek: isRecurring

@@ -218,26 +218,32 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             const hh = String(sDate.getHours()).padStart(2, '0');
             const min = String(sDate.getMinutes()).padStart(2, '0');
             setStartTime(`${hh}:${min}`);
+          }
+        }
 
-            const cfg = (loaded?.tournamentConfig as Record<string, unknown> | undefined);
-            if (cfg?.durationMinutes && Number(cfg.durationMinutes) > 0) {
-              const dm = Number(cfg.durationMinutes);
-              setDurationHours(Math.floor(dm / 60));
-              setDurationMinutes(dm % 60);
-            } else if (cfg?.durationHours && Number(cfg.durationHours) > 0) {
-              const dh = Number(cfg.durationHours);
-              setDurationHours(Math.floor(dh));
-              setDurationMinutes(Math.round((dh % 1) * 60));
-            } else if (loaded?.endDate) {
-              const eDate = new Date(loaded.endDate);
-              if (!isNaN(eDate.getTime()) && eDate.getTime() > sDate.getTime()) {
-                const totalDiffMinutes = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60));
-                const h = Math.floor(totalDiffMinutes / 60);
-                const m = totalDiffMinutes % 60;
-                setDurationHours(Math.max(0, h));
-                setDurationMinutes(Math.max(0, m));
-              }
-            }
+        // Populate duration states from config or dates
+        const cfg = (loaded?.tournamentConfig as Record<string, unknown> | undefined);
+        const cfgSchedule = (cfg?.schedule as Record<string, unknown> | undefined);
+        const cfgDurationMin = cfg?.durationMinutes ?? cfgSchedule?.durationMinutes;
+        const cfgDurationHours = cfg?.durationHours ?? cfgSchedule?.durationHours;
+
+        if (cfgDurationMin !== undefined && cfgDurationMin !== null && Number(cfgDurationMin) > 0) {
+          const dm = Number(cfgDurationMin);
+          setDurationHours(Math.floor(dm / 60));
+          setDurationMinutes(dm % 60);
+        } else if (cfgDurationHours !== undefined && cfgDurationHours !== null && Number(cfgDurationHours) > 0) {
+          const dh = Number(cfgDurationHours);
+          setDurationHours(Math.floor(dh));
+          setDurationMinutes(Math.round((dh % 1) * 60));
+        } else if (loaded?.startDate && loaded?.endDate) {
+          const sDate = new Date(loaded.startDate);
+          const eDate = new Date(loaded.endDate);
+          if (!isNaN(sDate.getTime()) && !isNaN(eDate.getTime()) && eDate.getTime() > sDate.getTime()) {
+            const totalDiffMinutes = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60));
+            const h = Math.floor(totalDiffMinutes / 60);
+            const m = totalDiffMinutes % 60;
+            setDurationHours(Math.max(0, h));
+            setDurationMinutes(Math.max(0, m));
           }
         }
 

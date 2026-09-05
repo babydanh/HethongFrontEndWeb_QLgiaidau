@@ -1112,7 +1112,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div>
                         <Input
                           type="number"
                           min={2}
@@ -1123,22 +1123,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           className="text-sm font-medium"
                           placeholder="16"
                         />
-                        <Button
-                          size="sm"
-                          onClick={() => void handleSaveMaxParticipants(false)}
-                          disabled={
-                            hasBracket ||
-                            ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(tournament.status) ||
-                            isSavingMaxParticipants ||
-                            maxParticipantsInput === tournament.maxParticipants
-                          }
-                          className="h-11 px-4 whitespace-nowrap font-medium text-xs"
-                        >
-                          {isSavingMaxParticipants ? translate('saving') : 'Lưu số lượng'}
-                        </Button>
                       </div>
                       <p className="text-xs text-slate-500">
-                        {hasBracket ? 'Đã khóa vì giải đã tạo nhánh đấu (bracket).' : 'Số lượng người chơi hoặc cặp/đội tham gia (2 - 128).'}
+                        {hasBracket ? 'Đã khóa vì giải đã tạo nhánh đấu (bracket).' : 'Số lượng người chơi hoặc cặp/đội tham gia (2 - 128). Tự động lưu.'}
                       </p>
                     </div>
                   </div>
@@ -1229,23 +1216,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                         </div>
                       </div>
                       <p className="text-xs text-slate-500">
-                        Tổng thời lượng: <strong className="text-slate-700">{durationHours} giờ {durationMinutes > 0 ? `${durationMinutes} phút` : ''}</strong> (Hệ thống tự động lưu).
+                        Tổng thời lượng: <strong className="text-slate-700">{durationHours} giờ {durationMinutes > 0 ? `${durationMinutes} phút` : ''}</strong> (Tự động lưu).
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-slate-400 italic">
-                      Thay đổi sẽ tự động lưu sau 1s hoặc nhấn nút để lưu ngay.
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() => void handleSaveSchedule(false)}
-                      disabled={scheduleSaveStatus === 'saving'}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4"
-                    >
-                      {scheduleSaveStatus === 'saving' ? translate('saving') : 'Lưu thời gian'}
-                    </Button>
                   </div>
                 </div>
 
@@ -1326,20 +1299,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-slate-400 italic">
-                      Địa điểm sẽ tự động lưu khi chỉnh sửa.
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() => void handleSaveLocation(false)}
-                      disabled={isSavingLocation}
-                      className="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4"
-                    >
-                      {isSavingLocation ? translate('saving') : translate('saveLocation')}
-                    </Button>
-                  </div>
                 </div>
 
                 {/* 4. Mô tả & Điều lệ giải */}
@@ -1368,20 +1327,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     onChange={(val) => setDescription(val)}
                     placeholder={translate('descriptionPlaceholder')}
                   />
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-slate-400 italic">
-                      Mô tả tự động lưu sau khi gõ xong.
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() => void handleSaveDescription(false)}
-                      disabled={isSavingDescription}
-                      className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4"
-                    >
-                      {isSavingDescription ? translate('saving') : translate('saveDescription')}
-                    </Button>
-                  </div>
                 </div>
 
               </div>
@@ -1460,43 +1405,63 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           <div className="space-y-2">
                             {pendingParticipants.map((p) => {
                               const isSelected = selectedIds.includes(p.id);
+                              const avatar = p.rosters?.[0]?.profile?.avatarUrl;
+                              const fullName = p.rosters?.[0]?.profile?.fullName || p.teamName || 'VĐV';
+                              const initial = fullName.trim().charAt(0).toUpperCase() || 'V';
+
                               return (
                                 <div
                                   key={p.id}
                                   onClick={() => toggleSelection(p.id)}
-                                  className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
                                     isSelected
-                                      ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-400'
-                                      : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'
+                                      ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
+                                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70'
                                   }`}
                                 >
+                                  {/* Checkbox */}
                                   <div
-                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
                                       isSelected
-                                        ? 'border-blue-600 bg-blue-600'
-                                        : 'border-slate-300'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-slate-300 bg-white'
                                     }`}
                                   >
-                                    {isSelected && (
-                                      <CheckCircle className="w-4 h-4 text-white" />
+                                    {isSelected && <CheckCircle className="w-3.5 h-3.5 fill-current" />}
+                                  </div>
+
+                                  {/* Avatar VĐV */}
+                                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+                                    {avatar ? (
+                                      <img
+                                        src={avatar}
+                                        alt={fullName}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                                        {initial}
+                                      </div>
                                     )}
                                   </div>
+
+                                  {/* Info */}
                                   <div className="flex-1 min-w-0">
-                                    <span className="text-sm font-semibold text-slate-900 truncate block">
+                                    <span className="text-sm font-bold text-slate-900 truncate block">
                                       {p.teamName}
                                     </span>
-                                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                    <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
                                       {p.rosters?.map((m) => (
-                                        <span key={m.userId} className="flex items-center gap-1">
-                                          <User className="w-3 h-3" />
+                                        <span key={m.userId} className="flex items-center gap-1 font-medium text-slate-600">
                                           {m.profile?.fullName || '—'}
                                         </span>
                                       ))}
                                     </div>
                                   </div>
-                                  <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold">
-                                                                        {translate('pendingPairingBadge')}
 
+                                  {/* Status badge */}
+                                  <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold shrink-0">
+                                    {translate('pendingPairingBadge')}
                                   </Badge>
                                 </div>
                               );
@@ -1588,19 +1553,25 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="flex flex-col gap-1">
-                                    {p.rosters?.map((m) => (
-                                      <div key={m.userId} className="flex items-center gap-2 text-xs text-slate-600">
-                                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                                          {m.profile?.avatarUrl ? (
-                                            <img src={m.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-                                          ) : (
-                                            <User className="w-3.5 h-3.5 text-slate-400" />
-                                          )}
+                                  <div className="flex flex-col gap-1.5">
+                                    {p.rosters?.map((m) => {
+                                      const fullName = m.profile?.fullName || 'VĐV';
+                                      const initial = fullName.trim().charAt(0).toUpperCase() || 'V';
+                                      return (
+                                        <div key={m.userId} className="flex items-center gap-2 text-xs text-slate-700">
+                                          <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200">
+                                            {m.profile?.avatarUrl ? (
+                                              <img src={m.profile.avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold">
+                                                {initial}
+                                              </div>
+                                            )}
+                                          </div>
+                                          <span className="font-semibold">{fullName}</span>
                                         </div>
-                                        <span className="font-medium">{m.profile?.fullName || '—'}</span>
-                                      </div>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
                                 </div>
                                 {/* Only show unpair for actual Doubles pairs (has 2 rosters) */}

@@ -1488,22 +1488,57 @@ const commonTranslate = useTranslations('Common');
           return (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 font-medium">
               {/* Time */}
-              {hasDate && (
-                <div className="flex items-start gap-2.5">
-                  <Clock className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="block font-extrabold text-slate-900">
-                      {activeTournament.startDate ? formatDate(activeTournament.startDate) : ''}
-                      {(activeTournament as unknown as Record<string, unknown>).startTime ? ` · ${(activeTournament as unknown as Record<string, unknown>).startTime}` : ''}
-                    </span>
-                    {!isClubLite && activeTournament.endDate && (
-                      <span className="text-xs text-slate-500">
-                        {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
+              {hasDate && (() => {
+                const sDate = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
+                const eDate = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
+                const rawStartTime = (activeTournament as unknown as Record<string, unknown>).startTime as string | undefined;
+
+                let timeStr = rawStartTime;
+                if (!timeStr && sDate && !isNaN(sDate.getTime())) {
+                  const hours = sDate.getHours();
+                  const minutes = sDate.getMinutes();
+                  // Only display time if it's not default midnight UTC/local (unless explicit)
+                  if (hours !== 0 || minutes !== 0) {
+                    timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                  }
+                }
+
+                // Compute duration in hours/minutes if both start and end dates exist
+                let durationStr = '';
+                const cfg = (activeTournament.tournamentConfig || {}) as Record<string, unknown>;
+                if (typeof cfg.durationHours === 'number' && cfg.durationHours > 0) {
+                  durationStr = `${cfg.durationHours}h`;
+                } else if (typeof cfg.durationMinutes === 'number' && cfg.durationMinutes > 0) {
+                  const h = Math.floor(cfg.durationMinutes / 60);
+                  const m = cfg.durationMinutes % 60;
+                  durationStr = h > 0 ? (m > 0 ? `${h}h${m}p` : `${h}h`) : `${m}p`;
+                } else if (sDate && eDate && !isNaN(sDate.getTime()) && !isNaN(eDate.getTime())) {
+                  const diffMinutes = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60));
+                  if (diffMinutes > 0 && diffMinutes < 24 * 60) {
+                    const h = Math.floor(diffMinutes / 60);
+                    const m = diffMinutes % 60;
+                    durationStr = h > 0 ? (m > 0 ? `${h}h${m}p` : `${h}h`) : `${m}p`;
+                  }
+                }
+
+                return (
+                  <div className="flex items-start gap-2.5">
+                    <Clock className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block font-extrabold text-slate-900">
+                        {sDate ? formatDate(sDate) : ''}
+                        {timeStr ? ` · ${timeStr}` : ''}
+                        {durationStr ? ` (${durationStr})` : ''}
                       </span>
-                    )}
+                      {!isClubLite && activeTournament.endDate && (
+                        <span className="text-xs text-slate-500">
+                          {translate('status.startDate')} {formatDate(activeTournament.startDate)} - {formatDate(activeTournament.endDate)}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Fee */}
               {hasFee && (

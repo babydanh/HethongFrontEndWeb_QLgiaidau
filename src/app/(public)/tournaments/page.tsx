@@ -25,6 +25,7 @@ import {
 import { getRegistrationModeUi } from './registrationMode';
 import { getTournamentLocationLabel, getTournamentShortLocation } from '@/utils/tournament-location';
 import AdBannerCard from '@/components/ui/AdBannerCard';
+import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 
 export default function TournamentsListPage() {
   const locale = useLocale();
@@ -759,48 +760,39 @@ export default function TournamentsListPage() {
                 className="bg-white rounded-lg border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Top: Large Image Banner */}
-                <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
-                  {tournament.bannerUrl ? (
-                    <img
-                      src={tournament.bannerUrl}
-                      alt={tournament.name}
-                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${isTournamentCompleted(tournament.status) ? 'grayscale opacity-60' : ''}`}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center p-6">
-                      <img
-                        src={BRAND.assets.defaultTournamentLogo}
-                        alt={`${BRAND.name} Logo`}
-                        className="w-44 md:w-52 h-auto object-contain drop-shadow-sm"
-                      />
+                <div className="relative aspect-[2.1/1] w-full bg-slate-950 overflow-hidden">
+                  <TournamentBannerCover
+                    bannerUrl={tournament.bannerUrl}
+                    tournamentName={tournament.name}
+                    categoryName={tournament.category?.name}
+                    isCompleted={isTournamentCompleted(tournament.status)}
+                  >
+                    {/* Status Overlay (Top-Left) */}
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
+                        {isTournamentInProgress(tournament.status) && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        )}
+                        {getTournamentStatusLabel(tournament.status, { DRAFT: translate('statusDraftPlain'), PENDING_APPROVAL: translate('statusPendingApproval'), PENDING_DELETE: translate('statusPendingDelete'), UPCOMING: translate('upcoming'), REGISTRATION_OPEN: translate('registrationOpen'), REGISTRATION_CLOSED: translate('statusRegistrationClosed'), IN_PROGRESS: translate('inProgress'), ONGOING: translate('inProgress'), COMPLETED: translate('completed'), CANCELLED: translate('statusCancelled') })}
+                        {isRecentlyCompletedTournament(tournament) && (
+                          <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-bold text-white">
+                            {recentlyFinishedLabel}
+                          </span>
+                        )}
+                      </span>
                     </div>
-                  )}
 
-                  {/* Status Overlay (Top-Left) */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
-                      {isTournamentInProgress(tournament.status) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      )}
-                      {getTournamentStatusLabel(tournament.status, { DRAFT: translate('statusDraftPlain'), PENDING_APPROVAL: translate('statusPendingApproval'), PENDING_DELETE: translate('statusPendingDelete'), UPCOMING: translate('upcoming'), REGISTRATION_OPEN: translate('registrationOpen'), REGISTRATION_CLOSED: translate('statusRegistrationClosed'), IN_PROGRESS: translate('inProgress'), ONGOING: translate('inProgress'), COMPLETED: translate('completed'), CANCELLED: translate('statusCancelled') })}
-                      {isRecentlyCompletedTournament(tournament) && (
-                        <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-bold text-white">
-                          {recentlyFinishedLabel}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Location Overlay (Bottom-Left) */}
-                  <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
-                    <span 
-                      className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 inline-flex items-center gap-1 truncate max-w-full"
-                      title={fullLocation}
-                    >
-                      <span className="shrink-0">📍</span>
-                      <span className="truncate">{displayLocation}</span>
-                    </span>
-                  </div>
+                    {/* Location Overlay (Bottom-Left) */}
+                    <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
+                      <span 
+                        className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 inline-flex items-center gap-1 truncate max-w-full"
+                        title={fullLocation}
+                      >
+                        <span className="shrink-0">📍</span>
+                        <span className="truncate">{displayLocation}</span>
+                      </span>
+                    </div>
+                  </TournamentBannerCover>
                 </div>
 
                 {/* Bottom: Details Section */}

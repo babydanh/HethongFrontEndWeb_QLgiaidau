@@ -45,6 +45,7 @@ import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-bann
 import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
+import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 
 interface EnrichedTournament {
   id: string;
@@ -298,31 +299,26 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
   return (
     <div className={`${hideFeaturedCardText ? 'aspect-[21/9] bg-slate-900' : 'bg-white'} rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative`}>
-      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} ${hasBanner ? 'bg-slate-900' : 'bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100'} relative overflow-hidden`}>
-        <Image
-          src={imageSrc}
-          alt={tournament.name}
-          fill
-          className={hasBanner ? "object-cover group-hover:scale-105 transition-transform duration-700 ease-out" : "object-contain p-8 drop-shadow-sm group-hover:scale-105 transition-transform duration-700 ease-out"}
-          onError={() => setImgError(true)}
-          unoptimized={imageSrc === fallbackSrc}
-        />
-        {!hideFeaturedCardText && hasBanner && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-        )}
-
-        {/* Badges */}
-        {!hideFeaturedCardText && (
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
-          <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-bold tracking-wider uppercase border border-white/20">
-            <Trophy className="w-3 h-3 inline-block mr-1" />
-            {tournament.category?.name || translate('tournamentFallback')}
-          </span>
-          <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-bold tracking-wider uppercase">
-            {translate('tournamentEnded')}
-          </span>
-        </div>
-        )}
+      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} bg-slate-950 relative overflow-hidden`}>
+        <TournamentBannerCover
+          bannerUrl={tournament.bannerUrl}
+          tournamentName={tournament.name}
+          categoryName={tournament.category?.name}
+          isCompleted={isTournamentCompleted(tournament.status)}
+        >
+          {/* Badges */}
+          {!hideFeaturedCardText && (
+          <div className="absolute top-4 left-4 z-10 flex gap-2">
+            <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-bold tracking-wider uppercase border border-white/20">
+              <Trophy className="w-3 h-3 inline-block mr-1" />
+              {tournament.category?.name || translate('tournamentFallback')}
+            </span>
+            <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-bold tracking-wider uppercase">
+              {translate('tournamentEnded')}
+            </span>
+          </div>
+          )}
+        </TournamentBannerCover>
       </div>
 
       {!hideFeaturedCardText && (

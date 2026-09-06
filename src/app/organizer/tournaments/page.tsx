@@ -16,6 +16,7 @@ import { Tournament } from '@/types/tournament';
 import { getSportLogo } from '@/constants/sports';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
+import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { OrganizerVerificationBanner } from '@/components/organizer/OrganizerVerificationBanner';
 
@@ -312,13 +313,12 @@ export default function MyTournamentsPage() {
                   className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
                 >
                   {/* Visual Header */}
-                  <div className="relative h-44 bg-slate-100 overflow-hidden group">
+                  <div className="relative h-44 bg-slate-950 overflow-hidden group">
                     <Link href={manageHref} className="block w-full h-full">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner()}
-                        alt={parent.name}
-                        className={`w-full h-full transition-transform duration-300 group-hover:scale-105 ${(parent.bannerUrl || firstDivision?.bannerUrl) ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"}`}
+                      <TournamentBannerCover
+                        bannerUrl={parent.bannerUrl || firstDivision?.bannerUrl}
+                        tournamentName={parent.name}
+                        categoryName={firstDivision?.category?.name || parent.name}
                       />
                     </Link>
 

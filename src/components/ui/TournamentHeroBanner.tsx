@@ -9,6 +9,7 @@ import { getSportLogo } from '@/constants/sports';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 import { BRAND } from '@/constants/brand';
 import { getTournamentShortLocation } from '@/utils/tournament-location';
+import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 
 interface Props {
   tournaments: Tournament[];
@@ -195,20 +196,6 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
     setCurrentIndex((prev) => (prev + 1) % tournaments.length);
   };
 
-  const getGradientBg = (name?: string) => {
-    const term = (name || '').toLowerCase();
-    if (term.includes('tennis')) {
-      return 'from-emerald-955 via-slate-955 to-indigo-950';
-    }
-    if (term.includes('pickleball')) {
-      return 'from-amber-955 via-slate-955 to-rose-950';
-    }
-    if (term.includes('badminton') || term.includes('lông')) {
-      return 'from-blue-955 via-slate-955 to-violet-950';
-    }
-    return 'from-indigo-955 via-slate-955 to-slate-955';
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'REGISTRATION_OPEN':
@@ -259,25 +246,12 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
             >
               <div className={`w-full ${heightClass} rounded-lg relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md bg-slate-950 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
                 {/* Background Image / Gradient */}
-                <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100 group-hover:scale-105">
-                  {tournament.bannerUrl ? (
-                    <img
-                      src={tournament.bannerUrl}
-                      alt={tournament.name}
-                      className="w-full h-full object-cover pointer-events-none select-none"
-                      draggable="false"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 flex items-center justify-center relative overflow-hidden border-b border-slate-100">
-                      <div className={`absolute inset-0 bg-gradient-to-tr ${getGradientBg(tournament.category?.name)} opacity-15`} />
-                      <img
-                        src={BRAND.assets.logoFull}
-                        alt={`${BRAND.name} Logo`}
-                        className="w-40 sm:w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm pointer-events-none select-none"
-                        draggable="false"
-                      />
-                    </div>
-                  )}
+                <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100 group-hover:scale-105 pointer-events-none select-none">
+                  <TournamentBannerCover
+                    bannerUrl={tournament.bannerUrl}
+                    tournamentName={tournament.name}
+                    categoryName={tournament.category?.name}
+                  />
                   {!hideFeaturedCardText && (
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/35 to-transparent pointer-events-none" />
                   )}

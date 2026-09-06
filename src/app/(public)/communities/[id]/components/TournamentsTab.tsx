@@ -19,6 +19,7 @@ import { tournamentsApi } from "@/features/tournaments/api";
 import { isLiteTournament } from "@/features/tournaments/lite-qr";
 import { getSportLogo } from "@/constants/sports";
 import BRAND from "@/constants/brand";
+import TournamentBannerCover from "@/components/ui/TournamentBannerCover";
 
 import { formatDate } from "@/utils/format";
 import { getTournamentLocationLabel } from "@/utils/tournament-location";
@@ -284,53 +285,31 @@ export default function TournamentsTab({
                 className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
               >
                 {/* Compact Card Banner */}
-                <div className={`relative h-36 w-full ${t.bannerUrl ? "bg-slate-900" : "bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"} overflow-hidden shrink-0`}>
-                  {t.bannerUrl ? (
-                    <img
-                      src={t.bannerUrl}
-                      alt={t.name}
-                      onError={(event) => {
-                        event.currentTarget.onerror = null;
-                        event.currentTarget.src = BRAND.assets.defaultTournamentLogo;
-                        event.currentTarget.classList.remove("object-cover");
-                        event.currentTarget.classList.add(
-                          "object-contain",
-                          "p-6",
-                        );
-                      }}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 transition-transform duration-500 group-hover:scale-105 flex items-center justify-center p-6">
-                      <img
-                        src={BRAND.assets.defaultTournamentLogo}
-                        alt={`${BRAND.name} Logo`}
-                        className="w-40 md:w-48 h-auto object-contain drop-shadow-xs"
-                      />
+                <div className="relative h-36 w-full bg-slate-950 overflow-hidden shrink-0">
+                  <TournamentBannerCover
+                    bannerUrl={t.bannerUrl}
+                    tournamentName={t.name}
+                    categoryName={t.category?.name}
+                    isCompleted={isTournamentCompleted(t.status)}
+                  >
+                    {/* Top Badges */}
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5 z-10">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {getStatusBadge(t.status)}
+                        {getTypeBadge(t.tournamentType)}
+                      </div>
+                      {isOwnerOrMod && (
+                        <button
+                          onClick={(e) =>
+                            handleDeleteTournament(t.id, Boolean(t.parent), e)
+                          }
+                          className="p-1.5 bg-black/40 hover:bg-rose-600 text-white/90 hover:text-white rounded-lg backdrop-blur-md transition-all active:scale-95 shadow-sm"
+                          title={translate("communityTournamentDeleteTitle")}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
-                  )}
-                  {t.bannerUrl && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                  )}
-
-                  {/* Top Badges */}
-                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5 z-10">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {getStatusBadge(t.status)}
-                      {getTypeBadge(t.tournamentType)}
-                    </div>
-                    {isOwnerOrMod && (
-                      <button
-                        onClick={(e) =>
-                          handleDeleteTournament(t.id, Boolean(t.parent), e)
-                        }
-                        className="p-1.5 bg-black/40 hover:bg-rose-600 text-white/90 hover:text-white rounded-lg backdrop-blur-md transition-all active:scale-95 shadow-sm"
-                        title={translate("communityTournamentDeleteTitle")}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
 
                   {/* Bottom Chips on Banner */}
                   <div className="absolute left-3 bottom-2.5 right-3 flex items-center justify-between gap-2 z-10">
@@ -347,6 +326,7 @@ export default function TournamentsTab({
                       </span>
                     )}
                   </div>
+                  </TournamentBannerCover>
                 </div>
 
                 {/* Card Content Body */}

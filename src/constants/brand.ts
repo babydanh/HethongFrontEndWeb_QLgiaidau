@@ -24,9 +24,9 @@ export const BRAND = {
     /** Touch icon cho thiết bị Apple / Mobile PWA */
     appleTouchIcon: '/apple-touch-icon.png',
     /** Fallback mặc định khi giải đấu / CLB / user không có ảnh */
-    defaultFallback: '/sporto_512.png',
-    defaultTournamentLogo: '/sporto_512.png',
-    defaultCommunityLogo: '/sporto_512.png',
+    defaultFallback: '/sporto_v1_with_text.svg',
+    defaultTournamentLogo: '/sporto_v1_with_text.svg',
+    defaultCommunityLogo: '/sporto_v1_with_text.svg',
   }
 } as const;
 

@@ -94,9 +94,10 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
   let divisions: Awaited<ReturnType<typeof getTournamentDivisions>> = [];
   let isForbidden = false;
   let forbiddenMessage: string | null = null;
+  const inviteCode = firstSearchParam(resolvedSearchParams.invite);
   try {
     const [t, d] = await Promise.all([
-      getTournament(resolvedParams.id),
+      getTournament(resolvedParams.id, inviteCode),
       getTournamentDivisions(resolvedParams.id),
     ]);
     tournament = t;
@@ -113,7 +114,13 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
   }
 
   if (isForbidden) {
-    return <ForbiddenClubTournamentView customMessage={forbiddenMessage} />;
+    return (
+      <ForbiddenClubTournamentView
+        tournamentId={resolvedParams.id}
+        initialInviteCode={inviteCode}
+        customMessage={forbiddenMessage}
+      />
+    );
   }
 
   if (!tournament) {

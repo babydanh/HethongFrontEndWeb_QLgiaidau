@@ -1076,6 +1076,11 @@
     "leaveClubTitle": "Rời khỏi câu lạc bộ",
     "leaveClubDescription": "Bạn có chắc chắn muốn rời khỏi câu lạc bộ này?",
     "leaveClubConfirm": "Rời khỏi",
+    "cancelJoinRequestTitle": "Huỷ yêu cầu tham gia",
+    "cancelJoinRequestDescription": "Bạn có chắc chắn muốn huỷ yêu cầu tham gia câu lạc bộ này?",
+    "cancelJoinRequestConfirm": "Huỷ yêu cầu",
+    "cancelJoinRequestSuccess": "Đã huỷ yêu cầu tham gia câu lạc bộ.",
+    "cancelJoinRequestFailed": "Lỗi khi huỷ yêu cầu tham gia câu lạc bộ.",
     "next": "Tiếp tục",
     "viewMore": "Xem thêm",
     "close": "Đóng",
@@ -6365,6 +6370,8 @@
     "notificationType_COMMUNITY_OWNERSHIP_TRANSFERRED": "Nhận quyền sở hữu",
     "notificationType_COMMUNITY_BANNED": "Bị cấm khỏi CLB",
     "notificationType_COMMUNITY_UNBANNED": "Được gỡ cấm",
+    "notificationType_COMMUNITY_JOIN_APPROVED": "Được duyệt tham gia CLB",
+    "notificationType_COMMUNITY_JOIN_REJECTED": "Yêu cầu vào CLB bị từ chối",
     "notificationType_TOURNAMENT_REGISTER_PENDING": "Chờ duyệt đăng ký",
     "notificationType_TOURNAMENT_REGISTER_SUCCESS": "Đăng ký thành công",
     "notificationType_TOURNAMENT_REGISTER_REJECTED": "Đăng ký bị từ chối",
@@ -6407,7 +6414,9 @@
     "notificationType_PAYOUT_REJECTED": "Rút tiền bị từ chối",
     "notificationType_COMMUNITY_POST_MENTIONED": "Được nhắc tên",
     "notificationType_COMMUNITY_POST_COMMENTED": "Bình luận mới",
-    "notificationType_COMMUNITY_POST_APPROVED": "Bài viết được duyệt"
+    "notificationType_COMMUNITY_POST_APPROVED": "Bài viết được duyệt",
+    "notificationType_COMMUNITY_POST_NEW": "Bài viết mới trong CLB",
+    "notificationType_COMMUNITY_CHAT_MESSAGE": "Tin nhắn CLB mới"
   },
   "OrganizerScoring": {
     "noMatch": "Không có dữ liệu trận để nhập điểm.",

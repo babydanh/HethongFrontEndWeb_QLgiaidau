@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
@@ -7,16 +7,37 @@ import { useRouter } from 'next/navigation';
 import { ShieldAlert, ArrowLeft, Users, Home } from 'lucide-react';
 
 interface ForbiddenClubTournamentViewProps {
+  tournamentId?: string | null;
   communityId?: string | null;
+  initialInviteCode?: string | null;
   customMessage?: string | null;
 }
 
 export default function ForbiddenClubTournamentView({
+  tournamentId,
   communityId,
+  initialInviteCode,
   customMessage,
 }: ForbiddenClubTournamentViewProps) {
   const translate = useTranslations('TournamentDetail');
   const router = useRouter();
+  const [inviteCodeInput, setInviteCodeInput] = React.useState(initialInviteCode || '');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleApplyInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = inviteCodeInput.trim();
+    if (!cleanCode) return;
+    setIsSubmitting(true);
+    if (tournamentId) {
+      router.push(`/tournaments/${tournamentId}?invite=${encodeURIComponent(cleanCode)}`);
+      router.refresh();
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.set('invite', cleanCode);
+      window.location.href = url.toString();
+    }
+  };
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
@@ -38,9 +59,33 @@ export default function ForbiddenClubTournamentView({
         </h1>
 
         {/* Description */}
-        <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto mb-8">
+        <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto mb-6">
           {customMessage || translate('clubInternalRestrictedDescription')}
         </p>
+
+        {/* Invite Code Input Section */}
+        <div className="mb-6 bg-slate-50 rounded-2xl border border-slate-200/80 p-4 text-left">
+          <label htmlFor="invite-code-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+            Bạn có mã mời tham gia giải?
+          </label>
+          <form onSubmit={handleApplyInvite} className="flex gap-2">
+            <input
+              id="invite-code-input"
+              type="text"
+              value={inviteCodeInput}
+              onChange={(e) => setInviteCodeInput(e.target.value)}
+              placeholder="Nhập mã mời (Invite Code)..."
+              className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={!inviteCodeInput.trim() || isSubmitting}
+              className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSubmitting ? 'Đang mở...' : 'Áp dụng'}
+            </button>
+          </form>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

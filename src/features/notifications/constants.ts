@@ -14,6 +14,8 @@ export const NOTIFICATION_TYPE_LABEL_KEYS: Record<string, string> = {
   COMMUNITY_OWNERSHIP_TRANSFERRED: 'notificationType_COMMUNITY_OWNERSHIP_TRANSFERRED',
   COMMUNITY_BANNED: 'notificationType_COMMUNITY_BANNED',
   COMMUNITY_UNBANNED: 'notificationType_COMMUNITY_UNBANNED',
+  COMMUNITY_JOIN_APPROVED: 'notificationType_COMMUNITY_JOIN_APPROVED',
+  COMMUNITY_JOIN_REJECTED: 'notificationType_COMMUNITY_JOIN_REJECTED',
   TOURNAMENT_REGISTER_PENDING: 'notificationType_TOURNAMENT_REGISTER_PENDING',
   TOURNAMENT_REGISTER_SUCCESS: 'notificationType_TOURNAMENT_REGISTER_SUCCESS',
   TOURNAMENT_REGISTER_REJECTED: 'notificationType_TOURNAMENT_REGISTER_REJECTED',
@@ -57,6 +59,8 @@ export const NOTIFICATION_TYPE_LABEL_KEYS: Record<string, string> = {
   COMMUNITY_POST_MENTIONED: 'notificationType_COMMUNITY_POST_MENTIONED',
   COMMUNITY_POST_COMMENTED: 'notificationType_COMMUNITY_POST_COMMENTED',
   COMMUNITY_POST_APPROVED: 'notificationType_COMMUNITY_POST_APPROVED',
+  COMMUNITY_POST_NEW: 'notificationType_COMMUNITY_POST_NEW',
+  COMMUNITY_CHAT_MESSAGE: 'notificationType_COMMUNITY_CHAT_MESSAGE',
 };
 
 export interface NotificationTypeMeta {
@@ -319,6 +323,18 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
     dotClassName: 'bg-blue-500',
   },
+  COMMUNITY_JOIN_APPROVED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/75 shadow-sm',
+    dotClassName: 'bg-emerald-500',
+  },
+  COMMUNITY_JOIN_REJECTED: {
+    badgeClassName: 'bg-rose-100 text-rose-800',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/75 shadow-sm',
+    dotClassName: 'bg-rose-500',
+  },
   MATCH_REMINDER: {
     badgeClassName: 'bg-amber-100 text-amber-800',
     cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
@@ -384,6 +400,18 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
     unreadCardClassName: 'border-emerald-200 bg-emerald-50/70 shadow-sm',
     dotClassName: 'bg-emerald-500',
+  },
+  COMMUNITY_POST_NEW: {
+    badgeClassName: 'bg-blue-100 text-blue-800 font-semibold',
+    cardClassName: 'hover:border-blue-200 hover:bg-blue-50/50',
+    unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
+    dotClassName: 'bg-blue-500',
+  },
+  COMMUNITY_CHAT_MESSAGE: {
+    badgeClassName: 'bg-violet-100 text-violet-800 font-semibold',
+    cardClassName: 'hover:border-violet-200 hover:bg-violet-50/50',
+    unreadCardClassName: 'border-violet-200 bg-violet-50/70 shadow-sm',
+    dotClassName: 'bg-violet-500',
   },
 };
 

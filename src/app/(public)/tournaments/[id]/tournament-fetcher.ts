@@ -50,14 +50,15 @@ export const getTournamentResults = cache(async (id: string, divisionId?: string
   }
 });
 
-export const getTournament = cache(async (id: string): Promise<Tournament | null> => {
+export const getTournament = cache(async (id: string, inviteCode?: string): Promise<Tournament | null> => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
   const baseUrl = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
   const appApiKey = process.env.NEXT_PUBLIC_APP_KEY || process.env.APP_KEY || '';
+  const query = inviteCode ? `?invite=${encodeURIComponent(inviteCode)}` : '';
 
   try {
-    const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}`, {
+    const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${id}${query}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(appApiKey ? { 'x-app-key': appApiKey } : {}),

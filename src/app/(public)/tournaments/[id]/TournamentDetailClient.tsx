@@ -1245,8 +1245,22 @@ const commonTranslate = useTranslations('Common');
                   </Button>
                 </Link>
               ) : (
-                <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm">
-                  {translate('joinLinkUnavailable')}
+                <Button
+                  type="button"
+                  onClick={() => {
+                    const rosterEl = document.getElementById('club-lite-roster-widget');
+                    if (rosterEl) {
+                      rosterEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                      const firstSlot = document.querySelector('[title*="Slot #"]');
+                      if (firstSlot) {
+                        firstSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer"
+                >
+                  {registrationButtonLabel || translate('liteJoin') || 'Chọn Slot tham gia'}
                 </Button>
               )
             ) : (
@@ -1655,18 +1669,20 @@ const commonTranslate = useTranslations('Common');
         </div>
 
         {/* Slot Roster Grid Confirmation Widget */}
-        <CommunityTournamentRosterWidget
-          tournamentId={tournament.id}
-          communityId={tournament.communityId || undefined}
-          communityLogoUrl={clubLogo}
-          hideHeader={true}
-          initialTournamentName={tournament.name}
-          categoryName={activeTournament.category?.name}
-          status={activeTournament.status}
-          inviteCode={activeTournament.inviteCode}
-          maxParticipants={activeTournament.maxParticipants}
-          startDate={activeTournament.startDate}
-        />
+        <div id="club-lite-roster-widget">
+          <CommunityTournamentRosterWidget
+            tournamentId={tournament.id}
+            communityId={tournament.communityId || undefined}
+            communityLogoUrl={clubLogo}
+            hideHeader={true}
+            initialTournamentName={tournament.name}
+            categoryName={activeTournament.category?.name}
+            status={activeTournament.status}
+            inviteCode={activeTournament.inviteCode}
+            maxParticipants={activeTournament.maxParticipants}
+            startDate={activeTournament.startDate}
+          />
+        </div>
 
         {/* Contact Info Card */}
         {renderContactCard()}

@@ -1076,6 +1076,11 @@
     "leaveClubTitle": "Leave club",
     "leaveClubDescription": "Are you sure you want to leave this club?",
     "leaveClubConfirm": "Leave",
+    "cancelJoinRequestTitle": "Cancel join request",
+    "cancelJoinRequestDescription": "Are you sure you want to cancel your request to join this club?",
+    "cancelJoinRequestConfirm": "Cancel request",
+    "cancelJoinRequestSuccess": "Join request cancelled successfully.",
+    "cancelJoinRequestFailed": "Failed to cancel join request.",
     "next": "Continue",
     "viewMore": "View more",
     "close": "Close",
@@ -6365,6 +6370,8 @@
     "notificationType_COMMUNITY_OWNERSHIP_TRANSFERRED": "Ownership Transferred",
     "notificationType_COMMUNITY_BANNED": "Banned from Club",
     "notificationType_COMMUNITY_UNBANNED": "Unbanned from Club",
+    "notificationType_COMMUNITY_JOIN_APPROVED": "Club Join Approved",
+    "notificationType_COMMUNITY_JOIN_REJECTED": "Club Join Request Rejected",
     "notificationType_TOURNAMENT_REGISTER_PENDING": "Pending Approval",
     "notificationType_TOURNAMENT_REGISTER_SUCCESS": "Registered Successfully",
     "notificationType_TOURNAMENT_REGISTER_REJECTED": "Registration Rejected",
@@ -6407,7 +6414,9 @@
     "notificationType_PAYOUT_REJECTED": "Payout Rejected",
     "notificationType_COMMUNITY_POST_MENTIONED": "Mentioned in Post",
     "notificationType_COMMUNITY_POST_COMMENTED": "New Comment",
-    "notificationType_COMMUNITY_POST_APPROVED": "Post Approved"
+    "notificationType_COMMUNITY_POST_APPROVED": "Post Approved",
+    "notificationType_COMMUNITY_POST_NEW": "New Club Post",
+    "notificationType_COMMUNITY_CHAT_MESSAGE": "New Club Message"
   },
   "OrganizerScoring": {
     "noMatch": "No match data is available for score entry.",

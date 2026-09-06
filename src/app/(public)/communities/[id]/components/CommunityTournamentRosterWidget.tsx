@@ -266,16 +266,19 @@ export default function CommunityTournamentRosterWidget({
 
   const tournamentName = tournament?.name || initialTournamentName || 'Giải đấu';
   const effectiveCategory = tournament?.category?.name || categoryName;
-  const requiresClubMembership = Boolean(tournament?.communityId && membershipStatus !== 'JOINED');
+  // In public communities, roster is viewable by all. If user clicks an empty slot to join, handleJoin prompts joining the club.
+  // Only if community is truly private and user is not joined, prompt club join.
+  const isPrivateCommunity = community && community.visibility === 'PRIVATE';
+  const requiresClubMembershipToView = Boolean(isPrivateCommunity && membershipStatus !== 'JOINED');
 
-  if (requiresClubMembership) {
+  if (requiresClubMembershipToView) {
     return (
       <>
         <div className="mt-3.5 flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
           <AlertCircle className="h-8 w-8 text-amber-500" />
           <div>
             <h3 className="text-base font-extrabold text-slate-900">Tham gia CLB để xem giải</h3>
-            <p className="mt-1 text-sm text-slate-600">Bạn cần là thành viên CLB trước khi xem danh sách và đăng ký giải này.</p>
+            <p className="mt-1 text-sm text-slate-600">Đây là giải đấu của câu lạc bộ riêng tư. Bạn cần là thành viên CLB trước khi xem danh sách và đăng ký giải này.</p>
           </div>
           {community && <button type="button" onClick={() => setIsJoinCommunityOpen(true)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Tham gia CLB</button>}
         </div>

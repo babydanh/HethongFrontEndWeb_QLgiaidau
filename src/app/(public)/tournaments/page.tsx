@@ -760,7 +760,7 @@ export default function TournamentsListPage() {
                 className="bg-white rounded-lg border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Top: Large Image Banner */}
-                <div className="relative aspect-[2.1/1] w-full bg-slate-950 overflow-hidden">
+                <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
                   <TournamentBannerCover
                     bannerUrl={tournament.bannerUrl}
                     tournamentName={tournament.name}

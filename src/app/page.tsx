@@ -298,8 +298,8 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   }, [locale, tournament.startDate, tournament.endDate]);
 
   return (
-    <div className={`${hideFeaturedCardText ? 'aspect-[21/9] bg-slate-900' : 'bg-white'} rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative`}>
-      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} bg-slate-950 relative overflow-hidden`}>
+    <div className={`${hideFeaturedCardText ? 'aspect-[21/9] bg-slate-100' : 'bg-white'} rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative`}>
+      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} bg-slate-100 relative overflow-hidden`}>
         <TournamentBannerCover
           bannerUrl={tournament.bannerUrl}
           tournamentName={tournament.name}

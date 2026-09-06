@@ -285,7 +285,7 @@ export default function TournamentsTab({
                 className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
               >
                 {/* Compact Card Banner */}
-                <div className="relative h-36 w-full bg-slate-950 overflow-hidden shrink-0">
+                <div className="relative h-36 w-full bg-slate-100 overflow-hidden shrink-0">
                   <TournamentBannerCover
                     bannerUrl={t.bannerUrl}
                     tournamentName={t.name}

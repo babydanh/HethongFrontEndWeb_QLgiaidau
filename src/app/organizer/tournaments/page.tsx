@@ -313,7 +313,7 @@ export default function MyTournamentsPage() {
                   className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
                 >
                   {/* Visual Header */}
-                  <div className="relative h-44 bg-slate-950 overflow-hidden group">
+                  <div className="relative h-44 bg-slate-100 overflow-hidden group">
                     <Link href={manageHref} className="block w-full h-full">
                       <TournamentBannerCover
                         bannerUrl={parent.bannerUrl || firstDivision?.bannerUrl}

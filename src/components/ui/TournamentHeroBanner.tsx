@@ -244,7 +244,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                 width: `${slideWidth}%`,
               }}
             >
-              <div className={`w-full ${heightClass} rounded-lg relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md bg-slate-950 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
+              <div className={`w-full ${heightClass} rounded-lg relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md bg-slate-100 dark:bg-slate-900 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
                 {/* Background Image / Gradient */}
                 <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100 group-hover:scale-105 pointer-events-none select-none">
                   <TournamentBannerCover

@@ -1027,14 +1027,16 @@ export default function ProfilePage() {
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
-                                    <Image
-                                      src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
-                                      alt={community.name}
-                                      fill
-                                      className={community.logoUrl ? "object-cover" : "object-contain p-2"}
-                                    />
-                                  </div>
+                                  {Boolean(community.logoUrl?.trim()) && (
+                                    <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                      <Image
+                                        src={community.logoUrl!}
+                                        alt={community.name}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                  )}
                                   <div className="min-w-0 flex-grow">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">
                                       <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
@@ -1071,14 +1073,16 @@ export default function ProfilePage() {
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
-                                    <Image
-                                      src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
-                                      alt={community.name}
-                                      fill
-                                      className={community.logoUrl ? "object-cover" : "object-contain p-2"}
-                                    />
-                                  </div>
+                                  {Boolean(community.logoUrl?.trim()) && (
+                                    <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                      <Image
+                                        src={community.logoUrl!}
+                                        alt={community.name}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                  )}
                                   <div className="min-w-0 flex-grow">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">
                                       <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>

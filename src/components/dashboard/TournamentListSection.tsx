@@ -27,7 +27,7 @@ interface Props {
 
 export function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
-  const logoSrc = (!imgError && src) ? src : BRAND.assets.defaultTournamentLogo;
+  if (!src || !src.trim() || imgError) return null;
 
   return (
     <div
@@ -35,11 +35,11 @@ export function AvatarCircle({ src, name, size = 32 }: { src?: string | null; na
       style={{ width: size, height: size }}
     >
       <img
-        src={logoSrc}
+        src={src}
         alt={name}
         referrerPolicy="no-referrer"
         onError={() => setImgError(true)}
-        className="w-full h-full object-contain rounded-full"
+        className="w-full h-full object-cover rounded-full"
       />
     </div>
   );

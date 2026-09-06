@@ -733,12 +733,18 @@ export default function CreateCommunityPage() {
                         onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
                         className="w-16 h-16 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-10 z-10 shrink-0 relative flex items-center justify-center cursor-pointer group/logo"
                       >
-                        <Image
-                          src={watchLogoUrl || BRAND.assets.defaultCommunityLogo}
-                          alt="Logo Preview"
-                          fill
-                          className={`transition-transform duration-300 ${watchLogoUrl ? 'object-cover' : 'object-contain p-2'}`}
-                        />
+                        {watchLogoUrl ? (
+                          <Image
+                            src={watchLogoUrl}
+                            alt="Logo Preview"
+                            fill
+                            className="object-cover transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-400">
+                            <Camera className="w-5 h-5" />
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-bold">
                           Đổi
                         </div>

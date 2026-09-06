@@ -224,17 +224,19 @@ export default function CommunitiesPage() {
                 </div>
 
                 {/* Card Info (White Area) */}
-                <div className="p-4 pt-2.5 flex flex-col justify-between bg-white">
+                <div className={`p-4 ${Boolean(community.logoUrl?.trim()) ? 'pt-2.5' : 'pt-4'} flex flex-col justify-between bg-white`}>
                   <div className="flex items-start gap-3 relative">
-                    {/* Circular Logo - Half overlap */}
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative flex items-center justify-center">
-                      <Image
-                        src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
-                        alt={community.name}
-                        fill
-                        className={`transition-transform duration-300 ${community.logoUrl ? 'object-cover' : 'object-contain p-1.5'}`}
-                      />
-                    </div>
+                    {/* Circular Logo - Half overlap (chỉ hiện khi có logo tải lên, không có thì ẩn hoàn toàn) */}
+                    {Boolean(community.logoUrl?.trim()) && (
+                      <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative flex items-center justify-center">
+                        <Image
+                          src={community.logoUrl!}
+                          alt={community.name}
+                          fill
+                          className="object-cover transition-transform duration-300"
+                        />
+                      </div>
+                    )}
 
                     {/* Text info next to logo */}
                     <div className="flex-grow min-w-0">

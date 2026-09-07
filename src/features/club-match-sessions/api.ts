@@ -8,6 +8,7 @@ import type {
 } from '@/types/club-match-session';
 
 type CursorQuery = { cursor?: string | null; limit?: number; status?: string };
+export type RecurringFrequency = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 export type ClubMatchApiError = {
   statusCode?: number;
@@ -41,6 +42,12 @@ export const clubMatchSessionsApi = {
     maxParticipants?: number;
     startAt?: string;
     endAt?: string;
+    isRecurring?: boolean;
+    recurringFrequency?: RecurringFrequency;
+    recurringDayOfWeek?: number;
+    recurringDaysOfWeek?: number[];
+    recurringTimeOfDay?: string;
+    recurringAdvanceDays?: number;
   }) => api.post<ApiResponse<ClubMatchSession>>('/club-match-sessions', payload).then(unwrapClubMatchData),
   list: (communityId: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubMatchSession[]>>('/club-match-sessions', {

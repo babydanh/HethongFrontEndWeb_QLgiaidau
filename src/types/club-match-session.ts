@@ -15,6 +15,12 @@ export interface ClubMatchSession {
   maxParticipants: number;
   startAt: string | null;
   endAt: string | null;
+  isRecurring?: boolean;
+  recurringFrequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
+  recurringDayOfWeek?: number | null;
+  recurringDaysOfWeek?: number[] | null;
+  recurringTimeOfDay?: string | null;
+  recurringAdvanceDays?: number | null;
   version: number;
   participantCount?: number;
   matchCount?: number;

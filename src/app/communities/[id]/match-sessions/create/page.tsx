@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, DatePicker } from '@/components/ui/Input';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { getErrorMessage } from '@/utils/error';
 
@@ -201,20 +201,16 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700 flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{t('startAt')}</span>
-                </label>
-                <input
-                  type="date"
+                <DatePicker
+                  label={t('startAt')}
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  onChange={(val) => setStartDate(val)}
+                  className="h-10 text-xs font-semibold"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700 flex items-center gap-1">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5 text-slate-400" />
                   <span>Giờ bắt đầu</span>
                 </label>

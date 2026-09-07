@@ -17,7 +17,19 @@ export interface ClubMatchSession {
   version: number;
   participantCount?: number;
   matchCount?: number;
-  capabilities?: { canManage?: boolean };
+  capabilities?: {
+    canManage?: boolean;
+    canJoin?: boolean;
+    canWithdraw?: boolean;
+    canCreateMatch?: boolean;
+  };
+  viewerParticipant?: ClubMatchParticipant['participant'] | null;
+  viewerPreferences?: {
+    preferredPartnerUserIds: string[];
+    preferredOpponentUserIds: string[];
+    avoidUserIds: string[];
+    version: number;
+  } | null;
 }
 
 export interface ClubMatchParticipant {
@@ -41,6 +53,10 @@ export interface ClubSessionMatch {
   p2SetsWon: number;
   revision: number;
   eloStatus: string;
+  eloDelta?: Record<string, number> | null;
+  scoreDetails?: Record<string, unknown>;
+  sideAUserIds: string[];
+  sideBUserIds: string[];
   participant1: { id: 'SIDE_A'; members: Array<{ id: string; fullName: string | null }> };
   participant2: { id: 'SIDE_B'; members: Array<{ id: string; fullName: string | null }> };
 }

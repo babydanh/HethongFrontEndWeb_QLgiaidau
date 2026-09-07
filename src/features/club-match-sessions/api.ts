@@ -82,6 +82,8 @@ export const clubMatchSessionsApi = {
     api.post<ApiResponse<unknown>>(`/club-match-sessions/${id}/participants/force`, { userIds }, { headers: { 'Idempotency-Key': idempotencyKey } }).then(unwrapClubMatchData),
   removeParticipant: (id: string, userId: string, version: number) =>
     api.patch<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/${userId}/remove`, { version }).then(unwrapClubMatchData),
+  createMockParticipant: (id: string, name: string) =>
+    api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/mock`, { name }).then(unwrapClubMatchData),
   createMatch: (
     id: string,
     payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES'; confirmWarnings?: boolean },

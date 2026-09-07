@@ -7,6 +7,7 @@ import type {
   CommunityDashboard,
   CommunityPost,
   CommunityComment,
+  CommunityPoll,
   CommunityReactionType,
   CommunitySocialSettings,
   CreateCommunityPostPayload,
@@ -21,6 +22,7 @@ interface BackendPost {
   communityId: string;
   authorId: string;
   tournamentId?: string | null;
+  clubMatchSessionId?: string | null;
   type?: string;
   tournament?: CommunityPost['tournament'];
   body: string | null;
@@ -43,6 +45,7 @@ function mapPost(post: BackendPost): CommunityPost {
     communityId: post.communityId,
     author: post.author ?? { id: post.authorId, fullName: '', avatarUrl: null },
     tournamentId: post.tournamentId ?? null,
+    clubMatchSessionId: post.clubMatchSessionId ?? null,
     type: post.type ?? 'NORMAL',
     tournament: post.tournament ?? null,
     content: post.body ?? '',
@@ -237,13 +240,13 @@ export const communitiesApi = {
     api.patch<ApiResponse<CommunityReport>>(`/communities/${communityId}/moderation/reports/${reportId}`, { status }),
 
   votePoll: (communityId: string, pollId: string, optionId: string) =>
-    api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/vote`, { optionId }),
+    api.post<ApiResponse<CommunityPoll>>(`/communities/${communityId}/polls/${pollId}/vote`, { optionId }),
 
   addPollOption: (communityId: string, pollId: string, optionText: string) =>
-    api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/options`, { optionText }),
+    api.post<ApiResponse<CommunityPoll>>(`/communities/${communityId}/polls/${pollId}/options`, { optionText }),
 
   closePoll: (communityId: string, pollId: string) =>
-    api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/close`),
+    api.post<ApiResponse<CommunityPoll>>(`/communities/${communityId}/polls/${pollId}/close`),
 
   getPendingPosts: (communityId: string) =>
     api.get<ApiResponse<BackendPost[]>>(`/communities/${communityId}/moderation/posts`),

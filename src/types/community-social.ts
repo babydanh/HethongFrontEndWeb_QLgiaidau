@@ -119,6 +119,7 @@ export interface CommunityPost {
   communityId: string;
   author: CommunityPostAuthor;
   tournamentId?: string | null;
+  clubMatchSessionId?: string | null;
   type?: 'NORMAL' | 'TOURNAMENT_ANNOUNCEMENT' | string;
   tournament?: CommunityPostTournament | null;
   content: string;

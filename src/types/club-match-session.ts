@@ -49,6 +49,7 @@ export interface ClubMatchParticipant {
   };
   fullName: string | null;
   avatarUrl: string | null;
+  isMock?: boolean;
 }
 
 export interface ClubSessionMatch {

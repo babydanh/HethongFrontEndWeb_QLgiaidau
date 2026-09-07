@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
-import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight, Users } from "lucide-react";
+import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
 import type {
@@ -18,6 +17,7 @@ import CommunityAvatar from "./CommunityAvatar";
 import CommunityPollCard from "./CommunityPollCard";
 import CommunityTournamentBracketWidget from "./CommunityTournamentBracketWidget";
 import CommunityTournamentRosterWidget from "./CommunityTournamentRosterWidget";
+import CommunityClubMatchSessionRosterWidget from "./CommunityClubMatchSessionRosterWidget";
 import ImageLightboxModal from "@/components/common/ImageLightboxModal";
 import UserProfilePopover, {
   type PopoverUserProfile,
@@ -69,11 +69,6 @@ export default function CommunityPostCard({
     hasBracket ? 'BRACKET' : 'ROSTER'
   );
 
-  useEffect(() => {
-    if (hasBracket) {
-      setActiveTournamentTab('BRACKET');
-    }
-  }, [hasBracket]);
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
 
@@ -518,7 +513,12 @@ export default function CommunityPostCard({
 
 
         {/* Tournament Bracket / Roster Grid / Poll Area */}
-        {(post.tournamentId || post.tournament?.id) ? (
+        {post.clubMatchSessionId ? (
+          <CommunityClubMatchSessionRosterWidget
+            sessionId={post.clubMatchSessionId}
+            communityId={post.communityId}
+          />
+        ) : (post.tournamentId || post.tournament?.id) ? (
           <div className="mt-3.5 space-y-3">
             {/* If bracket exists or is announced, provide clean toggle tabs so users can switch between bracket and roster */}
             {hasBracket && (
@@ -586,7 +586,7 @@ export default function CommunityPostCard({
         )}
 
         {/* Images Grid with Click to Open Lightbox (only for non-tournament posts to prevent duplicate huge banner) */}
-        {!post.tournamentId && !post.tournament?.id && post.imageUrls.length > 0 && (
+        {!post.clubMatchSessionId && !post.tournamentId && !post.tournament?.id && post.imageUrls.length > 0 && (
           <div
             className={cn(
               "mt-3.5 gap-2 overflow-hidden rounded-xl",

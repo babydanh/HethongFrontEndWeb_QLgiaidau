@@ -28,6 +28,8 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
   const [preferredOpponents, setPreferredOpponents] = useState<string[]>([]);
   const [avoidedPlayers, setAvoidedPlayers] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [mockName, setMockName] = useState('');
+  const [creatingMock, setCreatingMock] = useState(false);
   const [participantCursor, setParticipantCursor] = useState<string | null>(null);
   const [matchCursor, setMatchCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -93,6 +95,22 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     () => clubMatchSessionsApi.forceParticipants(sessionId, selectedMembers, crypto.randomUUID()),
     'participantsAssigned',
   );
+
+  const createMockParticipant = async () => {
+    const name = mockName.trim();
+    if (!name || creatingMock) return;
+    setCreatingMock(true);
+    try {
+      await clubMatchSessionsApi.createMockParticipant(sessionId, name);
+      setMockName('');
+      toast.success(t('mockParticipantCreated'));
+      await refresh();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setCreatingMock(false);
+    }
+  };
 
   const savePreferences = () => run(
     () => clubMatchSessionsApi.updatePreferences(
@@ -253,7 +271,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
               <p className="mt-2 text-sm text-amber-800">{sideBPlayers.map((userId) => participants.find((item) => item.participant.userId === userId)?.fullName).filter(Boolean).join(' · ') || t('noPlayers')}</p>
             </div>
           </div>
-          <div className="mt-4 space-y-2">{participants.map((item) => { const userId = item.participant.userId; const assignedSide = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null; const sideFull = sideAPlayers.length >= 2 && !sideAPlayers.includes(userId) || sideBPlayers.length >= 2 && !sideBPlayers.includes(userId); return <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"><div className="flex min-w-0 items-center gap-3"><span className="truncate"><span className="text-sm font-semibold">{item.fullName}</span><span className="ml-2 text-xs text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</span></span>{assignedSide && <Badge>{assignedSide}</Badge>}</div><div className="flex items-center gap-2">{item.participant.status === 'ACTIVE' && <><Button size="sm" variant={assignedSide === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && assignedSide !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={assignedSide === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && assignedSide !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></>}{session.capabilities?.canManage && item.participant.status === 'ACTIVE' && <Button size="sm" variant="destructive" disabled={busy} onClick={() => { if (window.confirm(t('removeParticipantConfirm', { name: item.fullName ?? '' }))) void run(() => clubMatchSessionsApi.removeParticipant(sessionId, item.participant.userId, item.participant.version), 'participantRemoved'); }}>{t('removeParticipant')}</Button>}</div></div>; })}</div>
+          <div className="mt-4 space-y-2">{participants.map((item) => { const userId = item.participant.userId; const assignedSide = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null; const sideFull = sideAPlayers.length >= 2 && !sideAPlayers.includes(userId) || sideBPlayers.length >= 2 && !sideBPlayers.includes(userId); return <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"><div className="flex min-w-0 items-center gap-3"><span className="truncate"><span className="text-sm font-semibold">{item.fullName}</span><span className="ml-2 text-xs text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</span></span>{item.isMock && <Badge>{t('mockPlayer')}</Badge>}{assignedSide && <Badge>{assignedSide}</Badge>}</div><div className="flex items-center gap-2">{item.participant.status === 'ACTIVE' && <><Button size="sm" variant={assignedSide === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && assignedSide !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={assignedSide === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && assignedSide !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></>}{session.capabilities?.canManage && item.participant.status === 'ACTIVE' && <Button size="sm" variant="destructive" disabled={busy} onClick={() => { if (window.confirm(t('removeParticipantConfirm', { name: item.fullName ?? '' }))) void run(() => clubMatchSessionsApi.removeParticipant(sessionId, item.participant.userId, item.participant.version), 'participantRemoved'); }}>{t('removeParticipant')}</Button>}</div></div>; })}</div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {clubMembers.map((record) => {
               const userId = record.member.userId;
@@ -263,6 +281,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
           </div>
           {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={() => void loadMoreMembers()}>{t('loadMoreMembers')}</Button>}
           {participantCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={() => void loadMoreParticipants()}>{t('loadMore')}</Button>}
+          {session.capabilities?.canManage && session.status === 'OPEN' && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3"><input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void createMockParticipant(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" /><Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={() => void createMockParticipant()}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button><span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span></div>}
           <div className="mt-4 flex flex-wrap items-center gap-3">{session.capabilities?.canManage && <Button disabled={busy || selectedMembers.length === 0} variant="outline" onClick={forceSelected}>{t('assignSelected')}</Button>}{session.capabilities?.canCreateMatch && <><span className="text-xs text-slate-500">{t('pairingDerivedHint')}</span><Button disabled={busy || !pairingReady} onClick={() => void createMatch()}>{t('createMatch')}</Button></>}</div>
         </section>
 

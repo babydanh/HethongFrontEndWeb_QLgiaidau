@@ -12,6 +12,7 @@ export interface ClubMatchSession {
   registrationMode: ClubMatchRegistrationMode;
   pairingMode: 'FREE';
   isRanked: boolean;
+  maxParticipants: number;
   startAt: string | null;
   endAt: string | null;
   version: number;

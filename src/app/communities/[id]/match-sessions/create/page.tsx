@@ -8,9 +8,7 @@ import {
   Check,
   ChevronLeft,
   Info,
-  Sparkles,
   Trophy,
-  UserRound,
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -19,28 +17,8 @@ import { Input } from '@/components/ui/Input';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { getErrorMessage } from '@/utils/error';
 
-type RegistrationMode = 'SELF' | 'MANAGER_ASSIGN' | 'MIXED';
-
-const REGISTRATION_MODES = [
-  {
-    value: 'MIXED',
-    labelKey: 'registrationMixed',
-    hintKey: 'registrationMixedHint',
-    icon: Users,
-  },
-  {
-    value: 'SELF',
-    labelKey: 'registrationSelf',
-    hintKey: 'registrationSelfHint',
-    icon: UserRound,
-  },
-  {
-    value: 'MANAGER_ASSIGN',
-    labelKey: 'registrationManager',
-    hintKey: 'registrationManagerHint',
-    icon: Trophy,
-  },
-] as const;
+type DurationOption = 60 | 90 | 'custom';
+type CapacityOption = 8 | 16 | 32 | 64 | 'custom';
 
 export default function CreateClubMatchSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -49,17 +27,28 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [registrationMode, setRegistrationMode] = useState<RegistrationMode>('MIXED');
   const [isRanked, setIsRanked] = useState(true);
   const [startAt, setStartAt] = useState('');
-  const [endAt, setEndAt] = useState('');
+  const [durationOption, setDurationOption] = useState<DurationOption>(60);
+  const [customDuration, setCustomDuration] = useState('60');
+  const [capacityOption, setCapacityOption] = useState<CapacityOption>(16);
+  const [customCapacity, setCustomCapacity] = useState('16');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (startAt && endAt && new Date(endAt) < new Date(startAt)) {
-      toast.error(t('invalidDateRange'));
+    const duration = durationOption === 'custom' ? Number(customDuration) : durationOption;
+    if (!Number.isInteger(duration) || duration < 30 || duration > 720) {
+      toast.error(t('invalidDuration'));
       return;
     }
+    const maxParticipants = capacityOption === 'custom' ? Number(customCapacity) : capacityOption;
+    if (!Number.isInteger(maxParticipants) || maxParticipants < 2 || maxParticipants > 128) {
+      toast.error(t('invalidMaxParticipants'));
+      return;
+    }
+
+    const startDate = startAt ? new Date(startAt) : undefined;
+    const endDate = startDate ? new Date(startDate.getTime() + duration * 60_000) : undefined;
 
     setSubmitting(true);
     try {
@@ -67,10 +56,11 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
         communityId: id,
         name: name.trim() || undefined,
         description: description.trim() || undefined,
-        registrationMode,
+        registrationMode: 'MIXED',
         isRanked,
-        startAt: startAt ? new Date(startAt).toISOString() : undefined,
-        endAt: endAt ? new Date(endAt).toISOString() : undefined,
+        maxParticipants,
+        startAt: startDate?.toISOString(),
+        endAt: endDate?.toISOString(),
       });
       toast.success(t('created'));
       router.replace(`/communities/${id}/match-sessions/${response.id}`);
@@ -93,25 +83,21 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
           {t('back')}
         </button>
 
-        <header className="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-violet-50 p-5 shadow-sm sm:p-7">
+        <header className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                {t('createKicker')}
-              </span>
-              <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 {t('createTitle')}
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
                 {t('createDescription')}
               </p>
             </div>
-            <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20 sm:flex">
+            <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 sm:flex">
               <Users className="h-7 w-7" aria-hidden="true" />
             </div>
           </div>
-          <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-blue-200/80 bg-white/75 px-3.5 py-3 text-xs leading-5 text-blue-900 sm:text-sm">
+          <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs leading-5 text-blue-900 sm:text-sm">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
             <span>{t('noBracketHint')}</span>
           </div>
@@ -165,7 +151,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4">
                   <Input
                     label={t('startAt')}
                     type="datetime-local"
@@ -173,58 +159,92 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                     onChange={(event) => setStartAt(event.target.value)}
                     aria-label={t('startAt')}
                   />
-                  <Input
-                    label={t('endAt')}
-                    type="datetime-local"
-                    value={endAt}
-                    min={startAt || undefined}
-                    onChange={(event) => setEndAt(event.target.value)}
-                    aria-label={t('endAt')}
-                  />
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">{t('durationTitle')}</h3>
+                      <p className="mt-0.5 text-xs text-slate-500">{t('durationHint')}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {([60, 90] as const).map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setDurationOption(option)}
+                          className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${durationOption === option
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200'
+                            }`}
+                        >
+                          {option === 60 ? t('oneHour') : t('ninetyMinutes')}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setDurationOption('custom')}
+                        className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${durationOption === 'custom'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200'
+                          }`}
+                      >
+                        {t('customDuration')}
+                      </button>
+                    </div>
+                    {durationOption === 'custom' && (
+                      <Input
+                        label={t('durationMinutes')}
+                        type="number"
+                        min={30}
+                        max={720}
+                        value={customDuration}
+                        onChange={(event) => setCustomDuration(event.target.value)}
+                      />
+                    )}
+                  </div>
                 </div>
               </section>
             </div>
 
             <div className="space-y-5">
               <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-950 sm:text-base">{t('registrationMode')}</h2>
-                    <p className="mt-0.5 text-xs text-slate-500">{t('registrationModeHint')}</p>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">{t('chooseOne')}</span>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-950 sm:text-base">{t('maxParticipants')}</h2>
+                  <p className="mt-0.5 text-xs text-slate-500">{t('maxParticipantsHint')}</p>
                 </div>
-
-                <div className="space-y-2.5" role="radiogroup" aria-label={t('registrationMode')}>
-                  {REGISTRATION_MODES.map((mode) => {
-                    const selected = registrationMode === mode.value;
-                    const Icon = mode.icon;
-                    return (
-                      <button
-                        key={mode.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => setRegistrationMode(mode.value)}
-                        className={`group flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${selected
-                          ? 'border-blue-500 bg-blue-50/80 ring-1 ring-blue-500/20'
-                          : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'
-                          }`}
-                      >
-                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
-                          <Icon className="h-4 w-4" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className={`flex items-center justify-between gap-2 text-sm font-bold ${selected ? 'text-blue-950' : 'text-slate-800'}`}>
-                            {t(mode.labelKey)}
-                            {selected && <Check className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />}
-                          </span>
-                          <span className="mt-1 block text-xs leading-5 text-slate-500">{t(mode.hintKey)}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-2">
+                  {([8, 16, 32, 64] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setCapacityOption(option)}
+                      className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${capacityOption === option
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200'
+                        }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCapacityOption('custom')}
+                    className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${capacityOption === 'custom'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200'
+                      }`}
+                  >
+                    {t('customMaxParticipants')}
+                  </button>
                 </div>
+                {capacityOption === 'custom' && (
+                  <Input
+                    label={t('maxParticipants')}
+                    type="number"
+                    min={2}
+                    max={128}
+                    value={customCapacity}
+                    onChange={(event) => setCustomCapacity(event.target.value)}
+                  />
+                )}
               </section>
 
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

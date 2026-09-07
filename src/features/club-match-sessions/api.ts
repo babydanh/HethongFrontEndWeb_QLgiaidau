@@ -38,6 +38,7 @@ export const clubMatchSessionsApi = {
     description?: string;
     registrationMode: 'SELF' | 'MANAGER_ASSIGN' | 'MIXED';
     isRanked: boolean;
+    maxParticipants?: number;
     startAt?: string;
     endAt?: string;
   }) => api.post<ApiResponse<ClubMatchSession>>('/club-match-sessions', payload).then(unwrapClubMatchData),

@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 import { toDateLocalValue } from '@/utils/dateTimeInput';
+import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 
 // Zod Schemas matching backend constraints
 const createProfileSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
@@ -75,6 +76,8 @@ export default function EditProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [avatarCropOpen, setAvatarCropOpen] = useState(false);
+  const [rawAvatarSrc, setRawAvatarSrc] = useState('');
 
   // Modals state
   const [isGenderModalOpen, setIsGenderModalOpen] = useState(false);
@@ -294,19 +297,33 @@ export default function EditProfilePage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(translate('imageTooLarge'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setRawAvatarSrc(reader.result);
+        setAvatarCropOpen(true);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
+  const handleAvatarCropConfirm = async (croppedBlob: Blob) => {
+    setAvatarCropOpen(false);
     try {
       setIsUploadingAvatar(true);
+      const file = new File([croppedBlob], 'profile_avatar.png', { type: 'image/png' });
       const response = await usersApi.uploadAvatar(file);
       const url = response.avatarUrl || undefined;
-
       const currentUser = useAuthStore.getState().user;
-      if (currentUser && url) {
-        useAuthStore.getState().setUser({ ...currentUser, avatarUrl: url });
-      }
+      if (currentUser && url) setUser({ ...currentUser, avatarUrl: url });
       toast.success(translate('avatarUpdated'));
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -1347,6 +1364,13 @@ export default function EditProfilePage() {
           </div>
         </div>
       )}
+
+      <CircularImageCropModal
+        isOpen={avatarCropOpen}
+        imageSrc={rawAvatarSrc}
+        onClose={() => setAvatarCropOpen(false)}
+        onConfirm={handleAvatarCropConfirm}
+      />
 
     </div>
   );

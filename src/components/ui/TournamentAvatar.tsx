@@ -48,10 +48,12 @@ export const TournamentAvatar: React.FC<TournamentAvatarProps> = ({
   className = '',
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   if (prevSrc !== src) {
     setPrevSrc(src);
     setHasError(false);
+    setIsLoaded(false);
   }
 
   const sportLogo = getSportLogo(category);
@@ -72,11 +74,16 @@ export const TournamentAvatar: React.FC<TournamentAvatarProps> = ({
       <div
         className={`relative rounded-full bg-white overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 shadow-2xs ${sizeConfig.container} ${className}`}
       >
+        {!isLoaded && <div className="absolute inset-0 animate-pulse bg-slate-100" />}
         <img
           src={src}
           alt={alt}
-          onError={() => setHasError(true)}
-          className="w-full h-full object-cover"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => {
+            setHasError(true);
+            setIsLoaded(false);
+          }}
+          className={`relative w-full h-full object-cover transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       </div>
     );

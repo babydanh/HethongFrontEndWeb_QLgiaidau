@@ -7,7 +7,23 @@ import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { regionsApi, type Region } from '@/features/regions/api';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldAlert, Settings as SettingsIcon, Loader2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  MapPin,
+  Users,
+  Trophy,
+  Share2,
+  MoreHorizontal,
+  ShieldAlert,
+  Settings as SettingsIcon,
+  Loader2,
+  UserPlus,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  ShieldCheck,
+  Lock,
+} from 'lucide-react';
 import { formatDate } from '@/utils/format';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
@@ -67,7 +83,7 @@ export default function CommunityDetailPage() {
       try {
 
         let wardName = '';
-        let districtName = '';
+        const districtName = '';
         let provinceName = '';
 
         if (community.provinceCode) {
@@ -147,16 +163,32 @@ export default function CommunityDetailPage() {
     }
     try {
       const res = await communitiesApi.getMyMembership(id);
-      type MembershipPayload = { role?: string; status?: string; memberId?: string };
-      const current = (res as unknown as { data?: MembershipPayload }).data
-        ?? (res as unknown as MembershipPayload);
-      if (current?.memberId) {
-        const nextMembership = {
-          role: current.role || 'MEMBER',
-          status: current.status || 'JOINED',
-          memberId: current.memberId,
-        };
-        setMembership(nextMembership);
+      type MembershipPayload = {
+        role?: string;
+        status?: string;
+        memberId?: string;
+        id?: string;
+      };
+      const raw = res as unknown as {
+        data?: MembershipPayload | { data?: MembershipPayload };
+        role?: string;
+        status?: string;
+        memberId?: string;
+        id?: string;
+      };
+      const nested = (raw?.data as { data?: MembershipPayload })?.data;
+      const current = (nested || raw?.data || raw) as MembershipPayload;
+
+      const memberId = current?.memberId || current?.id;
+      const status = current?.status;
+      const role = current?.role || 'MEMBER';
+
+      if (memberId || status) {
+        setMembership({
+          role,
+          status: status || 'JOINED',
+          memberId: memberId || 'current-member',
+        });
       } else {
         if (membership !== null) {
           setMembership(null);
@@ -164,8 +196,17 @@ export default function CommunityDetailPage() {
       }
     } catch (error) {
       const status = (error as { response?: { status?: number } })?.response?.status;
-      if (status === 404) setMembership(null);
-      else console.error('Failed to fetch membership status', error);
+      if (status === 404) {
+        // Only clear if community.access doesn't indicate membership
+        setMembership(prev => {
+          if (community?.access?.isMember || community?.access?.membershipStatus) {
+            return prev;
+          }
+          return null;
+        });
+      } else {
+        console.error('Failed to fetch membership status', error);
+      }
     }
   };
 
@@ -241,6 +282,18 @@ export default function CommunityDetailPage() {
       const data = (res as { data?: Community })?.data ?? (res as unknown as Community);
       setCommunity(data);
       if (data.access?.canViewContent) void fetchGallery();
+
+      // Đồng bộ ngay thông tin membership từ access trả về (nếu có)
+      if (data.access?.isMember || data.access?.membershipStatus) {
+        setMembership(prev => {
+          if (prev?.status === 'JOINED') return prev;
+          return {
+            role: data.access?.membershipRole || prev?.role || 'MEMBER',
+            status: data.access?.membershipStatus || (data.access?.isMember ? 'JOINED' : 'PENDING'),
+            memberId: prev?.memberId || 'current-member',
+          };
+        });
+      }
     } catch (e: unknown) {
       const error = e as { response?: { status?: number } };
       console.error('Failed to fetch community details', error);
@@ -277,19 +330,19 @@ export default function CommunityDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    if (id && user) {
+    if (id && user?.id) {
       Promise.resolve().then(() => {
         fetchMembership();
         fetchFollowState();
       });
-    } else {
+    } else if (!user) {
       if (membership !== null) {
         Promise.resolve().then(() => {
           setMembership(null);
         });
       }
     }
-  }, [id, user]);
+  }, [id, user?.id]);
 
   const handleLeaveCommunity = async () => {
     const currentUserId = user?.id;
@@ -384,10 +437,10 @@ export default function CommunityDetailPage() {
         toast.success(translate('joinSuccess')); 
         fetchMembership();
         fetchCommunity();
-      } catch (e) {
-        const error = e as any;
+      } catch (error: unknown) {
         console.error('Failed to join community', error);
-        if (error?.response?.status === 403) {
+        const errObj = error as { response?: { status?: number } };
+        if (errObj?.response?.status === 403) {
           toast.error(translate('inviteOnlyCommunity'));
         } else {
           toast.error(getErrorMessage(error, translate('joinFailed')));
@@ -410,13 +463,26 @@ export default function CommunityDetailPage() {
   };
 
   const getJoinButtonStyles = () => {
-    if (isOwner) return 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200';
-    if (membership?.status === 'JOINED') return 'bg-blue-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-blue-700 border border-blue-200';
-    if (membership?.status === 'PENDING') return 'bg-amber-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-amber-700 border border-amber-200 transition-colors cursor-pointer';
-    if (membership?.status === 'INVITED') return 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse';
-    if (community?.visibility === 'PRIVATE') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
-    if (community?.joinMode === 'INVITE_ONLY') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
-    return 'bg-blue-600 hover:bg-blue-700 text-white';
+    if (isOwner) return 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 shadow-none';
+    if (membership?.status === 'JOINED') return 'bg-emerald-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-emerald-700 border border-emerald-200 shadow-xs transition-colors';
+    if (membership?.status === 'PENDING') return 'bg-amber-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-amber-800 border border-amber-300 shadow-xs transition-colors cursor-pointer';
+    if (membership?.status === 'INVITED') return 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/30 animate-pulse';
+    if (community?.visibility === 'PRIVATE' || community?.joinMode === 'INVITE_ONLY') {
+      return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none';
+    }
+    return 'bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:via-indigo-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 ring-2 ring-blue-500/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]';
+  };
+
+  const renderJoinIcon = () => {
+    if (isJoinLoading) return <Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" />;
+    if (isOwner) return <ShieldCheck className="w-4 h-4 mr-2 shrink-0 text-slate-500" />;
+    if (membership?.status === 'JOINED') return <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-600 shrink-0" />;
+    if (membership?.status === 'PENDING') return <Clock className="w-4 h-4 mr-2 text-amber-600 shrink-0" />;
+    if (membership?.status === 'INVITED') return <Sparkles className="w-4 h-4 mr-2 text-white shrink-0 animate-pulse" />;
+    if (community?.visibility === 'PRIVATE' || community?.joinMode === 'INVITE_ONLY') {
+      return <Lock className="w-4 h-4 mr-2 shrink-0 text-slate-400" />;
+    }
+    return <UserPlus className="w-4 h-4 mr-2 shrink-0 stroke-[2.5]" />;
   };
 
   if (isLoading) {
@@ -449,8 +515,17 @@ export default function CommunityDetailPage() {
     (Boolean(community.creatorId) && user?.id === community.creatorId) ||
     (Boolean(community.ownerId) && user?.id === community.ownerId)
   );
-  const isOwnerOrMod = isOwner || (membership?.role === 'OWNER' || membership?.role === 'MODERATOR');
-  const canViewContent = Boolean(community.access?.canViewContent || membership?.status === 'JOINED' || isOwnerOrMod);
+
+  // Tính trạng thái membership hiệu lực: ưu tiên membership state từ API my-membership, fallback về community.access
+  const effectiveStatus = membership?.status
+    || (community.access?.isMember ? 'JOINED' : null)
+    || community.access?.membershipStatus
+    || null;
+  const effectiveRole = membership?.role || community.access?.membershipRole || 'MEMBER';
+  const effectiveIsJoined = effectiveStatus === 'JOINED' || Boolean(community.access?.isMember);
+
+  const isOwnerOrMod = isOwner || (effectiveRole === 'OWNER' || effectiveRole === 'MODERATOR');
+  const canViewContent = Boolean(community.access?.canViewContent || effectiveIsJoined || isOwnerOrMod);
   const canViewFeed = Boolean(community.access?.canViewFeed || canViewContent);
 
   const slides = community ? [
@@ -564,16 +639,16 @@ export default function CommunityDetailPage() {
             <Button
               onClick={handleJoinAction}
               disabled={isJoinLoading}
-              className={`flex-1 md:flex-none px-6 font-semibold text-xs shadow-sm transition-all h-10 rounded-lg ${getJoinButtonStyles()}`}
+              className={`flex-1 md:flex-none px-6 sm:px-8 font-bold text-sm h-11 rounded-xl transition-all duration-200 ${getJoinButtonStyles()}`}
             >
-              {isJoinLoading && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-              {getJoinButtonLabel()}
+              {renderJoinIcon()}
+              <span>{getJoinButtonLabel()}</span>
             </Button>
 
             <Button
               variant="outline"
               onClick={() => setIsShareModalOpen(true)}
-              className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-lg shadow-sm"
+              className="h-11 px-3.5 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-xl shadow-xs transition-colors"
               aria-label={translate('shareClubAria', { name: community.name })}
             >
               <Share2 className="w-4 h-4" />
@@ -583,7 +658,7 @@ export default function CommunityDetailPage() {
               <Button
                 variant="outline"
                 onClick={() => setActiveTab('settings')}
-                className={`h-10 px-3 rounded-lg shadow-sm border-slate-200 transition-colors ${
+                className={`h-11 px-3.5 rounded-xl shadow-xs border-slate-200 transition-colors ${
                   activeTab === 'settings'
                     ? 'bg-slate-200 text-slate-800 font-semibold'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
@@ -599,7 +674,7 @@ export default function CommunityDetailPage() {
               targetLabel={community.name}
               hidden={isOwner}
               compact
-              className="h-10 rounded-lg shadow-sm"
+              className="h-11 rounded-xl shadow-xs"
             />
           </div>
         </div>

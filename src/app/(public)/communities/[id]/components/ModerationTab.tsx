@@ -24,6 +24,7 @@ import MemberEloAdjustModal, { type EloOperation } from './MemberEloAdjustModal'
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { rankingsApi } from '@/features/rankings/api';
 import { Edit3, Award } from 'lucide-react';
+import { formatNotificationTimestamp } from '@/features/notifications/utils';
 
 interface UserSearchResult {
   id: string;
@@ -337,51 +338,51 @@ export default function ModerationTab({
 
               return (
                 <article key={req.member?.id || userId} className="rounded-xl border border-slate-200/90 bg-slate-50/70 p-4 shadow-2xs">
-                  <div className="flex justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          if (userId) {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            openUserProfile(
-                              {
-                                id: userId,
-                                fullName,
-                                avatarUrl,
-                                joinedAt,
-                              },
-                              rect,
-                              communityId,
-                            );
-                          }
-                        }}
-                        className="flex items-center gap-3 text-left group focus:outline-none"
-                      >
-                        <CommunityAvatar src={avatarUrl} name={fullName} size={40} />
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                            {fullName}
-                          </h4>
-                          <p className="text-[11px] text-slate-400">
-                            {translate('submittedAt', { date: joinedAt ? new Date(joinedAt).toLocaleDateString(locale) : translate('unknownDate') })}
-                          </p>
-                        </div>
-                      </button>
+                  {/* Top Header Row: User Info & Actions */}
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        if (userId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          openUserProfile(
+                            {
+                              id: userId,
+                              fullName,
+                              avatarUrl,
+                              joinedAt,
+                            },
+                            rect,
+                            communityId,
+                          );
+                        }
+                      }}
+                      className="flex items-center gap-3 text-left group focus:outline-none min-w-0 flex-1"
+                    >
+                      <CommunityAvatar src={avatarUrl} name={fullName} size={40} />
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                          {fullName}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
+                          <span>
+                            {translate('submittedAt', {
+                              date: joinedAt
+                                ? `${new Date(joinedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })} ${new Date(joinedAt).toLocaleDateString(locale)}`
+                                : translate('unknownDate'),
+                            })}
+                          </span>
+                          {joinedAt && (
+                            <span className="text-slate-400 font-medium">
+                              ({formatNotificationTimestamp(joinedAt, undefined, locale)})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </button>
 
-                      {joinAnswers && Object.keys(joinAnswers).length > 0 ? (
-                        <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
-                          {Object.entries(joinAnswers).map(([question, answer]) => (
-                            <div key={question} className="text-xs">
-                              <p className="font-semibold text-slate-700">{question}</p>
-                              <p className="mt-0.5 text-slate-600 font-normal">{String(answer)}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex shrink-0 flex-col gap-2">
+                    {/* Action buttons on top row */}
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <button
                         onClick={() => handleReview(userId, 'APPROVE')}
                         className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 shadow-2xs"
@@ -398,6 +399,18 @@ export default function ModerationTab({
                       </button>
                     </div>
                   </div>
+
+                  {/* Form answers */}
+                  {joinAnswers && Object.keys(joinAnswers).length > 0 ? (
+                    <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                      {Object.entries(joinAnswers).map(([question, answer]) => (
+                        <div key={question} className="text-xs">
+                          <p className="font-semibold text-slate-700">{question}</p>
+                          <p className="mt-0.5 text-slate-600 font-normal">{String(answer)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </article>
               );
             })}

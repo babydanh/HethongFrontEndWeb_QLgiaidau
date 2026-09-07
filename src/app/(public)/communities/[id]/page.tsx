@@ -445,7 +445,10 @@ export default function CommunityDetailPage() {
     );
   }
 
-  const isOwner = user?.id === community.creatorId || user?.id === community.ownerId;
+  const isOwner = Boolean(user?.id) && (
+    (Boolean(community.creatorId) && user?.id === community.creatorId) ||
+    (Boolean(community.ownerId) && user?.id === community.ownerId)
+  );
   const isOwnerOrMod = isOwner || (membership?.role === 'OWNER' || membership?.role === 'MODERATOR');
   const canViewContent = Boolean(community.access?.canViewContent || membership?.status === 'JOINED' || isOwnerOrMod);
   const canViewFeed = Boolean(community.access?.canViewFeed || canViewContent);

@@ -167,14 +167,15 @@ export default function TournamentsTab({
     const mt = matchType || "";
     const gr = genderRestriction || "";
     if (mt === "SINGLES") {
-      return gr === "FEMALE"
-        ? translate("communitySinglesFemale")
-        : translate("communitySinglesMale");
+      if (gr === "FEMALE") return translate("communitySinglesFemale");
+      if (gr === "MALE") return translate("communitySinglesMale");
+      return translate("communitySingles");
     }
     if (mt === "DOUBLES") {
-      return gr === "FEMALE"
-        ? translate("communityDoublesFemale")
-        : translate("communityDoublesMale");
+      if (gr === "FEMALE") return translate("communityDoublesFemale");
+      if (gr === "MALE") return translate("communityDoublesMale");
+      if (gr === "MIXED") return translate("communityMixedDoubles");
+      return translate("communityDoubles");
     }
     if (mt === "MIXED_DOUBLES" || mt === "MIXED" || gr === "MIXED") {
       return translate("communityMixedDoubles");

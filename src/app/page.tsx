@@ -1649,7 +1649,10 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <TournamentHeroBanner tournaments={featuredHomepageTournaments} heightClass="h-[185px] sm:h-[240px] md:h-[380px] lg:h-[420px]" />
+              <TournamentHeroBanner
+                tournaments={featuredHomepageTournaments}
+                heightClass="h-[185px] sm:h-[230px] md:h-[280px] lg:h-[330px] xl:h-[380px] 2xl:h-[420px]"
+              />
             )}
           </section>
 

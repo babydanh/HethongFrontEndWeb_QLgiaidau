@@ -41,7 +41,7 @@ function CountdownTimer({ targetDate, daysLabel }: { targetDate: string; daysLab
   );
 }
 
-export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[185px] sm:h-[240px] md:h-[380px] lg:h-[420px]' }: Props) {
+export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[185px] sm:h-[230px] md:h-[280px] lg:h-[340px] xl:h-[390px] 2xl:h-[420px]' }: Props) {
   const translate = useTranslations('Home');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(95);

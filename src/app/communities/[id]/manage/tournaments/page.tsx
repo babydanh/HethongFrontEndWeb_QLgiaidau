@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { ClubMatchSessionsPanel } from '@/features/club-match-sessions/ClubMatchSessionsPanel';
 
 type LiteSport = 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
 
@@ -387,6 +388,14 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
           <div className="flex items-center gap-3 flex-wrap">
             {canCreateClubLite && (
               <Button
+                onClick={() => router.push(`/communities/${community.id}/match-sessions/create`)}
+                className="bg-violet-600 hover:bg-violet-700 font-bold flex items-center gap-2 shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> {translate('communitySocialMatchButton')}
+              </Button>
+            )}
+            {canCreateClubLite && (
+              <Button
                 onClick={() => router.push(`/communities/${community.id}/create-lite`)}
                 className="font-bold flex items-center gap-2 shadow-sm"
               >
@@ -414,6 +423,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             </p>
           </div>
         </div>
+
+        <ClubMatchSessionsPanel communityId={community.id} />
 
         {/* Recurring Schedules Management (Cron) */}
         {(() => {

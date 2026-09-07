@@ -380,6 +380,23 @@ export default function CommunityDetailPage() {
     }
   };
 
+  const isOwner = Boolean(user?.id) && Boolean(community) && (
+    (Boolean(community?.creatorId) && user?.id === community?.creatorId) ||
+    (Boolean(community?.ownerId) && user?.id === community?.ownerId)
+  );
+
+  // Tính trạng thái membership hiệu lực: ưu tiên membership state từ API my-membership, fallback về community.access
+  const effectiveStatus = membership?.status
+    || (community?.access?.isMember ? 'JOINED' : null)
+    || community?.access?.membershipStatus
+    || null;
+  const effectiveRole = membership?.role || community?.access?.membershipRole || 'MEMBER';
+  const effectiveIsJoined = effectiveStatus === 'JOINED' || Boolean(community?.access?.isMember);
+
+  const isOwnerOrMod = isOwner || (effectiveRole === 'OWNER' || effectiveRole === 'MODERATOR');
+  const canViewContent = Boolean(community?.access?.canViewContent || effectiveIsJoined || isOwnerOrMod);
+  const canViewFeed = Boolean(community?.access?.canViewFeed || canViewContent);
+
   const handleJoinAction = async () => {
     if (!user) {
       toast.error(translate('loginToJoin')); 
@@ -392,17 +409,17 @@ export default function CommunityDetailPage() {
       return;
     }
 
-    if (membership?.status === 'JOINED') {
+    if (effectiveIsJoined) {
       setIsLeaveConfirmOpen(true);
       return;
     }
 
-    if (membership?.status === 'PENDING') {
+    if (effectiveStatus === 'PENDING') {
       setIsCancelRequestConfirmOpen(true);
       return;
     }
 
-    if (membership?.status === 'INVITED') {
+    if (effectiveStatus === 'INVITED') {
       try {
         setIsJoinLoading(true);
         await communitiesApi.respondToInvite(id, 'accept');
@@ -423,7 +440,7 @@ export default function CommunityDetailPage() {
       return;
     }
 
-    if (community?.joinMode === 'INVITE_ONLY' && membership?.status !== 'INVITED') {
+    if (community?.joinMode === 'INVITE_ONLY' && effectiveStatus !== 'INVITED') {
       toast.error(translate('inviteOnlyCommunity'));
       return;
     }
@@ -454,9 +471,9 @@ export default function CommunityDetailPage() {
   const getJoinButtonLabel = () => {
     if (isJoinLoading) return translate('confirmProcessing');
     if (isOwner) return translate('ownerRole');
-    if (membership?.status === 'JOINED') return translate('membershipJoined');
-    if (membership?.status === 'PENDING') return translate('membershipPendingStatus');
-    if (membership?.status === 'INVITED') return translate('acceptInviteAction');
+    if (effectiveIsJoined) return translate('membershipJoined');
+    if (effectiveStatus === 'PENDING') return translate('membershipPendingStatus');
+    if (effectiveStatus === 'INVITED') return translate('acceptInviteAction');
     if (community?.visibility === 'PRIVATE') return translate('inviteOnlyCommunity');
     if (community?.joinMode === 'INVITE_ONLY') return translate('inviteOnlyCommunity');
     return community?.joinMode === 'APPROVAL' ? translate('requestToJoin') : translate('joinAction');
@@ -464,9 +481,9 @@ export default function CommunityDetailPage() {
 
   const getJoinButtonStyles = () => {
     if (isOwner) return 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 shadow-none';
-    if (membership?.status === 'JOINED') return 'bg-emerald-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-emerald-700 border border-emerald-200 shadow-xs transition-colors';
-    if (membership?.status === 'PENDING') return 'bg-amber-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-amber-800 border border-amber-300 shadow-xs transition-colors cursor-pointer';
-    if (membership?.status === 'INVITED') return 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/30 animate-pulse';
+    if (effectiveIsJoined) return 'bg-emerald-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-emerald-700 border border-emerald-200 shadow-xs transition-colors';
+    if (effectiveStatus === 'PENDING') return 'bg-amber-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 text-amber-800 border border-amber-300 shadow-xs transition-colors cursor-pointer';
+    if (effectiveStatus === 'INVITED') return 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/30 animate-pulse';
     if (community?.visibility === 'PRIVATE' || community?.joinMode === 'INVITE_ONLY') {
       return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none';
     }
@@ -476,9 +493,9 @@ export default function CommunityDetailPage() {
   const renderJoinIcon = () => {
     if (isJoinLoading) return <Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" />;
     if (isOwner) return <ShieldCheck className="w-4 h-4 mr-2 shrink-0 text-slate-500" />;
-    if (membership?.status === 'JOINED') return <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-600 shrink-0" />;
-    if (membership?.status === 'PENDING') return <Clock className="w-4 h-4 mr-2 text-amber-600 shrink-0" />;
-    if (membership?.status === 'INVITED') return <Sparkles className="w-4 h-4 mr-2 text-white shrink-0 animate-pulse" />;
+    if (effectiveIsJoined) return <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-600 shrink-0" />;
+    if (effectiveStatus === 'PENDING') return <Clock className="w-4 h-4 mr-2 text-amber-600 shrink-0" />;
+    if (effectiveStatus === 'INVITED') return <Sparkles className="w-4 h-4 mr-2 text-white shrink-0 animate-pulse" />;
     if (community?.visibility === 'PRIVATE' || community?.joinMode === 'INVITE_ONLY') {
       return <Lock className="w-4 h-4 mr-2 shrink-0 text-slate-400" />;
     }
@@ -511,22 +528,7 @@ export default function CommunityDetailPage() {
     );
   }
 
-  const isOwner = Boolean(user?.id) && (
-    (Boolean(community.creatorId) && user?.id === community.creatorId) ||
-    (Boolean(community.ownerId) && user?.id === community.ownerId)
-  );
 
-  // Tính trạng thái membership hiệu lực: ưu tiên membership state từ API my-membership, fallback về community.access
-  const effectiveStatus = membership?.status
-    || (community.access?.isMember ? 'JOINED' : null)
-    || community.access?.membershipStatus
-    || null;
-  const effectiveRole = membership?.role || community.access?.membershipRole || 'MEMBER';
-  const effectiveIsJoined = effectiveStatus === 'JOINED' || Boolean(community.access?.isMember);
-
-  const isOwnerOrMod = isOwner || (effectiveRole === 'OWNER' || effectiveRole === 'MODERATOR');
-  const canViewContent = Boolean(community.access?.canViewContent || effectiveIsJoined || isOwnerOrMod);
-  const canViewFeed = Boolean(community.access?.canViewFeed || canViewContent);
 
   const slides = community ? [
     ...(community.bannerUrl ? [community.bannerUrl] : []),

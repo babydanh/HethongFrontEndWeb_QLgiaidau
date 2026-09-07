@@ -22,6 +22,7 @@ import { getErrorMessage } from '@/utils/error';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 
 export default function SettingsTab({ community }: { community: Community }) {
   const translate = useTranslations('CommunitySettings');
@@ -65,6 +66,8 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [bannerUrl, setBannerUrl] = useState(community.bannerUrl || '');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [logoCropOpen, setLogoCropOpen] = useState(false);
+  const [rawLogoSrc, setRawLogoSrc] = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -199,24 +202,45 @@ export default function SettingsTab({ community }: { community: Community }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (type === 'logo') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setRawLogoSrc(reader.result);
+          setLogoCropOpen(true);
+        }
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+      return;
+    }
+
     try {
-      if (type === 'logo') setIsUploadingLogo(true);
-      else setIsUploadingBanner(true);
+      setIsUploadingBanner(true);
 
       const res = await uploadApi.uploadImage(file);
-      if (type === 'logo') {
-        setLogoUrl(res.url);
-        toast.success(translate('logoUploadSuccess'));
-      } else {
-        setBannerUrl(res.url);
-        toast.success(translate('bannerUploadSuccess'));
-      }
+      setBannerUrl(res.url);
+      toast.success(translate('bannerUploadSuccess'));
     } catch (error) {
       console.error('Failed to upload image', error);
       toast.error(getErrorMessage(error, translate('imageUploadError')));
     } finally {
-      if (type === 'logo') setIsUploadingLogo(false);
-      else setIsUploadingBanner(false);
+      setIsUploadingBanner(false);
+    }
+  };
+
+  const handleLogoCropConfirm = async (croppedBlob: Blob) => {
+    setLogoCropOpen(false);
+    try {
+      setIsUploadingLogo(true);
+      const croppedFile = new File([croppedBlob], 'club_logo.png', { type: 'image/png' });
+      const res = await uploadApi.uploadImage(croppedFile);
+      setLogoUrl(res.url);
+      toast.success(translate('logoUploadSuccess'));
+    } catch (error) {
+      toast.error(getErrorMessage(error, translate('imageUploadError')));
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -1206,6 +1230,13 @@ export default function SettingsTab({ community }: { community: Community }) {
           />
         </div>
       </ConfirmModal>
+
+      <CircularImageCropModal
+        isOpen={logoCropOpen}
+        imageSrc={rawLogoSrc}
+        onClose={() => setLogoCropOpen(false)}
+        onConfirm={handleLogoCropConfirm}
+      />
     </div>
   );
 }

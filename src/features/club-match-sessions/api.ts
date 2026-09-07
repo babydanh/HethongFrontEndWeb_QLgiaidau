@@ -84,7 +84,7 @@ export const clubMatchSessionsApi = {
     api.patch<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/${userId}/remove`, { version }).then(unwrapClubMatchData),
   createMatch: (
     id: string,
-    payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType: 'SINGLES' | 'DOUBLES'; confirmWarnings?: boolean },
+    payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES'; confirmWarnings?: boolean },
     idempotencyKey: string,
   ) => api.post<ApiResponse<{ match: ClubSessionMatch }>>(`/club-match-sessions/${id}/matches`, payload, { headers: { 'Idempotency-Key': idempotencyKey } }).then(unwrapClubMatchData),
   updateScore: (match: ClubSessionMatch, p1SetsWon: number, p2SetsWon: number) =>

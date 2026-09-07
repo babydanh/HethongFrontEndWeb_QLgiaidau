@@ -8179,6 +8179,7 @@
     "descriptionPlaceholder": "For example: Friday evening club badminton social...",
     "name": "Session name",
     "namePlaceholder": "Leave blank to use the club-based suggested name",
+    "description": "Description",
     "rankedHint": "Apply ELO update to eligible matches",
     "unrankedHint": "Free play match session, no ELO rating",
     "registrationOpensImmediately": "Registration opens as soon as the session is created.",
@@ -8237,7 +8238,11 @@
     "cancelSessionConfirm": "Cancel this session and every unfinished match?",
     "sessionUpdated": "Session status updated",
     "participants": "Members and free pairing",
-    "participantSelectionHint": "Select members to assign them or split the selection evenly into the two sides of a new match.",
+    "participantSelectionHint": "Choose active players, then assign them to Side A or Side B. One per side becomes singles; two per side becomes doubles.",
+    "sideA": "Side A",
+    "sideB": "Side B",
+    "noPlayers": "Not selected",
+    "pairingDerivedHint": "Match type is inferred from each side",
     "active": "Participating",
     "assignSelected": "Assign selected",
     "participantsAssigned": "Members assigned to the session",
@@ -8267,6 +8272,7 @@
     "createMatch": "Create free-pair match",
     "selectTwoPlayers": "Select exactly 2 players for singles",
     "selectFourPlayers": "Select exactly 4 players for doubles",
+    "selectBalancedPlayers": "Choose 1 or 2 active players on each side with equal side sizes",
     "confirmPairingWarnings": "There are {count} scheduling or pairing-preference warnings. Create the match anyway?",
     "matchCreated": "Social match created",
     "matches": "Social matches",
@@ -8280,7 +8286,7 @@
     "matchCompleted": "Result completed",
     "eloStatus": "ELO status: {status}",
     "eloStates": { "WAITING_RESULT": "Waiting for result", "PENDING": "Processing", "NOT_RANKED": "Not ranked", "SKIPPED_MOCK": "Mock players skipped", "SKIPPED_CANCELLED": "Cancelled result skipped", "APPLIED": "Applied", "FAILED_RETRYABLE": "Retry scheduled", "FAILED_TERMINAL": "Manager review required" },
-    "status": { "OPEN": "Open", "LIVE": "Live", "CLOSED": "Registration closed", "ENDED": "Ended", "CANCELLED": "Cancelled" },
+    "status": { "OPEN": "Registration open", "LIVE": "Live", "CLOSED": "Registration closed", "ENDED": "Ended", "CANCELLED": "Cancelled" },
     "matchStatus": { "SCHEDULED": "Scheduled", "ONGOING": "Ongoing", "COMPLETED": "Completed", "CANCELLED": "Cancelled" }
   }
 }

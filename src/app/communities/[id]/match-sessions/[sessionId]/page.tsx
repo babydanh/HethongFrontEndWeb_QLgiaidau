@@ -21,8 +21,8 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
   const [matches, setMatches] = useState<ClubSessionMatch[]>([]);
   const [clubMembers, setClubMembers] = useState<CommunityMemberRecord[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-  const [matchType, setMatchType] = useState<'SINGLES' | 'DOUBLES'>('SINGLES');
+  const [sideAPlayers, setSideAPlayers] = useState<string[]>([]);
+  const [sideBPlayers, setSideBPlayers] = useState<string[]>([]);
   const [matchStatus, setMatchStatus] = useState('');
   const [preferredPartners, setPreferredPartners] = useState<string[]>([]);
   const [preferredOpponents, setPreferredOpponents] = useState<string[]>([]);
@@ -115,27 +115,54 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     );
   };
 
-  const createMatch = async (confirmWarnings = false) => {
-    const sideSize = matchType === 'SINGLES' ? 1 : 2;
-    if (selectedPlayers.length !== sideSize * 2) {
-      toast.error(t(matchType === 'SINGLES' ? 'selectTwoPlayers' : 'selectFourPlayers'));
+  const assignPlayer = (userId: string, side: 'A' | 'B') => {
+    setSideAPlayers((current) =>
+      side === 'A'
+        ? current.includes(userId)
+          ? current.filter((idValue) => idValue !== userId)
+          : current.length < 2
+            ? [...current, userId]
+            : current
+        : current.filter((idValue) => idValue !== userId),
+    );
+    setSideBPlayers((current) =>
+      side === 'B'
+        ? current.includes(userId)
+          ? current.filter((idValue) => idValue !== userId)
+          : current.length < 2
+            ? [...current, userId]
+            : current
+        : current.filter((idValue) => idValue !== userId),
+    );
+  };
+
+  const createMatch = async (
+    confirmWarnings = false,
+    idempotencyKey = crypto.randomUUID(),
+  ) => {
+    const sideSize = sideAPlayers.length;
+    if (
+      ![1, 2].includes(sideSize) ||
+      sideBPlayers.length !== sideSize
+    ) {
+      toast.error(t('selectBalancedPlayers'));
       return;
     }
     setBusy(true);
     try {
       await clubMatchSessionsApi.createMatch(sessionId, {
-        sideAUserIds: selectedPlayers.slice(0, sideSize),
-        sideBUserIds: selectedPlayers.slice(sideSize),
-        matchType,
+        sideAUserIds: sideAPlayers,
+        sideBUserIds: sideBPlayers,
         confirmWarnings,
-      }, crypto.randomUUID());
-      setSelectedPlayers([]);
+      }, idempotencyKey);
+      setSideAPlayers([]);
+      setSideBPlayers([]);
       toast.success(t('matchCreated'));
       await refresh();
     } catch (error) {
       const body = (error as AxiosError<ClubMatchApiError>).response?.data;
       if (body?.code === 'PAIRING_WARNINGS_REQUIRE_CONFIRMATION' && window.confirm(t('confirmPairingWarnings', { count: body.warnings?.length ?? 0 }))) {
-        await createMatch(true);
+        await createMatch(true, idempotencyKey);
       } else {
         toast.error(getErrorMessage(error));
       }
@@ -163,6 +190,9 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
   if (!session) return <main className="min-h-screen bg-slate-50 p-8 text-center text-slate-600">{t('loading')}</main>;
 
   const activeIds = new Set(participants.filter((item) => item.participant.status === 'ACTIVE').map((item) => item.participant.userId));
+  const pairingReady =
+    [1, 2].includes(sideAPlayers.length) &&
+    sideAPlayers.length === sideBPlayers.length;
   const preferenceOptions = participants.filter((item) =>
     item.participant.status === 'ACTIVE' &&
     item.participant.userId !== session.viewerParticipant?.userId,
@@ -213,7 +243,17 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">{t('participants')}</h2>
           <p className="mt-1 text-sm text-slate-500">{t('participantSelectionHint')}</p>
-          <div className="mt-4 space-y-2">{participants.map((item) => { const playerIndex = selectedPlayers.indexOf(item.participant.userId); const sideSize = matchType === 'SINGLES' ? 1 : 2; return <div key={item.participant.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"><label className="flex items-center gap-3"><input type="checkbox" disabled={item.participant.status !== 'ACTIVE'} checked={playerIndex >= 0} onChange={() => setSelectedPlayers((value) => playerIndex >= 0 ? value.filter((userId) => userId !== item.participant.userId) : value.length < sideSize * 2 ? [...value, item.participant.userId] : value)} /><span><span className="text-sm font-semibold">{item.fullName}</span><span className="ml-2 text-xs text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</span></span>{playerIndex >= 0 && <Badge>{playerIndex < sideSize ? 'A' : 'B'}</Badge>}</label>{session.capabilities?.canManage && item.participant.status === 'ACTIVE' && <Button size="sm" variant="destructive" disabled={busy} onClick={() => { if (window.confirm(t('removeParticipantConfirm', { name: item.fullName ?? '' }))) void run(() => clubMatchSessionsApi.removeParticipant(sessionId, item.participant.userId, item.participant.version), 'participantRemoved'); }}>{t('removeParticipant')}</Button>}</div>; })}</div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className="flex items-center justify-between text-sm font-bold text-blue-900"><span>{t('sideA')}</span><span>{sideAPlayers.length}/2</span></div>
+              <p className="mt-2 text-sm text-blue-800">{sideAPlayers.map((userId) => participants.find((item) => item.participant.userId === userId)?.fullName).filter(Boolean).join(' · ') || t('noPlayers')}</p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-center justify-between text-sm font-bold text-amber-900"><span>{t('sideB')}</span><span>{sideBPlayers.length}/2</span></div>
+              <p className="mt-2 text-sm text-amber-800">{sideBPlayers.map((userId) => participants.find((item) => item.participant.userId === userId)?.fullName).filter(Boolean).join(' · ') || t('noPlayers')}</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">{participants.map((item) => { const userId = item.participant.userId; const assignedSide = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null; const sideFull = sideAPlayers.length >= 2 && !sideAPlayers.includes(userId) || sideBPlayers.length >= 2 && !sideBPlayers.includes(userId); return <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"><div className="flex min-w-0 items-center gap-3"><span className="truncate"><span className="text-sm font-semibold">{item.fullName}</span><span className="ml-2 text-xs text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</span></span>{assignedSide && <Badge>{assignedSide}</Badge>}</div><div className="flex items-center gap-2">{item.participant.status === 'ACTIVE' && <><Button size="sm" variant={assignedSide === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && assignedSide !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={assignedSide === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && assignedSide !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></>}{session.capabilities?.canManage && item.participant.status === 'ACTIVE' && <Button size="sm" variant="destructive" disabled={busy} onClick={() => { if (window.confirm(t('removeParticipantConfirm', { name: item.fullName ?? '' }))) void run(() => clubMatchSessionsApi.removeParticipant(sessionId, item.participant.userId, item.participant.version), 'participantRemoved'); }}>{t('removeParticipant')}</Button>}</div></div>; })}</div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {clubMembers.map((record) => {
               const userId = record.member.userId;
@@ -223,7 +263,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
           </div>
           {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={() => void loadMoreMembers()}>{t('loadMoreMembers')}</Button>}
           {participantCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={() => void loadMoreParticipants()}>{t('loadMore')}</Button>}
-          <div className="mt-4 flex flex-wrap gap-3">{session.capabilities?.canManage && <Button disabled={busy || selectedMembers.length === 0} variant="outline" onClick={forceSelected}>{t('assignSelected')}</Button>}<select aria-label={t('matchType')} className="h-10 rounded-lg border border-slate-300 px-3" value={matchType} onChange={(event) => { setMatchType(event.target.value as typeof matchType); setSelectedPlayers([]); }}><option value="SINGLES">{t('singles')}</option><option value="DOUBLES">{t('doubles')}</option></select>{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => void createMatch()}>{t('createMatch')}</Button>}</div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">{session.capabilities?.canManage && <Button disabled={busy || selectedMembers.length === 0} variant="outline" onClick={forceSelected}>{t('assignSelected')}</Button>}{session.capabilities?.canCreateMatch && <><span className="text-xs text-slate-500">{t('pairingDerivedHint')}</span><Button disabled={busy || !pairingReady} onClick={() => void createMatch()}>{t('createMatch')}</Button></>}</div>
         </section>
 
         {session.viewerParticipant?.status === 'ACTIVE' && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -72,6 +72,29 @@ export function TournamentTypeChoiceModal({
               </p>
             </div>
           </button>
+
+          {/* Social match session option */}
+          <button
+            onClick={() => {
+              router.push(`/communities/${communityId}/match-sessions/create`);
+              onClose();
+            }}
+            className="w-full rounded-lg border border-slate-200 p-4 text-left hover:border-teal-400 hover:shadow-sm transition-all group bg-white"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
+                  Buổi Giao Lưu CLB
+                </h3>
+                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-teal-100 text-teal-800 rounded">
+                  GIAO LƯU
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Ghép trận tự do, không nhánh đấu, có tính ELO CLB hoặc giao lưu vui vẻ
+              </p>
+            </div>
+          </button>
         </div>
 
         <div className="px-6 pb-6">

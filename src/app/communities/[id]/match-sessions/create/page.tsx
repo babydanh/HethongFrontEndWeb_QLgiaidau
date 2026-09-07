@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { getErrorMessage } from '@/utils/error';
 
-type DurationOption = 60 | 90 | 'custom';
+type DurationOption = 60 | 90 | 120 | 180 | 'custom';
 type CapacityOption = 8 | 16 | 32 | 64 | 'custom';
 
 export default function CreateClubMatchSessionPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,6 +33,11 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [customDuration, setCustomDuration] = useState('60');
   const [capacityOption, setCapacityOption] = useState<CapacityOption>(16);
   const [customCapacity, setCustomCapacity] = useState('16');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [recurringDayOfWeek, setRecurringDayOfWeek] = useState(6);
+  const [recurringTimeOfDay, setRecurringTimeOfDay] = useState('18:00');
+  const [recurringAdvanceDays, setRecurringAdvanceDays] = useState(3);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -61,6 +66,16 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
         maxParticipants,
         startAt: startDate?.toISOString(),
         endAt: endDate?.toISOString(),
+        isRecurring,
+        ...(isRecurring
+          ? {
+              recurringFrequency,
+              recurringDayOfWeek,
+              recurringDaysOfWeek: [recurringDayOfWeek],
+              recurringTimeOfDay,
+              recurringAdvanceDays,
+            }
+          : {}),
       });
       toast.success(t('created'));
       router.replace(`/communities/${id}/match-sessions/${response.id}`);
@@ -165,7 +180,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                       <p className="mt-0.5 text-xs text-slate-500">{t('durationHint')}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {([60, 90] as const).map((option) => (
+                      {([60, 90, 120, 180] as const).map((option) => (
                         <button
                           key={option}
                           type="button"
@@ -175,7 +190,13 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                             : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200'
                             }`}
                         >
-                          {option === 60 ? t('oneHour') : t('ninetyMinutes')}
+                          {option === 60
+                            ? t('oneHour')
+                            : option === 90
+                            ? t('ninetyMinutes')
+                            : option === 120
+                            ? t('twoHours')
+                            : t('threeHours')}
                         </button>
                       ))}
                       <button
@@ -201,6 +222,53 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                     )}
                   </div>
                 </div>
+              </section>
+
+              <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-950 sm:text-base">{t('recurringTitle')}</h2>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{t('recurringHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isRecurring}
+                    aria-label={t('recurringTitle')}
+                    onClick={() => setIsRecurring((value) => !value)}
+                    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${isRecurring ? 'bg-blue-600' : 'bg-slate-300'}`}
+                  >
+                    <span className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isRecurring ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+                {isRecurring && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1 text-sm font-medium text-slate-700">
+                      <span>{t('recurringFrequency')}</span>
+                      <select value={recurringFrequency} onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
+                        <option value="DAILY">{t('recurringDaily')}</option>
+                        <option value="WEEKLY">{t('recurringWeekly')}</option>
+                        <option value="BIWEEKLY">{t('recurringBiweekly')}</option>
+                        <option value="MONTHLY">{t('recurringMonthly')}</option>
+                      </select>
+                    </label>
+                    {(recurringFrequency === 'WEEKLY' || recurringFrequency === 'BIWEEKLY') && (
+                      <label className="space-y-1 text-sm font-medium text-slate-700">
+                        <span>{t('recurringWeekday')}</span>
+                        <select value={recurringDayOfWeek} onChange={(event) => setRecurringDayOfWeek(Number(event.target.value))} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
+                          {[1, 2, 3, 4, 5, 6, 0].map((day) => <option key={day} value={day}>{t(`weekday${day}`)}</option>)}
+                        </select>
+                      </label>
+                    )}
+                    <Input label={t('recurringTime')} type="time" value={recurringTimeOfDay} onChange={(event) => setRecurringTimeOfDay(event.target.value)} />
+                    <label className="space-y-1 text-sm font-medium text-slate-700">
+                      <span>{t('recurringAdvanceDays')}</span>
+                      <select value={recurringAdvanceDays} onChange={(event) => setRecurringAdvanceDays(Number(event.target.value))} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
+                        {Array.from({ length: 8 }, (_, day) => <option key={day} value={day}>{day === 0 ? t('recurringSameDay') : t('recurringBeforeDays', { count: day })}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                )}
               </section>
             </div>
 

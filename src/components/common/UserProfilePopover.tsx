@@ -428,6 +428,20 @@ export default function UserProfilePopover({
 
     setSelectedTags((prev) => [...prev, trimmed]);
     setCustomTagInput("");
+
+    // If this tag is not in tagPresets, also persist it as a club tag preset so it can be reused
+    if (communityId && !tagPresets.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) {
+      communitiesApi
+        .createTagPreset(communityId, { name: trimmed, color: "#cbd5e1" })
+        .then((res) => {
+          if (res.data) {
+            setTagPresets((prev) => [...prev, res.data!]);
+          }
+        })
+        .catch(() => {
+          // Preset creation failure is non-blocking for member tag assignment
+        });
+    }
   };
 
   // Save tags
@@ -831,6 +845,50 @@ export default function UserProfilePopover({
             {!isEditingTags ? null : (
               /* Inline Edit Mode */
               <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 space-y-2 animate-in fade-in duration-150">
+                {/* Selected Tags Display */}
+                {selectedTags.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+                      <span>{translate('selectedTagsChipsLabel')}</span>
+                      <span>{selectedTags.length}/{MAX_MEMBER_TAGS}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedTags.map((tag) => {
+                        const preset = tagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
+                        return (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold border shadow-2xs"
+                            style={
+                              preset
+                                ? {
+                                    backgroundColor: preset.color,
+                                    borderColor: `${preset.color}99`,
+                                    color: '#0f172a',
+                                  }
+                                : {
+                                    backgroundColor: '#f1f5f9',
+                                    borderColor: '#cbd5e1',
+                                    color: '#1e293b',
+                                  }
+                            }
+                          >
+                            <span>{getPresetLabel(tag)}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleTag(tag)}
+                              disabled={isSavingTags}
+                              className="text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
+                            >
+                              <X className="h-3 w-3" strokeWidth={2} />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-[10px] font-semibold text-slate-500">
                   {translate('chooseTagToAssign')}
                 </p>

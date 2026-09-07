@@ -80,6 +80,7 @@ type Selection =
 type DisplayMessage = ChatMessage & { mine: boolean };
 type AiToolEvent = { type: 'tool_start' | 'tool_result' | 'tool_error'; tool: string; label: string; round: number; status?: string; uiBlocks?: AssistantUiBlock[] };
 type AiMessage = { role: 'user' | 'assistant'; content: string; uiBlocks?: AssistantUiBlock[]; toolEvents?: AiToolEvent[] };
+type RoomAiReply = { id: string; question: string; content: string; createdAt: string };
 type TypingEvent = { roomId: string; userId: string; isTyping: boolean };
 type PollOption = {
   id: string;
@@ -298,6 +299,8 @@ export default function UnifiedChatWidget() {
     return createInitialAiMessages(translate);
   });
   const [draft, setDraft] = useState('');
+  const [mentionIds, setMentionIds] = useState<string[]>([]);
+  const [roomAiReplies, setRoomAiReplies] = useState<Record<string, RoomAiReply[]>>({});
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -1345,6 +1348,37 @@ export default function UnifiedChatWidget() {
   const sendRoomMessage = async (overrideText?: string) => {
     const text = (overrideText ?? draft).trim();
     if ((!text && selectedFiles.length === 0) || selection.kind !== 'ROOM' || sending) return;
+    const aiMention = text.match(/(^|\s)@AISportO\b/i);
+    if (aiMention && selectedFiles.length === 0) {
+      const question = text.replace(/(^|\s)@AISportO\b/i, ' ').trim();
+      if (!question) {
+        toast.error('Hãy nhập câu hỏi sau @AISportO.');
+        return;
+      }
+      setSending(true);
+      setDraft('');
+      setMentionIds([]);
+      try {
+        const response = await fetch(`${getBaseUrl()}/ai/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: question, currentUrl: pathname, pageTitle: document.title, isMobile: window.matchMedia('(max-width: 640px)').matches, searchParams: window.location.search }),
+        });
+        const payload = await response.json().catch(() => ({})) as { reply?: string; message?: string };
+        if (!response.ok) throw new Error(payload.message || 'Không thể kết nối AISportO.');
+        setRoomAiReplies((current) => ({
+          ...current,
+          [selection.room.id]: [...(current[selection.room.id] || []), { id: `ai-${Date.now()}`, question, content: payload.reply || 'AISportO chưa có phản hồi.', createdAt: new Date().toISOString() }],
+        }));
+      } catch (error: unknown) {
+        setDraft(text);
+        toast.error(getErrorMessage(error, 'Không thể kết nối AISportO.'));
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
     if (isOtherBlocked) {
       toast.error(translate('blockedUserCannotMessage'));
       return;
@@ -1398,7 +1432,10 @@ export default function UnifiedChatWidget() {
         text,
         attachmentsUrls,
         currentReply?.id,
+        undefined,
+        mentionIds.length > 0 ? { mentions: mentionIds } : undefined,
       );
+      setMentionIds([]);
       const message = response.data;
       setMessages((current) =>
         current.some((item) => item.id === message.id)
@@ -1475,6 +1512,9 @@ export default function UnifiedChatWidget() {
 
   const handleDraftChange = (value: string) => {
     setDraft(value);
+    if (selection.kind === 'ROOM' && !/(?:^|\s)@[^\s@]*$/.test(value)) {
+      setMentionIds([]);
+    }
     if (selection.kind !== 'ROOM' || !socketRoomRef.current) return;
     const socket = socketClient.getChatSocket();
     socket.emit('typing', {
@@ -1613,6 +1653,21 @@ export default function UnifiedChatWidget() {
       : selection.kind === 'ROOM'
         ? void sendRoomMessage()
         : void sendSupportMessage();
+
+  const mentionQuery = draft.match(/(?:^|\s)@([^\s@]*)$/)?.[1]?.toLowerCase() ?? null;
+  const mentionCandidates = mentionQuery === null || selection.kind !== 'ROOM'
+    ? []
+    : (selection.room.participants || [])
+        .filter((participant) => participant.id !== user?.id && (participant.fullName || '').toLowerCase().includes(mentionQuery))
+        .slice(0, 6);
+  const selectMention = (participant: { id: string; fullName: string | null }) => {
+    const match = draft.match(/(?:^|\s)@[^\s@]*$/);
+    if (!match) return;
+    const prefix = draft.slice(0, draft.length - match[0].length);
+    setDraft(`${prefix}@${participant.fullName || 'thành viên'} `);
+    setMentionIds((current) => current.includes(participant.id) ? current : [...current, participant.id]);
+    inputRef.current?.focus();
+  };
 
   const sortedRooms = useMemo(
     () =>
@@ -2923,6 +2978,16 @@ export default function UnifiedChatWidget() {
                   })()}
                 </>
               )}
+              {selection.kind === 'ROOM' && (roomAiReplies[selection.room.id] || []).map((reply) => (
+                <div key={reply.id} className="mb-3 flex items-start gap-2 px-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700"><Bot className="h-4 w-4" /></div>
+                  <div className="max-w-[78%] rounded-2xl rounded-bl-xs border border-violet-200 bg-violet-50 px-3.5 py-2 text-sm text-slate-800 shadow-2xs">
+                    <div className="mb-1 text-[11px] font-bold text-violet-700">AISportO</div>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{reply.content}</ReactMarkdown>
+                    <time className="mt-1 block text-[10px] text-slate-400">{new Date(reply.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</time>
+                  </div>
+                </div>
+              ))}
               <div ref={endRef} />
 
               {/* Floating Messenger-like Scroll-To-Bottom Button */}
@@ -3117,6 +3182,29 @@ export default function UnifiedChatWidget() {
                                 disabled={isOtherBlocked || isOtherStrangerRestricted}
                 className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50/70 px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 disabled:text-slate-400"
               />
+
+              {mentionCandidates.length > 0 && (
+                <div className="absolute bottom-full left-14 mb-2 z-40 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                  {mentionCandidates.map((participant) => (
+                    <button
+                      key={participant.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => selectMention(participant)}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-blue-50"
+                    >
+                      {participant.avatarUrl ? (
+                        <img src={participant.avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
+                      ) : (
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
+                          {(participant.fullName || '?').trim().charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      <span className="truncate font-medium text-slate-800">{participant.fullName || 'Thành viên'}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Quick Send Button / Messenger Thumbs Up or Heart */}
               {draft.trim() || selectedFiles.length > 0 ? (

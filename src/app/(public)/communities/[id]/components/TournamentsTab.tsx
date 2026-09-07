@@ -224,10 +224,10 @@ export default function TournamentsTab({
               {translate("communityTournamentManageTitle")}
             </Button>
             <Button
-              onClick={() => router.push(`/communities/${communityId}/create-lite`)}
+              onClick={() => router.push(`/communities/${communityId}/match-sessions/create`)}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
             >
-              + {translate("communityTournamentCreateButton")}
+              + {translate("communitySocialMatchCreateButton")}
             </Button>
           </div>
         )}

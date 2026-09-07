@@ -391,7 +391,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 onClick={() => router.push(`/communities/${community.id}/match-sessions/create`)}
                 className="bg-violet-600 hover:bg-violet-700 font-bold flex items-center gap-2 shadow-sm"
               >
-                <Plus className="w-4 h-4" /> {translate('communitySocialMatchButton')}
+                <Plus className="w-4 h-4" /> {translate('communitySocialMatchCreateButton')}
               </Button>
             )}
             {canCreateClubLite && (

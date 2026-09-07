@@ -138,8 +138,12 @@ export function LiveMatchControlPanel({
       : sideOutState.servingTeam === 2
         ? team2Name
         : translate('unknownTeam');
-  const currentPointTeam1 = tennisPointState ? formatTennisPointDisplay(tennisPointState.team1Point) : String(currentSet.team1Score);
-  const currentPointTeam2 = tennisPointState ? formatTennisPointDisplay(tennisPointState.team2Point) : String(currentSet.team2Score);
+  const currentPointTeam1 = isTennis && tennisPointState
+    ? formatTennisPointDisplay(tennisPointState.team1Point)
+    : String(currentSet.team1Score);
+  const currentPointTeam2 = isTennis && tennisPointState
+    ? formatTennisPointDisplay(tennisPointState.team2Point)
+    : String(currentSet.team2Score);
   const isBadminton = sportKind === 'BADMINTON';
   const isTableTennis = sportKind === 'TABLE_TENNIS';
 
@@ -334,6 +338,15 @@ export function LiveMatchControlPanel({
                     isSubmitting={false}
                     onUpdatePoints={onUpdatePoints}
                   />
+                ) : isLiteMatch ? (
+                  <BadmintonOfficialPanel
+                    team1Name={team1Name}
+                    team2Name={team2Name}
+                    currentPointTeam1={currentPointTeam1}
+                    currentPointTeam2={currentPointTeam2}
+                    isSubmitting={false}
+                    onUpdatePoints={onUpdatePoints}
+                  />
                 ) : isBadminton ? (
                   <BadmintonOfficialPanel
                     team1Name={team1Name}
@@ -366,7 +379,7 @@ export function LiveMatchControlPanel({
 
               {/* Bottom Action Buttons: Big, Prominent, Clear */}
               <div className="pt-3 border-t border-slate-100">
-                {isSingleSetMatch && !isFootball ? (
+                {isSingleSetMatch && !isFootball && !isLiteMatch ? (
                   <p className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold leading-relaxed text-blue-800">
                     {translate(isLiteMatch ? 'singleSetMatchHint' : 'strictSingleSetMatchHint')}
                   </p>
@@ -392,7 +405,7 @@ export function LiveMatchControlPanel({
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    {(!isSingleSetMatch || !isLiteMatch) ? (
+                    {isLiteMatch || !isSingleSetMatch ? (
                       <button
                         type="button"
                         onClick={() => setConfirmFinishSequence(true)}

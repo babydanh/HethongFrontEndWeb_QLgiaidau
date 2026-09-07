@@ -343,6 +343,8 @@ function getMatchBestOfFormat(match: ScheduleBoardMatch, division?: { name?: str
   const matchConfig = (m.matchConfig || m.rules || {}) as Record<string, unknown>;
   const roundConfig = (division?.roundConfig || {}) as Record<string, unknown>;
 
+  if (matchConfig.mode === 'LITE' || matchConfig.scoringMode === 'FREE') return 'LITE';
+
   const setsToWin = Number(matchConfig.setsToWin ?? matchConfig.sets_to_win ?? 0);
   const bestOf = Number(matchConfig.bestOf ?? matchConfig.best_of ?? roundConfig.bestOf ?? roundConfig.best_of ?? 0);
 

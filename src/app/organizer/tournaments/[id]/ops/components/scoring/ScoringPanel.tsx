@@ -68,11 +68,12 @@ export const buildScoreDraft = (
   match: Match,
   tournamentSportRules?: SportRulesEnvelope | null,
 ): ScoreDraft => {
+  const effectiveTournamentSportRules = tournamentSportRules ?? match.tournament?.sportRules;
   const resolvedRules = resolveMatchSportRules({
     matchConfig: match.matchConfig,
     stageRoundConfig: match.stage?.roundConfig ?? match.group?.stage?.roundConfig ?? null,
     tournament: {
-      sportRules: tournamentSportRules,
+      sportRules: effectiveTournamentSportRules,
       tournamentConfig: match.tournament?.tournamentConfig,
     },
   });

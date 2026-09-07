@@ -34,6 +34,7 @@ import {
 import { getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
 import { toApiIsoDateTime, toDateTimeLocalValue } from '@/utils/dateTimeInput';
 import type { StageRoundRuleConfig } from '@/types/tournament';
+import { isLiteTournament } from '@/features/tournaments/lite-qr';
 
 type RoundConfigRecord = Record<string, unknown>;
 
@@ -57,6 +58,19 @@ const findRegionByLabel = (regions: Region[], value?: string | null) => {
 
 const isRoundConfigRecord = (value: unknown): value is RoundConfigRecord =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const readExplicitScoringMode = (value: unknown): 'LITE' | 'STRICT' | undefined => {
+  if (!isRoundConfigRecord(value)) return undefined;
+  const scoring = isRoundConfigRecord(value.scoring) ? value.scoring : undefined;
+  const raw = value.mode ?? value.rulesPreset ?? value.isLite ??
+    scoring?.mode ?? scoring?.rulesPreset ?? scoring?.isLite;
+  if (raw === true) return 'LITE';
+  if (raw === false) return 'STRICT';
+  const normalized = String(raw ?? '').trim().toUpperCase();
+  if (normalized === 'LITE') return 'LITE';
+  if (normalized === 'STRICT' || normalized === 'ADVANCED') return 'STRICT';
+  return undefined;
+};
 
 const mergeRoundConfig = (existing: unknown, incoming: RoundConfigRecord): RoundConfigRecord => {
   const previous = isRoundConfigRecord(existing) ? existing : {};
@@ -201,6 +215,11 @@ export function useManageState(id: string) {
   const manageDraftReadyRef = useRef(false);
   const manageDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'restored' | 'error'>('idle');
+
+  // Product discriminator is independent from the scoring mode. A standard
+  // quick/advanced tournament may use FREE scoring without becoming Super Lite.
+  const isSuperLiteTournament = isLiteTournament(tournament);
+  const tournamentProductMode = isSuperLiteTournament ? 'LITE' : 'STRICT';
 
   const clearManageDraft = useCallback(() => {
     if (typeof window !== 'undefined') window.localStorage.removeItem(manageDraftKey);
@@ -741,7 +760,10 @@ export function useManageState(id: string) {
   const applyDivisionFormValues = useCallback((selected: Division) => {
     const categoryKind = inferSportRuleKindFromCategory(selectedCategory);
     const rawResolvedRules = resolveSportRuleView(selected.roundConfig, categoryKind);
-    const tournamentMode = tournament?.tournamentConfig?.mode;
+    const scoringMode =
+      readExplicitScoringMode(selected.roundConfig) ??
+      readExplicitScoringMode(tournament?.sportRules) ??
+      (isSuperLiteTournament ? 'LITE' : 'STRICT');
     // A legacy division may contain a stale kind from another sport. Never let
     // that override the tournament category when the division is selected.
     const normalizedKind = normalizeSportRuleKindForCategory(rawResolvedRules.kind, selectedCategory);
@@ -750,9 +772,7 @@ export function useManageState(id: string) {
       : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
     const resolvedRules = {
       ...resolvedRulesByKind,
-      ...(tournamentMode
-        ? { mode: (tournamentMode === 'LITE' ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT' }
-        : {}),
+      mode: scoringMode,
     };
     const roundConfig = selected.roundConfig as Record<string, unknown> | null | undefined;
     const groupsConfig = roundConfig?.groupsConfig as Record<string, unknown> | undefined;
@@ -806,7 +826,8 @@ export function useManageState(id: string) {
         tournamentConfig: {
           ...tournament?.tournamentConfig,
           hideFeaturedCardText,
-          mode: isLiteMode ? 'LITE' : 'STRICT',
+          mode: tournamentProductMode,
+          isLite: isSuperLiteTournament,
         },
       });
       toast.success('Lưu thông tin giải đấu thành công!');
@@ -1028,7 +1049,8 @@ export function useManageState(id: string) {
         sportRules: nextSportRules,
         tournamentConfig: {
           ...tournament.tournamentConfig,
-          mode: isLiteMode ? 'LITE' : 'STRICT',
+          mode: tournamentProductMode,
+          isLite: isSuperLiteTournament,
         }
       });
       
@@ -1039,7 +1061,8 @@ export function useManageState(id: string) {
         sportRules: nextSportRules,
         tournamentConfig: {
           ...(current.tournamentConfig || {}),
-          mode: isLiteMode ? 'LITE' : 'STRICT',
+          mode: tournamentProductMode,
+          isLite: isSuperLiteTournament,
         }
       } : current);
     } catch (err) { toast.error(getErrorMessage(err)); }
@@ -2064,7 +2087,8 @@ export function useManageState(id: string) {
             tournamentConfig: {
               ...tournament?.tournamentConfig,
               hideFeaturedCardText,
-              mode: isLiteMode ? 'LITE' : 'STRICT',
+              mode: tournamentProductMode,
+              isLite: isSuperLiteTournament,
             },
           });
         }
@@ -2095,11 +2119,23 @@ export function useManageState(id: string) {
     const selectedCategory = tournament.category || categories.find((category) => category.id === categoryId || category.slug === categoryId) || null;
     const fallbackKind = inferSportRuleKindFromCategory(selectedCategory);
     const resolvedRules = resolveSportRuleView(tournament.sportRules, fallbackKind);
-    const tournamentConfig = tournament.tournamentConfig as Record<string, unknown> | undefined;
-    const resolvedWithTournamentMode =
-      tournamentConfig?.mode === 'LITE' || tournamentConfig?.scoringMode === 'FREE'
-        ? { ...resolvedRules, mode: 'LITE' as const }
-        : resolvedRules;
+    const sportRules = tournament.sportRules as Record<string, unknown> | undefined;
+    const scoringRules = sportRules?.scoring as Record<string, unknown> | undefined;
+    const hasExplicitScoringMode = [
+      sportRules?.mode,
+      sportRules?.isLite,
+      sportRules?.rulesPreset,
+      scoringRules?.mode,
+      scoringRules?.isLite,
+      scoringRules?.rulesPreset,
+    ].some((value) => value != null);
+    const resolvedWithTournamentMode = {
+      ...resolvedRules,
+      // Keep the scoring mode from the rules blob when it is explicit. Only
+      // use the product discriminator as a fallback; scoringMode=FREE alone
+      // must never turn a Quick/Advanced tournament into Super Lite.
+      mode: (hasExplicitScoringMode ? resolvedRules.mode : tournamentProductMode) as 'LITE' | 'STRICT',
+    };
 
     const normalizedKind = normalizeSportRuleKindForCategory(resolvedWithTournamentMode.kind, selectedCategory);
     const effectiveRules = normalizedKind === resolvedWithTournamentMode.kind

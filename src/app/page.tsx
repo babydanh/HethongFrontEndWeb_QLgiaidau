@@ -159,6 +159,9 @@ function LiveMatchSportLabel({ match, tournament, tournamentName, translate }: {
 
   const context = {
     ...match,
+    // This presentation helper only resolves sport rules; do not leak the
+    // broad API status string into the narrower MatchSportContext contract.
+    status: undefined,
     tournament: {
       name: (typeof matchTourn?.name === 'string' ? matchTourn.name : undefined) ?? (typeof tourn?.name === 'string' ? tourn.name : undefined) ?? tournamentName,
       sportRules: (matchTourn?.sportRules ?? tourn?.sportRules ?? null) as SportRulesEnvelope | null,

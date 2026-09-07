@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
-import { extractMatchScores } from '@/features/matches/score-display';
+import { ensureOpenScoringSet, extractMatchScores } from '@/features/matches/score-display';
 
 function normalizeViewerCount(value: unknown) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
@@ -57,9 +57,11 @@ function isStaleRevision(previous: Match | null, incoming: Match): boolean {
   }
 
   if (incoming.revision === previous.revision) {
-    const previousMode = previous.tournament?.tournamentConfig?.mode ?? null;
-    const incomingMode = incoming.tournament?.tournamentConfig?.mode ?? null;
-    return previousMode === incomingMode;
+    // A score/status payload may legitimately keep the same revision when it
+    // is produced by a legacy live endpoint. Only discard a same-revision
+    // event when the full live snapshot is unchanged; otherwise the card can
+    // remain stuck at the previous score until the reconciliation timer runs.
+    return hasSameLiveSnapshot(previous, incoming);
   }
 
   return false;
@@ -104,7 +106,7 @@ export function useLiveMatch(matchId: string) {
         if (isMounted) {
           matchRef.current = data;
           setMatch(data);
-          setScores(extractMatchScores(data.scoreDetails));
+          setScores(ensureOpenScoringSet(data, extractMatchScores(data.scoreDetails)));
           setCheerCount(data.cheerCount ?? 0);
         }
       } catch (err: unknown) {
@@ -163,7 +165,7 @@ export function useLiveMatch(matchId: string) {
           matchRef.current = next;
           return next;
         });
-        const nextScores = extractMatchScores(data.scoreDetails);
+        const nextScores = ensureOpenScoringSet(data, extractMatchScores(data.scoreDetails));
 
         setScores((previous) => (
           areScoresEqual(previous, nextScores) ? previous : nextScores
@@ -259,7 +261,7 @@ export function useLiveMatch(matchId: string) {
 
       if (includeScores) {
 
-        const nextScores = extractMatchScores(updatedMatch.scoreDetails);
+        const nextScores = ensureOpenScoringSet(updatedMatch, extractMatchScores(updatedMatch.scoreDetails));
         setScores((previous) => (areScoresEqual(previous, nextScores) ? previous : nextScores));
       }
     };

@@ -1,4 +1,8 @@
-import type { SportRuleScoringConfig, SportRulesEnvelope, StageRoundConfig } from './tournament';
+import type {
+  SportRuleScoringConfig,
+  SportRulesEnvelope,
+  StageRoundConfig,
+} from "./tournament";
 
 export interface MatchScore {
   team1Score: number;
@@ -17,10 +21,10 @@ export interface PickleballSideOutState {
   openingSequenceDone: boolean;
 }
 
-export type TennisPointLabel = '0' | '15' | '30' | '40' | 'A';
+export type TennisPointLabel = "0" | "15" | "30" | "40" | "A";
 
 export interface TennisLivePointState {
-  mode: 'standard' | 'tiebreak';
+  mode: "standard" | "tiebreak";
   team1Point: TennisPointLabel | number;
   team2Point: TennisPointLabel | number;
 }
@@ -51,7 +55,7 @@ export interface Match {
   groupId: string;
   tournamentId: string;
   divisionId?: string | null;
-  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
+  status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "DISPUTED";
   /** Persisted encounter leg; roundNumber remains the scheduler round/matchday. */
   leg?: number | null;
   roundNumber: number;
@@ -68,8 +72,28 @@ export interface Match {
   courtAddress?: string | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
-  participant1?: { id: string; teamName: string; isMock?: boolean; members?: { userId?: string; fullName?: string | null; avatarUrl?: string | null; isMock?: boolean }[] } | null;
-  participant2?: { id: string; teamName: string; isMock?: boolean; members?: { userId?: string; fullName?: string | null; avatarUrl?: string | null; isMock?: boolean }[] } | null;
+  participant1?: {
+    id: string;
+    teamName: string;
+    isMock?: boolean;
+    members?: {
+      userId?: string;
+      fullName?: string | null;
+      avatarUrl?: string | null;
+      isMock?: boolean;
+    }[];
+  } | null;
+  participant2?: {
+    id: string;
+    teamName: string;
+    isMock?: boolean;
+    members?: {
+      userId?: string;
+      fullName?: string | null;
+      avatarUrl?: string | null;
+      isMock?: boolean;
+    }[];
+  } | null;
   winnerId?: string | null;
   matchConfig?: SportRuleScoringConfig | null;
   scoreDetails?: Record<string, unknown> & {
@@ -109,7 +133,12 @@ export interface Match {
     venueName?: string | null;
     venueAddress?: string | null;
     categoryConfig?: Record<string, unknown> | null;
-    tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' } | null;
+    tournamentConfig?: {
+      isLite?: boolean;
+      mode?: "LITE" | "ADVANCED" | "STRICT";
+      scoringMode?: string;
+      scoring_mode?: string;
+    } | null;
     clubId?: string | null;
   } | null;
   group?: {
@@ -127,4 +156,3 @@ export interface Match {
     roundConfig?: StageRoundConfig | null;
   } | null;
 }
-

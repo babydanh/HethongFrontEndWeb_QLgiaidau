@@ -40,6 +40,29 @@ export const matchesApi = {
     api
       .patch<{ data: Match }>(`/matches/${id}/status`, statusData)
       .then((res) => res.data),
+  updateLiteStatus: (
+    id: string,
+    statusData: {
+      status: Match['status'];
+    },
+  ) =>
+    api
+      .patch<{ data: Match }>(`/matches/${id}/lite-status`, statusData)
+      .then((res) => res.data),
+  updateLiteScore: (
+    id: string,
+    scoreData: {
+      p1SetsWon: number;
+      p2SetsWon: number;
+      scoreDetails: Record<string, unknown>;
+      winnerId?: string | null;
+      overrideReason?: string;
+      expectedRevision?: number;
+    },
+  ) =>
+    api
+      .patch<{ data: Match }>(`/matches/${id}/lite-score`, scoreData)
+      .then((res) => res.data),
   applyOperation: (id: string, operationData: MatchOperationInput) =>
     api
       .patch<{ data: Match }>(`/matches/${id}/operation`, operationData)

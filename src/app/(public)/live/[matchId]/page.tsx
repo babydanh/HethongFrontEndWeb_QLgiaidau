@@ -574,10 +574,12 @@ export default function LiveMatchPage({ params }: Props) {
   const currentSet = scores[activeSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
   const resolvedRules = resolveMatchSportRules(match);
-  // Use the normalized rule view as the single UI mode source. This keeps the
-  // warning banner and quick-finalization behavior aligned even for legacy
-  // match payloads where tournamentConfig.mode is omitted.
-  const isLiteMatch = resolvedRules.mode === 'LITE';
+  const isLiteMatch =
+    resolvedRules.mode === 'LITE' ||
+    match.tournament?.tournamentConfig?.isLite === true ||
+    match.tournament?.tournamentConfig?.scoringMode === 'FREE' ||
+    match.tournament?.tournamentConfig?.mode === 'LITE' ||
+    match.tournament?.sportRules?.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind, tournamentDetailTranslate);
   const scoreGuidance = isLiteMatch
     ? {
@@ -1117,9 +1119,10 @@ export default function LiveMatchPage({ params }: Props) {
 
       const nextSetsWon = deriveSetsWon(newScores);
 
-      // BO1 has no next set. Once the only set is decisive, complete the
+      // In STRICT BO1, there is no next set. Once the only set is decisive, complete the
       // match in the same action so the persisted winner can advance the bracket.
-      if (resolvedRules.setsToWin === 1) {
+      // In LITE mode, users can play and finish as many sets as they want.
+      if (!isLiteMatch && resolvedRules.setsToWin === 1) {
         if (setObj.team1Score === setObj.team2Score) {
           toast.error(matchTranslate('bo1WinnerRequired'));
           return;
@@ -1150,14 +1153,17 @@ export default function LiveMatchPage({ params }: Props) {
         return;
       }
 
-      if (nextSetsWon.p1SetsWon < resolvedRules.setsToWin && nextSetsWon.p2SetsWon < resolvedRules.setsToWin) {
+      const shouldPushNextSet =
+        isLiteMatch ||
+        (nextSetsWon.p1SetsWon < resolvedRules.setsToWin &&
+          nextSetsWon.p2SetsWon < resolvedRules.setsToWin);
+
+      if (shouldPushNextSet) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
 
       const nextTennisPointState =
-        isTennis &&
-        nextSetsWon.p1SetsWon < resolvedRules.setsToWin &&
-        nextSetsWon.p2SetsWon < resolvedRules.setsToWin
+        isTennis && shouldPushNextSet
           ? createTennisLivePointState(newScores[newScores.length - 1], {
               enableTiebreak: !isLiteMatch,
             })
@@ -2142,11 +2148,12 @@ export default function LiveMatchPage({ params }: Props) {
                 {(() => {
                   const setsToWin = resolvedRules.setsToWin || 2;
                   const maxSets = setsToWin === 1 ? 1 : (setsToWin === 2 ? 3 : 5);
+                  const displayLength = isLiteMatch ? Math.max(1, scores.length) : maxSets;
                   return (
                     <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center">
                       <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{scorePresentation.summaryLabel}</h4>
                       <div className="flex flex-wrap justify-center gap-4">
-                        {Array.from({ length: maxSets }).map((_, idx) => {
+                        {Array.from({ length: displayLength }).map((_, idx) => {
                           const set = scores[idx];
                           const isPlayed = idx < scores.length;
                           const isOngoing = isPlayed && !set.isFinished;

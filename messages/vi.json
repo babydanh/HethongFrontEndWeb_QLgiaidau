@@ -234,6 +234,7 @@
     "statusScheduled": "Sắp diễn ra",
     "statusLive": "Đang diễn ra",
     "statusFinished": "Đã kết thúc",
+    "tournamentFinished": "Giải đấu đã kết thúc, không thể tạo lại bảng đấu.",
     "rankedTournament": "GIẢI ĐẤU HẠNG",
     "groupPrefix": "BẢNG {name}",
     "sportBadminton": "Cầu lông",
@@ -3967,7 +3968,9 @@
     "noMatchEvents": "Chưa có sự kiện trong trận.",
     "currentGameScore": "Game hiện tại: {score1} - {score2}",
     "rallyLabel": "Pha bóng",
-    "tennisAutoProgressHint": "Tự tăng theo mốc tennis và tự chốt game khi đủ điều kiện luật."
+    "tennisAutoProgressHint": "Tự tăng theo mốc tennis và tự chốt game khi đủ điều kiện luật.",
+    "liteOpenRules": "Luật mở",
+    "liteCurrentScoreLabel": "Tỷ số hiện tại"
   },
   "DeleteAccount": {
     "metaTitle": "Yêu cầu xóa tài khoản | Quản lý Giải đấu",

@@ -168,15 +168,13 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   }, []);
 
   useEffect(() => {
-    if (province) {
-      regionsApi.getWards(province).then((res) => {
-        setWards(res ?? []);
-      }).catch(() => {
-        setWards([]);
-      });
-    } else {
+    if (!province) return;
+
+    regionsApi.getWards(province).then((res) => {
+      setWards(res ?? []);
+    }).catch(() => {
       setWards([]);
-    }
+    });
   }, [province]);
 
   const fetchBracket = useCallback(async (divisionId = liteDivisionId) => {
@@ -621,7 +619,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const isSingleEliminationBracket = Boolean(
     bracket?.stages?.length === 1 && bracket.stages[0]?.type === 'SINGLE_ELIMINATION',
   );
-  const tournamentDragLocked = ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament?.status ?? '');
+  const isTournamentCompleted = ['COMPLETED', 'FINISHED', 'DONE', 'ENDED'].includes(
+    tournament?.status?.toUpperCase() ?? '',
+  );
+  const tournamentDragLocked = ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'FINISHED', 'DONE', 'ENDED'].includes(
+    tournament?.status?.toUpperCase() ?? '',
+  );
   const bracketDragEnabled = Boolean(
     hasBracket &&
     liteDivisionId &&
@@ -815,6 +818,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   };
 
   const handleGenerateBracket = async () => {
+    if (isTournamentCompleted) {
+      toast.error(translate('tournamentFinished'));
+      return;
+    }
     if (bracketEligibleCount < 2) {
       toast.error(translate('bracketMinimumParticipants', { count: 2 }));
       return;
@@ -857,6 +864,10 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   };
 
   const handleResetBracket = async () => {
+    if (isTournamentCompleted) {
+      toast.error(translate('tournamentFinished'));
+      return;
+    }
     setBracketLoading(true);
     try {
       if (isPairFormat && pendingParticipants.length >= 2) {
@@ -1680,15 +1691,17 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                             <span className="font-medium">💡 Nhánh đấu hiện tại vẫn giữ nguyên. Khi hoàn tất tách/ghép cặp, bạn có thể bấm <strong>&quot;Tạo lại nhánh đấu&quot;</strong> để hệ thống cập nhật sơ đồ theo các cặp đấu mới.</span>
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={handleResetBracket}
-                              disabled={bracketLoading || tournamentDragLocked || bracketEligibleCount < 2}
-                              className="flex-1 gap-2 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-semibold"
-                            >
-                              {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 text-amber-600" />}
-                              {bracketLoading ? translate('creatingBracket') : translate('resetBracketAction')}
-                            </Button>
+                            {!isTournamentCompleted && (
+                              <Button
+                                variant="outline"
+                                onClick={handleResetBracket}
+                                disabled={bracketLoading || tournamentDragLocked || bracketEligibleCount < 2}
+                                className="flex-1 gap-2 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-semibold"
+                              >
+                                {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 text-amber-600" />}
+                                {bracketLoading ? translate('creatingBracket') : translate('resetBracketAction')}
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               onClick={() => setActiveTab('bracket')}
@@ -1718,10 +1731,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Link href={`/tournaments/${id}?tab=bracket`} target="_blank">
                     <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> {translate('viewBracket')}</Button>
                   </Link>
-                  <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading || tournamentDragLocked} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
-                    {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                    {bracketLoading ? translate('creatingBracket') : translate('resetBracketAction')}
-                  </Button>
+                  {!isTournamentCompleted && (
+                    <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading || tournamentDragLocked} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
+                      {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      {bracketLoading ? translate('creatingBracket') : translate('resetBracketAction')}
+                    </Button>
+                  )}
                 </div>
               )}
               {participants.length > 0 && (

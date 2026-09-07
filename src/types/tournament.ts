@@ -1,36 +1,41 @@
-import { Category } from './category';
+import { Category } from "./category";
 
 export enum MatchTypeUI {
-  MALE_SINGLES = 'MALE_SINGLES',
-  FEMALE_SINGLES = 'FEMALE_SINGLES',
-  MALE_DOUBLES = 'MALE_DOUBLES',
-  FEMALE_DOUBLES = 'FEMALE_DOUBLES',
-  MIXED_DOUBLES = 'MIXED_DOUBLES',
+  MALE_SINGLES = "MALE_SINGLES",
+  FEMALE_SINGLES = "FEMALE_SINGLES",
+  MALE_DOUBLES = "MALE_DOUBLES",
+  FEMALE_DOUBLES = "FEMALE_DOUBLES",
+  MIXED_DOUBLES = "MIXED_DOUBLES",
 }
 
 export enum MatchTypeDB {
-  SINGLES = 'SINGLES',
-  DOUBLES = 'DOUBLES',
-  MIXED_DOUBLES = 'MIXED_DOUBLES',
+  SINGLES = "SINGLES",
+  DOUBLES = "DOUBLES",
+  MIXED_DOUBLES = "MIXED_DOUBLES",
 }
 
 export enum GenderRestriction {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE',
-  MIXED = 'MIXED',
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  MIXED = "MIXED",
 }
 
 export type SportRuleKind =
-  | 'BADMINTON'
-  | 'TABLE_TENNIS'
-  | 'PICKLEBALL_RALLY'
-  | 'PICKLEBALL_SIDE_OUT'
-  | 'TENNIS'
-  | 'FOOTBALL';
-export type SportScoringModel = 'RALLY_POINT_SET' | 'TENNIS_SET' | 'PICKLEBALL_SIDE_OUT';
+  | "BADMINTON"
+  | "TABLE_TENNIS"
+  | "PICKLEBALL_RALLY"
+  | "PICKLEBALL_SIDE_OUT"
+  | "TENNIS"
+  | "FOOTBALL";
+export type SportScoringModel =
+  "RALLY_POINT_SET" | "TENNIS_SET" | "PICKLEBALL_SIDE_OUT";
 
 export interface SportRuleScoringConfig {
-  mode?: 'LITE' | 'STRICT';
+  mode?: "LITE" | "STRICT";
+  /** Legacy/Quick scoring discriminator; FREE and OPEN mean unbounded sets. */
+  scoringMode?: string;
+  scoring_mode?: string;
+  rulesPreset?: string;
   kind?: SportRuleKind;
   scoringModel?: SportScoringModel;
   setsToWin?: number;
@@ -105,20 +110,34 @@ export interface Tournament {
   registrationStartDate?: string;
   registrationEndDate?: string;
   sportRules?: SportRulesEnvelope;
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_DELETE' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
-  format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT';
+  status:
+    | "DRAFT"
+    | "PENDING_APPROVAL"
+    | "PENDING_DELETE"
+    | "UPCOMING"
+    | "REGISTRATION_OPEN"
+    | "REGISTRATION_CLOSED"
+    | "IN_PROGRESS"
+    | "ONGOING"
+    | "COMPLETED"
+    | "CANCELLED";
+  format:
+    | "SINGLE_ELIMINATION"
+    | "DOUBLE_ELIMINATION"
+    | "ROUND_ROBIN"
+    | "GROUP_STAGE_KNOCKOUT";
   maxParticipants?: number;
   entryFee?: number;
   platformFeePercentage?: string;
   platformFeeThreshold?: string;
   platformFeeFixedAmount?: string;
   platformFeePerPlayer?: number;
-  tournamentType?: 'CLUB' | 'PUBLIC';
-  matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
+  tournamentType?: "CLUB" | "PUBLIC";
+  matchType?: "SINGLES" | "DOUBLES" | "MIXED_DOUBLES";
   communityId?: string | null;
   inviteCode?: string | null;
-  visibility?: 'PUBLIC' | 'PRIVATE';
-  genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED' | null;
+  visibility?: "PUBLIC" | "PRIVATE";
+  genderRestriction?: "MALE" | "FEMALE" | "MIXED" | null;
   venueId?: string | null;
   isRanked?: boolean;
   isRegistrationLocked?: boolean;
@@ -158,35 +177,39 @@ export interface Tournament {
   };
   parentId?: string | null;
   parent?: ParentTournament | null;
-  divisions?: {
-    id: string;
-    name: string;
-    matchType: string;
-    genderRestriction?: string | null;
-    status: string;
-    categoryId: string;
-    _count?: {
-      participants: number;
-      matches: number;
-    };
-    maxParticipants?: number;
-    inviteCode?: string | null;
-  }[] | null;
+  divisions?:
+    | {
+        id: string;
+        name: string;
+        matchType: string;
+        genderRestriction?: string | null;
+        status: string;
+        categoryId: string;
+        _count?: {
+          participants: number;
+          matches: number;
+        };
+        maxParticipants?: number;
+        inviteCode?: string | null;
+      }[]
+    | null;
   tournamentConfig?: {
     isLite?: boolean;
-    mode?: 'LITE' | 'ADVANCED' | 'STRICT';
+    mode?: "LITE" | "ADVANCED" | "STRICT";
+    scoringMode?: string;
+    scoring_mode?: string;
     bracketType?: string;
     maxTeams?: number;
-    seedingMethod?: 'ELO' | 'RANDOM' | 'MANUAL';
+    seedingMethod?: "ELO" | "RANDOM" | "MANUAL";
     thirdPlaceMatch?: boolean;
     minElo?: number | null;
     maxElo?: number | null;
     maxCombinedElo?: number | null;
     maxTeammateGap?: number | null;
-    registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+    registrationMode?: "OPEN" | "APPROVAL" | "INVITE_ONLY";
     registrationForm?: {
       version: 1;
-      status: 'DRAFT' | 'PUBLISHED';
+      status: "DRAFT" | "PUBLISHED";
       fields: Array<Record<string, unknown>>;
       divisionIds: string[];
     };
@@ -211,7 +234,7 @@ export interface Tournament {
     allowDraw?: boolean;
     recurring?: {
       enabled?: boolean;
-      frequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | string;
+      frequency?: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | string;
       dayOfWeek?: number;
       daysOfWeek?: number[];
       time?: string;
@@ -236,8 +259,8 @@ export interface GroupStageKnockoutConfig {
     wildcardTeamsAdvancing: number;
   };
   playoffConfig: {
-    type: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION';
-    seedingType: 'SEEDED' | 'RANDOM';
+    type: "SINGLE_ELIMINATION" | "DOUBLE_ELIMINATION";
+    seedingType: "SEEDED" | "RANDOM";
   };
   scoring: {
     winPoints: number;
@@ -245,7 +268,7 @@ export interface GroupStageKnockoutConfig {
     lossPoints: number;
   };
   tiebreakerRules: {
-    primary: 'H2H_POINTS' | 'SET_DIFF' | 'POINT_DIFF';
+    primary: "H2H_POINTS" | "SET_DIFF" | "POINT_DIFF";
     secondary: string[];
   };
 }
@@ -269,7 +292,7 @@ export interface TournamentParticipant {
   footballTeamLogoUrl?: string | null;
   rosterLockedAt?: string | null;
   seed: number | null;
-    isPaid: boolean;
+  isPaid: boolean;
   entryFeeAtRegistration?: string | number | null;
   eloPoints?: number;
 
@@ -292,18 +315,18 @@ export interface TournamentParticipant {
   partnerInviteExpiresAt?: string | null;
   teamInviteToken?: string | null;
   teamStatus?:
-    | 'PENDING'
-    | 'PENDING_APPROVAL'
-    | 'PENDING_PARTNER'
-    | 'WAITLISTED'
-    | 'COMPLETE'
-    | 'REJECTED'
-    | 'WITHDRAWN'
-    | 'KICKED'
-    | 'NO_SHOW'
-    | 'DISQUALIFIED'
-    | 'REPLACED'
-    | 'EXPIRED';
+    | "PENDING"
+    | "PENDING_APPROVAL"
+    | "PENDING_PARTNER"
+    | "WAITLISTED"
+    | "COMPLETE"
+    | "REJECTED"
+    | "WITHDRAWN"
+    | "KICKED"
+    | "NO_SHOW"
+    | "DISQUALIFIED"
+    | "REPLACED"
+    | "EXPIRED";
   registeredBy: {
     id: string;
     email?: string | null;
@@ -347,8 +370,28 @@ export interface BracketMatch {
   bracketBranch: string;
   status: string;
   isBye: boolean;
-  participant1: { id: string; teamName: string; seed: number | null; logoUrl?: string | null; members?: { userId: string; fullName: string | null; avatarUrl?: string | null }[] } | null;
-  participant2: { id: string; teamName: string; seed: number | null; logoUrl?: string | null; members?: { userId: string; fullName: string | null; avatarUrl?: string | null }[] } | null;
+  participant1: {
+    id: string;
+    teamName: string;
+    seed: number | null;
+    logoUrl?: string | null;
+    members?: {
+      userId: string;
+      fullName: string | null;
+      avatarUrl?: string | null;
+    }[];
+  } | null;
+  participant2: {
+    id: string;
+    teamName: string;
+    seed: number | null;
+    logoUrl?: string | null;
+    members?: {
+      userId: string;
+      fullName: string | null;
+      avatarUrl?: string | null;
+    }[];
+  } | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
   winnerId: string | null;
@@ -394,7 +437,7 @@ export interface BracketMatch {
 export interface LiteParticipant {
   id: string;
   teamName: string;
-  teamStatus: 'PENDING_PARTNER' | 'COMPLETE' | 'PENDING_APPROVAL' | 'WITHDRAWN';
+  teamStatus: "PENDING_PARTNER" | "COMPLETE" | "PENDING_APPROVAL" | "WITHDRAWN";
   isPaid: boolean;
   teamInviteToken?: string | null;
   rosters: {
@@ -415,7 +458,7 @@ export interface LiteGeneratePairsResponse {
     teamName: string;
   }>;
   unpairedParticipantIds: string[];
-  strategy: 'RANDOM' | 'ELO_BALANCED';
+  strategy: "RANDOM" | "ELO_BALANCED";
 }
 
 export interface LiteUnpairResponse {
@@ -449,4 +492,3 @@ export interface BracketStage {
     superTiebreakPoints?: number;
   } | null;
 }
-

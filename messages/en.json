@@ -235,6 +235,7 @@
     "statusScheduled": "Upcoming",
     "statusLive": "In progress",
     "statusFinished": "Finished",
+    "tournamentFinished": "The tournament has ended; its bracket cannot be recreated.",
     "rankedTournament": "RANKED TOURNAMENT",
     "roundGrandFinal": "Grand final",
     "roundFinal": "Final",
@@ -3967,7 +3968,9 @@
     "noMatchEvents": "No events recorded in this match.",
     "currentGameScore": "Current game: {score1} - {score2}",
     "rallyLabel": "Rally",
-    "tennisAutoProgressHint": "Automatically advances tennis points and closes the game when the rules are met."
+    "tennisAutoProgressHint": "Automatically advances tennis points and closes the game when the rules are met.",
+    "liteOpenRules": "Open rules",
+    "liteCurrentScoreLabel": "Current score"
   },
   "DeleteAccount": {
     "metaTitle": "Request account deletion | Tournament Management",

@@ -71,10 +71,17 @@ export function OfficialScoreModal({
                   <span className="font-semibold text-slate-400">{translate('currentRoundLabel')}</span>
                   <span className="font-bold text-white">{translate('roundValue', { round: match.roundNumber })}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-400">{translate('currentSetLabel')}</span>
-                  <span className="font-bold text-emerald-400">{translate('setValue', { set: activeSetIndex !== undefined ? activeSetIndex + 1 : 1 })}</span>
-                </div>
+                {controlProps.isLiteMatch ? (
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-400">{translate('liveRuleLabel')}</span>
+                    <span className="font-bold text-emerald-400">{translate('liteOpenRules')}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-400">{translate('currentSetLabel')}</span>
+                    <span className="font-bold text-emerald-400">{translate('setValue', { set: activeSetIndex !== undefined ? activeSetIndex + 1 : 1 })}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between pt-1 border-t border-slate-700/60">
                   <span className="font-semibold text-slate-400">{translate('matchStatusLabel')}</span>
                   <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-bold text-blue-300">

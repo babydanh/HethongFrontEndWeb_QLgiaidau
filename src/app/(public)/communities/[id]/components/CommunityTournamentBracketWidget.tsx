@@ -43,7 +43,10 @@ export default function CommunityTournamentBracketWidget({
       .getTournamentById(tournamentId)
       .then((res) => {
         if (!mounted) return;
-        const tourneyData = (res as any)?.data ?? res;
+        const rawRes = (res as any)?.data ?? res;
+        const tourneyData = (rawRes && typeof rawRes === 'object' && 'data' in rawRes && rawRes.data && typeof rawRes.data === 'object' && 'id' in rawRes.data)
+          ? rawRes.data
+          : rawRes;
         if (tourneyData && typeof tourneyData === 'object' && 'id' in tourneyData) {
           setTournament(tourneyData);
           setError(null);

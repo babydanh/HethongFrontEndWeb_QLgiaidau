@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight } from "lucide-react";
+import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
 import type {
@@ -58,6 +58,22 @@ export default function CommunityPostCard({
 
   const commentCount = overrideCommentCount ?? (post.commentCount ?? 0);
   const tournamentStatus = post.tournament?.status?.toUpperCase();
+  const isBracketAnnouncement = post.type === 'TOURNAMENT_BRACKET';
+  const hasActiveOrCompletedBracket =
+    tournamentStatus === 'ONGOING' ||
+    tournamentStatus === 'IN_PROGRESS' ||
+    tournamentStatus === 'COMPLETED' ||
+    tournamentStatus === 'FINISHED';
+  const hasBracket = isBracketAnnouncement || hasActiveOrCompletedBracket;
+  const [activeTournamentTab, setActiveTournamentTab] = useState<'BRACKET' | 'ROSTER'>(
+    hasBracket ? 'BRACKET' : 'ROSTER'
+  );
+
+  useEffect(() => {
+    if (hasBracket) {
+      setActiveTournamentTab('BRACKET');
+    }
+  }, [hasBracket]);
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
 
@@ -503,29 +519,63 @@ export default function CommunityPostCard({
 
         {/* Tournament Bracket / Roster Grid / Poll Area */}
         {(post.tournamentId || post.tournament?.id) ? (
-          (tournamentStatus === 'REGISTRATION_OPEN' || tournamentStatus === 'UPCOMING' || !tournamentStatus) ? (
-            <CommunityTournamentRosterWidget
-              tournamentId={post.tournamentId || post.tournament?.id || ''}
-              communityId={post.communityId}
-              communityLogoUrl={post.tournament?.logoUrl || undefined}
-              initialTournamentName={post.tournament?.name}
-              categoryName={post.tournament?.categoryName}
-              status={post.tournament?.status || undefined}
-              inviteCode={post.tournament?.inviteCode}
-              maxParticipants={post.tournament?.maxParticipants}
-              startDate={post.tournament?.startDate}
-            />
-          ) : (
-            <CommunityTournamentBracketWidget
-              tournamentId={post.tournamentId || post.tournament?.id || ''}
-              communityId={post.communityId}
-              communityLogoUrl={post.tournament?.logoUrl || undefined}
-              initialTournamentName={post.tournament?.name}
-              categoryName={post.tournament?.categoryName}
-              status={post.tournament?.status || undefined}
-              isLite={Boolean(post.tournament?.isLite)}
-            />
-          )
+          <div className="mt-3.5 space-y-3">
+            {/* If bracket exists or is announced, provide clean toggle tabs so users can switch between bracket and roster */}
+            {hasBracket && (
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl w-fit border border-slate-200/70">
+                <button
+                  type="button"
+                  onClick={() => setActiveTournamentTab('BRACKET')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                    activeTournamentTab === 'BRACKET'
+                      ? "bg-white text-blue-700 shadow-xs ring-1 ring-slate-200/80"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Trophy className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{translate('tournamentBracketTab')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTournamentTab('ROSTER')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                    activeTournamentTab === 'ROSTER'
+                      ? "bg-white text-blue-700 shadow-xs ring-1 ring-slate-200/80"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Users className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{translate('tournamentRosterTab')}</span>
+                </button>
+              </div>
+            )}
+
+            {activeTournamentTab === 'BRACKET' ? (
+              <CommunityTournamentBracketWidget
+                tournamentId={post.tournamentId || post.tournament?.id || ''}
+                communityId={post.communityId}
+                communityLogoUrl={post.tournament?.logoUrl || undefined}
+                initialTournamentName={post.tournament?.name}
+                categoryName={post.tournament?.categoryName}
+                status={post.tournament?.status || undefined}
+                isLite={Boolean(post.tournament?.isLite)}
+              />
+            ) : (
+              <CommunityTournamentRosterWidget
+                tournamentId={post.tournamentId || post.tournament?.id || ''}
+                communityId={post.communityId}
+                communityLogoUrl={post.tournament?.logoUrl || undefined}
+                initialTournamentName={post.tournament?.name}
+                categoryName={post.tournament?.categoryName}
+                status={post.tournament?.status || undefined}
+                inviteCode={post.tournament?.inviteCode}
+                maxParticipants={post.tournament?.maxParticipants}
+                startDate={post.tournament?.startDate}
+              />
+            )}
+          </div>
         ) : (
           post.poll && (
             <CommunityPollCard

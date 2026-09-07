@@ -991,6 +991,8 @@
     "tournamentStarts": "Starts:",
     "viewTournamentDetails": "View tournament details",
     "tournamentBracketUpdated": "The tournament bracket has been created. View the bracket and match schedule below.",
+    "tournamentBracketTab": "Bracket & Matches",
+    "tournamentRosterTab": "Participants",
     "postImageAlt": "Post image {index}",
     "zoomImage": "Zoom image",
     "commentsCount": "{count} comments",

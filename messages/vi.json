@@ -991,6 +991,8 @@
     "tournamentStarts": "Bắt đầu:",
     "viewTournamentDetails": "Xem chi tiết giải",
     "tournamentBracketUpdated": "Sơ đồ thi đấu đã được tạo. Xem bracket và lịch đấu bên dưới.",
+    "tournamentBracketTab": "Sơ đồ thi đấu",
+    "tournamentRosterTab": "Danh sách tham gia",
     "postImageAlt": "Ảnh bài viết {index}",
     "zoomImage": "Phóng to",
     "commentsCount": "{count} bình luận",

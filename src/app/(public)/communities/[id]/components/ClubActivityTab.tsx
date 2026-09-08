@@ -28,7 +28,6 @@ import {
   ShieldCheck,
   User,
   Flame,
-  Sparkles,
   Users,
   Plus,
 } from 'lucide-react';
@@ -55,6 +54,96 @@ interface MatchWithTournament extends Match {
   sideAUserIds?: string[];
   sideBUserIds?: string[];
   totalSetsPlayed?: number;
+}
+
+type MatchParticipant = NonNullable<Match['participant1']>;
+type MatchParticipantMember = NonNullable<MatchParticipant['members']>[number];
+
+function getParticipantProfileId(
+  participantId?: string | null,
+  member?: MatchParticipantMember,
+): string | undefined {
+  if (member?.userId) return member.userId;
+  if (participantId && !participantId.startsWith('SIDE_')) return participantId;
+  return undefined;
+}
+
+function ParticipantAvatarStack({
+  participant,
+  participantId,
+  fallbackLogoUrl,
+  fallbackName,
+  winner,
+  communityId,
+}: {
+  participant: Match['participant1'];
+  participantId?: string | null;
+  fallbackLogoUrl?: string | null;
+  fallbackName: string;
+  winner: boolean;
+  communityId: string;
+}) {
+  const { openUserProfile } = useUserProfileModalStore();
+  const members = participant?.members || [];
+  const items: Array<{
+    userId?: string;
+    fullName?: string | null;
+    avatarUrl?: string | null;
+  }> = members.length > 0
+    ? members.slice(0, 2)
+    : [{
+        userId: getParticipantProfileId(participantId),
+        fullName: fallbackName,
+        avatarUrl: fallbackLogoUrl,
+      }];
+
+  return (
+    <div className="flex shrink-0 items-center -space-x-2">
+      {items.map((member, index) => {
+        const targetUserId = getParticipantProfileId(participantId, member);
+        const displayName = member.fullName || fallbackName;
+        const avatarUrl = member.avatarUrl || (members.length === 0 ? fallbackLogoUrl : null);
+
+        return (
+          <button
+            key={`${targetUserId || displayName}-${index}`}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!targetUserId) return;
+              openUserProfile(
+                {
+                  id: targetUserId,
+                  fullName: displayName,
+                  avatarUrl,
+                },
+                event.currentTarget.getBoundingClientRect(),
+                communityId,
+              );
+            }}
+            title={`Xem hồ sơ ${displayName}`}
+            aria-label={`Xem hồ sơ ${displayName}`}
+            className={`relative w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 overflow-hidden border shadow-2xs ${
+              winner
+                ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-600 text-white'
+                : 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-300'
+            }`}
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>{displayName.charAt(0).toUpperCase() || '?'}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function isMockOrPlaceholderParticipant(name?: string | null, isMock?: boolean): boolean {
@@ -926,6 +1015,8 @@ export default function ClubActivityTab({ communityId }: Props) {
             const p2 = match.participant2;
             const p1Id = match.participant1Id || p1?.id;
             const p2Id = match.participant2Id || p2?.id;
+            const p1ProfileId = getParticipantProfileId(p1Id, p1?.members?.[0]);
+            const p2ProfileId = getParticipantProfileId(p2Id, p2?.members?.[0]);
 
             const isP1Winner = isCompleted && match.winnerId === p1Id;
             const isP2Winner = isCompleted && match.winnerId === p2Id;
@@ -995,9 +1086,8 @@ export default function ClubActivityTab({ communityId }: Props) {
                   <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                     <div className="flex items-center gap-2 flex-wrap">
                       {match.isStandaloneMatch ? (
-                        <span className="inline-flex items-center gap-1.5 font-bold text-violet-700 bg-violet-50/90 px-2.5 py-1 rounded-md border border-violet-200/80 shadow-2xs">
-                          <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                          <span>{matchTranslate('clubStandaloneMatchBadge')}</span>
+                        <span className="inline-flex items-center rounded-md bg-violet-600 px-2.5 py-1 font-bold text-white shadow-2xs">
+                          {matchTranslate('clubStandaloneMatchBadge')}
                         </span>
                       ) : match.tournamentName && (
                         match.isClubSessionMatch ? (
@@ -1085,49 +1175,22 @@ export default function ClubActivityTab({ communityId }: Props) {
                       </div>
                     )}
 
-                    {/* Team 1 Row */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            const targetUserId = p1Id || match.participant1?.members?.[0]?.userId;
-                            if (targetUserId) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              openUserProfile(
-                                {
-                                  id: targetUserId,
-                                  fullName: p1?.teamName || matchTranslate('unknownTeam'),
-                                  avatarUrl: p1Logo,
-                                },
-                                rect,
-                                communityId,
-                              );
-                            }
-                          }}
-                          title={`Xem hồ sơ ${p1?.teamName || ''}`}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer overflow-hidden border shadow-2xs ${
-                            isP1Winner
-                              ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-600 text-white'
-                              : 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-300'
-                          }`}
-                        >
-                          {p1Logo ? (
-                            <img
-                              src={p1Logo}
-                              alt={p1?.teamName || 'Participant 1'}
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span>{p1?.teamName ? p1.teamName.charAt(0).toUpperCase() : '1'}</span>
-                          )}
-                        </button>
+                      {/* Team 1 Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <ParticipantAvatarStack
+                            participant={p1}
+                            participantId={p1Id}
+                            fallbackLogoUrl={p1Logo}
+                            fallbackName={p1?.teamName || matchTranslate('unknownTeam')}
+                            winner={isP1Winner}
+                            communityId={communityId}
+                          />
                         <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
                           <button
                             type="button"
                             onClick={(e) => {
-                              const targetUserId = p1Id || match.participant1?.members?.[0]?.userId;
+                              const targetUserId = p1ProfileId;
                               if (targetUserId) {
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 openUserProfile(
@@ -1192,49 +1255,22 @@ export default function ClubActivityTab({ communityId }: Props) {
                       </div>
                     </div>
 
-                    {/* Team 2 Row */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            const targetUserId = p2Id || match.participant2?.members?.[0]?.userId;
-                            if (targetUserId) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              openUserProfile(
-                                {
-                                  id: targetUserId,
-                                  fullName: p2?.teamName || matchTranslate('unknownTeam'),
-                                  avatarUrl: p2Logo,
-                                },
-                                rect,
-                                communityId,
-                              );
-                            }
-                          }}
-                          title={`Xem hồ sơ ${p2?.teamName || ''}`}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 cursor-pointer overflow-hidden border shadow-2xs ${
-                            isP2Winner
-                              ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-600 text-white'
-                              : 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-300'
-                          }`}
-                        >
-                          {p2Logo ? (
-                            <img
-                              src={p2Logo}
-                              alt={p2?.teamName || 'Participant 2'}
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span>{p2?.teamName ? p2.teamName.charAt(0).toUpperCase() : '2'}</span>
-                          )}
-                        </button>
+                      {/* Team 2 Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <ParticipantAvatarStack
+                            participant={p2}
+                            participantId={p2Id}
+                            fallbackLogoUrl={p2Logo}
+                            fallbackName={p2?.teamName || matchTranslate('unknownTeam')}
+                            winner={isP2Winner}
+                            communityId={communityId}
+                          />
                         <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
                           <button
                             type="button"
                             onClick={(e) => {
-                              const targetUserId = p2Id || match.participant2?.members?.[0]?.userId;
+                              const targetUserId = p2ProfileId;
                               if (targetUserId) {
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 openUserProfile(

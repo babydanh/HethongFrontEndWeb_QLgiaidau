@@ -434,14 +434,6 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>
 
-        <nav className="flex h-fit min-w-0 overflow-x-auto border-b border-slate-200/80 bg-white px-2 shadow-xs lg:col-start-1 lg:self-start" aria-label={t('tabNavigation')}>
-          {tabs.map((tab) => (
-            <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
-              {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
-            </SessionTabButton>
-          ))}
-        </nav>
-
         <aside className="self-start rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-1">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
           <div className="mt-4 flex items-center gap-3">
@@ -450,9 +442,16 @@ export function ClubMatchSessionDetailView({
           </div>
         </aside>
 
-        <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
+        <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
+        <nav className="flex h-fit min-w-0 overflow-x-auto rounded-xl border border-slate-200/80 bg-white px-2 shadow-xs" aria-label={t('tabNavigation')}>
+          {tabs.map((tab) => (
+            <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
+              {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
+            </SessionTabButton>
+          ))}
+        </nav>
 
-        <div className="space-y-4 lg:col-start-1">
+        <div className="space-y-4">
 
         {activeTab === 'overview' && <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
@@ -537,7 +536,9 @@ export function ClubMatchSessionDetailView({
         </section>}
 
         {activeTab === 'statistics' && <StatisticsPanel stats={playerStats} completedMatches={completedMatches.length} t={t} />}
-      </div>
+        </div>
+        </div>
+        <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
       </div>
         {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(); }} />}
       </div>

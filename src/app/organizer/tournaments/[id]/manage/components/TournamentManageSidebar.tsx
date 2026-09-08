@@ -292,7 +292,7 @@ export function TournamentManageSidebar({
         aria-label={t('sidebar.manageMenu')}
         data-manage-sidebar
         className={cn(
-          'z-50 flex-col gap-4 lg:sticky lg:top-6 lg:z-auto lg:flex lg:w-[272px] lg:shrink-0',
+          'z-50 flex-col gap-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] lg:z-auto lg:flex lg:w-[272px] lg:shrink-0',
           isOpen
             ? 'fixed inset-y-0 left-0 flex w-[min(88vw,320px)] overflow-y-auto bg-white p-4 shadow-2xl'
             : 'hidden',

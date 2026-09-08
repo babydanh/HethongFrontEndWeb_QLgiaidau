@@ -8,6 +8,13 @@ import { Input, DatePicker } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+} from '@/components/ui/Modal';
+import {
   tournamentsApi,
   type BracketMatch,
   type BracketStage,
@@ -44,6 +51,7 @@ import RichTextEditor from '@/components/ui/RichTextEditor';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { regionsApi, type Region } from '@/features/regions/api';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import { communitiesApi, type CommunityMemberRecord } from '@/features/communities/api';
 
 type LiteTab = 'overview' | 'participants' | 'bracket' | 'matches';
 
@@ -581,6 +589,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [bracketLoading, setBracketLoading] = useState(false);
   const [mockLoading, setMockLoading] = useState(false);
   const [rosterConfirming, setRosterConfirming] = useState(false);
+  const [clubMembers, setClubMembers] = useState<CommunityMemberRecord[]>([]);
+  const [clubMembersLoading, setClubMembersLoading] = useState(false);
+  const [clubMembersError, setClubMembersError] = useState<string | null>(null);
+  const [clubMemberSearch, setClubMemberSearch] = useState('');
+  const [clubMemberDialogOpen, setClubMemberDialogOpen] = useState(false);
+  const [addingClubMemberId, setAddingClubMemberId] = useState<string | null>(null);
 
   const fetchParticipants = useCallback(async () => {
     if (!id) return;
@@ -595,6 +609,52 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       setParticipantsLoading(false);
     }
   }, [id]);
+
+  const fetchClubMembers = useCallback(async () => {
+    const communityId = tournament?.communityId;
+    if (!communityId) return;
+    setClubMembersLoading(true);
+    setClubMembersError(null);
+    try {
+      const response = await communitiesApi.getMembers(communityId, {
+        status: 'JOINED',
+        limit: 200,
+      });
+      setClubMembers(response.data ?? []);
+    } catch (error) {
+      setClubMembersError(getErrorMessage(error));
+    } finally {
+      setClubMembersLoading(false);
+    }
+  }, [tournament?.communityId]);
+
+  const registeredUserIds = new Set(
+    participants.flatMap((participant) =>
+      (participant.rosters ?? []).map((roster) => roster.userId),
+    ),
+  );
+  const normalizedClubMemberSearch = clubMemberSearch.trim().toLowerCase();
+  const filteredClubMembers = clubMembers.filter((member) => {
+    const name = member.user.fullName?.trim() ?? '';
+    return (
+      !normalizedClubMemberSearch ||
+      name.toLowerCase().includes(normalizedClubMemberSearch)
+    );
+  });
+
+  const handleAddClubMember = async (userId: string) => {
+    if (addingClubMemberId) return;
+    setAddingClubMemberId(userId);
+    try {
+      await tournamentsApi.addLiteClubMember(id, { userId });
+      toast.success(translate('addMemberSuccess'));
+      await fetchParticipants();
+    } catch (error) {
+      toast.error(getErrorMessage(error) || translate('addMemberError'));
+    } finally {
+      setAddingClubMemberId(null);
+    }
+  };
 
   const pendingParticipants = participants.filter(
     (p) => p.teamStatus === 'PENDING_PARTNER'
@@ -1353,7 +1413,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
 
           {activeTab === 'participants' && (
             <div className="space-y-5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-base font-semibold text-slate-900">
                   {translate('participantLabel')}
                   {!participantsLoading && (
@@ -1362,26 +1422,47 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     </span>
                   )}
                 </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={fetchParticipants}
-                  disabled={participantsLoading}
-                  className="gap-1 text-xs font-semibold"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${participantsLoading ? 'animate-spin' : ''}`} />
-                  {translate('refresh')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSeedMock}
-                  disabled={mockLoading}
-                  className="gap-1 text-xs font-semibold text-amber-700 border-amber-300 hover:bg-amber-50"
-                >
-                  <FlaskConical className={`w-3.5 h-3.5 ${mockLoading ? 'animate-pulse' : ''}`} />
-                  {mockLoading ? translate('creating') : translate('createMockParticipant')}
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {tournament?.communityId &&
+                    ['REGISTRATION_OPEN', 'UPCOMING'].includes(tournament.status.toUpperCase()) &&
+                    !tournament.isRegistrationLocked &&
+                    !tournamentDragLocked &&
+                    !hasBracket && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setClubMemberDialogOpen(true);
+                          setClubMemberSearch('');
+                          void fetchClubMembers();
+                        }}
+                        className="gap-1 text-xs font-semibold border-blue-200 text-blue-700 hover:bg-blue-50"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        {translate('addClubMember')}
+                      </Button>
+                    )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={fetchParticipants}
+                    disabled={participantsLoading}
+                    className="gap-1 text-xs font-semibold"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${participantsLoading ? 'animate-spin' : ''}`} />
+                    {translate('refresh')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSeedMock}
+                    disabled={mockLoading}
+                    className="gap-1 text-xs font-semibold text-amber-700 border-amber-300 hover:bg-amber-50"
+                  >
+                    <FlaskConical className={`w-3.5 h-3.5 ${mockLoading ? 'animate-pulse' : ''}`} />
+                    {mockLoading ? translate('creating') : translate('createMockParticipant')}
+                  </Button>
+                </div>
               </div>
 
               {participantsLoading && participants.length === 0 ? (
@@ -1807,6 +1888,79 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             </div>
           )}
         </div>
+
+        <Modal open={clubMemberDialogOpen} onOpenChange={setClubMemberDialogOpen}>
+          <ModalContent className="max-w-xl p-0 overflow-hidden">
+            <ModalHeader className="border-b border-slate-100 px-6 py-5 pr-12">
+              <ModalTitle>{translate('addClubMemberTitle')}</ModalTitle>
+              <ModalDescription>{translate('addClubMemberDescription')}</ModalDescription>
+            </ModalHeader>
+            <div className="space-y-4 px-6 py-5">
+              <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">
+                {translate('memberRosterNote')}
+              </div>
+              <Input
+                value={clubMemberSearch}
+                onChange={(event) => setClubMemberSearch(event.target.value)}
+                placeholder={translate('clubMemberSearchPlaceholder')}
+                aria-label={translate('clubMemberSearchPlaceholder')}
+              />
+              {clubMembersLoading ? (
+                <div className="flex items-center justify-center py-10 text-sm text-slate-500">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {translate('loadingParticipants')}
+                </div>
+              ) : clubMembersError ? (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                  <p>{clubMembersError || translate('clubMembersLoadError')}</p>
+                  <Button variant="outline" size="sm" onClick={fetchClubMembers} className="mt-3">
+                    {translate('retry')}
+                  </Button>
+                </div>
+              ) : filteredClubMembers.length === 0 ? (
+                <div className="py-10 text-center text-sm text-slate-500">
+                  <Users className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+                  {clubMembers.length === 0
+                    ? translate('noClubMembers')
+                    : translate('allClubMembersAdded')}
+                </div>
+              ) : (
+                <div className="max-h-[min(55vh,28rem)] overflow-y-auto rounded-lg border border-slate-200">
+                  {filteredClubMembers.map((member) => {
+                    const userId = member.member.userId || member.user.id;
+                    const fullName = member.user.fullName?.trim() || translate('unknownValue');
+                    const alreadyAdded = registeredUserIds.has(userId);
+                    const isAdding = addingClubMemberId === userId;
+                    const initial = fullName.charAt(0).toUpperCase() || 'V';
+                    return (
+                      <div key={member.member.id} className="flex items-center gap-3 border-b border-slate-100 px-3 py-3 last:border-0">
+                        <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-blue-100 text-center text-sm font-bold leading-9 text-blue-700">
+                          {member.user.avatarUrl ? (
+                            <img src={member.user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                          ) : initial}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-900">{fullName}</p>
+                          <p className="text-xs text-slate-500">{translate('clubMemberStatus')}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={alreadyAdded ? 'ghost' : 'outline'}
+                          disabled={alreadyAdded || addingClubMemberId !== null}
+                          onClick={() => void handleAddClubMember(userId)}
+                          className="shrink-0 text-xs"
+                        >
+                          {isAdding && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                          {alreadyAdded ? translate('memberAlreadyAdded') : translate('addMemberAction')}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </ModalContent>
+        </Modal>
 
       </div>
     </div>

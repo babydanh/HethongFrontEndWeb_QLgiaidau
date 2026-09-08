@@ -1424,6 +1424,11 @@ export const tournamentsApi = {
       `/tournaments/lite/${id}/participants`,
     ),
 
+  addLiteClubMember: (id: string, data: { userId: string }) =>
+    api.post<
+      ApiResponse<{ participant: LiteParticipant; userId: string }>
+    >(`/tournaments/lite/${id}/club-members`, data),
+
   pairLiteParticipants: (
     id: string,
     data: { participant1Id: string; participant2Id: string },

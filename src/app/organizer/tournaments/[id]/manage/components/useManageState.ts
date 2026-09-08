@@ -2186,7 +2186,7 @@ export function useManageState(id: string) {
       return;
     }
 
-    if (['basic','schedule','registration','bracket','livestream','finance','permissions'].includes(tab || '')) {
+    if (['basic','schedule','registration','bracket','court_schedule','livestream','finance','permissions'].includes(tab || '')) {
       void Promise.resolve().then(() => {
         setActiveTab(tab as typeof activeTab);
       });

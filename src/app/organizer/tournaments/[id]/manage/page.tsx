@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, User, Users, Video, Zap, Pencil, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -22,6 +22,8 @@ import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
 import { LivestreamTab } from './components/LivestreamTab';
+import { TournamentManageOverview } from './components/TournamentManageOverview';
+import { TournamentManageSidebar, type ManageNavigationTarget, type ManageSection } from './components/TournamentManageSidebar';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
@@ -86,6 +88,14 @@ function getDivisionGenderMeta(
   };
 }
 
+function getManageSectionFromTab(tab: string | null): ManageSection | null {
+  if (!tab || tab === 'operations') return null;
+  if (['basic', 'schedule', 'registration', 'bracket', 'court_schedule', 'livestream', 'finance', 'permissions'].includes(tab)) {
+    return tab as Exclude<ManageSection, 'overview'>;
+  }
+  return null;
+}
+
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
@@ -130,9 +140,61 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       : s.newDivisionName;
   };
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
-  const [courtOperatingStart, setCourtOperatingStart] = useState('08:00');
-  const [courtOperatingEnd, setCourtOperatingEnd] = useState('22:00');
+  const courtOperatingStart = '08:00';
+  const courtOperatingEnd = '22:00';
   const [isCourtWorkspaceFullscreen, setIsCourtWorkspaceFullscreen] = useState(false);
+  const [activeSection, setActiveSection] = useState<ManageSection>('overview');
+  const [isManageSidebarOpen, setIsManageSidebarOpen] = useState(false);
+  const manageMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarWasOpenRef = useRef(false);
+
+  useEffect(() => {
+    const querySection = getManageSectionFromTab(new URLSearchParams(window.location.search).get('tab'));
+    // URL state is an external navigation input; sync it after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (querySection) setActiveSection(querySection);
+  }, [id]);
+
+  useEffect(() => {
+    if (!isManageSidebarOpen) {
+      if (sidebarWasOpenRef.current) manageMenuButtonRef.current?.focus();
+      sidebarWasOpenRef.current = false;
+      return undefined;
+    }
+
+    sidebarWasOpenRef.current = true;
+    const focusableSelector = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsManageSidebarOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const sidebar = document.querySelector<HTMLElement>('[data-manage-sidebar]');
+      if (!sidebar) return;
+      const focusable = Array.from(sidebar.querySelectorAll<HTMLElement>(focusableSelector));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-manage-sidebar] button')?.focus());
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isManageSidebarOpen]);
 
   useEffect(() => {
     if (!isCourtWorkspaceFullscreen) return undefined;
@@ -154,6 +216,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     elementId?: string;
     openCreateDivision?: boolean;
   }) => {
+    setActiveSection(target.tab);
     s.setActiveTab(target.tab);
     if (target.basicSubTab) {
       s.setBasicSubTab(target.basicSubTab);
@@ -180,15 +243,39 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }, 150);
   };
 
+  const handleManageNavigation = (target: ManageNavigationTarget) => {
+    setActiveSection(target.section);
+    if (target.section !== 'overview') s.setActiveTab(target.section);
+    if (target.basicSubTab) s.setBasicSubTab(target.basicSubTab);
+    setIsManageSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const sportPresets = getSportRulePresets(s.sportRuleKind, ruleTranslate);
   const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
 
   if (s.isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <LoadingSpinner className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-slate-500 font-medium">{translate('loading')}</p>
+    <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1600px] flex-col gap-4 lg:flex-row lg:items-start lg:gap-6" aria-busy="true" aria-live="polite">
+        <div className="hidden w-[272px] shrink-0 space-y-4 lg:block">
+          <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
+          <div className="h-[420px] animate-pulse rounded-xl border border-slate-200 bg-white" />
+          <div className="h-28 animate-pulse rounded-xl bg-slate-900/90" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="flex min-h-28 items-center justify-center rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <LoadingSpinner className="h-8 w-8 animate-spin text-blue-600" />
+              <p className="text-sm font-semibold text-slate-500">{translate('loading')}</p>
+            </div>
+          </div>
+          <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-28 animate-pulse rounded-xl border border-slate-200 bg-white" />)}
+          </div>
+          <div className="h-72 animate-pulse rounded-xl border border-slate-200 bg-white" />
+        </div>
       </div>
     </div>
   );
@@ -211,17 +298,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   const tournament = s.tournament;
 
-  const TABS = [
-    { key: 'basic', label: translate('tabs.basic'), icon: Settings },
-    { key: 'schedule', label: 'Địa điểm & Sân', icon: MapPin },
-    { key: 'registration', label: translate('tabs.registration'), icon: Users },
-    { key: 'bracket', label: translate('tabs.bracket'), icon: Trophy },
-    { key: 'court_schedule', label: 'Lịch thi đấu', icon: Calendar },
-    { key: 'livestream', label: translate('tabs.livestream'), icon: Video },
-    { key: 'finance', label: translate('tabs.finance'), icon: DollarSign },
-    { key: 'permissions', label: translate('tabs.permissions'), icon: FileText },
-  ] as const;
-
   const buildPublicTournamentUrl = (tab?: 'bracket') => {
     const params = new URLSearchParams();
 
@@ -238,6 +314,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   };
 
   const handleOpenManageBracket = () => {
+    setActiveSection('bracket');
     if (s.activeTab !== 'bracket') {
       s.setActiveTab('bracket');
     }
@@ -252,11 +329,39 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     });
   };
 
+  const tournamentStatusLabel = getTournamentStatusLabel(tournament.status, {
+    DRAFT: translate('status.statusDraft'),
+    PENDING_APPROVAL: translate('status.statusPendingApproval'),
+    PENDING_DELETE: translate('status.statusPendingDelete'),
+    UPCOMING: translate('status.statusUpcoming'),
+    REGISTRATION_OPEN: translate('status.statusRegistrationOpen'),
+    REGISTRATION_CLOSED: translate('status.statusRegistrationClosed'),
+    IN_PROGRESS: translate('status.statusInProgress'),
+    COMPLETED: translate('status.statusCompleted'),
+    CANCELLED: translate('status.statusCancelled'),
+  });
+
   return (
-    <div className="min-h-screen bg-slate-50 py-6 md:py-8 px-3 md:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+          <TournamentManageSidebar
+            tournament={tournament}
+            activeSection={activeSection}
+            basicSubTab={s.basicSubTab}
+            divisionCount={s.divisions.length}
+            pendingRefereeCount={pendingRefereeCount}
+            matchCount={s.matches.length}
+            isOpen={isManageSidebarOpen}
+            menuButtonRef={manageMenuButtonRef}
+            onOpen={() => setIsManageSidebarOpen(true)}
+            onClose={() => setIsManageSidebarOpen(false)}
+            onNavigate={handleManageNavigation}
+          />
+
+          <main className="min-w-0 flex-1">
         {/* Header */}
-        <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-6 mb-4 md:mb-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6 mb-4 md:mb-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-2 w-full md:w-auto">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -454,34 +559,21 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        {/* Tabs nav */}
-        <div className="overflow-x-auto mb-6 bg-white rounded-lg border border-slate-200 shadow-sm hide-scrollbar">
-          <div className="flex md:grid md:grid-cols-8 gap-1.5 p-1.5 min-w-max md:min-w-0">
-            {TABS.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                data-testid={`tab-${key}`}
-                onClick={() => s.setActiveTab(key)}
-                className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  s.activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{label}</span>
-                {key === 'permissions' && pendingRefereeCount > 0 ? (
-                  <span className={`inline-flex min-w-[18px] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                    s.activeTab === key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {pendingRefereeCount}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tab content */}
-        {s.activeTab === 'basic' && <BasicInfoTab id={id} tournament={s.tournament} categories={s.categories}
+        {activeSection === 'overview' ? (
+          <TournamentManageOverview
+            tournament={tournament}
+            divisions={s.divisions}
+            selectedDivisionId={s.selectedDivisionId}
+            participants={s.participants}
+            matches={s.matches}
+            courts={s.courts}
+            statusLabel={tournamentStatusLabel}
+            onOpenOperations={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+          />
+        ) : (
+          <div className="space-y-6">
+        {/* Detail content */}
+        {activeSection === 'basic' && <BasicInfoTab id={id} tournament={s.tournament} categories={s.categories}
           validationField={s.validationField}
           basicSubTab={s.basicSubTab} setBasicSubTab={s.setBasicSubTab}
           name={s.name} setName={s.setName} categoryId={s.categoryId} setCategoryId={s.setCategoryId}
@@ -503,7 +595,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
           winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo} />}
 
-        {s.activeTab === 'schedule' && (
+        {activeSection === 'schedule' && (
           <div className="space-y-6">
             <ScheduleTab
               tournament={s.tournament}
@@ -539,7 +631,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        {s.activeTab === 'registration' && <RegistrationTab tournament={s.tournament}
+        {activeSection === 'registration' && <RegistrationTab tournament={s.tournament}
           inviteLink={s.inviteLink}
           mockNamesText={s.mockNamesText} setMockNamesText={s.setMockNamesText}
           isSeedingMock={s.isSeedingMock} isClearingMock={s.isClearingMock}
@@ -580,7 +672,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           refetchDivisionData={s.refetchDivisionData}
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success(translate('toast.copiedInvite')); }} />}
 
-        {s.activeTab === 'bracket' && (
+        {activeSection === 'bracket' && (
           <div ref={bracketSectionRef} className="space-y-6">
             <BracketTab key={s.selectedDivisionId || 'no-division'} tournament={s.tournament} bracket={s.bracket}
               selectedDivisionId={s.selectedDivisionId} participants={s.participants}
@@ -636,7 +728,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         )}
 
         {/* Tab Lịch thi đấu & Xếp sân độc lập */}
-        {s.activeTab === 'court_schedule' && (
+        {activeSection === 'court_schedule' && (
           <div className="space-y-6">
             {s.courts.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
@@ -647,7 +739,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </p>
                 <Button
                   type="button"
-                  onClick={() => s.setActiveTab('schedule')}
+                  onClick={() => handleManageNavigation({ section: 'schedule' })}
                   className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
                 >
                   Thiết lập sân bãi ngay
@@ -729,16 +821,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        {s.activeTab === 'finance' && <FinanceTab tournament={s.tournament} participants={s.participants}
+        {activeSection === 'finance' && <FinanceTab tournament={s.tournament} participants={s.participants}
           entryFee={s.entryFee} setEntryFee={s.setEntryFee}
           allowEntryFees={s.feesConfig?.allowEntryFees !== false}
           isSavingConfig={s.isSavingConfig} handleSaveFinanceConfig={s.handleSaveFinanceConfig}
           handlePayPlatformFee={s.handlePayPlatformFee} isPayingPlatformFee={s.isPayingPlatformFee}
           handleRequestPayout={s.handleRequestPayout} />}
 
-        {s.activeTab === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
+        {activeSection === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
 
-        {s.activeTab === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
+        {activeSection === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
+          </div>
+        )}
 
         {/* Stage config modal */}
         {s.selectedStage && s.selectedRoundNumber !== null && (
@@ -1204,6 +1298,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </ModalContent>
           </Modal>
         )}
+          </main>
+        </div>
       </div>
     </div>
   );

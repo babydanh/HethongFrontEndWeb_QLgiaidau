@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import {
   Modal,
   ModalContent,
-  ModalHeader,
   ModalTitle,
 } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -58,7 +57,14 @@ export function ClubStandaloneMatchModal({
       .then((res) => {
         if (!mounted) return;
         const memberList = Array.isArray(res.data) ? res.data : [];
-        setMembers(memberList);
+        const uniqueMembers = new Map<string, CommunityMemberRecord>();
+        memberList.forEach((record) => {
+          const userId = record.member?.userId?.trim();
+          if (userId && !uniqueMembers.has(userId)) {
+            uniqueMembers.set(userId, record);
+          }
+        });
+        setMembers([...uniqueMembers.values()]);
       })
       .catch((err) => {
         if (!mounted) return;
@@ -151,9 +157,9 @@ export function ClubStandaloneMatchModal({
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <ModalContent className="sm:max-w-md bg-white rounded-2xl p-0 overflow-hidden shadow-2xl border border-slate-200">
+      <ModalContent className="w-[95vw] sm:max-w-lg md:max-w-xl max-h-[90vh] bg-white rounded-2xl p-0 overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <Trophy className="w-5 h-5" />
@@ -170,17 +176,17 @@ export function ClubStandaloneMatchModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tóm tắt Đội A vs Đội B */}
-        <div className="p-4 sm:px-5 pb-2 bg-slate-50/50">
+        <div className="p-4 sm:px-5 pb-3 bg-slate-50/50 shrink-0">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             {/* Đội A */}
-            <div className="p-2.5 rounded-xl border border-blue-200/80 bg-blue-50/60 transition-all">
+            <div className="p-3 rounded-xl border border-blue-200/80 bg-blue-50/60 transition-all">
               <div className="flex items-center justify-between gap-1 mb-1">
                 <span className="text-[11px] font-black text-blue-700 tracking-wider">
                   {t('club_sideA')}
@@ -189,7 +195,7 @@ export function ClubStandaloneMatchModal({
                   {sideAUserIds.length}/2
                 </span>
               </div>
-              <p className="text-xs font-semibold text-slate-800 truncate">
+              <p className="text-xs font-semibold text-slate-800 truncate" title={sideAUserIds.length === 0 ? t('club_noPlayersSelected') : getMemberNames(sideAUserIds)}>
                 {sideAUserIds.length === 0
                   ? t('club_noPlayersSelected')
                   : getMemberNames(sideAUserIds)}
@@ -197,10 +203,10 @@ export function ClubStandaloneMatchModal({
             </div>
 
             {/* VS Divider */}
-            <span className="text-xs font-black text-slate-400 px-1">VS</span>
+            <span className="text-xs font-black text-slate-400 px-1 text-center">VS</span>
 
             {/* Đội B */}
-            <div className="p-2.5 rounded-xl border border-amber-200/80 bg-amber-50/60 transition-all">
+            <div className="p-3 rounded-xl border border-amber-200/80 bg-amber-50/60 transition-all">
               <div className="flex items-center justify-between gap-1 mb-1">
                 <span className="text-[11px] font-black text-amber-700 tracking-wider">
                   {t('club_sideB')}
@@ -209,7 +215,7 @@ export function ClubStandaloneMatchModal({
                   {sideBUserIds.length}/2
                 </span>
               </div>
-              <p className="text-xs font-semibold text-slate-800 truncate">
+              <p className="text-xs font-semibold text-slate-800 truncate" title={sideBUserIds.length === 0 ? t('club_noPlayersSelected') : getMemberNames(sideBUserIds)}>
                 {sideBUserIds.length === 0
                   ? t('club_noPlayersSelected')
                   : getMemberNames(sideBUserIds)}
@@ -225,13 +231,13 @@ export function ClubStandaloneMatchModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('club_searchMemberHint')}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-hidden focus:border-blue-500 transition-colors"
+              className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-hidden focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
 
         {/* Danh sách thành viên */}
-        <div className="max-h-[280px] overflow-y-auto px-4 sm:px-5 py-2 divide-y divide-slate-100">
+        <div className="flex-1 min-h-[180px] max-h-[320px] overflow-y-auto px-4 sm:px-5 py-2 divide-y divide-slate-100">
           {isLoadingMembers ? (
             <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
@@ -280,17 +286,17 @@ export function ClubStandaloneMatchModal({
                   </div>
 
                   {/* Nút chọn A | B */}
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
                       disabled={disabledA}
                       onClick={() => toggleSide(uId, 'A')}
-                      className={`w-8 h-7 text-xs font-bold rounded-lg border transition-all ${
+                      className={`min-w-9 h-8 px-2.5 text-xs font-bold rounded-lg border transition-all ${
                         isSideA
                           ? 'bg-blue-600 border-blue-600 text-white shadow-2xs'
                           : disabledA
                           ? 'opacity-30 border-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-600'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-600 active:scale-95'
                       }`}
                     >
                       A
@@ -299,12 +305,12 @@ export function ClubStandaloneMatchModal({
                       type="button"
                       disabled={disabledB}
                       onClick={() => toggleSide(uId, 'B')}
-                      className={`w-8 h-7 text-xs font-bold rounded-lg border transition-all ${
+                      className={`min-w-9 h-8 px-2.5 text-xs font-bold rounded-lg border transition-all ${
                         isSideB
                           ? 'bg-amber-600 border-amber-600 text-white shadow-2xs'
                           : disabledB
                           ? 'opacity-30 border-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-600'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-600 active:scale-95'
                       }`}
                     >
                       B
@@ -317,7 +323,7 @@ export function ClubStandaloneMatchModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 sm:px-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+        <div className="p-4 sm:px-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
           <p
             className={`text-xs font-semibold truncate ${
               sideAUserIds.length === sideBUserIds.length && sideAUserIds.length > 0
@@ -352,7 +358,7 @@ export function ClubStandaloneMatchModal({
               type="button"
               disabled={!canSubmit}
               onClick={handleStartMatch}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-50 whitespace-nowrap"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

@@ -64,6 +64,10 @@ export const clubMatchSessionsApi = {
     api.get<ApiResponse<ClubSessionMatch[]>>(`/club-match-sessions/${id}/matches`, {
       params: { limit: query.limit ?? 30, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
+  standaloneMatches: (communityId: string, query: CursorQuery = {}) =>
+    api.get<ApiResponse<ClubSessionMatch[]>>('/club-match-sessions/standalone-matches', {
+      params: { communityId, limit: query.limit ?? 50, cursor: query.cursor ?? undefined, status: query.status },
+    }).then(unwrapClubMatchPage),
   selfJoin: (id: string) => api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/self`).then(unwrapClubMatchData),
   withdraw: (id: string) => api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/self/withdraw`).then(unwrapClubMatchData),
   updatePreferences: (
@@ -89,6 +93,21 @@ export const clubMatchSessionsApi = {
     payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES'; confirmWarnings?: boolean },
     idempotencyKey: string,
   ) => api.post<ApiResponse<{ match: ClubSessionMatch }>>(`/club-match-sessions/${id}/matches`, payload, { headers: { 'Idempotency-Key': idempotencyKey } }).then(unwrapClubMatchData),
+  createStandaloneMatch: (
+    payload: {
+      communityId: string;
+      sideAUserIds: string[];
+      sideBUserIds: string[];
+      matchType: 'SINGLES' | 'DOUBLES';
+      isRanked: boolean;
+      scheduledAt?: string;
+    },
+    idempotencyKey: string,
+  ) => api.post<ApiResponse<{ match: ClubSessionMatch }>>('/club-match-sessions/standalone-matches', payload, {
+    headers: { 'Idempotency-Key': idempotencyKey },
+  }).then(unwrapClubMatchData),
+  deleteStandaloneMatch: (id: string) =>
+    api.delete<ApiResponse<{ deleted: boolean; eloReverted?: boolean }>>(`/club-match-sessions/standalone-matches/${id}`).then(unwrapClubMatchData),
   updateScore: (match: ClubSessionMatch, p1SetsWon: number, p2SetsWon: number) =>
     api.patch<ApiResponse<ClubSessionMatch>>(`/club-match-sessions/matches/${match.id}/score`, {
       p1SetsWon,

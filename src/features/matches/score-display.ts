@@ -31,6 +31,14 @@ type MatchSportContext = {
   status?: Match["status"];
   matchConfig?: Match["matchConfig"];
   scoreDetails?: Record<string, unknown> | null;
+  sportRules?: SportRulesEnvelope | null;
+  tournamentConfig?: {
+    isLite?: boolean;
+    mode?: "LITE" | "ADVANCED" | "STRICT";
+    scoringMode?: string;
+    scoring_mode?: string;
+    maxSets?: number;
+  } | null;
   stageRoundConfig?: Record<string, unknown> | null;
   tournament?: {
     name?: string;
@@ -84,7 +92,7 @@ export function extractMatchScores(
 
   const setsValue = scoreDetails.sets;
   if (Array.isArray(setsValue)) {
-    return setsValue.flatMap((setValue) => {
+    return setsValue.slice(0, 10).flatMap((setValue) => {
       if (
         !setValue ||
         typeof setValue !== "object" ||
@@ -138,7 +146,8 @@ export function extractMatchScores(
           isFinished: true,
         },
       ];
-    });
+    })
+    .slice(0, 10);
 }
 
 export function resolveMatchSportRules(
@@ -176,10 +185,15 @@ export function resolveMatchSportRules(
   const groupRoundOverride = getRoundOverride(groupRoundConfig, roundNumber);
 
   const tournamentConfig = match.tournament?.tournamentConfig;
+  const standaloneConfig = match.tournamentConfig;
   const tournamentScoringMode =
-    tournamentConfig?.scoringMode ?? tournamentConfig?.scoring_mode;
+    tournamentConfig?.scoringMode ??
+    tournamentConfig?.scoring_mode ??
+    standaloneConfig?.scoringMode ??
+    standaloneConfig?.scoring_mode;
   const mergedSource: Record<string, unknown> = {
     ...(match.tournament?.sportRules ?? {}),
+    ...(match.sportRules ?? {}),
     ...(stageRoundConfig ?? {}),
     ...(groupRoundOverride ?? {}),
     ...(stageRoundOverride ?? {}),
@@ -249,6 +263,9 @@ export function ensureOpenScoringSet(
     resolveMatchSportRules(match).mode !== "LITE"
   ) {
     return scores;
+  }
+  if (scores.length >= 10) {
+    return scores.slice(0, 10);
   }
   if (scores.some((score) => !score.isFinished)) {
     return scores;

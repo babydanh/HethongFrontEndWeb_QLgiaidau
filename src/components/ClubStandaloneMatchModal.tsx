@@ -39,6 +39,7 @@ export function ClubStandaloneMatchModal({
 
   const [sideAUserIds, setSideAUserIds] = useState<string[]>([]);
   const [sideBUserIds, setSideBUserIds] = useState<string[]>([]);
+  const [isRanked, setIsRanked] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function ClubStandaloneMatchModal({
     setLoadError(null);
     setSideAUserIds([]);
     setSideBUserIds([]);
+    setIsRanked(true);
     setSearchQuery('');
 
     communitiesApi
@@ -121,67 +123,14 @@ export function ClubStandaloneMatchModal({
     setIsSubmitting(true);
 
     try {
-      // 1. Lấy danh sách session hoặc tạo session mặc định cho CLB
-      const sessionPage = await clubMatchSessionsApi.list(communityId, { limit: 10 });
-      const sessions = sessionPage.data || [];
-      let targetSession = sessions.find((s) => s.status === 'OPEN' || s.status === 'LIVE');
-
-      if (!targetSession) {
-        targetSession = await clubMatchSessionsApi.create({
-          communityId,
-          name: t('club_standaloneMatch'),
-          registrationMode: 'OPEN' as any,
-          isRanked: true,
-          maxParticipants: 64,
-          startAt: new Date().toISOString(),
-        });
-      }
-
-      const sessionId = targetSession.id;
-      const allSelectedIds = [...sideAUserIds, ...sideBUserIds];
-
-      // 2. Force add participants vào session
-      try {
-        const forceKey = crypto.randomUUID();
-        await clubMatchSessionsApi.forceParticipants(sessionId, allSelectedIds, forceKey);
-      } catch {
-        // Bỏ qua nếu các thành viên đã có trong session
-      }
-
-      // 3. Tạo match
+      // Trận riêng phải đi qua resource riêng, không tạo session giả.
       const matchKey = crypto.randomUUID();
       const matchType = sideAUserIds.length === 1 ? 'SINGLES' : 'DOUBLES';
-
-      let createdMatchId = '';
-      try {
-        const matchRes = await clubMatchSessionsApi.createMatch(
-          sessionId,
-          {
-            sideAUserIds,
-            sideBUserIds,
-            matchType,
-          },
-          matchKey,
-        );
-        createdMatchId = matchRes.match?.id || '';
-      } catch (err: any) {
-        const code = err?.response?.data?.code || err?.code;
-        if (code === 'PAIRING_WARNINGS_REQUIRE_CONFIRMATION') {
-          const matchRes = await clubMatchSessionsApi.createMatch(
-            sessionId,
-            {
-              sideAUserIds,
-              sideBUserIds,
-              matchType,
-              confirmWarnings: true,
-            },
-            matchKey,
-          );
-          createdMatchId = matchRes.match?.id || '';
-        } else {
-          throw err;
-        }
-      }
+      const matchRes = await clubMatchSessionsApi.createStandaloneMatch(
+        { communityId, sideAUserIds, sideBUserIds, matchType, isRanked },
+        matchKey,
+      );
+      const createdMatchId = matchRes.match?.id || '';
 
       toast.success(t('club_startMatchAndScore'));
       onMatchCreated?.();
@@ -191,7 +140,7 @@ export function ClubStandaloneMatchModal({
       if (createdMatchId) {
         router.push(`/live/${createdMatchId}?scoring=1`);
       } else {
-        router.push(`/communities/${communityId}/match-sessions/${sessionId}`);
+        onClose();
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -383,19 +332,36 @@ export function ClubStandaloneMatchModal({
               : t('club_errorNeedEqualSides')}
           </p>
 
-          <Button
-            type="button"
-            disabled={!canSubmit}
-            onClick={handleStartMatch}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Play className="w-3.5 h-3.5 fill-current" />
-            )}
-            <span>{t('club_startMatchAndScore')}</span>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isRanked}
+              onClick={() => setIsRanked((value) => !value)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-bold transition-colors ${
+                isRanked
+                  ? 'border-amber-200 bg-amber-50 text-amber-700'
+                  : 'border-slate-200 bg-white text-slate-500'
+              }`}
+              title="Tính ELO cho trận này"
+            >
+              <span className={`h-2 w-2 rounded-full ${isRanked ? 'bg-amber-500' : 'bg-slate-300'}`} />
+              ELO
+            </button>
+            <Button
+              type="button"
+              disabled={!canSubmit}
+              onClick={handleStartMatch}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Play className="w-3.5 h-3.5 fill-current" />
+              )}
+              <span>{t('club_startMatchAndScore')}</span>
+            </Button>
+          </div>
         </div>
       </ModalContent>
     </Modal>

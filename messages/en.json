@@ -1180,7 +1180,7 @@
     "removeMemberFailed": "Failed to remove member from the community.",
     "bannedMember": "Banned {name} from the community.",
     "banMemberFailed": "Failed to ban member.",
-    "clubMemberFallback": "Club member",
+    "clubMemberFallback": "Member",
     "regionClearSelection": "Clear selection",
     "noMatchingRegions": "No matching locations found.",
     "moderationLoadFailed": "Unable to load community moderation data.",
@@ -1759,7 +1759,43 @@
     "chatSearchPlaceholder": "Search messages...",
     "thinkingReply": "Thinking...",
     "organizerLabel": "Tournament organizer",
-    "currentElo": "Current ELO"
+    "currentElo": "Current ELO",
+    "club_createMatchStandalone": "Create Match",
+    "club_standaloneMatch": "Standalone Match",
+    "club_standaloneMatchDesc": "Casual friendly match between club members",
+    "club_searchMemberHint": "Search member name...",
+    "club_startMatchAndScore": "Start & Score",
+    "club_errorNeedEqualSides": "Each side needs 1 player (singles) or 2 players (doubles)",
+    "club_noMembersFound": "No matching members found",
+    "club_sideA": "SIDE A",
+    "club_sideB": "SIDE B",
+    "club_singlesMatch": "Singles: 1 vs 1",
+    "club_doublesMatch": "Doubles: 2 vs 2",
+    "club_noPlayersSelected": "No players selected",
+    "clubRoleOwner": "Owner",
+    "clubRoleModerator": "Admin",
+    "clubRoleMember": "Member",
+    "clubActivityTitle": "Club Activity",
+    "clubActivitySubtitle": "Match event stream of club members",
+    "clubActivityMatchesCount": "{count} matches",
+    "clubActivityFilterAll": "All",
+    "clubActivityFilterMyMatches": "My matches",
+    "clubActivityFilterOngoing": "Live",
+    "clubActivityFilterCompleted": "Completed",
+    "clubActivitySearchPlaceholder": "Player, team, tournament, session...",
+    "clubActivityRefresh": "Refresh timeline",
+    "clubActivityEmptyTitle": "No match activity yet",
+    "clubActivityEmptyMyMatches": "You haven't played any matches in this club yet.",
+    "club_standaloneMatchBadge": "Casual Match",
+    "club_deleteStandaloneMatch": "Delete standalone match and revert ELO",
+    "club_deletingStandaloneMatch": "Deleting…",
+    "club_delete": "Delete",
+    "club_matchOngoing": "Ongoing",
+    "club_matchDurationMinutes": "{minutes} min",
+    "club_prevSetsCount": "+{count} prev sets",
+    "club_eloDeltaTitle": "ELO Change: {delta}",
+    "club_viewTournamentDetail": "View tournament details for {name}",
+    "club_viewProfileTitle": "View profile of {name}"
   },
   "SeriesCreate": {
     "defaultRulesDescription": "Accumulate PSR points. Top 2 receive direct-entry tickets; Top 16 PSR receive wildcard tickets for the leg.",
@@ -3016,7 +3052,7 @@
     "close": "Close"
   },
   "Home": {
-    "seoH1": "SportO - Sports tournament management and community platform",
+    "seoH1": "SportO - Play together",
     "featuredTournaments": "Featured Tournaments",
     "viewAll": "View all",
     "liveMatches": "Live Matches",
@@ -3121,7 +3157,6 @@
     "roundNumber": "Round {number}",
     "phaseLosers": "Losers bracket",
     "cheerError": "Unable to send cheer. Please try again.",
-    "seoH1": "SportO - Play together",
     "seoIntroTitle": "Leading sports tournament management & community platform",
     "seoIntroP1": "SportO is a comprehensive sports platform that helps athletes, organizers, and clubs easily create tournaments, generate brackets and schedules automatically, and follow live real-time scores.",
     "seoIntroP2": "Supporting top popular sports including Pickleball, Badminton, Tennis, Table Tennis, and Football with standardized ELO rating systems, fair tier divisions, and comprehensive player profiles.",
@@ -8334,8 +8369,15 @@
     "removeParticipant": "Remove from session",
     "removeParticipantConfirm": "Remove {name} from this session?",
     "participantRemoved": "Member removed from the session",
-    "participantSource": { "SELF": "Self-joined", "MANDATORY": "Manager assigned" },
-    "participantStatus": { "ACTIVE": "Active", "WITHDRAWN": "Withdrawn", "KICKED": "Removed" },
+    "participantSource": {
+      "SELF": "Self-joined",
+      "MANDATORY": "Manager assigned"
+    },
+    "participantStatus": {
+      "ACTIVE": "Active",
+      "WITHDRAWN": "Withdrawn",
+      "KICKED": "Removed"
+    },
     "preferences": "My pairing preferences",
     "preferencesHint": "Managers see a warning when a pairing differs; preferences are advisory, not mandatory.",
     "preferredPartner": "Preferred partner",
@@ -8375,8 +8417,28 @@
     "complete": "Complete",
     "matchCompleted": "Result completed",
     "eloStatus": "ELO status: {status}",
-    "eloStates": { "WAITING_RESULT": "Waiting for result", "PENDING": "Processing", "NOT_RANKED": "Not ranked", "SKIPPED_MOCK": "Mock players skipped", "SKIPPED_CANCELLED": "Cancelled result skipped", "APPLIED": "Applied", "FAILED_RETRYABLE": "Retry scheduled", "FAILED_TERMINAL": "Manager review required" },
-    "status": { "OPEN": "Registration open", "LIVE": "Live", "CLOSED": "Registration closed", "ENDED": "Ended", "CANCELLED": "Cancelled" },
-    "matchStatus": { "SCHEDULED": "Scheduled", "ONGOING": "Ongoing", "COMPLETED": "Completed", "CANCELLED": "Cancelled" }
+    "eloStates": {
+      "WAITING_RESULT": "Waiting for result",
+      "PENDING": "Processing",
+      "NOT_RANKED": "Not ranked",
+      "SKIPPED_MOCK": "Mock players skipped",
+      "SKIPPED_CANCELLED": "Cancelled result skipped",
+      "APPLIED": "Applied",
+      "FAILED_RETRYABLE": "Retry scheduled",
+      "FAILED_TERMINAL": "Manager review required"
+    },
+    "status": {
+      "OPEN": "Registration open",
+      "LIVE": "Live",
+      "CLOSED": "Registration closed",
+      "ENDED": "Ended",
+      "CANCELLED": "Cancelled"
+    },
+    "matchStatus": {
+      "SCHEDULED": "Scheduled",
+      "ONGOING": "Ongoing",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    }
   }
 }

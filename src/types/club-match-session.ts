@@ -60,8 +60,10 @@ export interface ClubMatchParticipant {
 
 export interface ClubSessionMatch {
   id: string;
-  clubMatchSessionId: string;
-  contextType: 'CLUB_SOCIAL_MATCH_SESSION';
+  clubMatchSessionId?: string | null;
+  standaloneMatchId?: string | null;
+  communityId?: string | null;
+  contextType: 'CLUB_SOCIAL_MATCH_SESSION' | 'CLUB_STANDALONE_MATCH';
   status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   p1SetsWon: number;
   p2SetsWon: number;
@@ -71,6 +73,14 @@ export interface ClubSessionMatch {
   scoreDetails?: Record<string, unknown>;
   sideAUserIds: string[];
   sideBUserIds: string[];
+  isRanked?: boolean;
+  sportRules?: Record<string, unknown> | null;
+  tournamentConfig?: Record<string, unknown> | null;
+  createdBy?: string | null;
+  scheduledAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  updatedAt?: string | null;
   participant1: { id: 'SIDE_A'; members: Array<{ id: string; userId?: string; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }> };
   participant2: { id: 'SIDE_B'; members: Array<{ id: string; userId?: string; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }> };
 }

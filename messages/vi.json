@@ -1180,7 +1180,7 @@
     "removeMemberFailed": "Lỗi khi mời thành viên ra khỏi cộng đồng.",
     "bannedMember": "Đã cấm {name} khỏi cộng đồng.",
     "banMemberFailed": "Lỗi khi cấm thành viên.",
-    "clubMemberFallback": "Thành viên CLB",
+    "clubMemberFallback": "Thành viên",
     "regionClearSelection": "Xóa lựa chọn",
     "noMatchingRegions": "Không tìm thấy địa điểm phù hợp.",
     "moderationLoadFailed": "Không thể tải dữ liệu điều phối cộng đồng.",
@@ -1759,7 +1759,43 @@
     "chatSearchPlaceholder": "Tìm kiếm tin nhắn...",
     "thinkingReply": "Đang suy nghĩ...",
     "organizerLabel": "Ban tổ chức giải",
-    "currentElo": "ELO hiện tại"
+    "currentElo": "ELO hiện tại",
+    "club_createMatchStandalone": "Tạo trận đấu",
+    "club_standaloneMatch": "Trận đấu riêng",
+    "club_standaloneMatchDesc": "Trận giao lưu riêng giữa các thành viên",
+    "club_searchMemberHint": "Tìm theo tên thành viên...",
+    "club_startMatchAndScore": "Bắt đầu & Tính điểm",
+    "club_errorNeedEqualSides": "Mỗi đội cần 1 VĐV (đơn) hoặc 2 VĐV (đôi)",
+    "club_noMembersFound": "Không tìm thấy thành viên phù hợp",
+    "club_sideA": "ĐỘI A",
+    "club_sideB": "ĐỘI B",
+    "club_singlesMatch": "Trận đơn: 1 vs 1",
+    "club_doublesMatch": "Trận đôi: 2 vs 2",
+    "club_noPlayersSelected": "Chưa chọn VĐV",
+    "clubRoleOwner": "Chủ nhiệm",
+    "clubRoleModerator": "Ban quản trị",
+    "clubRoleMember": "Thành viên",
+    "clubActivityTitle": "Hoạt động câu lạc bộ",
+    "clubActivitySubtitle": "Dòng sự kiện trận đấu của các thành viên trong câu lạc bộ",
+    "clubActivityMatchesCount": "{count} trận đấu",
+    "clubActivityFilterAll": "Tất cả",
+    "clubActivityFilterMyMatches": "Trận của tôi",
+    "clubActivityFilterOngoing": "Đang đấu",
+    "clubActivityFilterCompleted": "Đã xong",
+    "clubActivitySearchPlaceholder": "Tên VĐV, đội, giải, giao lưu...",
+    "clubActivityRefresh": "Làm mới dòng thời gian",
+    "clubActivityEmptyTitle": "Chưa có hoạt động trận đấu nào",
+    "clubActivityEmptyMyMatches": "Bạn chưa tham gia trận đấu nào trong câu lạc bộ này.",
+    "club_standaloneMatchBadge": "Trận riêng",
+    "club_deleteStandaloneMatch": "Xóa trận riêng và hoàn ELO",
+    "club_deletingStandaloneMatch": "Đang xóa…",
+    "club_delete": "Xóa",
+    "club_matchOngoing": "Đang diễn ra",
+    "club_matchDurationMinutes": "{minutes} phút",
+    "club_prevSetsCount": "+{count} set trước",
+    "club_eloDeltaTitle": "Thay đổi ELO: {delta}",
+    "club_viewTournamentDetail": "Xem chi tiết giải đấu {name}",
+    "club_viewProfileTitle": "Xem hồ sơ {name}"
   },
   "Profile": {
     "editCover": "Chỉnh sửa ảnh bìa",
@@ -3016,7 +3052,7 @@
     "close": "Đóng"
   },
   "Home": {
-    "seoH1": "SportO - Nền tảng quản lý và tổ chức giải đấu thể thao phong trào",
+    "seoH1": "SportO - Chơi cùng nhau",
     "featuredTournaments": "Giải đấu nổi bật",
     "viewAll": "Xem tất cả",
     "liveMatches": "Trận đấu trực tiếp",
@@ -3121,7 +3157,6 @@
     "phaseGrandFinal": "Chung kết tổng",
     "phasePlayoff": "Vòng play-off",
     "cheerError": "Không thể gửi cổ vũ, vui lòng thử lại.",
-    "seoH1": "SportO - Chơi cùng nhau",
     "seoIntroTitle": "Hệ thống quản lý giải đấu & kết nối thể thao hàng đầu",
     "seoIntroP1": "SportO là nền tảng thể thao toàn diện giúp vận động viên, ban tổ chức và các câu lạc bộ dễ dàng khởi tạo giải đấu, bốc thăm xếp lịch thi đấu tự động và cập nhật tỉ số trực tiếp thời gian thực.",
     "seoIntroP2": "Hệ thống hỗ trợ đa dạng các bộ môn thể thao phổ biến hàng đầu như Pickleball, Cầu lông, Quần vợt (Tennis), Bóng bàn và Bóng đá với hệ thống tính điểm ELO chuẩn hóa, phân hạng trình độ công bằng và hồ sơ vận động viên chi tiết.",
@@ -8338,8 +8373,15 @@
     "removeParticipant": "Gỡ khỏi buổi",
     "removeParticipantConfirm": "Gỡ {name} khỏi buổi giao lưu?",
     "participantRemoved": "Đã gỡ thành viên khỏi buổi giao lưu",
-    "participantSource": { "SELF": "Tự tham gia", "MANDATORY": "BQT chỉ định" },
-    "participantStatus": { "ACTIVE": "Đang tham gia", "WITHDRAWN": "Đã rút", "KICKED": "Đã gỡ" },
+    "participantSource": {
+      "SELF": "Tự tham gia",
+      "MANDATORY": "BQT chỉ định"
+    },
+    "participantStatus": {
+      "ACTIVE": "Đang tham gia",
+      "WITHDRAWN": "Đã rút",
+      "KICKED": "Đã gỡ"
+    },
     "preferences": "Nguyện vọng ghép trận của tôi",
     "preferencesHint": "BQT sẽ thấy cảnh báo khi ghép khác nguyện vọng; đây không phải ràng buộc bắt buộc.",
     "preferredPartner": "Muốn cùng đội",
@@ -8379,8 +8421,28 @@
     "complete": "Chốt kết quả",
     "matchCompleted": "Đã chốt kết quả",
     "eloStatus": "Trạng thái ELO: {status}",
-    "eloStates": { "WAITING_RESULT": "Chờ kết quả", "PENDING": "Đang xử lý", "NOT_RANKED": "Không tính ELO", "SKIPPED_MOCK": "Bỏ qua VĐV ảo", "SKIPPED_CANCELLED": "Bỏ qua do đã hủy", "APPLIED": "Đã cập nhật", "FAILED_RETRYABLE": "Sẽ thử lại", "FAILED_TERMINAL": "Cần BQT kiểm tra" },
-    "status": { "OPEN": "Đang mở đăng ký", "LIVE": "Đang diễn ra", "CLOSED": "Đã đóng đăng ký", "ENDED": "Đã kết thúc", "CANCELLED": "Đã hủy" },
-    "matchStatus": { "SCHEDULED": "Sắp đấu", "ONGOING": "Đang đấu", "COMPLETED": "Hoàn tất", "CANCELLED": "Đã hủy" }
+    "eloStates": {
+      "WAITING_RESULT": "Chờ kết quả",
+      "PENDING": "Đang xử lý",
+      "NOT_RANKED": "Không tính ELO",
+      "SKIPPED_MOCK": "Bỏ qua VĐV ảo",
+      "SKIPPED_CANCELLED": "Bỏ qua do đã hủy",
+      "APPLIED": "Đã cập nhật",
+      "FAILED_RETRYABLE": "Sẽ thử lại",
+      "FAILED_TERMINAL": "Cần BQT kiểm tra"
+    },
+    "status": {
+      "OPEN": "Đang mở đăng ký",
+      "LIVE": "Đang diễn ra",
+      "CLOSED": "Đã đóng đăng ký",
+      "ENDED": "Đã kết thúc",
+      "CANCELLED": "Đã hủy"
+    },
+    "matchStatus": {
+      "SCHEDULED": "Sắp đấu",
+      "ONGOING": "Đang đấu",
+      "COMPLETED": "Hoàn tất",
+      "CANCELLED": "Đã hủy"
+    }
   }
 }

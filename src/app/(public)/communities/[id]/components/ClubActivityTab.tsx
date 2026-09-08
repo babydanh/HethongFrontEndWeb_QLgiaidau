@@ -48,7 +48,7 @@ interface TeamStreakRecord {
 interface MatchWithTournament extends Match {
   tournamentName?: string;
   isClubSessionMatch?: boolean;
-  clubMatchSessionId?: string;
+  clubMatchSessionId?: string | null;
   sessionStatus?: string;
   eloDelta?: Record<string, number> | null;
   sideAUserIds?: string[];

@@ -102,6 +102,7 @@ function HlsVideoPlayer({ src }: { src: string }) {
 }
 
 type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];
+const MAX_LIVE_SETS = 10;
 
 /**
  * Wrapper for PATCH /matches/:id/score that:
@@ -595,19 +596,21 @@ export default function LiveMatchPage({ params }: Props) {
 
   const isUserReferee = user?.roles?.includes('REFEREE') ?? false;
   const isAssignedReferee = isUserReferee && (match.refereeId == null || match.refereeId === user?.id);
-  const isClubSessionMatch = (match as Match & { contextType?: string }).contextType === 'CLUB_SOCIAL_MATCH_SESSION';
-  const isClubSessionPlayer = Boolean(
+  const isClubMatchContext =
+    match.contextType === 'CLUB_SOCIAL_MATCH_SESSION' ||
+    match.contextType === 'CLUB_STANDALONE_MATCH';
+  const isClubMatchPlayer = Boolean(
     user?.id &&
-      isClubSessionMatch &&
+      isClubMatchContext &&
       [match.participant1, match.participant2]
         .flatMap((participant) => participant?.members ?? [])
         .some((member) => member.userId === user.id),
   );
   const canControlLiveMatch = Boolean(
-    hasAdminRole ||
+      hasAdminRole ||
       match.tournament?.createdBy === user?.id ||
       isAssignedReferee ||
-      isClubSessionPlayer,
+      isClubMatchPlayer,
   );
 
   // Cho phép bình luận tự do thoải mái
@@ -623,7 +626,11 @@ export default function LiveMatchPage({ params }: Props) {
     match.tournament?.tournamentConfig?.isLite === true ||
     match.tournament?.tournamentConfig?.scoringMode === 'FREE' ||
     match.tournament?.tournamentConfig?.mode === 'LITE' ||
-    match.tournament?.sportRules?.mode === 'LITE';
+    match.tournament?.sportRules?.mode === 'LITE' ||
+    match.tournamentConfig?.isLite === true ||
+    match.tournamentConfig?.scoringMode === 'FREE' ||
+    match.tournamentConfig?.mode === 'LITE' ||
+    match.sportRules?.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind, tournamentDetailTranslate);
   const scoreGuidance = isLiteMatch
     ? {
@@ -774,7 +781,7 @@ export default function LiveMatchPage({ params }: Props) {
 
     const payload: Record<string, unknown> = {
       ...basePayload,
-      sets: nextScores,
+      sets: nextScores.slice(0, MAX_LIVE_SETS),
       penalties: nextPenalties,
     };
 
@@ -1009,15 +1016,21 @@ export default function LiveMatchPage({ params }: Props) {
     if (!isLiteMatch && overrideEnabled && !appliedOverrideReason) {
       return;
     }
-    const newScores = [...optimisticScoresRef.current];
+    const newScores = optimisticScoresRef.current.slice(0, MAX_LIVE_SETS);
     try {
       if (newScores.length === 0) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
 
-      const activeIdx = newScores.findIndex((s) => !s.isFinished) !== -1
-        ? newScores.findIndex((s) => !s.isFinished)
-        : newScores.length - 1;
+      let activeIdx = newScores.findIndex((s) => !s.isFinished);
+      if (activeIdx === -1) {
+        if (newScores.length >= MAX_LIVE_SETS) {
+          toast.error(`Đã đạt tối đa ${MAX_LIVE_SETS} set.`);
+          return;
+        }
+        newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
+        activeIdx = newScores.length - 1;
+      }
 
       const setObj = { ...newScores[activeIdx] };
       const currentTennisPointState = isTennis
@@ -1104,9 +1117,9 @@ export default function LiveMatchPage({ params }: Props) {
       const nextMatch = mergeMatchUpdate(res);
       const serverScores = extractMatchScores(res.scoreDetails);
       const nextScores = serverScores.length > 0
-        ? serverScores
+        ? serverScores.slice(0, MAX_LIVE_SETS)
         : optimisticScoresRef.current.length > 0
-          ? optimisticScoresRef.current
+          ? optimisticScoresRef.current.slice(0, MAX_LIVE_SETS)
           : newStatus === 'ONGOING'
             ? [{ team1Score: 0, team2Score: 0, isFinished: false }]
             : [];
@@ -1145,7 +1158,7 @@ export default function LiveMatchPage({ params }: Props) {
 
     try {
       await flushPendingScoreSync();
-      const newScores = [...scores];
+      const newScores = scores.slice(0, MAX_LIVE_SETS);
       const activeIdx = newScores.findIndex((s) => !s.isFinished);
       if (activeIdx === -1) {
         toast.error(matchTranslate('setNotFound'));
@@ -1201,9 +1214,10 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       const shouldPushNextSet =
-        isLiteMatch ||
+        newScores.length < MAX_LIVE_SETS &&
+        (isLiteMatch ||
         (nextSetsWon.p1SetsWon < resolvedRules.setsToWin &&
-          nextSetsWon.p2SetsWon < resolvedRules.setsToWin);
+          nextSetsWon.p2SetsWon < resolvedRules.setsToWin));
 
       if (shouldPushNextSet) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
@@ -1293,7 +1307,9 @@ export default function LiveMatchPage({ params }: Props) {
     try {
       await flushPendingScoreSync();
       // Mark current set as finished if it isn't
-      const newScores = scores.map((s) => (!s.isFinished ? { ...s, isFinished: true } : s));
+      const newScores = scores
+        .slice(0, MAX_LIVE_SETS)
+        .map((s) => (!s.isFinished ? { ...s, isFinished: true } : s));
 
       const winnerId = winnerTeam === 1 ? match.participant1Id : match.participant2Id;
       if (!winnerId) {

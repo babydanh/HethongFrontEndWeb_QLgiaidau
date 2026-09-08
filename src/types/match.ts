@@ -141,6 +141,19 @@ export interface Match {
     } | null;
     clubId?: string | null;
   } | null;
+  /** Context fields returned by the standalone club-match projection. */
+  contextType?: "TOURNAMENT" | "CLUB_SOCIAL_MATCH_SESSION" | "CLUB_STANDALONE_MATCH";
+  clubMatchSessionId?: string | null;
+  standaloneMatchId?: string | null;
+  communityId?: string | null;
+  sportRules?: SportRulesEnvelope | null;
+  tournamentConfig?: {
+    isLite?: boolean;
+    mode?: "LITE" | "ADVANCED" | "STRICT";
+    scoringMode?: string;
+    scoring_mode?: string;
+    maxSets?: number;
+  } | null;
   group?: {
     id: string;
     name: string;

@@ -326,22 +326,22 @@ export function TournamentManageSidebar({
           {renderNavGroup('advanced', t('sidebar.advancedGroup'), advancedItems)}
         </div>
 
-        <div className="rounded-xl bg-slate-950 p-3.5 text-white shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-3.5 text-slate-900 shadow-sm">
           <div className="flex items-center gap-2 text-xs font-bold">
-            <BarChart3 className="h-4 w-4 text-sky-300" aria-hidden="true" />
+            <BarChart3 className="h-4 w-4 text-blue-600" aria-hidden="true" />
             {t('sidebar.snapshotTitle')}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="rounded-lg bg-white/10 px-2.5 py-2">
-              <p className="text-[10px] text-slate-300">{t('sidebar.divisions')}</p>
-              <p className="mt-0.5 text-sm font-bold">{divisionCount}</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+              <p className="text-[10px] text-slate-500">{t('sidebar.divisions')}</p>
+              <p className="mt-0.5 text-sm font-bold text-slate-900">{divisionCount}</p>
             </div>
-            <div className="rounded-lg bg-white/10 px-2.5 py-2">
-              <p className="text-[10px] text-slate-300">{t('sidebar.matches')}</p>
-              <p className="mt-0.5 text-sm font-bold">{matchCount}</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+              <p className="text-[10px] text-slate-500">{t('sidebar.matches')}</p>
+              <p className="mt-0.5 text-sm font-bold text-slate-900">{matchCount}</p>
             </div>
           </div>
-          <a href={`/tournaments/${tournament.id}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-300 hover:text-white">
+          <a href={`/tournaments/${tournament.id}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700">
             {t('sidebar.openPublicPage')} <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
           </a>
         </div>

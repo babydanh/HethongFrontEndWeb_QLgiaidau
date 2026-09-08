@@ -257,11 +257,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   if (s.isLoading) return (
     <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 lg:px-8">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-4 lg:flex-row lg:items-start lg:gap-6" aria-busy="true" aria-live="polite">
+      <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-start lg:gap-6" aria-busy="true" aria-live="polite">
         <div className="hidden w-[272px] shrink-0 space-y-4 lg:block">
           <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
           <div className="h-[420px] animate-pulse rounded-xl border border-slate-200 bg-white" />
-          <div className="h-28 animate-pulse rounded-xl bg-slate-900/90" />
+          <div className="h-28 animate-pulse rounded-xl border border-slate-200 bg-white" />
         </div>
         <div className="min-w-0 flex-1 space-y-4">
           <div className="flex min-h-28 items-center justify-center rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -343,7 +343,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   return (
     <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 lg:px-8">
-      <div className="mx-auto max-w-[1600px]">
+      <div className="w-full">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
           <TournamentManageSidebar
             tournament={tournament}
@@ -789,7 +789,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
-              <div className="mx-auto max-w-[1800px]">
+              <div className="w-full">
                 <CourtWorkspace
                   tournamentStatus={s.tournament?.status}
                   bracket={s.bracket}

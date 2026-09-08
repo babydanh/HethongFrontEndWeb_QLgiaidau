@@ -938,14 +938,14 @@ export default function ClubActivityTab({ communityId }: Props) {
         {/* Filter & Search Bar */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Filter buttons */}
-          <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium text-slate-600">
+          <div className="flex items-center gap-0.5 text-xs font-medium text-slate-600">
             <button
               type="button"
               onClick={() => setFilter('ALL')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`h-7 rounded-md px-2 transition-colors ${
                 filter === 'ALL'
-                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                  : 'hover:text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                  : 'hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {matchTranslate('clubActivityFilterAll')}
@@ -954,10 +954,10 @@ export default function ClubActivityTab({ communityId }: Props) {
               <button
                 type="button"
                 onClick={() => setFilter('MY_MATCHES')}
-                className={`px-2.5 py-1 rounded-md transition-colors flex items-center gap-1 ${
+                className={`flex h-7 items-center gap-1 rounded-md px-2 transition-colors ${
                   filter === 'MY_MATCHES'
-                    ? 'bg-white text-blue-700 shadow-2xs font-semibold'
-                    : 'hover:text-slate-900'
+                    ? 'bg-blue-50 text-blue-700 font-semibold'
+                    : 'hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <span>{matchTranslate('clubActivityFilterMyMatches')}</span>
@@ -971,10 +971,10 @@ export default function ClubActivityTab({ communityId }: Props) {
             <button
               type="button"
               onClick={() => setFilter('ONGOING')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`h-7 rounded-md px-2 transition-colors ${
                 filter === 'ONGOING'
-                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                  : 'hover:text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                  : 'hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {matchTranslate('clubActivityFilterOngoing')}
@@ -982,10 +982,10 @@ export default function ClubActivityTab({ communityId }: Props) {
             <button
               type="button"
               onClick={() => setFilter('COMPLETED')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`h-7 rounded-md px-2 transition-colors ${
                 filter === 'COMPLETED'
-                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                  : 'hover:text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                  : 'hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {matchTranslate('clubActivityFilterCompleted')}
@@ -1004,7 +1004,7 @@ export default function ClubActivityTab({ communityId }: Props) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={matchTranslate('clubActivitySearchPlaceholder')}
-              className="pl-8 pr-3 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-400 transition-colors w-36 sm:w-52"
+              className="h-7 w-36 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 transition-colors focus:border-slate-400 focus:outline-hidden sm:w-52"
             />
           </div>
 
@@ -1012,7 +1012,7 @@ export default function ClubActivityTab({ communityId }: Props) {
           <button
             type="button"
             onClick={() => setIsStandaloneModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-2xs transition-colors"
+            className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-blue-600 px-2.5 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-blue-700 active:bg-blue-800"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{commonTranslate('club_createMatchStandalone')}</span>
@@ -1024,7 +1024,7 @@ export default function ClubActivityTab({ communityId }: Props) {
             onClick={() => void fetchClubMatches(true)}
             disabled={isRefreshing}
             title={matchTranslate('clubActivityRefresh')}
-            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>

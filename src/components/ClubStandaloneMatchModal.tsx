@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Modal,
@@ -28,7 +27,6 @@ export function ClubStandaloneMatchModal({
   onClose,
   onMatchCreated,
 }: ClubStandaloneMatchModalProps) {
-  const router = useRouter();
   const t = useTranslations('Common');
 
   const [members, setMembers] = useState<CommunityMemberRecord[]>([]);
@@ -132,22 +130,15 @@ export function ClubStandaloneMatchModal({
       // Trận riêng phải đi qua resource riêng, không tạo session giả.
       const matchKey = crypto.randomUUID();
       const matchType = sideAUserIds.length === 1 ? 'SINGLES' : 'DOUBLES';
-      const matchRes = await clubMatchSessionsApi.createStandaloneMatch(
+      await clubMatchSessionsApi.createStandaloneMatch(
         { communityId, sideAUserIds, sideBUserIds, matchType, isRanked },
         matchKey,
       );
-      const createdMatchId = matchRes.match?.id || '';
 
       toast.success(t('club_startMatchAndScore'));
       onMatchCreated?.();
       onClose();
-
-      // Nếu có match ID, điều hướng trực tiếp sang trang live match scoring
-      if (createdMatchId) {
-        router.push(`/live/${createdMatchId}?scoring=1`);
-      } else {
-        onClose();
-      }
+      // Không auto-route — user sẽ thấy card trận riêng xuất hiện trong feed và click vào để tính điểm
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

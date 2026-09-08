@@ -48,6 +48,7 @@ interface TeamStreakRecord {
 interface MatchWithTournament extends Match {
   tournamentName?: string;
   isClubSessionMatch?: boolean;
+  isStandaloneMatch?: boolean;
   clubMatchSessionId?: string | null;
   sessionStatus?: string;
   eloDelta?: Record<string, number> | null;
@@ -398,6 +399,87 @@ export default function ClubActivityTab({ communityId }: Props) {
         allMatches.push(...sessionResults.flat());
       } catch (err) {
         console.warn('Failed to fetch club match sessions', err);
+      }
+
+      // 3. Get standalone matches (trận riêng lẻ)
+      try {
+        const standalonePage = await clubMatchSessionsApi.standaloneMatches(communityId, { limit: 30 });
+        const standaloneList = standalonePage.data || [];
+
+        for (const sm of standaloneList) {
+          const p1Members = (sm.participant1?.members || []).map((m) => ({
+            id: m.id || m.userId || '',
+            userId: m.userId,
+            fullName: m.fullName || '',
+            avatarUrl: m.avatarUrl || null,
+            isMock: m.isMock,
+          }));
+          const p2Members = (sm.participant2?.members || []).map((m) => ({
+            id: m.id || m.userId || '',
+            userId: m.userId,
+            fullName: m.fullName || '',
+            avatarUrl: m.avatarUrl || null,
+            isMock: m.isMock,
+          }));
+
+          const sideAName = p1Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội A';
+          const sideBName = p2Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội B';
+
+          const winnerId =
+            sm.status === 'COMPLETED'
+              ? sm.p1SetsWon > sm.p2SetsWon
+                ? 'SIDE_A'
+                : sm.p2SetsWon > sm.p1SetsWon
+                ? 'SIDE_B'
+                : undefined
+              : undefined;
+
+          const standaloneMatch: MatchWithTournament = {
+            id: sm.id,
+            groupId: sm.standaloneMatchId || sm.id,
+            bracketBranch: 'MAIN',
+            tournamentId: sm.communityId || communityId,
+            tournamentName: matchTranslate('clubStandaloneMatchBadge'),
+            roundNumber: 0,
+            status: sm.status,
+            participant1Id: 'SIDE_A',
+            participant2Id: 'SIDE_B',
+            winnerId,
+            p1SetsWon: sm.p1SetsWon ?? 0,
+            p2SetsWon: sm.p2SetsWon ?? 0,
+            totalSetsPlayed: (sm.p1SetsWon ?? 0) + (sm.p2SetsWon ?? 0),
+            isBye: false,
+            matchOrder: 1,
+            scoreDetails: sm.scoreDetails || {},
+            scheduledAt: sm.scheduledAt || sm.startedAt || sm.updatedAt || undefined,
+            startedAt: sm.startedAt || undefined,
+            completedAt: sm.completedAt || undefined,
+            updatedAt: sm.updatedAt || new Date().toISOString(),
+            participant1: {
+              id: 'SIDE_A',
+              teamName: sideAName,
+              members: p1Members as any,
+            } as any,
+            participant2: {
+              id: 'SIDE_B',
+              teamName: sideBName,
+              members: p2Members as any,
+            } as any,
+            isClubSessionMatch: false,
+            isStandaloneMatch: true,
+            clubMatchSessionId: null,
+            sessionStatus: undefined,
+            eloDelta: sm.eloDelta,
+            sideAUserIds: sm.sideAUserIds,
+            sideBUserIds: sm.sideBUserIds,
+          };
+
+          if (isRenderablePublicMatch(standaloneMatch)) {
+            allMatches.push(standaloneMatch);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch standalone matches', err);
       }
 
       setMatches(allMatches);
@@ -912,7 +994,12 @@ export default function ClubActivityTab({ communityId }: Props) {
                   {/* Top Metadata Header */}
                   <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {match.tournamentName && (
+                      {match.isStandaloneMatch ? (
+                        <span className="inline-flex items-center gap-1.5 font-bold text-violet-700 bg-violet-50/90 px-2.5 py-1 rounded-md border border-violet-200/80 shadow-2xs">
+                          <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                          <span>{matchTranslate('clubStandaloneMatchBadge')}</span>
+                        </span>
+                      ) : match.tournamentName && (
                         match.isClubSessionMatch ? (
                           <Link
                             href={`/communities/${communityId}/match-sessions/${match.clubMatchSessionId}`}
@@ -938,7 +1025,9 @@ export default function ClubActivityTab({ communityId }: Props) {
                         )
                       )}
                       <span className="font-semibold text-slate-800 text-xs">
-                        {match.isClubSessionMatch
+                        {match.isStandaloneMatch
+                          ? matchTranslate('clubStandaloneMatchRound')
+                          : match.isClubSessionMatch
                           ? matchTranslate('clubSessionFriendlyRound')
                           : roundLabel || `Trận #${match.matchOrder}`}
                       </span>
@@ -1233,7 +1322,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                       <span>
                         {match.isClubSessionMatch
                           ? matchTranslate('clubSessionView')
-                          : matchTranslate('detailsAction') || 'Chi tiết'}
+                          : matchTranslate('detailsAction') || 'Xem trận'}
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600 transition-all" />
                     </Link>

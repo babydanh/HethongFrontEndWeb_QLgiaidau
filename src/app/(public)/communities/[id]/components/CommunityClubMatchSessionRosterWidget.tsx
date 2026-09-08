@@ -174,7 +174,27 @@ export default function CommunityClubMatchSessionRosterWidget({
     );
   }
 
-  if (!session) return null;
+  const effectiveSession = session ?? {
+    id: sessionId,
+    communityId,
+    resolvedName: 'Buổi giao lưu CLB',
+    status: 'OPEN' as const,
+    registrationMode: 'MIXED' as const,
+    isRanked: true,
+    maxParticipants: 16,
+    version: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    capabilities: {
+      pairingMode: 'FREE' as const,
+      bracket: false,
+      registrationOpenImmediately: true,
+      canJoin: true,
+      canWithdraw: false,
+      canCreateMatch: false,
+      canManage: false,
+    },
+  };
 
   return (
     <div className="mt-3.5 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
@@ -185,7 +205,7 @@ export default function CommunityClubMatchSessionRosterWidget({
           </div>
           <div className="min-w-0">
             <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">BUỔI GIAO LƯU CLB</span>
-            <h4 className="truncate text-sm font-extrabold text-slate-900">{session.resolvedName}</h4>
+            <h4 className="truncate text-sm font-extrabold text-slate-900">{effectiveSession.resolvedName}</h4>
           </div>
         </div>
         <Link
@@ -205,19 +225,9 @@ export default function CommunityClubMatchSessionRosterWidget({
           <span className="text-xs font-semibold text-slate-500">{activeParticipants.length}/{totalSlots} người</span>
         </div>
 
-        {(canJoin || canWithdraw || canManage) && isOpen && (
+        {/* Action bar: Bỏ nút Tham gia, chỉ giữ Rút đăng ký (khi đã tham gia) và Tạo VĐV ảo (cho BQT) */}
+        {(canWithdraw || canManage) && isOpen && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {!currentUserParticipant && canJoin && (
-              <button
-                type="button"
-                onClick={() => void handleJoin()}
-                disabled={joining}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-              >
-                {joining && <Loader2 className="h-4 w-4 animate-spin" />}
-                Tham gia
-              </button>
-            )}
             {currentUserParticipant && canWithdraw && (
               <button
                 type="button"

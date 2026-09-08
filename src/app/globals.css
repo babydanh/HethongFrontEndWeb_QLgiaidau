@@ -88,7 +88,7 @@
 }
 
 html {
-  font-size: 14.5px;
+  font-size: 14px;
   scroll-padding-top: var(--app-header-height);
   scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
@@ -96,7 +96,21 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+/* Tablet & Màn hình máy tính nhỏ (13" laptop, HD/WXGA 1024px - 1366px): giao diện thu gọn nhẹ, thanh thoát */
 @media (min-width: 640px) {
+  html {
+    font-size: 14.5px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Màn hình desktop lớn / Full HD trở lên */
+@media (min-width: 1440px) {
   html {
     font-size: 16px;
   }

@@ -302,7 +302,7 @@ export function Header() {
           : 'border-b border-blue-100/60 bg-[#F4F8FF]',
       )}
     >
-      <div className="flex h-full w-full items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32">
+      <div className="flex h-full w-full items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20 2xl:px-28">
         <div className="flex h-full items-center gap-8">
           <Link href="/" className="relative flex h-full items-center py-0">
             <Image

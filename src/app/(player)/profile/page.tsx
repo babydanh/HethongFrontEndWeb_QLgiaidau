@@ -255,6 +255,7 @@ export default function ProfilePage() {
   const [coOrganizerTournaments, setCoOrganizerTournaments] = useState<Tournament[]>([]);
   const [refereeTournaments, setRefereeTournaments] = useState<WorkspaceRefereeInvite[]>([]);
   const [isLoading, setIsLoading] = useState(() => !useAuthStore.getState().user?.id);
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(() => Boolean(useAuthStore.getState().user?.id));
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
     if (typeof window !== 'undefined') {
@@ -369,6 +370,7 @@ export default function ProfilePage() {
             .catch(() => undefined);
         }
 
+        setIsLoadingCommunities(true);
         void Promise.all([
           communitiesApi.getMyCommunities().catch(() => null),
           tournamentsApi.getMyWorkspace().catch(() => null),
@@ -382,10 +384,16 @@ export default function ProfilePage() {
           setCoOrganizerTournaments(workspaceRes?.data?.coOrganizerTournaments || []);
           setRefereeTournaments(workspaceRes?.data?.refereeTournaments || workspaceRes?.data?.refereeInvites || []);
           setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
+          setIsLoadingCommunities(false);
+        }).catch(() => {
+          if (isMounted) setIsLoadingCommunities(false);
         });
       } catch (error) {
         console.error('Failed to fetch profile', error);
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setIsLoadingCommunities(false);
+        }
       }
     };
 
@@ -1002,7 +1010,7 @@ export default function ProfilePage() {
                   </Link>
                 </div>
 
-                {isLoading ? (
+                {isLoading || isLoadingCommunities ? (
                   <div className="animate-pulse flex gap-4">
                     <div className="w-16 h-16 bg-slate-200 rounded-full"></div>
                     <div className="flex-1 space-y-2 py-1">

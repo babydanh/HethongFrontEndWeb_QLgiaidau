@@ -7,7 +7,7 @@ import { AxiosError } from 'axios';
 import { Button } from '@/components/ui/Button';
 import { clubMatchSessionsApi, type ClubMatchApiError } from '@/features/club-match-sessions/api';
 import { ClubMatchSessionDetailView } from '@/features/club-match-sessions/ClubMatchSessionDetailView';
-import { communitiesApi, type CommunityMemberRecord } from '@/features/communities/api';
+import { communitiesApi, type Community, type CommunityMemberRecord } from '@/features/communities/api';
 import { socketClient } from '@/lib/socket';
 import type { ClubMatchParticipant, ClubMatchSession, ClubSessionMatch } from '@/types/club-match-session';
 import { getErrorMessage, isHttpStatusError } from '@/utils/error';
@@ -18,6 +18,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
   const { id, sessionId } = use(params);
   const t = useTranslations('ClubMatchSession');
   const [session, setSession] = useState<ClubMatchSession | null>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
   const [participants, setParticipants] = useState<ClubMatchParticipant[]>([]);
   const [matches, setMatches] = useState<ClubSessionMatch[]>([]);
   const [clubMembers, setClubMembers] = useState<CommunityMemberRecord[]>([]);
@@ -39,13 +40,16 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
 
   const refresh = useCallback(async () => {
     setLoadError(false);
-    const [sessionResponse, participantsResponse, matchesResponse, membersResponse] = await Promise.all([
+    const [sessionResponse, participantsResponse, matchesResponse, membersResponse, communityResponse] = await Promise.all([
       clubMatchSessionsApi.get(sessionId),
       clubMatchSessionsApi.participants(sessionId),
       clubMatchSessionsApi.matches(sessionId, { status: matchStatus || undefined }),
       communitiesApi.getMembers(id, { status: 'JOINED', limit: 100 }),
+      communitiesApi.getCommunityById(id),
     ]);
     setSession(sessionResponse);
+    const communityData = (communityResponse as { data?: Community })?.data || (communityResponse as unknown as Community);
+    setCommunity(communityData);
     setParticipants(participantsResponse.data ?? []);
     setMatches(matchesResponse.data ?? []);
     setParticipantCursor(participantsResponse.meta.nextCursor);
@@ -213,6 +217,8 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
   return (
     <ClubMatchSessionDetailView
       communityId={id}
+      communityName={community?.name}
+      communityLogoUrl={community?.logoUrl}
       session={session}
       participants={participants}
       clubMembers={clubMembers}

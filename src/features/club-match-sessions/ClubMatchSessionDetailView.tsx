@@ -12,12 +12,12 @@ import {
   ChevronRight,
   Clock3,
   Flame,
-  Plus,
   Radio,
   Settings2,
   ShieldCheck,
   Swords,
   Trophy,
+  X,
   UserPlus,
   Users,
 } from 'lucide-react';
@@ -35,6 +35,8 @@ type SessionTab = 'overview' | 'participants' | 'matches' | 'statistics';
 
 type Props = {
   communityId: string;
+  communityName?: string | null;
+  communityLogoUrl?: string | null;
   session: ClubMatchSession;
   participants: ClubMatchParticipant[];
   clubMembers: CommunityMemberRecord[];
@@ -282,6 +284,8 @@ function MatchSide({
 
 export function ClubMatchSessionDetailView({
   communityId,
+  communityName,
+  communityLogoUrl,
   session,
   participants,
   clubMembers,
@@ -321,6 +325,7 @@ export function ClubMatchSessionDetailView({
   const t = useTranslations('ClubMatchSession');
   const locale = useLocale();
   const [activeTab, setActiveTab] = useState<SessionTab>('overview');
+  const [pairingOpen, setPairingOpen] = useState(false);
   const activeParticipants = participants.filter((item) => item.participant.status === 'ACTIVE');
   const activeIds = new Set(activeParticipants.map((item) => item.participant.userId));
   const pairingReady = [1, 2].includes(sideAPlayers.length) && sideAPlayers.length === sideBPlayers.length;
@@ -340,13 +345,14 @@ export function ClubMatchSessionDetailView({
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
+      <div className="mx-auto max-w-[1280px] space-y-5">
         <Link href={`/communities/${communityId}/manage/tournaments`} className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-900">
           <ChevronLeft className="h-4 w-4" />
           {t('back')}
         </Link>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 lg:col-start-1">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0">
               <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -357,10 +363,6 @@ export function ClubMatchSessionDetailView({
               <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{session.resolvedName}</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{session.description || t('noDescription')}</p>
             </div>
-            <div className="grid min-w-[220px] grid-cols-2 gap-2">
-              <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
-              <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(matches.length)} label={t('matches')} />
-            </div>
           </div>
 
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
@@ -370,7 +372,6 @@ export function ClubMatchSessionDetailView({
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {session.capabilities?.canJoin && <Button disabled={busy} onClick={onJoin}><UserPlus className="mr-2 h-4 w-4" />{t('join')}</Button>}
             {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
             {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
             {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
@@ -378,13 +379,25 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>
 
-        <nav className="flex overflow-x-auto border-b border-slate-200 bg-white px-2 shadow-sm" aria-label={t('tabNavigation')}>
+        <nav className="flex min-w-0 overflow-x-auto border-b border-slate-200 bg-white px-2 shadow-sm lg:col-start-1" aria-label={t('tabNavigation')}>
           {tabs.map((tab) => (
             <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
               {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
             </SessionTabButton>
           ))}
         </nav>
+
+        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-1">
+          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">{t('clubContextLabel')}</p>
+          <div className="mt-4 flex items-center gap-3">
+            <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
+            <div className="min-w-0"><p className="truncate font-black text-slate-950">{communityName || t('clubSessionLabel')}</p><p className="mt-1 text-xs text-slate-500">{t('clubContextHint')}</p></div>
+          </div>
+        </aside>
+
+        <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
+
+        <div className="space-y-4 lg:col-start-1">
 
         {activeTab === 'overview' && <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -415,47 +428,17 @@ export function ClubMatchSessionDetailView({
 
         {activeTab === 'participants' && <section className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div><h2 className="text-xl font-black text-slate-950">{t('registrationTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('registrationOpensImmediately')}</p></div>
-              {session.capabilities?.canJoin && <Button size="sm" disabled={busy} onClick={onJoin}><Plus className="mr-1.5 h-4 w-4" />{t('join')}</Button>}
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-8">
-              {slots.map((item, index) => item ? (
-                <div key={item.participant.id} className="min-w-0 text-center">
-                  <div className="flex justify-center"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} /></div>
-                  <p className="mt-2 truncate text-xs font-bold text-slate-900">{item.fullName || `#${index + 1}`}</p>
-                  <p className="truncate text-[10px] text-slate-500">{item.isMock ? t('mockPlayer') : t('active')}</p>
-                </div>
-              ) : (
-                <div key={`slot-${index}`} className="min-w-0 text-center">
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div>
-                  <p className="mt-2 text-xs font-semibold text-slate-400">Slot #{index + 1}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div><h2 className="text-xl font-black text-slate-950">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantSelectionHint')}</p></div>
-            {session.capabilities?.canCreateMatch && <Button disabled={busy || !pairingReady} onClick={onCreateMatch}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}
+            <div><h2 className="text-xl font-black text-slate-950">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantsOnlyHint')}</p></div>
+            <span className="text-sm font-bold text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
           </div>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" />
-            <PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" />
-          </div>
-          <p className="mt-3 text-xs font-medium text-slate-500">{t('pairingDerivedHint')}</p>
 
           <div className="mt-5 space-y-2">
             {activeParticipants.map((item) => {
-              const userId = item.participant.userId;
-              const side = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null;
-              const sideFull = (sideAPlayers.length >= 2 && !sideAPlayers.includes(userId)) || (sideBPlayers.length >= 2 && !sideBPlayers.includes(userId));
               return (
                 <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
                   <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{item.fullName}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] text-amber-700">{t('mockPlayer')}</Badge>}</div>
-                  <div className="flex items-center gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div>
+                  <span className="text-xs font-semibold text-slate-400">{t('joinedLabel')}</span>
                 </div>
               );
             })}
@@ -493,12 +476,15 @@ export function ClubMatchSessionDetailView({
         </section>}
 
         {activeTab === 'matches' && <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
           {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} t={t} />)}</div>}
           {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
         </section>}
 
         {activeTab === 'statistics' && <StatisticsPanel stats={playerStats} completedMatches={completedMatches.length} t={t} />}
+      </div>
+      </div>
+        {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(); }} />}
       </div>
     </main>
   );
@@ -514,6 +500,55 @@ function SessionTabButton({ children, icon, active, onClick }: { children: React
 
 function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return <div className="flex items-start gap-3"><span className="mt-0.5 text-blue-600">{icon}</span><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div></div>;
+}
+
+function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, canWithdraw, busy, onJoin, onWithdraw }: {
+  slots: Array<ClubMatchParticipant | null>;
+  activeCount: number;
+  maxParticipants: number;
+  t: (key: string, values?: Record<string, string | number>) => string;
+  canJoin: boolean;
+  canWithdraw: boolean;
+  busy: boolean;
+  onJoin: () => void;
+  onWithdraw: () => void;
+}) {
+  return <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-2">
+    <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('registrationTitle')}</h2><span className="text-sm font-bold text-slate-500">{activeCount}/{maxParticipants}</span></div>
+    <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
+      {slots.map((item, index) => item ? <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p className="mt-2 truncate text-[11px] font-bold text-slate-900">{item.fullName || `#${index + 1}`}</p></div> : <div key={`slot-${index}`} className="min-w-0 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-semibold text-slate-400">Slot #{index + 1}</p></div>)}
+    </div>
+    {(canJoin || canWithdraw) && <div className="mt-6 flex gap-2 border-t border-slate-100 pt-4">{canJoin && <Button className="flex-1" size="sm" disabled={busy} onClick={onJoin}><UserPlus className="mr-1.5 h-4 w-4" />{t('join')}</Button>}{canWithdraw && <Button className="flex-1" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button>}</div>}
+  </aside>;
+}
+
+function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, t, assignPlayer, onClose, onCreate }: {
+  participants: ClubMatchParticipant[];
+  sideAPlayers: string[];
+  sideBPlayers: string[];
+  pairingReady: boolean;
+  busy: boolean;
+  t: (key: string, values?: Record<string, string | number>) => string;
+  assignPlayer: (userId: string, side: 'A' | 'B') => void;
+  onClose: () => void;
+  onCreate: () => void;
+}) {
+  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 sm:items-center sm:p-6">
+    <div role="dialog" aria-modal="true" aria-labelledby="create-match-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('matchesTab')}</p><h2 id="create-match-title" className="mt-1 text-xl font-black text-slate-950">{t('createMatchFormTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('createMatchFormHint')}</p></div><button type="button" aria-label={t('closeForm')} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950"><X className="h-5 w-5" /></button></div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2"><PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" /><PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" /></div>
+      <p className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-medium text-slate-600">{t('participantSelectionHint')}</p>
+      <div className="mt-4 space-y-2">
+        {participants.map((item) => {
+          const userId = item.participant.userId;
+          const side = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null;
+          const sideFull = (sideAPlayers.length >= 2 && !sideAPlayers.includes(userId)) || (sideBPlayers.length >= 2 && !sideBPlayers.includes(userId));
+          return <div key={item.participant.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><span className="truncate text-sm font-bold text-slate-900">{item.fullName}</span></div><div className="flex shrink-0 gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div></div>;
+        })}
+      </div>
+      <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4"><Button variant="outline" disabled={busy} onClick={onClose}>{t('closeForm')}</Button><Button disabled={busy || !pairingReady} onClick={onCreate}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button></div>
+    </div>
+  </div>;
 }
 
 function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; completedMatches: number; t: (key: string, values?: Record<string, string | number>) => string }) {

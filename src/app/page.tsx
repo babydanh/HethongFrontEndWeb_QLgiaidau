@@ -1528,6 +1528,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <h1 className="sr-only">{translate('seoH1')}</h1>
 
         {/* Left Column (9/12) */}
         <div className="lg:col-span-9 flex flex-col gap-8">

@@ -438,7 +438,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                 id: sm.id,
                 groupId: session.id,
                 bracketBranch: 'MAIN',
-                tournamentId: session.id,
+                tournamentId: '',
                 tournamentName: sessionTitle,
                 roundNumber: 0,
                 status: sm.status,
@@ -466,6 +466,8 @@ export default function ClubActivityTab({ communityId }: Props) {
                   members: p2Members as any,
                 } as any,
                 isClubSessionMatch: true,
+                contextType: 'CLUB_SOCIAL_MATCH_SESSION',
+                communityId,
                 clubMatchSessionId: session.id,
                 sessionStatus: session.status,
                 eloDelta: sm.eloDelta,
@@ -527,7 +529,7 @@ export default function ClubActivityTab({ communityId }: Props) {
             id: sm.id,
             groupId: sm.standaloneMatchId || sm.id,
             bracketBranch: 'MAIN',
-            tournamentId: sm.communityId || communityId,
+            tournamentId: '',
             tournamentName: matchTranslate('clubStandaloneMatchBadge'),
             roundNumber: 0,
             status: sm.status,
@@ -556,6 +558,8 @@ export default function ClubActivityTab({ communityId }: Props) {
             } as any,
             isClubSessionMatch: false,
             isStandaloneMatch: true,
+            contextType: 'CLUB_STANDALONE_MATCH',
+            communityId: sm.communityId || communityId,
             clubMatchSessionId: null,
             sessionStatus: undefined,
             eloDelta: sm.eloDelta,
@@ -660,40 +664,75 @@ export default function ClubActivityTab({ communityId }: Props) {
     };
   }, [fetchClubMatches]);
 
-  // Socket updates for realtime score/match events
+  // The community room is the cross-device path: a match created in the app
+  // or on the web is immediately reconciled into the same activity feed.
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
-    if (!socket) return;
-
-    const handleMatchUpdate = (updatedMatch: Match) => {
-      if (!updatedMatch || !updatedMatch.id) return;
-
-      setMatches((prev) => {
-        const index = prev.findIndex((m) => m.id === updatedMatch.id);
-        if (index >= 0) {
-          const next = [...prev];
-          next[index] = { ...next[index], ...updatedMatch };
-          return next;
+    const parsePayload = (raw: unknown): Record<string, unknown> | null => {
+      if (typeof raw === 'string') {
+        try {
+          const parsed: unknown = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+            ? parsed as Record<string, unknown>
+            : null;
+        } catch {
+          return null;
         }
-        // If it belongs to one of our tournaments, prepend it
-        const tour = tournaments.find((t) => t.id === updatedMatch.tournamentId);
-        if (tour) {
-          return [{ ...updatedMatch, tournamentName: tour.name }, ...prev];
-        }
-        return prev;
-      });
+      }
+      return raw && typeof raw === 'object' && !Array.isArray(raw)
+        ? raw as Record<string, unknown>
+        : null;
     };
 
+    const handleMatchUpdate = (raw: unknown) => {
+      const updatedMatch = parsePayload(raw);
+      if (!updatedMatch?.id) return;
+
+      // Community events carry a complete projection for create/score/status.
+      // Refetching keeps the Web card shape identical to the App projection.
+      const eventCommunityId = updatedMatch.communityId
+        ?? (updatedMatch.community as Record<string, unknown> | undefined)?.id;
+      const isClubEvent =
+        updatedMatch.contextType === 'CLUB_SOCIAL_MATCH_SESSION' ||
+        updatedMatch.contextType === 'CLUB_STANDALONE_MATCH' ||
+        eventCommunityId === communityId;
+      if (!isClubEvent) return;
+      void fetchClubMatches();
+    };
+
+    const join = () => socket.emit('joinClubCommunity', communityId);
+    socket.on('connect', join);
     socket.on('match:update', handleMatchUpdate);
-    socket.on('match:completed', handleMatchUpdate);
-    socket.on('match:score', handleMatchUpdate);
+    if (!socket.connected) socket.connect(); else join();
+    const recoveryTimer = window.setInterval(() => {
+      void fetchClubMatches();
+    }, 30000);
 
     return () => {
+      window.clearInterval(recoveryTimer);
+      socket.emit('leaveClubCommunity', communityId);
+      socket.off('connect', join);
       socket.off('match:update', handleMatchUpdate);
-      socket.off('match:completed', handleMatchUpdate);
-      socket.off('match:score', handleMatchUpdate);
     };
-  }, [tournaments]);
+  }, [communityId, fetchClubMatches]);
+
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const handleScoreOrStatus = (raw: unknown) => {
+      if (!raw) return;
+      // Match-scoped events can be received when the user opens a score board;
+      // refresh the feed so the card gets the same authoritative projection.
+      void fetchClubMatches();
+    };
+    socket.on('score:update', handleScoreOrStatus);
+    socket.on('match:status', handleScoreOrStatus);
+    socket.on('elo:update', handleScoreOrStatus);
+    return () => {
+      socket.off('score:update', handleScoreOrStatus);
+      socket.off('match:status', handleScoreOrStatus);
+      socket.off('elo:update', handleScoreOrStatus);
+    };
+  }, [fetchClubMatches]);
 
   // Listen for filter request from UserProfilePopover
   useEffect(() => {
@@ -1348,16 +1387,14 @@ export default function ClubActivityTab({ communityId }: Props) {
                     </div>
 
                     <Link
-                      href={
-                        match.isClubSessionMatch
-                          ? `/communities/${communityId}/match-sessions/${match.clubMatchSessionId}`
-                          : `/live/${match.id}`
-                      }
+                      href={match.isClubSessionMatch || match.isStandaloneMatch
+                        ? `/live/${match.id}?scoring=1`
+                        : `/live/${match.id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors group/btn shrink-0"
                     >
                       <span>
-                        {match.isClubSessionMatch
-                          ? matchTranslate('clubSessionView')
+                        {match.isClubSessionMatch || match.isStandaloneMatch
+                          ? matchTranslate('clubOpenScoring')
                           : matchTranslate('detailsAction') || 'Xem trận'}
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600 transition-all" />

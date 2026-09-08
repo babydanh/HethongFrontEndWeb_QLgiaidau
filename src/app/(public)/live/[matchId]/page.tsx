@@ -59,6 +59,8 @@ import type { TournamentParticipant } from '@/types/tournament';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import ShareModal from '@/components/common/ShareModal';
 import Hls from 'hls.js';
+import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
+import type { ClubSessionMatch } from '@/types/club-match-session';
 
 function HlsVideoPlayer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -104,6 +106,18 @@ function HlsVideoPlayer({ src }: { src: string }) {
 type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];
 const MAX_LIVE_SETS = 10;
 
+async function fetchAuthoritativeLiveMatch(matchId: string): Promise<Match> {
+  try {
+    return await matchesApi.getMatchById(matchId);
+  } catch (tournamentError) {
+    try {
+      return await clubMatchSessionsApi.getMatchById(matchId) as unknown as Match;
+    } catch {
+      throw tournamentError;
+    }
+  }
+}
+
 /**
  * Wrapper for PATCH /matches/:id/score that:
  * - injects expectedRevision (optimistic lock, NOTE-7/D3) from the current
@@ -142,17 +156,43 @@ export default function LiveMatchPage({ params }: Props) {
   const { user } = useAuthStore();
   const { openUserProfile, openUserById } = useUserProfileModalStore();
 
+  const isClubMatch = Boolean(
+    match?.contextType === 'CLUB_SOCIAL_MATCH_SESSION' ||
+    match?.contextType === 'CLUB_STANDALONE_MATCH',
+  );
+  const asClubMatch = (value: Match): ClubSessionMatch => value as unknown as ClubSessionMatch;
+
   /**
    * Single choke point for PATCH /matches/:id/score (NOTE-7/D3): injects the
    * current snapshot revision as expectedRevision so a stale device write is
    * rejected server-side with 409 instead of silently overwriting newer data.
    */
   const updateScoreWithRevision = async (payload: ScoreUpdatePayload) => {
+    if (isClubMatch && match) {
+      return await clubMatchSessionsApi.updateScore(
+        asClubMatch(match),
+        payload.p1SetsWon,
+        payload.p2SetsWon,
+        payload.scoreDetails,
+      ) as unknown as Match;
+    }
     const revision = match?.revision;
     return matchesApi.updateScore(matchId, {
       ...payload,
       ...(revision !== undefined ? { expectedRevision: revision } : {}),
     });
+  };
+
+  const completeScoreWithRevision = async (payload: ScoreUpdatePayload) => {
+    if (isClubMatch && match) {
+      return await clubMatchSessionsApi.completeMatch(
+        asClubMatch(match),
+        payload.p1SetsWon,
+        payload.p2SetsWon,
+        payload.scoreDetails,
+      ) as unknown as Match;
+    }
+    return updateScoreWithRevision(payload);
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
@@ -858,7 +898,7 @@ export default function LiveMatchPage({ params }: Props) {
           // while the UI incorrectly continues to show the score as saved.
           clearPendingScoreSync();
           if (isConflict409(err)) {
-            const fresh = await matchesApi.getMatchById(matchId);
+            const fresh = await fetchAuthoritativeLiveMatch(matchId);
             applyServerSnapshot(fresh);
             toast(matchTranslate('scoreChangedOnOtherDevice'), {
               icon: '⚠️',
@@ -866,7 +906,7 @@ export default function LiveMatchPage({ params }: Props) {
             });
           } else {
             try {
-              const fresh = await matchesApi.getMatchById(matchId);
+              const fresh = await fetchAuthoritativeLiveMatch(matchId);
               applyServerSnapshot(fresh);
             } catch {
               optimisticScoresRef.current = extractMatchScores(match?.scoreDetails);
@@ -1113,8 +1153,10 @@ export default function LiveMatchPage({ params }: Props) {
       // The previous order sent a zero-score PATCH while the match was still
       // SCHEDULED; the 400 left a local first-set seed behind, so the second
       // click followed a different branch and appeared to work.
-      const res = await matchesApi.updateStatus(matchId, { status: newStatus });
-      const nextMatch = mergeMatchUpdate(res);
+      const res = isClubMatch && match
+        ? await clubMatchSessionsApi.startMatch(asClubMatch(match))
+        : await matchesApi.updateStatus(matchId, { status: newStatus });
+      const nextMatch = mergeMatchUpdate(res as unknown as Match);
       const serverScores = extractMatchScores(res.scoreDetails);
       const nextScores = serverScores.length > 0
         ? serverScores.slice(0, MAX_LIVE_SETS)
@@ -1197,7 +1239,7 @@ export default function LiveMatchPage({ params }: Props) {
         }
 
         setScores(newScores);
-        const completedMatch = await updateScoreWithRevision({
+      const completedMatch = await completeScoreWithRevision({
           p1SetsWon: nextSetsWon.p1SetsWon,
           p2SetsWon: nextSetsWon.p2SetsWon,
           scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
@@ -1271,7 +1313,7 @@ export default function LiveMatchPage({ params }: Props) {
     } catch (err: unknown) {
       console.error(err);
       if (isConflict409(err)) {
-        const fresh = await matchesApi.getMatchById(matchId);
+        const fresh = await fetchAuthoritativeLiveMatch(matchId);
         applyServerSnapshot(fresh);
         toast(matchTranslate('setChangedOtherDevice'));
       } else {
@@ -1350,7 +1392,7 @@ export default function LiveMatchPage({ params }: Props) {
             ? { team1Goals: shootoutGoals.p1Goals, team2Goals: shootoutGoals.p2Goals, winnerId }
             : footballScore.shootout,
         };
-        const completedMatch = await updateScoreWithRevision({
+        const completedMatch = await completeScoreWithRevision({
           p1SetsWon: 0,
           p2SetsWon: 0,
           scoreDetails: {
@@ -1405,7 +1447,7 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       // Update score and winner
-      const completedMatch = await updateScoreWithRevision({
+        const completedMatch = await completeScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null, penalties, shootoutPayload),
@@ -1420,7 +1462,7 @@ export default function LiveMatchPage({ params }: Props) {
     } catch (err: unknown) {
       console.error(err);
       if (isConflict409(err)) {
-        const fresh = await matchesApi.getMatchById(matchId);
+        const fresh = await fetchAuthoritativeLiveMatch(matchId);
         applyServerSnapshot(fresh);
         toast(matchTranslate('matchChangedOtherDevice'));
       } else {

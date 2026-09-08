@@ -64,6 +64,8 @@ export const clubMatchSessionsApi = {
     api.get<ApiResponse<ClubSessionMatch[]>>(`/club-match-sessions/${id}/matches`, {
       params: { limit: query.limit ?? 30, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
+  getMatchById: (id: string) =>
+    api.get<ApiResponse<ClubSessionMatch>>(`/club-match-sessions/matches/${id}`).then(unwrapClubMatchData),
   standaloneMatches: (communityId: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubSessionMatch[]>>('/club-match-sessions/standalone-matches', {
       params: { communityId, limit: query.limit ?? 50, cursor: query.cursor ?? undefined, status: query.status },
@@ -108,18 +110,36 @@ export const clubMatchSessionsApi = {
   }).then(unwrapClubMatchData),
   deleteStandaloneMatch: (id: string) =>
     api.delete<ApiResponse<{ deleted: boolean; eloReverted?: boolean }>>(`/club-match-sessions/standalone-matches/${id}`).then(unwrapClubMatchData),
-  updateScore: (match: ClubSessionMatch, p1SetsWon: number, p2SetsWon: number) =>
+  updateScore: (
+    match: ClubSessionMatch,
+    p1SetsWon: number,
+    p2SetsWon: number,
+    scoreDetails?: Record<string, unknown>,
+  ) =>
     api.patch<ApiResponse<ClubSessionMatch>>(`/club-match-sessions/matches/${match.id}/score`, {
       p1SetsWon,
       p2SetsWon,
       expectedRevision: match.revision,
-      ...(match.scoreDetails !== undefined ? { scoreDetails: match.scoreDetails } : {}),
+      ...(scoreDetails !== undefined || match.scoreDetails !== undefined
+        ? { scoreDetails: scoreDetails ?? match.scoreDetails }
+        : {}),
     }).then(unwrapClubMatchData),
-  completeMatch: (match: ClubSessionMatch, p1SetsWon: number, p2SetsWon: number) =>
+  completeMatch: (
+    match: ClubSessionMatch,
+    p1SetsWon: number,
+    p2SetsWon: number,
+    scoreDetails?: Record<string, unknown>,
+  ) =>
     api.post<ApiResponse<ClubSessionMatch>>(`/club-match-sessions/matches/${match.id}/complete`, {
       p1SetsWon,
       p2SetsWon,
       expectedRevision: match.revision,
-      ...(match.scoreDetails !== undefined ? { scoreDetails: match.scoreDetails } : {}),
+      ...(scoreDetails !== undefined || match.scoreDetails !== undefined
+        ? { scoreDetails: scoreDetails ?? match.scoreDetails }
+        : {}),
+    }).then(unwrapClubMatchData),
+  startMatch: (match: ClubSessionMatch) =>
+    api.post<ApiResponse<ClubSessionMatch>>(`/club-match-sessions/matches/${match.id}/start`, {
+      expectedRevision: match.revision,
     }).then(unwrapClubMatchData),
 };

@@ -205,8 +205,19 @@ export default function CommunityClubMatchSessionRosterWidget({
           <span className="text-xs font-semibold text-slate-500">{activeParticipants.length}/{totalSlots} người</span>
         </div>
 
-        {(canWithdraw || canManage) && isOpen && (
+        {(canJoin || canWithdraw || canManage) && isOpen && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
+            {!currentUserParticipant && canJoin && (
+              <button
+                type="button"
+                onClick={() => void handleJoin()}
+                disabled={joining}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+              >
+                {joining && <Loader2 className="h-4 w-4 animate-spin" />}
+                Tham gia
+              </button>
+            )}
             {currentUserParticipant && canWithdraw && (
               <button
                 type="button"

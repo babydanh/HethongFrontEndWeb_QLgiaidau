@@ -57,15 +57,14 @@ export default function CommunityClubMatchSessionRosterWidget({
       ]);
       setSession(sessionData);
       setParticipants(participantsData.data ?? []);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không thể tải buổi giao lưu.');
+    } catch {
+      // The feed remains usable when an old announcement points to a removed or invalid session.
     }
   }, [sessionId]);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      setLoading(true);
       try {
         const [sessionData, participantsData] = await Promise.all([
           clubMatchSessionsApi.get(sessionId),
@@ -74,9 +73,8 @@ export default function CommunityClubMatchSessionRosterWidget({
         if (!mounted) return;
         setSession(sessionData);
         setParticipants(participantsData.data ?? []);
-      } catch (error) {
-        if (!mounted) return;
-        toast.error(error instanceof Error ? error.message : 'Không thể tải buổi giao lưu.');
+      } catch {
+        // The feed remains usable when an old announcement points to a removed or invalid session.
       } finally {
         if (mounted) setLoading(false);
       }

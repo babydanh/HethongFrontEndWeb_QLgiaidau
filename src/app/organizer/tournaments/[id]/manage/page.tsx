@@ -256,11 +256,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
 
   if (s.isLoading) return (
-    <div className="min-h-screen bg-slate-50 py-4 md:py-6">
+    <div className="min-h-screen bg-slate-50 py-3 md:py-4">
       <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-start lg:gap-6" aria-busy="true" aria-live="polite">
         <div className="hidden w-[272px] shrink-0 space-y-4 lg:block">
           <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
-          <div className="h-[420px] animate-pulse rounded-xl border border-slate-200 bg-white" />
+          <div className="h-[320px] animate-pulse rounded-xl border border-slate-200 bg-white" />
           <div className="h-28 animate-pulse rounded-xl border border-slate-200 bg-white" />
         </div>
         <div className="min-w-0 flex-1 space-y-4">
@@ -342,7 +342,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 py-4 md:py-6">
+    <div className="min-h-screen bg-slate-50 py-3 md:py-4">
       <div className="w-full">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
           <TournamentManageSidebar
@@ -361,8 +361,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
           <main className="min-w-0 flex-1">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6 mb-4 md:mb-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="space-y-2 w-full md:w-auto">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 mb-3 md:mb-4 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div className="space-y-1.5 w-full md:w-auto">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {getSportLogo(s.tournament.category?.name) && (
@@ -406,7 +406,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
               )}
             </div>
-            <h1 data-testid="tournament-title" className="text-xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
+            <h1 data-testid="tournament-title" className="text-lg md:text-2xl font-bold text-slate-900">{s.tournament.name}</h1>
             <p className="text-slate-500 font-medium text-xs md:text-sm flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               {translate('status.startDate')} {s.tournament.startDate ? formatDate(s.tournament.startDate) : translate('status.notSet')}
@@ -415,18 +415,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           <div className="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
             <Button
               onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-10 px-3 md:px-4"
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"
             >
               {translate('status.operations')}
             </Button>
             <Button
               variant="outline"
               onClick={handleOpenManageBracket}
-              className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-100 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-10 px-3 md:px-4"
+              className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-100 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"
             >
               <Trophy className="w-3.5 h-3.5" /> Bracket
             </Button>
-            <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-10 px-3 md:px-4">
+            <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3">
               <ExternalLink className="w-3.5 h-3.5" /> {translate('status.tournamentPage')}
             </Button>
           </div>

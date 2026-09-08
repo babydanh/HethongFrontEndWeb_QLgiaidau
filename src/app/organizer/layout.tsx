@@ -131,7 +131,7 @@ export default function OrganizerLayout({
   }
 
   return (
-    <section className="min-h-[calc(100vh-9rem)] bg-slate-50 py-6 md:py-8">
+    <section className={isTournamentManageRoute ? 'min-h-[calc(100vh-9rem)] bg-slate-50' : 'min-h-[calc(100vh-9rem)] bg-slate-50 py-6 md:py-8'}>
       <div className={isTournamentManageRoute ? 'w-full' : 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8'}>
         {children}
       </div>

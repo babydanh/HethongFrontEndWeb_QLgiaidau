@@ -140,9 +140,9 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6 mb-8 shadow-sm">
-      <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-        <FileText className="w-5 h-5 text-blue-600" /> {translate('progressTitle')}
+    <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-5 mb-4 md:mb-5 shadow-sm">
+      <h3 className="text-base md:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <FileText className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> {translate('progressTitle')}
       </h3>
       
       {isTournamentDraft(tournament.status) && (
@@ -360,9 +360,9 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
       )}
 
       <div className={`relative flex flex-col md:flex-row justify-between ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
-        <div className="hidden md:block absolute top-6 left-8 right-8 h-1 bg-slate-100 rounded -z-10" />
+        <div className="hidden md:block absolute top-5 left-6 right-6 h-1 bg-slate-100 rounded -z-10" />
         <div 
-          className="hidden md:block absolute top-6 left-8 h-1 bg-blue-600 rounded -z-10 transition-all duration-500"
+          className="hidden md:block absolute top-5 left-6 h-1 bg-blue-600 rounded -z-10 transition-all duration-500"
           style={{ width: `${Math.max(0, (currentStep / (steps.length - 1)) * 100)}%` }}
         />
 
@@ -371,9 +371,9 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
           const isActive = idx === currentStep;
 
           return (
-            <div key={idx} className="flex flex-col items-center flex-1 relative mb-6 md:mb-0">
+            <div key={idx} className="flex flex-col items-center flex-1 relative mb-4 md:mb-0">
               <div 
-                className={`w-12 h-12 rounded-full flex items-center justify-center border-4 border-white shadow-sm mb-3 transition-colors ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-[3px] border-white shadow-sm mb-2 transition-colors ${
                   isCompleted ? 'bg-emerald-500 text-white' : 
                   isActive ? 'bg-blue-600 text-white ring-4 ring-blue-50' : 
                   'bg-slate-100 text-slate-400'
@@ -386,18 +386,18 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                 <div className={`font-bold text-sm ${isActive ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
                   {step.title}
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5 max-w-[140px] leading-tight mx-auto">
+                <div className="text-[11px] text-slate-400 mt-0.5 max-w-[120px] leading-tight mx-auto">
                   {step.description}
                 </div>
               </div>
 
               {isActive && step.actionText && (
-                <div className="mt-4">
+                <div className="mt-2">
                   <Button
                     size="sm"
                     onClick={step.onClick}
                     disabled={isLoading || isOpening || (idx === 1 && !phase2MandatoryPass)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-md shadow-blue-500/20"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] flex items-center gap-1.5 h-7 px-3 rounded-full shadow-md shadow-blue-500/20"
                   >
                     {step.actionText} <ChevronRight className="w-3.5 h-3.5" />
                   </Button>

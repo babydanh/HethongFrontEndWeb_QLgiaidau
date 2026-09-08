@@ -386,7 +386,7 @@ export default function TournamentsTab({
                       onClick={() =>
                         router.push(`/communities/${communityId}/match-sessions/${s.id}`)
                       }
-                      className="group cursor-pointer bg-white border border-slate-200/90 hover:border-teal-500/80 rounded-xl shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                      className="group cursor-pointer bg-white border border-slate-200/90 hover:border-teal-500/80 rounded-lg shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
                     >
                       {/* Banner / Header Area */}
                       <div className="relative h-32 w-full bg-slate-800 overflow-hidden shrink-0">
@@ -424,14 +424,14 @@ export default function TournamentsTab({
                       </div>
 
                       {/* Body Info */}
-                      <div className="p-4 flex flex-col justify-between flex-1 gap-3">
+                      <div className="p-3.5 flex flex-col justify-between flex-1 gap-2.5">
                         <div>
                           <h4 className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors text-sm sm:text-base line-clamp-1">
                             {s.resolvedName}
                           </h4>
 
                           {/* Tag chips */}
-                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
                             {s.isRanked ? (
                               <span className="bg-sky-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold shadow-2xs">
                                 {sessionTranslate("rankedShort")}
@@ -454,8 +454,8 @@ export default function TournamentsTab({
                           </div>
                         </div>
 
-                        {/* Meta info: Thời gian & người tham gia */}
-                        <div className="space-y-1.5 text-xs text-slate-500 border-t border-slate-100 pt-2.5">
+                        {/* Meta info: Thời gian & người tham gia (chỉ hiện 3/16, bỏ số trận, bỏ đường kẻ) */}
+                        <div className="space-y-1 text-xs text-slate-500">
                           {timeLabel ? (
                             <div className="flex items-center gap-2 min-w-0">
                               <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -465,20 +465,23 @@ export default function TournamentsTab({
 
                           <div className="flex items-center gap-2 min-w-0">
                             <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate">
+                            <span className="truncate font-medium text-slate-700">
                               {s.participantCount ?? 0}
-                              {s.maxParticipants ? ` / ${s.maxParticipants}` : ""}{" "}
-                              {translate("participants") || "người"} ·{" "}
-                              {s.matchCount ?? 0} {translate("matches") || "trận"}
+                              {s.maxParticipants ? `/${s.maxParticipants}` : ""}
                             </span>
                           </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                          <span className="font-bold text-slate-900">
-                            {translate("free")}
-                          </span>
+                        {/* Footer: bỏ đường kẻ, bỏ 'Miễn phí' khi không có phí */}
+                        <div className="flex items-center justify-between pt-1 text-xs">
+                          {Boolean((s as unknown as { entryFee?: number }).entryFee && (s as unknown as { entryFee?: number }).entryFee! > 0) ? (
+                            <span className="font-bold text-slate-900">
+                              {((s as unknown as { entryFee?: number }).entryFee!).toLocaleString(
+                                locale === "vi" ? "vi-VN" : "en-US"
+                              )}{" "}
+                              {translate("currencyVnd")}
+                            </span>
+                          ) : <span />}
 
                           <span className="text-xs font-bold text-teal-700 group-hover:text-teal-800 group-hover:translate-x-0.5 transition-all flex items-center gap-1">
                             Vào buổi giao lưu →
@@ -524,7 +527,7 @@ export default function TournamentsTab({
                     <div
                       key={t.id}
                       onClick={() => router.push(`/tournaments/${t.id}`)}
-                      className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-xl shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                      className="group cursor-pointer bg-white border border-slate-200/90 hover:border-blue-500/80 rounded-lg shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
                     >
                       {/* Compact Card Banner */}
                       <div className="relative h-36 w-full bg-slate-100 overflow-hidden shrink-0">
@@ -572,14 +575,14 @@ export default function TournamentsTab({
                       </div>
 
                       {/* Card Content Body */}
-                      <div className="p-4 flex flex-col justify-between flex-1 gap-3">
+                      <div className="p-3.5 flex flex-col justify-between flex-1 gap-2.5">
                         <div>
                           <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-1">
                             {t.name}
                           </h3>
 
                           {/* Format / Division tags */}
-                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
                             {formatLabel && (
                               <span className="bg-slate-100/80 px-2 py-0.5 rounded text-slate-600 text-[10px] font-semibold border border-slate-200/70">
                                 {formatLabel}
@@ -601,7 +604,7 @@ export default function TournamentsTab({
                         </div>
 
                         {/* Info Meta */}
-                        <div className="space-y-1.5 text-xs text-slate-500 border-t border-slate-100 pt-2.5">
+                        <div className="space-y-1 text-xs text-slate-500">
                           <div className="flex items-center gap-2 min-w-0">
                             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span className="truncate">
@@ -626,15 +629,15 @@ export default function TournamentsTab({
                           )}
                         </div>
 
-                        {/* Footer Strip */}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                          <span className="font-bold text-slate-900">
-                            {t.entryFee && t.entryFee > 0
-                              ? `${t.entryFee.toLocaleString(
-                                  locale === "vi" ? "vi-VN" : "en-US",
-                                )} ${translate("currencyVnd")}`
-                              : translate("free")}
-                          </span>
+                        {/* Footer Strip: Chỉ hiện phí khi entryFee > 0 */}
+                        <div className="flex items-center justify-between pt-1 text-xs">
+                          {t.entryFee && t.entryFee > 0 ? (
+                            <span className="font-bold text-slate-900">
+                              {t.entryFee.toLocaleString(
+                                locale === "vi" ? "vi-VN" : "en-US",
+                              )} {translate("currencyVnd")}
+                            </span>
+                          ) : <span />}
 
                           <span className="text-xs font-bold text-blue-600 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all flex items-center gap-1">
                             {translate("viewDetails")} →

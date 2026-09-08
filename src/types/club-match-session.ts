@@ -65,8 +65,8 @@ export interface ClubSessionMatch {
   scoreDetails?: Record<string, unknown>;
   sideAUserIds: string[];
   sideBUserIds: string[];
-  participant1: { id: 'SIDE_A'; members: Array<{ id: string; fullName: string | null }> };
-  participant2: { id: 'SIDE_B'; members: Array<{ id: string; fullName: string | null }> };
+  participant1: { id: 'SIDE_A'; members: Array<{ id: string; userId?: string; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }> };
+  participant2: { id: 'SIDE_B'; members: Array<{ id: string; userId?: string; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }> };
 }
 
 export interface CursorResponse<T> {

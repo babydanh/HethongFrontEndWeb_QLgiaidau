@@ -225,6 +225,8 @@ export default function TournamentsTab({
   });
 
   const filteredSessions = sessions.filter((s) => {
+    // Ẩn các buổi giao lưu đã bị hủy
+    if (s.status === "CANCELLED") return false;
     // Buổi giao lưu CLB thuộc phạm vi CLUB. Nếu lọc PUBLIC thì ẩn.
     if (activeTypeFilter === "PUBLIC") return false;
     if (activeFilter === "ALL") return true;

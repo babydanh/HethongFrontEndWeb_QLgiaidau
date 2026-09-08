@@ -92,6 +92,7 @@ export default function CommunityClubMatchSessionRosterWidget({
   const canWithdraw = session?.capabilities?.canWithdraw === true;
   const canManage = session?.capabilities?.canManage === true;
   const isOpen = session?.status === 'OPEN';
+  const canTapEmptySlot = isOpen && (canJoin || canWithdraw);
 
   const handleJoin = async () => {
     if (!user?.id) {
@@ -173,30 +174,8 @@ export default function CommunityClubMatchSessionRosterWidget({
           <span className="text-xs font-semibold text-slate-500">{activeParticipants.length}/{maxParticipants} người</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-6 sm:gap-x-4">
-          {Array.from({ length: maxParticipants }, (_, index) => {
-            const participant = activeParticipants[index];
-            const name = participant?.fullName?.trim() || `VĐV ${index + 1}`;
-            const color = SLOT_COLORS[index % SLOT_COLORS.length];
-            return participant ? (
-              <div key={participant.participant.id} className="flex min-w-0 flex-col items-center text-center">
-                <div className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white text-sm font-extrabold text-white shadow-md sm:h-16 sm:w-16 ${participant.avatarUrl ? 'bg-slate-100' : color}`}>
-                  {participant.avatarUrl ? <img src={participant.avatarUrl} alt={name} className="h-full w-full object-cover" /> : initials(name)}
-                </div>
-                <span className="mt-2 max-w-full truncate text-xs font-semibold text-blue-700">{name}</span>
-                <span className="mt-0.5 max-w-full truncate text-[10px] text-slate-400">{participant.isMock ? 'VĐV ảo · không ELO' : 'Đã tham gia'}</span>
-              </div>
-            ) : (
-              <div key={`empty-${index}`} className="flex min-w-0 flex-col items-center text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-200 text-2xl font-light text-slate-300 sm:h-16 sm:w-16">+</div>
-                <span className="mt-2 text-[10px] font-medium text-slate-400">Slot #{index + 1}</span>
-              </div>
-            );
-          })}
-        </div>
-
         {(canJoin || canWithdraw || canManage) && (
-          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             {(canJoin || canWithdraw) && isOpen && (
               <button type="button" onClick={() => void handleJoin()} disabled={joining} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                 {joining && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -217,6 +196,36 @@ export default function CommunityClubMatchSessionRosterWidget({
             )}
           </div>
         )}
+
+        <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-6 sm:gap-x-4">
+          {Array.from({ length: maxParticipants }, (_, index) => {
+            const participant = activeParticipants[index];
+            const name = participant?.fullName?.trim() || `VĐV ${index + 1}`;
+            const color = SLOT_COLORS[index % SLOT_COLORS.length];
+            return participant ? (
+              <div key={participant.participant.id} className="flex min-w-0 flex-col items-center text-center">
+                <div className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white text-sm font-extrabold text-white shadow-md sm:h-16 sm:w-16 ${participant.avatarUrl ? 'bg-slate-100' : color}`}>
+                  {participant.avatarUrl ? <img src={participant.avatarUrl} alt={name} className="h-full w-full object-cover" /> : initials(name)}
+                </div>
+                <span className="mt-2 max-w-full truncate text-xs font-semibold text-blue-700">{name}</span>
+                <span className="mt-0.5 max-w-full truncate text-[10px] text-slate-400">{participant.isMock ? 'VĐV ảo · không ELO' : 'Đã tham gia'}</span>
+              </div>
+            ) : (
+              <div
+                key={`empty-${index}`}
+                className={`flex min-w-0 flex-col items-center text-center ${canTapEmptySlot ? 'cursor-pointer rounded-xl p-1 hover:bg-blue-50' : ''}`}
+                onClick={canTapEmptySlot ? () => void handleJoin() : undefined}
+                onKeyDown={canTapEmptySlot ? (event) => { if (event.key === 'Enter' || event.key === ' ') void handleJoin(); } : undefined}
+                role={canTapEmptySlot ? 'button' : undefined}
+                tabIndex={canTapEmptySlot ? 0 : undefined}
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-200 text-2xl font-light text-slate-300 sm:h-16 sm:w-16">+</div>
+                <span className="mt-2 text-[10px] font-medium text-slate-400">Slot #{index + 1}</span>
+              </div>
+            );
+          })}
+        </div>
+
       </div>
     </div>
   );

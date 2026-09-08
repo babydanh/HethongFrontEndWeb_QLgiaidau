@@ -1,0 +1,435 @@
+'use client';
+
+import { useState } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Plus,
+  Radio,
+  Settings2,
+  ShieldCheck,
+  Swords,
+  Trophy,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import type { CommunityMemberRecord } from '@/features/communities/api';
+import type {
+  ClubMatchParticipant,
+  ClubMatchSession,
+  ClubSessionMatch,
+} from '@/types/club-match-session';
+
+type SessionAction = 'CLOSE' | 'END' | 'CANCEL';
+
+type Props = {
+  communityId: string;
+  session: ClubMatchSession;
+  participants: ClubMatchParticipant[];
+  clubMembers: CommunityMemberRecord[];
+  selectedMembers: string[];
+  setSelectedMembers: Dispatch<SetStateAction<string[]>>;
+  sideAPlayers: string[];
+  sideBPlayers: string[];
+  assignPlayer: (userId: string, side: 'A' | 'B') => void;
+  preferredPartners: string[];
+  setPreferredPartners: Dispatch<SetStateAction<string[]>>;
+  preferredOpponents: string[];
+  setPreferredOpponents: Dispatch<SetStateAction<string[]>>;
+  avoidedPlayers: string[];
+  setAvoidedPlayers: Dispatch<SetStateAction<string[]>>;
+  matches: ClubSessionMatch[];
+  matchStatus: string;
+  setMatchStatus: (value: string) => void;
+  mockName: string;
+  setMockName: (value: string) => void;
+  creatingMock: boolean;
+  busy: boolean;
+  loadingMore: boolean;
+  participantCursor: string | null;
+  matchCursor: string | null;
+  memberCursor: string | null;
+  onJoin: () => void;
+  onWithdraw: () => void;
+  onTransition: (action: SessionAction) => void;
+  onForceSelected: () => void;
+  onCreateMock: () => void;
+  onSavePreferences: () => void;
+  onCreateMatch: () => void;
+  onLoadMoreParticipants: () => void;
+  onLoadMoreMatches: () => void;
+  onLoadMoreMembers: () => void;
+};
+
+function formatSessionDate(value: string | null, locale: string, fallback: string) {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function initials(name: string | null | undefined) {
+  const parts = (name || '?').trim().split(/\s+/).filter(Boolean);
+  return parts.length > 1
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : (parts[0]?.[0] || '?').toUpperCase();
+}
+
+function Avatar({
+  name,
+  avatarUrl,
+  mock = false,
+  className = 'h-11 w-11',
+}: {
+  name: string | null | undefined;
+  avatarUrl?: string | null;
+  mock?: boolean;
+  className?: string;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  return avatarUrl && !imageFailed ? (
+    <img
+      src={avatarUrl}
+      alt={name || 'Player'}
+      className={`${className} rounded-full border-2 border-white object-cover shadow-sm ${mock ? 'grayscale' : ''}`}
+      onError={() => setImageFailed(true)}
+    />
+  ) : (
+    <span className={`${className} inline-flex items-center justify-center rounded-full border-2 border-white bg-blue-100 text-sm font-bold text-blue-700 shadow-sm`}>
+      {initials(name)}
+    </span>
+  );
+}
+
+function statusClasses(status: ClubMatchSession['status']) {
+  if (status === 'OPEN') return 'border-blue-200 bg-blue-50 text-blue-700';
+  if (status === 'LIVE') return 'border-rose-200 bg-rose-50 text-rose-700';
+  if (status === 'CLOSED') return 'border-amber-200 bg-amber-50 text-amber-700';
+  if (status === 'CANCELLED') return 'border-rose-200 bg-rose-50 text-rose-700';
+  return 'border-slate-200 bg-slate-100 text-slate-700';
+}
+
+function readSetScores(match: ClubSessionMatch) {
+  const rawSets = match.scoreDetails?.sets;
+  if (!Array.isArray(rawSets)) return [];
+  return rawSets.flatMap((item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+    const record = item as Record<string, unknown>;
+    const team1Score = Number(record.team1Score);
+    const team2Score = Number(record.team2Score);
+    return Number.isFinite(team1Score) && Number.isFinite(team2Score)
+      ? [{ team1Score, team2Score, isFinished: record.isFinished === true }]
+      : [];
+  });
+}
+
+function sideMembers(match: ClubSessionMatch, side: 'A' | 'B') {
+  return (side === 'A' ? match.participant1 : match.participant2).members ?? [];
+}
+
+function sideName(match: ClubSessionMatch, side: 'A' | 'B', fallback: string) {
+  const names = sideMembers(match, side)
+    .map((member) => member.fullName?.trim())
+    .filter(Boolean);
+  return names.join(' / ') || fallback;
+}
+
+function MatchCard({ match, t }: { match: ClubSessionMatch; t: (key: string, values?: Record<string, string | number>) => string }) {
+  const sets = readSetScores(match);
+  const sideA = sideMembers(match, 'A');
+  const sideB = sideMembers(match, 'B');
+  const isLive = match.status === 'ONGOING';
+  const deltas = Object.values(match.eloDelta ?? {}).filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  const totalElo = deltas.reduce((sum, value) => sum + value, 0);
+  const eloText = match.eloStatus === 'APPLIED' && deltas.length > 0
+    ? `ELO ${totalElo >= 0 ? '+' : ''}${totalElo}`
+    : t('eloStatus', { status: t(`eloStates.${match.eloStatus}`) });
+
+  return (
+    <Link
+      href={`/live/${match.id}?scoring=1`}
+      className={`group block overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md ${isLive ? 'border-rose-200' : 'border-slate-200'}`}
+    >
+      <div className={`flex items-center justify-between border-b px-4 py-2.5 ${isLive ? 'border-rose-100 bg-rose-50/70' : 'border-slate-100 bg-slate-50/70'}`}>
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${isLive ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            {isLive && <Radio className="h-3.5 w-3.5 animate-pulse" />}
+            {t(`matchStatus.${match.status}`)}
+          </span>
+          <span className="text-xs font-semibold text-slate-500">{t('matchType')}</span>
+        </div>
+        <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
+      </div>
+
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-5 sm:px-6">
+        <MatchSide members={sideA} name={sideName(match, 'A', t('sideA'))} align="left" />
+        <div className="min-w-[74px] text-center">
+          <div className={`text-3xl font-black tracking-tight ${isLive ? 'text-rose-600' : 'text-slate-900'}`}>
+            {match.p1SetsWon} : {match.p2SetsWon}
+          </div>
+          {sets.length > 0 && (
+            <div className="mt-2 flex max-w-[132px] flex-wrap justify-center gap-1">
+              {sets.map((set, index) => (
+                <span key={`${match.id}-${index}`} className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${index === sets.length - 1 && !sets[index].isFinished ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {set.team1Score}-{set.team2Score}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <MatchSide members={sideB} name={sideName(match, 'B', t('sideB'))} align="right" />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-500 sm:px-6">
+        <span className={match.eloStatus === 'APPLIED' ? 'text-emerald-700' : 'text-slate-500'}>{eloText}</span>
+        <span className="text-blue-600">{t('openScoring')}</span>
+      </div>
+    </Link>
+  );
+}
+
+function MatchSide({
+  members,
+  name,
+  align,
+}: {
+  members: Array<{ fullName: string | null; avatarUrl?: string | null; isMock?: boolean }>;
+  name: string;
+  align: 'left' | 'right';
+}) {
+  return (
+    <div className={`min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+      <div className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'} -space-x-3`}>
+        {members.slice(0, 2).map((member, index) => (
+          <Avatar key={`${member.fullName}-${index}`} name={member.fullName} avatarUrl={member.avatarUrl} mock={member.isMock} className="h-10 w-10" />
+        ))}
+      </div>
+      <p className="mt-2 line-clamp-2 text-sm font-bold leading-tight text-slate-900">{name}</p>
+    </div>
+  );
+}
+
+export function ClubMatchSessionDetailView({
+  communityId,
+  session,
+  participants,
+  clubMembers,
+  selectedMembers,
+  setSelectedMembers,
+  sideAPlayers,
+  sideBPlayers,
+  assignPlayer,
+  preferredPartners,
+  setPreferredPartners,
+  preferredOpponents,
+  setPreferredOpponents,
+  avoidedPlayers,
+  setAvoidedPlayers,
+  matches,
+  matchStatus,
+  setMatchStatus,
+  mockName,
+  setMockName,
+  creatingMock,
+  busy,
+  loadingMore,
+  participantCursor,
+  matchCursor,
+  memberCursor,
+  onJoin,
+  onWithdraw,
+  onTransition,
+  onForceSelected,
+  onCreateMock,
+  onSavePreferences,
+  onCreateMatch,
+  onLoadMoreParticipants,
+  onLoadMoreMatches,
+  onLoadMoreMembers,
+}: Props) {
+  const t = useTranslations('ClubMatchSession');
+  const locale = useLocale();
+  const activeParticipants = participants.filter((item) => item.participant.status === 'ACTIVE');
+  const activeIds = new Set(activeParticipants.map((item) => item.participant.userId));
+  const pairingReady = [1, 2].includes(sideAPlayers.length) && sideAPlayers.length === sideBPlayers.length;
+  const preferenceOptions = activeParticipants.filter((item) => item.participant.userId !== session.viewerParticipant?.userId);
+  const selectedPreferenceIds = new Set([...preferredPartners, ...preferredOpponents, ...avoidedPlayers]);
+  const slotCount = Math.min(Math.max(session.maxParticipants, activeParticipants.length, 8), 16);
+  const slots = Array.from({ length: slotCount }, (_, index) => activeParticipants[index] ?? null);
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-5">
+        <Link href={`/communities/${communityId}/manage/tournaments`} className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-900">
+          <ChevronLeft className="h-4 w-4" />
+          {t('back')}
+        </Link>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Badge className={`border px-3 py-1 text-xs font-bold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
+                <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
+                <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">{t('sessionType')}</Badge>
+              </div>
+              <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{session.resolvedName}</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{session.description || t('noDescription')}</p>
+            </div>
+            <div className="grid min-w-[220px] grid-cols-2 gap-2">
+              <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
+              <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(matches.length)} label={t('matches')} />
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
+            <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, t('scheduleHint'))}</span>
+            <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{session.endAt ? formatSessionDate(session.endAt, locale, t('scheduleHint')) : t('scheduleHint')}</span>
+            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {session.capabilities?.canJoin && <Button disabled={busy} onClick={onJoin}><UserPlus className="mr-2 h-4 w-4" />{t('join')}</Button>}
+            {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
+            {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
+            {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
+            {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
+          </div>
+        </section>
+
+        <nav className="flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Session navigation">
+          <AnchorTab href="#overview" active icon={<Trophy className="h-4 w-4" />}>{t('basicInfoTitle')}</AnchorTab>
+          <AnchorTab href="#participants" icon={<Users className="h-4 w-4" />}>{t('participants')}</AnchorTab>
+          <AnchorTab href="#matches" icon={<Swords className="h-4 w-4" />}>{t('matches')}</AnchorTab>
+          {session.viewerParticipant?.status === 'ACTIVE' && <AnchorTab href="#preferences" icon={<Settings2 className="h-4 w-4" />}>{t('preferences')}</AnchorTab>}
+        </nav>
+
+        <section id="overview" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('sessionType')}</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950">{t('participants')}</h2>
+            </div>
+            <span className="text-sm font-bold text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div><h3 className="font-black text-slate-950">{t('participants')} · {activeParticipants.length}</h3><p className="mt-1 text-xs text-slate-500">{t('registrationOpensImmediately')}</p></div>
+              {session.capabilities?.canJoin && <Button size="sm" disabled={busy} onClick={onJoin}><Plus className="mr-1.5 h-4 w-4" />{t('join')}</Button>}
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-8">
+              {slots.map((item, index) => item ? (
+                <div key={item.participant.id} className="min-w-0 text-center">
+                  <div className="flex justify-center"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} /></div>
+                  <p className="mt-2 truncate text-xs font-bold text-slate-900">{item.fullName || `#${index + 1}`}</p>
+                  <p className="truncate text-[10px] text-slate-500">{item.isMock ? t('mockPlayer') : t('active')}</p>
+                </div>
+              ) : (
+                <div key={`slot-${index}`} className="min-w-0 text-center">
+                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div>
+                  <p className="mt-2 text-xs font-semibold text-slate-400">Slot #{index + 1}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="participants" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div><h2 className="text-xl font-black text-slate-950">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantSelectionHint')}</p></div>
+            {session.capabilities?.canCreateMatch && <Button disabled={busy || !pairingReady} onClick={onCreateMatch}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" />
+            <PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" />
+          </div>
+          <p className="mt-3 text-xs font-medium text-slate-500">{t('pairingDerivedHint')}</p>
+
+          <div className="mt-5 space-y-2">
+            {activeParticipants.map((item) => {
+              const userId = item.participant.userId;
+              const side = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null;
+              const sideFull = (sideAPlayers.length >= 2 && !sideAPlayers.includes(userId)) || (sideBPlayers.length >= 2 && !sideBPlayers.includes(userId));
+              return (
+                <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
+                  <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{item.fullName}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] text-amber-700">{t('mockPlayer')}</Badge>}</div>
+                  <div className="flex items-center gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div>
+                </div>
+              );
+            })}
+          </div>
+          {participantCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreParticipants}>{t('loadMore')}</Button>}
+
+          {session.capabilities?.canManage && (
+            <div className="mt-5 border-t border-slate-100 pt-5">
+              <div className="mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4 text-blue-600" /><h3 className="font-bold text-slate-900">{t('assignSelected')}</h3></div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {clubMembers.map((record) => {
+                  const userId = record.member.userId;
+                  const checked = selectedMembers.includes(userId);
+                  return <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-300"><input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} /><Avatar name={record.user.fullName} avatarUrl={record.user.avatarUrl} className="h-8 w-8" /><span className="flex-1 text-sm font-semibold text-slate-800">{record.user.fullName}</span>{activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">{t('active')}</Badge>}</label>;
+                })}
+              </div>
+              {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
+              <div className="mt-3 flex flex-wrap gap-2"><Button variant="outline" disabled={busy || selectedMembers.length === 0} onClick={onForceSelected}>{t('assignSelected')}</Button></div>
+              {session.status === 'OPEN' && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" /><Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button><span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span></div>}
+            </div>
+          )}
+        </section>
+
+        {session.viewerParticipant?.status === 'ACTIVE' && <section id="preferences" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-xl font-black text-slate-950">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {[
+              { value: preferredPartners, setValue: setPreferredPartners, label: t('preferredPartner') },
+              { value: preferredOpponents, setValue: setPreferredOpponents, label: t('preferredOpponent') },
+              { value: avoidedPlayers, setValue: setAvoidedPlayers, label: t('avoidPlayer') },
+            ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-bold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{item.fullName}</option>)}</select></label>)}
+          </div>
+          <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
+        </section>}
+
+        <section id="matches" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div>
+          {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} t={t} />)}</div>}
+          {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function SummaryMetric({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
+  return <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-1.5 text-blue-600">{icon}<span className="text-xl font-black text-slate-950">{value}</span></div><p className="mt-1 truncate text-[11px] font-semibold text-slate-500">{label}</p></div>;
+}
+
+function AnchorTab({ href, children, icon, active = false }: { href: string; children: ReactNode; icon: ReactNode; active?: boolean }) {
+  return <a href={href} className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition ${active ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'}`}>{icon}{children}</a>;
+}
+
+function PairingSide({
+  title,
+  players,
+  participants,
+  tone,
+}: {
+  title: string;
+  players: string[];
+  participants: ClubMatchParticipant[];
+  tone: 'blue' | 'amber';
+}) {
+  const classes = tone === 'blue' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-amber-200 bg-amber-50 text-amber-900';
+  return <div className={`rounded-xl border p-4 ${classes}`}><div className="flex items-center justify-between text-sm font-black"><span>{title}</span><span>{players.length}/2</span></div><div className="mt-3 flex flex-wrap gap-2">{players.length ? players.map((userId) => { const item = participants.find((candidate) => candidate.participant.userId === userId); return <span key={userId} className="inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-bold"><Avatar name={item?.fullName} avatarUrl={item?.avatarUrl} className="h-6 w-6" />{item?.fullName || userId}</span>; }) : <span className="text-sm opacity-70">Chưa chọn</span>}</div></div>;
+}

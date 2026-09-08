@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { startTransition, useEffect, useRef, useState, use } from 'react';
 import { BRAND } from '@/constants/brand';
@@ -134,6 +134,7 @@ export default function LiveMatchPage({ params }: Props) {
       : rateLimitMessage;
   };
   const router = useRouter();
+  const searchParams = useSearchParams();
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
   const { match, scores, viewerCount, cheerCount, setCheerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
@@ -178,6 +179,21 @@ export default function LiveMatchPage({ params }: Props) {
   const [shootoutGoals, setShootoutGoals] = useState<{ p1Goals: number; p2Goals: number }>({ p1Goals: 0, p2Goals: 0 });
   const [footballScore, setFootballScore] = useState<FootballScoreState>(DEFAULT_FOOTBALL_SCORE);
   const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
+  const autoOpenedScoringRef = useRef<string | null>(null);
+  const shouldOpenScoring = searchParams.get('scoring') === '1';
+
+  useEffect(() => {
+    if (
+      !shouldOpenScoring ||
+      !match ||
+      ['COMPLETED', 'CANCELLED'].includes(match.status) ||
+      autoOpenedScoringRef.current === match.id
+    ) {
+      return;
+    }
+    autoOpenedScoringRef.current = match.id;
+    setIsOfficialScoreModalOpen(true);
+  }, [match, shouldOpenScoring]);
   const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
   const lastSyncedTennisServerKeyRef = useRef<string>('init');
   const optimisticScoresRef = useRef<MatchScore[]>(scores);
@@ -560,10 +576,19 @@ export default function LiveMatchPage({ params }: Props) {
 
   const isUserReferee = user?.roles?.includes('REFEREE') ?? false;
   const isAssignedReferee = isUserReferee && (match.refereeId == null || match.refereeId === user?.id);
+  const isClubSessionMatch = (match as Match & { contextType?: string }).contextType === 'CLUB_SOCIAL_MATCH_SESSION';
+  const isClubSessionPlayer = Boolean(
+    user?.id &&
+      isClubSessionMatch &&
+      [match.participant1, match.participant2]
+        .flatMap((participant) => participant?.members ?? [])
+        .some((member) => member.userId === user.id),
+  );
   const canControlLiveMatch = Boolean(
     hasAdminRole ||
       match.tournament?.createdBy === user?.id ||
-      isAssignedReferee,
+      isAssignedReferee ||
+      isClubSessionPlayer,
   );
 
   // Cho phép bình luận tự do thoải mái

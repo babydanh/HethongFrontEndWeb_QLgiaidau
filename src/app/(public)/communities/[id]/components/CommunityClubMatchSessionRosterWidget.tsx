@@ -53,7 +53,7 @@ export default function CommunityClubMatchSessionRosterWidget({
     try {
       const [sessionData, participantsData] = await Promise.all([
         clubMatchSessionsApi.get(sessionId),
-        clubMatchSessionsApi.participants(sessionId, { limit: 100, status: 'ACTIVE' }),
+        clubMatchSessionsApi.participants(sessionId, { limit: 50, status: 'ACTIVE' }),
       ]);
       setSession(sessionData);
       setParticipants(participantsData.data ?? []);
@@ -68,7 +68,7 @@ export default function CommunityClubMatchSessionRosterWidget({
       try {
         const [sessionData, participantsData] = await Promise.all([
           clubMatchSessionsApi.get(sessionId),
-          clubMatchSessionsApi.participants(sessionId, { limit: 100, status: 'ACTIVE' }),
+          clubMatchSessionsApi.participants(sessionId, { limit: 50, status: 'ACTIVE' }),
         ]);
         if (!mounted) return;
         setSession(sessionData);

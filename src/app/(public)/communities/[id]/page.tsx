@@ -688,8 +688,8 @@ export default function CommunityDetailPage() {
           {[
             { id: 'overview', label: translate('overviewTab') },
             ...(canViewContent ? [
-              { id: 'tournaments', label: translate('tournamentsTab') },
               { id: 'activity', label: translate('activityTab') },
+              { id: 'tournaments', label: translate('tournamentsTab') },
               { id: 'members', label: translate('membersTab') },
               { id: 'gallery', label: translate('galleryTab') },
               { id: 'rankings', label: translate('rankingsTab') },

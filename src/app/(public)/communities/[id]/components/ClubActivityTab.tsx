@@ -1041,8 +1041,8 @@ export default function ClubActivityTab({ communityId }: Props) {
 
                     <div className="flex items-center gap-2">
                       {isOngoing && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
                           Đang diễn ra
                         </span>
                       )}

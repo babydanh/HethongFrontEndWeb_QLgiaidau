@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, ArrowUpRight, ChevronLeft, ChevronRight, Loader2, Plus, UserRound, X } from 'lucide-react';
+import { AlertCircle, ArrowUpRight, ChevronLeft, ChevronRight, Loader2, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import type { ClubMatchParticipant, ClubMatchSession } from '@/types/club-match-session';
@@ -43,9 +43,6 @@ export default function CommunityClubMatchSessionRosterWidget({
   const [participants, setParticipants] = useState<ClubMatchParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  const [showMockForm, setShowMockForm] = useState(false);
-  const [mockName, setMockName] = useState('');
-  const [creatingMock, setCreatingMock] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
 
@@ -147,23 +144,6 @@ export default function CommunityClubMatchSessionRosterWidget({
     }
   };
 
-  const handleCreateMock = async () => {
-    const name = mockName.trim();
-    if (!name || creatingMock) return;
-    setCreatingMock(true);
-    try {
-      await clubMatchSessionsApi.createMockParticipant(sessionId, name);
-      setMockName('');
-      setShowMockForm(false);
-      toast.success('Đã tạo VĐV ảo. VĐV ảo không tính ELO.');
-      await refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không thể tạo VĐV ảo.');
-    } finally {
-      setCreatingMock(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="mt-3.5 rounded-2xl border border-blue-100 bg-slate-50/70 p-5">
@@ -225,58 +205,18 @@ export default function CommunityClubMatchSessionRosterWidget({
           <span className="text-xs font-semibold text-slate-500">{activeParticipants.length}/{totalSlots} người</span>
         </div>
 
-        {/* Action bar: Bỏ nút Tham gia, chỉ giữ Rút đăng ký (khi đã tham gia) và Tạo VĐV ảo (cho BQT) */}
-        {(canWithdraw || canManage) && isOpen && (
+        {/* Action bar: Chỉ giữ Rút đăng ký khi người dùng hiện tại đã có slot */}
+        {currentUserParticipant && canWithdraw && isOpen && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {currentUserParticipant && canWithdraw && (
-              <button
-                type="button"
-                onClick={() => setConfirmWithdraw(true)}
-                disabled={joining}
-                className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-              >
-                {joining && <Loader2 className="h-4 w-4 animate-spin" />}
-                Rút đăng ký
-              </button>
-            )}
-            {canManage && !showMockForm && (
-              <button
-                type="button"
-                onClick={() => setShowMockForm(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 transition-colors cursor-pointer"
-              >
-                <Plus className="h-4 w-4" /> Tạo VĐV ảo
-              </button>
-            )}
-            {canManage && showMockForm && (
-              <div className="flex w-full flex-wrap items-center gap-2 rounded-xl bg-amber-50 p-2.5 ring-1 ring-amber-200">
-                <input
-                  value={mockName}
-                  onChange={(event) => setMockName(event.target.value)}
-                  onKeyDown={(event) => { if (event.key === 'Enter') void handleCreateMock(); }}
-                  placeholder="Tên VĐV ảo"
-                  maxLength={255}
-                  className="min-w-0 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400"
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleCreateMock()}
-                  disabled={!mockName.trim() || creatingMock}
-                  className="rounded-lg bg-amber-500 px-3 py-2 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50 cursor-pointer"
-                >
-                  Thêm
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowMockForm(false); setMockName(''); }}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-white cursor-pointer"
-                  aria-label="Đóng"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setConfirmWithdraw(true)}
+              disabled={joining}
+              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              {joining && <Loader2 className="h-4 w-4 animate-spin" />}
+              Rút đăng ký
+            </button>
           </div>
         )}
 

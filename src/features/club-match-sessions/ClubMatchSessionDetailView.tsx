@@ -24,6 +24,7 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { CommunityMemberRecord } from '@/features/communities/api';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import type {
   ClubMatchParticipant,
   ClubMatchSession,
@@ -91,19 +92,29 @@ function initials(name: string | null | undefined) {
     : (parts[0]?.[0] || '?').toUpperCase();
 }
 
+function shortDisplayName(name: string | null | undefined) {
+  const value = (name || '').trim();
+  if (!value) return '?';
+  const parts = value.split(/\s+/);
+  return parts[parts.length - 1] || value;
+}
+
 function Avatar({
   name,
   avatarUrl,
+  userId,
   mock = false,
   className = 'h-11 w-11',
 }: {
   name: string | null | undefined;
   avatarUrl?: string | null;
+  userId?: string | null;
   mock?: boolean;
   className?: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  return avatarUrl && !imageFailed ? (
+  const openUserById = useUserProfileModalStore((state) => state.openUserById);
+  const content = avatarUrl && !imageFailed ? (
     <img
       src={avatarUrl}
       alt={name || 'Player'}
@@ -114,6 +125,21 @@ function Avatar({
     <span className={`${className} inline-flex items-center justify-center rounded-full border-2 border-white bg-blue-100 text-sm font-bold text-blue-700 shadow-sm`}>
       {initials(name)}
     </span>
+  );
+  if (!userId) return content;
+  return (
+    <button
+      type="button"
+      aria-label={`Mở hồ sơ ${name || 'người chơi'}`}
+      className="shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openUserById(userId, name || '', avatarUrl || null, event.currentTarget.getBoundingClientRect());
+      }}
+    >
+      {content}
+    </button>
   );
 }
 
@@ -145,7 +171,7 @@ function sideMembers(match: ClubSessionMatch, side: 'A' | 'B') {
 
 function sideName(match: ClubSessionMatch, side: 'A' | 'B', fallback: string) {
   const names = sideMembers(match, side)
-    .map((member) => member.fullName?.trim())
+    .map((member) => shortDisplayName(member.fullName))
     .filter(Boolean);
   return names.join(' / ') || fallback;
 }
@@ -437,7 +463,7 @@ export function ClubMatchSessionDetailView({
             {activeParticipants.map((item) => {
               return (
                 <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
-                  <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{item.fullName}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] text-amber-700">{t('mockPlayer')}</Badge>}</div>
+                  <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p title={item.fullName || undefined} className="truncate text-sm font-bold text-slate-900">{shortDisplayName(item.fullName)}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] text-amber-700">{t('mockPlayer')}</Badge>}</div>
                   <span className="text-xs font-semibold text-slate-400">{t('joinedLabel')}</span>
                 </div>
               );
@@ -452,7 +478,7 @@ export function ClubMatchSessionDetailView({
                 {clubMembers.map((record) => {
                   const userId = record.member.userId;
                   const checked = selectedMembers.includes(userId);
-                  return <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-300"><input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} /><Avatar name={record.user.fullName} avatarUrl={record.user.avatarUrl} className="h-8 w-8" /><span className="flex-1 text-sm font-semibold text-slate-800">{record.user.fullName}</span>{activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">{t('active')}</Badge>}</label>;
+                  return <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-300"><input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} /><Avatar name={record.user.fullName} userId={userId} avatarUrl={record.user.avatarUrl} className="h-8 w-8" /><span title={record.user.fullName || undefined} className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{shortDisplayName(record.user.fullName)}</span>{activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">{t('active')}</Badge>}</label>;
                 })}
               </div>
               {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
@@ -469,7 +495,7 @@ export function ClubMatchSessionDetailView({
               { value: preferredPartners, setValue: setPreferredPartners, label: t('preferredPartner') },
               { value: preferredOpponents, setValue: setPreferredOpponents, label: t('preferredOpponent') },
               { value: avoidedPlayers, setValue: setAvoidedPlayers, label: t('avoidPlayer') },
-            ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-bold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{item.fullName}</option>)}</select></label>)}
+            ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-bold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{shortDisplayName(item.fullName)}</option>)}</select></label>)}
           </div>
           <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
           </div>}
@@ -516,7 +542,7 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   return <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-2">
     <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('registrationTitle')}</h2><span className="text-sm font-bold text-slate-500">{activeCount}/{maxParticipants}</span></div>
     <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
-      {slots.map((item, index) => item ? <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p className="mt-2 truncate text-[11px] font-bold text-slate-900">{item.fullName || `#${index + 1}`}</p></div> : <div key={`slot-${index}`} className="min-w-0 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-semibold text-slate-400">Slot #{index + 1}</p></div>)}
+      {slots.map((item, index) => item ? <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p title={item.fullName || undefined} className="mt-2 truncate text-[11px] font-bold text-slate-900">{shortDisplayName(item.fullName) || `#${index + 1}`}</p></div> : <div key={`slot-${index}`} className="min-w-0 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-semibold text-slate-400">Slot #{index + 1}</p></div>)}
     </div>
     {(canJoin || canWithdraw) && <div className="mt-6 flex gap-2 border-t border-slate-100 pt-4">{canJoin && <Button className="flex-1" size="sm" disabled={busy} onClick={onJoin}><UserPlus className="mr-1.5 h-4 w-4" />{t('join')}</Button>}{canWithdraw && <Button className="flex-1" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button>}</div>}
   </aside>;
@@ -543,7 +569,7 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
           const userId = item.participant.userId;
           const side = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null;
           const sideFull = (sideAPlayers.length >= 2 && !sideAPlayers.includes(userId)) || (sideBPlayers.length >= 2 && !sideBPlayers.includes(userId));
-          return <div key={item.participant.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><span className="truncate text-sm font-bold text-slate-900">{item.fullName}</span></div><div className="flex shrink-0 gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div></div>;
+          return <div key={item.participant.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><span title={item.fullName || undefined} className="min-w-0 truncate text-sm font-bold text-slate-900">{shortDisplayName(item.fullName)}</span></div><div className="flex shrink-0 gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div></div>;
         })}
       </div>
       <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4"><Button variant="outline" disabled={busy} onClick={onClose}>{t('closeForm')}</Button><Button disabled={busy || !pairingReady} onClick={onCreate}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button></div>
@@ -567,7 +593,7 @@ function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; 
       <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('playerStatistics')}</h2><span className="text-xs font-semibold text-slate-500">{t('completedMatchesOnly')}</span></div>
       {stats.length === 0 ? <p className="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{t('noParticipants')}</p> : <div className="mt-4 overflow-x-auto"><div className="min-w-[620px] space-y-2">
         {stats.map((stat, index) => <div key={stat.id} className="grid grid-cols-[auto_minmax(0,1fr)_72px_92px_92px_90px] items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
-          <span className="w-5 text-center text-xs font-black text-slate-400">{index + 1}</span><div className="flex min-w-0 items-center gap-2"><Avatar name={stat.name} avatarUrl={stat.avatarUrl} className="h-9 w-9" /><span className="truncate text-sm font-bold text-slate-900">{stat.name}</span></div>
+          <span className="w-5 text-center text-xs font-black text-slate-400">{index + 1}</span><div className="flex min-w-0 items-center gap-2"><Avatar name={stat.name} userId={stat.id} avatarUrl={stat.avatarUrl} className="h-9 w-9" /><span title={stat.name} className="truncate text-sm font-bold text-slate-900">{shortDisplayName(stat.name)}</span></div>
           <StatValue label={t('played')} value={String(stat.played)} /><StatValue label={t('winLoss')} value={`${stat.wins}–${stat.losses}`} /><StatValue label={t(stat.streakType === 'WIN' ? 'winningStreak' : stat.streakType === 'LOSS' ? 'losingStreak' : 'streak')} value={stat.streak ? String(stat.streak) : '—'} tone={stat.streakType === 'WIN' ? 'positive' : stat.streakType === 'LOSS' ? 'negative' : 'default'} /><StatValue label="ELO" value={`${stat.eloDelta >= 0 ? '+' : ''}${stat.eloDelta}`} tone={stat.eloDelta >= 0 ? 'positive' : 'negative'} />
         </div>)}
       </div></div>}
@@ -592,5 +618,5 @@ function PairingSide({
   tone: 'blue' | 'amber';
 }) {
   const classes = tone === 'blue' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-amber-200 bg-amber-50 text-amber-900';
-  return <div className={`rounded-xl border p-4 ${classes}`}><div className="flex items-center justify-between text-sm font-black"><span>{title}</span><span>{players.length}/2</span></div><div className="mt-3 flex flex-wrap gap-2">{players.length ? players.map((userId) => { const item = participants.find((candidate) => candidate.participant.userId === userId); return <span key={userId} className="inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-bold"><Avatar name={item?.fullName} avatarUrl={item?.avatarUrl} className="h-6 w-6" />{item?.fullName || userId}</span>; }) : <span className="text-sm opacity-70">Chưa chọn</span>}</div></div>;
+  return <div className={`rounded-xl border p-4 ${classes}`}><div className="flex items-center justify-between text-sm font-black"><span>{title}</span><span>{players.length}/2</span></div><div className="mt-3 flex flex-wrap gap-2">{players.length ? players.map((userId) => { const item = participants.find((candidate) => candidate.participant.userId === userId); return <span key={userId} title={item?.fullName || userId} className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-bold"><Avatar name={item?.fullName} userId={userId} avatarUrl={item?.avatarUrl} className="h-6 w-6" />{shortDisplayName(item?.fullName) || userId}</span>; }) : <span className="text-sm opacity-70">Chưa chọn</span>}</div></div>;
 }

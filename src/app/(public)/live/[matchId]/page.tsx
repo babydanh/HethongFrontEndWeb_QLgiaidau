@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { startTransition, useEffect, useRef, useState, use } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState, use } from 'react';
 import { BRAND } from '@/constants/brand';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
 import {
@@ -194,13 +194,31 @@ export default function LiveMatchPage({ params }: Props) {
     autoOpenedScoringRef.current = match.id;
     setIsOfficialScoreModalOpen(true);
   }, [match, shouldOpenScoring]);
-  const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
+  const [optimisticTennisPointState, setOptimisticTennisPointStateValue] = useState<TennisLivePointState | null>(null);
+  const optimisticTennisPointStateRef = useRef<TennisLivePointState | null>(null);
+  const setOptimisticTennisPointState = useCallback((nextState: TennisLivePointState | null) => {
+    optimisticTennisPointStateRef.current = nextState;
+    setOptimisticTennisPointStateValue(nextState);
+  }, []);
   const lastSyncedTennisServerKeyRef = useRef<string>('init');
   const optimisticScoresRef = useRef<MatchScore[]>(scores);
   const scoreSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingScorePayloadRef = useRef<ScoreUpdatePayload | null>(null);
   const scoreSyncInFlightRef = useRef(false);
   const liveMutationInFlightRef = useRef(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    void Promise.resolve().then(() => {
+      if (isCancelled) return;
+      optimisticTennisPointStateRef.current = null;
+      setOptimisticTennisPointStateValue(null);
+      lastSyncedTennisServerKeyRef.current = 'init';
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, [matchId]);
 
   useEffect(() => {
     optimisticScoresRef.current = scores;
@@ -486,6 +504,7 @@ export default function LiveMatchPage({ params }: Props) {
     resolvedTennisPointState,
     resolvedTennisPointStateKey,
     serverScoreDetailsKey,
+    setOptimisticTennisPointState,
   ]);
 
   useEffect(() => {
@@ -744,7 +763,7 @@ export default function LiveMatchPage({ params }: Props) {
 
     nextScores: typeof scores,
     nextSideOutState: PickleballSideOutState = sideOutState,
-    nextTennisPointState: TennisLivePointState | null = tennisPointState,
+    nextTennisPointState: TennisLivePointState | null = optimisticTennisPointStateRef.current ?? tennisPointState,
     nextPenalties: MatchPenaltyRecord[] = penalties,
     nextShootout?: { team1Goals: number; team2Goals: number; winnerId: string | null },
   ) => {
@@ -1001,16 +1020,19 @@ export default function LiveMatchPage({ params }: Props) {
         : newScores.length - 1;
 
       const setObj = { ...newScores[activeIdx] };
-      let nextTennisPointState = tennisPointState;
+      const currentTennisPointState = isTennis
+        ? optimisticTennisPointStateRef.current ?? resolvedTennisPointState
+        : null;
+      let nextTennisPointState = currentTennisPointState;
 
-      if (isTennis && tennisPointState) {
+      if (isTennis && currentTennisPointState) {
         if (action === 'inc') {
-          const tennisResult = awardTennisPoint(setObj, tennisPointState, team, resolvedRules, {
+          const tennisResult = awardTennisPoint(setObj, currentTennisPointState, team, resolvedRules, {
             enableTiebreak: !isLiteMatch,
           });
           newScores[activeIdx] = tennisResult.nextSet;
           nextTennisPointState = tennisResult.nextLiveState;
-        } else if (isTennisPointStateEmpty(tennisPointState)) {
+        } else if (isTennisPointStateEmpty(currentTennisPointState)) {
           newScores[activeIdx] =
             team === 1
               ? {
@@ -1025,7 +1047,7 @@ export default function LiveMatchPage({ params }: Props) {
             enableTiebreak: !isLiteMatch,
           });
         } else {
-          nextTennisPointState = stepBackTennisPoint(tennisPointState, team);
+          nextTennisPointState = stepBackTennisPoint(currentTennisPointState, team);
           newScores[activeIdx] = setObj;
         }
       } else {

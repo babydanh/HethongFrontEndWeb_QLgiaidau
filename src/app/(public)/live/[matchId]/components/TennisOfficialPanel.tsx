@@ -3,7 +3,6 @@
 import type { Match, MatchScore, TennisLivePointState } from '@/types/match';
 import { useTranslations } from 'next-intl';
 import { Minus, Plus } from 'lucide-react';
-import { cn } from '@/utils/cn';
 
 interface TennisOfficialPanelProps {
   match: Match;
@@ -44,9 +43,17 @@ export function TennisOfficialPanel({
             <p className="text-xs font-bold uppercase tracking-wider text-blue-700">{translate('tennisControl')}</p>
             <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-700">{pointHint}</p>
           </div>
-          <div className="shrink-0 self-start sm:self-auto rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-900 shadow-xs">
-            {translate('currentGameScore', { score1: currentSet.team1Score, score2: currentSet.team2Score })}
+          <div className="shrink-0 self-start rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs sm:self-auto sm:text-sm shadow-xs">
+            <span className="mr-2 font-semibold text-slate-500">{translate('tennisSetGamesLabel')}</span>
+            <span className="font-black tabular-nums text-slate-900">{currentSet.team1Score} - {currentSet.team2Score}</span>
           </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-blue-100 pt-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{translate('tennisCurrentGamePoints')}</span>
+          <span className="rounded-full bg-white px-3 py-1 text-sm font-black tabular-nums text-slate-900 shadow-xs">
+            {currentPointTeam1} - {currentPointTeam2}
+          </span>
         </div>
       </div>
 
@@ -76,7 +83,7 @@ export function TennisOfficialPanel({
 
             <div className="flex min-w-[120px] sm:min-w-[140px] md:min-w-[160px] flex-col items-center justify-center rounded-2xl bg-white px-6 py-4 sm:py-5 shadow-xs border border-slate-200/70">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                {translate('rallyLabel')}
+                {translate('tennisGamePointLabel')}
               </span>
               <span className="mt-1 text-5xl sm:text-6xl md:text-7xl font-black tabular-nums text-blue-700 leading-none">
                 {currentPointTeam1}
@@ -121,7 +128,7 @@ export function TennisOfficialPanel({
 
             <div className="flex min-w-[120px] sm:min-w-[140px] md:min-w-[160px] flex-col items-center justify-center rounded-2xl bg-white px-6 py-4 sm:py-5 shadow-xs border border-slate-200/70">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                {translate('rallyLabel')}
+                {translate('tennisGamePointLabel')}
               </span>
               <span className="mt-1 text-5xl sm:text-6xl md:text-7xl font-black tabular-nums text-blue-700 leading-none">
                 {currentPointTeam2}

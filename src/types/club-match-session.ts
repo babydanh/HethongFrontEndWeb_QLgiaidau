@@ -37,6 +37,12 @@ export interface ClubMatchSession {
     avoidUserIds: string[];
     version: number;
   } | null;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+    config?: Record<string, unknown> | null;
+  } | null;
 }
 
 export interface ClubMatchParticipant {

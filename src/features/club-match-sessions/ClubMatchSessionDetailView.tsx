@@ -166,6 +166,24 @@ function readSetScores(match: ClubSessionMatch) {
   });
 }
 
+function readTennisGamePoints(match: ClubSessionMatch) {
+  const liveState = match.scoreDetails?.liveState;
+  const pointState = liveState && typeof liveState === 'object' && !Array.isArray(liveState)
+    ? (liveState as Record<string, unknown>).tennisPointState
+    : null;
+  const rawPoints = pointState && typeof pointState === 'object' && !Array.isArray(pointState)
+    ? pointState as Record<string, unknown>
+    : {};
+  const normalize = (value: unknown) => {
+    if (typeof value === 'number' && Number.isFinite(value)) return String(Math.max(0, Math.trunc(value)));
+    return value === '15' || value === '30' || value === '40' || value === 'A' ? value : '0';
+  };
+  return {
+    team1: normalize(rawPoints.team1Point),
+    team2: normalize(rawPoints.team2Point),
+  };
+}
+
 function sideMembers(match: ClubSessionMatch, side: 'A' | 'B') {
   return (side === 'A' ? match.participant1 : match.participant2).members ?? [];
 }
@@ -234,7 +252,7 @@ function buildPlayerStats(participants: ClubMatchParticipant[], matches: ClubSes
   return [...stats.values()].sort((left, right) => right.wins - left.wins || right.played - left.played || right.eloDelta - left.eloDelta);
 }
 
-function MatchCard({ match, t }: { match: ClubSessionMatch; t: (key: string, values?: Record<string, string | number>) => string }) {
+function MatchCard({ match, isTennis, t }: { match: ClubSessionMatch; isTennis: boolean; t: (key: string, values?: Record<string, string | number>) => string }) {
   const sets = readSetScores(match);
   const sideA = sideMembers(match, 'A');
   const sideB = sideMembers(match, 'B');
@@ -244,6 +262,7 @@ function MatchCard({ match, t }: { match: ClubSessionMatch; t: (key: string, val
   const eloText = match.eloStatus === 'APPLIED' && deltas.length > 0
     ? `ELO ${totalElo >= 0 ? '+' : ''}${totalElo}`
     : t('eloStatus', { status: t(`eloStates.${match.eloStatus}`) });
+  const currentGamePoints = isTennis && isLive ? readTennisGamePoints(match) : null;
 
   return (
     <Link
@@ -274,6 +293,12 @@ function MatchCard({ match, t }: { match: ClubSessionMatch; t: (key: string, val
                   {set.team1Score}-{set.team2Score}
                 </span>
               ))}
+            </div>
+          )}
+          {currentGamePoints && (
+            <div className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700">
+              <span className="truncate">{t('currentGamePoints')}</span>
+              <span className="shrink-0 tabular-nums">{currentGamePoints.team1} - {currentGamePoints.team2}</span>
             </div>
           )}
         </div>
@@ -364,6 +389,8 @@ export function ClubMatchSessionDetailView({
   const completedMatches = matches.filter((match) => match.status === 'COMPLETED');
   const liveMatches = matches.filter((match) => match.status === 'ONGOING');
   const playerStats = buildPlayerStats(activeParticipants, matches);
+  const categoryText = `${session.category?.slug ?? ''} ${session.category?.name ?? ''}`.toLowerCase();
+  const isTennis = categoryText.includes('tennis') || categoryText.includes('quan vot');
   const tabs: Array<{ id: SessionTab; label: string; icon: ReactNode; count?: number }> = [
     { id: 'overview', label: t('overviewTab'), icon: <Trophy className="h-4 w-4" /> },
     { id: 'participants', label: t('participantsTab'), icon: <Users className="h-4 w-4" />, count: activeParticipants.length },
@@ -505,7 +532,7 @@ export function ClubMatchSessionDetailView({
 
         {activeTab === 'matches' && <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-900">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
-          {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} t={t} />)}</div>}
+          {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} />)}</div>}
           {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
         </section>}
 
@@ -577,22 +604,147 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
   onClose: () => void;
   onCreate: () => void;
 }) {
-  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 sm:items-center sm:p-6">
-    <div role="dialog" aria-modal="true" aria-labelledby="create-match-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xl sm:p-6">
-      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('matchesTab')}</p><h2 id="create-match-title" className="mt-1 text-lg font-bold text-slate-900">{t('createMatchFormTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('createMatchFormHint')}</p></div><button type="button" aria-label={t('closeForm')} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><X className="h-5 w-5" /></button></div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2"><PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" /><PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" /></div>
-      <p className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-medium text-slate-600">{t('participantSelectionHint')}</p>
-      <div className="mt-4 space-y-2">
-        {participants.map((item) => {
-          const userId = item.participant.userId;
-          const side = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null;
-          const sideFull = (sideAPlayers.length >= 2 && !sideAPlayers.includes(userId)) || (sideBPlayers.length >= 2 && !sideBPlayers.includes(userId));
-          return <div key={item.participant.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><span title={item.fullName || undefined} className="min-w-0 truncate text-sm font-semibold text-slate-900">{shortDisplayName(item.fullName)}</span></div><div className="flex shrink-0 gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div></div>;
-        })}
+  const [search, setSearch] = useState('');
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredParticipants = normalizedSearch
+    ? participants.filter((item) => {
+        const name = (item.fullName || '').toLowerCase();
+        return name.includes(normalizedSearch);
+      })
+    : participants;
+
+  const aCount = sideAPlayers.length;
+  const bCount = sideBPlayers.length;
+  const statusLabel =
+    aCount > 0 && aCount === bCount && aCount <= 2
+      ? aCount === 1
+        ? t('singlesReady')
+        : t('doublesReady')
+      : t('selectBalancedPlayers');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 sm:items-center sm:p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-match-title"
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xl sm:p-6"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('matchesTab')}</p>
+            <h2 id="create-match-title" className="mt-1 text-lg font-bold text-slate-900">
+              {t('createMatchFormTitle')}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">{t('createMatchFormHint')}</p>
+          </div>
+          <button
+            type="button"
+            aria-label={t('closeForm')}
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" />
+          <PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" />
+        </div>
+
+        <div className="mt-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('searchParticipantsHint')}
+            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none"
+          />
+        </div>
+
+        <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
+          {filteredParticipants.length === 0 ? (
+            <div className="py-8 text-center text-xs font-medium text-slate-400">{t('noParticipantsFound')}</div>
+          ) : (
+            filteredParticipants.map((item) => {
+              const userId = item.participant.userId;
+              const isSideA = sideAPlayers.includes(userId);
+              const isSideB = sideBPlayers.includes(userId);
+              const disabledA = !isSideA && sideAPlayers.length >= 2;
+              const disabledB = !isSideB && sideBPlayers.length >= 2;
+
+              return (
+                <div
+                  key={item.participant.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar
+                      name={item.fullName}
+                      userId={userId}
+                      avatarUrl={item.avatarUrl}
+                      mock={item.isMock}
+                      className="h-8 w-8"
+                    />
+                    <span
+                      title={item.fullName || undefined}
+                      className="min-w-0 truncate text-sm font-semibold text-slate-900"
+                    >
+                      {shortDisplayName(item.fullName)}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Button
+                      size="sm"
+                      variant={isSideA ? 'default' : 'outline'}
+                      disabled={busy || disabledA}
+                      onClick={() => assignPlayer(userId, 'A')}
+                      className={`h-8 min-w-[54px] font-bold text-xs ${
+                        isSideA ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+                      }`}
+                    >
+                      {t('sideA')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={isSideB ? 'default' : 'outline'}
+                      disabled={busy || disabledB}
+                      onClick={() => assignPlayer(userId, 'B')}
+                      className={`h-8 min-w-[54px] font-bold text-xs ${
+                        isSideB ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''
+                      }`}
+                    >
+                      {t('sideB')}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+          <p
+            className={`text-xs font-semibold ${
+              pairingReady ? 'text-emerald-600' : 'text-slate-500'
+            }`}
+          >
+            {statusLabel}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={busy} onClick={onClose}>
+              {t('closeForm')}
+            </Button>
+            <Button disabled={busy || !pairingReady} onClick={onCreate}>
+              <Swords className="mr-2 h-4 w-4" />
+              {t('createMatch')}
+            </Button>
+          </div>
+        </div>
       </div>
-      <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4"><Button variant="outline" disabled={busy} onClick={onClose}>{t('closeForm')}</Button><Button disabled={busy || !pairingReady} onClick={onCreate}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button></div>
     </div>
-  </div>;
+  );
 }
 
 function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; completedMatches: number; t: (key: string, values?: Record<string, string | number>) => string }) {

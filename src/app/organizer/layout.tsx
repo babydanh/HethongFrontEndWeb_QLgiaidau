@@ -1,7 +1,7 @@
 'use client';
 
 import { useSyncExternalStore, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -23,6 +23,7 @@ export default function OrganizerLayout({
   children: React.ReactNode;
 }) {
   const { user, isAuthenticated } = useAuthStore();
+  const pathname = usePathname();
   const router = useRouter();
   const mounted = useMounted();
   const translate = useTranslations('OrganizerTournaments');
@@ -30,6 +31,7 @@ export default function OrganizerLayout({
   const hasOrganizerRole = Boolean(
     user?.roles?.some((role) => role === 'ORGANIZER' || role === 'ADMIN'),
   );
+  const isTournamentManageRoute = /^\/organizer\/tournaments\/[^/]+\/manage(?:\/|$)/.test(pathname);
 
   useEffect(() => {
     if (!mounted) return;
@@ -130,7 +132,7 @@ export default function OrganizerLayout({
 
   return (
     <section className="min-h-[calc(100vh-9rem)] bg-slate-50 py-6 md:py-8">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className={isTournamentManageRoute ? 'w-full' : 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8'}>
         {children}
       </div>
     </section>

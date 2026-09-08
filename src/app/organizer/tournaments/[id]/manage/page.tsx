@@ -256,7 +256,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
 
   if (s.isLoading) return (
-    <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-4 md:py-6">
       <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-start lg:gap-6" aria-busy="true" aria-live="polite">
         <div className="hidden w-[272px] shrink-0 space-y-4 lg:block">
           <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
@@ -342,7 +342,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-4 md:py-6">
       <div className="w-full">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
           <TournamentManageSidebar
@@ -788,7 +788,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 {translate('exitWorkspace')}
               </Button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6">
+            <div className="min-h-0 flex-1 overflow-y-auto py-4 md:py-6">
               <div className="w-full">
                 <CourtWorkspace
                   tournamentStatus={s.tournament?.status}

@@ -137,7 +137,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`h-full antialiased ${inter.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
         <link rel="icon" href="/sporto_512.png" type="image/png" sizes="512x512" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />

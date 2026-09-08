@@ -251,6 +251,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                     bannerUrl={tournament.bannerUrl}
                     tournamentName={tournament.name}
                     categoryName={tournament.category?.name}
+                    priority={index === 0}
                   />
                   {!hideFeaturedCardText && (
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/35 to-transparent pointer-events-none" />

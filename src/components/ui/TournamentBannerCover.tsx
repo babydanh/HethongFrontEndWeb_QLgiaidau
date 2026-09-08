@@ -10,6 +10,7 @@ export interface TournamentBannerCoverProps {
   categoryName?: string | null;
   className?: string;
   isCompleted?: boolean;
+  priority?: boolean;
   children?: React.ReactNode;
 }
 
@@ -82,6 +83,7 @@ export const TournamentBannerCover: React.FC<TournamentBannerCoverProps> = ({
   categoryName,
   className = '',
   isCompleted = false,
+  priority = false,
   children,
 }) => {
   const [imgError, setImgError] = useState(false);
@@ -99,6 +101,9 @@ export const TournamentBannerCover: React.FC<TournamentBannerCoverProps> = ({
         <img
           src={bannerUrl!.split(',')[0]}
           alt={tournamentName}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          decoding={priority ? 'sync' : 'async'}
           onError={() => setImgError(true)}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
         />

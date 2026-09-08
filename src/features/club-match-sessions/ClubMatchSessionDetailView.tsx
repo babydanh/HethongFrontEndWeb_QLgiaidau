@@ -5,10 +5,13 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
+  BarChart3,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Flame,
   Plus,
   Radio,
   Settings2,
@@ -28,6 +31,7 @@ import type {
 } from '@/types/club-match-session';
 
 type SessionAction = 'CLOSE' | 'END' | 'CANCEL';
+type SessionTab = 'overview' | 'participants' | 'matches' | 'statistics';
 
 type Props = {
   communityId: string;
@@ -142,6 +146,63 @@ function sideName(match: ClubSessionMatch, side: 'A' | 'B', fallback: string) {
     .map((member) => member.fullName?.trim())
     .filter(Boolean);
   return names.join(' / ') || fallback;
+}
+
+type PlayerStat = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  played: number;
+  wins: number;
+  losses: number;
+  eloDelta: number;
+  streak: number;
+  streakType: 'WIN' | 'LOSS' | 'NONE';
+};
+
+function buildPlayerStats(participants: ClubMatchParticipant[], matches: ClubSessionMatch[]) {
+  const stats = new Map<string, PlayerStat>();
+  participants
+    .filter((item) => item.participant.status === 'ACTIVE')
+    .forEach((item) => {
+      stats.set(item.participant.userId, {
+        id: item.participant.userId,
+        name: item.fullName || item.participant.userId,
+        avatarUrl: item.avatarUrl,
+        played: 0,
+        wins: 0,
+        losses: 0,
+        eloDelta: 0,
+        streak: 0,
+        streakType: 'NONE',
+      });
+    });
+
+  const chronologicalMatches = matches.filter((match) => match.status === 'COMPLETED').slice().reverse();
+  chronologicalMatches.forEach((match) => {
+    const winner = match.p1SetsWon === match.p2SetsWon ? null : match.p1SetsWon > match.p2SetsWon ? 'A' : 'B';
+    (['A', 'B'] as const).forEach((side) => {
+      const won = winner === side;
+      const lost = winner !== null && !won;
+      sideMembers(match, side).forEach((member) => {
+        if (!member.userId) return;
+        const stat = stats.get(member.userId);
+        if (!stat) return;
+        stat.played += 1;
+        if (won) stat.wins += 1;
+        if (lost) stat.losses += 1;
+        if (winner) {
+          const streakType = won ? 'WIN' : 'LOSS';
+          stat.streak = stat.streakType === streakType ? stat.streak + 1 : 1;
+          stat.streakType = streakType;
+        }
+        const delta = match.eloDelta?.[member.userId];
+        if (typeof delta === 'number' && Number.isFinite(delta)) stat.eloDelta += delta;
+      });
+    });
+  });
+
+  return [...stats.values()].sort((left, right) => right.wins - left.wins || right.played - left.played || right.eloDelta - left.eloDelta);
 }
 
 function MatchCard({ match, t }: { match: ClubSessionMatch; t: (key: string, values?: Record<string, string | number>) => string }) {
@@ -259,6 +320,7 @@ export function ClubMatchSessionDetailView({
 }: Props) {
   const t = useTranslations('ClubMatchSession');
   const locale = useLocale();
+  const [activeTab, setActiveTab] = useState<SessionTab>('overview');
   const activeParticipants = participants.filter((item) => item.participant.status === 'ACTIVE');
   const activeIds = new Set(activeParticipants.map((item) => item.participant.userId));
   const pairingReady = [1, 2].includes(sideAPlayers.length) && sideAPlayers.length === sideBPlayers.length;
@@ -266,6 +328,15 @@ export function ClubMatchSessionDetailView({
   const selectedPreferenceIds = new Set([...preferredPartners, ...preferredOpponents, ...avoidedPlayers]);
   const slotCount = Math.min(Math.max(session.maxParticipants, activeParticipants.length, 8), 16);
   const slots = Array.from({ length: slotCount }, (_, index) => activeParticipants[index] ?? null);
+  const completedMatches = matches.filter((match) => match.status === 'COMPLETED');
+  const liveMatches = matches.filter((match) => match.status === 'ONGOING');
+  const playerStats = buildPlayerStats(activeParticipants, matches);
+  const tabs: Array<{ id: SessionTab; label: string; icon: ReactNode; count?: number }> = [
+    { id: 'overview', label: t('overviewTab'), icon: <Trophy className="h-4 w-4" /> },
+    { id: 'participants', label: t('participantsTab'), icon: <Users className="h-4 w-4" />, count: activeParticipants.length },
+    { id: 'matches', label: t('matchesTab'), icon: <Swords className="h-4 w-4" />, count: matches.length },
+    { id: 'statistics', label: t('statisticsTab'), icon: <BarChart3 className="h-4 w-4" /> },
+  ];
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
@@ -307,25 +378,45 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>
 
-        <nav className="flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Session navigation">
-          <AnchorTab href="#overview" active icon={<Trophy className="h-4 w-4" />}>{t('basicInfoTitle')}</AnchorTab>
-          <AnchorTab href="#participants" icon={<Users className="h-4 w-4" />}>{t('participants')}</AnchorTab>
-          <AnchorTab href="#matches" icon={<Swords className="h-4 w-4" />}>{t('matches')}</AnchorTab>
-          {session.viewerParticipant?.status === 'ACTIVE' && <AnchorTab href="#preferences" icon={<Settings2 className="h-4 w-4" />}>{t('preferences')}</AnchorTab>}
+        <nav className="flex overflow-x-auto border-b border-slate-200 bg-white px-2 shadow-sm" aria-label={t('tabNavigation')}>
+          {tabs.map((tab) => (
+            <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
+              {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
+            </SessionTabButton>
+          ))}
         </nav>
 
-        <section id="overview" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('sessionType')}</p>
-              <h2 className="mt-1 text-xl font-black text-slate-950">{t('participants')}</h2>
+        {activeTab === 'overview' && <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-xl font-black text-slate-950">{t('overviewTitle')}</h2></div>
+              <span className="text-sm font-bold text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
             </div>
-            <span className="text-sm font-bold text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
+              <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(matches.length)} label={t('matches')} />
+              <SummaryMetric icon={<Radio className="h-4 w-4" />} value={String(liveMatches.length)} label={t('liveMatches')} />
+              <SummaryMetric icon={<CheckCircle2 className="h-4 w-4" />} value={String(completedMatches.length)} label={t('completedMatches')} />
+            </div>
+            <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-sm text-slate-700">
+              <p className="font-bold text-slate-950">{t('overviewHint')}</p>
+              <p className="mt-1 leading-6">{t('registrationOpensImmediately')} {t('pairingDerivedHint')}.</p>
+            </div>
           </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="text-xl font-black text-slate-950">{t('basicInfoTitle')}</h2>
+            <div className="mt-5 space-y-4 text-sm">
+              <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, t('scheduleHint'))} />
+              <InfoRow icon={<Clock3 className="h-4 w-4" />} label={t('endAt')} value={session.endAt ? formatSessionDate(session.endAt, locale, t('scheduleHint')) : t('scheduleHint')} />
+              <InfoRow icon={<ShieldCheck className="h-4 w-4" />} label={t('ranked')} value={session.isRanked ? t('rankedHint') : t('unrankedHint')} />
+            </div>
+          </div>
+        </section>}
 
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-4 sm:p-5">
+        {activeTab === 'participants' && <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div><h3 className="font-black text-slate-950">{t('participants')} · {activeParticipants.length}</h3><p className="mt-1 text-xs text-slate-500">{t('registrationOpensImmediately')}</p></div>
+              <div><h2 className="text-xl font-black text-slate-950">{t('registrationTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('registrationOpensImmediately')}</p></div>
               {session.capabilities?.canJoin && <Button size="sm" disabled={busy} onClick={onJoin}><Plus className="mr-1.5 h-4 w-4" />{t('join')}</Button>}
             </div>
             <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-8">
@@ -343,9 +434,8 @@ export function ClubMatchSessionDetailView({
               ))}
             </div>
           </div>
-        </section>
 
-        <section id="participants" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div><h2 className="text-xl font-black text-slate-950">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantSelectionHint')}</p></div>
             {session.capabilities?.canCreateMatch && <Button disabled={busy || !pairingReady} onClick={onCreateMatch}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}
@@ -387,9 +477,9 @@ export function ClubMatchSessionDetailView({
               {session.status === 'OPEN' && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" /><Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button><span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span></div>}
             </div>
           )}
-        </section>
+          </div>
 
-        {session.viewerParticipant?.status === 'ACTIVE' && <section id="preferences" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          {session.viewerParticipant?.status === 'ACTIVE' && <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-xl font-black text-slate-950">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {[
@@ -399,13 +489,16 @@ export function ClubMatchSessionDetailView({
             ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-bold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{item.fullName}</option>)}</select></label>)}
           </div>
           <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
+          </div>}
         </section>}
 
-        <section id="matches" className="space-y-3">
+        {activeTab === 'matches' && <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div>
           {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} t={t} />)}</div>}
           {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
-        </section>
+        </section>}
+
+        {activeTab === 'statistics' && <StatisticsPanel stats={playerStats} completedMatches={completedMatches.length} t={t} />}
       </div>
     </main>
   );
@@ -415,8 +508,41 @@ function SummaryMetric({ icon, value, label }: { icon: ReactNode; value: string;
   return <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-1.5 text-blue-600">{icon}<span className="text-xl font-black text-slate-950">{value}</span></div><p className="mt-1 truncate text-[11px] font-semibold text-slate-500">{label}</p></div>;
 }
 
-function AnchorTab({ href, children, icon, active = false }: { href: string; children: ReactNode; icon: ReactNode; active?: boolean }) {
-  return <a href={href} className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition ${active ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'}`}>{icon}{children}</a>;
+function SessionTabButton({ children, icon, active, onClick }: { children: ReactNode; icon: ReactNode; active: boolean; onClick: () => void }) {
+  return <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-4 text-sm font-bold transition ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-950'}`}>{icon}{children}</button>;
+}
+
+function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return <div className="flex items-start gap-3"><span className="mt-0.5 text-blue-600">{icon}</span><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div></div>;
+}
+
+function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; completedMatches: number; t: (key: string, values?: Record<string, string | number>) => string }) {
+  const rankedStats = stats.filter((stat) => stat.played > 0);
+  return <section className="space-y-4">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-xl font-black text-slate-950">{t('statisticsTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('statisticsHint')}</p></div><BarChart3 className="h-6 w-6 text-blue-600" /></div>
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(completedMatches)} label={t('completedMatches')} />
+        <SummaryMetric icon={<Users className="h-4 w-4" />} value={String(rankedStats.length)} label={t('playersWithResults')} />
+        <SummaryMetric icon={<Trophy className="h-4 w-4" />} value={String(rankedStats[0]?.wins ?? 0)} label={t('topWins')} />
+        <SummaryMetric icon={<Flame className="h-4 w-4" />} value={rankedStats[0]?.streak ? `${rankedStats[0].streak}` : '—'} label={t('currentStreak')} />
+      </div>
+    </div>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('playerStatistics')}</h2><span className="text-xs font-semibold text-slate-500">{t('completedMatchesOnly')}</span></div>
+      {stats.length === 0 ? <p className="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{t('noParticipants')}</p> : <div className="mt-4 overflow-x-auto"><div className="min-w-[620px] space-y-2">
+        {stats.map((stat, index) => <div key={stat.id} className="grid grid-cols-[auto_minmax(0,1fr)_72px_92px_92px_90px] items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
+          <span className="w-5 text-center text-xs font-black text-slate-400">{index + 1}</span><div className="flex min-w-0 items-center gap-2"><Avatar name={stat.name} avatarUrl={stat.avatarUrl} className="h-9 w-9" /><span className="truncate text-sm font-bold text-slate-900">{stat.name}</span></div>
+          <StatValue label={t('played')} value={String(stat.played)} /><StatValue label={t('winLoss')} value={`${stat.wins}–${stat.losses}`} /><StatValue label={t(stat.streakType === 'WIN' ? 'winningStreak' : stat.streakType === 'LOSS' ? 'losingStreak' : 'streak')} value={stat.streak ? String(stat.streak) : '—'} tone={stat.streakType === 'WIN' ? 'positive' : stat.streakType === 'LOSS' ? 'negative' : 'default'} /><StatValue label="ELO" value={`${stat.eloDelta >= 0 ? '+' : ''}${stat.eloDelta}`} tone={stat.eloDelta >= 0 ? 'positive' : 'negative'} />
+        </div>)}
+      </div></div>}
+    </div>
+  </section>;
+}
+
+function StatValue({ label, value, tone = 'default' }: { label: string; value: string; tone?: 'default' | 'positive' | 'negative' }) {
+  const toneClass = tone === 'positive' ? 'text-emerald-700' : tone === 'negative' ? 'text-rose-700' : 'text-slate-900';
+  return <div className="text-right"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p><p className={`mt-1 text-sm font-black ${toneClass}`}>{value}</p></div>;
 }
 
 function PairingSide({

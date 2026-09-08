@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Loader2, Plus, UserRound, X } from 'lucide-react';
+import { AlertCircle, ArrowUpRight, ChevronLeft, ChevronRight, Loader2, Plus, UserRound, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import type { ClubMatchParticipant, ClubMatchSession } from '@/types/club-match-session';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { cn } from '@/utils/cn';
 
 interface CommunityClubMatchSessionRosterWidgetProps {
   sessionId: string;
@@ -24,6 +25,8 @@ const SLOT_COLORS = [
   'bg-emerald-500',
 ];
 
+const SLOTS_PER_PAGE = 16;
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
@@ -40,39 +43,40 @@ export default function CommunityClubMatchSessionRosterWidget({
   const [participants, setParticipants] = useState<ClubMatchParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [showMockForm, setShowMockForm] = useState(false);
   const [mockName, setMockName] = useState('');
   const [creatingMock, setCreatingMock] = useState(false);
-  const [showMockForm, setShowMockForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
-      const [sessionData, participantPage] = await Promise.all([
+      const [sessionData, participantsData] = await Promise.all([
         clubMatchSessionsApi.get(sessionId),
-        clubMatchSessionsApi.participants(sessionId, { limit: 50, status: 'ACTIVE' }),
+        clubMatchSessionsApi.participants(sessionId, { limit: 100, status: 'ACTIVE' }),
       ]);
       setSession(sessionData);
-      setParticipants(participantPage.data ?? []);
-    } catch {
-      // The feed remains usable when an old announcement points to a removed session.
-    } finally {
-      setLoading(false);
+      setParticipants(participantsData.data ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể tải buổi giao lưu.');
     }
   }, [sessionId]);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
+      setLoading(true);
       try {
-        const [sessionData, participantPage] = await Promise.all([
+        const [sessionData, participantsData] = await Promise.all([
           clubMatchSessionsApi.get(sessionId),
-          clubMatchSessionsApi.participants(sessionId, { limit: 50, status: 'ACTIVE' }),
+          clubMatchSessionsApi.participants(sessionId, { limit: 100, status: 'ACTIVE' }),
         ]);
-        if (mounted) {
-          setSession(sessionData);
-          setParticipants(participantPage.data ?? []);
-        }
-      } catch {
-        // The feed remains usable when an old announcement points to a removed session.
+        if (!mounted) return;
+        setSession(sessionData);
+        setParticipants(participantsData.data ?? []);
+      } catch (error) {
+        if (!mounted) return;
+        toast.error(error instanceof Error ? error.message : 'Không thể tải buổi giao lưu.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -87,12 +91,31 @@ export default function CommunityClubMatchSessionRosterWidget({
     () => participants.filter((item) => item.participant.status === 'ACTIVE'),
     [participants],
   );
-  const maxParticipants = Math.max(session?.maxParticipants ?? 16, activeParticipants.length);
+  const totalSlots = Math.max(session?.maxParticipants ?? 16, activeParticipants.length);
+  const totalPages = Math.max(1, Math.ceil(totalSlots / SLOTS_PER_PAGE));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safePage - 1) * SLOTS_PER_PAGE;
+  const endIndex = Math.min(startIndex + SLOTS_PER_PAGE, totalSlots);
+
+  const currentUserParticipant = useMemo(() => {
+    if (!user?.id) return null;
+    return activeParticipants.find(
+      (p) => String(p.participant.userId) === String(user.id),
+    );
+  }, [activeParticipants, user?.id]);
+
   const canJoin = session?.capabilities?.canJoin === true;
-  const canWithdraw = session?.capabilities?.canWithdraw === true;
+  const canWithdraw = session?.capabilities?.canWithdraw === true || !!currentUserParticipant;
   const canManage = session?.capabilities?.canManage === true;
   const isOpen = session?.status === 'OPEN';
-  const canTapEmptySlot = isOpen && (canJoin || canWithdraw);
+  const canTapEmptySlot = isOpen && !currentUserParticipant && (canJoin || !user?.id);
+
+  const userPage = useMemo(() => {
+    if (!currentUserParticipant) return null;
+    const idx = activeParticipants.findIndex((p) => p.participant.id === currentUserParticipant.participant.id);
+    if (idx === -1) return null;
+    return Math.floor(idx / SLOTS_PER_PAGE) + 1;
+  }, [currentUserParticipant, activeParticipants]);
 
   const handleJoin = async () => {
     if (!user?.id) {
@@ -101,16 +124,26 @@ export default function CommunityClubMatchSessionRosterWidget({
     }
     setJoining(true);
     try {
-      if (canWithdraw) {
-        await clubMatchSessionsApi.withdraw(sessionId);
-        toast.success('Đã rút đăng ký khỏi buổi giao lưu.');
-      } else {
-        await clubMatchSessionsApi.selfJoin(sessionId);
-        toast.success('Đã tham gia buổi giao lưu.');
-      }
+      await clubMatchSessionsApi.selfJoin(sessionId);
+      toast.success('Đã tham gia buổi giao lưu.');
       await refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể cập nhật đăng ký.');
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!user?.id) return;
+    setJoining(true);
+    try {
+      await clubMatchSessionsApi.withdraw(sessionId);
+      toast.success('Đã rút đăng ký khỏi buổi giao lưu.');
+      setConfirmWithdraw(false);
+      await refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể rút đăng ký.');
     } finally {
       setJoining(false);
     }
@@ -171,62 +204,218 @@ export default function CommunityClubMatchSessionRosterWidget({
             <h3 className="text-base font-extrabold text-slate-900">Xác nhận tham gia · {activeParticipants.length}</h3>
             <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">Tự do</span>
           </div>
-          <span className="text-xs font-semibold text-slate-500">{activeParticipants.length}/{maxParticipants} người</span>
+          <span className="text-xs font-semibold text-slate-500">{activeParticipants.length}/{totalSlots} người</span>
         </div>
 
-        {(canJoin || canWithdraw || canManage) && (
+        {(canWithdraw || canManage) && isOpen && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {(canJoin || canWithdraw) && isOpen && (
-              <button type="button" onClick={() => void handleJoin()} disabled={joining} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+            {currentUserParticipant && canWithdraw && (
+              <button
+                type="button"
+                onClick={() => setConfirmWithdraw(true)}
+                disabled={joining}
+                className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+              >
                 {joining && <Loader2 className="h-4 w-4 animate-spin" />}
-                {canWithdraw ? 'Rút đăng ký' : 'Tham gia'}
+                Rút đăng ký
               </button>
             )}
-            {canManage && isOpen && !showMockForm && (
-              <button type="button" onClick={() => setShowMockForm(true)} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700">
+            {canManage && !showMockForm && (
+              <button
+                type="button"
+                onClick={() => setShowMockForm(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 transition-colors cursor-pointer"
+              >
                 <Plus className="h-4 w-4" /> Tạo VĐV ảo
               </button>
             )}
             {canManage && showMockForm && (
               <div className="flex w-full flex-wrap items-center gap-2 rounded-xl bg-amber-50 p-2.5 ring-1 ring-amber-200">
-                <input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void handleCreateMock(); }} placeholder="Tên VĐV ảo" maxLength={255} className="min-w-0 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" autoFocus />
-                <button type="button" onClick={() => void handleCreateMock()} disabled={!mockName.trim() || creatingMock} className="rounded-lg bg-amber-500 px-3 py-2 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50">Thêm</button>
-                <button type="button" onClick={() => { setShowMockForm(false); setMockName(''); }} className="rounded-lg p-2 text-slate-500 hover:bg-white" aria-label="Đóng"><X className="h-4 w-4" /></button>
+                <input
+                  value={mockName}
+                  onChange={(event) => setMockName(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === 'Enter') void handleCreateMock(); }}
+                  placeholder="Tên VĐV ảo"
+                  maxLength={255}
+                  className="min-w-0 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleCreateMock()}
+                  disabled={!mockName.trim() || creatingMock}
+                  className="rounded-lg bg-amber-500 px-3 py-2 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50 cursor-pointer"
+                >
+                  Thêm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowMockForm(false); setMockName(''); }}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-white cursor-pointer"
+                  aria-label="Đóng"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
         )}
 
         <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-6 sm:gap-x-4">
-          {Array.from({ length: maxParticipants }, (_, index) => {
+          {Array.from({ length: endIndex - startIndex }, (_, idx) => {
+            const index = startIndex + idx;
             const participant = activeParticipants[index];
             const name = participant?.fullName?.trim() || `VĐV ${index + 1}`;
             const color = SLOT_COLORS[index % SLOT_COLORS.length];
+            const isMe = user?.id && String(participant?.participant.userId) === String(user.id);
+
             return participant ? (
-              <div key={participant.participant.id} className="flex min-w-0 flex-col items-center text-center">
-                <div className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white text-sm font-extrabold text-white shadow-md sm:h-16 sm:w-16 ${participant.avatarUrl ? 'bg-slate-100' : color}`}>
-                  {participant.avatarUrl ? <img src={participant.avatarUrl} alt={name} className="h-full w-full object-cover" /> : initials(name)}
+              <div
+                key={participant.participant.id}
+                className={cn(
+                  'flex min-w-0 flex-col items-center text-center transition-transform',
+                  isMe && 'cursor-pointer hover:scale-105',
+                )}
+                onClick={isMe ? () => setConfirmWithdraw(true) : undefined}
+                title={isMe ? 'Nhấn để rút đăng ký' : undefined}
+              >
+                <div className={`relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 text-sm font-extrabold text-white shadow-md sm:h-16 sm:w-16 ${
+                  isMe ? 'border-blue-500 ring-2 ring-blue-300' : 'border-white'
+                } ${participant.avatarUrl ? 'bg-slate-100' : color}`}>
+                  {participant.avatarUrl ? (
+                    <img src={participant.avatarUrl} alt={name} className="h-full w-full object-cover" />
+                  ) : (
+                    initials(name)
+                  )}
+                  {isMe && (
+                    <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-blue-600 ring-2 ring-white" title="Bạn" />
+                  )}
                 </div>
-                <span className="mt-2 max-w-full truncate text-xs font-semibold text-blue-700">{name}</span>
-                <span className="mt-0.5 max-w-full truncate text-[10px] text-slate-400">{participant.isMock ? 'VĐV ảo · không ELO' : 'Đã tham gia'}</span>
+                <span className={cn('mt-2 max-w-full truncate text-xs font-semibold', isMe ? 'font-bold text-blue-800' : 'text-slate-800')}>
+                  {name} {isMe && '(Tôi)'}
+                </span>
+                <span className="mt-0.5 max-w-full truncate text-[10px] text-slate-400">
+                  {participant.isMock ? 'VĐV ảo · không ELO' : `Slot #${index + 1}`}
+                </span>
               </div>
             ) : (
               <div
                 key={`empty-${index}`}
-                className={`flex min-w-0 flex-col items-center text-center ${canTapEmptySlot ? 'cursor-pointer rounded-xl p-1 hover:bg-blue-50' : ''}`}
+                className={cn(
+                  'group flex min-w-0 flex-col items-center text-center transition-colors',
+                  canTapEmptySlot ? 'cursor-pointer rounded-xl p-1 hover:bg-blue-50/80' : 'opacity-70',
+                )}
                 onClick={canTapEmptySlot ? () => void handleJoin() : undefined}
                 onKeyDown={canTapEmptySlot ? (event) => { if (event.key === 'Enter' || event.key === ' ') void handleJoin(); } : undefined}
                 role={canTapEmptySlot ? 'button' : undefined}
                 tabIndex={canTapEmptySlot ? 0 : undefined}
+                title={canTapEmptySlot ? 'Bấm để tham gia slot này' : undefined}
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-200 text-2xl font-light text-slate-300 sm:h-16 sm:w-16">+</div>
-                <span className="mt-2 text-[10px] font-medium text-slate-400">Slot #{index + 1}</span>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-2xl font-light text-slate-400 group-hover:border-blue-400 group-hover:text-blue-500 sm:h-16 sm:w-16 transition-colors">
+                  {joining ? <Loader2 className="h-5 w-5 animate-spin text-blue-500" /> : '+'}
+                </div>
+                <span className="mt-2 text-[10px] font-medium text-slate-400 group-hover:text-blue-600 transition-colors">
+                  Slot #{index + 1}
+                </span>
               </div>
             );
           })}
         </div>
 
+        {totalPages > 1 && (
+          <div className="mt-6 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <span className="text-[11px] font-medium text-slate-400">
+              Slot {startIndex + 1} - {endIndex} / {totalSlots}
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Trang trước"
+              >
+                <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                <span>Trước</span>
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                  const isActive = pageNum === safePage;
+                  const hasUser = pageNum === userPage;
+                  return (
+                    <button
+                      key={`page-pill-${pageNum}`}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        'relative h-7 min-w-[28px] px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80',
+                      )}
+                    >
+                      <span>{pageNum}</span>
+                      {hasUser && (
+                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" title="Vị trí của bạn" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Trang sau"
+              >
+                <span>Sau</span>
+                <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {confirmWithdraw && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Rút đăng ký tham gia</h4>
+            </div>
+
+            <p className="text-sm text-slate-600">
+              Bạn có chắc chắn muốn rút khỏi buổi giao lưu này? Slot của bạn sẽ được nhường lại cho thành viên khác.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmWithdraw(false)}
+                disabled={joining}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleWithdraw()}
+                disabled={joining}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {joining && <Loader2 className="h-4 w-4 animate-spin" />}
+                Xác nhận rút
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

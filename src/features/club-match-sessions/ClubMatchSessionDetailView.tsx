@@ -292,7 +292,7 @@ function MatchSide({
   name,
   align,
 }: {
-  members: Array<{ fullName: string | null; avatarUrl?: string | null; isMock?: boolean }>;
+  members: Array<{ userId?: string | null; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }>;
   name: string;
   align: 'left' | 'right';
 }) {
@@ -300,7 +300,7 @@ function MatchSide({
     <div className={`min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
       <div className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'} -space-x-3`}>
         {members.slice(0, 2).map((member, index) => (
-          <Avatar key={`${member.fullName}-${index}`} name={member.fullName} avatarUrl={member.avatarUrl} mock={member.isMock} className="h-10 w-10" />
+          <Avatar key={`${member.userId || member.fullName}-${index}`} name={member.fullName} userId={member.userId} avatarUrl={member.avatarUrl} mock={member.isMock} className="h-10 w-10" />
         ))}
       </div>
       <p className="mt-2 line-clamp-2 text-sm font-bold leading-tight text-slate-900">{name}</p>

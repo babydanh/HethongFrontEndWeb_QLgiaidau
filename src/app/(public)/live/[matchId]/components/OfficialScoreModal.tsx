@@ -33,9 +33,9 @@ export function OfficialScoreModal({
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent className="h-[96dvh] max-h-[96dvh] w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] min-w-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl sm:h-[92dvh] sm:max-h-[92dvh] sm:w-[95vw] sm:max-w-7xl sm:rounded-3xl">
-        <div className="grid h-full min-h-0 min-w-0 max-w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-1">
-          {/* Left Sidebar: clean, high contrast dark theme without ugly white borders */}
-          <div className="flex max-h-[20dvh] min-w-0 max-w-full flex-col justify-between overflow-y-auto overflow-x-hidden bg-slate-900 p-4 text-white sm:max-h-[26dvh] sm:p-5 lg:max-h-none lg:overflow-y-auto lg:p-6">
+        <div className="flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+          {/* Left Sidebar: hiển thị đầy đủ thông tin trên desktop/tablet lớn, ẩn trên mobile để tối đa không gian chấm điểm */}
+          <div className="hidden min-w-0 max-w-full flex-col justify-between overflow-y-auto overflow-x-hidden bg-slate-900 p-5 text-white lg:flex lg:p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
@@ -129,7 +129,7 @@ export function OfficialScoreModal({
               </div>
             </ModalHeader>
 
-            <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-slate-50/50 p-2 sm:p-4 md:p-5 flex flex-col">
+            <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-slate-50/50 p-3 sm:p-5 md:p-6 flex flex-col">
               <LiveMatchControlPanel
                 match={match}
                 team1Name={team1Name}

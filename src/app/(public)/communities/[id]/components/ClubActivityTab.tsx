@@ -30,7 +30,9 @@ import {
   Flame,
   Sparkles,
   Users,
+  Plus,
 } from 'lucide-react';
+import { ClubStandaloneMatchModal } from '@/components/ClubStandaloneMatchModal';
 
 interface Props {
   communityId: string;
@@ -232,6 +234,7 @@ function ClubActivitySkeleton() {
 export default function ClubActivityTab({ communityId }: Props) {
   const searchInputId = useId();
   const matchTranslate = useTranslations('Match');
+  const commonTranslate = useTranslations('Common');
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [matches, setMatches] = useState<MatchWithTournament[]>([]);
@@ -239,6 +242,7 @@ export default function ClubActivityTab({ communityId }: Props) {
   const [filter, setFilter] = useState<TimelineFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isStandaloneModalOpen, setIsStandaloneModalOpen] = useState(false);
 
   const roundLabelTranslations = useMemo<RoundLabelTranslations>(() => ({
     roundGrandFinal: matchTranslate('roundGrandFinal'),
@@ -794,6 +798,16 @@ export default function ClubActivityTab({ communityId }: Props) {
             />
           </div>
 
+          {/* Create Standalone Match button */}
+          <button
+            type="button"
+            onClick={() => setIsStandaloneModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-2xs transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{commonTranslate('club_createMatchStandalone')}</span>
+          </button>
+
           {/* Refresh button */}
           <button
             type="button"
@@ -839,6 +853,9 @@ export default function ClubActivityTab({ communityId }: Props) {
               translations: roundLabelTranslations,
             });
             const sets = extractMatchScores(match.scoreDetails);
+            const totalSets = sets.length;
+            const displaySets = totalSets > 5 ? sets.slice(totalSets - 5) : sets;
+            const skippedSetsCount = totalSets > 5 ? totalSets - 5 : 0;
 
             // Real avatar/logo resolution
             const p1Logo = (p1 as any)?.logoUrl || p1?.members?.[0]?.avatarUrl || null;
@@ -963,11 +980,19 @@ export default function ClubActivityTab({ communityId }: Props) {
                   {/* Teams & Set Scores Panel */}
                   <div className="p-4 space-y-3">
                     {/* Header showing S1, S2, S3... above score columns */}
-                    {sets.length > 0 && (
-                      <div className="flex justify-end gap-1.5 pr-0.5 font-mono text-[9px] font-bold text-slate-400">
-                        {sets.map((_, index) => (
-                          <span key={index} className="w-7 text-center">S{index + 1}</span>
-                        ))}
+                    {displaySets.length > 0 && (
+                      <div className="flex justify-end items-center gap-1.5 pr-0.5 font-mono text-[9px] font-bold text-slate-400">
+                        {skippedSetsCount > 0 && (
+                          <span className="text-[8.5px] font-semibold text-slate-400 pr-1 select-none">
+                            +{skippedSetsCount} set trước
+                          </span>
+                        )}
+                        {displaySets.map((_, index) => {
+                          const setNumber = skippedSetsCount + index + 1;
+                          return (
+                            <span key={index} className="w-7 text-center">S{setNumber}</span>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -1052,8 +1077,8 @@ export default function ClubActivityTab({ communityId }: Props) {
 
                       {/* Set Scores for Team 1 */}
                       <div className="flex items-center gap-1.5 shrink-0 font-mono">
-                        {sets.length > 0 ? (
-                          sets.map((s, idx) => {
+                        {displaySets.length > 0 ? (
+                          displaySets.map((s, idx) => {
                             const s1 = s.team1Score;
                             const s2 = s.team2Score;
                             const isSetWinner = typeof s1 === 'number' && typeof s2 === 'number' && s1 > s2;
@@ -1159,8 +1184,8 @@ export default function ClubActivityTab({ communityId }: Props) {
 
                       {/* Set Scores for Team 2 */}
                       <div className="flex items-center gap-1.5 shrink-0 font-mono">
-                        {sets.length > 0 ? (
-                          sets.map((s, idx) => {
+                        {displaySets.length > 0 ? (
+                          displaySets.map((s, idx) => {
                             const s1 = s.team1Score;
                             const s2 = s.team2Score;
                             const isSetWinner = typeof s1 === 'number' && typeof s2 === 'number' && s2 > s1;
@@ -1219,6 +1244,14 @@ export default function ClubActivityTab({ communityId }: Props) {
           })}
         </div>
       )}
+
+      {/* Standalone Match Modal */}
+      <ClubStandaloneMatchModal
+        communityId={communityId}
+        isOpen={isStandaloneModalOpen}
+        onClose={() => setIsStandaloneModalOpen(false)}
+        onMatchCreated={() => void fetchClubMatches(true)}
+      />
     </div>
   );
 }

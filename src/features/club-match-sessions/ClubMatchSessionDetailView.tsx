@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Clock3,
   Flame,
+  Plus,
   Radio,
   Settings2,
   ShieldCheck,
@@ -352,12 +353,13 @@ export function ClubMatchSessionDetailView({
   const locale = useLocale();
   const [activeTab, setActiveTab] = useState<SessionTab>('overview');
   const [pairingOpen, setPairingOpen] = useState(false);
+  const [mockFormOpen, setMockFormOpen] = useState(false);
   const activeParticipants = participants.filter((item) => item.participant.status === 'ACTIVE');
   const activeIds = new Set(activeParticipants.map((item) => item.participant.userId));
   const pairingReady = [1, 2].includes(sideAPlayers.length) && sideAPlayers.length === sideBPlayers.length;
   const preferenceOptions = activeParticipants.filter((item) => item.participant.userId !== session.viewerParticipant?.userId);
   const selectedPreferenceIds = new Set([...preferredPartners, ...preferredOpponents, ...avoidedPlayers]);
-  const slotCount = Math.min(Math.max(session.maxParticipants, activeParticipants.length, 8), 16);
+  const slotCount = Math.max(session.maxParticipants, activeParticipants.length, 8);
   const slots = Array.from({ length: slotCount }, (_, index) => activeParticipants[index] ?? null);
   const completedMatches = matches.filter((match) => match.status === 'COMPLETED');
   const liveMatches = matches.filter((match) => match.status === 'ONGOING');
@@ -377,7 +379,7 @@ export function ClubMatchSessionDetailView({
           {t('back')}
         </Link>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 lg:col-start-1">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0">
@@ -392,8 +394,8 @@ export function ClubMatchSessionDetailView({
           </div>
 
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
-            <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, t('scheduleHint'))}</span>
-            <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{session.endAt ? formatSessionDate(session.endAt, locale, t('scheduleHint')) : t('scheduleHint')}</span>
+            {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
+            {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
             <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
           </div>
 
@@ -405,7 +407,7 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>
 
-        <nav className="flex min-w-0 overflow-x-auto border-b border-slate-200 bg-white px-2 shadow-sm lg:col-start-1" aria-label={t('tabNavigation')}>
+        <nav className="flex h-fit min-w-0 overflow-x-auto border-b border-slate-200 bg-white px-2 shadow-sm lg:col-start-1 lg:self-start" aria-label={t('tabNavigation')}>
           {tabs.map((tab) => (
             <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
               {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
@@ -413,7 +415,7 @@ export function ClubMatchSessionDetailView({
           ))}
         </nav>
 
-        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-1">
+        <aside className="self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-1">
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">{t('clubContextLabel')}</p>
           <div className="mt-4 flex items-center gap-3">
             <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
@@ -445,8 +447,8 @@ export function ClubMatchSessionDetailView({
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-xl font-black text-slate-950">{t('basicInfoTitle')}</h2>
             <div className="mt-5 space-y-4 text-sm">
-              <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, t('scheduleHint'))} />
-              <InfoRow icon={<Clock3 className="h-4 w-4" />} label={t('endAt')} value={session.endAt ? formatSessionDate(session.endAt, locale, t('scheduleHint')) : t('scheduleHint')} />
+              {session.startAt && <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, '')} />}
+              {session.endAt && <InfoRow icon={<Clock3 className="h-4 w-4" />} label={t('endAt')} value={formatSessionDate(session.endAt, locale, '')} />}
               <InfoRow icon={<ShieldCheck className="h-4 w-4" />} label={t('ranked')} value={session.isRanked ? t('rankedHint') : t('unrankedHint')} />
             </div>
           </div>
@@ -473,7 +475,7 @@ export function ClubMatchSessionDetailView({
 
           {session.capabilities?.canManage && (
             <div className="mt-5 border-t border-slate-100 pt-5">
-              <div className="mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4 text-blue-600" /><h3 className="font-bold text-slate-900">{t('assignSelected')}</h3></div>
+              <div className="mb-3 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><UserPlus className="h-4 w-4 text-blue-600" /><h3 className="font-bold text-slate-900">{t('assignSelected')}</h3></div>{session.status === 'OPEN' && <Button type="button" size="sm" variant="outline" aria-expanded={mockFormOpen} aria-label={t('createMockParticipant')} title={t('createMockParticipant')} onClick={() => setMockFormOpen((value) => !value)}><Plus className="h-4 w-4" /><span className="sr-only">{t('createMockParticipant')}</span></Button>}</div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {clubMembers.map((record) => {
                   const userId = record.member.userId;
@@ -483,7 +485,7 @@ export function ClubMatchSessionDetailView({
               </div>
               {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
               <div className="mt-3 flex flex-wrap gap-2"><Button variant="outline" disabled={busy || selectedMembers.length === 0} onClick={onForceSelected}>{t('assignSelected')}</Button></div>
-              {session.status === 'OPEN' && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" /><Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button><span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span></div>}
+              {session.status === 'OPEN' && mockFormOpen && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" /><Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button><span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span></div>}
             </div>
           )}
           </div>
@@ -521,7 +523,7 @@ function SummaryMetric({ icon, value, label }: { icon: ReactNode; value: string;
 }
 
 function SessionTabButton({ children, icon, active, onClick }: { children: ReactNode; icon: ReactNode; active: boolean; onClick: () => void }) {
-  return <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-4 text-sm font-bold transition ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-950'}`}>{icon}{children}</button>;
+  return <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-bold transition sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-950'}`}>{icon}{children}</button>;
 }
 
 function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
@@ -539,12 +541,28 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   onJoin: () => void;
   onWithdraw: () => void;
 }) {
-  return <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-2">
+  const pageSize = 16;
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(slots.length / pageSize));
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  return <aside className="self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-2">
     <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('registrationTitle')}</h2><span className="text-sm font-bold text-slate-500">{activeCount}/{maxParticipants}</span></div>
     <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
-      {slots.map((item, index) => item ? <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p title={item.fullName || undefined} className="mt-2 truncate text-[11px] font-bold text-slate-900">{shortDisplayName(item.fullName) || `#${index + 1}`}</p></div> : <div key={`slot-${index}`} className="min-w-0 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-semibold text-slate-400">Slot #{index + 1}</p></div>)}
+      {visibleSlots.map((item, index) => {
+        const slotNumber = currentPage * pageSize + index + 1;
+        if (!item) {
+          const emptySlot = <><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-semibold text-slate-400">Slot #{slotNumber}</p></>;
+          return canJoin
+            ? <button key={`slot-${slotNumber}`} type="button" disabled={busy} onClick={onJoin} className="min-w-0 cursor-pointer rounded-xl p-1 text-center transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60">{emptySlot}</button>
+            : <div key={`slot-${slotNumber}`} className="min-w-0 text-center">{emptySlot}</div>;
+        }
+        return <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p title={item.fullName || undefined} className="mt-2 truncate text-[11px] font-bold text-slate-900">{shortDisplayName(item.fullName) || `#${slotNumber}`}</p></div>;
+      })}
     </div>
-    {(canJoin || canWithdraw) && <div className="mt-6 flex gap-2 border-t border-slate-100 pt-4">{canJoin && <Button className="flex-1" size="sm" disabled={busy} onClick={onJoin}><UserPlus className="mr-1.5 h-4 w-4" />{t('join')}</Button>}{canWithdraw && <Button className="flex-1" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button>}</div>}
+    {pageCount > 1 && <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-bold text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
+    {canWithdraw && <div className="mt-6 border-t border-slate-100 pt-4"><Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button></div>}
   </aside>;
 }
 

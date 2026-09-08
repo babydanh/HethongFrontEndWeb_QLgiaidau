@@ -7,6 +7,7 @@ import type { Tournament } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
 import { communitiesApi } from '@/features/communities/api';
 import { matchesApi } from '@/features/matches/api';
+import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import { socketClient } from '@/lib/socket';
 import { formatDateTime } from '@/utils/format';
@@ -28,6 +29,7 @@ import {
   User,
   Flame,
   Sparkles,
+  Users,
 } from 'lucide-react';
 
 interface Props {
@@ -43,6 +45,74 @@ interface TeamStreakRecord {
 
 interface MatchWithTournament extends Match {
   tournamentName?: string;
+  isClubSessionMatch?: boolean;
+  clubMatchSessionId?: string;
+  sessionStatus?: string;
+  eloDelta?: Record<string, number> | null;
+  sideAUserIds?: string[];
+  sideBUserIds?: string[];
+  totalSetsPlayed?: number;
+}
+
+function isMockOrPlaceholderParticipant(name?: string | null, isMock?: boolean): boolean {
+  if (isMock === true) return true;
+  if (!name) return true;
+  const normalized = name
+    .trim()
+    .toUpperCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+  if (!normalized) return true;
+  if (
+    normalized.includes('(VĐV ẢO)') ||
+    normalized.includes('VĐV ẢO') ||
+    normalized.includes('VDV AO') ||
+    normalized.includes('VĐV AO') ||
+    normalized.includes('(ẢO)') ||
+    normalized.includes('[ẢO]') ||
+    normalized.includes('MOCK')
+  ) {
+    return true;
+  }
+  const placeholders = new Set([
+    'TBD',
+    'TBA',
+    'BYE',
+    'WAITING',
+    'PENDING',
+    'CHỜ XÁC ĐỊNH',
+    'CHO XAC DINH',
+    'ĐANG CHỜ',
+    'DANG CHO',
+    'CHƯA XÁC ĐỊNH',
+    'CHUA XAC DINH',
+  ]);
+  return placeholders.has(normalized);
+}
+
+function isRenderablePublicMatch(match: MatchWithTournament): boolean {
+  if (match.isBye) return false;
+  const p1 = match.participant1;
+  const p2 = match.participant2;
+  const p1Id = match.participant1Id || p1?.id;
+  const p2Id = match.participant2Id || p2?.id;
+  if (!p1Id || !p2Id) return false;
+
+  const t1Name = p1?.teamName;
+  const t2Name = p2?.teamName;
+  if (isMockOrPlaceholderParticipant(t1Name, (p1 as any)?.isMock)) return false;
+  if (isMockOrPlaceholderParticipant(t2Name, (p2 as any)?.isMock)) return false;
+
+  const p1Members = p1?.members || [];
+  const p2Members = p2?.members || [];
+  if (p1Members.some((mem) => isMockOrPlaceholderParticipant(mem.fullName, (mem as any)?.isMock))) {
+    return false;
+  }
+  if (p2Members.some((mem) => isMockOrPlaceholderParticipant(mem.fullName, (mem as any)?.isMock))) {
+    return false;
+  }
+
+  return true;
 }
 
 function computeChronologicalStreaks(matches: MatchWithTournament[]): Map<string, { p1Streak: TeamStreakRecord | null; p2Streak: TeamStreakRecord | null }> {
@@ -183,7 +253,7 @@ export default function ClubActivityTab({ communityId }: Props) {
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
   }), [matchTranslate]);
 
-  // Fetch all matches across all tournaments of this community
+  // Fetch all matches across all tournaments and club match sessions of this community
   const fetchClubMatches = useCallback(async (isRefresh = false) => {
     if (!communityId) return;
     if (isRefresh) {
@@ -191,49 +261,149 @@ export default function ClubActivityTab({ communityId }: Props) {
     }
 
     try {
-      // 1. Get community tournaments
-      const tourRes = await communitiesApi.getTournaments(communityId);
-      const tourList = Array.isArray(tourRes?.data) ? tourRes.data : [];
-      setTournaments(tourList);
+      const allMatches: MatchWithTournament[] = [];
 
-      if (tourList.length === 0) {
-        setMatches([]);
-        return;
+      // 1. Get community tournaments & their real matches
+      try {
+        const tourRes = await communitiesApi.getTournaments(communityId);
+        const tourList = Array.isArray(tourRes?.data) ? tourRes.data : [];
+        setTournaments(tourList);
+
+        if (tourList.length > 0) {
+          const recentTournaments = tourList.slice(0, 5);
+          const matchPromises = recentTournaments.map(async (t) => {
+            try {
+              const res = await matchesApi.getMatches({
+                tournament_id: t.id,
+                limit: 50,
+                status: '',
+              });
+              const matchItems = Array.isArray(res?.data) ? (res.data as Match[]) : [];
+              return matchItems
+                .map((m) => ({
+                  ...m,
+                  tournamentName: t.name,
+                }))
+                .filter(isRenderablePublicMatch);
+            } catch {
+              return [] as MatchWithTournament[];
+            }
+          });
+
+          const results = await Promise.all(matchPromises);
+          allMatches.push(...results.flat());
+        }
+      } catch (err) {
+        console.warn('Failed to fetch club tournaments', err);
       }
 
-      // Map tournament IDs to tournament objects for quick lookup
-      const tourMap = new Map<string, Tournament>();
-      tourList.forEach((t) => tourMap.set(t.id, t));
+      // 2. Get club match sessions (buổi giao lưu) & their real matches (parity with mobile app)
+      try {
+        const sessionPage = await clubMatchSessionsApi.list(communityId, { limit: 8 });
+        const sessions = sessionPage.data || [];
 
-      // 2. Fetch matches for up to 5 most recent active tournaments in parallel
-      const recentTournaments = tourList.slice(0, 5);
-      const matchPromises = recentTournaments.map(async (t) => {
-        try {
-          const res = await matchesApi.getMatches({
-            tournament_id: t.id,
-            limit: 50,
-            status: '',
-          });
-          const matchItems = Array.isArray(res?.data) ? (res.data as Match[]) : [];
-          return matchItems.map((m) => ({
-            ...m,
-            tournamentName: t.name,
-          }));
-        } catch {
-          return [] as MatchWithTournament[];
-        }
-      });
+        const sessionPromises = sessions.map(async (session) => {
+          try {
+            const matchesPage = await clubMatchSessionsApi.matches(session.id, { limit: 50 });
+            const sMatches = matchesPage.data || [];
 
-      const results = await Promise.all(matchPromises);
-      const combined = results.flat();
-      setMatches(combined);
+            const sessionMapped: MatchWithTournament[] = [];
+
+            for (const sm of sMatches) {
+              const p1Members = (sm.participant1?.members || []).map((m) => ({
+                id: m.id || m.userId || '',
+                userId: m.userId,
+                fullName: m.fullName || '',
+                avatarUrl: m.avatarUrl || null,
+                isMock: m.isMock,
+              }));
+
+              const p2Members = (sm.participant2?.members || []).map((m) => ({
+                id: m.id || m.userId || '',
+                userId: m.userId,
+                fullName: m.fullName || '',
+                avatarUrl: m.avatarUrl || null,
+                isMock: m.isMock,
+              }));
+
+              const sideAName = p1Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội A';
+              const sideBName = p2Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội B';
+
+              const winnerId =
+                sm.status === 'COMPLETED'
+                  ? sm.p1SetsWon > sm.p2SetsWon
+                    ? 'SIDE_A'
+                    : sm.p2SetsWon > sm.p1SetsWon
+                    ? 'SIDE_B'
+                    : undefined
+                  : undefined;
+
+              const sessionTitle = session.resolvedName || session.name || matchTranslate('clubSessionBadge');
+
+              const sessionMatch: MatchWithTournament = {
+                id: sm.id,
+                groupId: session.id,
+                bracketBranch: 'MAIN',
+                tournamentId: session.id,
+                tournamentName: sessionTitle,
+                roundNumber: 0,
+                status: sm.status,
+                participant1Id: 'SIDE_A',
+                participant2Id: 'SIDE_B',
+                winnerId,
+                p1SetsWon: sm.p1SetsWon ?? 0,
+                p2SetsWon: sm.p2SetsWon ?? 0,
+                totalSetsPlayed: (sm.p1SetsWon ?? 0) + (sm.p2SetsWon ?? 0),
+                isBye: false,
+                matchOrder: 1,
+                scoreDetails: sm.scoreDetails || {},
+                scheduledAt: session.startAt || undefined,
+                startedAt: session.startAt || undefined,
+                completedAt: session.endAt || undefined,
+                updatedAt: session.startAt || new Date().toISOString(),
+                participant1: {
+                  id: 'SIDE_A',
+                  teamName: sideAName,
+                  members: p1Members as any,
+                } as any,
+                participant2: {
+                  id: 'SIDE_B',
+                  teamName: sideBName,
+                  members: p2Members as any,
+                } as any,
+                isClubSessionMatch: true,
+                clubMatchSessionId: session.id,
+                sessionStatus: session.status,
+                eloDelta: sm.eloDelta,
+                sideAUserIds: sm.sideAUserIds,
+                sideBUserIds: sm.sideBUserIds,
+              };
+
+              if (isRenderablePublicMatch(sessionMatch)) {
+                sessionMapped.push(sessionMatch);
+              }
+            }
+
+            return sessionMapped;
+          } catch {
+            return [] as MatchWithTournament[];
+          }
+        });
+
+        const sessionResults = await Promise.all(sessionPromises);
+        allMatches.push(...sessionResults.flat());
+      } catch (err) {
+        console.warn('Failed to fetch club match sessions', err);
+      }
+
+      setMatches(allMatches);
     } catch (err) {
       console.error('Failed to fetch club activity matches', err);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [communityId]);
+  }, [communityId, matchTranslate]);
 
   const { user } = useAuthStore();
   const { openUserProfile } = useUserProfileModalStore();
@@ -384,8 +554,14 @@ export default function ClubActivityTab({ communityId }: Props) {
           if (!currentUserId && !currentUserName) return false;
           const p1Id = m.participant1Id || m.participant1?.id;
           const p2Id = m.participant2Id || m.participant2?.id;
-          const isP1 = p1Id === currentUserId || (m.participant1?.members || []).some((mem) => mem.userId === currentUserId);
-          const isP2 = p2Id === currentUserId || (m.participant2?.members || []).some((mem) => mem.userId === currentUserId);
+          const isP1 =
+            p1Id === currentUserId ||
+            (m.participant1?.members || []).some((mem) => mem.userId === currentUserId) ||
+            (m.sideAUserIds || []).includes(currentUserId || '');
+          const isP2 =
+            p2Id === currentUserId ||
+            (m.participant2?.members || []).some((mem) => mem.userId === currentUserId) ||
+            (m.sideBUserIds || []).includes(currentUserId || '');
           const t1Name = (m.participant1?.teamName || '').toLowerCase();
           const t2Name = (m.participant2?.teamName || '').toLowerCase();
           const nameMatch = currentUserName && (t1Name.includes(currentUserName) || t2Name.includes(currentUserName));
@@ -423,8 +599,14 @@ export default function ClubActivityTab({ communityId }: Props) {
     return effectiveMatches.filter((m) => {
       const p1Id = m.participant1Id || m.participant1?.id;
       const p2Id = m.participant2Id || m.participant2?.id;
-      const isP1 = p1Id === currentUserId || (m.participant1?.members || []).some((mem) => mem.userId === currentUserId);
-      const isP2 = p2Id === currentUserId || (m.participant2?.members || []).some((mem) => mem.userId === currentUserId);
+      const isP1 =
+        p1Id === currentUserId ||
+        (m.participant1?.members || []).some((mem) => mem.userId === currentUserId) ||
+        (m.sideAUserIds || []).includes(currentUserId || '');
+      const isP2 =
+        p2Id === currentUserId ||
+        (m.participant2?.members || []).some((mem) => mem.userId === currentUserId) ||
+        (m.sideBUserIds || []).includes(currentUserId || '');
       const t1Name = (m.participant1?.teamName || '').toLowerCase();
       const t2Name = (m.participant2?.teamName || '').toLowerCase();
       return isP1 || isP2 || (currentUserName && (t1Name.includes(currentUserName) || t2Name.includes(currentUserName)));
@@ -448,12 +630,12 @@ export default function ClubActivityTab({ communityId }: Props) {
                   )}
                 </div>
                 {userMembership?.role === 'OWNER' && (
-                  <span title="Chủ nhiệm CLB" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center ring-2 ring-white shadow-2xs">
+                  <span title={matchTranslate('clubRoleOwner')} className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center ring-2 ring-white shadow-2xs">
                     <Crown className="w-3 h-3" />
                   </span>
                 )}
                 {userMembership?.role === 'MODERATOR' && (
-                  <span title="Quản trị viên CLB" className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white shadow-2xs">
+                  <span title={matchTranslate('clubRoleModerator')} className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white shadow-2xs">
                     <ShieldCheck className="w-3 h-3" />
                   </span>
                 )}
@@ -462,14 +644,14 @@ export default function ClubActivityTab({ communityId }: Props) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-slate-900 text-sm sm:text-base truncate">
-                    {user.fullName || 'Thành viên'}
+                    {user.fullName || matchTranslate('clubMemberFallback')}
                   </span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
                     {userMembership?.role === 'OWNER'
-                      ? 'Chủ nhiệm'
+                      ? matchTranslate('clubRoleOwner')
                       : userMembership?.role === 'MODERATOR'
-                      ? 'Ban quản trị'
-                      : 'Thành viên'}
+                      ? matchTranslate('clubRoleModerator')
+                      : matchTranslate('clubRoleMember')}
                   </span>
                   {/* Member Tags */}
                   {userMembership?.tags && userMembership.tags.length > 0 && (
@@ -484,7 +666,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Hồ sơ và thông số thi đấu của bạn trong câu lạc bộ
+                  {matchTranslate('clubMyProfileSubtitle')}
                 </p>
               </div>
             </div>
@@ -493,17 +675,17 @@ export default function ClubActivityTab({ communityId }: Props) {
             <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
               {/* ELO Telemetry */}
               <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-right">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Điểm CLB</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{matchTranslate('clubPointsLabel')}</p>
                 <p className="text-sm font-black font-mono text-blue-700">
-                  {userRanking?.eloPoints ? `${userRanking.eloPoints} ELO` : 'Chưa xếp hạng'}
+                  {userRanking?.eloPoints ? `${userRanking.eloPoints} ELO` : matchTranslate('clubUnranked')}
                 </p>
               </div>
 
               {/* Matches Record */}
               <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-right">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Trận trong CLB</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{matchTranslate('clubMatchesCountLabel')}</p>
                 <p className="text-sm font-black font-mono text-slate-800">
-                  {userMatchesCount} trận
+                  {matchTranslate('clubActivityMatchesCount', { count: userMatchesCount })}
                 </p>
               </div>
 
@@ -511,7 +693,7 @@ export default function ClubActivityTab({ communityId }: Props) {
               {userRanking && typeof userRanking.winStreak === 'number' && userRanking.winStreak > 0 && (
                 <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200/80 text-right">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1 justify-end">
-                    <Flame className="w-3 h-3" /> Phong độ
+                    <Flame className="w-3 h-3" /> {matchTranslate('clubFormLabel')}
                   </p>
                   <p className="text-sm font-black font-mono text-emerald-700">
                     W{userRanking.winStreak}
@@ -528,14 +710,14 @@ export default function ClubActivityTab({ communityId }: Props) {
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-slate-900 tracking-tight">
-              Hoạt động câu lạc bộ
+              {matchTranslate('clubActivityTitle')}
             </h3>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-              {effectiveMatches.length} trận đấu
+              {matchTranslate('clubActivityMatchesCount', { count: effectiveMatches.length })}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Dòng sự kiện trận đấu của các thành viên trong câu lạc bộ
+            {matchTranslate('clubActivitySubtitle')}
           </p>
         </div>
 
@@ -552,7 +734,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                   : 'hover:text-slate-900'
               }`}
             >
-              Tất cả
+              {matchTranslate('clubActivityFilterAll')}
             </button>
             {user?.id && (
               <button
@@ -564,7 +746,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                     : 'hover:text-slate-900'
                 }`}
               >
-                <span>Trận của tôi</span>
+                <span>{matchTranslate('clubActivityFilterMyMatches')}</span>
                 {userMatchesCount > 0 && (
                   <span className={`text-[10px] px-1 rounded-full ${filter === 'MY_MATCHES' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'}`}>
                     {userMatchesCount}
@@ -581,7 +763,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                   : 'hover:text-slate-900'
               }`}
             >
-              Đang đấu
+              {matchTranslate('clubActivityFilterOngoing')}
             </button>
             <button
               type="button"
@@ -592,7 +774,7 @@ export default function ClubActivityTab({ communityId }: Props) {
                   : 'hover:text-slate-900'
               }`}
             >
-              Đã xong
+              {matchTranslate('clubActivityFilterCompleted')}
             </button>
           </div>
 
@@ -607,8 +789,8 @@ export default function ClubActivityTab({ communityId }: Props) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tên VĐV, đội, giải..."
-              className="pl-8 pr-3 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-400 transition-colors w-36 sm:w-44"
+              placeholder={matchTranslate('clubActivitySearchPlaceholder')}
+              className="pl-8 pr-3 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-slate-400 transition-colors w-36 sm:w-52"
             />
           </div>
 
@@ -617,7 +799,7 @@ export default function ClubActivityTab({ communityId }: Props) {
             type="button"
             onClick={() => void fetchClubMatches(true)}
             disabled={isRefreshing}
-            title="Làm mới dòng thời gian"
+            title={matchTranslate('clubActivityRefresh')}
             className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -631,11 +813,11 @@ export default function ClubActivityTab({ communityId }: Props) {
       ) : timelineMatches.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-white text-slate-500">
           <Activity className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-700">Chưa có hoạt động trận đấu nào</p>
+          <p className="text-sm font-medium text-slate-700">{matchTranslate('clubActivityEmptyTitle')}</p>
           <p className="text-xs text-slate-400 mt-0.5">
             {filter === 'MY_MATCHES'
-              ? 'Bạn chưa tham gia trận đấu nào trong câu lạc bộ này.'
-              : 'Khi các giải đấu trong câu lạc bộ khởi tranh và diễn ra, diễn biến trận đấu sẽ hiển thị tại đây.'}
+              ? matchTranslate('clubActivityEmptyMyMatches')
+              : matchTranslate('clubActivityEmptyDesc')}
           </p>
         </div>
       ) : (
@@ -663,13 +845,29 @@ export default function ClubActivityTab({ communityId }: Props) {
             const p2Logo = (p2 as any)?.logoUrl || p2?.members?.[0]?.avatarUrl || null;
 
             // ELO delta calculation / extraction
-            const rawEloDelta = (match.scoreDetails as any)?.eloDelta ?? (match as any)?.eloChange;
-            const p1EloDelta = isCompleted && match.winnerId
-              ? (isP1Winner ? `+${rawEloDelta || 16}` : `-${rawEloDelta || 14}`)
-              : null;
-            const p2EloDelta = isCompleted && match.winnerId
-              ? (isP2Winner ? `+${rawEloDelta || 16}` : `-${rawEloDelta || 14}`)
-              : null;
+            let p1EloDelta: string | null = null;
+            let p2EloDelta: string | null = null;
+
+            if (match.isClubSessionMatch && match.eloDelta && isCompleted) {
+              const p1MemberUserIds = (match.participant1?.members || []).map((m) => m.userId).filter(Boolean) as string[];
+              const p2MemberUserIds = (match.participant2?.members || []).map((m) => m.userId).filter(Boolean) as string[];
+
+              const p1Delta = p1MemberUserIds.map((uid) => match.eloDelta?.[uid]).find((d) => typeof d === 'number');
+              const p2Delta = p2MemberUserIds.map((uid) => match.eloDelta?.[uid]).find((d) => typeof d === 'number');
+
+              if (typeof p1Delta === 'number') {
+                p1EloDelta = `${p1Delta > 0 ? '+' : ''}${p1Delta}`;
+              }
+              if (typeof p2Delta === 'number') {
+                p2EloDelta = `${p2Delta > 0 ? '+' : ''}${p2Delta}`;
+              }
+            } else if (isCompleted && match.winnerId) {
+              const rawEloDelta = (match.scoreDetails as any)?.eloDelta ?? (match as any)?.eloChange;
+              if (rawEloDelta) {
+                p1EloDelta = isP1Winner ? `+${rawEloDelta}` : `-${rawEloDelta}`;
+                p2EloDelta = isP2Winner ? `+${rawEloDelta}` : `-${rawEloDelta}`;
+              }
+            }
 
             const displayTime = match.completedAt
               ? formatDateTime(match.completedAt)
@@ -698,19 +896,34 @@ export default function ClubActivityTab({ communityId }: Props) {
                   <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                     <div className="flex items-center gap-2 flex-wrap">
                       {match.tournamentName && (
-                        <Link
-                          href={`/tournaments/${match.tournamentId}`}
-                          title={`Xem chi tiết giải đấu ${match.tournamentName}`}
-                          className="inline-flex items-center gap-1.5 font-bold text-blue-700 bg-blue-50/90 hover:bg-blue-100/90 hover:text-blue-800 px-2.5 py-1 rounded-md border border-blue-200/80 transition-colors shadow-2xs group/tname"
-                        >
-                          <Trophy className="w-3.5 h-3.5 text-blue-600 group-hover/tname:scale-110 transition-transform" />
-                          <span className="underline decoration-transparent group-hover/tname:decoration-blue-700 underline-offset-2 transition-all">
-                            {match.tournamentName}
-                          </span>
-                        </Link>
+                        match.isClubSessionMatch ? (
+                          <Link
+                            href={`/communities/${communityId}/match-sessions/${match.clubMatchSessionId}`}
+                            title={matchTranslate('clubSessionView')}
+                            className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50/90 hover:bg-emerald-100/90 hover:text-emerald-800 px-2.5 py-1 rounded-md border border-emerald-200/80 transition-colors shadow-2xs group/sname"
+                          >
+                            <Users className="w-3.5 h-3.5 text-emerald-600 group-hover/sname:scale-110 transition-transform" />
+                            <span className="underline decoration-transparent group-hover/sname:decoration-emerald-700 underline-offset-2 transition-all">
+                              {match.tournamentName}
+                            </span>
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/tournaments/${match.tournamentId}`}
+                            title={`Xem chi tiết giải đấu ${match.tournamentName}`}
+                            className="inline-flex items-center gap-1.5 font-bold text-blue-700 bg-blue-50/90 hover:bg-blue-100/90 hover:text-blue-800 px-2.5 py-1 rounded-md border border-blue-200/80 transition-colors shadow-2xs group/tname"
+                          >
+                            <Trophy className="w-3.5 h-3.5 text-blue-600 group-hover/tname:scale-110 transition-transform" />
+                            <span className="underline decoration-transparent group-hover/tname:decoration-blue-700 underline-offset-2 transition-all">
+                              {match.tournamentName}
+                            </span>
+                          </Link>
+                        )
                       )}
                       <span className="font-semibold text-slate-800 text-xs">
-                        {roundLabel || `Trận #${match.matchOrder}`}
+                        {match.isClubSessionMatch
+                          ? matchTranslate('clubSessionFriendlyRound')
+                          : roundLabel || `Trận #${match.matchOrder}`}
                       </span>
                       {/* Match Format badge */}
                       {sets.length > 0 && (
@@ -985,10 +1198,18 @@ export default function ClubActivityTab({ communityId }: Props) {
                     </div>
 
                     <Link
-                      href={`/live/${match.id}`}
+                      href={
+                        match.isClubSessionMatch
+                          ? `/communities/${communityId}/match-sessions/${match.clubMatchSessionId}`
+                          : `/live/${match.id}`
+                      }
                       className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors group/btn shrink-0"
                     >
-                      <span>{matchTranslate('detailsAction') || 'Chi tiết'}</span>
+                      <span>
+                        {match.isClubSessionMatch
+                          ? matchTranslate('clubSessionView')
+                          : matchTranslate('detailsAction') || 'Chi tiết'}
+                      </span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600 transition-all" />
                     </Link>
                   </div>

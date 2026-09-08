@@ -380,20 +380,20 @@ export function ClubMatchSessionDetailView({
         </Link>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 lg:col-start-1">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7 lg:col-start-1">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge className={`border px-3 py-1 text-xs font-bold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
-                <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
-                <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">{t('sessionType')}</Badge>
+                <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
+                <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
+                <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
               </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{session.resolvedName}</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{session.description || t('noDescription')}</p>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description || t('noDescription')}</p>
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
             {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
             {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
             <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
@@ -407,7 +407,7 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>
 
-        <nav className="flex h-fit min-w-0 overflow-x-auto border-b border-slate-200 bg-white px-2 shadow-sm lg:col-start-1 lg:self-start" aria-label={t('tabNavigation')}>
+        <nav className="flex h-fit min-w-0 overflow-x-auto border-b border-slate-200/80 bg-white px-2 shadow-xs lg:col-start-1 lg:self-start" aria-label={t('tabNavigation')}>
           {tabs.map((tab) => (
             <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
               {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
@@ -415,11 +415,11 @@ export function ClubMatchSessionDetailView({
           ))}
         </nav>
 
-        <aside className="self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-1">
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">{t('clubContextLabel')}</p>
+        <aside className="self-start rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
           <div className="mt-4 flex items-center gap-3">
             <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
-            <div className="min-w-0"><p className="truncate font-black text-slate-950">{communityName || t('clubSessionLabel')}</p><p className="mt-1 text-xs text-slate-500">{t('clubContextHint')}</p></div>
+            <div className="min-w-0"><p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p><p className="mt-1 text-xs text-slate-500">{t('clubContextHint')}</p></div>
           </div>
         </aside>
 
@@ -428,10 +428,10 @@ export function ClubMatchSessionDetailView({
         <div className="space-y-4 lg:col-start-1">
 
         {activeTab === 'overview' && <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
             <div className="flex items-start justify-between gap-3">
-              <div><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-xl font-black text-slate-950">{t('overviewTitle')}</h2></div>
-              <span className="text-sm font-bold text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
+              <div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('overviewTitle')}</h2></div>
+              <span className="text-sm font-medium text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
@@ -439,13 +439,13 @@ export function ClubMatchSessionDetailView({
               <SummaryMetric icon={<Radio className="h-4 w-4" />} value={String(liveMatches.length)} label={t('liveMatches')} />
               <SummaryMetric icon={<CheckCircle2 className="h-4 w-4" />} value={String(completedMatches.length)} label={t('completedMatches')} />
             </div>
-            <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-sm text-slate-700">
-              <p className="font-bold text-slate-950">{t('overviewHint')}</p>
+            <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-sm text-slate-600">
+              <p className="font-semibold text-slate-800">{t('overviewHint')}</p>
               <p className="mt-1 leading-6">{t('registrationOpensImmediately')} {t('pairingDerivedHint')}.</p>
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-xl font-black text-slate-950">{t('basicInfoTitle')}</h2>
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+            <h2 className="text-lg font-bold text-slate-900">{t('basicInfoTitle')}</h2>
             <div className="mt-5 space-y-4 text-sm">
               {session.startAt && <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, '')} />}
               {session.endAt && <InfoRow icon={<Clock3 className="h-4 w-4" />} label={t('endAt')} value={formatSessionDate(session.endAt, locale, '')} />}
@@ -455,18 +455,18 @@ export function ClubMatchSessionDetailView({
         </section>}
 
         {activeTab === 'participants' && <section className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div><h2 className="text-xl font-black text-slate-950">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantsOnlyHint')}</p></div>
-            <span className="text-sm font-bold text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
+            <div><h2 className="text-lg font-bold text-slate-900">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantsOnlyHint')}</p></div>
+            <span className="text-sm font-medium text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
           </div>
 
           <div className="mt-5 space-y-2">
             {activeParticipants.map((item) => {
               return (
                 <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
-                  <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p title={item.fullName || undefined} className="truncate text-sm font-bold text-slate-900">{shortDisplayName(item.fullName)}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] text-amber-700">{t('mockPlayer')}</Badge>}</div>
-                  <span className="text-xs font-semibold text-slate-400">{t('joinedLabel')}</span>
+                  <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p title={item.fullName || undefined} className="truncate text-sm font-semibold text-slate-900">{shortDisplayName(item.fullName)}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] font-medium text-amber-700">{t('mockPlayer')}</Badge>}</div>
+                  <span className="text-xs font-medium text-slate-400">{t('joinedLabel')}</span>
                 </div>
               );
             })}
@@ -475,12 +475,12 @@ export function ClubMatchSessionDetailView({
 
           {session.capabilities?.canManage && (
             <div className="mt-5 border-t border-slate-100 pt-5">
-              <div className="mb-3 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><UserPlus className="h-4 w-4 text-blue-600" /><h3 className="font-bold text-slate-900">{t('assignSelected')}</h3></div>{session.status === 'OPEN' && <Button type="button" size="sm" variant="outline" aria-expanded={mockFormOpen} aria-label={t('createMockParticipant')} title={t('createMockParticipant')} onClick={() => setMockFormOpen((value) => !value)}><Plus className="h-4 w-4" /><span className="sr-only">{t('createMockParticipant')}</span></Button>}</div>
+              <div className="mb-3 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><UserPlus className="h-4 w-4 text-blue-600" /><h3 className="font-semibold text-slate-900">{t('assignSelected')}</h3></div>{session.status === 'OPEN' && <Button type="button" size="sm" variant="outline" aria-expanded={mockFormOpen} aria-label={t('createMockParticipant')} title={t('createMockParticipant')} onClick={() => setMockFormOpen((value) => !value)}><Plus className="h-4 w-4" /><span className="sr-only">{t('createMockParticipant')}</span></Button>}</div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {clubMembers.map((record) => {
                   const userId = record.member.userId;
                   const checked = selectedMembers.includes(userId);
-                  return <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-300"><input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} /><Avatar name={record.user.fullName} userId={userId} avatarUrl={record.user.avatarUrl} className="h-8 w-8" /><span title={record.user.fullName || undefined} className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{shortDisplayName(record.user.fullName)}</span>{activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">{t('active')}</Badge>}</label>;
+                  return <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200/80 p-3 transition hover:border-blue-300"><input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} /><Avatar name={record.user.fullName} userId={userId} avatarUrl={record.user.avatarUrl} className="h-8 w-8" /><span title={record.user.fullName || undefined} className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{shortDisplayName(record.user.fullName)}</span>{activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700">{t('active')}</Badge>}</label>;
                 })}
               </div>
               {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
@@ -490,21 +490,21 @@ export function ClubMatchSessionDetailView({
           )}
           </div>
 
-          {session.viewerParticipant?.status === 'ACTIVE' && <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-xl font-black text-slate-950">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
+          {session.viewerParticipant?.status === 'ACTIVE' && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-lg font-bold text-slate-900">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {[
               { value: preferredPartners, setValue: setPreferredPartners, label: t('preferredPartner') },
               { value: preferredOpponents, setValue: setPreferredOpponents, label: t('preferredOpponent') },
               { value: avoidedPlayers, setValue: setAvoidedPlayers, label: t('avoidPlayer') },
-            ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-bold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{shortDisplayName(item.fullName)}</option>)}</select></label>)}
+            ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-semibold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{shortDisplayName(item.fullName)}</option>)}</select></label>)}
           </div>
           <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
           </div>}
         </section>}
 
         {activeTab === 'matches' && <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-900">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
           {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} t={t} />)}</div>}
           {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
         </section>}
@@ -519,15 +519,15 @@ export function ClubMatchSessionDetailView({
 }
 
 function SummaryMetric({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
-  return <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-1.5 text-blue-600">{icon}<span className="text-xl font-black text-slate-950">{value}</span></div><p className="mt-1 truncate text-[11px] font-semibold text-slate-500">{label}</p></div>;
+  return <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3"><div className="flex items-center gap-1.5 text-blue-600">{icon}<span className="text-xl font-bold text-slate-900">{value}</span></div><p className="mt-1 truncate text-[11px] font-medium text-slate-500">{label}</p></div>;
 }
 
 function SessionTabButton({ children, icon, active, onClick }: { children: ReactNode; icon: ReactNode; active: boolean; onClick: () => void }) {
-  return <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-bold transition sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-950'}`}>{icon}{children}</button>;
+  return <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-semibold transition sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}>{icon}{children}</button>;
 }
 
 function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return <div className="flex items-start gap-3"><span className="mt-0.5 text-blue-600">{icon}</span><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div></div>;
+  return <div className="flex items-start gap-3"><span className="mt-0.5 text-blue-600">{icon}</span><div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 font-medium text-slate-700">{value}</p></div></div>;
 }
 
 function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, canWithdraw, busy, onJoin, onWithdraw }: {
@@ -547,21 +547,21 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  return <aside className="self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-2 lg:row-start-2">
-    <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('registrationTitle')}</h2><span className="text-sm font-bold text-slate-500">{activeCount}/{maxParticipants}</span></div>
+  return <aside className="self-start rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-2">
+    <div className="flex items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">{t('registrationTitle')}</h2><span className="text-sm font-medium text-slate-500">{activeCount}/{maxParticipants}</span></div>
     <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
       {visibleSlots.map((item, index) => {
         const slotNumber = currentPage * pageSize + index + 1;
         if (!item) {
-          const emptySlot = <><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-semibold text-slate-400">Slot #{slotNumber}</p></>;
+          const emptySlot = <><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-xl font-light text-slate-400">+</div><p className="mt-2 text-[11px] font-medium text-slate-400">Slot #{slotNumber}</p></>;
           return canJoin
             ? <button key={`slot-${slotNumber}`} type="button" disabled={busy} onClick={onJoin} className="min-w-0 cursor-pointer rounded-xl p-1 text-center transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60">{emptySlot}</button>
             : <div key={`slot-${slotNumber}`} className="min-w-0 text-center">{emptySlot}</div>;
         }
-        return <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p title={item.fullName || undefined} className="mt-2 truncate text-[11px] font-bold text-slate-900">{shortDisplayName(item.fullName) || `#${slotNumber}`}</p></div>;
+        return <div key={item.participant.id} className="min-w-0 text-center"><div className="flex justify-center"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-12 w-12" /></div><p title={item.fullName || undefined} className="mt-2 truncate text-[11px] font-semibold text-slate-800">{shortDisplayName(item.fullName) || `#${slotNumber}`}</p></div>;
       })}
     </div>
-    {pageCount > 1 && <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-bold text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
+    {pageCount > 1 && <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-medium text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
     {canWithdraw && <div className="mt-6 border-t border-slate-100 pt-4"><Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button></div>}
   </aside>;
 }
@@ -578,8 +578,8 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
   onCreate: () => void;
 }) {
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 sm:items-center sm:p-6">
-    <div role="dialog" aria-modal="true" aria-labelledby="create-match-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
-      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('matchesTab')}</p><h2 id="create-match-title" className="mt-1 text-xl font-black text-slate-950">{t('createMatchFormTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('createMatchFormHint')}</p></div><button type="button" aria-label={t('closeForm')} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950"><X className="h-5 w-5" /></button></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="create-match-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xl sm:p-6">
+      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('matchesTab')}</p><h2 id="create-match-title" className="mt-1 text-lg font-bold text-slate-900">{t('createMatchFormTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('createMatchFormHint')}</p></div><button type="button" aria-label={t('closeForm')} onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><X className="h-5 w-5" /></button></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2"><PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" /><PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" /></div>
       <p className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-medium text-slate-600">{t('participantSelectionHint')}</p>
       <div className="mt-4 space-y-2">
@@ -587,7 +587,7 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
           const userId = item.participant.userId;
           const side = sideAPlayers.includes(userId) ? 'A' : sideBPlayers.includes(userId) ? 'B' : null;
           const sideFull = (sideAPlayers.length >= 2 && !sideAPlayers.includes(userId)) || (sideBPlayers.length >= 2 && !sideBPlayers.includes(userId));
-          return <div key={item.participant.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><span title={item.fullName || undefined} className="min-w-0 truncate text-sm font-bold text-slate-900">{shortDisplayName(item.fullName)}</span></div><div className="flex shrink-0 gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div></div>;
+          return <div key={item.participant.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><span title={item.fullName || undefined} className="min-w-0 truncate text-sm font-semibold text-slate-900">{shortDisplayName(item.fullName)}</span></div><div className="flex shrink-0 gap-1.5"><Button size="sm" variant={side === 'A' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'A')} onClick={() => assignPlayer(userId, 'A')}>{t('sideA')}</Button><Button size="sm" variant={side === 'B' ? 'default' : 'outline'} disabled={busy || (sideFull && side !== 'B')} onClick={() => assignPlayer(userId, 'B')}>{t('sideB')}</Button></div></div>;
         })}
       </div>
       <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4"><Button variant="outline" disabled={busy} onClick={onClose}>{t('closeForm')}</Button><Button disabled={busy || !pairingReady} onClick={onCreate}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button></div>
@@ -598,8 +598,8 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
 function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; completedMatches: number; t: (key: string, values?: Record<string, string | number>) => string }) {
   const rankedStats = stats.filter((stat) => stat.played > 0);
   return <section className="space-y-4">
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-xl font-black text-slate-950">{t('statisticsTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('statisticsHint')}</p></div><BarChart3 className="h-6 w-6 text-blue-600" /></div>
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('statisticsTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('statisticsHint')}</p></div><BarChart3 className="h-6 w-6 text-blue-600" /></div>
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(completedMatches)} label={t('completedMatches')} />
         <SummaryMetric icon={<Users className="h-4 w-4" />} value={String(rankedStats.length)} label={t('playersWithResults')} />
@@ -607,11 +607,11 @@ function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; 
         <SummaryMetric icon={<Flame className="h-4 w-4" />} value={rankedStats[0]?.streak ? `${rankedStats[0].streak}` : '—'} label={t('currentStreak')} />
       </div>
     </div>
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">{t('playerStatistics')}</h2><span className="text-xs font-semibold text-slate-500">{t('completedMatchesOnly')}</span></div>
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+      <div className="flex items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">{t('playerStatistics')}</h2><span className="text-xs font-medium text-slate-500">{t('completedMatchesOnly')}</span></div>
       {stats.length === 0 ? <p className="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{t('noParticipants')}</p> : <div className="mt-4 overflow-x-auto"><div className="min-w-[620px] space-y-2">
         {stats.map((stat, index) => <div key={stat.id} className="grid grid-cols-[auto_minmax(0,1fr)_72px_92px_92px_90px] items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
-          <span className="w-5 text-center text-xs font-black text-slate-400">{index + 1}</span><div className="flex min-w-0 items-center gap-2"><Avatar name={stat.name} userId={stat.id} avatarUrl={stat.avatarUrl} className="h-9 w-9" /><span title={stat.name} className="truncate text-sm font-bold text-slate-900">{shortDisplayName(stat.name)}</span></div>
+          <span className="w-5 text-center text-xs font-bold text-slate-400">{index + 1}</span><div className="flex min-w-0 items-center gap-2"><Avatar name={stat.name} userId={stat.id} avatarUrl={stat.avatarUrl} className="h-9 w-9" /><span title={stat.name} className="truncate text-sm font-semibold text-slate-900">{shortDisplayName(stat.name)}</span></div>
           <StatValue label={t('played')} value={String(stat.played)} /><StatValue label={t('winLoss')} value={`${stat.wins}–${stat.losses}`} /><StatValue label={t(stat.streakType === 'WIN' ? 'winningStreak' : stat.streakType === 'LOSS' ? 'losingStreak' : 'streak')} value={stat.streak ? String(stat.streak) : '—'} tone={stat.streakType === 'WIN' ? 'positive' : stat.streakType === 'LOSS' ? 'negative' : 'default'} /><StatValue label="ELO" value={`${stat.eloDelta >= 0 ? '+' : ''}${stat.eloDelta}`} tone={stat.eloDelta >= 0 ? 'positive' : 'negative'} />
         </div>)}
       </div></div>}
@@ -620,8 +620,8 @@ function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; 
 }
 
 function StatValue({ label, value, tone = 'default' }: { label: string; value: string; tone?: 'default' | 'positive' | 'negative' }) {
-  const toneClass = tone === 'positive' ? 'text-emerald-700' : tone === 'negative' ? 'text-rose-700' : 'text-slate-900';
-  return <div className="text-right"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p><p className={`mt-1 text-sm font-black ${toneClass}`}>{value}</p></div>;
+  const toneClass = tone === 'positive' ? 'text-emerald-700' : tone === 'negative' ? 'text-rose-700' : 'text-slate-800';
+  return <div className="text-right"><p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p><p className={`mt-1 text-sm font-bold ${toneClass}`}>{value}</p></div>;
 }
 
 function PairingSide({
@@ -636,5 +636,5 @@ function PairingSide({
   tone: 'blue' | 'amber';
 }) {
   const classes = tone === 'blue' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-amber-200 bg-amber-50 text-amber-900';
-  return <div className={`rounded-xl border p-4 ${classes}`}><div className="flex items-center justify-between text-sm font-black"><span>{title}</span><span>{players.length}/2</span></div><div className="mt-3 flex flex-wrap gap-2">{players.length ? players.map((userId) => { const item = participants.find((candidate) => candidate.participant.userId === userId); return <span key={userId} title={item?.fullName || userId} className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-bold"><Avatar name={item?.fullName} userId={userId} avatarUrl={item?.avatarUrl} className="h-6 w-6" />{shortDisplayName(item?.fullName) || userId}</span>; }) : <span className="text-sm opacity-70">Chưa chọn</span>}</div></div>;
+  return <div className={`rounded-xl border p-4 ${classes}`}><div className="flex items-center justify-between text-sm font-bold"><span>{title}</span><span>{players.length}/2</span></div><div className="mt-3 flex flex-wrap gap-2">{players.length ? players.map((userId) => { const item = participants.find((candidate) => candidate.participant.userId === userId); return <span key={userId} title={item?.fullName || userId} className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold"><Avatar name={item?.fullName} userId={userId} avatarUrl={item?.avatarUrl} className="h-6 w-6" />{shortDisplayName(item?.fullName) || userId}</span>; }) : <span className="text-sm opacity-70">Chưa chọn</span>}</div></div>;
 }

@@ -131,41 +131,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* ── Typography & Readability Boost ── */
-/* Ensure small labels and captions have clear font-weight and don't look skinny */
-small,
-.text-xs,
-.text-\[10px\],
-.text-\[11px\],
-.text-\[12px\],
-.text-\[13px\] {
-  font-weight: 500;
-}
-
-/* Elevate pale grey texts to higher contrast for easy reading */
-.text-slate-400 {
-  color: #64748b !important; /* slate-500 */
-}
-
-.text-slate-500 {
-  color: #475569 !important; /* slate-600 */
-}
-
-.text-gray-400,
-.text-neutral-400,
-.text-zinc-400 {
-  color: #6b7280 !important; /* gray-500 */
-}
-
-.text-gray-500,
-.text-neutral-500,
-.text-zinc-500 {
-  color: #4b5563 !important; /* gray-600 */
-}
-
-.text-muted-foreground {
-  color: #475569 !important;
-}
 
 /* Editor.js Content View Styling */
 .editorjs-content-view h1,

@@ -2,7 +2,22 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
+import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { ensureOpenScoringSet, extractMatchScores } from '@/features/matches/score-display';
+
+async function fetchLiveMatchSnapshot(matchId: string): Promise<Match> {
+  try {
+    return await matchesApi.getMatchById(matchId);
+  } catch (tournamentError) {
+    // Club session/standalone matches deliberately have no synthetic
+    // tournament id. Resolve them through the club-match context endpoint.
+    try {
+      return await clubMatchSessionsApi.getMatchById(matchId) as unknown as Match;
+    } catch {
+      throw tournamentError;
+    }
+  }
+}
 
 function normalizeViewerCount(value: unknown) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
@@ -102,7 +117,7 @@ export function useLiveMatch(matchId: string) {
 
     const fetchMatch = async () => {
       try {
-        const data = await matchesApi.getMatchById(matchId);
+        const data = await fetchLiveMatchSnapshot(matchId);
         if (isMounted) {
           matchRef.current = data;
           setMatch(data);
@@ -147,7 +162,7 @@ export function useLiveMatch(matchId: string) {
 
     const refreshMatchSnapshot = async () => {
       try {
-        const data = await matchesApi.getMatchById(matchId);
+        const data = await fetchLiveMatchSnapshot(matchId);
         if (!isMounted) {
           return;
         }

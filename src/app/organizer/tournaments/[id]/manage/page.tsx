@@ -27,7 +27,7 @@ import { TournamentManageSidebar, type ManageNavigationTarget, type ManageSectio
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-import { getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
+import { getTournamentStatusClassName, getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
 import { getDivisionBracketLabel, getDivisionMatchLabel, type TournamentDisplayLabels } from '@/utils/tournament-display';
 
 function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
@@ -361,9 +361,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
           <main className="min-w-0 flex-1">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 mb-3 md:mb-4 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          <div className="space-y-1.5 w-full md:w-auto">
-            <div className="flex items-center gap-3">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 mb-3 md:mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
               <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {getSportLogo(s.tournament.category?.name) && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -371,17 +371,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 )}
                 {s.tournament.category?.name || translate('status.sportFallback')}
               </span>
-              {getTournamentStatusLabel(s.tournament.status, {
-                DRAFT: translate('status.statusDraft'),
-                PENDING_APPROVAL: translate('status.statusPendingApproval'),
-                PENDING_DELETE: translate('status.statusPendingDelete'),
-                UPCOMING: translate('status.statusUpcoming'),
-                REGISTRATION_OPEN: translate('status.statusRegistrationOpen'),
-                REGISTRATION_CLOSED: translate('status.statusRegistrationClosed'),
-                IN_PROGRESS: translate('status.statusInProgress'),
-                COMPLETED: translate('status.statusCompleted'),
-                CANCELLED: translate('status.statusCancelled'),
-              })}
+              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] md:text-xs font-bold ${getTournamentStatusClassName(s.tournament.status)}`}>
+                {getTournamentStatusLabel(s.tournament.status, {
+                  DRAFT: translate('status.statusDraft'),
+                  PENDING_APPROVAL: translate('status.statusPendingApproval'),
+                  PENDING_DELETE: translate('status.statusPendingDelete'),
+                  UPCOMING: translate('status.statusUpcoming'),
+                  REGISTRATION_OPEN: translate('status.statusRegistrationOpen'),
+                  REGISTRATION_CLOSED: translate('status.statusRegistrationClosed'),
+                  IN_PROGRESS: translate('status.statusInProgress'),
+                  COMPLETED: translate('status.statusCompleted'),
+                  CANCELLED: translate('status.statusCancelled'),
+                })}
+              </span>
               {s.draftStatus === 'saving' && (
                 <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/80 animate-pulse shadow-2xs">
                   <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
@@ -406,13 +408,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
               )}
             </div>
-            <h1 data-testid="tournament-title" className="text-lg md:text-2xl font-bold text-slate-900">{s.tournament.name}</h1>
-            <p className="text-slate-500 font-medium text-xs md:text-sm flex items-center gap-1">
+            <h1 data-testid="tournament-title" className="truncate text-lg md:text-2xl font-bold tracking-tight text-slate-900">{s.tournament.name}</h1>
+            <p className="mt-1 flex items-center gap-1 text-xs md:text-sm font-medium text-slate-500">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               {translate('status.startDate')} {s.tournament.startDate ? formatDate(s.tournament.startDate) : translate('status.notSet')}
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-1.5 md:w-auto md:justify-end">
             <Button
               onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
               className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"

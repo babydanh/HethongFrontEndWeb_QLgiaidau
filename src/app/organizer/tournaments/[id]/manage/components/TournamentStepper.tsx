@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2, Download } from 'lucide-react';
+import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2, Download, type LucideIcon } from 'lucide-react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
 import {
@@ -107,7 +107,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   const steps = [
     {
       title: translate('steps.registration.title'),
-      icon: <Users className="w-4 h-4" />,
+      icon: Users,
       description: translate('steps.registration.description'),
       actionText: translate('steps.registration.action'),
       onClick: () => onNextStep('UPCOMING'),
@@ -115,7 +115,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
     },
     {
       title: translate('steps.schedule.title'),
-      icon: <GitMerge className="w-4 h-4" />,
+      icon: GitMerge,
       description: translate('steps.schedule.description'),
       actionText: translate('steps.schedule.action'),
       onClick: () => onOpenTournament?.(),
@@ -123,7 +123,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
     },
     {
       title: translate('steps.inProgress.title'),
-      icon: <Play className="w-4 h-4" />,
+      icon: Play,
       description: translate('steps.inProgress.description'),
       actionText: translate('steps.inProgress.action'),
       onClick: () => onNextStep('COMPLETED'),
@@ -131,7 +131,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
     },
     {
       title: translate('steps.completed.title'),
-      icon: <Trophy className="w-4 h-4" />,
+      icon: Trophy,
       description: translate('steps.completed.description'),
       actionText: null,
       onClick: () => {},
@@ -140,8 +140,8 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-5 mb-4 md:mb-5 shadow-sm">
-      <h3 className="text-base md:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 mb-3 md:mb-4">
+      <h3 className="text-sm md:text-base font-bold tracking-tight text-slate-900 mb-3 flex items-center gap-2">
         <FileText className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> {translate('progressTitle')}
       </h3>
       
@@ -359,53 +359,56 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         </div>
       )}
 
-      <div className={`relative flex flex-col md:flex-row justify-between ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
-        <div className="hidden md:block absolute top-5 left-6 right-6 h-1 bg-slate-100 rounded -z-10" />
-        <div 
-          className="hidden md:block absolute top-5 left-6 h-1 bg-blue-600 rounded -z-10 transition-all duration-500"
-          style={{ width: `${Math.max(0, (currentStep / (steps.length - 1)) * 100)}%` }}
+      <div className={`relative ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-4 hidden h-px bg-slate-200 sm:block" />
+        <div
+          className="pointer-events-none absolute left-[12.5%] top-4 hidden h-px bg-blue-600 transition-all duration-500 sm:block"
+          style={{ width: `${Math.max(0, (currentStep / (steps.length - 1)) * 75)}%` }}
         />
 
-        {steps.map((step, idx) => {
-          const isCompleted = idx < currentStep;
-          const isActive = idx === currentStep;
+        <div className="grid grid-cols-4 gap-1 sm:gap-3">
+          {steps.map((step, idx) => {
+            const isCompleted = idx < currentStep;
+            const isActive = idx === currentStep;
+            const StepIcon = step.icon as LucideIcon;
 
           return (
-            <div key={idx} className="flex flex-col items-center flex-1 relative mb-4 md:mb-0">
+            <div key={idx} className="relative flex min-w-0 flex-col items-center text-center">
               <div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-[3px] border-white shadow-sm mb-2 transition-colors ${
+                className={`relative z-10 mb-1.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-sm transition-colors ${
                   isCompleted ? 'bg-emerald-500 text-white' : 
                   isActive ? 'bg-blue-600 text-white ring-4 ring-blue-50' : 
                   'bg-slate-100 text-slate-400'
                 }`}
               >
-                {isCompleted ? <Check className="w-6 h-6 font-bold" /> : step.icon}
+                {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : <StepIcon className="h-3.5 w-3.5" />}
               </div>
               
-              <div className="text-center">
-                <div className={`font-bold text-sm ${isActive ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
+              <div className="min-w-0 max-w-full">
+                <div className={`truncate px-0.5 text-[11px] font-bold sm:text-xs ${isActive ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
                   {step.title}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5 max-w-[120px] leading-tight mx-auto">
+                <div className="mx-auto mt-0.5 hidden max-w-[150px] text-[10px] leading-tight text-slate-400 lg:block">
                   {step.description}
                 </div>
               </div>
 
               {isActive && step.actionText && (
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <Button
                     size="sm"
                     onClick={step.onClick}
                     disabled={isLoading || isOpening || (idx === 1 && !phase2MandatoryPass)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] flex items-center gap-1.5 h-7 px-3 rounded-full shadow-md shadow-blue-500/20"
+                    className="h-7 rounded-full bg-blue-600 px-2.5 text-[10px] font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 sm:px-3 sm:text-[11px]"
                   >
-                    {step.actionText} <ChevronRight className="w-3.5 h-3.5" />
+                    <span className="truncate">{step.actionText}</span> <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                   </Button>
                 </div>
               )}
             </div>
           );
-        })}
+          })}
+        </div>
       </div>
 
       {/* Step 4 — Completed tournament: show only the export action */}

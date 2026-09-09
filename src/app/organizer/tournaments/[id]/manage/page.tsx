@@ -363,19 +363,26 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           headerActions={(
             <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
               <Button
+                size="sm"
                 onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-                className="h-8 bg-blue-600 px-2.5 text-[11px] font-bold text-white hover:bg-blue-700 md:h-9 md:px-3 md:text-sm"
+                className="h-7.5 bg-blue-600 px-2.5 text-xs font-bold text-white hover:bg-blue-700 shadow-sm"
               >
                 {translate('status.operations')}
               </Button>
               <Button
+                size="sm"
                 variant="outline"
                 onClick={handleOpenManageBracket}
-                className="h-8 border-slate-200 bg-slate-50 px-2.5 text-[11px] font-bold text-slate-600 hover:bg-amber-100 md:h-9 md:px-3 md:text-sm"
+                className="h-7.5 border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300"
               >
                 <Trophy className="h-3.5 w-3.5" /> Bracket
               </Button>
-              <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="h-8 border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 md:h-9 md:px-3 md:text-sm">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.open(buildPublicTournamentUrl(), '_blank')}
+                className="h-7.5 border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+              >
                 <ExternalLink className="h-3.5 w-3.5" /> {translate('status.tournamentPage')}
               </Button>
             </div>

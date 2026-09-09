@@ -140,10 +140,10 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
   ];
 
   return (
-    <div className="mb-3 rounded-xl border border-slate-200 bg-white p-3 md:p-4">
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-slate-900 md:text-base">
-          <FileText className="h-4 w-4 text-blue-600 md:h-5 md:w-5" /> {translate('progressTitle')}
+    <div className="mb-3 rounded-xl border border-slate-200 bg-white p-2.5 sm:p-3 shadow-xs">
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="flex items-center gap-1.5 text-xs sm:text-sm font-bold tracking-tight text-slate-800">
+          <FileText className="h-4 w-4 text-blue-600 shrink-0" /> {translate('progressTitle')}
         </h3>
         {headerActions}
       </div>
@@ -362,14 +362,14 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
         </div>
       )}
 
-      <div className={`relative sm:ml-auto sm:max-w-[900px] ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
-        <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-4 hidden h-px bg-slate-200 sm:block" />
+      <div className={`relative w-full ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-3.5 hidden h-px bg-slate-200 sm:block" />
         <div
-          className="pointer-events-none absolute left-[12.5%] top-4 hidden h-px bg-blue-600 transition-all duration-500 sm:block"
+          className="pointer-events-none absolute left-[12.5%] top-3.5 hidden h-px bg-blue-600 transition-all duration-500 sm:block"
           style={{ width: `${Math.max(0, (currentStep / (steps.length - 1)) * 75)}%` }}
         />
 
-        <div className="grid grid-cols-4 gap-1 sm:gap-3">
+        <div className="grid grid-cols-4 gap-1 sm:gap-2">
           {steps.map((step, idx) => {
             const isCompleted = idx < currentStep;
             const isActive = idx === currentStep;
@@ -378,30 +378,30 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
           return (
             <div key={idx} className="relative flex min-w-0 flex-col items-center text-center">
               <div 
-                className={`relative z-10 mb-1.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-sm transition-colors ${
+                className={`relative z-10 mb-1 flex h-6.5 w-6.5 sm:h-7 sm:w-7 items-center justify-center rounded-full border-2 border-white shadow-xs transition-colors ${
                   isCompleted ? 'bg-emerald-500 text-white' : 
-                  isActive ? 'bg-blue-600 text-white ring-4 ring-blue-50' : 
+                  isActive ? 'bg-blue-600 text-white ring-2 ring-blue-100' : 
                   'bg-slate-100 text-slate-400'
                 }`}
               >
-                {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : <StepIcon className="h-3.5 w-3.5" />}
+                {isCompleted ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : <StepIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               </div>
               
               <div className="min-w-0 max-w-full">
-                <div className={`truncate px-0.5 text-[11px] font-bold sm:text-xs ${isActive ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
+                <div className={`truncate px-0.5 text-[10px] font-bold sm:text-[11px] ${isActive ? 'text-blue-700 font-extrabold' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
                   {step.title}
                 </div>
               </div>
 
               {isActive && step.actionText && (
-                <div className="mt-1.5">
+                <div className="mt-1">
                   <Button
                     size="sm"
                     onClick={step.onClick}
                     disabled={isLoading || isOpening || (idx === 1 && !phase2MandatoryPass)}
-                    className="h-7 rounded-full bg-blue-600 px-2.5 text-[10px] font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 sm:px-3 sm:text-[11px]"
+                    className="h-6 rounded-full bg-blue-600 px-2 text-[9px] font-bold text-white shadow-xs shadow-blue-500/20 hover:bg-blue-700 sm:h-6.5 sm:px-2.5 sm:text-[10px]"
                   >
-                    <span className="truncate">{step.actionText}</span> <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{step.actionText}</span> <ChevronRight className="h-3 w-3 shrink-0 ml-0.5" />
                   </Button>
                 </div>
               )}
@@ -413,10 +413,10 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
 
       {/* Step 4 — Completed tournament: show only the export action */}
       {isTournamentCompleted(tournament.status) && (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2">
           <div>
-            <p className="text-sm font-bold text-emerald-900">{translate('completedTitle')}</p>
-            <p className="mt-0.5 text-xs font-medium text-emerald-700">
+            <p className="text-xs font-bold text-emerald-900">{translate('completedTitle')}</p>
+            <p className="text-[11px] font-medium text-emerald-700">
               {translate('completedDescription')}
             </p>
           </div>
@@ -424,9 +424,9 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
             size="sm"
             onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
             disabled={matches.length === 0}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 h-7 px-3 rounded-md shadow-xs"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3 h-3" />
             {matches.length === 0 ? translate('noMatches') : translate('exportResults', { count: matches.length })}
           </Button>
         </div>

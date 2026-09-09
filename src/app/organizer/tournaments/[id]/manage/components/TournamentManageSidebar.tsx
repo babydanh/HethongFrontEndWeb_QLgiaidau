@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   DollarSign,
   ExternalLink,
   Info,
@@ -21,6 +22,8 @@ import {
   X,
 } from 'lucide-react';
 import type { Tournament } from '@/types/tournament';
+import { getSportLogo } from '@/constants/sports';
+import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 import { cn } from '@/utils/cn';
 import { useTranslations } from 'next-intl';
 
@@ -40,6 +43,20 @@ export type ManageBasicSubTab = 'general' | 'branding' | 'prizes' | 'contact' | 
 export interface ManageNavigationTarget {
   section: ManageSection;
   basicSubTab?: ManageBasicSubTab;
+}
+
+function getStatusLabels(t: ReturnType<typeof useTranslations>) {
+  return {
+    DRAFT: t('status.statusDraft'),
+    PENDING_APPROVAL: t('status.statusPendingApproval'),
+    PENDING_DELETE: t('status.statusPendingDelete'),
+    UPCOMING: t('status.statusUpcoming'),
+    REGISTRATION_OPEN: t('status.statusRegistrationOpen'),
+    REGISTRATION_CLOSED: t('status.statusRegistrationClosed'),
+    IN_PROGRESS: t('status.statusInProgress'),
+    COMPLETED: t('status.statusCompleted'),
+    CANCELLED: t('status.statusCancelled'),
+  };
 }
 
 interface TournamentManageSidebarProps {
@@ -158,6 +175,9 @@ export function TournamentManageSidebar({
   onNavigate,
 }: TournamentManageSidebarProps) {
   const t = useTranslations('OrganizerManage');
+  const statusLabels = getStatusLabels(t);
+  const sportLogo = getSportLogo(tournament.category?.name);
+  const statusLabel = getTournamentStatusLabel(tournament.status, statusLabels);
 
   const managementItems: SidebarItem[] = [
     {
@@ -278,6 +298,25 @@ export function TournamentManageSidebar({
             : 'hidden',
         )}
       >
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+              {sportLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={sportLogo} alt="" className="h-7 w-7 object-contain" />
+              ) : <ClipboardList className="h-5 w-5 text-blue-600" aria-hidden="true" />}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{tournament.category?.name || t('status.sportFallback')}</p>
+              <h1 className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-slate-900">{tournament.name}</h1>
+              <span className={cn('mt-2 inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[10px] font-bold', getTournamentStatusClassName(tournament.status))}>
+                <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                <span className="truncate">{statusLabel}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-1 flex items-center justify-between lg:hidden">
           <span className="text-sm font-bold tracking-tight text-slate-900">{t('sidebar.manageMenu')}</span>
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={t('sidebar.closeMenu')}>

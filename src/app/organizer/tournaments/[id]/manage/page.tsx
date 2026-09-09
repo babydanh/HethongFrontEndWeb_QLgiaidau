@@ -7,10 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { formatDate } from '@/utils/format';
-import { getSportLogo } from '@/constants/sports';
 import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
@@ -27,7 +25,7 @@ import { TournamentManageSidebar, type ManageNavigationTarget, type ManageSectio
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-import { getTournamentStatusClassName, getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
+import { getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
 import { getDivisionBracketLabel, getDivisionMatchLabel, type TournamentDisplayLabels } from '@/utils/tournament-display';
 
 function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
@@ -360,84 +358,28 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           />
 
           <main className="min-w-0 flex-1">
-        {/* Header + compact progress */}
-        <section className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-3 md:flex-row md:items-center md:justify-between md:p-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {getSportLogo(s.tournament.category?.name) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={getSportLogo(s.tournament.category?.name)!} alt="" className="w-3 h-3 object-contain" />
-                )}
-                {s.tournament.category?.name || translate('status.sportFallback')}
-              </span>
-              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] md:text-xs font-bold ${getTournamentStatusClassName(s.tournament.status)}`}>
-                {getTournamentStatusLabel(s.tournament.status, {
-                  DRAFT: translate('status.statusDraft'),
-                  PENDING_APPROVAL: translate('status.statusPendingApproval'),
-                  PENDING_DELETE: translate('status.statusPendingDelete'),
-                  UPCOMING: translate('status.statusUpcoming'),
-                  REGISTRATION_OPEN: translate('status.statusRegistrationOpen'),
-                  REGISTRATION_CLOSED: translate('status.statusRegistrationClosed'),
-                  IN_PROGRESS: translate('status.statusInProgress'),
-                  COMPLETED: translate('status.statusCompleted'),
-                  CANCELLED: translate('status.statusCancelled'),
-                })}
-              </span>
-              {s.draftStatus === 'saving' && (
-                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/80 animate-pulse shadow-2xs">
-                  <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
-                  <span>{translate('status.autoSaving')}</span>
-                </div>
-              )}
-              {s.draftStatus === 'saved' && (
-                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200/80 shadow-2xs">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  <span>{translate('status.autoSaved')}</span>
-                </div>
-              )}
-              {s.draftStatus === 'error' && (
-                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-semibold border border-rose-200/80 shadow-2xs">
-                  <AlertCircle className="w-3 h-3 text-rose-600" />
-                  <span>{translate('status.autoSaveError')}</span>
-                </div>
-              )}
-              {s.draftStatus === 'restored' && (
-                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-200/80 shadow-2xs">
-                  <span>{translate('status.draftRestored')}</span>
-                </div>
-              )}
-            </div>
-            <h1 data-testid="tournament-title" className="truncate text-lg md:text-2xl font-bold tracking-tight text-slate-900">{s.tournament.name}</h1>
-            <p className="mt-1 flex items-center gap-1 text-xs md:text-sm font-medium text-slate-500">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              {translate('status.startDate')} {s.tournament.startDate ? formatDate(s.tournament.startDate) : translate('status.notSet')}
-            </p>
-          </div>
-          <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-1.5 md:w-auto md:justify-end">
-            <Button
-              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"
-            >
-              {translate('status.operations')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleOpenManageBracket}
-              className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-100 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"
-            >
-              <Trophy className="w-3.5 h-3.5" /> Bracket
-            </Button>
-            <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3">
-              <ExternalLink className="w-3.5 h-3.5" /> {translate('status.tournamentPage')}
-            </Button>
-          </div>
-        </div>
-
         <TournamentStepper
           tournament={s.tournament}
-          embedded
+          headerActions={(
+            <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+              <Button
+                onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+                className="h-8 bg-blue-600 px-2.5 text-[11px] font-bold text-white hover:bg-blue-700 md:h-9 md:px-3 md:text-sm"
+              >
+                {translate('status.operations')}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleOpenManageBracket}
+                className="h-8 border-slate-200 bg-slate-50 px-2.5 text-[11px] font-bold text-slate-600 hover:bg-amber-100 md:h-9 md:px-3 md:text-sm"
+              >
+                <Trophy className="h-3.5 w-3.5" /> Bracket
+              </Button>
+              <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="h-8 border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 md:h-9 md:px-3 md:text-sm">
+                <ExternalLink className="h-3.5 w-3.5" /> {translate('status.tournamentPage')}
+              </Button>
+            </div>
+          )}
           onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
           onNextStep={s.handleTournamentStepTransition}
           publishFeeAmount={s.publishFeeAmount}
@@ -454,7 +396,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           matches={s.matches}
           onChecklistNavigate={handleChecklistNavigate}
         />
-        </section>
 
         {/* Divisions Selector */}
         <div id="manage-divisions-section" className="bg-white rounded-xl border border-slate-200 p-4 mb-4 shadow-sm transition-all">

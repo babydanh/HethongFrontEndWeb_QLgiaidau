@@ -1,4 +1,5 @@
 import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2, Download, type LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
 import {
@@ -26,7 +27,7 @@ export interface ChecklistNavigateOptions {
 
 interface TournamentStepperProps {
   tournament: Tournament;
-  embedded?: boolean;
+  headerActions?: ReactNode;
   onPublish: () => void;
   onNextStep: (nextStatus: Tournament['status']) => void;
   publishFeeAmount?: number;
@@ -51,7 +52,7 @@ interface TournamentStepperProps {
   onChecklistNavigate?: (target: ChecklistNavigateOptions) => void;
 }
 
-export function TournamentStepper({ tournament, embedded = false, onPublish, onNextStep, publishFeeAmount = 0, isLoading,
+export function TournamentStepper({ tournament, headerActions, onPublish, onNextStep, publishFeeAmount = 0, isLoading,
   onOpenTournament, isOpening = false,
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
   participants = [], divisions = [], matches = [],
@@ -139,10 +140,13 @@ export function TournamentStepper({ tournament, embedded = false, onPublish, onN
   ];
 
   return (
-    <div className={embedded ? 'p-3 md:p-4' : 'mb-3 rounded-xl border border-slate-200 bg-white p-3 md:p-4'}>
-      <h3 className="text-sm md:text-base font-bold tracking-tight text-slate-900 mb-3 flex items-center gap-2">
-        <FileText className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> {translate('progressTitle')}
-      </h3>
+    <div className="mb-3 rounded-xl border border-slate-200 bg-white p-3 md:p-4">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-slate-900 md:text-base">
+          <FileText className="h-4 w-4 text-blue-600 md:h-5 md:w-5" /> {translate('progressTitle')}
+        </h3>
+        {headerActions}
+      </div>
       
       {isTournamentDraft(tournament.status) && (
         <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-lg border border-dashed border-slate-300 mb-6">

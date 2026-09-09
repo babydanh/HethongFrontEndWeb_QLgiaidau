@@ -539,7 +539,7 @@ export default function CommunityDetailPage() {
     <div className="min-h-screen bg-slate-50 pb-12">
       {/* Banner / Cover */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 md:pt-6">
-        <div className="relative h-[340px] md:h-[480px] lg:h-[520px] w-full bg-slate-200 shadow-xl rounded-lg md:rounded-2xl overflow-hidden group/banner">
+        <div className="relative aspect-[1.91/1] min-h-[190px] max-h-[420px] w-full bg-slate-200 shadow-xl rounded-lg md:rounded-2xl overflow-hidden group/banner">
           {slides.length > 0 ? (
             <Image
               src={slides[currentSlide]}

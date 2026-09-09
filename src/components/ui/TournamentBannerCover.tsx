@@ -9,6 +9,7 @@ export interface TournamentBannerCoverProps {
   tournamentName: string;
   categoryName?: string | null;
   className?: string;
+  /** Kept for call-site compatibility; completed banners remain full-color. */
   isCompleted?: boolean;
   priority?: boolean;
   children?: React.ReactNode;
@@ -82,7 +83,6 @@ export const TournamentBannerCover: React.FC<TournamentBannerCoverProps> = ({
   tournamentName,
   categoryName,
   className = '',
-  isCompleted = false,
   priority = false,
   children,
 }) => {
@@ -93,9 +93,7 @@ export const TournamentBannerCover: React.FC<TournamentBannerCoverProps> = ({
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden select-none ${className} ${
-        isCompleted ? 'grayscale opacity-70' : ''
-      }`}
+      className={`relative w-full h-full overflow-hidden select-none ${className}`}
     >
       {hasCustomBanner ? (
         <img

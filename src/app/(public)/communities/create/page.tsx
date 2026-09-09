@@ -692,7 +692,7 @@ export default function CreateCommunityPage() {
                   {/* Header Banner - Cho phép nhấp trực tiếp để upload */}
                   <div
                     onClick={() => !isUploadingBanner && bannerInputRef.current?.click()}
-                    className="h-44 sm:h-48 bg-slate-100 relative overflow-hidden shrink-0 cursor-pointer group/banner"
+                    className="aspect-[1.91/1] min-h-[170px] max-h-[220px] bg-slate-100 relative overflow-hidden shrink-0 cursor-pointer group/banner"
                   >
                     {watchBannerUrl ? (
                       <Image

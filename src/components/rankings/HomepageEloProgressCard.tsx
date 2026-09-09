@@ -15,6 +15,7 @@ import {
   type EloProgressToNextLabel,
 } from '@/features/rankings/elo-display';
 import { getRankProgressInfo, getRankStyle } from '@/utils/rank-style';
+import { getRankBorderColor } from '@/components/ui/RankAvatar';
 
 export interface HomepageEloProgressCardProps {
   activeRankInfo: PlayerRanking | null;
@@ -78,6 +79,13 @@ export default function HomepageEloProgressCard({
     ? eloTranslate('unranked')
     : getLocalizedRankTierName(activeRankInfo, eloTranslate);
 
+  const rankColor = getRankBorderColor(
+    hasNoRanks ? null : eloPoints,
+    activeRankInfo?.tierName || displayTier,
+    activeRankInfo?.matchesPlayed,
+    activeRankInfo?.categoryName || sportName,
+  );
+
   return (
     <div className="bg-white rounded-lg border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-4 flex flex-col gap-3 relative overflow-hidden">
       {/* Header: Tên rank + ELO badge + Môn thể thao & Hình thức */}
@@ -97,8 +105,14 @@ export default function HomepageEloProgressCard({
             {rankLabel}
           </h4>
         </div>
-        <span className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm transition-all duration-300 ${tierStyle.badgeClass}`}>
-          {eloPoints} ELO
+        <span
+          className="inline-flex items-center justify-center text-xs px-3.5 py-1.5 rounded-full font-extrabold text-white shadow-sm transition-all duration-300"
+          style={{
+            backgroundColor: rankColor,
+            boxShadow: `0 2px 10px -2px ${rankColor}80`,
+          }}
+        >
+          {eloPoints}
         </span>
       </div>
 

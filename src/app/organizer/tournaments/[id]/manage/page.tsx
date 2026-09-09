@@ -360,8 +360,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           />
 
           <main className="min-w-0 flex-1">
-        {/* Header */}
-        <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 mb-3 md:mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Header + compact progress */}
+        <section className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-3 md:flex-row md:items-center md:justify-between md:p-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
               <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -436,6 +437,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         <TournamentStepper
           tournament={s.tournament}
+          embedded
           onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
           onNextStep={s.handleTournamentStepTransition}
           publishFeeAmount={s.publishFeeAmount}
@@ -452,6 +454,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           matches={s.matches}
           onChecklistNavigate={handleChecklistNavigate}
         />
+        </section>
 
         {/* Divisions Selector */}
         <div id="manage-divisions-section" className="bg-white rounded-xl border border-slate-200 p-4 mb-4 shadow-sm transition-all">

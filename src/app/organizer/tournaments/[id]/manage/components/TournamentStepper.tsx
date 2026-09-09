@@ -1,4 +1,3 @@
-import React from 'react';
 import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2, Download, type LucideIcon } from 'lucide-react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
@@ -27,9 +26,9 @@ export interface ChecklistNavigateOptions {
 
 interface TournamentStepperProps {
   tournament: Tournament;
+  embedded?: boolean;
   onPublish: () => void;
   onNextStep: (nextStatus: Tournament['status']) => void;
-  onPayPlatformFee?: () => void;
   publishFeeAmount?: number;
   isLoading?: boolean;
   onOpenTournament?: () => void;
@@ -52,7 +51,7 @@ interface TournamentStepperProps {
   onChecklistNavigate?: (target: ChecklistNavigateOptions) => void;
 }
 
-export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading,
+export function TournamentStepper({ tournament, embedded = false, onPublish, onNextStep, publishFeeAmount = 0, isLoading,
   onOpenTournament, isOpening = false,
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
   participants = [], divisions = [], matches = [],
@@ -140,7 +139,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 mb-3 md:mb-4">
+    <div className={embedded ? 'p-3 md:p-4' : 'mb-3 rounded-xl border border-slate-200 bg-white p-3 md:p-4'}>
       <h3 className="text-sm md:text-base font-bold tracking-tight text-slate-900 mb-3 flex items-center gap-2">
         <FileText className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> {translate('progressTitle')}
       </h3>

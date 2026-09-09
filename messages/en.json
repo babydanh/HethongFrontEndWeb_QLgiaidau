@@ -7155,6 +7155,9 @@
     "viewPublic": "View public",
     "operations": "Operations",
     "noRounds": "No rounds yet",
+    "loadMore": "Load more tournaments",
+    "loadingMore": "Loading more...",
+    "loadedCount": "Showing {loaded}/{total} tournaments",
     "verificationBannerTitle": "Organizer Account Email Not Verified",
     "verificationBannerDesc": "You must verify your email address to publish tournaments publicly, generate brackets, and accept registrations from athletes.",
     "verificationStep1": "1. Account registration",
@@ -7533,7 +7536,12 @@
       "snapshotTitle": "Data snapshot",
       "divisions": "Divisions",
       "matches": "Matches",
-      "openPublicPage": "Open public page"
+      "openPublicPage": "Open public page",
+      "dateTime": "Time",
+      "location": "Location",
+      "entryFee": "Entry fee",
+      "free": "Free",
+      "notSet": "Not set"
     },
     "overview": {
       "eyebrow": "Tournament operations",

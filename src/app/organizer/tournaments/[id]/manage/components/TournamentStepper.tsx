@@ -362,7 +362,7 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
         </div>
       )}
 
-      <div className={`relative ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`relative sm:ml-auto sm:max-w-[900px] ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-4 hidden h-px bg-slate-200 sm:block" />
         <div
           className="pointer-events-none absolute left-[12.5%] top-4 hidden h-px bg-blue-600 transition-all duration-500 sm:block"
@@ -390,9 +390,6 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
               <div className="min-w-0 max-w-full">
                 <div className={`truncate px-0.5 text-[11px] font-bold sm:text-xs ${isActive ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>
                   {step.title}
-                </div>
-                <div className="mx-auto mt-0.5 hidden max-w-[150px] text-[10px] leading-tight text-slate-400 lg:block">
-                  {step.description}
                 </div>
               </div>
 

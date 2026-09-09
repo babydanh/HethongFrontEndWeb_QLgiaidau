@@ -24,6 +24,7 @@ import {
 import type { Tournament } from '@/types/tournament';
 import { getSportLogo } from '@/constants/sports';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
+import { formatCurrency, formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { useTranslations } from 'next-intl';
 
@@ -178,6 +179,13 @@ export function TournamentManageSidebar({
   const statusLabels = getStatusLabels(t);
   const sportLogo = getSportLogo(tournament.category?.name);
   const statusLabel = getTournamentStatusLabel(tournament.status, statusLabels);
+  const tournamentDate = tournament.startDate
+    ? `${formatDateTime(tournament.startDate)}${tournament.endDate ? ` – ${formatDateTime(tournament.endDate)}` : ''}`
+    : t('sidebar.notSet');
+  const tournamentLocation = tournament.venue?.name || tournament.locationAddress || tournament.city || t('sidebar.notSet');
+  const tournamentFee = tournament.entryFee && tournament.entryFee > 0
+    ? formatCurrency(tournament.entryFee)
+    : t('sidebar.free');
 
   const managementItems: SidebarItem[] = [
     {
@@ -313,6 +321,20 @@ export function TournamentManageSidebar({
                 <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
                 <span className="truncate">{statusLabel}</span>
               </span>
+              <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-2.5 text-[10px] text-slate-500">
+                <div className="flex items-start gap-1.5">
+                  <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                  <span className="min-w-0 leading-snug"><span className="font-semibold text-slate-600">{t('sidebar.dateTime')}:</span> {tournamentDate}</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                  <span className="min-w-0 truncate leading-snug" title={tournamentLocation}><span className="font-semibold text-slate-600">{t('sidebar.location')}:</span> {tournamentLocation}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                  <span className="leading-snug">{t('sidebar.entryFee')}: {tournamentFee}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

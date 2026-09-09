@@ -7155,6 +7155,9 @@
     "viewPublic": "Xem công khai",
     "operations": "Vận hành",
     "noRounds": "Chưa có vòng đấu",
+    "loadMore": "Tải thêm giải đấu",
+    "loadingMore": "Đang tải thêm...",
+    "loadedCount": "Đã hiển thị {loaded}/{total} giải đấu",
     "verificationBannerTitle": "Tài khoản Ban tổ chức chưa xác minh Email",
     "verificationBannerDesc": "Bạn cần xác thực địa chỉ email để mở quyền công bố giải đấu công khai, kích hoạt bốc thăm nhánh đấu và nhận đăng ký từ vận động viên.",
     "verificationStep1": "1. Đăng ký tài khoản",
@@ -7537,7 +7540,12 @@
       "snapshotTitle": "Tóm tắt dữ liệu",
       "divisions": "Nội dung",
       "matches": "Trận đấu",
-      "openPublicPage": "Mở trang công khai"
+      "openPublicPage": "Mở trang công khai",
+      "dateTime": "Thời gian",
+      "location": "Địa điểm",
+      "entryFee": "Lệ phí",
+      "free": "Miễn phí",
+      "notSet": "Chưa thiết lập"
     },
     "overview": {
       "eyebrow": "Điều phối giải đấu",

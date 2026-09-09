@@ -312,11 +312,11 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
           {/* Badges */}
           {!hideFeaturedCardText && (
           <div className="absolute top-4 left-4 z-10 flex gap-2">
-            <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-bold tracking-wider uppercase border border-white/20">
-              <Trophy className="w-3 h-3 inline-block mr-1" />
+            <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-xs font-bold tracking-wider uppercase border border-white/20">
+              <Trophy className="w-3.5 h-3.5 inline-block mr-1" />
               {tournament.category?.name || translate('tournamentFallback')}
             </span>
-            <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-bold tracking-wider uppercase">
+            <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-xs font-bold tracking-wider uppercase">
               {translate('tournamentEnded')}
             </span>
           </div>
@@ -330,8 +330,8 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
             <h3 className="text-sm font-semibold text-slate-900 group-hover:text-content-link transition-colors line-clamp-1 leading-snug">
               {tournament.name}
             </h3>
-            <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-medium">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-600 font-medium">
+              <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span>{dateRange}</span>
             </div>
           </div>
@@ -1266,18 +1266,18 @@ export default function HomePage() {
 
             {/* Name & Subtitle */}
             <div className="min-w-0 flex-1">
-              <div className={`text-xs sm:text-sm tracking-tight truncate ${isWinner ? 'text-slate-900 font-bold' : 'text-slate-600 font-semibold'}`}>
+              <div className={`text-xs sm:text-sm tracking-tight truncate ${isWinner ? 'text-slate-900 font-bold' : 'text-slate-700 font-semibold'}`}>
                 {primaryTitle}
               </div>
               {subTitle && (
-                <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
+                <div className="text-xs text-slate-500 truncate mt-0.5 font-normal">
                   {subTitle}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Scores for Sets - Gọn gàng, nhỏ lại xíu */}
+          {/* Scores for Sets - Gọn gàng, rõ ràng */}
           <div className="flex items-center gap-1.5 shrink-0 text-center">
             {scores.length > 0 ? (
               scores.slice(0, 5).map((s, idx) => {
@@ -1287,10 +1287,10 @@ export default function HomePage() {
                 return (
                   <div
                     key={idx}
-                    className={`w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md flex items-center justify-center text-[11px] sm:text-xs tabular-nums transition-colors ${
+                    className={`w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md flex items-center justify-center text-xs tabular-nums transition-colors ${
                       isSetWin
                         ? 'bg-blue-600 text-white font-bold shadow-2xs'
-                        : 'bg-slate-100 text-slate-500 font-medium'
+                        : 'bg-slate-100 text-slate-700 font-semibold'
                     }`}
                   >
                     {scoreVal}
@@ -1311,15 +1311,15 @@ export default function HomePage() {
         key={match.id}
         className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-3.5 hover:border-slate-300 hover:shadow-2xs transition-all"
       >
-        {/* Row Header: Gọn lại, nhỏ lại (text-[10px]), Set 1 2 viết tắt là S1 S2 S3 S4 S5 */}
-        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 text-[10.5px]">
-          <div className="flex items-center gap-1.5 font-medium text-slate-500 uppercase tracking-wider truncate">
-            <span className="font-semibold text-slate-600">{roundLabel || translate('roundFallback')}</span>
-            {formatText && <span className="text-slate-400">• {formatText}</span>}
-            {courtText && <span className="text-slate-400 font-normal normal-case">| {courtText}</span>}
+        {/* Row Header: Nhãn vòng đấu, set S1 S2 rõ ràng */}
+        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 text-xs">
+          <div className="flex items-center gap-1.5 font-medium text-slate-600 uppercase tracking-wider truncate">
+            <span className="font-bold text-slate-700">{roundLabel || translate('roundFallback')}</span>
+            {formatText && <span className="text-slate-500">• {formatText}</span>}
+            {courtText && <span className="text-slate-500 font-normal normal-case">| {courtText}</span>}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0 font-medium text-slate-400 text-[10px]">
+          <div className="flex items-center gap-1.5 shrink-0 font-bold text-slate-500 text-xs">
             {scores.length > 0 ? (
               scores.slice(0, 5).map((_, idx) => (
                 <div key={idx} className="w-6 sm:w-6.5 text-center">
@@ -2125,7 +2125,7 @@ export default function HomePage() {
                    <h3 className="text-base font-semibold text-slate-900 line-clamp-1 leading-snug">
                      {user?.fullName || translate('user')}
                    </h3>
-                   <p className="mb-3.5 w-full truncate text-xs text-slate-400">
+                   <p className="mb-3.5 w-full truncate text-xs text-slate-600 font-medium">
                      {user?.email}
                    </p>
                  </button>
@@ -2133,26 +2133,26 @@ export default function HomePage() {
                  {/* Stats Grid */}
                  <div className="grid grid-cols-3 w-full gap-2 mt-1 pt-3 border-t border-slate-100">
                    <div className="flex flex-col items-center">
-                     <span className="text-base font-bold text-slate-800 leading-none">
+                     <span className="text-base font-bold text-slate-900 leading-none">
                        {matchesPlayed}
                      </span>
-                     <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
+                     <span className="text-[11px] font-bold text-slate-600 mt-1 uppercase tracking-wider">
                        {translate('matchLabel')}
                      </span>
                    </div>
                    <div className="flex flex-col items-center border-l border-r border-slate-100">
-                     <span className="text-base font-bold text-slate-800 leading-none">
+                     <span className="text-base font-bold text-slate-900 leading-none">
                        {matchesWon}
                      </span>
-                     <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
+                     <span className="text-[11px] font-bold text-slate-600 mt-1 uppercase tracking-wider">
                        {translate('wins')}
                      </span>
                    </div>
                    <div className="flex flex-col items-center">
-                     <span className="text-base font-bold text-slate-800 leading-none">
+                     <span className="text-base font-bold text-slate-900 leading-none">
                        {winRate}%
                      </span>
-                     <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
+                     <span className="text-[11px] font-bold text-slate-600 mt-1 uppercase tracking-wider">
                        {translate('winRate')}
                      </span>
                    </div>

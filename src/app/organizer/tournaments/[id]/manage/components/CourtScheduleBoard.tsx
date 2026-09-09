@@ -100,7 +100,7 @@ interface CourtScheduleBoardProps {
   isFullscreen?: boolean;
   onOpenMatch: (matchId: string) => void;
   onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean, durationMinutes?: number) => Promise<void>;
-  onRefetchData?: () => Promise<any> | void;
+  onRefetchData?: () => Promise<void> | void;
 }
 
 type DraftAssignment = {
@@ -186,6 +186,7 @@ type MatchCardResizeState = {
 };
 
 const PIXELS_PER_MINUTE = 9.6; // 1 minute = 9.6px (15 mins = 144px height, high spacious grid matching previous 30p view)
+const TIMELINE_OVERSCAN_ROWS = 8;
 
 function formatMatchTime(value?: string | null) {
   if (!value) return '—';
@@ -580,6 +581,9 @@ export function CourtScheduleBoard({
   const [activeDurationPickerMatchId, setActiveDurationPickerMatchId] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const effectiveAutoSaveStatus = Object.keys(draftAssignments).length > 0 && autoSaveStatus === 'saved'
+    ? 'unsaved'
+    : autoSaveStatus;
 
   // AI Voice & Natural Language Scheduling State
   const [aiVoiceModalOpen, setAiVoiceModalOpen] = useState(false);
@@ -605,6 +609,9 @@ export function CourtScheduleBoard({
   const [queueTargetRowIndex, setQueueTargetRowIndex] = useState<number>(0);
   const boardRef = useRef<HTMLDivElement>(null);
   const boardScrollContainerRef = useRef<HTMLDivElement>(null);
+  const boardScrollFrameRef = useRef<number | null>(null);
+  const boardViewportRef = useRef({ top: 0, height: 0 });
+  const [boardViewport, setBoardViewport] = useState({ top: 0, height: 0 });
 
   const handleScrollCourts = (direction: 'left' | 'right') => {
     if (!boardScrollContainerRef.current) return;
@@ -729,6 +736,17 @@ export function CourtScheduleBoard({
       }),
     [displayMatches, scheduleDate],
   );
+
+  const scheduledMatchesByCourt = useMemo(() => {
+    const byCourt = new Map<string, typeof scheduledMatches>();
+    for (const item of scheduledMatches) {
+      if (!item.courtId) continue;
+      const courtItems = byCourt.get(item.courtId) || [];
+      courtItems.push(item);
+      byCourt.set(item.courtId, courtItems);
+    }
+    return byCourt;
+  }, [scheduledMatches]);
 
   const unscheduledMatches = useMemo(
     () => displayMatches.filter((item) => !item.courtId || !item.scheduledAt),
@@ -965,6 +983,87 @@ export function CourtScheduleBoard({
     };
   }, [currentPixelsPerMinute, defaultStepMinutes, defaultTotalSlots, operatingStart, rowDurations, scheduleDate]);
 
+  // The board keeps its full absolute-coordinate height so scrolling and
+  // drag/drop coordinates remain stable, but only mounts the rows near the
+  // viewport. This avoids building hundreds of interactive cells per court
+  // when a tournament has a long operating window.
+  const visibleTimelineRows = useMemo(() => {
+    const rows = timelineRows.rows;
+    if (rows.length === 0 || boardViewport.height <= 0) return rows;
+
+    const viewportTop = Math.max(0, boardViewport.top);
+    const viewportBottom = viewportTop + boardViewport.height;
+    let firstVisible = 0;
+    while (
+      firstVisible < rows.length - 1 &&
+      rows[firstVisible].top + rows[firstVisible].height < viewportTop
+    ) {
+      firstVisible += 1;
+    }
+
+    let lastVisible = firstVisible;
+    while (
+      lastVisible < rows.length - 1 &&
+      rows[lastVisible].top < viewportBottom
+    ) {
+      lastVisible += 1;
+    }
+
+    const start = Math.max(0, firstVisible - TIMELINE_OVERSCAN_ROWS);
+    const end = Math.min(rows.length, lastVisible + TIMELINE_OVERSCAN_ROWS + 1);
+    return rows.slice(start, end);
+  }, [boardViewport.height, boardViewport.top, timelineRows.rows]);
+
+  useEffect(() => {
+    return () => {
+      if (boardScrollFrameRef.current !== null) {
+        cancelAnimationFrame(boardScrollFrameRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const container = boardScrollContainerRef.current;
+    if (!container) return;
+
+    const measure = () => {
+      boardViewportRef.current = {
+        top: container.scrollTop,
+        height: container.clientHeight,
+      };
+      setBoardViewport((previous) => {
+        const next = boardViewportRef.current;
+        return previous.top === next.top && previous.height === next.height
+          ? previous
+          : next;
+      });
+    };
+
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, [courts.length, isFullscreen, isLocalFullscreen, timelineRows.totalHeight]);
+
+  const handleBoardScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    boardViewportRef.current = {
+      top: target.scrollTop,
+      height: target.clientHeight,
+    };
+    if (boardScrollFrameRef.current !== null) return;
+
+    boardScrollFrameRef.current = requestAnimationFrame(() => {
+      boardScrollFrameRef.current = null;
+      setBoardViewport((previous) => {
+        const next = boardViewportRef.current;
+        return previous.top === next.top && previous.height === next.height
+          ? previous
+          : next;
+      });
+    });
+  };
+
   // Undo / Redo State Helpers
   const pushHistory = (newDrafts: Record<string, DraftAssignment>, newDurations?: Record<number, number>) => {
     setHistory((prev) => {
@@ -1085,7 +1184,6 @@ export function CourtScheduleBoard({
   // Auto-Save Effect (Debounce 3.5s after user changes schedule)
   useEffect(() => {
     if (Object.keys(draftAssignments).length === 0) return;
-    setAutoSaveStatus('unsaved');
 
     const timer = setTimeout(() => {
       void handleSaveAllDrafts(true);
@@ -3456,12 +3554,12 @@ export function CourtScheduleBoard({
 
             {/* Auto-Save Live Status Indicator */}
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-semibold select-none shadow-2xs">
-              {autoSaveStatus === 'saving' ? (
+              {effectiveAutoSaveStatus === 'saving' ? (
                 <>
                   <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
                   <span className="text-amber-700 font-bold">Đang lưu...</span>
                 </>
-              ) : autoSaveStatus === 'unsaved' ? (
+              ) : effectiveAutoSaveStatus === 'unsaved' ? (
                 <>
                   <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
                   <span className="text-blue-700 font-bold">Đang xếp...</span>
@@ -3811,6 +3909,7 @@ export function CourtScheduleBoard({
       ) : (
         <div
           ref={boardScrollContainerRef}
+          onScroll={handleBoardScroll}
           onWheel={(e) => {
             if (e.shiftKey && boardScrollContainerRef.current) {
               boardScrollContainerRef.current.scrollLeft += e.deltaY;
@@ -3879,7 +3978,7 @@ export function CourtScheduleBoard({
               className="sticky left-0 z-20 border-r border-amber-300 bg-[#fef08a] shadow-xs"
               style={{ height: timelineRows.totalHeight }}
             >
-              {timelineRows.rows.map((row) => {
+              {visibleTimelineRows.map((row) => {
                 const minR = selectionRange ? Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
                 const maxR = selectionRange ? Math.max(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;
                 const isRowSelected = Boolean(selectionRange) && row.index >= minR && row.index <= maxR;
@@ -3982,7 +4081,7 @@ export function CourtScheduleBoard({
 
             {/* Court Grid Columns with Excel-style Cells */}
             {courts.map((court, courtIndex) => {
-              const courtMatches = scheduledMatches.filter((item) => item.courtId === court.id && item.scheduledAt);
+              const courtMatches = scheduledMatchesByCourt.get(court.id) || [];
               const courtBlocked = blockedSlots.filter((slot) => slot.courtId === court.id);
 
               return (
@@ -3994,7 +4093,7 @@ export function CourtScheduleBoard({
                   onDrop={(event) => handleDrop(event, court.id)}
                 >
                   {/* Excel Cells (1 cell per time row) */}
-                  {timelineRows.rows.map((row) => {
+                  {visibleTimelineRows.map((row) => {
                     const minC = selectionRange ? Math.min(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
                     const maxC = selectionRange ? Math.max(selectionRange.startCourtIndex, selectionRange.endCourtIndex) : -1;
                     const minR = selectionRange ? Math.min(selectionRange.startRowIndex, selectionRange.endRowIndex) : -1;

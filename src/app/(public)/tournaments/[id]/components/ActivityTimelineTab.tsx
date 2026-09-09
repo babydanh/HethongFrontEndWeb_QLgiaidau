@@ -213,6 +213,7 @@ export default function ActivityTimelineTab({ tournament, tournamentId, division
         tournament_id: tournamentId,
         limit: 100,
         status: '',
+        activeStageOnly: 'true',
       };
       if (divisionId) matchParams.division_id = divisionId;
 
@@ -229,7 +230,7 @@ export default function ActivityTimelineTab({ tournament, tournamentId, division
   }, [tournamentId, divisionId]);
 
   useEffect(() => {
-    void fetchTimelineMatches();
+    void Promise.resolve().then(() => fetchTimelineMatches());
   }, [fetchTimelineMatches]);
 
   // Socket updates for live timeline changes

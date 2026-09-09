@@ -138,9 +138,13 @@ export function useManageState(id: string) {
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const divisionsRef = useRef<Division[]>([]);
-  divisionsRef.current = divisions;
   const selectedDivisionIdRef = useRef<string>('');
-  selectedDivisionIdRef.current = selectedDivisionId;
+  useEffect(() => {
+    divisionsRef.current = divisions;
+  }, [divisions]);
+  useEffect(() => {
+    selectedDivisionIdRef.current = selectedDivisionId;
+  }, [selectedDivisionId]);
   const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
   const [editingDivision, setEditingDivision] = useState<Division | null>(null);
   const [newDivisionMatchType, setNewDivisionMatchType] = useState('MALE_DOUBLES');
@@ -448,7 +452,11 @@ export function useManageState(id: string) {
 
       // Always merge latest direct matches from matchesApi to get exact scheduled courts & timestamps
       try {
-        const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 1000 });
+        const mRes = await matchesApi.getMatches({
+          tournamentId: id,
+          limit: 1000,
+          activeStageOnly: true,
+        });
         if (mRes.data && Array.isArray(mRes.data) && mRes.data.length > 0) {
           const directMatchMap = new Map(mRes.data.map((m) => [m.id, m]));
           combinedMatches.forEach((m, idx) => {
@@ -465,10 +473,10 @@ export function useManageState(id: string) {
               directMatchMap.delete(m.id);
             }
           });
-          // Add any direct matches not in bracket stages
-          for (const m of directMatchMap.values()) {
-            combinedMatches.push(m);
-          }
+          // The active bracket is authoritative for tournament matches. Do
+          // not append rows that are missing from it: the generic match list
+          // can contain matches from a soft-deleted stage after a bracket was
+          // regenerated, which would resurrect ghost/TBD cards on the board.
         }
       } catch { /* silent */ }
 

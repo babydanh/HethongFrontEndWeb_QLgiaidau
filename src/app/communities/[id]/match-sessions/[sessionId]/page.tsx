@@ -147,14 +147,14 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       : current.filter((idValue) => idValue !== userId));
   };
 
-  const createMatch = async (confirmWarnings = false, idempotencyKey = crypto.randomUUID()) => {
+  const createMatch = async (confirmWarnings = false, idempotencyKey = crypto.randomUUID(), onCreated?: (match: ClubSessionMatch) => void) => {
     if (![1, 2].includes(sideAPlayers.length) || sideBPlayers.length !== sideAPlayers.length) {
       toast.error(t('selectBalancedPlayers'));
       return;
     }
     setBusy(true);
     try {
-      await clubMatchSessionsApi.createMatch(sessionId, {
+      const result = await clubMatchSessionsApi.createMatch(sessionId, {
         sideAUserIds: sideAPlayers,
         sideBUserIds: sideBPlayers,
         confirmWarnings,
@@ -162,11 +162,12 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       setSideAPlayers([]);
       setSideBPlayers([]);
       toast.success(t('matchCreated'));
+      onCreated?.(result.match);
       await refresh();
     } catch (error) {
       const body = (error as AxiosError<ClubMatchApiError>).response?.data;
       if (body?.code === 'PAIRING_WARNINGS_REQUIRE_CONFIRMATION' && window.confirm(t('confirmPairingWarnings', { count: body.warnings?.length ?? 0 }))) {
-        await createMatch(true, idempotencyKey);
+        await createMatch(true, idempotencyKey, onCreated);
       } else {
         toast.error(getErrorMessage(error));
       }
@@ -211,6 +212,10 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     } finally { setLoadingMore(false); }
   };
 
+  const updateMatchInView = (updatedMatch: ClubSessionMatch) => {
+    setMatches((current) => current.map((match) => match.id === updatedMatch.id ? updatedMatch : match));
+  };
+
   if (loadError && !session) return <main className="min-h-screen bg-slate-50 p-8 text-center"><p className="text-rose-700" role="alert">{t('loadFailed')}</p><Button className="mt-4" variant="outline" onClick={() => void refresh()}>{t('retry')}</Button></main>;
   if (!session) return <main className="min-h-screen bg-slate-50 p-8 text-center text-slate-600">{t('loading')}</main>;
 
@@ -250,7 +255,8 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       onForceSelected={forceSelected}
       onCreateMock={() => void createMockParticipant()}
       onSavePreferences={savePreferences}
-      onCreateMatch={() => void createMatch()}
+      onCreateMatch={(onCreated) => void createMatch(false, crypto.randomUUID(), onCreated)}
+      onMatchUpdated={updateMatchInView}
       onLoadMoreParticipants={() => void loadMoreParticipants()}
       onLoadMoreMatches={() => void loadMoreMatches()}
       onLoadMoreMembers={() => void loadMoreMembers()}

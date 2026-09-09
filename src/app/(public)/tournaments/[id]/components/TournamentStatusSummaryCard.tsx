@@ -118,6 +118,7 @@ export default function TournamentStatusSummaryCard({
       tournament_id: tournamentId,
       status: '',
       limit: 50,
+      activeStageOnly: 'true',
     };
 
     if (divisionId) params.division_id = divisionId;

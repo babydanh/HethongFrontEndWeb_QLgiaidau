@@ -13,12 +13,13 @@ import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { Trophy, Search, Play, Loader2, X, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import type { ClubSessionMatch } from '@/types/club-match-session';
 
 interface ClubStandaloneMatchModalProps {
   communityId: string;
   isOpen: boolean;
   onClose: () => void;
-  onMatchCreated?: () => void;
+  onMatchCreated?: (match: ClubSessionMatch) => void;
 }
 
 export function ClubStandaloneMatchModal({
@@ -43,13 +44,6 @@ export function ClubStandaloneMatchModal({
     if (!isOpen || !communityId) return;
 
     let mounted = true;
-    setIsLoadingMembers(true);
-    setLoadError(null);
-    setSideAUserIds([]);
-    setSideBUserIds([]);
-    setIsRanked(true);
-    setSearchQuery('');
-
     communitiesApi
       .getMembers(communityId, { limit: 100, status: 'JOINED' })
       .then((res) => {
@@ -130,15 +124,14 @@ export function ClubStandaloneMatchModal({
       // Trận riêng phải đi qua resource riêng, không tạo session giả.
       const matchKey = crypto.randomUUID();
       const matchType = sideAUserIds.length === 1 ? 'SINGLES' : 'DOUBLES';
-      await clubMatchSessionsApi.createStandaloneMatch(
+      const result = await clubMatchSessionsApi.createStandaloneMatch(
         { communityId, sideAUserIds, sideBUserIds, matchType, isRanked },
         matchKey,
       );
 
       toast.success(t('club_startMatchAndScore'));
-      onMatchCreated?.();
+      onMatchCreated?.(result.match);
       onClose();
-      // Không auto-route — user sẽ thấy card trận riêng xuất hiện trong feed và click vào để tính điểm
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

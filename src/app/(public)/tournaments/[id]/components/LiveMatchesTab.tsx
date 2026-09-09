@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Match, matchesApi } from '@/features/matches/api';
@@ -121,15 +121,15 @@ export default function LiveMatchesTab({
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const liveRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    const fetchLiveMatches = async () => {
+  const fetchLiveMatches = useCallback(async () => {
       try {
         const params: Record<string, string | number> = {
           tournament_id: tournamentId,
           status: 'ONGOING,IN_PROGRESS,LIVE,PLAYING',
           limit: 100,
+          activeStageOnly: 'true',
         };
         if (divisionId) params.division_id = divisionId;
 
@@ -142,26 +142,26 @@ export default function LiveMatchesTab({
             : Array.isArray((rawRes as { data?: { data?: unknown } })?.data?.data)
               ? (rawRes as { data: { data: Match[] } }).data.data
               : [];
-        if (active) {
-          const ongoing = (list as Match[]).filter(isVisibleLiveMatch);
-          setLiveMatches(ongoing);
-          if (divisionId) onLiveCountChange?.(divisionId, ongoing.length);
-        }
+        const ongoing = (list as Match[]).filter(isVisibleLiveMatch);
+        setLiveMatches(ongoing);
+        if (divisionId) onLiveCountChange?.(divisionId, ongoing.length);
       } catch (err) {
         console.error('Failed to fetch live matches:', err);
-        if (active) {
-          setLiveMatches([]);
-          if (divisionId) onLiveCountChange?.(divisionId, 0);
-        }
+        setLiveMatches([]);
+        if (divisionId) onLiveCountChange?.(divisionId, 0);
       }
-    };
+  }, [divisionId, onLiveCountChange, tournamentId]);
 
-    fetchLiveMatches();
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchLiveMatches());
 
     return () => {
-      active = false;
+      if (liveRefreshTimerRef.current) {
+        clearTimeout(liveRefreshTimerRef.current);
+        liveRefreshTimerRef.current = null;
+      }
     };
-  }, [divisionId, onLiveCountChange, tournamentId]);
+  }, [fetchLiveMatches]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -179,6 +179,14 @@ export default function LiveMatchesTab({
       if (!updatedMatch?.id || updatedMatch.tournamentId !== tournamentId) return;
       if (divisionId && updatedMatch.divisionId !== divisionId) return;
 
+      const scheduleAuthoritativeRefresh = () => {
+        if (liveRefreshTimerRef.current) clearTimeout(liveRefreshTimerRef.current);
+        liveRefreshTimerRef.current = setTimeout(() => {
+          liveRefreshTimerRef.current = null;
+          void fetchLiveMatches();
+        }, 180);
+      };
+
       setLiveMatches((current) => {
         let next: Match[];
         const isLiveValid = isVisibleLiveMatch(updatedMatch);
@@ -190,7 +198,11 @@ export default function LiveMatchesTab({
           if (exists) {
             next = current.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
           } else {
-            next = [updatedMatch, ...current];
+            // A socket payload is not enough to establish that a new match
+            // belongs to the active bracket generation. Re-read through the
+            // API so deleted-stage rows cannot be resurrected in the live tab.
+            scheduleAuthoritativeRefresh();
+            next = current;
           }
         }
         if (divisionId) onLiveCountChange?.(divisionId, next.length);
@@ -206,7 +218,7 @@ export default function LiveMatchesTab({
       socket.off('connect', joinTournament);
       socket.off('match:update', handleMatchUpdate);
     };
-  }, [divisionId, onLiveCountChange, tournamentId]);
+  }, [divisionId, fetchLiveMatches, onLiveCountChange, tournamentId]);
 
   const filteredMatches = liveMatches.filter((m) => {
     if (!searchQuery.trim()) return true;

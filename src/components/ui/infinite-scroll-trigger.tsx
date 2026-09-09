@@ -20,15 +20,15 @@ export function InfiniteScrollTrigger({
   const triggerLockedRef = useRef(false);
 
   useEffect(() => {
-    if (isLoading) {
-      triggerLockedRef.current = false;
-      return;
-    }
     if (!hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !triggerLockedRef.current) {
+        if (!entries[0].isIntersecting) {
+          triggerLockedRef.current = false;
+          return;
+        }
+        if (!isLoading && !triggerLockedRef.current) {
           triggerLockedRef.current = true;
           onLoadMore();
         }

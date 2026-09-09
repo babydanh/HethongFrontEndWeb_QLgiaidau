@@ -7,7 +7,10 @@ import type {
   CursorResponse,
 } from '@/types/club-match-session';
 
-type CursorQuery = { cursor?: string | null; limit?: number; status?: string };
+export type CursorQuery = { cursor?: string | null; limit?: number; status?: string };
+export type ClubScoreMatchSnapshot = Pick<ClubSessionMatch, 'id' | 'revision'> & {
+  scoreDetails?: Record<string, unknown>;
+};
 export type RecurringFrequency = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 export type ClubMatchApiError = {
@@ -51,24 +54,24 @@ export const clubMatchSessionsApi = {
   }) => api.post<ApiResponse<ClubMatchSession>>('/club-match-sessions', payload).then(unwrapClubMatchData),
   list: (communityId: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubMatchSession[]>>('/club-match-sessions', {
-      params: { communityId, limit: query.limit ?? 20, cursor: query.cursor ?? undefined, status: query.status },
+      params: { communityId, limit: query.limit ?? 10, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
   get: (id: string) => api.get<ApiResponse<ClubMatchSession>>(`/club-match-sessions/${id}`).then(unwrapClubMatchData),
   transition: (id: string, action: 'CLOSE' | 'END' | 'CANCEL', version: number) =>
     api.post<ApiResponse<ClubMatchSession>>(`/club-match-sessions/${id}/transition`, { action, version }).then(unwrapClubMatchData),
   participants: (id: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubMatchParticipant[]>>(`/club-match-sessions/${id}/participants`, {
-      params: { limit: query.limit ?? 30, cursor: query.cursor ?? undefined, status: query.status },
+      params: { limit: query.limit ?? 10, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
   matches: (id: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubSessionMatch[]>>(`/club-match-sessions/${id}/matches`, {
-      params: { limit: query.limit ?? 30, cursor: query.cursor ?? undefined, status: query.status },
+      params: { limit: query.limit ?? 10, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
   getMatchById: (id: string) =>
     api.get<ApiResponse<ClubSessionMatch>>(`/club-match-sessions/matches/${id}`).then(unwrapClubMatchData),
   standaloneMatches: (communityId: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubSessionMatch[]>>('/club-match-sessions/standalone-matches', {
-      params: { communityId, limit: query.limit ?? 50, cursor: query.cursor ?? undefined, status: query.status },
+      params: { communityId, limit: query.limit ?? 10, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
   selfJoin: (id: string) => api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/self`).then(unwrapClubMatchData),
   withdraw: (id: string) => api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/self/withdraw`).then(unwrapClubMatchData),
@@ -111,7 +114,7 @@ export const clubMatchSessionsApi = {
   deleteStandaloneMatch: (id: string) =>
     api.delete<ApiResponse<{ deleted: boolean; eloReverted?: boolean }>>(`/club-match-sessions/standalone-matches/${id}`).then(unwrapClubMatchData),
   updateScore: (
-    match: ClubSessionMatch,
+    match: ClubScoreMatchSnapshot,
     p1SetsWon: number,
     p2SetsWon: number,
     scoreDetails?: Record<string, unknown>,
@@ -125,7 +128,7 @@ export const clubMatchSessionsApi = {
         : {}),
     }).then(unwrapClubMatchData),
   completeMatch: (
-    match: ClubSessionMatch,
+    match: ClubScoreMatchSnapshot,
     p1SetsWon: number,
     p2SetsWon: number,
     scoreDetails?: Record<string, unknown>,

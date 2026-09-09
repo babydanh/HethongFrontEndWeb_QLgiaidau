@@ -342,6 +342,7 @@ const commonTranslate = useTranslations('Common');
           tournament_id: tournamentId,
           status: 'ONGOING,IN_PROGRESS,LIVE,PLAYING',
           limit: 100,
+          activeStageOnly: true,
         },
         signal,
       );

@@ -170,6 +170,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       const matchParams: Record<string, string | number> = {
         tournament_id: effectiveTournamentId,
         status: '', // Overrides default status filter to get all matches
+        activeStageOnly: 'true',
         // Backend caps cursor pages at 100; loading one full tournament page
         // keeps stage filters complete for normal brackets without fan-out requests.
         limit: 100,

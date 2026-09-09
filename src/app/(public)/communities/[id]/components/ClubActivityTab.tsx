@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId, useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useId, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { Tournament } from '@/features/tournaments/api';
@@ -8,17 +8,18 @@ import type { Match } from '@/types/match';
 import { communitiesApi } from '@/features/communities/api';
 import { matchesApi } from '@/features/matches/api';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
+import type { ClubSessionMatch } from '@/types/club-match-session';
+import { ClubMatchScoreEntryModal, type ScoreMatch } from '@/features/club-match-sessions/ClubMatchScoreEntryModal';
+import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
 import { extractMatchScores } from '@/features/matches/score-display';
 import { socketClient } from '@/lib/socket';
 import { formatDateTime } from '@/utils/format';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
-import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import {
   Clock,
-  MapPin,
   Search,
   RefreshCw,
   Activity,
@@ -26,7 +27,6 @@ import {
   Trophy,
   Crown,
   ShieldCheck,
-  User,
   Flame,
   Users,
   Plus,
@@ -39,11 +39,6 @@ interface Props {
 
 type TimelineFilter = 'ALL' | 'MY_MATCHES' | 'COMPLETED' | 'ONGOING';
 
-interface TeamStreakRecord {
-  type: 'W' | 'L';
-  count: number;
-}
-
 interface MatchWithTournament extends Match {
   tournamentName?: string;
   isClubSessionMatch?: boolean;
@@ -54,6 +49,122 @@ interface MatchWithTournament extends Match {
   sideAUserIds?: string[];
   sideBUserIds?: string[];
   totalSetsPlayed?: number;
+  eloChange?: number;
+}
+
+const ACTIVITY_PAGE_SIZE = 10;
+
+type CursorState = {
+  hasMore: boolean;
+  nextCursor: string | null;
+};
+
+type ActivityPagination = {
+  standalone: CursorState;
+  sessions: CursorState;
+  sessionMatches: Record<string, CursorState>;
+  tournaments: Record<string, CursorState>;
+  sessionMeta: Record<string, { name: string; status: string }>;
+  pendingSessionIds: string[];
+};
+
+const emptyCursorState = (): CursorState => ({ hasMore: false, nextCursor: null });
+
+function readCursorState(meta?: { hasMore?: boolean; nextCursor?: string | null }): CursorState {
+  const hasMore = meta?.hasMore === true && Boolean(meta.nextCursor);
+  return { hasMore, nextCursor: hasMore ? meta?.nextCursor ?? null : null };
+}
+
+function mapClubMatchProjection(
+  match: ClubSessionMatch,
+  context: 'SESSION' | 'STANDALONE',
+  communityId: string,
+  tournamentName: string,
+  sessionId?: string,
+): MatchWithTournament {
+  const p1Members = match.participant1.members.map((member) => ({
+    id: member.id || member.userId || '',
+    userId: member.userId,
+    fullName: member.fullName || '',
+    avatarUrl: member.avatarUrl || null,
+    isMock: member.isMock,
+  }));
+  const p2Members = match.participant2.members.map((member) => ({
+    id: member.id || member.userId || '',
+    userId: member.userId,
+    fullName: member.fullName || '',
+    avatarUrl: member.avatarUrl || null,
+    isMock: member.isMock,
+  }));
+  const winnerId = match.status === 'COMPLETED'
+    ? match.p1SetsWon > match.p2SetsWon ? 'SIDE_A' : match.p2SetsWon > match.p1SetsWon ? 'SIDE_B' : undefined
+    : undefined;
+
+  return {
+    id: match.id,
+    groupId: sessionId || match.standaloneMatchId || match.id,
+    bracketBranch: 'MAIN',
+    tournamentId: '',
+    tournamentName,
+    roundNumber: 0,
+    status: match.status,
+    participant1Id: 'SIDE_A',
+    participant2Id: 'SIDE_B',
+    winnerId,
+    p1SetsWon: match.p1SetsWon ?? 0,
+    p2SetsWon: match.p2SetsWon ?? 0,
+    totalSetsPlayed: (match.p1SetsWon ?? 0) + (match.p2SetsWon ?? 0),
+    isBye: false,
+    matchOrder: 1,
+    scoreDetails: match.scoreDetails || {},
+    scheduledAt: match.scheduledAt || match.startedAt || match.updatedAt || undefined,
+    startedAt: match.startedAt || undefined,
+    completedAt: match.completedAt || undefined,
+    updatedAt: match.updatedAt || new Date().toISOString(),
+    participant1: { id: 'SIDE_A', teamName: p1Members.map((member) => member.fullName).filter(Boolean).join(' · ') || 'A', members: p1Members },
+    participant2: { id: 'SIDE_B', teamName: p2Members.map((member) => member.fullName).filter(Boolean).join(' · ') || 'B', members: p2Members },
+    isClubSessionMatch: context === 'SESSION',
+    isStandaloneMatch: context === 'STANDALONE',
+    contextType: context === 'SESSION' ? 'CLUB_SOCIAL_MATCH_SESSION' : 'CLUB_STANDALONE_MATCH',
+    communityId: match.communityId || communityId,
+    clubMatchSessionId: sessionId || null,
+    sessionStatus: undefined,
+    eloDelta: match.eloDelta,
+    sideAUserIds: match.sideAUserIds,
+    sideBUserIds: match.sideBUserIds,
+    sportRules: match.sportRules as Match['sportRules'],
+    tournamentConfig: match.tournamentConfig as Match['tournamentConfig'],
+    revision: match.revision,
+  };
+}
+
+function hasActivityCursor(pagination: ActivityPagination) {
+  return pagination.standalone.hasMore || pagination.sessions.hasMore ||
+    Object.values(pagination.sessionMatches).some((cursor) => cursor.hasMore) ||
+    Object.values(pagination.tournaments).some((cursor) => cursor.hasMore) ||
+    pagination.pendingSessionIds.length > 0;
+}
+
+function toScoreMatch(match: MatchWithTournament): ScoreMatch {
+  const mapMembers = (participant: Match['participant1'], side: 'A' | 'B') => (participant?.members || []).map((member, index) => ({
+    id: `${match.id}-${side}-${index}`,
+    userId: member.userId,
+    fullName: member.fullName || null,
+    avatarUrl: member.avatarUrl || null,
+    isMock: member.isMock,
+  }));
+  return {
+    id: match.id,
+    status: match.status === 'DISPUTED' ? 'COMPLETED' : match.status,
+    revision: match.revision ?? 0,
+    p1SetsWon: match.p1SetsWon ?? 0,
+    p2SetsWon: match.p2SetsWon ?? 0,
+    scoreDetails: match.scoreDetails,
+    sportRules: match.sportRules as Record<string, unknown> | null | undefined,
+    tournamentConfig: match.tournamentConfig as Record<string, unknown> | null | undefined,
+    participant1: { id: 'SIDE_A', members: mapMembers(match.participant1, 'A') },
+    participant2: { id: 'SIDE_B', members: mapMembers(match.participant2, 'B') },
+  };
 }
 
 type MatchParticipant = NonNullable<Match['participant1']>;
@@ -192,80 +303,19 @@ function isRenderablePublicMatch(match: MatchWithTournament): boolean {
 
   const t1Name = p1?.teamName;
   const t2Name = p2?.teamName;
-  if (isMockOrPlaceholderParticipant(t1Name, (p1 as any)?.isMock)) return false;
-  if (isMockOrPlaceholderParticipant(t2Name, (p2 as any)?.isMock)) return false;
+  if (isMockOrPlaceholderParticipant(t1Name, p1?.isMock)) return false;
+  if (isMockOrPlaceholderParticipant(t2Name, p2?.isMock)) return false;
 
   const p1Members = p1?.members || [];
   const p2Members = p2?.members || [];
-  if (p1Members.some((mem) => isMockOrPlaceholderParticipant(mem.fullName, (mem as any)?.isMock))) {
+  if (p1Members.some((mem) => isMockOrPlaceholderParticipant(mem.fullName, mem.isMock))) {
     return false;
   }
-  if (p2Members.some((mem) => isMockOrPlaceholderParticipant(mem.fullName, (mem as any)?.isMock))) {
+  if (p2Members.some((mem) => isMockOrPlaceholderParticipant(mem.fullName, mem.isMock))) {
     return false;
   }
 
   return true;
-}
-
-function computeChronologicalStreaks(matches: MatchWithTournament[]): Map<string, { p1Streak: TeamStreakRecord | null; p2Streak: TeamStreakRecord | null }> {
-  const streakMap = new Map<string, { p1Streak: TeamStreakRecord | null; p2Streak: TeamStreakRecord | null }>();
-
-  const sorted = [...matches].sort((a, b) => {
-    const timeA = new Date(a.completedAt || a.startedAt || a.scheduledAt || a.updatedAt).getTime();
-    const timeB = new Date(b.completedAt || b.startedAt || b.scheduledAt || b.updatedAt).getTime();
-    return timeA - timeB;
-  });
-
-  const runningStreaks = new Map<string, TeamStreakRecord>();
-
-  for (const m of sorted) {
-    const p1Id = m.participant1Id || m.participant1?.id;
-    const p2Id = m.participant2Id || m.participant2?.id;
-
-    const p1Current = p1Id && runningStreaks.has(p1Id) ? { ...runningStreaks.get(p1Id)! } : null;
-    const p2Current = p2Id && runningStreaks.has(p2Id) ? { ...runningStreaks.get(p2Id)! } : null;
-
-    streakMap.set(m.id, {
-      p1Streak: p1Current,
-      p2Streak: p2Current,
-    });
-
-    if (m.status === 'COMPLETED' && m.winnerId) {
-      if (p1Id) {
-        const isP1Win = m.winnerId === p1Id;
-        const prev = runningStreaks.get(p1Id);
-        if (isP1Win) {
-          runningStreaks.set(p1Id, {
-            type: 'W',
-            count: prev?.type === 'W' ? prev.count + 1 : 1,
-          });
-        } else {
-          runningStreaks.set(p1Id, {
-            type: 'L',
-            count: prev?.type === 'L' ? prev.count + 1 : 1,
-          });
-        }
-      }
-
-      if (p2Id) {
-        const isP2Win = m.winnerId === p2Id;
-        const prev = runningStreaks.get(p2Id);
-        if (isP2Win) {
-          runningStreaks.set(p2Id, {
-            type: 'W',
-            count: prev?.type === 'W' ? prev.count + 1 : 1,
-          });
-        } else {
-          runningStreaks.set(p2Id, {
-            type: 'L',
-            count: prev?.type === 'L' ? prev.count + 1 : 1,
-          });
-        }
-      }
-    }
-  }
-
-  return streakMap;
 }
 
 /**
@@ -333,6 +383,22 @@ export default function ClubActivityTab({ communityId }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isStandaloneModalOpen, setIsStandaloneModalOpen] = useState(false);
+  const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+  const [scoreMatch, setScoreMatch] = useState<ScoreMatch | null>(null);
+  const [visibleLimit, setVisibleLimit] = useState(ACTIVITY_PAGE_SIZE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [pagination, setPagination] = useState<ActivityPagination>({
+    standalone: emptyCursorState(),
+    sessions: emptyCursorState(),
+    sessionMatches: {},
+    tournaments: {},
+    sessionMeta: {},
+    pendingSessionIds: [],
+  });
+  const matchesRef = useRef<MatchWithTournament[]>([]);
+  const paginationRef = useRef<ActivityPagination>(pagination);
+  const visibleLimitRef = useRef(ACTIVITY_PAGE_SIZE);
+  const loadMoreInFlightRef = useRef(false);
 
   const roundLabelTranslations = useMemo<RoundLabelTranslations>(() => ({
     roundGrandFinal: matchTranslate('roundGrandFinal'),
@@ -347,7 +413,25 @@ export default function ClubActivityTab({ communityId }: Props) {
     legSuffix: (leg) => `${matchTranslate('leg')} ${leg}`,
   }), [matchTranslate]);
 
-  // Fetch all matches across all tournaments and club match sessions of this community
+  const commitActivityMatches = useCallback((items: MatchWithTournament[], nextPagination: ActivityPagination) => {
+    const uniqueMatches = [...new Map(items.map((item) => [item.id, item])).values()];
+    matchesRef.current = uniqueMatches;
+    paginationRef.current = nextPagination;
+    setMatches(uniqueMatches);
+    setPagination(nextPagination);
+    visibleLimitRef.current = ACTIVITY_PAGE_SIZE;
+    setVisibleLimit(ACTIVITY_PAGE_SIZE);
+  }, []);
+
+  const appendActivityMatches = useCallback((items: MatchWithTournament[]) => {
+    if (items.length === 0) return;
+    const uniqueMatches = [...new Map([...matchesRef.current, ...items].map((item) => [item.id, item])).values()];
+    matchesRef.current = uniqueMatches;
+    setMatches(uniqueMatches);
+  }, []);
+
+  // Fetch the first cursor page from every current activity source. The UI only reveals ten rows;
+  // later triggers reveal the local buffer before asking the server for another cursor page.
   const fetchClubMatches = useCallback(async (isRefresh = false) => {
     if (!communityId) return;
     if (isRefresh) {
@@ -356,6 +440,14 @@ export default function ClubActivityTab({ communityId }: Props) {
 
     try {
       const allMatches: MatchWithTournament[] = [];
+      const nextPagination: ActivityPagination = {
+        standalone: emptyCursorState(),
+        sessions: emptyCursorState(),
+        sessionMatches: {},
+        tournaments: {},
+        sessionMeta: {},
+        pendingSessionIds: [],
+      };
 
       // 1. Get community tournaments & their real matches
       try {
@@ -369,9 +461,10 @@ export default function ClubActivityTab({ communityId }: Props) {
             try {
               const res = await matchesApi.getMatches({
                 tournament_id: t.id,
-                limit: 50,
+                limit: ACTIVITY_PAGE_SIZE,
                 status: '',
               });
+              nextPagination.tournaments[t.id] = readCursorState(res.meta);
               const matchItems = Array.isArray(res?.data) ? (res.data as Match[]) : [];
               return matchItems
                 .map((m) => ({
@@ -393,92 +486,26 @@ export default function ClubActivityTab({ communityId }: Props) {
 
       // 2. Get club match sessions (buổi giao lưu) & their real matches (parity with mobile app)
       try {
-        const sessionPage = await clubMatchSessionsApi.list(communityId, { limit: 8 });
+        const sessionPage = await clubMatchSessionsApi.list(communityId, { limit: ACTIVITY_PAGE_SIZE });
         const sessions = sessionPage.data || [];
+        nextPagination.sessions = readCursorState(sessionPage.meta);
+        sessions.forEach((session) => {
+          nextPagination.sessionMeta[session.id] = {
+            name: session.resolvedName || session.name || matchTranslate('clubSessionBadge'),
+            status: session.status,
+          };
+        });
 
         const sessionPromises = sessions.map(async (session) => {
           try {
-            const matchesPage = await clubMatchSessionsApi.matches(session.id, { limit: 50 });
+            const matchesPage = await clubMatchSessionsApi.matches(session.id, { limit: ACTIVITY_PAGE_SIZE });
+            nextPagination.sessionMatches[session.id] = readCursorState(matchesPage.meta);
             const sMatches = matchesPage.data || [];
 
-            const sessionMapped: MatchWithTournament[] = [];
-
-            for (const sm of sMatches) {
-              const p1Members = (sm.participant1?.members || []).map((m) => ({
-                id: m.id || m.userId || '',
-                userId: m.userId,
-                fullName: m.fullName || '',
-                avatarUrl: m.avatarUrl || null,
-                isMock: m.isMock,
-              }));
-
-              const p2Members = (sm.participant2?.members || []).map((m) => ({
-                id: m.id || m.userId || '',
-                userId: m.userId,
-                fullName: m.fullName || '',
-                avatarUrl: m.avatarUrl || null,
-                isMock: m.isMock,
-              }));
-
-              const sideAName = p1Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội A';
-              const sideBName = p2Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội B';
-
-              const winnerId =
-                sm.status === 'COMPLETED'
-                  ? sm.p1SetsWon > sm.p2SetsWon
-                    ? 'SIDE_A'
-                    : sm.p2SetsWon > sm.p1SetsWon
-                    ? 'SIDE_B'
-                    : undefined
-                  : undefined;
-
-              const sessionTitle = session.resolvedName || session.name || matchTranslate('clubSessionBadge');
-
-              const sessionMatch: MatchWithTournament = {
-                id: sm.id,
-                groupId: session.id,
-                bracketBranch: 'MAIN',
-                tournamentId: '',
-                tournamentName: sessionTitle,
-                roundNumber: 0,
-                status: sm.status,
-                participant1Id: 'SIDE_A',
-                participant2Id: 'SIDE_B',
-                winnerId,
-                p1SetsWon: sm.p1SetsWon ?? 0,
-                p2SetsWon: sm.p2SetsWon ?? 0,
-                totalSetsPlayed: (sm.p1SetsWon ?? 0) + (sm.p2SetsWon ?? 0),
-                isBye: false,
-                matchOrder: 1,
-                scoreDetails: sm.scoreDetails || {},
-                scheduledAt: session.startAt || undefined,
-                startedAt: session.startAt || undefined,
-                completedAt: session.endAt || undefined,
-                updatedAt: session.startAt || new Date().toISOString(),
-                participant1: {
-                  id: 'SIDE_A',
-                  teamName: sideAName,
-                  members: p1Members as any,
-                } as any,
-                participant2: {
-                  id: 'SIDE_B',
-                  teamName: sideBName,
-                  members: p2Members as any,
-                } as any,
-                isClubSessionMatch: true,
-                contextType: 'CLUB_SOCIAL_MATCH_SESSION',
-                communityId,
-                clubMatchSessionId: session.id,
-                sessionStatus: session.status,
-                eloDelta: sm.eloDelta,
-                sideAUserIds: sm.sideAUserIds,
-                sideBUserIds: sm.sideBUserIds,
-              };
-
-              if (isRenderablePublicMatch(sessionMatch)) {
-                sessionMapped.push(sessionMatch);
-              }
-            }
+            const sessionMapped = sMatches
+              .map((sm) => mapClubMatchProjection(sm, 'SESSION', communityId, session.resolvedName || session.name || matchTranslate('clubSessionBadge'), session.id))
+              .map((item) => ({ ...item, sessionStatus: session.status }))
+              .filter(isRenderablePublicMatch);
 
             return sessionMapped;
           } catch {
@@ -494,78 +521,12 @@ export default function ClubActivityTab({ communityId }: Props) {
 
       // 3. Get standalone matches (trận riêng lẻ)
       try {
-        const standalonePage = await clubMatchSessionsApi.standaloneMatches(communityId, { limit: 30 });
+        const standalonePage = await clubMatchSessionsApi.standaloneMatches(communityId, { limit: ACTIVITY_PAGE_SIZE });
         const standaloneList = standalonePage.data || [];
+        nextPagination.standalone = readCursorState(standalonePage.meta);
 
         for (const sm of standaloneList) {
-          const p1Members = (sm.participant1?.members || []).map((m) => ({
-            id: m.id || m.userId || '',
-            userId: m.userId,
-            fullName: m.fullName || '',
-            avatarUrl: m.avatarUrl || null,
-            isMock: m.isMock,
-          }));
-          const p2Members = (sm.participant2?.members || []).map((m) => ({
-            id: m.id || m.userId || '',
-            userId: m.userId,
-            fullName: m.fullName || '',
-            avatarUrl: m.avatarUrl || null,
-            isMock: m.isMock,
-          }));
-
-          const sideAName = p1Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội A';
-          const sideBName = p2Members.map((m) => m.fullName).filter(Boolean).join(' · ') || 'Đội B';
-
-          const winnerId =
-            sm.status === 'COMPLETED'
-              ? sm.p1SetsWon > sm.p2SetsWon
-                ? 'SIDE_A'
-                : sm.p2SetsWon > sm.p1SetsWon
-                ? 'SIDE_B'
-                : undefined
-              : undefined;
-
-          const standaloneMatch: MatchWithTournament = {
-            id: sm.id,
-            groupId: sm.standaloneMatchId || sm.id,
-            bracketBranch: 'MAIN',
-            tournamentId: '',
-            tournamentName: matchTranslate('clubStandaloneMatchBadge'),
-            roundNumber: 0,
-            status: sm.status,
-            participant1Id: 'SIDE_A',
-            participant2Id: 'SIDE_B',
-            winnerId,
-            p1SetsWon: sm.p1SetsWon ?? 0,
-            p2SetsWon: sm.p2SetsWon ?? 0,
-            totalSetsPlayed: (sm.p1SetsWon ?? 0) + (sm.p2SetsWon ?? 0),
-            isBye: false,
-            matchOrder: 1,
-            scoreDetails: sm.scoreDetails || {},
-            scheduledAt: sm.scheduledAt || sm.startedAt || sm.updatedAt || undefined,
-            startedAt: sm.startedAt || undefined,
-            completedAt: sm.completedAt || undefined,
-            updatedAt: sm.updatedAt || new Date().toISOString(),
-            participant1: {
-              id: 'SIDE_A',
-              teamName: sideAName,
-              members: p1Members as any,
-            } as any,
-            participant2: {
-              id: 'SIDE_B',
-              teamName: sideBName,
-              members: p2Members as any,
-            } as any,
-            isClubSessionMatch: false,
-            isStandaloneMatch: true,
-            contextType: 'CLUB_STANDALONE_MATCH',
-            communityId: sm.communityId || communityId,
-            clubMatchSessionId: null,
-            sessionStatus: undefined,
-            eloDelta: sm.eloDelta,
-            sideAUserIds: sm.sideAUserIds,
-            sideBUserIds: sm.sideBUserIds,
-          };
+          const standaloneMatch = mapClubMatchProjection(sm, 'STANDALONE', communityId, matchTranslate('clubStandaloneMatchBadge'));
 
           if (isRenderablePublicMatch(standaloneMatch)) {
             allMatches.push(standaloneMatch);
@@ -575,14 +536,110 @@ export default function ClubActivityTab({ communityId }: Props) {
         console.warn('Failed to fetch standalone matches', err);
       }
 
-      setMatches(allMatches);
+      commitActivityMatches(allMatches, nextPagination);
     } catch (err) {
       console.error('Failed to fetch club activity matches', err);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [communityId, matchTranslate]);
+  }, [communityId, commitActivityMatches, matchTranslate]);
+
+  const loadMoreActivity = useCallback(async () => {
+    if (loadMoreInFlightRef.current || !communityId) return;
+    const currentLimit = visibleLimitRef.current;
+    if (matchesRef.current.length > currentLimit) {
+      visibleLimitRef.current += ACTIVITY_PAGE_SIZE;
+      setVisibleLimit(visibleLimitRef.current);
+      return;
+    }
+    if (!hasActivityCursor(paginationRef.current)) return;
+
+    loadMoreInFlightRef.current = true;
+    setIsLoadingMore(true);
+    const current = paginationRef.current;
+    const nextPagination: ActivityPagination = {
+      standalone: { ...current.standalone },
+      sessions: { ...current.sessions },
+      sessionMatches: { ...current.sessionMatches },
+      tournaments: { ...current.tournaments },
+      sessionMeta: { ...current.sessionMeta },
+      pendingSessionIds: [...current.pendingSessionIds],
+    };
+    let incoming: MatchWithTournament[] = [];
+
+    try {
+      if (nextPagination.standalone.hasMore && nextPagination.standalone.nextCursor) {
+        const page = await clubMatchSessionsApi.standaloneMatches(communityId, {
+          limit: ACTIVITY_PAGE_SIZE,
+          cursor: nextPagination.standalone.nextCursor,
+        });
+        nextPagination.standalone = readCursorState(page.meta);
+        incoming = page.data.map((item) => mapClubMatchProjection(item, 'STANDALONE', communityId, matchTranslate('clubStandaloneMatchBadge'))).filter(isRenderablePublicMatch);
+      } else {
+        const tournamentEntry = Object.entries(nextPagination.tournaments).find(([, state]) => state.hasMore && state.nextCursor);
+        if (tournamentEntry) {
+          const [tournamentId, state] = tournamentEntry;
+          const tournament = tournaments.find((item) => item.id === tournamentId);
+          const page = await matchesApi.getMatches({
+            tournament_id: tournamentId,
+            limit: ACTIVITY_PAGE_SIZE,
+            cursor: state.nextCursor,
+            status: '',
+          });
+          nextPagination.tournaments[tournamentId] = readCursorState(page.meta);
+          incoming = (page.data as Match[])
+            .map((item) => ({ ...item, tournamentName: tournament?.name }))
+            .filter(isRenderablePublicMatch);
+        } else {
+          let sessionId = Object.entries(nextPagination.sessionMatches).find(([, state]) => state.hasMore && state.nextCursor)?.[0];
+          if (!sessionId && nextPagination.pendingSessionIds.length === 0 && nextPagination.sessions.hasMore && nextPagination.sessions.nextCursor) {
+            const page = await clubMatchSessionsApi.list(communityId, {
+              limit: ACTIVITY_PAGE_SIZE,
+              cursor: nextPagination.sessions.nextCursor,
+            });
+            nextPagination.sessions = readCursorState(page.meta);
+            page.data.forEach((session) => {
+              nextPagination.sessionMeta[session.id] = {
+                name: session.resolvedName || session.name || matchTranslate('clubSessionBadge'),
+                status: session.status,
+              };
+              nextPagination.pendingSessionIds.push(session.id);
+            });
+          }
+          sessionId = sessionId || nextPagination.pendingSessionIds.shift();
+          if (sessionId) {
+            const state = nextPagination.sessionMatches[sessionId] || emptyCursorState();
+            const page = await clubMatchSessionsApi.matches(sessionId, {
+              limit: ACTIVITY_PAGE_SIZE,
+              cursor: state.nextCursor || undefined,
+            });
+            nextPagination.sessionMatches[sessionId] = readCursorState(page.meta);
+            const session = nextPagination.sessionMeta[sessionId];
+            incoming = page.data
+              .map((item) => mapClubMatchProjection(item, 'SESSION', communityId, session?.name || matchTranslate('clubSessionBadge'), sessionId))
+              .map((item) => ({ ...item, sessionStatus: session?.status }))
+              .filter(isRenderablePublicMatch);
+          }
+        }
+      }
+
+      const beforeCount = matchesRef.current.length;
+      paginationRef.current = nextPagination;
+      setPagination(nextPagination);
+      appendActivityMatches(incoming);
+      const addedCount = matchesRef.current.length - beforeCount;
+      if (addedCount > 0) {
+        visibleLimitRef.current += Math.min(ACTIVITY_PAGE_SIZE, addedCount);
+        setVisibleLimit(visibleLimitRef.current);
+      }
+    } catch (error) {
+      console.warn('Failed to load more club activity', error);
+    } finally {
+      loadMoreInFlightRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, [appendActivityMatches, communityId, matchTranslate, tournaments]);
 
   const { user } = useAuthStore();
   const { openUserProfile } = useUserProfileModalStore();
@@ -592,19 +649,14 @@ export default function ClubActivityTab({ communityId }: Props) {
     tags?: string[];
   } | null>(null);
   const [userRanking, setUserRanking] = useState<PlayerRanking | null>(null);
-  const [isLoadingUserClubInfo, setIsLoadingUserClubInfo] = useState(false);
 
   // Fetch current user info in this community
   useEffect(() => {
     if (!communityId || !user?.id) {
-      setUserMembership(null);
-      setUserRanking(null);
       return;
     }
 
     let isMounted = true;
-    setIsLoadingUserClubInfo(true);
-
     Promise.allSettled([
       communitiesApi.getMyMembership(communityId),
       rankingsApi.getUserRankings(user.id),
@@ -642,7 +694,6 @@ export default function ClubActivityTab({ communityId }: Props) {
         setUserRanking(ownRank || null);
       }
     }).finally(() => {
-      if (isMounted) setIsLoadingUserClubInfo(false);
     });
 
     return () => {
@@ -804,6 +855,9 @@ export default function ClubActivityTab({ communityId }: Props) {
       });
   }, [effectiveMatches, filter, searchQuery, user?.id, user?.fullName]);
 
+  const visibleTimelineMatches = timelineMatches.slice(0, visibleLimit);
+  const hasMoreActivity = timelineMatches.length > visibleLimit || hasActivityCursor(pagination);
+
   // Compute user matches count in this club
   const userMatchesCount = useMemo(() => {
     if (!user?.id && !user?.fullName) return 0;
@@ -926,9 +980,6 @@ export default function ClubActivityTab({ communityId }: Props) {
             <h3 className="text-base font-semibold text-slate-900 tracking-tight">
               {matchTranslate('clubActivityTitle')}
             </h3>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-              {matchTranslate('clubActivityMatchesCount', { count: effectiveMatches.length })}
-            </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             {matchTranslate('clubActivitySubtitle')}
@@ -961,11 +1012,6 @@ export default function ClubActivityTab({ communityId }: Props) {
                 }`}
               >
                 <span>{matchTranslate('clubActivityFilterMyMatches')}</span>
-                {userMatchesCount > 0 && (
-                  <span className={`text-[10px] px-1 rounded-full ${filter === 'MY_MATCHES' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'}`}>
-                    {userMatchesCount}
-                  </span>
-                )}
               </button>
             )}
             <button
@@ -1046,7 +1092,7 @@ export default function ClubActivityTab({ communityId }: Props) {
         </div>
       ) : (
         <div className="relative pl-6 border-l-2 border-slate-200 space-y-6 pt-1">
-          {timelineMatches.map((match) => {
+          {visibleTimelineMatches.map((match) => {
             const isCompleted = match.status === 'COMPLETED';
             const isOngoing = match.status === 'ONGOING';
 
@@ -1070,16 +1116,16 @@ export default function ClubActivityTab({ communityId }: Props) {
             const skippedSetsCount = totalSets > 5 ? totalSets - 5 : 0;
 
             // Real avatar/logo resolution
-            const p1Logo = (p1 as any)?.logoUrl || p1?.members?.[0]?.avatarUrl || null;
-            const p2Logo = (p2 as any)?.logoUrl || p2?.members?.[0]?.avatarUrl || null;
+            const p1Logo = p1?.members?.[0]?.avatarUrl || null;
+            const p2Logo = p2?.members?.[0]?.avatarUrl || null;
 
             // ELO delta calculation / extraction
             let p1EloDelta: string | null = null;
             let p2EloDelta: string | null = null;
 
             if (match.isClubSessionMatch && match.eloDelta && isCompleted) {
-              const p1MemberUserIds = (match.participant1?.members || []).map((m) => m.userId).filter(Boolean) as string[];
-              const p2MemberUserIds = (match.participant2?.members || []).map((m) => m.userId).filter(Boolean) as string[];
+              const p1MemberUserIds = (match.participant1?.members || []).map((m) => m.userId).filter((id): id is string => Boolean(id));
+              const p2MemberUserIds = (match.participant2?.members || []).map((m) => m.userId).filter((id): id is string => Boolean(id));
 
               const p1Delta = p1MemberUserIds.map((uid) => match.eloDelta?.[uid]).find((d) => typeof d === 'number');
               const p2Delta = p2MemberUserIds.map((uid) => match.eloDelta?.[uid]).find((d) => typeof d === 'number');
@@ -1091,10 +1137,11 @@ export default function ClubActivityTab({ communityId }: Props) {
                 p2EloDelta = `${p2Delta > 0 ? '+' : ''}${p2Delta}`;
               }
             } else if (isCompleted && match.winnerId) {
-              const rawEloDelta = (match.scoreDetails as any)?.eloDelta ?? (match as any)?.eloChange;
-              if (rawEloDelta) {
-                p1EloDelta = isP1Winner ? `+${rawEloDelta}` : `-${rawEloDelta}`;
-                p2EloDelta = isP2Winner ? `+${rawEloDelta}` : `-${rawEloDelta}`;
+              const rawEloDelta = match.scoreDetails?.eloDelta;
+              const eloDelta = typeof rawEloDelta === 'number' ? rawEloDelta : match.eloChange;
+              if (typeof eloDelta === 'number' && Number.isFinite(eloDelta)) {
+                p1EloDelta = isP1Winner ? `+${eloDelta}` : `-${eloDelta}`;
+                p2EloDelta = isP2Winner ? `+${eloDelta}` : `-${eloDelta}`;
               }
             }
 
@@ -1105,6 +1152,11 @@ export default function ClubActivityTab({ communityId }: Props) {
               : match.scheduledAt
               ? formatDateTime(match.scheduledAt)
               : null;
+            const isClubActivityMatch = match.isClubSessionMatch || match.isStandaloneMatch;
+            const openScoreFromCard = () => {
+              setScoreMatch(toScoreMatch(match));
+              setIsScoreModalOpen(true);
+            };
 
             return (
               <div key={match.id} className="relative group">
@@ -1120,7 +1172,23 @@ export default function ClubActivityTab({ communityId }: Props) {
                 />
 
                 {/* Match Card Container */}
-                <div className="rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 transition-all shadow-2xs overflow-hidden">
+                <div
+                  className={`rounded-xl border border-slate-200/90 bg-white transition-all shadow-2xs overflow-hidden ${isClubActivityMatch ? 'cursor-pointer hover:border-blue-300' : 'hover:border-slate-300'}`}
+                  role={isClubActivityMatch ? 'button' : undefined}
+                  tabIndex={isClubActivityMatch ? 0 : undefined}
+                  aria-label={isClubActivityMatch ? matchTranslate('clubOpenScoring') : undefined}
+                  onClick={isClubActivityMatch ? (event) => {
+                    const target = event.target as HTMLElement;
+                    if (target.closest('a,button,input,select,textarea')) return;
+                    openScoreFromCard();
+                  } : undefined}
+                  onKeyDown={isClubActivityMatch ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openScoreFromCard();
+                    }
+                  } : undefined}
+                >
                   {/* Top Metadata Header */}
                   <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -1386,33 +1454,61 @@ export default function ClubActivityTab({ communityId }: Props) {
                       )}
                     </div>
 
-                    <Link
-                      href={match.isClubSessionMatch || match.isStandaloneMatch
-                        ? `/live/${match.id}?scoring=1`
-                        : `/live/${match.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors group/btn shrink-0"
-                    >
-                      <span>
-                        {match.isClubSessionMatch || match.isStandaloneMatch
-                          ? matchTranslate('clubOpenScoring')
-                          : matchTranslate('detailsAction') || 'Xem trận'}
-                      </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600 transition-all" />
-                    </Link>
+                    {match.isClubSessionMatch || match.isStandaloneMatch ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScoreMatch(toScoreMatch(match));
+                          setIsScoreModalOpen(true);
+                        }}
+                        className="group/btn inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-slate-700 transition-colors hover:text-blue-600"
+                      >
+                        <span>{matchTranslate('clubOpenScoring')}</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400 transition-all group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600" />
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/live/${match.id}`}
+                        className="group/btn inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-slate-700 transition-colors hover:text-blue-600"
+                      >
+                        <span>{matchTranslate('detailsAction')}</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400 transition-all group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600" />
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
             );
           })}
+          <InfiniteScrollTrigger
+            hasMore={hasMoreActivity}
+            isLoading={isLoadingMore}
+            onLoadMore={() => void loadMoreActivity()}
+          />
         </div>
       )}
 
       {/* Standalone Match Modal */}
       <ClubStandaloneMatchModal
+        key={`standalone-modal-${isStandaloneModalOpen ? 'open' : 'closed'}`}
         communityId={communityId}
         isOpen={isStandaloneModalOpen}
         onClose={() => setIsStandaloneModalOpen(false)}
-        onMatchCreated={() => void fetchClubMatches(true)}
+        onMatchCreated={(createdMatch) => {
+          setScoreMatch(createdMatch);
+          setIsScoreModalOpen(true);
+          void fetchClubMatches(true);
+        }}
+      />
+      <ClubMatchScoreEntryModal
+        key={scoreMatch?.id ?? 'no-score-match'}
+        match={scoreMatch}
+        open={isScoreModalOpen}
+        onOpenChange={(open) => {
+          setIsScoreModalOpen(open);
+          if (!open) setScoreMatch(null);
+        }}
+        onSaved={() => void fetchClubMatches(true)}
       />
     </div>
   );

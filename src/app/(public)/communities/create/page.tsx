@@ -45,6 +45,8 @@ type CreateCommunityFormValues = {
   bannerUrl?: string;
 };
 
+type TournamentSport = Parameters<typeof tournamentsApi.createLiteTournament>[0]['sport'];
+
 export default function CreateCommunityPage() {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -225,7 +227,7 @@ export default function CreateCommunityPage() {
         try {
           const selectedCat = categories.find((c) => c.id === data.categoryIds[0]);
           const slug = (selectedCat?.slug || selectedCat?.name || '').toLowerCase();
-          let sport = 'badminton';
+          let sport: TournamentSport = 'badminton';
           if (slug.includes('badminton') || slug.includes('cầu lông') || slug.includes('cau long')) sport = 'badminton';
           else if (slug.includes('tennis') || slug.includes('quần vợt') || slug.includes('quan vot')) sport = 'tennis';
           else if (slug.includes('pickleball')) sport = 'pickleball';
@@ -237,7 +239,7 @@ export default function CreateCommunityPage() {
 
           await tournamentsApi.createLiteTournament({
             name: `Giao hữu ${data.name.trim()}`,
-            sport: sport as any,
+            sport,
             communityId,
             format: 'doubles',
             bracketType: 'single_elimination',

@@ -1425,7 +1425,7 @@ export default function HomePage() {
                 {primaryTitle}
               </div>
               {subTitle && (
-                <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
+                <div className="text-xs text-slate-500 truncate mt-0.5 font-normal">
                   {subTitle}
                 </div>
               )}
@@ -1433,7 +1433,7 @@ export default function HomePage() {
           </div>
 
           {/* VS label on the right */}
-          <div className="text-xs font-semibold text-slate-300 shrink-0 select-none">
+          <div className="text-xs font-bold text-slate-500 shrink-0 select-none">
             VS
           </div>
         </div>
@@ -1447,17 +1447,17 @@ export default function HomePage() {
         className="block bg-white rounded-xl border border-slate-200/80 p-3 sm:p-3.5 hover:border-slate-300 hover:shadow-2xs transition-all"
       >
         {/* Header: VÒNG ĐẤU • NỘI DUNG | Sân thi đấu ... Giờ thi đấu */}
-        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 text-[10.5px]">
+        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 text-xs">
           <div className="flex items-center gap-2 font-bold text-slate-700 uppercase tracking-wider truncate">
             <span>{roundLabel || translate('roundFallback')}</span>
             {formatText && <span>• {formatText}</span>}
-            {courtText && <span className="text-slate-400 font-normal normal-case">| {courtText}</span>}
+            {courtText && <span className="text-slate-500 font-normal normal-case">| {courtText}</span>}
           </div>
 
           {/* Time Badge (e.g. 14:30) */}
           <div className="shrink-0">
             {timeString ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-sky-50 text-sky-600 border border-sky-100">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
                 {timeString}
               </span>
             ) : (
@@ -1704,10 +1704,10 @@ export default function HomePage() {
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
+                                    <span className={`text-xs uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-700'}`}>
                                       {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                     </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
+                                    <span className="text-xs uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
                                       <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>
@@ -1817,10 +1817,10 @@ export default function HomePage() {
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
+                                    <span className={`text-xs uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-700'}`}>
                                       {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                     </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
+                                    <span className="text-xs uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
                                       <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>
@@ -1932,10 +1932,10 @@ export default function HomePage() {
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
+                                    <span className={`text-xs uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-700'}`}>
                                       {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                     </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
+                                    <span className="text-xs uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
                                       <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>

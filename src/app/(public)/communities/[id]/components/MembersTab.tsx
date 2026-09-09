@@ -3,27 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag, Edit3 } from 'lucide-react';
+import { Users, Search, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, Ban, Tag, Edit3 } from 'lucide-react';
 import { ClubMembersSkeleton } from '@/components/skeletons/ClubTabSkeletons';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi, MemberStreak } from '@/features/communities/api';
 import TagAssignModal from './TagAssignModal';
 import MemberEloAdjustModal, { type EloOperation } from './MemberEloAdjustModal';
-import { getCommunityTagDisplayName, isSameCommunityTag } from './tag-display';
-import { usersApi } from '@/features/users/api';
+import { getCommunityTagDisplayName, isSameCommunityTag, type CommunityTagTranslator } from './tag-display';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { getErrorMessage } from '@/utils/error';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-
-interface UserSearchResult {
-  id: string;
-  email: string;
-  fullName?: string;
-  avatarUrl?: string;
-}
 
 interface MemberData {
   member: {
@@ -58,7 +49,6 @@ export default function MembersTab({
   categoryName?: string;
   onMembershipChange?: () => void;
 }) {
-  const router = useRouter();
   const translate = useTranslations('Common');
   const translateMatch = useTranslations('Match');
   const locale = useLocale();
@@ -75,13 +65,6 @@ export default function MembersTab({
   
   // Menu dropdown state
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
-
-  // Invite Modal state
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteSearch, setInviteSearch] = useState('');
-  const [inviteResults, setInviteResults] = useState<UserSearchResult[]>([]);
-  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
-  const [isInvitingId, setIsInvitingId] = useState<string | null>(null);
 
   // Transfer Confirmation state
   const [confirmTransferUserId, setConfirmTransferUserId] = useState<string | null>(null);
@@ -148,36 +131,6 @@ export default function MembersTab({
     }
   }, [communityId]);
 
-  // Handle User Search for Invitation
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (inviteSearch.trim().length >= 2) {
-        try {
-          setIsSearchingUsers(true);
-          const results = await usersApi.searchUsers(inviteSearch);
-          // Filter out existing members
-          const filtered: UserSearchResult[] = (results || []).filter(
-            (u) => !members.some(m => m.user?.id === u.id)
-          ).map(u => ({
-            id: u.id,
-            email: u.email || '',
-            fullName: u.fullName || undefined,
-            avatarUrl: u.avatarUrl || undefined,
-          }));
-          setInviteResults(filtered);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setIsSearchingUsers(false);
-        }
-      } else {
-        setInviteResults([]);
-      }
-    }, 400);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [inviteSearch, members]);
-
   const handleUpdateRole = async (targetUserId: string, newRole: 'MODERATOR' | 'MEMBER') => {
     try {
       await communitiesApi.updateMemberRole(communityId, targetUserId, newRole);
@@ -234,20 +187,6 @@ export default function MembersTab({
     }
   };
 
-  const handleInviteUser = async (targetUser: UserSearchResult) => {
-    try {
-      setIsInvitingId(targetUser.id);
-      await communitiesApi.inviteMember(communityId, { userId: targetUser.id, role: 'MEMBER' });
-      toast.success(translate('invitationSent', { name: targetUser.fullName || targetUser.email }));
-      setInviteResults(prev => prev.filter(r => r.id !== targetUser.id));
-    } catch (error) {
-      console.error(error);
-      toast.error(getErrorMessage(error, translate('inviteMemberFailed')));
-    } finally {
-      setIsInvitingId(null);
-    }
-  };
-
   const handleAdjustMemberElo = async (payload: {
     userId: string;
     operation: EloOperation;
@@ -278,7 +217,7 @@ export default function MembersTab({
     const pills: React.ReactNode[] = [];
     (item.member?.tags ?? []).forEach((tag) => {
       const preset = tagPresets.find((candidate) => isSameCommunityTag(candidate.name, tag) || candidate.name.toLowerCase() === tag.toLowerCase());
-      const displayTag = getCommunityTagDisplayName(tag, translate as any) || tag;
+      const displayTag = getCommunityTagDisplayName(tag, translate as CommunityTagTranslator) || tag;
       pills.push(
         <span
           key={`tag-${tag}`}
@@ -392,7 +331,7 @@ export default function MembersTab({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
         <div className="relative w-full sm:w-64">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400" />
@@ -405,15 +344,6 @@ export default function MembersTab({
             placeholder={translate('memberSearchPlaceholder')}
           />
         </div>
-        {isOwnerOrMod && (
-          <Button 
-            onClick={() => setIsInviteOpen(true)}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            {translate('inviteMember')}
-          </Button>
-        )}
       </div>
 
       {isLoading ? (
@@ -667,78 +597,6 @@ export default function MembersTab({
               </Button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Invite Member Modal */}
-      {isInviteOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full border border-slate-200 shadow-xl overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 text-base">{translate('inviteMember')}</h3>
-              <button 
-                onClick={() => {
-                  setIsInviteOpen(false);
-                  setInviteSearch('');
-                  setInviteResults([]);
-                }}
-                className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-400" />
-                <input
-                  type="text"
-                  value={inviteSearch}
-                  onChange={(e) => setInviteSearch(e.target.value)}
-                  placeholder={translate('userSearchPlaceholder')}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
-                />
-              </div>
-
-              {isSearchingUsers ? (
-                <div className="py-8 flex justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                </div>
-              ) : inviteResults.length > 0 ? (
-                <div className="space-y-3 max-h-[35vh] overflow-y-auto">
-                  {inviteResults.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
-                          {user.avatarUrl ? (
-                            <Image src={user.avatarUrl} alt={user.fullName ?? 'User avatar'} fill className="object-cover" />
-                          ) : (
-                            getInitials(user.fullName ?? '')
-                          )}
-                        </div>
-                        <div className="text-left">
-                          <p className="text-xs font-semibold text-slate-800">{user.fullName}</p>
-                          <p className="text-[10px] text-slate-400">{user.email}</p>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleInviteUser(user)}
-                        disabled={isInvitingId === user.id}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded"
-                      >
-                        {isInvitingId === user.id ? translate('inviting') : translate('invite')}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : inviteSearch.trim().length >= 2 ? (
-                <p className="text-center text-slate-400 text-xs py-4">{translate('noUsersFound')}</p>
-              ) : inviteSearch.trim().length > 0 ? (
-                <p className="text-center text-slate-400 text-xs py-4">{translate('minimumSearchCharacters')}</p>
-              ) : null}
-            </div>
-          </div>
         </div>
       )}
 

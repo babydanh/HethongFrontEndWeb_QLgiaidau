@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { tournamentsApi, divisionsApi, Division } from '@/features/tournaments/api';
+import { tournamentsApi, divisionsApi, Division, OrganizerTournamentListItem } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
 import Link from 'next/link';
@@ -35,10 +35,6 @@ interface ParentWithDivisions {
   status?: Tournament['status'];
 }
 
-const getDefaultBanner = () => {
-  return BRAND.assets.defaultTournamentLogo;
-};
-
 const getFormatLabel = (matchType: string, genderRestriction?: string | null, translate?: (key: string) => string) => {
   const mt = matchType || '';
   const gr = genderRestriction || '';
@@ -54,6 +50,27 @@ const getFormatLabel = (matchType: string, genderRestriction?: string | null, tr
   return mt;
 };
 
+const TournamentCardSkeleton = () => (
+  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" aria-hidden="true">
+    <div className="h-44 animate-pulse bg-slate-200" />
+    <div className="space-y-4 p-4 md:p-5">
+      <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
+      <div className="flex gap-2">
+        <div className="h-7 w-24 animate-pulse rounded-lg bg-slate-100" />
+        <div className="h-7 w-20 animate-pulse rounded-lg bg-slate-100" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+        <div className="h-4 animate-pulse rounded bg-slate-100" />
+        <div className="h-4 animate-pulse rounded bg-slate-100" />
+      </div>
+    </div>
+    <div className="flex gap-2 border-t border-slate-100 bg-slate-50 p-3 md:p-4">
+      <div className="h-10 flex-1 animate-pulse rounded bg-slate-200" />
+      <div className="h-10 flex-1 animate-pulse rounded bg-slate-200" />
+    </div>
+  </div>
+);
+
 
 export default function MyTournamentsPage() {
   const router = useRouter();
@@ -61,45 +78,63 @@ export default function MyTournamentsPage() {
   const locale = useLocale();
   const [parents, setParents] = useState<ParentWithDivisions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const parentsRef = useRef<ParentWithDivisions[]>([]);
   const listRequestRef = useRef<Promise<void> | null>(null);
   const divisionCacheRef = useRef(new Map<string, Tournament[]>());
 
-  const fetchTournaments = useCallback(async () => {
+  const fetchTournaments = useCallback(async (options?: {
+    append?: boolean;
+    cursor?: string | null;
+  }) => {
     if (listRequestRef.current) return listRequestRef.current;
+
+    const append = options?.append === true;
+    const cursor = options?.cursor ?? null;
 
     const request = (async () => {
       try {
-        setIsLoading(true);
-        // Parent detail already contains its divisions; keep this fan-out limited
-        // to parent records and never clear a previously rendered snapshot on error.
-        const res = await tournamentsApi.getMyParentTournaments();
-        let parentsWithDivisions: ParentWithDivisions[] = [];
+        if (append) setIsLoadingMore(true);
+        else setIsLoading(true);
 
-        if (res.data) {
-          const parentDetails = await Promise.allSettled(
-            res.data.map(async (p: { id: string }) => {
-              const detail = await tournamentsApi.getParentTournamentById(p.id);
-              return detail.data;
-            }),
-          );
-          parentsWithDivisions = parentDetails.flatMap((result) =>
-            result.status === 'fulfilled' && result.value ? [result.value] : [],
-          );
-        }
+        const response = await tournamentsApi.getMyManagementTournaments({
+          limit: 12,
+          ...(cursor ? { cursor } : {}),
+        });
+        const pageItems = response.data ?? [];
 
-        // Fetch older standalone tournaments sequentially. This avoids a burst of
-        // /divisions requests when an organizer owns many legacy tournaments.
-        const oldRes = await tournamentsApi.getMyTournaments();
-        if (oldRes.data) {
-          const standaloneTournaments = oldRes.data.filter(t => !t.parentId);
-          const pseudoParents: ParentWithDivisions[] = [];
+        const enrichedItems = await Promise.allSettled(
+          pageItems.map(async (item: OrganizerTournamentListItem) => {
+            if (item.itemType === 'PARENT') {
+              try {
+                const detail = await tournamentsApi.getParentTournamentById(item.id);
+                if (detail.data) {
+                  return { ...detail.data, isStandalone: false } as ParentWithDivisions;
+                }
+              } catch {
+                // Keep the parent card visible even if optional detail enrichment fails.
+              }
+              return {
+                id: item.id,
+                name: item.name,
+                createdAt: item.createdAt,
+                description: item.description,
+                bannerUrl: item.bannerUrl,
+                logoUrl: item.logoUrl,
+                communityId: undefined,
+                divisions: [],
+                isStandalone: false,
+              } as ParentWithDivisions;
+            }
 
-          for (const t of standaloneTournaments) {
-            let divisionsList = divisionCacheRef.current.get(t.id) ?? [];
+            const tournament = item as Tournament;
+            let divisionsList = divisionCacheRef.current.get(tournament.id) ?? [];
             if (divisionsList.length === 0) {
-              if (Array.isArray(t.divisions) && t.divisions.length > 0) {
-                divisionsList = t.divisions.map((div) => {
+              if (Array.isArray(tournament.divisions) && tournament.divisions.length > 0) {
+                divisionsList = tournament.divisions.map((div) => {
                   const d = div as Partial<Division>;
                   return {
                     ...div,
@@ -109,13 +144,13 @@ export default function MyTournamentsPage() {
                     },
                     format: d.bracketType || '',
                     currency: 'VND',
-                    organizerId: t.organizerId || '',
+                    organizerId: tournament.organizerId || '',
                   };
                 }) as unknown as Tournament[];
-                divisionCacheRef.current.set(t.id, divisionsList);
+                divisionCacheRef.current.set(tournament.id, divisionsList);
               } else {
                 try {
-                  const divRes = await divisionsApi.getDivisions(t.id);
+                  const divRes = await divisionsApi.getDivisions(tournament.id);
                   if (Array.isArray(divRes.data) && divRes.data.length > 0) {
                     divisionsList = divRes.data.map((div) => ({
                       ...div,
@@ -125,52 +160,56 @@ export default function MyTournamentsPage() {
                       },
                       format: div.bracketType || '',
                       currency: 'VND',
-                      organizerId: t.organizerId || '',
+                      organizerId: tournament.organizerId || '',
                     })) as unknown as Tournament[];
-                    divisionCacheRef.current.set(t.id, divisionsList);
+                    divisionCacheRef.current.set(tournament.id, divisionsList);
                   }
                 } catch {
-                  console.error(`Failed to fetch divisions for tournament ${t.id}`);
+                  // Divisions are optional enrichment; the card can still render.
                 }
               }
             }
 
-            // Keep the tournament card usable even when its optional division
-            // enrichment is rate-limited or temporarily unavailable.
-            if (divisionsList.length === 0) divisionsList = [t];
-
-            pseudoParents.push({
-              id: t.id,
-              name: t.name,
-              createdAt: t.createdAt,
-              description: t.description,
-              bannerUrl: t.bannerUrl,
-              logoUrl: t.logoUrl,
-              communityId: t.communityId,
-              isLite: t.isLite,
-              tournamentConfig: t.tournamentConfig,
-              divisions: divisionsList,
+            return {
+              id: tournament.id,
+              name: tournament.name,
+              createdAt: tournament.createdAt,
+              description: tournament.description,
+              bannerUrl: tournament.bannerUrl,
+              logoUrl: tournament.logoUrl,
+              communityId: tournament.communityId,
+              isLite: tournament.isLite,
+              tournamentConfig: tournament.tournamentConfig,
+              divisions: divisionsList.length > 0 ? divisionsList : [tournament],
               isStandalone: true,
-              status: t.status,
-            });
-          }
-          parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
-        }
+              status: tournament.status,
+            } as ParentWithDivisions;
+          }),
+        );
 
-        const sortedParents = [...parentsWithDivisions].sort((a, b) => {
+        const loadedParents = enrichedItems.flatMap((result) =>
+          result.status === 'fulfilled' && result.value ? [result.value] : [],
+        );
+
+        const sortedParents = [...(append ? parentsRef.current : []), ...loadedParents].sort((a, b) => {
           const aDate = a.createdAt ?? a.divisions.find((division) => division.createdAt)?.createdAt;
           const bDate = b.createdAt ?? b.divisions.find((division) => division.createdAt)?.createdAt;
           const aTime = aDate ? new Date(aDate).getTime() : Number.NEGATIVE_INFINITY;
           const bTime = bDate ? new Date(bDate).getTime() : Number.NEGATIVE_INFINITY;
-          return bTime - aTime;
+          if (bTime !== aTime) return bTime - aTime;
+          return b.id === a.id ? 0 : b.id > a.id ? 1 : -1;
         });
         parentsRef.current = sortedParents;
         setParents(sortedParents);
-        } catch {
+        setNextCursor(response.meta?.nextCursor ?? null);
+        setHasMore(response.meta?.hasMore === true);
+        setTotalCount(response.meta?.total ?? sortedParents.length);
+      } catch {
         // Keep the last successful cards visible during transient 429/network errors.
-        if (parentsRef.current.length === 0) toast.error(translate('loadError'));
+        toast.error(translate('loadError'));
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
     })();
 
@@ -185,6 +224,11 @@ export default function MyTournamentsPage() {
   useEffect(() => {
     void fetchTournaments();
   }, [fetchTournaments]);
+
+  const handleLoadMore = () => {
+    if (!nextCursor || isLoadingMore || listRequestRef.current) return;
+    void fetchTournaments({ append: true, cursor: nextCursor });
+  };
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
     e.preventDefault();
@@ -203,7 +247,11 @@ export default function MyTournamentsPage() {
         toast.success(resData.message || translate('pendingDeleteSuccess'));
         fetchTournaments();
       } else {
-        setParents(parents.filter(p => p.id !== id));
+        setParents((current) => {
+          const next = current.filter((p) => p.id !== id);
+          parentsRef.current = next;
+          return next;
+        });
         toast.success(translate('deleteSuccess'));
       }
     } catch (err) {
@@ -236,10 +284,20 @@ export default function MyTournamentsPage() {
 
   if (isLoading && parents.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <LoadingSpinner className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-500 font-medium">{translate('loading')}</p>
+      <div className="min-h-screen bg-slate-50 py-8 px-3 md:py-12 md:px-8" aria-busy="true">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
+            <div className="space-y-2">
+              <div className="h-8 w-64 animate-pulse rounded bg-slate-200" />
+              <div className="h-4 w-48 animate-pulse rounded bg-slate-100" />
+            </div>
+            <div className="h-10 w-40 animate-pulse rounded-lg bg-slate-200" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }, (_, index) => (
+              <TournamentCardSkeleton key={index} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -481,6 +539,24 @@ export default function MyTournamentsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {parents.length > 0 && hasMore && (
+          <div className="mt-8 flex flex-col items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="min-w-44 border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
+            >
+              {isLoadingMore && <LoadingSpinner className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoadingMore ? translate('loadingMore') : translate('loadMore')}
+            </Button>
+            <p className="text-xs font-medium text-slate-400">
+              {translate('loadedCount', { loaded: parents.length, total: totalCount })}
+            </p>
           </div>
         )}
 

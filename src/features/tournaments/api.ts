@@ -836,6 +836,10 @@ export interface TournamentVenueWithCourts {
   courts: TournamentCourt[];
 }
 
+export type OrganizerTournamentListItem =
+  | ({ itemType: "PARENT" } & ParentTournament)
+  | ({ itemType: "STANDALONE" } & Tournament);
+
 export const tournamentsApi = {
   getFeesConfig: () =>
     api.get<ApiResponse<TournamentFeesConfig>>("/tournaments/fees"),
@@ -844,6 +848,14 @@ export const tournamentsApi = {
   getPublicTournaments: (params?: Record<string, unknown>) =>
     api.get<PaginatedTournaments>("/tournaments/public", { params }),
   getMyTournaments: () => api.get<ApiResponse<Tournament[]>>("/tournaments/my"),
+  getMyManagementTournaments: (params?: {
+    cursor?: string;
+    limit?: number;
+  }) =>
+    api.get<ApiResponse<OrganizerTournamentListItem[]>>(
+      "/tournaments/my/management",
+      { params },
+    ),
   getMyWorkspace: () =>
     api.get<ApiResponse<TournamentWorkspace>>("/tournaments/workspace/me"),
   getTournamentById: (id: string, params?: Record<string, unknown>) =>

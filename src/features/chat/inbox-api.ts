@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
-import type { ChatMessage } from '@/types/community-social';
+import type { ChatMessage, ReactionViewer } from '@/types/community-social';
 import type { ChatParticipant } from '@/types/chat';
 
 export interface InboxRoom {
@@ -71,7 +71,7 @@ export const inboxApi = {
   getPinnedMessage: (roomId: string) =>
     api.get<ApiResponse<ChatMessage | null>>(`/chat/rooms/${roomId}/pinned`),
   toggleReaction: (messageId: string, emoji: string) =>
-    api.post<ApiResponse<{ reactions: string[] }>>(`/chat/messages/${messageId}/reaction`, { emoji }),
+    api.post<ApiResponse<{ reactions: string[]; reactionDetails?: Array<{ emoji: string; count: number; isReacted?: boolean; userIds?: string[]; users: ReactionViewer[] }> }>>(`/chat/messages/${messageId}/reaction`, { emoji }),
   votePoll: (messageId: string, optionId: string) =>
     api.post<ApiResponse<{ messageId: string; roomId: string; metadata: unknown }>>(`/chat/messages/${messageId}/poll/vote`, { optionId }),
   getLinkPreview: (url: string) =>

@@ -9,6 +9,7 @@ import type {
   CommunityComment,
   CommunityPoll,
   CommunityReactionType,
+  ReactionGroup,
   CommunitySocialSettings,
   CreateCommunityPostPayload,
   CursorPage,
@@ -226,6 +227,15 @@ export const communitiesApi = {
 
   reactToPost: (communityId: string, postId: string, reactionType: CommunityReactionType) =>
     api.post<ApiResponse<{ reactionType: CommunityReactionType | null; count: number }>>(`/communities/${communityId}/posts/${postId}/reaction`, { reactionType }),
+
+  getPostReactions: (communityId: string, postId: string) =>
+    api.get<ApiResponse<ReactionGroup[]>>(`/communities/${communityId}/posts/${postId}/reactions`),
+
+  getCommentReactions: (communityId: string, commentId: string) =>
+    api.get<ApiResponse<ReactionGroup[]>>(`/communities/${communityId}/comments/${commentId}/reactions`),
+
+  reactToComment: (communityId: string, commentId: string, reactionType: CommunityReactionType) =>
+    api.post<ApiResponse<{ reactionType: CommunityReactionType | null; count: number; reactionDetails: ReactionGroup[] }>>(`/communities/${communityId}/comments/${commentId}/reaction`, { reactionType }),
 
   reportPost: (communityId: string, postId: string, data: { reason: string; details?: string }) =>
     api.post<ApiResponse<unknown>>(`/communities/${communityId}/posts/${postId}/report`, data),

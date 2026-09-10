@@ -214,10 +214,10 @@ type QuickFormatConfig = {
 };
 
 const QUICK_FORMAT_OPTIONS = [
-  { key: 'MALE_SINGLES', labelKey: 'formatMaleSingles' },
-  { key: 'FEMALE_SINGLES', labelKey: 'formatFemaleSingles' },
   { key: 'MALE_DOUBLES', labelKey: 'formatMaleDoubles' },
   { key: 'FEMALE_DOUBLES', labelKey: 'formatFemaleDoubles' },
+  { key: 'MALE_SINGLES', labelKey: 'formatMaleSingles' },
+  { key: 'FEMALE_SINGLES', labelKey: 'formatFemaleSingles' },
   { key: 'MIXED_DOUBLES', labelKey: 'formatMixedDoubles' },
   { key: 'FOOTBALL_MALE', labelKey: 'formatFootballMale' },
   { key: 'FOOTBALL_FEMALE', labelKey: 'formatFootballFemale' },
@@ -321,7 +321,7 @@ export default function QuickTournamentCreate() {
   const { register, handleSubmit, setValue, getValues, control, formState: { errors } } = useForm<QuickValues>({
     resolver: zodResolver(quickSchema),
     defaultValues: {
-      sport: 'badminton', format: 'doubles',
+      sport: 'pickleball', format: 'doubles',
       tournamentType: communityId ? 'CLUB' : 'PUBLIC',
       visibility: communityId ? 'PRIVATE' : 'PUBLIC',
       registrationMode: communityId ? 'OPEN' : 'APPROVAL',
@@ -510,7 +510,17 @@ export default function QuickTournamentCreate() {
   useEffect(() => {
     let active = true;
     categoriesApi.getCategories().then((response) => {
-      if (active) setCategories((response.data ?? []).filter((category) => category.isActive !== false));
+      if (active) {
+        const loaded = (response.data ?? []).filter((category) => category.isActive !== false);
+        loaded.sort((a, b) => {
+          const aName = (a.name || a.slug || '').toLowerCase();
+          const bName = (b.name || b.slug || '').toLowerCase();
+          if (aName.includes('pickleball')) return -1;
+          if (bName.includes('pickleball')) return 1;
+          return 0;
+        });
+        setCategories(loaded);
+      }
     }).catch(() => toast.error(translate('categoriesLoadError'))).finally(() => {
       if (active) setLoadingCategories(false);
     });
@@ -847,11 +857,35 @@ export default function QuickTournamentCreate() {
               
               {/* Card 1: Thông tin cơ bản */}
               <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <Trophy className="h-4 w-4" />
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <Trophy className="h-4 w-4" />
+                    </div>
+                    <h2 className="text-base font-bold text-slate-900">{translate('basicInfoTitle')}</h2>
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">{translate('basicInfoTitle')}</h2>
+
+                  {/* Nút gạt bật/tắt hiển thị Công khai */}
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-bold text-slate-700 select-none">
+                      {translate('publicVisibility')}
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={visibility === 'PUBLIC'}
+                      onClick={() => setValue('visibility', visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC', { shouldValidate: true, shouldDirty: true })}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                        visibility === 'PUBLIC' ? 'bg-blue-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          visibility === 'PUBLIC' ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Tên giải đấu */}
@@ -1146,7 +1180,164 @@ export default function QuickTournamentCreate() {
             {/* ─── CỘT PHẢI (5 CỘT - STICKY): NỘI DUNG, THỂ THỨC, ELO, QUY MÔ, HIỂN THỊ, NÚT SUBMIT ─── */}
             <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
               
-              {/* Card Phải 1: Nội dung thi đấu */}
+              {/* Card Phải 1: Thể thức thi đấu */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <GitBranch className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900">{translate('bracketTitle')}</h3>
+                  </div>
+                  <span className="text-xs text-slate-400">{translate('chooseOne')}</span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2.5">
+                  {BRACKET_OPTIONS.map((opt) => {
+                    const isSelected = bracketType === opt.id;
+                    const { Icon } = opt;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
+                        className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                            isSelected
+                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                              {translate(opt.labelKey)}
+                            </span>
+                            {isSelected && (
+                              <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
+                            )}
+                          </div>
+                          <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
+                            {translate(opt.descKey)}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.bracketType && <span className="block text-xs text-rose-600">{errors.bracketType.message}</span>}
+              </section>
+
+              {/* Card Phải 2: Quy mô & Chế độ đăng ký */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                {/* 1. Quy mô số đội */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-blue-600" />
+                      {translate('tournamentScaleLabel')}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {bracketType === 'round_robin' ? translate('roundRobinScaleLimit') : translate('generalScaleLimit')}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {(bracketType === 'round_robin' ? [4, 6, 8, 10, 12, 15] : [4, 8, 16, 32, 64, 128]).map((num) => {
+                      const isCurrent = maxTeams === num;
+                      return (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                            isCurrent
+                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
+                    <div className="flex items-center gap-1 ml-auto">
+                      <span className="text-[11px] text-slate-500">{translate('otherOption')}</span>
+                      <input
+                        type="number"
+                        min={2}
+                        max={bracketType === 'round_robin' ? 15 : 128}
+                        {...register('maxTeams', { valueAsNumber: true })}
+                        className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  {errors.maxTeams && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.maxTeams.message}</span>}
+
+                  {/* Smart suggestion when Round Robin > 15 */}
+                  {bracketType === 'round_robin' && maxTeams > 15 && (
+                    <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <p className="leading-relaxed">
+                          <strong className="font-bold text-amber-950">{translate('smartSuggestionLabel')}</strong> {translate('roundRobinSuggestion', { maxTeams })}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setValue('bracketType', 'group_stage_knockout', { shouldValidate: true })}
+                          className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-amber-950 transition"
+                        >
+                          {translate('switchToGroupStage')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Chế độ nhận đăng ký (Chỉ hiện khi tạo trong CLB) */}
+                {communityId && (
+                  <>
+                    <div className="h-px bg-slate-100" />
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
+                        <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+                        {translate('registrationModeTitle')}
+                      </span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { val: 'OPEN', labelKey: 'registrationOpen', subKey: 'registrationOpenShort' },
+                          { val: 'APPROVAL', labelKey: 'registrationApproval', subKey: 'registrationApprovalShort' },
+                          { val: 'INVITE_ONLY', labelKey: 'registrationInviteOnly', subKey: 'registrationInviteOnlyShort' },
+                        ].map((item) => {
+                          const isSelected = registrationMode === item.val;
+                          return (
+                            <button
+                              key={item.val}
+                              type="button"
+                              onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
+                              className={`rounded-xl border p-2 text-center transition ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="text-xs font-bold">{translate(item.labelKey)}</div>
+                              <div className="text-[10px] text-slate-400 mt-0.5">{translate(item.subKey)}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </section>
+
+              {/* Card Phải 3: Nội dung thi đấu */}
               <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3.5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
@@ -1265,205 +1456,6 @@ export default function QuickTournamentCreate() {
                 )}
               </section>
 
-              {/* Card Phải 2: Thể thức thi đấu */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <GitBranch className="h-4 w-4" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">{translate('bracketTitle')}</h3>
-                  </div>
-                  <span className="text-xs text-slate-400">{translate('chooseOne')}</span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2.5">
-                  {BRACKET_OPTIONS.map((opt) => {
-                    const isSelected = bracketType === opt.id;
-                    const { Icon } = opt;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                          isSelected
-                            ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
-                        }`}
-                      >
-                        <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
-                            isSelected
-                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
-                              {translate(opt.labelKey)}
-                            </span>
-                            {isSelected && (
-                              <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
-                            )}
-                          </div>
-                          <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
-                            {translate(opt.descKey)}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {errors.bracketType && <span className="block text-xs text-rose-600">{errors.bracketType.message}</span>}
-              </section>
-
-              {/* Card Phải 3: Quy mô, ELO, Hiển thị & Chế độ đăng ký */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-                
-                {/* 1. Quy mô số đội */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5 text-blue-600" />
-                      {translate('tournamentScaleLabel')}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {bracketType === 'round_robin' ? translate('roundRobinScaleLimit') : translate('generalScaleLimit')}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {(bracketType === 'round_robin' ? [4, 6, 8, 10, 12, 15] : [4, 8, 16, 32, 64, 128]).map((num) => {
-                      const isCurrent = maxTeams === num;
-                      return (
-                        <button
-                          key={num}
-                          type="button"
-                          onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
-                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
-                            isCurrent
-                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
-                          }`}
-                        >
-                          {num}
-                        </button>
-                      );
-                    })}
-                    <div className="flex items-center gap-1 ml-auto">
-                      <span className="text-[11px] text-slate-500">{translate('otherOption')}</span>
-                      <input
-                        type="number"
-                        min={2}
-                        max={bracketType === 'round_robin' ? 15 : 128}
-                        {...register('maxTeams', { valueAsNumber: true })}
-                        className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-                  {errors.maxTeams && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.maxTeams.message}</span>}
-
-                  {/* Smart suggestion when Round Robin > 15 */}
-                  {bracketType === 'round_robin' && maxTeams > 15 && (
-                    <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <p className="leading-relaxed">
-                          <strong className="font-bold text-amber-950">{translate('smartSuggestionLabel')}</strong> {translate('roundRobinSuggestion', { maxTeams })}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setValue('bracketType', 'group_stage_knockout', { shouldValidate: true })}
-                          className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-amber-950 transition"
-                        >
-                          {translate('switchToGroupStage')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="h-px bg-slate-100" />
-
-                {/* 2. Hiển thị giải đấu */}
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
-                    <Eye className="h-3.5 w-3.5 text-blue-600" />
-                    {translate('visibilityTitle')}
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setValue('visibility', 'PUBLIC')}
-                      className={`rounded-xl border p-2.5 text-left transition ${
-                        visibility === 'PUBLIC'
-                          ? 'border-blue-500 bg-blue-50/70 ring-1 ring-blue-200'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
-                        <span className={`h-3 w-3 rounded-full border-2 ${visibility === 'PUBLIC' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
-                        {translate('publicVisibility')}
-                      </div>
-                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">{translate('publicVisibilityDescription')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue('visibility', 'PRIVATE')}
-                      className={`rounded-xl border p-2.5 text-left transition ${
-                        visibility === 'PRIVATE'
-                          ? 'border-blue-500 bg-blue-50/70 ring-1 ring-blue-200'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
-                        <span className={`h-3 w-3 rounded-full border-2 ${visibility === 'PRIVATE' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
-                        {translate('privateVisibility')}
-                      </div>
-                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">{translate('privateVisibilityDescription')}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 3. Chế độ nhận đăng ký (Chỉ hiện khi tạo trong CLB) */}
-                {communityId && (
-                  <>
-                    <div className="h-px bg-slate-100" />
-                    <div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
-                        <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-                        {translate('registrationModeTitle')}
-                      </span>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {[
-                          { val: 'OPEN', labelKey: 'registrationOpen', subKey: 'registrationOpenShort' },
-                          { val: 'APPROVAL', labelKey: 'registrationApproval', subKey: 'registrationApprovalShort' },
-                          { val: 'INVITE_ONLY', labelKey: 'registrationInviteOnly', subKey: 'registrationInviteOnlyShort' },
-                        ].map((item) => {
-                          const isSelected = registrationMode === item.val;
-                          return (
-                            <button
-                              key={item.val}
-                              type="button"
-                              onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
-                              className={`rounded-xl border p-2 text-center transition ${
-                                isSelected
-                                  ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                              }`}
-                            >
-                              <div className="text-xs font-bold">{translate(item.labelKey)}</div>
-                              <div className="text-[10px] text-slate-400 mt-0.5">{translate(item.subKey)}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </section>
 
               {/* Card Phải 4: Action Buttons (Sticky Submit) */}
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">

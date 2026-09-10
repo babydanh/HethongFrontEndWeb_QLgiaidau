@@ -9,6 +9,7 @@ import type {
   CommunityComment,
   CommunityPost,
   CommunityReactionType,
+  ReactionGroup,
 } from "@/types/community-social";
 import { cn } from "@/utils/cn";
 import { getErrorMessage } from "@/utils/error";
@@ -54,6 +55,10 @@ export default function CommunityPostCard({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const [commentReactionGroups, setCommentReactionGroups] = useState<Record<string, ReactionGroup[]>>({});
+  const [commentReactionOverrides, setCommentReactionOverrides] = useState<Record<string, CommunityReactionType | null>>({});
+  const [reactionViewer, setReactionViewer] = useState<{ title: string; groups: ReactionGroup[] } | null>(null);
+  const [loadingReactionViewer, setLoadingReactionViewer] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
 
   const commentCount = overrideCommentCount ?? (post.commentCount ?? 0);
@@ -71,6 +76,27 @@ export default function CommunityPostCard({
 
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
+
+  const openReactionViewer = async (target: 'POST' | 'COMMENT', targetId: string) => {
+    setLoadingReactionViewer(true);
+    try {
+      const response = target === 'POST'
+        ? await communitiesApi.getPostReactions(post.communityId, targetId)
+        : await communitiesApi.getCommentReactions(post.communityId, targetId);
+      const groups = response.data ?? [];
+      if (target === 'COMMENT') {
+        setCommentReactionGroups((current) => ({ ...current, [targetId]: groups }));
+      }
+      setReactionViewer({
+        title: target === 'POST' ? translate('reactionViewerTitle') : translate('commentReactionViewerTitle'),
+        groups,
+      });
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, translate('reactionViewerFailed')));
+    } finally {
+      setLoadingReactionViewer(false);
+    }
+  };
 
   // Popover Profile State
   const [popoverUser, setPopoverUser] = useState<PopoverUserProfile | null>(null);
@@ -621,22 +647,35 @@ export default function CommunityPostCard({
 
         {/* Interaction Actions */}
         <div className="mt-4 flex items-center gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600">
-          <button
-            type="button"
-            onClick={() => onReact("CHEER")}
-            className={cn(
-              "inline-flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors",
-              post.viewerReaction === "CHEER"
-                ? "text-rose-600 bg-rose-50 font-bold"
-                : "hover:text-rose-600 hover:bg-slate-50",
+          <div className="inline-flex items-center gap-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => onReact("CHEER")}
+              className={cn(
+                "inline-flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors",
+                post.viewerReaction === "CHEER"
+                  ? "text-rose-600 bg-rose-50 font-bold"
+                  : "hover:text-rose-600 hover:bg-slate-50",
+              )}
+              aria-label={translate('reactToPost')}
+            >
+              <Heart
+                className="h-4 w-4"
+                fill={post.viewerReaction === "CHEER" ? "currentColor" : "none"}
+              />
+              <span>{post.reactionCount}</span>
+            </button>
+            {post.reactionCount > 0 && (
+              <button
+                type="button"
+                onClick={() => void openReactionViewer('POST', post.id)}
+                className="rounded-lg px-1.5 py-1 text-slate-500 transition-colors hover:bg-slate-50 hover:text-blue-600"
+                aria-label={translate('reactionViewerTitle')}
+              >
+                {loadingReactionViewer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
+              </button>
             )}
-          >
-            <Heart
-              className="h-4 w-4"
-              fill={post.viewerReaction === "CHEER" ? "currentColor" : "none"}
-            />
-            <span>{post.reactionCount}</span>
-          </button>
+          </div>
           <button
             type="button"
             onClick={() => void loadComments(false)}
@@ -720,6 +759,11 @@ export default function CommunityPostCard({
                 const renderCommentItem = (comment: CommunityComment, isReply = false) => {
                   const authorName = comment.author?.fullName?.trim() || translate('member');
                   const authorAvatar = comment.author?.avatarUrl;
+                  const commentGroups = commentReactionGroups[comment.id] ?? [];
+                  const commentReactionCount = comment.reactionCount ?? commentGroups.reduce((sum, group) => sum + group.count, 0);
+                  const commentReaction = Object.prototype.hasOwnProperty.call(commentReactionOverrides, comment.id)
+                    ? commentReactionOverrides[comment.id]
+                    : comment.viewerReaction;
 
                   return (
                     <div
@@ -758,18 +802,31 @@ export default function CommunityPostCard({
                           <button
                             type="button"
                             onClick={() => {
-                              setLikedComments((prev) => ({
-                                ...prev,
-                                [comment.id]: !prev[comment.id],
-                              }));
+                              void communitiesApi.reactToComment(post.communityId, comment.id, 'LIKE')
+                                .then((result) => {
+                                  setLikedComments((prev) => ({ ...prev, [comment.id]: result.data.reactionType === 'LIKE' }));
+                                  setCommentReactionOverrides((prev) => ({ ...prev, [comment.id]: result.data.reactionType }));
+                                  setCommentReactionGroups((prev) => ({ ...prev, [comment.id]: result.data.reactionDetails ?? [] }));
+                                })
+                                .catch((error: unknown) => toast.error(getErrorMessage(error, translate('reactionUpdateFailed'))));
                             }}
                             className={cn(
                               "hover:underline cursor-pointer transition-colors",
                               likedComments[comment.id] ? "text-rose-600 font-bold" : "hover:text-rose-600",
                             )}
                           >
-                            {likedComments[comment.id] ? translate('likedAction') : translate('likeAction')}
+                            {commentReaction === 'LIKE' || likedComments[comment.id] ? translate('likedAction') : translate('likeAction')}
                           </button>
+                          {commentReactionCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => void openReactionViewer('COMMENT', comment.id)}
+                              className="inline-flex items-center gap-1 text-slate-400 hover:text-blue-600"
+                              aria-label={translate('commentReactionViewerTitle')}
+                            >
+                              <span>👍</span><span>{commentReactionCount}</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => {
@@ -918,6 +975,37 @@ export default function CommunityPostCard({
         }}
         communityId={post.communityId}
       />
+
+      {reactionViewer && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={reactionViewer.title}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-base font-bold text-slate-900">{reactionViewer.title}</h2>
+              <button type="button" onClick={() => setReactionViewer(null)} className="text-xl leading-none text-slate-400 hover:text-slate-800" aria-label={translate('closeAction')}>×</button>
+            </div>
+            <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
+              {reactionViewer.groups.length === 0 ? (
+                <p className="py-6 text-center text-sm text-slate-500">{translate('noReactions')}</p>
+              ) : reactionViewer.groups.map((group) => (
+                <div key={group.reactionType}>
+                  <div className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <span>{({ LIKE: '👍', CHEER: '❤️', RESPECT: '👏', LAUGH: '😂', CLUTCH: '🔥' } as Record<string, string>)[group.reactionType] ?? '👍'}</span>
+                    <span>{group.count}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {group.users.map((viewer) => (
+                      <div key={viewer.id} className="flex items-center gap-2 text-sm text-slate-800">
+                        <CommunityAvatar src={viewer.avatarUrl} name={viewer.fullName} size={28} />
+                        <span className="truncate">{viewer.fullName}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

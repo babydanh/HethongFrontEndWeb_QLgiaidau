@@ -147,6 +147,21 @@ export interface CommunityComment {
   updatedAt?: string;
   status?: 'PUBLISHED' | 'HIDDEN' | 'REJECTED';
   moderationReason?: string | null;
+  reactionCount?: number;
+  viewerReaction?: CommunityReactionType | null;
+}
+
+export interface ReactionViewer {
+  id: string;
+  fullName: string;
+  avatarUrl?: string | null;
+}
+
+export interface ReactionGroup {
+  reactionType: string;
+  count: number;
+  isReacted?: boolean;
+  users: ReactionViewer[];
 }
 
 export interface CommunitySocialSettings {
@@ -196,6 +211,13 @@ export interface ChatMessage {
   type?: 'TEXT' | 'POLL' | 'TOURNAMENT_SHARE' | 'LINK_PREVIEW' | string;
   metadata?: ChatMessageMetadata;
   reactions?: string[];
+  reactionDetails?: Array<{
+    emoji: string;
+    count: number;
+    isReacted?: boolean;
+    userIds?: string[];
+    users: ReactionViewer[];
+  }>;
   createdAt: string;
 }
 

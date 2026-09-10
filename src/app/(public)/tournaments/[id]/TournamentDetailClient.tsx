@@ -983,7 +983,7 @@ const commonTranslate = useTranslations('Common');
                 </span>
               </div>
 
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-snug">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
                 {tournament.name}
               </h1>
             </div>
@@ -1025,7 +1025,7 @@ const commonTranslate = useTranslations('Common');
                 </span>
               </div>
 
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-snug">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
                 {tournament.name}
               </h1>
             </div>

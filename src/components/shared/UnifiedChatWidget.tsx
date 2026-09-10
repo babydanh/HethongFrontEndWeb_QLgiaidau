@@ -78,6 +78,7 @@ type Selection =
   | { kind: 'ROOM'; room: InboxRoom };
 
 type DisplayMessage = ChatMessage & { mine: boolean };
+type ChatReactionDetail = NonNullable<ChatMessage['reactionDetails']>[number];
 type AiToolEvent = { type: 'tool_start' | 'tool_result' | 'tool_error'; tool: string; label: string; round: number; status?: string; uiBlocks?: AssistantUiBlock[] };
 type AiMessage = { role: 'user' | 'assistant'; content: string; uiBlocks?: AssistantUiBlock[]; toolEvents?: AiToolEvent[] };
 type RoomAiReply = { id: string; question: string; content: string; createdAt: string };
@@ -308,6 +309,8 @@ export default function UnifiedChatWidget() {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [reactions, setReactions] = useState<Record<string, string[]>>({});
+  const [reactionDetails, setReactionDetails] = useState<Record<string, ChatReactionDetail[]>>({});
+  const [reactionDetailMessageId, setReactionDetailMessageId] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -828,15 +831,19 @@ export default function UnifiedChatWidget() {
       );
     };
 
-    const onReaction = (data: { roomId: string; messageId: string; userId: string; emoji: string; reactions: string[] }) => {
+    const onReaction = (data: { roomId: string; messageId: string; userId: string; emoji: string; reactions: string[]; reactionDetails?: ChatReactionDetail[] }) => {
       if (data.roomId !== roomId || !active) return;
       setReactions((prev) => ({
         ...prev,
         [data.messageId]: data.reactions,
       }));
+      setReactionDetails((prev) => ({
+        ...prev,
+        [data.messageId]: data.reactionDetails ?? [],
+      }));
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === data.messageId ? { ...m, reactions: data.reactions } : m,
+          m.id === data.messageId ? { ...m, reactions: data.reactions, reactionDetails: data.reactionDetails ?? [] } : m,
         ),
       );
     };
@@ -954,12 +961,17 @@ export default function UnifiedChatWidget() {
             mine: message.senderId === user?.id,
           }));
           const rxMap: Record<string, string[]> = {};
+          const detailMap: Record<string, ChatReactionDetail[]> = {};
           fetchedMessages.forEach((m) => {
             if (m.reactions && m.reactions.length > 0) {
               rxMap[m.id] = m.reactions;
             }
+            if (m.reactionDetails && m.reactionDetails.length > 0) {
+              detailMap[m.id] = m.reactionDetails;
+            }
           });
           setReactions((prev) => ({ ...prev, ...rxMap }));
+          setReactionDetails((prev) => ({ ...prev, ...detailMap }));
           setMessages(
             fetchedMessages.sort(
               (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -1104,7 +1116,10 @@ export default function UnifiedChatWidget() {
     });
 
     try {
-      await inboxApi.toggleReaction(messageId, emoji);
+      const response = await inboxApi.toggleReaction(messageId, emoji);
+      const payload = (response.data as unknown as { data?: { reactions?: string[]; reactionDetails?: ChatReactionDetail[] }; reactions?: string[]; reactionDetails?: ChatReactionDetail[] }).data ?? response.data;
+      if (payload.reactions) setReactions((prev) => ({ ...prev, [messageId]: payload.reactions ?? [] }));
+      if (payload.reactionDetails) setReactionDetails((prev) => ({ ...prev, [messageId]: payload.reactionDetails ?? [] }));
     } catch {
       // socket listener will sync
     }
@@ -1495,6 +1510,11 @@ export default function UnifiedChatWidget() {
         ...message,
         mine: message.senderId === user?.id,
       }));
+      const olderDetails: Record<string, ChatReactionDetail[]> = {};
+      older.forEach((message) => {
+        if (message.reactionDetails?.length) olderDetails[message.id] = message.reactionDetails;
+      });
+      setReactionDetails((prev) => ({ ...prev, ...olderDetails }));
       setMessages((current) => [
         ...older.filter(
           (message) => !current.some((item) => item.id === message.id),
@@ -2899,7 +2919,7 @@ export default function UnifiedChatWidget() {
                                       className={`absolute -bottom-2.5 ${
                                         message.mine ? 'left-2' : 'right-2'
                                       } z-10 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-xs shadow-md border border-slate-200 cursor-pointer hover:scale-105 active:scale-95 transition`}
-                                      onClick={() => void toggleReaction(message.id, msgReactions[0])}
+                                      onClick={() => setReactionDetailMessageId(message.id)}
                                       title={translate('chatReactionTooltip', { count: msgReactions.length, summary: reactionSummary })}
                                     >
                                       {Object.keys(reactionCounts).map((emoji) => (
@@ -2988,7 +3008,7 @@ export default function UnifiedChatWidget() {
                   </div>
                 </div>
               ))}
-              <div ref={endRef} />
+      <div ref={endRef} />
 
               {/* Floating Messenger-like Scroll-To-Bottom Button */}
               {showScrollBottom && (
@@ -3639,6 +3659,44 @@ export default function UnifiedChatWidget() {
           </section>
         </div>
       )}
+
+      {reactionDetailMessageId && (() => {
+        const message = messages.find((item) => item.id === reactionDetailMessageId);
+        const groups = message?.reactionDetails ?? reactionDetails[reactionDetailMessageId] ?? [];
+        return (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label={translate('chatReactionTitle')}
+            onClick={() => setReactionDetailMessageId(null)}
+          >
+            <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-bold text-slate-900">{translate('chatReactionTitle')}</h2>
+                <button type="button" onClick={() => setReactionDetailMessageId(null)} className="text-xl leading-none text-slate-400 hover:text-slate-800" aria-label={translate('chatClose')}>×</button>
+              </div>
+              <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
+                {groups.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-500">{translate('noReactions')}</p>
+                ) : groups.map((group) => (
+                  <div key={group.emoji}>
+                    <div className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><span>{group.emoji}</span><span>{group.count}</span></div>
+                    <div className="space-y-1.5">
+                      {group.users.map((viewer) => (
+                        <div key={viewer.id} className="flex items-center gap-2 text-sm text-slate-800">
+                          {viewer.avatarUrl ? <img src={viewer.avatarUrl} alt={viewer.fullName} className="h-7 w-7 rounded-full object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">{viewer.fullName.trim().charAt(0).toUpperCase() || '?'}</span>}
+                          <span className="truncate">{viewer.fullName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Main Floating Trigger Button */}
       <button

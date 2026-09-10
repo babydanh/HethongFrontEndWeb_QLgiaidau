@@ -358,8 +358,8 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
         }}
         className={`w-full bg-white border border-slate-300 rounded-lg px-4 py-3 transition-all duration-300 ${
           isFocused 
-            ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[300px]' 
-            : 'hover:border-slate-400 min-h-[140px]'
+            ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[360px]' 
+            : 'hover:border-slate-400 min-h-[220px]'
         }`}
       >
         <div ref={containerRef} className="prose prose-slate max-w-none text-slate-800 text-sm editorjs-container" />
@@ -369,7 +369,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
       <style jsx global>{`
         .editorjs-container .codex-editor__redactor {
           padding-bottom: 20px !important;
-          min-height: 100px;
+          min-height: 180px;
         }
         .editorjs-container .ce-block {
           margin-bottom: 8px;

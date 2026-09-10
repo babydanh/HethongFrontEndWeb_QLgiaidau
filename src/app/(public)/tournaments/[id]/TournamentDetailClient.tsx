@@ -953,7 +953,7 @@ const commonTranslate = useTranslations('Common');
             <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex flex-wrap items-center gap-1.5">
                 {/* Status Badge */}
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md shadow-2xs ${
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
                   isLive
                     ? 'bg-rose-600 text-white'
                     : isFinished
@@ -970,19 +970,13 @@ const commonTranslate = useTranslations('Common');
 
                 {/* Sport Badge */}
                 {activeTournament.category?.name && (
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
-                    {(() => {
-                      const logo = getSportLogo(activeTournament.category?.name);
-                      return logo ? (
-                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3 h-3 object-contain brightness-0 invert" />
-                      ) : null;
-                    })()}
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
                     {activeTournament.category.name}
                   </span>
                 )}
 
                 {/* Ranked / Casual Badge */}
-                <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md shadow-2xs ${
+                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
                   activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
                 }`}>
                   {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
@@ -1001,7 +995,7 @@ const commonTranslate = useTranslations('Common');
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-1.5">
                 {/* Status Badge */}
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md shadow-2xs ${
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
                   isLive
                     ? 'bg-rose-600 text-white'
                     : isFinished
@@ -1018,19 +1012,13 @@ const commonTranslate = useTranslations('Common');
 
                 {/* Sport Badge */}
                 {activeTournament.category?.name && (
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
-                    {(() => {
-                      const logo = getSportLogo(activeTournament.category?.name);
-                      return logo ? (
-                        <img src={logo} alt={activeTournament.category?.name || ''} className="w-3 h-3 object-contain brightness-0 invert" />
-                      ) : null;
-                    })()}
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
                     {activeTournament.category.name}
                   </span>
                 )}
 
                 {/* Ranked / Casual Badge */}
-                <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md shadow-2xs ${
+                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
                   activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
                 }`}>
                   {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
@@ -1104,7 +1092,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="info"
-                size="md"
+                size="sm"
               />
             </div>
           );
@@ -1122,7 +1110,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="warning"
-                size="md"
+                size="sm"
               />
             </div>
           );
@@ -1140,7 +1128,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="danger"
-                size="md"
+                size="sm"
               />
             </div>
           );
@@ -1158,7 +1146,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="danger"
-                size="md"
+                size="sm"
               />
             </div>
           );
@@ -1306,23 +1294,15 @@ const commonTranslate = useTranslations('Common');
         )}
       </div>
 
-      {/* Fee & Registration Lock Status (Timeline đã có đồng hồ đếm ngược trực quan ở trên) */}
-      {(isRegistrationLocked || Number(activeTournament.entryFee) > 0) && (
-        <div className="pt-3 border-t border-slate-100 space-y-2.5">
-          {isRegistrationLocked && (
-            <div className="flex items-center justify-between text-xs font-bold text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
-              <span>{translate('registrationLocked') || 'Đã khóa đăng ký'}</span>
-              <span>🔒</span>
-            </div>
-          )}
-          {Number(activeTournament.entryFee) > 0 && (
-            <div className="flex items-center justify-between text-slate-700 pt-0.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{translate('entryFee') || 'Lệ phí tham gia'}:</span>
-              <span className="font-black text-blue-600 text-base sm:text-lg tracking-tight">
-                {formatCurrency(activeTournament.entryFee)}
-              </span>
-            </div>
-          )}
+      {/* Entry Fee (if any) */}
+      {Number(activeTournament.entryFee) > 0 && (
+        <div className="pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between text-slate-700 pt-0.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{translate('entryFee') || 'Lệ phí tham gia'}:</span>
+            <span className="font-black text-blue-600 text-base sm:text-lg tracking-tight">
+              {formatCurrency(activeTournament.entryFee)}
+            </span>
+          </div>
         </div>
       )}
 

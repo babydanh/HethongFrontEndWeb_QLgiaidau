@@ -76,13 +76,13 @@ export default function CountdownTimer({
     danger: 'bg-rose-500 animate-pulse',
   };
 
-  const padding = size === 'sm' ? 'py-2 px-3' : size === 'lg' ? 'py-3 px-4' : 'py-2.5 px-3';
+  const padding = size === 'sm' ? 'py-1.5 px-2.5' : size === 'lg' ? 'py-3 px-4' : 'py-2.5 px-3';
 
   return (
-    <div className={`mt-2 ${padding} border rounded-xl shadow-2xs ${colors[variant]}`}>
-      <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full shrink-0 ${dotColors[variant]}`} />
-        <span className={`font-bold tracking-tight ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-xs sm:text-sm'}`}>
+    <div className={`mt-2 ${padding} border rounded-lg shadow-2xs ${colors[variant]}`}>
+      <div className="flex items-center gap-1.5">
+        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[variant]}`} />
+        <span className={`font-bold tracking-tight ${size === 'sm' ? 'text-[11px]' : size === 'lg' ? 'text-base' : 'text-xs sm:text-sm'}`}>
           {display}
         </span>
       </div>

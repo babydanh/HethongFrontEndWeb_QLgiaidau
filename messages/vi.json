@@ -7527,6 +7527,7 @@
     "sidebar": {
       "manageMenu": "Menu quản lý giải",
       "openMenu": "Mở menu quản lý giải",
+      "closeMenu": "Đóng menu quản lý giải",
       "setupGroup": "Thiết lập",
       "operationsGroup": "Vận hành",
       "resultsGroup": "Kết quả",
@@ -7547,6 +7548,7 @@
       "elo": "ELO / suất đặc cách",
       "format": "Thể thức & Sơ đồ",
       "content": "Nội dung thi đấu",
+      "rules": "Luật thi đấu & Tính điểm",
       "bracket": "Bracket & Sơ đồ",
       "matches": "Trận đấu",
       "matchSchedule": "Lịch thi đấu & Xếp sân",

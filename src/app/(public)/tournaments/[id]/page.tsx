@@ -7,6 +7,7 @@ import { isTournamentCompleted } from '@/utils/tournament-status';
 import TournamentDetailClient from './TournamentDetailClient';
 import { getTournament, getTournamentDivisions, getTournamentResults } from './tournament-fetcher';
 import type { TournamentResult } from '@/features/tournaments/api';
+import { hasPublishedTournamentResults } from '@/features/tournaments/result-availability';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -103,9 +104,13 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
     tournament = t;
     divisions = d;
   } catch (err: unknown) {
-    if ((err as any)?.statusCode === 403) {
+    const statusCode =
+      typeof err === 'object' && err !== null && 'statusCode' in err
+        ? (err as { statusCode?: unknown }).statusCode
+        : undefined;
+    if (statusCode === 403) {
       isForbidden = true;
-      forbiddenMessage = (err as Error)?.message || null;
+      forbiddenMessage = err instanceof Error ? err.message : null;
     } else {
       // Preserve Next.js error handling for transient API/5xx failures instead of
       // turning an outage into a misleading not-found page.
@@ -136,9 +141,7 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
     divisionIdsToCheck.map((dId) => getTournamentResults(resolvedParams.id, dId))
   );
 
-  let hasInitialResults = Boolean(
-    tournament.status && isTournamentCompleted(tournament.status)
-  );
+  let hasInitialResults = false;
   let primaryResults: TournamentResult | null = null;
   const initialCompletedDivisionIds: Record<string, boolean> = {};
 
@@ -153,7 +156,7 @@ export default async function TournamentDetailPage({ params, searchParams }: Pag
     if (res.status === 'fulfilled' && res.value) {
       const awards = res.value.awards ?? [];
       const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
-      if (awards.length >= 1 || res.value.finalized || hasTop1) {
+      if (hasPublishedTournamentResults(res.value)) {
         hasInitialResults = true;
         if (!primaryResults) primaryResults = res.value;
         if (dId && (res.value.finalized || hasTop1)) {

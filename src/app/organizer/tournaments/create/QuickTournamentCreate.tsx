@@ -25,6 +25,7 @@ import {
   X,
   Sparkles,
   Home,
+  FileText,
 } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
@@ -354,6 +355,7 @@ export default function QuickTournamentCreate() {
   const formValues = useWatch({ control });
   const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [editingFormatId, setEditingFormatId] = useState<string | null>(null);
   const [formatDraft, setFormatDraft] = useState<QuickFormatConfig>({
@@ -381,15 +383,16 @@ export default function QuickTournamentCreate() {
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
   useEffect(() => {
-    if (!isFormatModalOpen && !isAiModalOpen) return;
+    if (!isFormatModalOpen && !isAiModalOpen && !isDescriptionModalOpen) return;
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (isFormatModalOpen) setIsFormatModalOpen(false);
       if (isAiModalOpen) setIsAiModalOpen(false);
+      if (isDescriptionModalOpen) setIsDescriptionModalOpen(false);
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isAiModalOpen, isFormatModalOpen]);
+  }, [isAiModalOpen, isFormatModalOpen, isDescriptionModalOpen]);
 
   const draftKey = `sporto:tournament-quick-draft:${communityId || 'public'}`;
 
@@ -819,36 +822,31 @@ export default function QuickTournamentCreate() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50/70 px-4 py-8 md:px-8">
+    <main className="min-h-screen bg-slate-50/70 px-3 py-3 sm:px-6 sm:py-4">
       <div className="mx-auto max-w-7xl">
-        {/* Header Bar */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/25">
-                <Trophy className="h-5 w-5" />
-              </div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{translate('pageTitle')}</h1>
+        {/* Header Bar: Tinh gọn 1 hàng */}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
+              <Trophy className="h-4 w-4" />
             </div>
-            <p className="mt-1.5 text-xs md:text-sm text-slate-500">
-              {translate('pageSubtitle')}
-            </p>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">{translate('pageTitle')}</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-auto">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setIsAiModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 transition cursor-pointer"
             >
-              <Sparkles className="h-4 w-4 text-amber-500" />
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
               {translate('createWithAiExcel')}
             </button>
             <button
               type="button"
               onClick={() => router.push(`/organizer/tournaments/create?mode=advanced${communityId ? `&communityId=${communityId}` : ''}`)}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer"
             >
-              <Settings2 className="h-4 w-4 text-slate-500" /> {translate('advancedCreate')}
+              <Settings2 className="h-3.5 w-3.5 text-slate-500" /> {translate('advancedCreate')}
             </button>
           </div>
         </div>
@@ -868,21 +866,21 @@ export default function QuickTournamentCreate() {
         >
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 items-start">
             
-            {/* ─── CỘT TRÁI (7 CỘT): THÔNG TIN CƠ BẢN, LỊCH TRÌNH, ĐỊA ĐIỂM, MÔ TẢ ─── */}
-            <div className="space-y-4 lg:col-span-7">
+            {/* ─── CỘT TRÁI (7 CỘT): THÔNG TIN CƠ BẢN, LỊCH TRÌNH & ĐỊA ĐIỂM ─── */}
+            <div className="space-y-3 lg:col-span-7">
               
-              {/* Card 1: Thông tin cơ bản */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              {/* Card 1: Thông tin cơ bản & Môn thể thao & Mô tả */}
+              <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <Trophy className="h-4 w-4" />
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <Trophy className="h-3.5 w-3.5" />
                     </div>
-                    <h2 className="text-base font-bold text-slate-900">{translate('basicInfoTitle')}</h2>
+                    <h2 className="text-sm font-bold text-slate-900">{translate('basicInfoTitle')}</h2>
                   </div>
 
                   {/* Nút gạt bật/tắt hiển thị Công khai */}
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-slate-700 select-none">
                       {translate('publicVisibility')}
                     </span>
@@ -891,13 +889,13 @@ export default function QuickTournamentCreate() {
                       role="switch"
                       aria-checked={visibility === 'PUBLIC'}
                       onClick={() => setValue('visibility', visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC', { shouldValidate: true, shouldDirty: true })}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-1 ${
                         visibility === 'PUBLIC' ? 'bg-blue-600' : 'bg-slate-300'
                       }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                          visibility === 'PUBLIC' ? 'translate-x-5' : 'translate-x-0'
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                          visibility === 'PUBLIC' ? 'translate-x-4' : 'translate-x-0'
                         }`}
                       />
                     </button>
@@ -906,13 +904,13 @@ export default function QuickTournamentCreate() {
 
                 {/* Tên giải đấu */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
                     {translate('tournamentNameLabel')} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     data-testid="tournament-name-input"
                     {...register('name')}
-                    className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     placeholder={translate('tournamentNamePlaceholder')}
                   />
                   {errors.name && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.name.message}</span>}
@@ -920,10 +918,10 @@ export default function QuickTournamentCreate() {
 
                 {/* Môn thể thao chính */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                     {translate('sportLabel')} <span className="text-rose-500">*</span>
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                     {categories.map((category) => {
                       const value = sportFromCategory(category);
                       if (!value) return null;
@@ -938,14 +936,14 @@ export default function QuickTournamentCreate() {
                             setValue('sport', value, { shouldValidate: true, shouldDirty: true });
                             handleSportChange(value);
                           }}
-                          className={`flex items-center gap-2 rounded-xl border p-2 text-left transition cursor-pointer ${
+                          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer ${
                             isSelected
                               ? 'border-blue-600 bg-blue-50/80 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                           }`}
                         >
                           {sportIcon ? (
-                            <div className="relative h-5 w-5 shrink-0">
+                            <div className="relative h-4 w-4 shrink-0">
                               <Image
                                 src={sportIcon}
                                 alt={category.name}
@@ -954,61 +952,69 @@ export default function QuickTournamentCreate() {
                               />
                             </div>
                           ) : (
-                            <Trophy className="h-4 w-4 text-slate-400 shrink-0" />
+                            <Trophy className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                           )}
                           <span className="text-xs font-semibold truncate">{category.name}</span>
                         </button>
                       );
                     })}
                   </div>
-                  {/* Hidden input to maintain react-hook-form registration */}
                   <input type="hidden" {...register('sport')} />
-                  <span className="mt-1 block text-[11px] text-slate-500">
-                    {selectedCategory ? translate('defaultRulesApplied', { sport: selectedCategory.name }) : translate('selectSportHint')}
-                  </span>
                 </div>
 
-                {/* Mô tả giải đấu: Trình soạn thảo trực tiếp */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                    {translate('descriptionLabel')}
-                  </label>
-                  <RichTextEditor
-                    value={description}
-                    onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
-                    placeholder={translate('descriptionEditorPlaceholder')}
-                  />
+                {/* Mô tả giải đấu: Thanh mở popup soạn thảo gọn gàng */}
+                <div className="border-t border-slate-100 pt-2 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1 pr-2">
+                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-700 shrink-0">{translate('descriptionLabel')}:</span>
+                    <span className="text-xs text-slate-400 truncate">
+                      {description
+                        ? description.replace(/<[^>]*>/g, '').trim().slice(0, 45) + (description.length > 45 ? '...' : '')
+                        : translate('descriptionPlaceholder')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsDescriptionModalOpen(true)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition cursor-pointer shrink-0"
+                  >
+                    <Settings2 className="h-3 w-3" />
+                    <span>{description ? translate('editFormat') : translate('openEditor')}</span>
+                  </button>
                   <input type="hidden" {...register('description')} />
                 </div>
               </section>
 
-              {/* Card 2: Lịch trình thời gian */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                    <Calendar className="h-4 w-4" />
+              {/* Card 2: Lịch trình & Địa điểm thi đấu kết hợp */}
+              <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <Calendar className="h-3.5 w-3.5" />
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">{translate('scheduleTitle')}</h2>
+                  <h2 className="text-sm font-bold text-slate-900">{translate('scheduleTitle')} & {translate('locationTitle')}</h2>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                {/* Lịch trình: 2 DateTimePicker chính */}
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   <DateTimePicker
                     name="registrationStart"
-					label={translate('registrationStartLabel')}                    value={registrationStart || ''}
+                    label={translate('registrationStartLabel')}
+                    value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
                   <DateTimePicker
                     name="startDate"
-					label={translate('startDateLabel')}                    value={startDate || ''}
+                    label={translate('startDateLabel')}
+                    value={startDate || ''}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
                   />
 
-                  <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                  <DateTimePicker
+                  <div className={`sm:col-span-2 grid gap-2.5 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
+                    <div className="grid gap-2.5 sm:grid-cols-2">
+                      <DateTimePicker
                         name="registrationEnd"
                         label={translate('registrationEndLabel')}
                         value={registrationEnd || ''}
@@ -1027,60 +1033,48 @@ export default function QuickTournamentCreate() {
                     </div>
                   </div>
                 </div>
-              </section>
 
-              {/* Card 3: Địa điểm & Sân thi đấu */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                    <MapPin className="h-4 w-4" />
+                {/* Địa điểm thi đấu */}
+                <div className="border-t border-slate-100 pt-2.5 space-y-2">
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                        {translate('venueLabel')}
+                      </label>
+                      <input
+                        data-testid="venue-name-input"
+                        {...register('venueName')}
+                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        placeholder={translate('venuePlaceholder')}
+                      />
+                      {errors.venueName && <span className="mt-0.5 block text-[11px] text-rose-600">{errors.venueName.message}</span>}
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                        {translate('addressLabel')}
+                      </label>
+                      <input
+                        data-testid="location-address-input"
+                        {...register('locationAddress')}
+                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        placeholder={translate('addressPlaceholder')}
+                      />
+                      {errors.locationAddress && <span className="mt-0.5 block text-[11px] text-rose-600">{errors.locationAddress.message}</span>}
+                      {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                        <div className="mt-1 flex items-center gap-1 text-[11px] text-blue-600 font-medium">
+                          <Sparkles className="w-3 h-3 shrink-0 text-blue-500" />
+                          <span className="truncate">
+                            <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                            {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">{translate('locationTitle')}</h2>
-                </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      {translate('venueLabel')}
-                    </label>
-                    <input
-                      data-testid="venue-name-input"
-                      {...register('venueName')}
-                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      placeholder={translate('venuePlaceholder')}
-                    />
-                    {errors.venueName && <span className="mt-1 block text-xs text-rose-600">{errors.venueName.message}</span>}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      {translate('addressLabel')}
-                    </label>
-                    <input
-                      data-testid="location-address-input"
-                      {...register('locationAddress')}
-                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      placeholder={translate('addressPlaceholder')}
-                    />
-                    {errors.locationAddress && <span className="mt-1 block text-xs text-rose-600">{errors.locationAddress.message}</span>}
-                    {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
-                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-fadeIn">
-                        <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-500" />
-                        <span>
-                          <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
-                          {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Dropdowns Tỉnh/Thành ➔ Phường/Xã */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                    {translate('administrativeAreaLabel')}
-                  </label>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  {/* Dropdowns Tỉnh/Thành & Phường/Xã */}
+                  <div className="grid gap-2 sm:grid-cols-2">
                     <div>
                       <SearchableRegionSelect
                         value={province || ''}
@@ -1107,9 +1101,6 @@ export default function QuickTournamentCreate() {
                       />
                     </div>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    {translate('locationHint')}
-                  </p>
                 </div>
               </section>
 
@@ -1180,22 +1171,22 @@ export default function QuickTournamentCreate() {
 
             </div>
 
-            {/* ─── CỘT PHẢI (5 CỘT - STICKY): NỘI DUNG, THỂ THỨC, ELO, QUY MÔ, HIỂN THỊ, NÚT SUBMIT ─── */}
-            <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
+            {/* ─── CỘT PHẢI (5 CỘT - STICKY): THỂ THỨC, QUY MÔ, NỘI DUNG, NÚT SUBMIT ─── */}
+            <div className="space-y-3 lg:col-span-5 lg:sticky lg:top-4 lg:self-start">
               
-              {/* Card Phải 1: Thể thức thi đấu */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              {/* Card Phải 1: Thể thức thi đấu (Grid 2x2 siêu gọn) */}
+              <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <GitBranch className="h-4 w-4" />
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <GitBranch className="h-3.5 w-3.5" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900">{translate('bracketTitle')}</h3>
+                    <h3 className="text-xs font-bold text-slate-900">{translate('bracketTitle')}</h3>
                   </div>
-                  <span className="text-xs text-slate-400">{translate('chooseOne')}</span>
+                  <span className="text-[11px] text-slate-400">{translate('chooseOne')}</span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5">
+                <div className="grid grid-cols-2 gap-1.5">
                   {BRACKET_OPTIONS.map((opt) => {
                     const isSelected = bracketType === opt.id;
                     const { Icon } = opt;
@@ -1204,51 +1195,43 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all cursor-pointer ${
+                        className={`group flex items-center gap-2 rounded-lg border p-2 text-left transition cursor-pointer ${
                           isSelected
                             ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
                             : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
                         }`}
                       >
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition ${
                             isSelected
-                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                              ? 'border-blue-600 bg-blue-600 text-white'
                               : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
                           }`}
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
-                              {translate(opt.labelKey)}
-                            </span>
-                            {isSelected && (
-                              <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
-                            )}
-                          </div>
-                          <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
-                            {translate(opt.descKey)}
-                          </p>
+                          <span className={`block text-xs font-bold truncate transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                            {translate(opt.labelKey)}
+                          </span>
                         </div>
                       </button>
                     );
                   })}
                 </div>
-                {errors.bracketType && <span className="block text-xs text-rose-600">{errors.bracketType.message}</span>}
+                {errors.bracketType && <span className="block text-[11px] text-rose-600">{errors.bracketType.message}</span>}
               </section>
 
               {/* Card Phải 2: Quy mô & Chế độ đăng ký */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5">
                 {/* 1. Quy mô số đội */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5 text-blue-600" />
                       {translate('tournamentScaleLabel')}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-[11px] text-slate-400">
                       {bracketType === 'round_robin' ? translate('roundRobinScaleLimit') : translate('generalScaleLimit')}
                     </span>
                   </div>
@@ -1260,7 +1243,7 @@ export default function QuickTournamentCreate() {
                           key={num}
                           type="button"
                           onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
-                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                          className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
                             isCurrent
                               ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
                               : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
@@ -1277,7 +1260,7 @@ export default function QuickTournamentCreate() {
                         min={2}
                         max={bracketType === 'round_robin' ? 15 : 128}
                         {...register('maxTeams', { valueAsNumber: true })}
-                        className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                        className="w-12 rounded-lg border border-slate-300 bg-white px-1.5 py-0.5 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -1285,15 +1268,15 @@ export default function QuickTournamentCreate() {
 
                   {/* Smart suggestion when Round Robin > 15 */}
                   {bracketType === 'round_robin' && maxTeams > 15 && (
-                    <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <p className="leading-relaxed">
+                    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50/90 p-2.5 text-xs text-amber-900 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <p className="leading-tight text-[11px]">
                           <strong className="font-bold text-amber-950">{translate('smartSuggestionLabel')}</strong> {translate('roundRobinSuggestion', { maxTeams })}
                         </p>
                         <button
                           type="button"
                           onClick={() => setValue('bracketType', 'group_stage_knockout', { shouldValidate: true })}
-                          className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-amber-950 transition"
+                          className="shrink-0 rounded bg-amber-200 hover:bg-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950 transition"
                         >
                           {translate('switchToGroupStage')}
                         </button>
@@ -1307,7 +1290,7 @@ export default function QuickTournamentCreate() {
                   <>
                     <div className="h-px bg-slate-100" />
                     <div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-1.5">
                         <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                         {translate('registrationModeTitle')}
                       </span>
@@ -1323,7 +1306,7 @@ export default function QuickTournamentCreate() {
                               key={item.val}
                               type="button"
                               onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
-                              className={`rounded-xl border p-2 text-center transition ${
+                              className={`rounded-lg border p-1.5 text-center transition cursor-pointer ${
                                 isSelected
                                   ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
                                   : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -1341,22 +1324,22 @@ export default function QuickTournamentCreate() {
               </section>
 
               {/* Card Phải 3: Nội dung thi đấu */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3.5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <Layers className="h-4 w-4" />
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <Layers className="h-3.5 w-3.5" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <h3 className="text-xs font-bold text-slate-900">
                       {sport === 'football' ? translate('footballContentTitle') : translate('competitionContentTitle')}
                     </h3>
                   </div>
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200">
                     {translate('selectedFormatsCount', { count: selectedFormats.length })}
                   </span>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {formatConfigs
                     .filter((config) => (sport === 'football' ? config.key.startsWith('FOOTBALL_') : !config.key.startsWith('FOOTBALL_')))
                     .map((config) => {
@@ -1375,7 +1358,7 @@ export default function QuickTournamentCreate() {
                       return (
                         <div
                           key={formatId}
-                          className={`group flex items-center justify-between rounded-xl border px-3.5 py-2.5 transition-all ${
+                          className={`group flex items-center justify-between rounded-lg border px-3 py-1.5 transition-all ${
                             isSelected
                               ? 'border-blue-500 bg-blue-50/75 text-blue-950 shadow-2xs'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/70'
@@ -1385,7 +1368,7 @@ export default function QuickTournamentCreate() {
                             type="button"
                             data-testid={`format-option-${formatId}`}
                             onClick={() => toggleFormat(formatId)}
-                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left cursor-pointer"
+                            className="flex min-w-0 flex-1 items-center gap-2 text-left cursor-pointer"
                           >
                             <span
                               className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold leading-none transition-colors ${
@@ -1395,51 +1378,49 @@ export default function QuickTournamentCreate() {
                               {isSelected ? '✓' : ''}
                             </span>
                             <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
-                              {/* Tên nội dung thi đấu - không gian rộng rãi tối đa */}
-                              <span className="truncate text-xs sm:text-sm font-bold text-slate-900">
+                              {/* Tên nội dung thi đấu */}
+                              <span className="truncate text-xs font-bold text-slate-900">
                                 {config.label}
                               </span>
 
-                              {/* Badges tinh gọn: Icon thể thức + Icon người và số lượng (bỏ chữ trình, chữ đội) */}
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {/* Thể thức thi đấu dạng icon */}
+                              {/* Badges tinh gọn */}
+                              <div className="flex items-center gap-1 shrink-0">
                                 <span
                                   title={bracketTitle}
-                                  className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-slate-100/90 text-slate-600 border border-slate-200/80 shadow-2xs hover:bg-slate-200/80 transition-colors"
+                                  className="inline-flex items-center justify-center h-5 w-5 rounded bg-slate-100/90 text-slate-600 border border-slate-200/80 shadow-2xs"
                                 >
-                                  <BracketIcon className="h-3.5 w-3.5" />
+                                  <BracketIcon className="h-3 w-3" />
                                 </span>
 
-                                {/* Số lượng dạng icon người + số */}
                                 <span
                                   title={`${translate('participantLimitUnit')}: ${participantCount}`}
-                                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100/90 border border-slate-200/80 px-2 py-0.5 text-xs font-bold text-slate-700 shadow-2xs"
+                                  className="inline-flex items-center gap-1 rounded bg-slate-100/90 border border-slate-200/80 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 shadow-2xs"
                                 >
-                                  <Users className="h-3.5 w-3.5 text-slate-500" />
+                                  <Users className="h-3 w-3 text-slate-500" />
                                   <span>{participantCount}</span>
                                 </span>
                               </div>
                             </div>
                           </button>
-                          <div className="ml-1.5 flex items-center gap-1 shrink-0">
+                          <div className="ml-1 flex items-center gap-0.5 shrink-0">
                             <button
                               type="button"
                               onClick={() => openFormatModal(formatId)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white p-1 text-slate-500 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 cursor-pointer shadow-2xs"
                               title={translate('editFormat')}
                               aria-label={translate('editFormatAria', { label: config.label })}
                             >
-                              <Settings2 className="h-3.5 w-3.5" />
+                              <Settings2 className="h-3 w-3" />
                             </button>
                             {config.isCustom && (
                               <button
                                 type="button"
                                 onClick={() => removeFormat(formatId)}
-                                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 cursor-pointer shadow-2xs"
+                                className="inline-flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 cursor-pointer shadow-2xs"
                                 title={translate('removeFormatTitle')}
                                 aria-label={translate('removeFormatAria', { label: config.label })}
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-3 w-3" />
                               </button>
                             )}
                           </div>
@@ -1450,7 +1431,7 @@ export default function QuickTournamentCreate() {
                 <button
                   type="button"
                   onClick={() => openFormatModal()}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-2.5 py-1.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" /> {translate('addFormat')}
                 </button>
@@ -1459,45 +1440,44 @@ export default function QuickTournamentCreate() {
                 )}
               </section>
 
-
               {/* Card Phải 4: Action Buttons (Sticky Submit) */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm space-y-2">
                 {!hasOrganizerRole ? (
-                  <div className="space-y-3">
-                    <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-left">
+                  <div className="space-y-2">
+                    <div className="rounded-lg border border-rose-200 bg-rose-50/80 p-2.5 text-left">
                       <p className="text-xs font-bold text-rose-900">
                         {translate('roleRequiredAlertTitle')}
                       </p>
-                      <p className="mt-1 text-[11px] font-medium text-rose-700 leading-relaxed">
+                      <p className="mt-0.5 text-[11px] font-medium text-rose-700 leading-relaxed">
                         {translate('roleRequiredAlertDesc')}
                       </p>
                     </div>
 
                     <Link
                       href="/"
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-700 py-3 text-xs font-bold text-white shadow-md hover:bg-slate-800 transition active:scale-[0.99] cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-slate-700 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-slate-800 transition active:scale-[0.99] cursor-pointer"
                     >
-                      <Home className="h-4 w-4" />
+                      <Home className="h-3.5 w-3.5" />
                       <span>{translate('backToHomeAction') || 'Quay lại'}</span>
                     </Link>
                   </div>
                 ) : !user?.isEmailVerified ? (
-                  <div className="space-y-3">
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-left">
+                  <div className="space-y-2">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-2.5 text-left">
                       <p className="text-xs font-bold text-amber-900">
                         {translate('verificationAlertTitle')}
                       </p>
-                      <p className="mt-1 text-[11px] font-medium text-amber-700 leading-relaxed">
+                      <p className="mt-0.5 text-[11px] font-medium text-amber-700 leading-relaxed">
                         {translate('verificationAlertDesc')}
                       </p>
                     </div>
 
                     <Link
                       href="/auth/verify-email"
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-600 py-3 text-xs font-bold text-white shadow-md hover:bg-amber-700 transition active:scale-[0.99] cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-amber-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-amber-700 transition active:scale-[0.99] cursor-pointer"
                     >
                       <span>{translate('verificationVerifyButton')}</span>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
                 ) : (
@@ -1505,7 +1485,7 @@ export default function QuickTournamentCreate() {
                     type="submit"
                     data-testid="submit-quick-create-btn"
                     disabled={isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99]"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99] cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
@@ -1521,7 +1501,7 @@ export default function QuickTournamentCreate() {
                   </button>
                 )}
 
-                <p className="text-center text-[11px] text-slate-400">
+                <p className="text-center text-[10px] text-slate-400">
                   {translate('submitHint')}
                 </p>
               </div>
@@ -1718,6 +1698,67 @@ export default function QuickTournamentCreate() {
         </div>
       )}
 
+
+      {/* RichTextEditor Description Modal */}
+      {isDescriptionModalOpen && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={translate('descriptionDialogAria')}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsDescriptionModalOpen(false);
+          }}
+        >
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">{translate('descriptionEditorTitle')}</h2>
+                  <p className="text-xs text-slate-500">{translate('descriptionEditorSubtitle')}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDescriptionModalOpen(false)}
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+                aria-label={translate('close')}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto flex-1">
+              <RichTextEditor
+                value={description}
+                onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
+                placeholder={translate('descriptionEditorPlaceholder')}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-3 shrink-0 bg-slate-50/60">
+              <button
+                type="button"
+                onClick={() => setIsDescriptionModalOpen(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              >
+                {translate('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDescriptionModalOpen(false)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span>{translate('saveDescription')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Smart AI & Excel Modal */}
       <SmartAiTournamentModal

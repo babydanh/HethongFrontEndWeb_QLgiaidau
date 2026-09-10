@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Crown, Loader2, Share2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { tournamentsApi, type TournamentResult, type TournamentResultAward } from '@/features/tournaments/api';
+import { hasPublishedTournamentResults } from '@/features/tournaments/result-availability';
 import ShareModal from '@/components/common/ShareModal';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
@@ -457,7 +458,7 @@ export default function ResultsTab({
     .filter((award) => award.participant && typeof award.rank === 'number' && award.rank >= 1)
     .sort((a, b) => a.rank - b.rank);
 
-  if (!result || rawAwards.length === 0) {
+  if (!result || !hasPublishedTournamentResults(result) || rawAwards.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
         <p className="text-sm font-bold text-slate-700">{translate('resultsTabPendingTitle')}</p>

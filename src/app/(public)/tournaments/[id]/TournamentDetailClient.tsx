@@ -19,6 +19,7 @@ import MatchesTab from './components/MatchesTab';
 import SponsorsTab from './components/SponsorsTab';
 import LiveMatchesTab from './components/LiveMatchesTab';
 import ResultsTab from './components/ResultsTab';
+import { hasPublishedTournamentResults } from '@/features/tournaments/result-availability';
 import RegisterModal from './components/RegisterModal';
 import CommunityTournamentRosterWidget from '@/app/(public)/communities/[id]/components/CommunityTournamentRosterWidget';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -171,10 +172,13 @@ const commonTranslate = useTranslations('Common');
   const { openUserById, openUserProfile } = useUserProfileModalStore();
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
+    if (tabParam === 'results' && !initialHasResults) {
+      return 'overview';
+    }
     if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results' || tabParam === 'live') {
       return tabParam as TournamentDetailTab;
     }
-    if (initialHasResults || isTournamentCompleted(initialTournament?.status)) {
+    if (initialHasResults) {
       return 'results';
     }
     return 'overview';
@@ -294,8 +298,7 @@ const commonTranslate = useTranslations('Common');
             const data = res.value.data;
             const awards = data.awards ?? [];
             const hasTop1 = awards.some((a) => a.rank === 1 && (Boolean(a.participant?.teamName) || Boolean(a.participant?.members?.length)));
-            const hasAwards = awards.length >= 1 || data.finalized;
-            if (hasAwards || hasTop1) {
+            if (hasPublishedTournamentResults(data)) {
               foundResults = true;
             }
             if (dId && (data.finalized || hasTop1)) {
@@ -317,13 +320,8 @@ const commonTranslate = useTranslations('Common');
           }
         }
       } catch {
-        if (active) {
-          const isFinished = Boolean(
-            (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
-            (tournament?.status && isTournamentCompleted(tournament.status))
-          );
-          setHasConfirmedResults(isFinished);
-        }
+        // Never infer published results from the tournament lifecycle status.
+        // Keep the last known result state during a transient API failure.
       }
     };
     checkResultsRef.current = checkResults;
@@ -428,7 +426,7 @@ const commonTranslate = useTranslations('Common');
     (activeTournament?.status && isTournamentCompleted(activeTournament.status)) ||
     (tournament?.status && isTournamentCompleted(tournament.status))
   );
-  const showResultsTab = Boolean(hasConfirmedResults || isCompleted);
+  const showResultsTab = hasConfirmedResults;
 
   // If activeTab is 'live' but there are no live matches in any division,
   // automatically redirect activeTab to 'results' (if results exist) or 'overview'
@@ -703,8 +701,21 @@ const commonTranslate = useTranslations('Common');
     const defaultTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
     const requestedTab: TournamentDetailTab =
       rawTab && TOURNAMENT_DETAIL_TABS.includes(rawTab as TournamentDetailTab)
+        && (rawTab !== 'results' || showResultsTab)
         ? (rawTab as TournamentDetailTab)
         : defaultTab;
+
+    if (rawTab === 'results' && !showResultsTab && typeof window !== 'undefined') {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete('tab');
+      window.history.replaceState(
+        null,
+        '',
+        nextParams.toString()
+          ? `/tournaments/${tournamentId}?${nextParams.toString()}`
+          : `/tournaments/${tournamentId}`,
+      );
+    }
 
     // If an intentional user click navigation is in progress:
     if (pendingNavigatedTabRef.current !== null) {

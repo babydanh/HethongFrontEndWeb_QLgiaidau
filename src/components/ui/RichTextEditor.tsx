@@ -12,6 +12,7 @@ interface RichTextEditorProps {
   error?: string;
   label?: string;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 interface EditorJSBlock {
@@ -186,7 +187,7 @@ interface EditorJSAPI {
   };
 }
 
-export default function RichTextEditor({ value, onChange, placeholder, error, label, disabled }: RichTextEditorProps) {
+export default function RichTextEditor({ value, onChange, placeholder, error, label, disabled, compact = false }: RichTextEditorProps) {
   const translate = useTranslations('RichTextEditor');
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -350,19 +351,22 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
       {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
       <div 
         onClick={() => setIsFocused(true)}
+        onFocus={() => setIsFocused(true)}
         onBlur={(e) => {
           // Check if the focus goes outside the editor wrapper
           if (!e.currentTarget.contains(e.relatedTarget as Node)) {
             setIsFocused(false);
           }
         }}
-        className={`w-full bg-white border border-slate-300 rounded-lg px-4 py-3 transition-all duration-300 ${
-          isFocused 
-            ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[360px]' 
-            : 'hover:border-slate-400 min-h-[220px]'
+        className={`w-full bg-white border border-slate-300 rounded-lg transition-all duration-300 ease-out ${
+          isFocused
+            ? 'px-4 py-3 ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[360px]'
+            : compact
+              ? 'px-3 py-2 hover:border-slate-400 min-h-[84px] max-h-[96px] overflow-hidden'
+              : 'px-4 py-3 hover:border-slate-400 min-h-[220px]'
         }`}
       >
-        <div ref={containerRef} className="prose prose-slate max-w-none text-slate-800 text-sm editorjs-container" />
+        <div ref={containerRef} className={`prose prose-slate max-w-none text-slate-800 text-sm editorjs-container ${compact ? 'editorjs-container--compact' : ''}`} />
       </div>
       {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
 
@@ -370,6 +374,10 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
         .editorjs-container .codex-editor__redactor {
           padding-bottom: 20px !important;
           min-height: 180px;
+        }
+        .editorjs-container--compact .codex-editor__redactor {
+          padding-bottom: 12px !important;
+          min-height: 48px;
         }
         .editorjs-container .ce-block {
           margin-bottom: 8px;

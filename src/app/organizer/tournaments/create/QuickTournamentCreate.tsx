@@ -19,7 +19,6 @@ import {
   ShieldCheck,
   Trophy,
   Info,
-  Check,
   Plus,
   Flame,
   X,
@@ -371,7 +370,6 @@ export default function QuickTournamentCreate() {
   const formValues = useWatch({ control });
   const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [editingFormatId, setEditingFormatId] = useState<string | null>(null);
   const [formatDraft, setFormatDraft] = useState<QuickFormatConfig>({
@@ -392,16 +390,15 @@ export default function QuickTournamentCreate() {
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
   useEffect(() => {
-    if (!isFormatModalOpen && !isAiModalOpen && !isDescriptionModalOpen) return;
+    if (!isFormatModalOpen && !isAiModalOpen) return;
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (isFormatModalOpen) setIsFormatModalOpen(false);
       if (isAiModalOpen) setIsAiModalOpen(false);
-      if (isDescriptionModalOpen) setIsDescriptionModalOpen(false);
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isAiModalOpen, isFormatModalOpen, isDescriptionModalOpen]);
+  }, [isAiModalOpen, isFormatModalOpen]);
 
   const draftKey = `sporto:tournament-quick-draft:${communityId || 'public'}`;
 
@@ -981,25 +978,25 @@ export default function QuickTournamentCreate() {
                   <input type="hidden" {...register('sport')} />
                 </div>
 
-                {/* Mô tả giải đấu: Thanh mở popup soạn thảo gọn gàng */}
-                <div className="border-t border-slate-100 pt-2 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1 pr-2">
+                {/* Mô tả giải đấu: editor nhỏ, bấm vào sẽ mở rộng và blur sẽ thu lại */}
+                <div className="border-t border-slate-100 pt-2.5">
+                  <div className="mb-1.5 flex items-center gap-1.5">
                     <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span className="text-xs font-semibold text-slate-700 shrink-0">{translate('descriptionLabel')}:</span>
-                    <span className="text-xs text-slate-400 truncate">
-                      {description
-                        ? description.replace(/<[^>]*>/g, '').trim().slice(0, 45) + (description.length > 45 ? '...' : '')
-                        : translate('descriptionPlaceholder')}
-                    </span>
+                    <label htmlFor="tournament-description-editor" className="text-xs font-semibold text-slate-700">
+                      {translate('descriptionLabel')}
+                    </label>
+                    {description && (
+                      <span className="text-[10px] font-medium text-emerald-600">{translate('descriptionSaved')}</span>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsDescriptionModalOpen(true)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition cursor-pointer shrink-0"
-                  >
-                    <Settings2 className="h-3 w-3" />
-                    <span>{description ? translate('editFormat') : translate('openEditor')}</span>
-                  </button>
+                  <div id="tournament-description-editor">
+                    <RichTextEditor
+                      value={description}
+                      compact
+                      onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
+                      placeholder={translate('descriptionEditorPlaceholder')}
+                    />
+                  </div>
                   <input type="hidden" {...register('description')} />
                 </div>
               </section>
@@ -1055,9 +1052,6 @@ export default function QuickTournamentCreate() {
 
                 {/* Địa điểm thi đấu */}
                 <div className="border-t border-slate-100 pt-2.5 space-y-2">
-                  <p className="text-[11px] font-medium text-slate-500">
-                    {translate('locationOptionalHint')}
-                  </p>
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
@@ -1066,7 +1060,7 @@ export default function QuickTournamentCreate() {
                       <input
                         data-testid="venue-name-input"
                         {...register('venueName')}
-                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        className="mt-1 min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         placeholder={translate('venuePlaceholder')}
                       />
                       {errors.venueName && <span className="mt-0.5 block text-[11px] text-rose-600">{errors.venueName.message}</span>}
@@ -1079,7 +1073,7 @@ export default function QuickTournamentCreate() {
                       <input
                         data-testid="location-address-input"
                         {...register('locationAddress')}
-                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        className="mt-1 min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         placeholder={translate('addressPlaceholder')}
                       />
                       {errors.locationAddress && <span className="mt-0.5 block text-[11px] text-rose-600">{errors.locationAddress.message}</span>}
@@ -1724,68 +1718,6 @@ export default function QuickTournamentCreate() {
               </div>
             </div>
             <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">{translate('cancel')}</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">{editingFormatId ? translate('saveChanges') : <><Plus className="h-3.5 w-3.5" /> {translate('addFormat')}</>}</button></div>
-          </div>
-        </div>
-      )}
-
-
-      {/* RichTextEditor Description Modal */}
-      {isDescriptionModalOpen && (
-        <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label={translate('descriptionDialogAria')}
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setIsDescriptionModalOpen(false);
-          }}
-        >
-          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                  <FileText className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">{translate('descriptionEditorTitle')}</h2>
-                  <p className="text-xs text-slate-500">{translate('descriptionEditorSubtitle')}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsDescriptionModalOpen(false)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
-                aria-label={translate('close')}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="p-5 overflow-y-auto flex-1">
-              <RichTextEditor
-                value={description}
-                onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
-                placeholder={translate('descriptionEditorPlaceholder')}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-3 shrink-0 bg-slate-50/60">
-              <button
-                type="button"
-                onClick={() => setIsDescriptionModalOpen(false)}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-              >
-                {translate('cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsDescriptionModalOpen(false)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
-              >
-                <Check className="h-3.5 w-3.5" />
-                <span>{translate('saveDescription')}</span>
-              </button>
-            </div>
           </div>
         </div>
       )}

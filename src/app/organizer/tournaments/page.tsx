@@ -35,7 +35,7 @@ interface ParentWithDivisions {
 
 type OrganizerTournamentFilter = 'ALL' | 'COMPLETED';
 
-const ORGANIZER_TOURNAMENT_PAGE_SIZE = 10;
+const ORGANIZER_TOURNAMENT_PAGE_SIZE = 9;
 
 const getFormatLabel = (matchType: string, genderRestriction?: string | null, translate?: (key: string) => string) => {
   const mt = matchType || '';

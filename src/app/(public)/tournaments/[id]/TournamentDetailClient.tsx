@@ -939,7 +939,21 @@ const commonTranslate = useTranslations('Common');
     const isFinished = isCompleted || (hasConfirmedResults && liveMatchesCount === 0);
 
     return (
-      <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-3.5">
+      <div className="relative bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-3.5">
+        {/* Report button - subtle flag at top-right corner */}
+        {!isOwner && (
+          <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-10">
+            <ReportViolationButton
+              targetType="TOURNAMENT"
+              targetId={tournament.id}
+              targetLabel={tournament.name}
+              compact
+              variant="ghost"
+              className="h-7 w-7 p-0 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50/60"
+            />
+          </div>
+        )}
+
         {hasTournamentLogo ? (
           /* When tournament HAS Logo -> Display Logo + Badges + Title at Top */
           <div className="flex items-start gap-3.5">
@@ -1306,7 +1320,7 @@ const commonTranslate = useTranslations('Common');
         </div>
       )}
 
-      {/* Secondary Utility Actions (Follow, Share, Report) */}
+      {/* Secondary Utility Actions (Follow & Share) */}
       <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
         {user?.id && (
           <Button
@@ -1330,13 +1344,6 @@ const commonTranslate = useTranslations('Common');
         >
           <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
         </Button>
-        <ReportViolationButton
-          targetType="TOURNAMENT"
-          targetId={tournament.id}
-          targetLabel={tournament.name}
-          hidden={isOwner}
-          compact
-        />
       </div>
     </div>
     );
@@ -1612,7 +1619,19 @@ const commonTranslate = useTranslations('Common');
     return (
       <div className="space-y-4">
         {/* Presented by Club Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
+        <div className="relative bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
+          {!isOwner && (
+            <div className="absolute top-3 right-3 z-10">
+              <ReportViolationButton
+                targetType="TOURNAMENT"
+                targetId={tournament.id}
+                targetLabel={tournament.name}
+                compact
+                variant="ghost"
+                className="h-7 w-7 p-0 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50/60"
+              />
+            </div>
+          )}
           <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
             MANG ĐẾN BỞI
           </span>
@@ -1625,8 +1644,8 @@ const commonTranslate = useTranslations('Common');
                 src={clubLogo}
                 alt={clubName}
                 className={cn(
-                  'h-full w-full rounded-full',
-                  hasCustomClubLogo ? 'object-cover' : 'object-contain p-1.5'
+                  'h-full w-full object-cover',
+                  !hasCustomClubLogo && 'p-1.5'
                 )}
                 onError={(e) => {
                   const img = e.currentTarget as HTMLImageElement;
@@ -1692,13 +1711,6 @@ const commonTranslate = useTranslations('Common');
           >
             <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
           </Button>
-          <ReportViolationButton
-            targetType="TOURNAMENT"
-            targetId={tournament.id}
-            targetLabel={tournament.name}
-            hidden={isOwner}
-            compact
-          />
         </div>
       </div>
     );

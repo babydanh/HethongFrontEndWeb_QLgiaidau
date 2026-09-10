@@ -40,6 +40,7 @@ interface ReportViolationButtonProps {
   hidden?: boolean;
   className?: string;
   compact?: boolean;
+  variant?: 'outline' | 'ghost';
 }
 
 function parseEvidenceUrls(value: string): string[] {
@@ -56,6 +57,7 @@ export function ReportViolationButton({
   hidden = false,
   className,
   compact = false,
+  variant = 'outline',
 }: ReportViolationButtonProps) {
   const translate = useTranslations('Reports');
   const reportSchema = useMemo(() => createReportSchema(translate), [translate]);
@@ -123,10 +125,15 @@ export function ReportViolationButton({
     <>
       <Button
         type="button"
-        variant="outline"
+        variant={variant}
         size={compact ? 'icon' : 'default'}
         onClick={handleOpen}
-        className={cn('border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800', className)}
+        className={cn(
+          variant === 'outline'
+            ? 'border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800'
+            : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50/70 border-0 shadow-none',
+          className
+        )}
         aria-label={`${translate('reportButton')} ${targetLabel}`}
       >
         <Flag className="h-4 w-4" />

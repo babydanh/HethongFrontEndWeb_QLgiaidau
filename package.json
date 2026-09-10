@@ -26,6 +26,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sentry/nextjs": "^10.73.0",
     "@types/mapbox-gl": "^3.5.0",
     "axios": "^1.16.1",
     "bracketry": "^1.1.3",

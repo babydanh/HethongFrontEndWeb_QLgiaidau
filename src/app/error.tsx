@@ -1,6 +1,8 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 
 export default function Error({
@@ -11,6 +13,11 @@ export default function Error({
   reset: () => void;
 }) {
   const t = useTranslations('Errors');
+
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg border border-slate-200 p-8 shadow-sm text-center">

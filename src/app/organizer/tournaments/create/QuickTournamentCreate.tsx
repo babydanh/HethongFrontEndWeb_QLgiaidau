@@ -207,6 +207,7 @@ type QuickFormatConfig = {
   bracketType?: QuickValues['bracketType'];
   maxParticipantsOverride?: boolean;
   maxParticipants?: number | null;
+  maxParticipantsInput?: string;
   eloEnabled: boolean;
   minElo: number | null;
   maxElo: number | null;
@@ -338,6 +339,9 @@ export default function QuickTournamentCreate() {
   const selectedFormats = useWatch({ control, name: 'selectedFormats' }) || [];
   const bracketType = useWatch({ control, name: 'bracketType' });
   const maxTeams = useWatch({ control, name: 'maxTeams' });
+  const commonParticipantLimit = Number.isInteger(Number(maxTeams)) && Number(maxTeams) >= 2
+    ? Number(maxTeams)
+    : 16;
   const visibility = useWatch({ control, name: 'visibility' });
   const registrationMode = useWatch({ control, name: 'registrationMode' });
   const province = useWatch({ control, name: 'province' });
@@ -576,8 +580,15 @@ export default function QuickTournamentCreate() {
       const existing = formatConfigs.find((config) => config.id === formatId || config.key === formatId);
       if (existing) {
         setEditingFormatId(existing.id);
-        setFormatDraft({ ...existing });
-        setShowAdvancedOptions(Boolean(existing.bracketType || existing.maxParticipantsOverride || existing.eloEnabled));
+        setFormatDraft({
+          ...existing,
+          maxParticipantsInput: String(
+            existing.maxParticipantsOverride && existing.maxParticipants
+              ? existing.maxParticipants
+              : commonParticipantLimit,
+          ),
+        });
+        setShowAdvancedOptions(Boolean(existing.bracketType || existing.eloEnabled));
         setIsFormatModalOpen(true);
         return;
       }
@@ -593,6 +604,7 @@ export default function QuickTournamentCreate() {
       bracketType: undefined,
       maxParticipantsOverride: false,
       maxParticipants: null,
+      maxParticipantsInput: String(commonParticipantLimit),
       eloEnabled: false,
       minElo: null,
       maxElo: null,
@@ -616,6 +628,11 @@ export default function QuickTournamentCreate() {
       toast.error(translate('eloRangeError'));
       return;
     }
+    const participantLimit = Number(formatDraft.maxParticipantsInput ?? formatDraft.maxParticipants ?? commonParticipantLimit);
+    if (!Number.isInteger(participantLimit) || participantLimit < 2 || participantLimit > 128) {
+      toast.error(translate('participantLimitInvalid'));
+      return;
+    }
     const defaultOption = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatDraft.key);
     const normalizedLabel = formatDraft.label.trim() || (defaultOption ? translate(defaultOption.labelKey) : formatDraft.key);
     const normalizedDraft: QuickFormatConfig = {
@@ -623,7 +640,8 @@ export default function QuickTournamentCreate() {
       label: normalizedLabel,
       bracketType: formatDraft.bracketType || undefined,
       maxParticipantsOverride: Boolean(formatDraft.maxParticipantsOverride),
-      maxParticipants: formatDraft.maxParticipantsOverride && formatDraft.maxParticipants ? Number(formatDraft.maxParticipants) : null,
+      maxParticipants: formatDraft.maxParticipantsOverride ? participantLimit : null,
+      maxParticipantsInput: String(participantLimit),
     };
 
     if (editingFormatId) {
@@ -1573,7 +1591,39 @@ export default function QuickTournamentCreate() {
                 <span className="mt-1 block text-[10.5px] font-normal text-slate-500">{translate('customFormatNameHint')}</span>
               </label>
 
-              {/* 3. Tùy chọn nâng cao (Thu gọn mặc định) */}
+              {/* 3. Quy mô nội dung - luôn hiển thị, mặc định theo setting chung của giải */}
+              <div className="rounded-lg border border-blue-100 bg-blue-50/45 p-3">
+                <label htmlFor="format-participant-limit" className="block text-xs font-bold text-slate-800">
+                  {translate('participantLimitLabel')}
+                </label>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <input
+                    id="format-participant-limit"
+                    type="number"
+                    min={2}
+                    max={128}
+                    inputMode="numeric"
+                    value={formatDraft.maxParticipantsInput ?? String(formatDraft.maxParticipants ?? commonParticipantLimit)}
+                    onChange={(event) => {
+                      const inputValue = event.target.value.replace(/\D/g, '').slice(0, 3);
+                      const parsedValue = inputValue === '' ? null : Number(inputValue);
+                      setFormatDraft((current) => ({
+                        ...current,
+                        maxParticipantsInput: inputValue,
+                        maxParticipantsOverride: true,
+                        maxParticipants: parsedValue,
+                      }));
+                    }}
+                    className="w-32 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <span className="text-xs font-medium text-slate-600">{translate('participantLimitUnit')}</span>
+                </div>
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  {translate('participantLimitHint', { count: commonParticipantLimit })}
+                </p>
+              </div>
+
+              {/* 4. Tùy chọn nâng cao (Thu gọn mặc định) */}
               <div className="pt-1">
                 <button
                   type="button"
@@ -1591,7 +1641,7 @@ export default function QuickTournamentCreate() {
 
                 {showAdvancedOptions && (
                   <div className="mt-3 space-y-3.5 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-                    {/* 3.1 Thể thức bảng đấu riêng */}
+                    {/* 4.1 Thể thức bảng đấu riêng */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700">
                         {translate('customBracketLabel')}
@@ -1611,47 +1661,7 @@ export default function QuickTournamentCreate() {
                       </label>
                     </div>
 
-                    {/* 3.2 Quy mô số người/đội tham gia riêng */}
-                    <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
-                      <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(formatDraft.maxParticipantsOverride)}
-                          onChange={(event) => setFormatDraft((current) => ({
-                            ...current,
-                            maxParticipantsOverride: event.target.checked,
-                            maxParticipants: event.target.checked ? (current.maxParticipants || maxTeams) : null,
-                          }))}
-                          className="h-4 w-4 rounded text-blue-600 cursor-pointer"
-                        />
-                        {translate('overrideParticipants')}
-                      </label>
-
-                      {formatDraft.maxParticipantsOverride ? (
-                        <div className="pt-1">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min={2}
-                              max={128}
-                              value={formatDraft.maxParticipants ?? maxTeams}
-                              onChange={(event) => setFormatDraft((current) => ({
-                                ...current,
-                                maxParticipants: event.target.value === '' ? null : Math.min(128, Math.max(2, Number(event.target.value))),
-                              }))}
-                              className="w-32 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-900"
-                            />
-                            <span className="text-xs text-slate-500 font-medium">{translate('participantLimitUnit')}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-slate-500">
-                          {translate('inheritedParticipantLimit', { count: maxTeams })}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* 3.3 Giới hạn ELO */}
+                    {/* 4.2 Giới hạn ELO */}
                     <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                       <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
                         <input

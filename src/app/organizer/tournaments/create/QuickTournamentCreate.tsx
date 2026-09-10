@@ -298,11 +298,8 @@ const toDivisionInput = (
 };
 
 const quickDefaults = () => {
-  const regStart = new Date();
-  regStart.setSeconds(0, 0);
-
   return {
-    registrationStart: formatDateTimeInput(regStart),
+    registrationStart: '',
     registrationEnd: '',
     startDate: '',
     endDate: '',
@@ -410,14 +407,8 @@ export default function QuickTournamentCreate() {
       if (!raw) return;
       const saved = JSON.parse(raw) as Partial<QuickValues>;
       Object.entries(saved).forEach(([key, value]) => {
-        // Không khôi phục registrationStart từ bản nháp cũ, luôn giữ Date Time Now
-        if (key === 'registrationStart') return;
         if (value !== undefined && value !== null) setValue(key as keyof QuickValues, value as never, { shouldDirty: false });
       });
-      // Luôn cập nhật lại registrationStart thành Date Time Now hiện tại
-      const now = new Date();
-      now.setSeconds(0, 0);
-      setValue('registrationStart', formatDateTimeInput(now), { shouldDirty: false });
       toast.success(translate('draftRestored'), { id: 'quick-draft-restored' });
     } catch {
       window.localStorage.removeItem(draftKey);
@@ -428,8 +419,6 @@ export default function QuickTournamentCreate() {
     if (typeof window === 'undefined' || !draftHydratedRef.current) return;
     const timer = window.setTimeout(() => {
       const draft = { ...(formValues as QuickValues) } as Partial<QuickValues>;
-      // Không lưu registrationStart vào bản nháp
-      delete draft.registrationStart;
       window.localStorage.setItem(draftKey, JSON.stringify(draft));
     }, 350);
     return () => window.clearTimeout(timer);
@@ -442,6 +431,10 @@ export default function QuickTournamentCreate() {
 
   const handleRegistrationStartChange = (val: string) => {
     setValue('registrationStart', val, { shouldValidate: true });
+    if (!val) {
+      userTouchedScheduleRef.current.registrationEnd = false;
+      setValue('registrationEnd', '', { shouldValidate: true });
+    }
   };
 
   const handleRegistrationEndChange = (val: string) => {
@@ -450,52 +443,55 @@ export default function QuickTournamentCreate() {
   };
 
   useEffect(() => {
-    if (!registrationStart || !startDate) {
+    if (!startDate) {
       return;
     }
     const start = new Date(startDate);
     if (Number.isNaN(start.getTime())) return;
-    
-    // Tự động tính hạn đóng đăng ký: 23:59 ngày hôm trước ngày bắt đầu giải
-    const dayBeforeStart = new Date(start);
-    dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
-    dayBeforeStart.setHours(23, 59, 0, 0);
 
-    const regStart = new Date(registrationStart);
     const now = new Date();
-    let targetRegEnd = dayBeforeStart;
+    const regStart = registrationStart ? new Date(registrationStart) : null;
 
-    // Nếu ngày hôm trước vẫn nhỏ hơn thời điểm mở đăng ký hoặc nhỏ hơn hiện tại
-    if (targetRegEnd.getTime() <= regStart.getTime() || targetRegEnd.getTime() <= now.getTime()) {
-      targetRegEnd = new Date(start.getTime() - 2 * 60 * 60 * 1000);
+    if (regStart && !Number.isNaN(regStart.getTime())) {
+      // Tự động tính hạn đóng đăng ký: 23:59 ngày hôm trước ngày bắt đầu giải
+      const dayBeforeStart = new Date(start);
+      dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
+      dayBeforeStart.setHours(23, 59, 0, 0);
+      let targetRegEnd = dayBeforeStart;
+
+      // Nếu ngày hôm trước vẫn nhỏ hơn thời điểm mở đăng ký hoặc nhỏ hơn hiện tại
       if (targetRegEnd.getTime() <= regStart.getTime() || targetRegEnd.getTime() <= now.getTime()) {
-        const baseline = Math.max(regStart.getTime(), now.getTime());
-        targetRegEnd = new Date((baseline + start.getTime()) / 2);
+        targetRegEnd = new Date(start.getTime() - 2 * 60 * 60 * 1000);
+        if (targetRegEnd.getTime() <= regStart.getTime() || targetRegEnd.getTime() <= now.getTime()) {
+          const baseline = Math.max(regStart.getTime(), now.getTime());
+          targetRegEnd = new Date((baseline + start.getTime()) / 2);
+        }
       }
-    }
 
-    if (targetRegEnd.getTime() >= start.getTime()) {
-      targetRegEnd = new Date(start.getTime() - 60 * 60 * 1000);
+      if (targetRegEnd.getTime() >= start.getTime()) {
+        targetRegEnd = new Date(start.getTime() - 60 * 60 * 1000);
+      }
+
+      const nextRegistrationEnd = formatDateTimeInput(targetRegEnd);
+      const currentRegistrationEnd = getValues('registrationEnd');
+      if (!currentRegistrationEnd || !userTouchedScheduleRef.current.registrationEnd) {
+        setValue('registrationEnd', nextRegistrationEnd, { shouldValidate: true });
+      }
     }
 
     const estimatedEnd = new Date(start);
     estimatedEnd.setDate(estimatedEnd.getDate() + 14);
     estimatedEnd.setHours(23, 59, 0, 0);
 
-    const nextRegistrationEnd = formatDateTimeInput(targetRegEnd);
     const nextEndDate = formatDateTimeInput(estimatedEnd);
-    const currentRegistrationEnd = getValues('registrationEnd');
     const currentEndDate = getValues('endDate');
 
-    if (!currentRegistrationEnd || !userTouchedScheduleRef.current.registrationEnd) {
-      setValue('registrationEnd', nextRegistrationEnd, { shouldValidate: true });
-    }
     if (!currentEndDate || !userTouchedScheduleRef.current.endDate) {
       setValue('endDate', nextEndDate, { shouldValidate: true });
     }
   }, [registrationStart, startDate, getValues, setValue]);
 
-  const showDerivedSchedule = Boolean(registrationStart && startDate);
+  const showDerivedSchedule = Boolean(startDate);
 
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
@@ -887,7 +883,7 @@ export default function QuickTournamentCreate() {
               
               {/* Card 1: Thông tin cơ bản & Môn thể thao & Mô tả */}
               <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center justify-between pb-1">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                       <Trophy className="h-3.5 w-3.5" />
@@ -978,80 +974,67 @@ export default function QuickTournamentCreate() {
                   <input type="hidden" {...register('sport')} />
                 </div>
 
-                {/* Mô tả giải đấu: editor nhỏ, bấm vào sẽ mở rộng và blur sẽ thu lại */}
-                <div className="border-t border-slate-100 pt-2.5">
-                  <div className="mb-1.5 flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <label htmlFor="tournament-description-editor" className="text-xs font-semibold text-slate-700">
-                      {translate('descriptionLabel')}
-                    </label>
-                    {description && (
-                      <span className="text-[10px] font-medium text-emerald-600">{translate('descriptionSaved')}</span>
-                    )}
-                  </div>
-                  <div id="tournament-description-editor">
-                    <RichTextEditor
-                      value={description}
-                      compact
-                      onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
-                      placeholder={translate('descriptionEditorPlaceholder')}
-                    />
-                  </div>
-                  <input type="hidden" {...register('description')} />
-                </div>
               </section>
 
               {/* Card 2: Lịch trình & Địa điểm thi đấu kết hợp */}
               <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2 pb-1">
                   <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                     <Calendar className="h-3.5 w-3.5" />
                   </div>
                   <h2 className="text-sm font-bold text-slate-900">{translate('scheduleTitle')} & {translate('locationTitle')}</h2>
                 </div>
 
-                {/* Lịch trình: 2 DateTimePicker chính */}
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  <DateTimePicker
-                    name="registrationStart"
-                    label={translate('registrationStartLabel')}
-                    value={registrationStart || ''}
-                    onChange={handleRegistrationStartChange}
-                    error={errors.registrationStart?.message}
-                  />
+                {/* Ngày thi đấu là thông tin chính; đăng ký chỉ là tùy chọn */}
+                <div className="space-y-2.5">
+                  <div className="rounded-lg bg-blue-50/55 p-2.5 ring-1 ring-blue-100/80">
+                    <DateTimePicker
+                      name="startDate"
+                      label={translate('startDateLabel')}
+                      value={startDate || ''}
+                      onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
+                      error={errors.startDate?.message}
+                      className="border-blue-300 bg-white shadow-xs"
+                    />
+                    <p className="mt-1 text-[11px] font-medium text-blue-700/75">
+                      {translate('startDatePriorityHint')}
+                    </p>
+                  </div>
 
-                  <DateTimePicker
-                    name="startDate"
-                    label={translate('startDateLabel')}
-                    value={startDate || ''}
-                    onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
-                    error={errors.startDate?.message}
-                  />
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    <DateTimePicker
+                      name="registrationStart"
+                      label={`${translate('registrationStartLabel')} (${translate('optionalLabel')})`}
+                      value={registrationStart || ''}
+                      onChange={handleRegistrationStartChange}
+                      error={errors.registrationStart?.message}
+                    />
 
-                  <div className={`sm:col-span-2 grid gap-2.5 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
-                    <div className="grid gap-2.5 sm:grid-cols-2">
+                    <div className={`overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
+                      <DateTimePicker
+                        name="endDate"
+                        label={`${translate('endDateLabel')} (${translate('optionalLabel')})`}
+                        value={endDate || ''}
+                        onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
+                        error={errors.endDate?.message}
+                      />
+                    </div>
+
+                    <div className={`sm:col-span-2 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                       <DateTimePicker
                         name="registrationEnd"
-                        label={translate('registrationEndLabel')}
+                        label={`${translate('registrationEndLabel')} (${translate('optionalLabel')})`}
                         value={registrationEnd || ''}
                         onChange={handleRegistrationEndChange}
                         error={errors.registrationEnd?.message}
                         max={startDate || undefined}
-                      />
-
-                      <DateTimePicker
-                        name="endDate"
-                        label={translate('endDateLabel')}
-                        value={endDate || ''}
-                        onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
-                        error={errors.endDate?.message}
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Địa điểm thi đấu */}
-                <div className="border-t border-slate-100 pt-2.5 space-y-2">
+                <div className="pt-1 space-y-2">
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
@@ -1123,7 +1106,7 @@ export default function QuickTournamentCreate() {
               {/* Card 4: Thiết lập chuyên biệt bóng đá (nếu là môn bóng đá) */}
               {sport === 'football' && (
                 <section className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 md:p-6 shadow-2xs space-y-4">
-                  <div className="flex items-center gap-2 border-b border-blue-100 pb-3">
+                  <div className="flex items-center gap-2 pb-1">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
                       <Flame className="h-4 w-4" />
                     </div>
@@ -1192,7 +1175,7 @@ export default function QuickTournamentCreate() {
               
               {/* Card Phải 1: Thể thức thi đấu (Grid 2x2 siêu gọn) */}
               <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                <div className="flex items-center justify-between pb-1.5">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                       <GitBranch className="h-3.5 w-3.5" />
@@ -1304,7 +1287,6 @@ export default function QuickTournamentCreate() {
                 {/* 2. Chế độ nhận đăng ký (Chỉ hiện khi tạo trong CLB) */}
                 {communityId && (
                   <>
-                    <div className="h-px bg-slate-100" />
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-1.5">
                         <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
@@ -1341,7 +1323,7 @@ export default function QuickTournamentCreate() {
 
               {/* Card Phải 3: Nội dung thi đấu */}
               <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center justify-between pb-1">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                       <Layers className="h-3.5 w-3.5" />
@@ -1529,6 +1511,31 @@ export default function QuickTournamentCreate() {
             </div>
 
           </div>
+
+          {/* Mô tả là thông tin phụ, đặt sau cùng để không cản trở việc tạo giải */}
+          <section className="mt-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <label htmlFor="tournament-description-editor" className="text-xs font-semibold text-slate-700">
+                {translate('descriptionLabel')}
+              </label>
+              <span className="text-[10px] font-medium text-slate-400">
+                ({translate('optionalLabel')})
+              </span>
+              {description && (
+                <span className="text-[10px] font-medium text-emerald-600">{translate('descriptionSaved')}</span>
+              )}
+            </div>
+            <div id="tournament-description-editor">
+              <RichTextEditor
+                value={description}
+                compact
+                onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
+                placeholder={translate('descriptionEditorPlaceholder')}
+              />
+            </div>
+            <input type="hidden" {...register('description')} />
+          </section>
         </form>
       </div>
       {isFormatModalOpen && (

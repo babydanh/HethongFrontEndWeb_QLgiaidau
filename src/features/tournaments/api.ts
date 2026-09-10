@@ -104,7 +104,7 @@ export interface TournamentCourt {
   id: string;
   venueId: string;
   courtName: string;
-  status: 'AVAILABLE' | 'MAINTENANCE' | string;
+  status: "AVAILABLE" | "MAINTENANCE" | string;
 }
 
 export interface TournamentCourtsResponse {
@@ -139,7 +139,7 @@ export interface AiScheduleCommandResult {
     startTime: string;
     endTime: string;
     minimumStartIntervalMinutes: number;
-    timingModel: 'MATCH_TOTAL' | 'PER_SET' | 'PER_HALF';
+    timingModel: "MATCH_TOTAL" | "PER_SET" | "PER_HALF";
     needsReview: boolean;
     explanation: string;
   };
@@ -153,7 +153,7 @@ export interface SchedulePlanPreviewInput {
   matchIds?: string[];
   durationMinutes?: number;
   bufferMinutes?: number;
-  timingModel?: 'MATCH_TOTAL' | 'PER_SET' | 'PER_HALF';
+  timingModel?: "MATCH_TOTAL" | "PER_SET" | "PER_HALF";
   unitDurationMinutes?: number;
   unitCount?: number;
   betweenUnitBreakMinutes?: number;
@@ -161,16 +161,16 @@ export interface SchedulePlanPreviewInput {
   gridIncrementMinutes?: 5 | 10 | 15 | 30 | 60;
   minimumStartIntervalMinutes?: number;
   operatingWindow?: { start: string; end: string };
-  strategy: 'ROUND_ORDER_EARLIEST_AVAILABLE';
+  strategy: "ROUND_ORDER_EARLIEST_AVAILABLE";
 }
 
 export interface SchedulePlanPreview {
   planId: string;
-  strategy: 'ROUND_ORDER_EARLIEST_AVAILABLE';
+  strategy: "ROUND_ORDER_EARLIEST_AVAILABLE";
   scheduleVersion: string;
   durationMinutes: number;
   bufferMinutes: number;
-  timingModel: 'MATCH_TOTAL' | 'PER_SET' | 'PER_HALF';
+  timingModel: "MATCH_TOTAL" | "PER_SET" | "PER_HALF";
   unitDurationMinutes: number;
   unitCount: number;
   betweenUnitBreakMinutes: number;
@@ -279,7 +279,6 @@ export type LiteDivisionConfigInput = Pick<
   | "maxParticipants"
   | "bracketType"
   | "startDate"
-
   | "registrationEndDate"
   | "minElo"
   | "prizeDescription"
@@ -836,9 +835,22 @@ export interface TournamentVenueWithCourts {
   courts: TournamentCourt[];
 }
 
+export type OrganizerTournamentDivisionPreview = Omit<
+  Partial<Division>,
+  "matchType" | "status"
+> & {
+  id: string;
+  name: string;
+  matchType: string;
+  status: string;
+};
+
 export type OrganizerTournamentListItem =
-  | ({ itemType: "PARENT" } & ParentTournament)
-  | ({ itemType: "STANDALONE" } & Tournament);
+  | ({ itemType: "PARENT"; divisions?: Tournament[] } & ParentTournament)
+  | ({
+      itemType: "STANDALONE";
+      divisions?: OrganizerTournamentDivisionPreview[];
+    } & Tournament);
 
 export const tournamentsApi = {
   getFeesConfig: () =>
@@ -863,7 +875,9 @@ export const tournamentsApi = {
   getTournamentById: (id: string, params?: Record<string, unknown>) =>
     api.get<ApiResponse<Tournament>>(`/tournaments/${id}`, { params }),
   getTournamentVenues: (id: string) =>
-    api.get<ApiResponse<TournamentVenueWithCourts[]>>(`/tournaments/${id}/venues`),
+    api.get<ApiResponse<TournamentVenueWithCourts[]>>(
+      `/tournaments/${id}/venues`,
+    ),
   createTournamentVenue: (
     id: string,
     data: {
@@ -892,13 +906,17 @@ export const tournamentsApi = {
       `/tournaments/${id}/venues/${venueId}/default`,
     ),
   deleteTournamentVenue: (id: string, venueId: string) =>
-    api.delete<ApiResponse<{ success: boolean; remainingVenueIds: string[]; defaultVenueId: string | null }>>(
-      `/tournaments/${id}/venues/${venueId}`,
-    ),
+    api.delete<
+      ApiResponse<{
+        success: boolean;
+        remainingVenueIds: string[];
+        defaultVenueId: string | null;
+      }>
+    >(`/tournaments/${id}/venues/${venueId}`),
   addVenueCourtDirect: (
     id: string,
     venueId: string,
-    data: { courtName: string; status?: 'AVAILABLE' | 'MAINTENANCE' },
+    data: { courtName: string; status?: "AVAILABLE" | "MAINTENANCE" },
   ) =>
     api.post<ApiResponse<TournamentCourt>>(
       `/tournaments/${id}/venues/${venueId}/courts`,
@@ -920,28 +938,35 @@ export const tournamentsApi = {
   saveTournamentVenue: (
     id: string,
     data: { name: string; locationAddress: string },
-  ) => api.patch<ApiResponse<{ id: string; name: string; locationAddress: string }>>(
-    `/tournaments/${id}/venue`,
-    data,
-  ),
+  ) =>
+    api.patch<
+      ApiResponse<{ id: string; name: string; locationAddress: string }>
+    >(`/tournaments/${id}/venue`, data),
   getTournamentCourts: (id: string) =>
     api.get<ApiResponse<TournamentCourtsResponse>>(`/tournaments/${id}/courts`),
   addTournamentCourt: (
     id: string,
-    data: { courtName: string; status?: 'AVAILABLE' | 'MAINTENANCE' },
-  ) => api.post<ApiResponse<TournamentCourt>>(`/tournaments/${id}/courts`, data),
+    data: { courtName: string; status?: "AVAILABLE" | "MAINTENANCE" },
+  ) =>
+    api.post<ApiResponse<TournamentCourt>>(`/tournaments/${id}/courts`, data),
   addTournamentCourtsBatch: (
     id: string,
     data: { courtCount: number; namePrefix?: string },
-  ) => api.post<ApiResponse<TournamentCourt[]>>(`/tournaments/${id}/courts/batch`, data),
-  previewSchedulePlan: (
-    id: string,
-    data: SchedulePlanPreviewInput,
-  ) => api.post<ApiResponse<SchedulePlanPreview>>(`/tournaments/${id}/schedule-plans`, data),
-  previewScheduleWithAi: (
-    id: string,
-    data: AiScheduleCommandInput,
-  ) => api.post<ApiResponse<AiScheduleCommandResult>>(`/ai/tournaments/${id}/schedule-preview`, data),
+  ) =>
+    api.post<ApiResponse<TournamentCourt[]>>(
+      `/tournaments/${id}/courts/batch`,
+      data,
+    ),
+  previewSchedulePlan: (id: string, data: SchedulePlanPreviewInput) =>
+    api.post<ApiResponse<SchedulePlanPreview>>(
+      `/tournaments/${id}/schedule-plans`,
+      data,
+    ),
+  previewScheduleWithAi: (id: string, data: AiScheduleCommandInput) =>
+    api.post<ApiResponse<AiScheduleCommandResult>>(
+      `/ai/tournaments/${id}/schedule-preview`,
+      data,
+    ),
   removeTournamentCourt: (id: string, courtId: string) =>
     api.delete<ApiResponse<TournamentCourt>>(
       `/tournaments/${id}/courts/${courtId}`,
@@ -1064,10 +1089,19 @@ export const tournamentsApi = {
   getPublicSponsors: (id: string) =>
     api.get<ApiResponse<TournamentSponsor[]>>(`/tournaments/${id}/sponsors`),
   getOrganizerSponsors: (id: string) =>
-    api.get<ApiResponse<TournamentSponsor[]>>(`/tournaments/${id}/sponsors/manage`),
+    api.get<ApiResponse<TournamentSponsor[]>>(
+      `/tournaments/${id}/sponsors/manage`,
+    ),
   createSponsor: (id: string, data: SponsorPayload) =>
-    api.post<ApiResponse<TournamentSponsor>>(`/tournaments/${id}/sponsors`, data),
-  updateSponsor: (id: string, sponsorId: string, data: Partial<SponsorPayload>) =>
+    api.post<ApiResponse<TournamentSponsor>>(
+      `/tournaments/${id}/sponsors`,
+      data,
+    ),
+  updateSponsor: (
+    id: string,
+    sponsorId: string,
+    data: Partial<SponsorPayload>,
+  ) =>
     api.patch<ApiResponse<TournamentSponsor>>(
       `/tournaments/${id}/sponsors/${sponsorId}`,
       data,
@@ -1439,9 +1473,10 @@ export const tournamentsApi = {
     ),
 
   addLiteClubMember: (id: string, data: { userId: string }) =>
-    api.post<
-      ApiResponse<{ participant: LiteParticipant; userId: string }>
-    >(`/tournaments/lite/${id}/club-members`, data),
+    api.post<ApiResponse<{ participant: LiteParticipant; userId: string }>>(
+      `/tournaments/lite/${id}/club-members`,
+      data,
+    ),
 
   pairLiteParticipants: (
     id: string,
@@ -1477,7 +1512,9 @@ export const tournamentsApi = {
       divisionId ? { divisionId } : undefined,
     ),
   toggleRecurringTournament: (id: string, enabled: boolean) =>
-    api.patch<ApiResponse<Tournament>>(`/tournaments/${id}/recurring/toggle`, { enabled }),
+    api.patch<ApiResponse<Tournament>>(`/tournaments/${id}/recurring/toggle`, {
+      enabled,
+    }),
   deleteRecurringTournament: (id: string) =>
     api.delete<ApiResponse<Tournament>>(`/tournaments/${id}/recurring`),
 };

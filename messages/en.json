@@ -7973,6 +7973,7 @@
     "venuePlaceholder": "For example: District 1 Sports Hall",
     "addressLabel": "Address",
     "addressPlaceholder": "Enter the competition address",
+    "locationOptionalHint": "You can add the venue and address after creating the tournament.",
     "administrativeAreaLabel": "Province/city and ward",
     "provincePlaceholder": "Select a province or city",
     "selectProvinceFirst": "Select a province/city first",

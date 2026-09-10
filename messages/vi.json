@@ -7977,6 +7977,7 @@
     "venuePlaceholder": "Ví dụ: Nhà thi đấu Quận 1",
     "addressLabel": "Địa chỉ",
     "addressPlaceholder": "Nhập địa chỉ thi đấu",
+    "locationOptionalHint": "Có thể bổ sung sân và địa chỉ sau khi tạo giải.",
     "administrativeAreaLabel": "Tỉnh/thành phố và phường/xã",
     "provincePlaceholder": "Chọn tỉnh/thành phố",
     "selectProvinceFirst": "Chọn tỉnh/thành trước",

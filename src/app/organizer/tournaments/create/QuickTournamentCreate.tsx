@@ -218,16 +218,28 @@ type QuickFormatConfig = {
 const QUICK_FORMAT_OPTIONS = [
   { key: 'MALE_DOUBLES', labelKey: 'formatMaleDoubles' },
   { key: 'FEMALE_DOUBLES', labelKey: 'formatFemaleDoubles' },
-  { key: 'MALE_SINGLES', labelKey: 'formatMaleSingles' },
-  { key: 'FEMALE_SINGLES', labelKey: 'formatFemaleSingles' },
   { key: 'MIXED_DOUBLES', labelKey: 'formatMixedDoubles' },
   { key: 'FOOTBALL_MALE', labelKey: 'formatFootballMale' },
   { key: 'FOOTBALL_FEMALE', labelKey: 'formatFootballFemale' },
   { key: 'FOOTBALL_MIXED', labelKey: 'formatFootballMixed' },
 ] as const;
 
-const DEFAULT_RACKET_FORMATS = QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => item.key);
-const DEFAULT_FOOTBALL_FORMATS = QUICK_FORMAT_OPTIONS.slice(5).map((item) => item.key);
+const DEFAULT_RACKET_FORMAT_OPTIONS = QUICK_FORMAT_OPTIONS.filter((item) => !item.key.startsWith('FOOTBALL_'));
+const DEFAULT_FOOTBALL_FORMAT_OPTIONS = QUICK_FORMAT_OPTIONS.filter((item) => item.key.startsWith('FOOTBALL_'));
+const DEFAULT_RACKET_FORMATS: string[] = DEFAULT_RACKET_FORMAT_OPTIONS.map((item) => item.key);
+const DEFAULT_FOOTBALL_FORMATS: string[] = DEFAULT_FOOTBALL_FORMAT_OPTIONS.map((item) => item.key);
+
+const createDefaultFormatConfigs = (
+  options: ReadonlyArray<(typeof QUICK_FORMAT_OPTIONS)[number]>,
+  translate: QuickMessage,
+): QuickFormatConfig[] => options.map((item) => ({
+  id: item.key,
+  key: item.key,
+  label: translate(item.labelKey),
+  eloEnabled: false,
+  minElo: null,
+  maxElo: null,
+}));
 
 const sportFromCategory = (category: Category): QuickSport | null => {
   const value = `${category.slug ?? ''} ${category.name ?? ''}`.toLowerCase();
@@ -337,7 +349,11 @@ export default function QuickTournamentCreate() {
   });
 
   const sport = useWatch({ control, name: 'sport' });
-  const selectedFormats = useWatch({ control, name: 'selectedFormats' }) || [];
+  const watchedSelectedFormats = useWatch({ control, name: 'selectedFormats' });
+  const selectedFormats = useMemo(
+    () => watchedSelectedFormats ?? [],
+    [watchedSelectedFormats],
+  );
   const bracketType = useWatch({ control, name: 'bracketType' });
   const maxTeams = useWatch({ control, name: 'maxTeams' });
   const commonParticipantLimit = Number.isInteger(Number(maxTeams)) && Number(maxTeams) >= 2
@@ -369,16 +385,9 @@ export default function QuickTournamentCreate() {
     minElo: null,
     maxElo: null,
   });
-  const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>([
-    ...QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({
-      id: item.key,
-      key: item.key,
-      label: translate(item.labelKey),
-      eloEnabled: false,
-      minElo: null,
-      maxElo: null,
-    })),
-  ]);
+  const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>(() =>
+    createDefaultFormatConfigs(DEFAULT_RACKET_FORMAT_OPTIONS, translate),
+  );
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
@@ -573,10 +582,28 @@ export default function QuickTournamentCreate() {
     if (firstConfig) syncLegacyFormat(firstConfig.key);
   };
 
+  useEffect(() => {
+    const allowedFormatIds = new Set(
+      formatConfigs
+        .filter((config) =>
+          sport === 'football'
+            ? config.key.startsWith('FOOTBALL_')
+            : DEFAULT_RACKET_FORMATS.includes(config.key),
+        )
+        .map((config) => config.id),
+    );
+    const normalizedSelectedFormats = selectedFormats.filter((formatId) =>
+      allowedFormatIds.has(formatId),
+    );
+    if (normalizedSelectedFormats.length !== selectedFormats.length) {
+      setValue('selectedFormats', normalizedSelectedFormats, { shouldValidate: true });
+    }
+  }, [formatConfigs, selectedFormats, setValue, sport]);
+
   const openFormatModal = (formatId?: string) => {
     const isFootball = sport === 'football';
     const sportOptions = QUICK_FORMAT_OPTIONS.filter((item) =>
-      isFootball ? item.key.startsWith('FOOTBALL_') : !item.key.startsWith('FOOTBALL_')
+      isFootball ? DEFAULT_FOOTBALL_FORMATS.includes(item.key) : DEFAULT_RACKET_FORMATS.includes(item.key)
     );
 
     if (formatId) {
@@ -664,33 +691,11 @@ export default function QuickTournamentCreate() {
 
   const handleSportChange = (newSport: QuickSport) => {
     if (newSport === 'football') {
-      const defaultFootball = QUICK_FORMAT_OPTIONS.slice(5).map((item) => ({
-        id: item.key,
-        key: item.key,
-        label: translate(item.labelKey),
-        bracketType: undefined,
-        maxParticipantsOverride: false,
-        maxParticipants: null,
-        eloEnabled: false,
-        minElo: null,
-        maxElo: null,
-      }));
       setValue('selectedFormats', [], { shouldValidate: false });
-      setFormatConfigs(defaultFootball);
+      setFormatConfigs(createDefaultFormatConfigs(DEFAULT_FOOTBALL_FORMAT_OPTIONS, translate));
     } else {
-      const defaultRacket = QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({
-        id: item.key,
-        key: item.key,
-        label: translate(item.labelKey),
-        bracketType: undefined,
-        maxParticipantsOverride: false,
-        maxParticipants: null,
-        eloEnabled: false,
-        minElo: null,
-        maxElo: null,
-      }));
       setValue('selectedFormats', [], { shouldValidate: false });
-      setFormatConfigs(defaultRacket);
+      setFormatConfigs(createDefaultFormatConfigs(DEFAULT_RACKET_FORMAT_OPTIONS, translate));
     }
   };
 
@@ -748,7 +753,21 @@ export default function QuickTournamentCreate() {
 
       // Convert the selected cards into the explicit API DTO. The UI-only
       // selectedFormats array never crosses the API boundary.
-      const divisionInputs = values.selectedFormats.map((formatId) => {
+      const submittedFormatIds = values.selectedFormats.filter((formatId) => {
+        const config = formatConfigs.find((item) => item.id === formatId || item.key === formatId);
+        return Boolean(
+          config &&
+          (values.sport === 'football'
+            ? DEFAULT_FOOTBALL_FORMATS.includes(config.key)
+            : DEFAULT_RACKET_FORMATS.includes(config.key)),
+        );
+      });
+      if (submittedFormatIds.length === 0) {
+        toast.error(translate('validationFormats'));
+        setIsSubmitting(false);
+        return;
+      }
+      const divisionInputs = submittedFormatIds.map((formatId) => {
         const config = formatConfigs.find((item) => item.id === formatId || item.key === formatId);
         const formatKey = config?.key || formatId;
         const divisionMaxParticipants = config?.maxParticipantsOverride && config.maxParticipants && config.maxParticipants > 0
@@ -1036,6 +1055,9 @@ export default function QuickTournamentCreate() {
 
                 {/* Địa điểm thi đấu */}
                 <div className="border-t border-slate-100 pt-2.5 space-y-2">
+                  <p className="text-[11px] font-medium text-slate-500">
+                    {translate('locationOptionalHint')}
+                  </p>
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
@@ -1341,7 +1363,11 @@ export default function QuickTournamentCreate() {
 
                 <div className="space-y-1.5">
                   {formatConfigs
-                    .filter((config) => (sport === 'football' ? config.key.startsWith('FOOTBALL_') : !config.key.startsWith('FOOTBALL_')))
+                    .filter((config) =>
+                      sport === 'football'
+                        ? DEFAULT_FOOTBALL_FORMATS.includes(config.key)
+                        : DEFAULT_RACKET_FORMATS.includes(config.key),
+                    )
                     .map((config) => {
                       const formatId = config.id;
                       const isSelected = selectedFormats.includes(formatId);
@@ -1550,7 +1576,11 @@ export default function QuickTournamentCreate() {
                   className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
                 >
                   {QUICK_FORMAT_OPTIONS
-                    .filter((option) => (sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')))
+                    .filter((option) =>
+                      sport === 'football'
+                        ? DEFAULT_FOOTBALL_FORMATS.includes(option.key)
+                        : DEFAULT_RACKET_FORMATS.includes(option.key),
+                    )
                     .map((option) => (
                       <option key={option.key} value={option.key}>
                         {translate(option.labelKey)}

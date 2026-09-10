@@ -851,6 +851,7 @@ export const tournamentsApi = {
   getMyManagementTournaments: (params?: {
     cursor?: string;
     limit?: number;
+    offset?: number;
     status?: "COMPLETED";
   }) =>
     api.get<ApiResponse<OrganizerTournamentListItem[]>>(

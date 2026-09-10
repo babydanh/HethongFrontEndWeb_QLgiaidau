@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, DollarSign, Download, ChevronRight, Check } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, DollarSign, Download, ChevronRight, Check, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
@@ -430,6 +430,47 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     >
                       <ExternalLink className="mr-1.5 h-3.5 w-3.5 text-slate-500" /> {translate('status.tournamentPage')}
                     </Button>
+
+                    {/* Dynamic Step Transition Action Button */}
+                    {(() => {
+                      if (tournament.status === 'REGISTRATION_OPEN') {
+                        return (
+                          <Button
+                            size="sm"
+                            onClick={() => s.handleTournamentStepTransition('UPCOMING')}
+                            disabled={s.isLoading}
+                            className="h-8 bg-amber-500 hover:bg-amber-600 px-3 text-xs font-bold text-white shadow-sm transition-colors"
+                          >
+                            <ChevronRight className="mr-1 h-3.5 w-3.5" /> Khóa / Đóng đăng ký
+                          </Button>
+                        );
+                      }
+                      if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) {
+                        return (
+                          <Button
+                            size="sm"
+                            onClick={s.handleConfirmOpen}
+                            disabled={s.isLoading || s.isOpening}
+                            className="h-8 bg-emerald-600 hover:bg-emerald-700 px-3 text-xs font-bold text-white shadow-sm transition-colors"
+                          >
+                            <Play className="mr-1 h-3.5 w-3.5 fill-current" /> Khai mạc / Mở giải đấu
+                          </Button>
+                        );
+                      }
+                      if (['IN_PROGRESS', 'ONGOING', 'LIVE', 'ACTIVE'].includes(tournament.status)) {
+                        return (
+                          <Button
+                            size="sm"
+                            onClick={() => s.setIsEndModalOpen(true)}
+                            disabled={s.isLoading || s.isEnding}
+                            className="h-8 bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-bold text-white shadow-sm transition-colors"
+                          >
+                            <Trophy className="mr-1 h-3.5 w-3.5" /> Hoàn tất giải đấu
+                          </Button>
+                        );
+                      }
+                      return null;
+                    })()}
 
                     {isTournamentCompleted(tournament.status) && (
                       <Button

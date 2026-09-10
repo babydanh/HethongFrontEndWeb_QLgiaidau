@@ -5,15 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { tournamentsApi, divisionsApi, Division, OrganizerTournamentListItem } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
-import { Calendar, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Users, Plus, Eye, Settings, Trash2, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { Tournament } from '@/types/tournament';
-import { getSportLogo } from '@/constants/sports';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
@@ -36,6 +34,8 @@ interface ParentWithDivisions {
 }
 
 type OrganizerTournamentFilter = 'ALL' | 'COMPLETED';
+
+const ORGANIZER_TOURNAMENT_PAGE_SIZE = 10;
 
 const getFormatLabel = (matchType: string, genderRestriction?: string | null, translate?: (key: string) => string) => {
   const mt = matchType || '';
@@ -80,9 +80,8 @@ export default function MyTournamentsPage() {
   const locale = useLocale();
   const [parents, setParents] = useState<ParentWithDivisions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [filter, setFilter] = useState<OrganizerTournamentFilter>('ALL');
   const parentsRef = useRef<ParentWithDivisions[]>([]);
@@ -90,24 +89,18 @@ export default function MyTournamentsPage() {
   const divisionCacheRef = useRef(new Map<string, Tournament[]>());
   const requestGenerationRef = useRef(0);
 
-  const fetchTournaments = useCallback(async (options?: {
-    append?: boolean;
-    cursor?: string | null;
-  }) => {
+  const fetchTournaments = useCallback(async (pageToLoad: number) => {
     if (listRequestRef.current) return listRequestRef.current;
 
-    const append = options?.append === true;
-    const cursor = options?.cursor ?? null;
     const requestGeneration = requestGenerationRef.current;
 
     const request = (async () => {
       try {
-        if (append) setIsLoadingMore(true);
-        else setIsLoading(true);
+        setIsLoading(true);
 
         const response = await tournamentsApi.getMyManagementTournaments({
-          limit: 12,
-          ...(cursor ? { cursor } : {}),
+          limit: ORGANIZER_TOURNAMENT_PAGE_SIZE,
+          offset: (pageToLoad - 1) * ORGANIZER_TOURNAMENT_PAGE_SIZE,
           ...(filter === 'COMPLETED' ? { status: 'COMPLETED' } : {}),
         });
         const pageItems = response.data ?? [];
@@ -201,7 +194,7 @@ export default function MyTournamentsPage() {
         // response from the previous filter mix into the current list.
         if (requestGeneration !== requestGenerationRef.current) return;
 
-        const sortedParents = [...(append ? parentsRef.current : []), ...loadedParents].sort((a, b) => {
+        const sortedParents = loadedParents.sort((a, b) => {
           const aDate = a.createdAt ?? a.divisions.find((division) => division.createdAt)?.createdAt;
           const bDate = b.createdAt ?? b.divisions.find((division) => division.createdAt)?.createdAt;
           const aTime = aDate ? new Date(aDate).getTime() : Number.NEGATIVE_INFINITY;
@@ -211,9 +204,8 @@ export default function MyTournamentsPage() {
         });
         parentsRef.current = sortedParents;
         setParents(sortedParents);
-        setNextCursor(response.meta?.nextCursor ?? null);
-        setHasMore(response.meta?.hasMore === true);
         setTotalCount(response.meta?.total ?? sortedParents.length);
+        setTotalPages(Math.max(1, response.meta?.totalPages ?? Math.ceil((response.meta?.total ?? sortedParents.length) / ORGANIZER_TOURNAMENT_PAGE_SIZE)));
       } catch {
         // Keep the last successful cards visible during transient 429/network errors.
         if (requestGeneration === requestGenerationRef.current) {
@@ -222,7 +214,6 @@ export default function MyTournamentsPage() {
       } finally {
         if (requestGeneration === requestGenerationRef.current) {
           setIsLoading(false);
-          setIsLoadingMore(false);
         }
       }
     })();
@@ -236,12 +227,15 @@ export default function MyTournamentsPage() {
   }, [filter, translate]);
 
   useEffect(() => {
-    void fetchTournaments();
-  }, [fetchTournaments]);
+    void fetchTournaments(page);
+  }, [fetchTournaments, page]);
 
-  const handleLoadMore = () => {
-    if (!nextCursor || isLoadingMore || listRequestRef.current) return;
-    void fetchTournaments({ append: true, cursor: nextCursor });
+  const handlePageChange = (nextPage: number) => {
+    if (isLoading || nextPage < 1 || nextPage > totalPages || nextPage === page) return;
+    parentsRef.current = [];
+    divisionCacheRef.current.clear();
+    setParents([]);
+    setPage(nextPage);
   };
 
   const handleFilterChange = (nextFilter: OrganizerTournamentFilter) => {
@@ -255,11 +249,10 @@ export default function MyTournamentsPage() {
     divisionCacheRef.current.clear();
     setFilter(nextFilter);
     setParents([]);
-    setNextCursor(null);
-    setHasMore(false);
+    setPage(1);
+    setTotalPages(1);
     setTotalCount(0);
     setIsLoading(true);
-    setIsLoadingMore(false);
   };
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
@@ -277,7 +270,7 @@ export default function MyTournamentsPage() {
       const resData = res?.data as unknown as { pendingDelete?: boolean; message?: string } | undefined;
       if (resData?.pendingDelete) {
         toast.success(resData.message || translate('pendingDeleteSuccess'));
-        fetchTournaments();
+        void fetchTournaments(page);
       } else {
         setParents((current) => {
           const next = current.filter((p) => p.id !== id);
@@ -492,19 +485,6 @@ export default function MyTournamentsPage() {
                       </Button>
                     </div>
 
-                    {/* Category Name Badge (neatly positioned, high contrast, no blur) */}
-                    <div className="absolute bottom-3 left-3 z-10">
-                      <span className="flex items-center gap-1 bg-slate-900/95 text-white px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider w-fit">
-                        {(() => {
-                          const logo = getSportLogo(firstDivision?.category?.name);
-                          return logo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={logo} alt={firstDivision?.category?.name || ''} className="w-3 h-3 object-contain brightness-150" />
-                          ) : null;
-                        })()}
-                        {firstDivision?.category?.name || 'MULTISPORT'}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Content */}
@@ -607,22 +587,43 @@ export default function MyTournamentsPage() {
           </div>
         )}
 
-        {parents.length > 0 && hasMore && (
-          <div className="mt-8 flex flex-col items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleLoadMore}
-              disabled={isLoadingMore}
-              className="min-w-44 border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
-            >
-              {isLoadingMore && <LoadingSpinner className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoadingMore ? translate('loadingMore') : translate('loadMore')}
-            </Button>
+        {parents.length > 0 && totalPages > 1 && (
+          <nav className="mt-8 flex flex-col items-center gap-3" aria-label={translate('paginationLabel')}>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={isLoading || page <= 1}
+                aria-label={translate('previousPage')}
+                className="h-9 gap-1 border-slate-200 bg-white px-3 text-slate-700 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">{translate('previousPage')}</span>
+              </Button>
+              <span className="min-w-24 text-center text-sm font-semibold text-slate-700" aria-live="polite">
+                {translate('pageOf', { page, total: totalPages })}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={isLoading || page >= totalPages}
+                aria-label={translate('nextPage')}
+                className="h-9 gap-1 border-slate-200 bg-white px-3 text-slate-700 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <span className="hidden sm:inline">{translate('nextPage')}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
             <p className="text-xs font-medium text-slate-400">
-              {translate('loadedCount', { loaded: parents.length, total: totalCount })}
+              {translate('showingRange', {
+                from: (page - 1) * ORGANIZER_TOURNAMENT_PAGE_SIZE + 1,
+                to: Math.min(page * ORGANIZER_TOURNAMENT_PAGE_SIZE, totalCount),
+                total: totalCount,
+              })}
             </p>
-          </div>
+          </nav>
         )}
 
       </div>

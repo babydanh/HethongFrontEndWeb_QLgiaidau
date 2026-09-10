@@ -200,20 +200,20 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
     switch (status) {
       case 'REGISTRATION_OPEN':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs uppercase font-bold bg-emerald-500 text-white shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-emerald-500 text-white shadow-xs">
+            <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
             {translate('registrationOpen')}
           </span>
         );
       case 'REGISTRATION_CLOSED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs uppercase font-bold bg-amber-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-amber-600 text-white shadow-xs">
             {translate('registrationClosed')}
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs uppercase font-bold bg-blue-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-600 text-white shadow-xs">
             {translate('upcoming')}
           </span>
         );
@@ -268,13 +268,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
 
                 {!hideFeaturedCardText && (
                 <div className="absolute bottom-2.5 sm:bottom-4 left-3 sm:left-5 right-12 sm:right-20 z-20 pointer-events-none max-w-xl flex flex-col gap-1 sm:gap-1.5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     {tournament.category?.name && (
-                      <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded border border-white/20 shadow-sm">
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded border border-white/20 shadow-xs">
                         {(() => {
                           const logo = getSportLogo(tournament.category?.name);
                           return logo ? (
-                            <img src={logo} alt={tournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150 drop-shadow" />
+                            <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain brightness-150 drop-shadow" />
                           ) : null;
                         })()}
                         {tournament.category.name}

@@ -35,6 +35,8 @@ interface ParentWithDivisions {
   status?: Tournament['status'];
 }
 
+type OrganizerTournamentFilter = 'ALL' | 'COMPLETED';
+
 const getFormatLabel = (matchType: string, genderRestriction?: string | null, translate?: (key: string) => string) => {
   const mt = matchType || '';
   const gr = genderRestriction || '';
@@ -82,9 +84,11 @@ export default function MyTournamentsPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [filter, setFilter] = useState<OrganizerTournamentFilter>('ALL');
   const parentsRef = useRef<ParentWithDivisions[]>([]);
   const listRequestRef = useRef<Promise<void> | null>(null);
   const divisionCacheRef = useRef(new Map<string, Tournament[]>());
+  const requestGenerationRef = useRef(0);
 
   const fetchTournaments = useCallback(async (options?: {
     append?: boolean;
@@ -94,6 +98,7 @@ export default function MyTournamentsPage() {
 
     const append = options?.append === true;
     const cursor = options?.cursor ?? null;
+    const requestGeneration = requestGenerationRef.current;
 
     const request = (async () => {
       try {
@@ -103,6 +108,7 @@ export default function MyTournamentsPage() {
         const response = await tournamentsApi.getMyManagementTournaments({
           limit: 12,
           ...(cursor ? { cursor } : {}),
+          ...(filter === 'COMPLETED' ? { status: 'COMPLETED' } : {}),
         });
         const pageItems = response.data ?? [];
 
@@ -191,6 +197,10 @@ export default function MyTournamentsPage() {
           result.status === 'fulfilled' && result.value ? [result.value] : [],
         );
 
+        // A filter change starts a new request generation. Never let a slower
+        // response from the previous filter mix into the current list.
+        if (requestGeneration !== requestGenerationRef.current) return;
+
         const sortedParents = [...(append ? parentsRef.current : []), ...loadedParents].sort((a, b) => {
           const aDate = a.createdAt ?? a.divisions.find((division) => division.createdAt)?.createdAt;
           const bDate = b.createdAt ?? b.divisions.find((division) => division.createdAt)?.createdAt;
@@ -206,10 +216,14 @@ export default function MyTournamentsPage() {
         setTotalCount(response.meta?.total ?? sortedParents.length);
       } catch {
         // Keep the last successful cards visible during transient 429/network errors.
-        toast.error(translate('loadError'));
+        if (requestGeneration === requestGenerationRef.current) {
+          toast.error(translate('loadError'));
+        }
       } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
+        if (requestGeneration === requestGenerationRef.current) {
+          setIsLoading(false);
+          setIsLoadingMore(false);
+        }
       }
     })();
 
@@ -219,7 +233,7 @@ export default function MyTournamentsPage() {
     } finally {
       if (listRequestRef.current === request) listRequestRef.current = null;
     }
-  }, [translate]);
+  }, [filter, translate]);
 
   useEffect(() => {
     void fetchTournaments();
@@ -228,6 +242,24 @@ export default function MyTournamentsPage() {
   const handleLoadMore = () => {
     if (!nextCursor || isLoadingMore || listRequestRef.current) return;
     void fetchTournaments({ append: true, cursor: nextCursor });
+  };
+
+  const handleFilterChange = (nextFilter: OrganizerTournamentFilter) => {
+    if (nextFilter === filter) return;
+
+    requestGenerationRef.current += 1;
+    // Allow the new filter request to start immediately even if enrichment for
+    // the previous filter is still in flight.
+    listRequestRef.current = null;
+    parentsRef.current = [];
+    divisionCacheRef.current.clear();
+    setFilter(nextFilter);
+    setParents([]);
+    setNextCursor(null);
+    setHasMore(false);
+    setTotalCount(0);
+    setIsLoading(true);
+    setIsLoadingMore(false);
   };
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
@@ -326,19 +358,52 @@ export default function MyTournamentsPage() {
           </Link>
         </div>
 
+        <div className="mb-6 flex flex-wrap items-center gap-2" role="tablist" aria-label={translate('filterLabel')}>
+          {([
+            ['ALL', translate('filterAll')],
+            ['COMPLETED', translate('filterCompleted')],
+          ] as const).map(([value, label]) => {
+            const isSelected = filter === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => handleFilterChange(value)}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  isSelected
+                    ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
         {parents.length === 0 ? (
           <div className="bg-white rounded-lg p-6 md:p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
             <div className="w-16 h-16 md:w-24 md:h-24 flex items-center justify-center mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
             </div>
-            <h3 className="text-lg md:text-xl font-bold text-slate-900">{translate('emptyTitle')}</h3>
+            <h3 className="text-lg md:text-xl font-bold text-slate-900">
+              {filter === 'COMPLETED' ? translate('emptyCompletedTitle') : translate('emptyTitle')}
+            </h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm">
-              {translate('emptyDescription')}
+              {filter === 'COMPLETED' ? translate('emptyCompletedDescription') : translate('emptyDescription')}
             </p>
-            <Link href="/organizer/tournaments/create" className="mt-6">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">{translate('createFirst')}</Button>
-            </Link>
+            {filter === 'COMPLETED' ? (
+              <Button type="button" onClick={() => handleFilterChange('ALL')} className="mt-6 bg-blue-600 px-6 text-white hover:bg-blue-700">
+                {translate('filterAll')}
+              </Button>
+            ) : (
+              <Link href="/organizer/tournaments/create" className="mt-6">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">{translate('createFirst')}</Button>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

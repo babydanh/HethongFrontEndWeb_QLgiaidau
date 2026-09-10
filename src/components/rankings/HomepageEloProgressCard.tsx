@@ -93,23 +93,23 @@ export default function HomepageEloProgressCard({
         <div>
           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
             {sportName && (
-              <span className="text-xs font-bold text-white bg-blue-600 px-2.5 py-0.5 rounded uppercase tracking-wider shadow-2xs">
+              <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded uppercase tracking-wider shadow-2xs">
                 {sportName}
               </span>
             )}
-            <span className="text-xs font-bold text-white bg-slate-700 px-2.5 py-0.5 rounded uppercase tracking-wider shadow-2xs">
+            <span className="text-[10px] font-bold text-white bg-slate-700 px-1.5 py-0.5 rounded uppercase tracking-wider shadow-2xs">
               {formatLabel}
             </span>
           </div>
-          <h4 className="text-base font-bold text-slate-900 tracking-tight">
+          <h4 className="text-sm font-bold text-slate-900 tracking-tight">
             {rankLabel}
           </h4>
         </div>
         <span
-          className="inline-flex items-center justify-center text-xs px-3.5 py-1.5 rounded-full font-extrabold text-white shadow-sm transition-all duration-300"
+          className="inline-flex items-center justify-center text-[11px] px-2.5 py-1 rounded-full font-extrabold text-white shadow-xs transition-all duration-300"
           style={{
             backgroundColor: rankColor,
-            boxShadow: `0 2px 10px -2px ${rankColor}80`,
+            boxShadow: `0 2px 8px -2px ${rankColor}80`,
           }}
         >
           {eloPoints}

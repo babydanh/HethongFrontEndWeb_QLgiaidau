@@ -1169,141 +1169,176 @@ const commonTranslate = useTranslations('Common');
         return null;
       })()}
 
-      {/* Primary CTA Button */}
+      {/* Primary CTA & Secondary Quick Actions Row */}
       <div className="pt-1">
-        {!isOwner && !isTournamentDraft(activeTournament.status) && (
-          <div>
-            {canResumePayment ? (
-              <Button
-                type="button"
-                onClick={() => {
-                  const resumeParticipantId = myRegistration?.participant?.id;
-                  if (resumeParticipantId) {
-                    const checkoutParams = new URLSearchParams({
-                      participantId: resumeParticipantId,
-                      tournamentId,
-                    });
-                    const resumeDivisionId =
-                      myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
-                    if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                    if (inviteCode) checkoutParams.set('invite', inviteCode);
-                    router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                  } else {
-                    router.push(registerHref);
-                  }
-                }}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
-              >
-                <CreditCard className="w-4 h-4" />
-                {translate('continuePayment') || 'Thanh toán ngay'}
-              </Button>
-            ) : isRegisteredUser ? (
-              <Button
-                type="button"
-                disabled
-                className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
-              >
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
-              </Button>
-            ) : isRegistrationOpen && areAllDivisionsFull ? (
-              <Button
-                type="button"
-                disabled
-                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
-              >
-                <Users className="w-4 h-4 text-slate-400" />
-                <span>{translate('registrationFull') || 'Đã đủ hồ sơ'}</span>
-              </Button>
-            ) : isRegistrationOpen && (isRegistrationLocked || isRegistrationExpired) ? (
-              <Button
-                type="button"
-                disabled
-                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
-              >
-                <span>{registrationButtonLabel}</span>
-              </Button>
-            ) : isTournamentInProgress(activeTournament.status) || isTournamentCompleted(activeTournament.status) ? (
-              <Button
-                type="button"
-                onClick={() => handleTabSelect('matches')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-4 h-4" />
-                {translate('tabs.matches') || 'Lịch thi đấu'}
-              </Button>
-            ) : isRegistrationButtonDisabled ? (
-              <Button
-                type="button"
-                disabled
-                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
-              >
-                <span>{registrationButtonLabel}</span>
-              </Button>
-            ) : isClubLiteTournament(activeTournament) ? (
-              activeTournament.inviteCode ? (
-                <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm">
-                    {translate('liteJoin')}
-                  </Button>
-                </Link>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={() => {
-                    const rosterEl = document.getElementById('club-lite-roster-widget');
-                    if (rosterEl) {
-                      rosterEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else {
-                      const firstSlot = document.querySelector('[title*="Slot #"]');
-                      if (firstSlot) {
-                        firstSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            {!isOwner && !isTournamentDraft(activeTournament.status) && (
+              <div>
+                {canResumePayment ? (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const resumeParticipantId = myRegistration?.participant?.id;
+                      if (resumeParticipantId) {
+                        const checkoutParams = new URLSearchParams({
+                          participantId: resumeParticipantId,
+                          tournamentId,
+                        });
+                        const resumeDivisionId =
+                          myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
+                        if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
+                        if (inviteCode) checkoutParams.set('invite', inviteCode);
+                        router.push(`/payments/checkout?${checkoutParams.toString()}`);
+                      } else {
+                        router.push(registerHref);
                       }
-                    }
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer"
-                >
-                  {registrationButtonLabel || translate('liteJoin') || 'Chọn Slot tham gia'}
-                </Button>
-              )
-            ) : (
-              <Button
-                type="button"
-                onClick={() => {
-                  const needsRegistrationPage =
-                    activeTournament.visibility === 'PRIVATE' ||
-                    registrationModeUi.mode !== 'OPEN' ||
-                    divisionsList.length > 0 ||
-                    hasAdvancedRegistrationForm;
-                  if (needsRegistrationPage) {
-                    router.push(registerHref);
-                  } else {
-                    setIsRegisterModalOpen(true);
-                  }
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer"
+                    }}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {translate('continuePayment') || 'Thanh toán ngay'}
+                  </Button>
+                ) : isRegisteredUser ? (
+                  <Button
+                    type="button"
+                    disabled
+                    className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                  >
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
+                  </Button>
+                ) : isRegistrationOpen && areAllDivisionsFull ? (
+                  <Button
+                    type="button"
+                    disabled
+                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                  >
+                    <Users className="w-4 h-4 text-slate-400" />
+                    <span>{translate('registrationFull') || 'Đã đủ hồ sơ'}</span>
+                  </Button>
+                ) : isRegistrationOpen && (isRegistrationLocked || isRegistrationExpired) ? (
+                  <Button
+                    type="button"
+                    disabled
+                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                  >
+                    <span>{registrationButtonLabel}</span>
+                  </Button>
+                ) : isTournamentInProgress(activeTournament.status) || isTournamentCompleted(activeTournament.status) ? (
+                  <Button
+                    type="button"
+                    onClick={() => handleTabSelect('matches')}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    {translate('tabs.matches') || 'Lịch thi đấu'}
+                  </Button>
+                ) : isRegistrationButtonDisabled ? (
+                  <Button
+                    type="button"
+                    disabled
+                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                  >
+                    <span>{registrationButtonLabel}</span>
+                  </Button>
+                ) : isClubLiteTournament(activeTournament) ? (
+                  activeTournament.inviteCode ? (
+                    <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm">
+                        {translate('liteJoin')}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const rosterEl = document.getElementById('club-lite-roster-widget');
+                        if (rosterEl) {
+                          rosterEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                          const firstSlot = document.querySelector('[title*="Slot #"]');
+                          if (firstSlot) {
+                            firstSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer"
+                    >
+                      {registrationButtonLabel || translate('liteJoin') || 'Chọn Slot tham gia'}
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const needsRegistrationPage =
+                        activeTournament.visibility === 'PRIVATE' ||
+                        registrationModeUi.mode !== 'OPEN' ||
+                        divisionsList.length > 0 ||
+                        hasAdvancedRegistrationForm;
+                      if (needsRegistrationPage) {
+                        router.push(registerHref);
+                      } else {
+                        setIsRegisterModalOpen(true);
+                      }
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer"
+                  >
+                    {registrationButtonLabel}
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {isOwner && !isTournamentDraft(activeTournament.status) && (
+              <Link
+                href={`/organizer/tournaments/${activeTournament.id}/manage`}
+                className="block w-full"
               >
-                {registrationButtonLabel}
-              </Button>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-sm text-sm">
+                  {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
+                </Button>
+              </Link>
             )}
           </div>
-        )}
+
+          {/* Quick Icon Actions (Theo dõi & Chia sẻ) */}
+          {user?.id && (
+            <Button
+              onClick={toggleFollow}
+              disabled={followLoading}
+              variant={isFollowing ? 'default' : 'outline'}
+              size="icon"
+              title={isFollowing ? translate('followActive') : translate('follow')}
+              aria-label={isFollowing ? translate('followActive') : translate('follow')}
+              className={`shrink-0 w-11 h-11 rounded-lg border shadow-xs transition-colors ${
+                isFollowing
+                  ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900'
+              }`}
+            >
+              <Bookmark className={`w-4 h-4 ${isFollowing ? 'fill-current' : ''}`} />
+            </Button>
+          )}
+
+          <Button
+            onClick={handleShareClick}
+            variant="outline"
+            size="icon"
+            title={translate("share")}
+            aria-label={translate("share")}
+            className="shrink-0 w-11 h-11 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900 shadow-xs rounded-lg transition-colors"
+          >
+            <Share2 className="w-4 h-4" />
+          </Button>
+        </div>
 
         {isOwner && !isTournamentDraft(activeTournament.status) && (
-          <div className="space-y-2">
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
-              <p className="text-xs text-slate-700 font-bold">
-                {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
-              </p>
-            </div>
-            <Link
-              href={`/organizer/tournaments/${activeTournament.id}/manage`}
-              className="block w-full"
-            >
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-sm">
-                {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
-              </Button>
-            </Link>
+          <div className="mt-2 bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+            <p className="text-[11px] text-slate-600 font-medium">
+              {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
+            </p>
           </div>
         )}
       </div>
@@ -1319,32 +1354,6 @@ const commonTranslate = useTranslations('Common');
           </div>
         </div>
       )}
-
-      {/* Secondary Utility Actions (Follow & Share) */}
-      <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
-        {user?.id && (
-          <Button
-            onClick={toggleFollow}
-            disabled={followLoading}
-            variant={isFollowing ? 'default' : 'outline'}
-            className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-lg ${
-              isFollowing
-                ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
-                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-            }`}
-          >
-            <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
-            {isFollowing ? translate('followActive') : translate('follow')}
-          </Button>
-        )}
-        <Button
-          onClick={handleShareClick}
-          variant="outline"
-          className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-lg"
-        >
-          <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
-        </Button>
-      </div>
     </div>
     );
   };
@@ -1688,28 +1697,33 @@ const commonTranslate = useTranslations('Common');
         {renderContactCard()}
 
         {/* Follow & Share */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-xs flex items-center justify-end gap-2">
           {user?.id && (
             <Button
               onClick={toggleFollow}
               disabled={followLoading}
               variant={isFollowing ? 'default' : 'outline'}
-              className={`flex-1 font-bold shadow-xs h-9 text-xs rounded-lg ${
+              size="icon"
+              title={isFollowing ? translate('followActive') : translate('follow')}
+              aria-label={isFollowing ? translate('followActive') : translate('follow')}
+              className={`w-10 h-10 rounded-lg border shadow-xs transition-colors ${
                 isFollowing
                   ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900'
               }`}
             >
-              <Bookmark className={`w-3.5 h-3.5 mr-1 ${isFollowing ? 'fill-current' : ''}`} />
-              {isFollowing ? translate('followActive') : translate('follow')}
+              <Bookmark className={`w-4 h-4 ${isFollowing ? 'fill-current' : ''}`} />
             </Button>
           )}
           <Button
             onClick={handleShareClick}
             variant="outline"
-            className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs rounded-lg"
+            size="icon"
+            title={translate("share")}
+            aria-label={translate("share")}
+            className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900 shadow-xs rounded-lg transition-colors"
           >
-            <Share2 className="w-3.5 h-3.5 mr-1" /> {translate("share")}
+            <Share2 className="w-4 h-4" />
           </Button>
         </div>
       </div>

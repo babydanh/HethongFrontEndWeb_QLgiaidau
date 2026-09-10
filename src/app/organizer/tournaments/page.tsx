@@ -83,6 +83,7 @@ export default function MyTournamentsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [hasLoadError, setHasLoadError] = useState(false);
   const [filter, setFilter] = useState<OrganizerTournamentFilter>('ALL');
   const parentsRef = useRef<ParentWithDivisions[]>([]);
   const listRequestRef = useRef<Promise<void> | null>(null);
@@ -97,6 +98,7 @@ export default function MyTournamentsPage() {
     const request = (async () => {
       try {
         setIsLoading(true);
+        setHasLoadError(false);
 
         const response = await tournamentsApi.getMyManagementTournaments({
           limit: ORGANIZER_TOURNAMENT_PAGE_SIZE,
@@ -209,6 +211,7 @@ export default function MyTournamentsPage() {
       } catch {
         // Keep the last successful cards visible during transient 429/network errors.
         if (requestGeneration === requestGenerationRef.current) {
+          setHasLoadError(true);
           toast.error(translate('loadError'));
         }
       } finally {
@@ -323,6 +326,21 @@ export default function MyTournamentsPage() {
               <TournamentCardSkeleton key={index} />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasLoadError && parents.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-50 px-3 py-8 md:px-8 md:py-12">
+        <div className="mx-auto flex max-w-xl flex-col items-center rounded-lg border border-rose-100 bg-white p-6 text-center shadow-sm md:p-12">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-2xl text-rose-500" aria-hidden="true">!</div>
+          <h3 className="text-lg font-bold text-slate-900">{translate('loadErrorTitle')}</h3>
+          <p className="mt-2 max-w-sm font-medium text-slate-500">{translate('loadErrorDescription')}</p>
+          <Button type="button" onClick={() => void fetchTournaments(page)} className="mt-6 bg-blue-600 px-6 text-white hover:bg-blue-700">
+            {translate('retry')}
+          </Button>
         </div>
       </div>
     );

@@ -4,15 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
+import { getSportLogo } from '@/constants/sports';
+import { getSportTheme } from '@/components/ui/TournamentBannerCover';
 import ImageLightboxModal from '@/components/common/ImageLightboxModal';
 
 interface GalleryCarouselProps {
   images?: string[];
   defaultBanner?: string;
+  categoryName?: string | null;
+  tournamentName?: string;
   className?: string;
 }
 
-export default function GalleryCarousel({ images = [], defaultBanner, className = '' }: GalleryCarouselProps) {
+export default function GalleryCarousel({
+  images = [],
+  defaultBanner,
+  categoryName,
+  tournamentName,
+  className = '',
+}: GalleryCarouselProps) {
   const translate = useTranslations('Common');
   const allImages = [
     ...(defaultBanner ? [defaultBanner] : []),
@@ -42,24 +52,81 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
   }, [allImages.length, isHovered, isLightboxOpen, handleNext]);
 
   if (allImages.length === 0) {
+    const theme = getSportTheme(categoryName);
+    const sportIcon = getSportLogo(categoryName);
+
     return (
-      <div className={`w-full bg-gradient-to-br from-blue-50 via-sky-50/80 to-indigo-100/90 flex flex-col items-center justify-center text-slate-800 gap-3 relative overflow-hidden ${className}`}>
-        {/* Soft glowing ambient circles */}
-        <div className="absolute -right-16 -top-16 w-80 h-80 bg-sky-300/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Subtle background sport watermark pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.08] pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col items-center gap-2.5 text-center px-4">
-          <img
-            src={BRAND.assets.logoFull}
-            alt={translate('brandLogoAlt', { name: BRAND.name })}
-            className="h-16 md:h-20 w-auto object-contain drop-shadow-sm"
+      <div className={`relative w-full h-full overflow-hidden select-none ${className}`}>
+        {/* Dynamic Athletic Sport Cover matching tournament cards */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradient}`}>
+          {/* Ambient Lighting & Glow */}
+          <div
+            className={`absolute -top-12 -right-12 w-72 h-72 rounded-full ${theme.glowColor} blur-3xl pointer-events-none`}
           />
-          <span className="text-[11px] sm:text-xs tracking-widest text-blue-700/85 font-extrabold uppercase mt-1 drop-shadow-2xs">
-            {translate('galleryEmptyTagline') || 'Hệ thống quản lý giải đấu chuyên nghiệp'}
-          </span>
+          <div
+            className="absolute -bottom-10 -left-10 w-64 h-64 rounded-full bg-white/20 blur-3xl pointer-events-none"
+          />
+          <div
+            className="absolute top-0 left-1/4 w-96 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"
+          />
+
+          {/* Geometric Sports Court / Arena Pattern */}
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            viewBox="0 0 400 200"
+          >
+            {/* Athletic Diagonal Sweep */}
+            <line x1="-50" y1="250" x2="300" y2="-50" stroke="white" strokeOpacity="0.16" strokeWidth="40" />
+            <line x1="0" y1="230" x2="350" y2="-50" stroke="white" strokeOpacity="0.12" strokeWidth="1.5" />
+            
+            {/* Court boundary line abstractions */}
+            <circle cx="200" cy="100" r="60" stroke="white" strokeOpacity="0.14" strokeWidth="1.5" fill="none" />
+            <line x1="200" y1="0" x2="200" y2="200" stroke="white" strokeOpacity="0.14" strokeWidth="1.5" strokeDasharray="6 4" />
+            <rect x="25" y="20" width="350" height="160" rx="8" stroke="white" strokeOpacity="0.14" strokeWidth="1.5" fill="none" />
+            
+            {/* Dynamic Corner Accents */}
+            <path d="M 25 45 L 25 20 L 50 20" stroke="white" strokeOpacity="0.25" strokeWidth="2" fill="none" />
+            <path d="M 375 155 L 375 180 L 350 180" stroke="white" strokeOpacity="0.25" strokeWidth="2" fill="none" />
+          </svg>
+
+          {/* Large Athletic Sport Typography Watermark */}
+          <div className="absolute inset-0 flex items-center justify-end pr-6 sm:pr-12 pointer-events-none overflow-hidden">
+            <span className="text-5xl sm:text-7xl md:text-8xl font-black italic tracking-tighter text-white/[0.14] uppercase transform rotate-[-4deg] select-none whitespace-nowrap">
+              {theme.watermarkText}
+            </span>
+          </div>
+
+          {/* Sport Icon Watermark (Right aligned) */}
+          {sportIcon && (
+            <div className="absolute right-6 sm:right-16 top-1/2 -translate-y-1/2 w-28 h-28 sm:w-44 sm:h-44 opacity-[0.22] filter brightness-0 invert pointer-events-none transition-transform duration-700">
+              <img
+                src={sportIcon}
+                alt=""
+                className="w-full h-full object-contain"
+                aria-hidden="true"
+              />
+            </div>
+          )}
+
+          {/* Center Brandmark (Transparent SportO Logo with clean white vector filter) */}
+          <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src={BRAND.assets.logoFull}
+                alt={`${BRAND.name} Cover`}
+                className="w-40 sm:w-56 md:w-64 h-auto object-contain filter brightness-0 invert drop-shadow-[0_2px_14px_rgba(0,0,0,0.4)]"
+              />
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-px bg-white/50" />
+                <span className="text-[10px] sm:text-xs font-bold tracking-[0.25em] text-white/90 uppercase drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
+                  {categoryName || BRAND.name}
+                </span>
+                <span className="w-8 h-px bg-white/50" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

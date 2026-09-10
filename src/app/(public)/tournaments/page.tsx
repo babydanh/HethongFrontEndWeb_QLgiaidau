@@ -798,23 +798,21 @@ export default function TournamentsListPage() {
                 {/* Bottom: Details Section */}
                 <div className="p-5 flex gap-5 flex-grow">
                   {/* Left Column: Date Block */}
-                  <div className="flex items-center justify-center shrink-0 border-r border-slate-100 pr-5 min-w-[100px]">
-                    <div className="flex items-center gap-1.5 font-bold text-slate-900 leading-none">
-                      {/* Ngày bắt đầu / Tháng mini */}
-                      <div className="flex items-baseline gap-0.5">
+                  <div className="flex items-center justify-center shrink-0 border-r border-slate-100 pr-4 min-w-[78px]">
+                    <div className="flex items-center justify-between gap-1.5 font-bold text-slate-900 leading-none w-full">
+                      {/* Ngày bắt đầu / Tháng mini ở dưới */}
+                      <div className="flex flex-col items-center">
                         <span className="text-2xl font-black">{startDay}</span>
-                        <span className="text-[10px] font-bold text-slate-400">/</span>
-                        <span className="text-[10px] font-bold text-slate-500 translate-y-0.5">T{startMonth}</span>
+                        <span className="text-[10px] font-bold text-slate-500 mt-1">T{startMonth}</span>
                       </div>
 
                       {/* Dấu gạch ngang ở giữa */}
-                      <span className="text-slate-300 font-bold text-sm mx-0.5">-</span>
+                      <span className="text-slate-300 font-bold text-sm mb-3.5 mx-0.5">-</span>
 
-                      {/* Ngày kết thúc / Tháng mini */}
-                      <div className="flex items-baseline gap-0.5">
+                      {/* Ngày kết thúc / Tháng mini ở dưới */}
+                      <div className="flex flex-col items-center">
                         <span className="text-2xl font-black">{endDay}</span>
-                        <span className="text-[10px] font-bold text-slate-400">/</span>
-                        <span className="text-[10px] font-bold text-slate-500 translate-y-0.5">T{endMonth}</span>
+                        <span className="text-[10px] font-bold text-slate-500 mt-1">T{endMonth}</span>
                       </div>
                     </div>
                   </div>
@@ -858,7 +856,7 @@ export default function TournamentsListPage() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-sm md:text-base font-bold text-slate-900 uppercase leading-snug line-clamp-2">
+                      <h3 className="text-sm md:text-base font-bold text-slate-900 uppercase leading-snug line-clamp-2 min-h-[2.5rem] flex items-center">
                         {tournament.name}
                       </h3>
                     </div>

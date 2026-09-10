@@ -1118,8 +1118,17 @@ export default function UnifiedChatWidget() {
     try {
       const response = await inboxApi.toggleReaction(messageId, emoji);
       const payload = (response.data as unknown as { data?: { reactions?: string[]; reactionDetails?: ChatReactionDetail[] }; reactions?: string[]; reactionDetails?: ChatReactionDetail[] }).data ?? response.data;
-      if (payload.reactions) setReactions((prev) => ({ ...prev, [messageId]: payload.reactions ?? [] }));
-      if (payload.reactionDetails) setReactionDetails((prev) => ({ ...prev, [messageId]: payload.reactionDetails ?? [] }));
+      if (payload.reactions || payload.reactionDetails) {
+        const nextReactions = payload.reactions ?? [];
+        const nextDetails = payload.reactionDetails ?? [];
+        setReactions((prev) => ({ ...prev, [messageId]: nextReactions }));
+        setReactionDetails((prev) => ({ ...prev, [messageId]: nextDetails }));
+        setMessages((current) => current.map((message) => (
+          message.id === messageId
+            ? { ...message, reactions: nextReactions, reactionDetails: nextDetails }
+            : message
+        )));
+      }
     } catch {
       // socket listener will sync
     }
@@ -2938,7 +2947,7 @@ export default function UnifiedChatWidget() {
                               </div>
 
                               {/* Read receipts are derived only from participant.lastReadAt. */}
-                              {index === roomMessages.length - 1 && message.mine && (() => {
+                              {message.mine && (() => {
                                 const viewers = getMessageViewers(
                                   selectedRoom?.participants ?? [],
                                   selectedRoom ? roomReadStates[selectedRoom.id] : undefined,
@@ -3662,7 +3671,9 @@ export default function UnifiedChatWidget() {
 
       {reactionDetailMessageId && (() => {
         const message = messages.find((item) => item.id === reactionDetailMessageId);
-        const groups = message?.reactionDetails ?? reactionDetails[reactionDetailMessageId] ?? [];
+        const groups = message?.reactionDetails?.length
+          ? message.reactionDetails
+          : reactionDetails[reactionDetailMessageId] ?? [];
         return (
           <div
             className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4"

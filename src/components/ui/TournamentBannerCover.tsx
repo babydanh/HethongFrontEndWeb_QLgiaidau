@@ -22,7 +22,7 @@ interface SportVisualTheme {
   accentBorder: string;
 }
 
-function getSportTheme(categoryName?: string | null): SportVisualTheme {
+export function getSportTheme(categoryName?: string | null): SportVisualTheme {
   const term = (categoryName || '').toLowerCase();
 
   if (term.includes('pickleball')) {

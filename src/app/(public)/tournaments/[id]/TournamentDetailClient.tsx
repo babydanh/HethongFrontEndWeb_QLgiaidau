@@ -1740,6 +1740,8 @@ const commonTranslate = useTranslations('Common');
                   <GalleryCarousel
                     images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
                     defaultBanner={activeTournament.bannerUrl || undefined}
+                    categoryName={activeTournament.category?.name}
+                    tournamentName={activeTournament.name}
                     className="w-full h-full object-cover"
                   />
                 </div>

@@ -5,10 +5,13 @@ import {
   CalendarClock,
   CheckCircle2,
   CircleAlert,
+  Download,
   ExternalLink,
+  FileSpreadsheet,
   MapPin,
   Trophy,
   Users,
+  ChevronRight,
 } from 'lucide-react';
 import type { Division } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
@@ -16,7 +19,8 @@ import type { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 import { formatDate } from '@/utils/format';
-import { useTranslations } from 'next-intl';
+import { exportTournamentResultsExcel } from '@/utils/exportTournament';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface TournamentManageOverviewProps {
   tournament: Tournament;
@@ -27,6 +31,8 @@ interface TournamentManageOverviewProps {
   courts: Array<{ id: string; courtName: string; status?: string }>;
   statusLabel: string;
   onOpenOperations: () => void;
+  onSelectDivision?: (divisionId: string) => void;
+  onOpenBracket?: () => void;
 }
 
 function MetricCard({
@@ -50,11 +56,11 @@ function MetricCard({
   }[tone];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+          <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
           <p className="mt-1 truncate text-[11px] font-medium text-slate-500">{detail}</p>
         </div>
         <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1', toneClasses)}>
@@ -87,9 +93,11 @@ export function TournamentManageOverview({
   courts,
   statusLabel,
   onOpenOperations,
+  onSelectDivision,
+  onOpenBracket,
 }: TournamentManageOverviewProps) {
   const t = useTranslations('OrganizerManage');
-  const selectedDivision = divisions.find((division) => division.id === selectedDivisionId);
+  const locale = useLocale();
   const summary = tournament._summary;
   const totalMatches = summary?.matchesTotal ?? matches.length;
   const completedMatches = summary?.matchesCompleted ?? matches.filter((match) => match.status === 'COMPLETED').length;
@@ -98,112 +106,263 @@ export function TournamentManageOverview({
   const progress = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">{t('overview.eyebrow')}</p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 md:text-2xl">{t('overview.title')}</h2>
-          <p className="mt-1 text-sm text-slate-500">{t('overview.description')}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true" />
-            {statusLabel}
-          </span>
-          <Button type="button" variant="outline" onClick={onOpenOperations} className="h-9 text-xs font-bold">
-            {t('overview.openOperations')} <ExternalLink className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-          </Button>
-        </div>
-      </div>
-
+    <div className="space-y-4">
+      {/* 4 KPI Cards */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label={t('overview.divisionsLabel')} value={String(divisions.length)} detail={t('overview.divisionsDetail')} icon={Trophy} tone="blue" />
-        <MetricCard label={t('overview.participantsLabel')} value={String(participants.length)} detail={selectedDivision?.name || t('overview.noDivision')} icon={Users} tone="emerald" />
-        <MetricCard label={t('overview.matchProgressLabel')} value={`${completedMatches}/${totalMatches}`} detail={t('overview.matchProgressDetail', { progress, live: liveCount })} icon={Activity} tone="amber" />
-        <MetricCard label={t('overview.courtsLabel')} value={String(courts.length)} detail={courts.length ? t('overview.courtsReady') : t('overview.courtsEmpty')} icon={MapPin} tone="violet" />
+        <MetricCard
+          label={t('overview.participantsLabel')}
+          value={String(summary?.participantCount ?? participants.length)}
+          detail={divisions.length ? `${divisions.length} nội dung` : t('overview.noDivision')}
+          icon={Users}
+          tone="blue"
+        />
+        <MetricCard
+          label={t('overview.matchProgressLabel')}
+          value={`${completedMatches}/${totalMatches}`}
+          detail={t('overview.matchProgressDetail', { progress, live: liveCount })}
+          icon={Activity}
+          tone="amber"
+        />
+        <MetricCard
+          label={t('overview.divisionsLabel')}
+          value={String(divisions.length)}
+          detail={t('overview.divisionsDetail')}
+          icon={Trophy}
+          tone="emerald"
+        />
+        <MetricCard
+          label={t('overview.courtsLabel')}
+          value={String(courts.length)}
+          detail={courts.length ? t('overview.courtsReady') : t('overview.courtsEmpty')}
+          icon={MapPin}
+          tone="violet"
+        />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.8fr)]">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-5" aria-labelledby="manage-live-title">
-          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={cn('h-2 w-2 rounded-full', liveMatches.length ? 'animate-pulse bg-rose-500' : 'bg-slate-300')} aria-hidden="true" />
-                <h3 id="manage-live-title" className="text-base font-bold text-slate-900">{t('overview.liveTitle')}</h3>
+      {/* 2-Column Section: Left (Results/Standings) + Right (Quick Actions & Status) */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
+        {/* Left Column: Kết quả giải đấu / Trận đấu */}
+        <div className="space-y-4">
+          {/* Live matches if any */}
+          {liveMatches.length > 0 && (
+            <section className="rounded-xl border border-rose-200 bg-white p-4 shadow-xs" aria-labelledby="manage-live-title">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full animate-pulse bg-rose-500" aria-hidden="true" />
+                  <h3 id="manage-live-title" className="text-sm font-bold text-slate-900">{t('overview.liveTitle')}</h3>
+                </div>
+                <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                  {t('overview.liveCount', { count: liveCount })}
+                </span>
               </div>
-              <p className="mt-1 text-xs text-slate-500">{t('overview.liveDescription')}</p>
-            </div>
-            <span className="text-xs font-semibold text-slate-500">{t('overview.liveCount', { count: liveCount })}</span>
-          </div>
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {liveMatches.slice(0, 4).map((match) => {
+                  const setScore = getLatestSetScore(match);
+                  return (
+                    <div key={match.id} className="rounded-lg border border-rose-100 bg-rose-50/40 p-3">
+                      <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-rose-700">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" /> {t('overview.liveBadge')}
+                        </span>
+                        <span className="text-slate-500">{match.courtName || t('overview.courtNotSet')}</span>
+                      </div>
+                      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs font-bold text-slate-800">
+                        <div className="min-w-0 space-y-1">
+                          <p className="truncate">{getTeamName(match, 1)}</p>
+                          <p className="truncate">{getTeamName(match, 2)}</p>
+                        </div>
+                        <div className="text-right text-xs font-extrabold text-slate-900">
+                          <p>{match.p1SetsWon}</p>
+                          <p>{match.p2SetsWon}</p>
+                        </div>
+                      </div>
+                      {setScore ? (
+                        <p className="mt-2 inline-flex rounded bg-white px-1.5 py-0.5 text-[10px] font-bold text-blue-700 ring-1 ring-blue-100">
+                          {t('overview.currentSet', { score: setScore })}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-          {liveMatches.length ? (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {liveMatches.slice(0, 4).map((match) => {
-                const setScore = getLatestSetScore(match);
-                return (
-                  <div key={match.id} className="rounded-xl border border-rose-100 bg-rose-50/50 p-3.5">
-                    <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-rose-700">
-                      <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" /> {t('overview.liveBadge')}</span>
-                      <span>{match.courtName || t('overview.courtNotSet')}</span>
-                    </div>
-                    <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                      <div className="min-w-0 space-y-1.5 text-sm font-bold text-slate-800">
-                        <p className="truncate">{getTeamName(match, 1)}</p>
-                        <p className="truncate">{getTeamName(match, 2)}</p>
-                      </div>
-                      <div className="text-right text-sm font-bold text-slate-900">
-                        <p>{match.p1SetsWon}</p>
-                        <p>{match.p2SetsWon}</p>
-                      </div>
-                    </div>
-                    {setScore ? <p className="mt-3 inline-flex rounded-md bg-white px-2 py-1 text-[11px] font-bold text-blue-700 ring-1 ring-blue-100">{t('overview.currentSet', { score: setScore })}</p> : null}
-                  </div>
-                );
-              })}
+          {/* Results Summary by Division */}
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs" aria-labelledby="manage-results-title">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 id="manage-results-title" className="text-sm font-bold text-slate-900">
+                  {t('overview.resultsTitle')}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">{t('overview.resultsSubtitle')}</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
+                disabled={matches.length === 0}
+                className="h-7 text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+                {t('sidebar.exportResults')}
+              </Button>
             </div>
-          ) : liveCount > 0 ? (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-5 text-sm text-amber-800">
-              <CircleAlert className="h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
-              {t('overview.livePartial')}
+
+            {divisions.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {divisions.map((div) => {
+                  const divMatches = matches.filter((m) => m.divisionId === div.id);
+                  const divCompleted = divMatches.filter((m) => m.status === 'COMPLETED').length;
+                  const divTotal = divMatches.length;
+                  const divPct = divTotal > 0 ? Math.round((divCompleted / divTotal) * 100) : 0;
+                  const isSelected = div.id === selectedDivisionId;
+
+                  return (
+                    <div
+                      key={div.id}
+                      onClick={() => onSelectDivision?.(div.id)}
+                      className={cn(
+                        'flex items-center justify-between py-2.5 px-2 rounded-lg transition-colors cursor-pointer',
+                        isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50',
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                          <Trophy className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className={cn('truncate text-xs font-bold', isSelected ? 'text-blue-900' : 'text-slate-800')}>
+                            {div.name}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {div.maxParticipants ? `${div.maxParticipants} VĐV / đội` : 'Không giới hạn quy mô'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-slate-700">
+                            {divTotal > 0 ? `${divCompleted}/${divTotal} trận` : 'Chưa có trận'}
+                          </p>
+                          {divTotal > 0 && (
+                            <div className="mt-1 h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-blue-600 transition-all"
+                                style={{ width: `${divPct}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-300" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-slate-400">
+                <Trophy className="h-8 w-8 text-slate-300 mb-2" />
+                <p className="text-xs font-semibold text-slate-600">{t('overview.noDivision')}</p>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Right Column: Tác vụ nhanh & Trạng thái */}
+        <div className="space-y-4">
+          {/* Quick Actions Card */}
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs" aria-labelledby="manage-quick-tasks-title">
+            <h3 id="manage-quick-tasks-title" className="text-sm font-bold text-slate-900 mb-0.5">
+              {t('overview.quickTasksTitle')}
+            </h3>
+            <p className="text-xs text-slate-500 mb-3">{t('overview.quickTasksSubtitle')}</p>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
+                disabled={matches.length === 0}
+                className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-2.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                  <span>{t('sidebar.exportResults')}</span>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenBracket}
+                className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-2.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-amber-600" />
+                  <span>{t('overview.viewStandings')}</span>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.open(`/tournaments/${tournament.id}`, '_blank')}
+                className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-2.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-blue-600" />
+                  <span>{t('overview.openPublic')}</span>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              </button>
             </div>
-          ) : (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+          </section>
+
+          {/* Empty / Live state reminder if no live matches */}
+          {liveMatches.length === 0 && (
+            <div className="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white p-4 text-slate-500 shadow-xs">
               <CircleAlert className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
-              {t('overview.noLive')}
+              <div className="text-xs">
+                <p className="font-bold text-slate-700">{t('overview.noLiveMatchesYet')}</p>
+                <p className="text-slate-400 mt-0.5">{t('overview.noLiveSubtitle')}</p>
+              </div>
             </div>
           )}
-        </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-5" aria-labelledby="manage-readiness-title">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-            <h3 id="manage-readiness-title" className="text-base font-bold text-slate-900">{t('overview.readinessTitle')}</h3>
-          </div>
-          <div className="mt-4 space-y-3">
-            <div className="flex items-start gap-3 rounded-lg bg-slate-50 p-3">
-              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
-              <div>
-                <p className="text-xs font-bold text-slate-800">{t('overview.dateLabel')}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{tournament.startDate ? formatDate(tournament.startDate) : t('overview.notSet')}</p>
+          {/* Readiness Details */}
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs" aria-labelledby="manage-readiness-title">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+              <h3 id="manage-readiness-title" className="text-sm font-bold text-slate-900">
+                {t('overview.readinessTitle')}
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-start gap-2.5 rounded-lg bg-slate-50 p-2.5">
+                <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden="true" />
+                <div>
+                  <p className="font-bold text-slate-800">{t('overview.dateLabel')}</p>
+                  <p className="text-slate-500 mt-0.5">
+                    {tournament.startDate ? formatDate(tournament.startDate) : t('overview.notSet')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 rounded-lg bg-slate-50 p-2.5">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden="true" />
+                <div>
+                  <p className="font-bold text-slate-800">{t('overview.courtsLabel')}</p>
+                  <p className="text-slate-500 mt-0.5">
+                    {courts.length ? t('overview.courtsConfigured', { count: courts.length }) : t('overview.courtsNeedSetup')}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-3 rounded-lg bg-slate-50 p-3">
-              <Trophy className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
-              <div>
-                <p className="text-xs font-bold text-slate-800">{t('overview.selectedDivisionLabel')}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{selectedDivision?.name || t('overview.noDivision')}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg bg-slate-50 p-3">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" aria-hidden="true" />
-              <div>
-                <p className="text-xs font-bold text-slate-800">{t('overview.courtsLabel')}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{courts.length ? t('overview.courtsConfigured', { count: courts.length }) : t('overview.courtsNeedSetup')}</p>
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </div>
   );
 }
+

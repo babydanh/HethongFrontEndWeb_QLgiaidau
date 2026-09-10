@@ -8,7 +8,7 @@ import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRul
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
-  Plus, Bell, Mail, ChevronRight, ChevronLeft, ChevronDown, UserPlus, Star, Loader2, MessageSquare,
+  Plus, Bell, Mail, UserPlus, Star, Loader2, MessageSquare,
   Hourglass, Coins, Sparkles
 } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
@@ -99,6 +99,26 @@ interface GroupMatchesData {
   isRanked?: boolean;
   matches: BracketMatch[];
 }
+
+const HOME_MATCH_LIMIT = 4;
+
+const limitMatchGroups = (
+  entries: Array<[string, GroupMatchesData]>,
+  limit: number,
+): Array<[string, GroupMatchesData]> => {
+  let remaining = limit;
+
+  return entries.reduce<Array<[string, GroupMatchesData]>>((visible, [key, group]) => {
+    if (remaining <= 0) return visible;
+
+    const matches = group.matches.slice(0, remaining);
+    if (matches.length === 0) return visible;
+
+    visible.push([key, { ...group, matches }]);
+    remaining -= matches.length;
+    return visible;
+  }, []);
+};
 
 const getMatchRankedStatus = (
   match: BracketMatch,
@@ -407,9 +427,6 @@ export default function HomePage() {
 
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
-  const [visibleLiveCount, setVisibleLiveCount] = useState(2);
-  const [visibleCompletedCount, setVisibleCompletedCount] = useState(2);
-  const [visibleUpcomingCount, setVisibleUpcomingCount] = useState(2);
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>({});
@@ -417,8 +434,6 @@ export default function HomePage() {
   const feedRequestInFlightRef = useRef(false);
   const feedRefreshQueuedRef = useRef(false);
   const [feedRefreshTick, setFeedRefreshTick] = useState(0);
-
-  const [tournamentPages, setTournamentPages] = useState<Record<string, number>>({});
 
   // Ranked Tournament State
   const [rankedTournament, setRankedTournament] = useState<Tournament | null>(null);
@@ -706,9 +721,6 @@ export default function HomePage() {
       } finally {
         setIsLoading(false);
         setIsLoadingRanked(false);
-        setVisibleLiveCount(2);
-        setVisibleCompletedCount(2);
-        setVisibleUpcomingCount(2);
         feedRequestInFlightRef.current = false;
         if (feedRefreshQueuedRef.current) {
           feedRefreshQueuedRef.current = false;
@@ -851,12 +863,11 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
-  // Progressive slice for live tournaments (Start with 2 tournaments, load more as user expands)
+  // The homepage is a preview. The full match list is available from /matches.
   const liveTournamentEntries = Object.entries(liveMatchesByTournament);
-  const visibleLiveTournamentEntries = liveTournamentEntries.slice(0, visibleLiveCount);
-  const canShowMoreLive = liveTournamentEntries.length > visibleLiveCount;
+  const visibleLiveTournamentEntries = limitMatchGroups(liveTournamentEntries, HOME_MATCH_LIMIT);
 
-  // Group upcoming matches by tournament name & Progressive slice
+  // Group upcoming matches by tournament name.
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -874,10 +885,9 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const upcomingTournamentEntries = Object.entries(upcomingMatchesByTournament);
-  const visibleUpcomingTournamentEntries = upcomingTournamentEntries.slice(0, visibleUpcomingCount);
-  const canShowMoreUpcoming = upcomingTournamentEntries.length > visibleUpcomingCount;
+  const visibleUpcomingTournamentEntries = limitMatchGroups(upcomingTournamentEntries, HOME_MATCH_LIMIT);
 
-  // Group completed matches by tournament name & Progressive slice
+  // Group completed matches by tournament name.
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
@@ -895,8 +905,7 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const completedTournamentEntries = Object.entries(completedMatchesByTournament);
-  const visibleCompletedTournamentEntries = completedTournamentEntries.slice(0, visibleCompletedCount);
-  const canShowMoreCompleted = completedTournamentEntries.length > visibleCompletedCount;
+  const visibleCompletedTournamentEntries = limitMatchGroups(completedTournamentEntries, HOME_MATCH_LIMIT);
 
   const renderMatchCard = (
     match: BracketMatch,
@@ -1685,10 +1694,7 @@ export default function HomePage() {
                     >
                       {visibleLiveTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
-                        const tournamentId = group.id || tournamentName;
-                        const currentPage = tournamentPages[tournamentId] || 1;
-                        const totalPages = Math.ceil(group.matches.length / 4);
-                        const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                        const displayMatches = group.matches;
                         const matchedTournament = tournaments.find(t => t.id === group.id);
                         const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
                         return (
@@ -1717,30 +1723,6 @@ export default function HomePage() {
                                 </div>
                               </Link>
 
-                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                {/* Mini Pagination controls for tournament matches */}
-                                {totalPages > 1 && (
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                      disabled={currentPage === 1}
-                                      className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                    >
-                                      <ChevronLeft className="w-3.5 h-3.5" />
-                                    </button>
-                                    <span className="text-[11px] font-semibold text-slate-400 px-1">
-                                      {currentPage}/{totalPages}
-                                    </span>
-                                    <button
-                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                      disabled={currentPage === totalPages}
-                                      className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                    >
-                                      <ChevronRight className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                             {/* Matches List Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
@@ -1751,25 +1733,17 @@ export default function HomePage() {
                       })}
                     </motion.div>
 
-                    {/* Cursor Load More Trigger */}
-                    <div className="flex flex-col items-center justify-center pt-1.5 gap-2">
-                      {canShowMoreLive ? (
-                        <button
-                          type="button"
-                          onClick={() => setVisibleLiveCount(prev => prev + 2)}
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 active:scale-98 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+                    {liveMatches.length > HOME_MATCH_LIMIT && (
+                      <div className="flex justify-center pt-1.5">
+                        <Link
+                          href="/matches"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all"
                         >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                          <span>{translate('loadMore')}</span>
-                        </button>
-                      ) : liveTournamentEntries.length > 2 ? (
-                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 py-0.5">
-                          <span className="w-6 h-px bg-slate-200" />
-                          <span>{translate('allMatchesLoaded')}</span>
-                          <span className="w-6 h-px bg-slate-200" />
-                        </div>
-                      ) : null}
-                    </div>
+                          <span>{translate('viewAllMatches')}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1797,10 +1771,7 @@ export default function HomePage() {
                     >
                       {visibleCompletedTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
-                        const tournamentId = group.id || tournamentName;
-                        const currentPage = tournamentPages[tournamentId] || 1;
-                        const totalPages = Math.ceil(group.matches.length / 2);
-                        const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
+                        const displayMatches = group.matches;
                         const matchedTournament = tournaments.find(t => t.id === group.id);
                         const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
@@ -1830,32 +1801,6 @@ export default function HomePage() {
                                 </div>
                               </Link>
 
-                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
-                                {totalPages > 1 && (
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                      disabled={currentPage === 1}
-                                      aria-label={translate('previousPage')}
-                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                    >
-                                      <ChevronLeft className="w-3.5 h-3.5" />
-                                    </button>
-                                    <span className="min-w-6 text-center text-xs font-bold text-slate-500">
-                                      {currentPage}
-                                    </span>
-                                    <button
-                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                      disabled={currentPage === totalPages}
-                                      aria-label={translate('nextPage')}
-                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                    >
-                                      <ChevronRight className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                             {/* Matches List: 2 matches in 2 separate rows (1 match per row) */}
                             <div className="space-y-2.5">
@@ -1866,25 +1811,17 @@ export default function HomePage() {
                       })}
                     </motion.div>
 
-                    {/* Cursor Load More Trigger */}
-                    <div className="flex flex-col items-center justify-center pt-1.5 gap-2">
-                      {canShowMoreCompleted ? (
-                        <button
-                          type="button"
-                          onClick={() => setVisibleCompletedCount(prev => prev + 2)}
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 active:scale-98 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+                    {completedMatches.length > HOME_MATCH_LIMIT && (
+                      <div className="flex justify-center pt-1.5">
+                        <Link
+                          href="/matches"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all"
                         >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                          <span>{translate('loadMore')}</span>
-                        </button>
-                      ) : completedTournamentEntries.length > 2 ? (
-                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 py-0.5">
-                          <span className="w-6 h-px bg-slate-200" />
-                          <span>{translate('allMatchesLoaded')}</span>
-                          <span className="w-6 h-px bg-slate-200" />
-                        </div>
-                      ) : null}
-                    </div>
+                          <span>{translate('viewAllMatches')}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1912,10 +1849,7 @@ export default function HomePage() {
                     >
                       {visibleUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
                         const group = rawGroup as GroupMatchesData;
-                        const tournamentId = group.id || tournamentName;
-                        const currentPage = tournamentPages[tournamentId] || 1;
-                        const totalPages = Math.ceil(group.matches.length / 2);
-                        const displayMatches = group.matches.slice((currentPage - 1) * 2, currentPage * 2);
+                        const displayMatches = group.matches;
                         const matchedTournament = tournaments.find(t => t.id === group.id);
                         const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
@@ -1945,32 +1879,6 @@ export default function HomePage() {
                                 </div>
                               </Link>
 
-                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                {/* Mini Pagination controls - Chuẩn chỉ giống tab Trận đấu */}
-                                {totalPages > 1 && (
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
-                                      disabled={currentPage === 1}
-                                      aria-label={translate('previousPage')}
-                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                    >
-                                      <ChevronLeft className="w-3.5 h-3.5" />
-                                    </button>
-                                    <span className="min-w-6 text-center text-xs font-bold text-slate-500">
-                                      {currentPage}
-                                    </span>
-                                    <button
-                                      onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
-                                      disabled={currentPage === totalPages}
-                                      aria-label={translate('nextPage')}
-                                      className="p-1 text-slate-700 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                                    >
-                                      <ChevronRight className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                             {/* Matches List: 1 row with 2 matches side-by-side */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
@@ -1981,25 +1889,17 @@ export default function HomePage() {
                       })}
                     </motion.div>
 
-                    {/* Cursor Load More Trigger */}
-                    <div className="flex flex-col items-center justify-center pt-1.5 gap-2">
-                      {canShowMoreUpcoming ? (
-                        <button
-                          type="button"
-                          onClick={() => setVisibleUpcomingCount(prev => prev + 2)}
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 active:scale-98 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+                    {upcomingMatches.length > HOME_MATCH_LIMIT && (
+                      <div className="flex justify-center pt-1.5">
+                        <Link
+                          href="/matches"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all"
                         >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                          <span>{translate('loadMore')}</span>
-                        </button>
-                      ) : upcomingTournamentEntries.length > 2 ? (
-                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 py-0.5">
-                          <span className="w-6 h-px bg-slate-200" />
-                          <span>{translate('allMatchesLoaded')}</span>
-                          <span className="w-6 h-px bg-slate-200" />
-                        </div>
-                      ) : null}
-                    </div>
+                          <span>{translate('viewAllMatches')}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2015,7 +1915,7 @@ export default function HomePage() {
                   <p className="text-[11px] font-medium text-slate-500 mt-0.5">{translate('last14Days')}</p>
                 </div>
                 <Link href="/tournaments" className="text-xs font-semibold text-content-link hover:underline flex items-center gap-1">
-                  {translate('explore')} <ArrowRight className="w-3.5 h-3.5" />
+                  {translate('viewAllTournaments')} <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
               <div className="p-4">
@@ -2026,7 +1926,7 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {recentCompletedTournaments.slice(0, 6).map((tournament) => (
+                    {recentCompletedTournaments.slice(0, HOME_MATCH_LIMIT).map((tournament) => (
                       <HomepageTournamentCard key={tournament.id} tournament={tournament} />
                     ))}
                   </div>

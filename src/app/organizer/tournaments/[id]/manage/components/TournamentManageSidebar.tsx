@@ -7,7 +7,6 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronRight,
-  ClipboardList,
   DollarSign,
   ExternalLink,
   Info,
@@ -22,9 +21,6 @@ import {
   X,
 } from 'lucide-react';
 import type { Tournament } from '@/types/tournament';
-import { getSportLogo } from '@/constants/sports';
-import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
-import { formatCurrency, formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { useTranslations } from 'next-intl';
 
@@ -44,20 +40,6 @@ export type ManageBasicSubTab = 'general' | 'branding' | 'prizes' | 'contact' | 
 export interface ManageNavigationTarget {
   section: ManageSection;
   basicSubTab?: ManageBasicSubTab;
-}
-
-function getStatusLabels(t: ReturnType<typeof useTranslations>) {
-  return {
-    DRAFT: t('status.statusDraft'),
-    PENDING_APPROVAL: t('status.statusPendingApproval'),
-    PENDING_DELETE: t('status.statusPendingDelete'),
-    UPCOMING: t('status.statusUpcoming'),
-    REGISTRATION_OPEN: t('status.statusRegistrationOpen'),
-    REGISTRATION_CLOSED: t('status.statusRegistrationClosed'),
-    IN_PROGRESS: t('status.statusInProgress'),
-    COMPLETED: t('status.statusCompleted'),
-    CANCELLED: t('status.statusCancelled'),
-  };
 }
 
 interface TournamentManageSidebarProps {
@@ -176,18 +158,8 @@ export function TournamentManageSidebar({
   onNavigate,
 }: TournamentManageSidebarProps) {
   const t = useTranslations('OrganizerManage');
-  const statusLabels = getStatusLabels(t);
-  const sportLogo = getSportLogo(tournament.category?.name);
-  const statusLabel = getTournamentStatusLabel(tournament.status, statusLabels);
-  const tournamentDate = tournament.startDate
-    ? `${formatDateTime(tournament.startDate)}${tournament.endDate ? ` – ${formatDateTime(tournament.endDate)}` : ''}`
-    : t('sidebar.notSet');
-  const tournamentLocation = tournament.venue?.name || tournament.locationAddress || tournament.city || t('sidebar.notSet');
-  const tournamentFee = tournament.entryFee && tournament.entryFee > 0
-    ? formatCurrency(tournament.entryFee)
-    : t('sidebar.free');
 
-  const managementItems: SidebarItem[] = [
+  const setupItems: SidebarItem[] = [
     {
       key: 'overview',
       label: t('sidebar.overview'),
@@ -224,31 +196,44 @@ export function TournamentManageSidebar({
         { key: 'elo', label: t('sidebar.elo'), target: { section: 'registration' } },
       ],
     },
-    {
-      key: 'format',
-      label: t('sidebar.format'),
-      icon: Trophy,
-      target: { section: 'bracket' },
-      children: [
-        { key: 'content', label: t('sidebar.content'), target: { section: 'bracket' } },
-        { key: 'rules', label: t('sidebar.rules'), target: { section: 'bracket' } },
-        { key: 'bracket', label: t('sidebar.bracket'), target: { section: 'bracket' } },
-      ],
-    },
+  ];
+
+  const operationsItems: SidebarItem[] = [
     {
       key: 'court_schedule',
       label: t('sidebar.matchSchedule'),
       icon: CalendarDays,
       target: { section: 'court_schedule' },
     },
+    {
+      key: 'bracket',
+      label: t('sidebar.bracket'),
+      icon: Trophy,
+      target: { section: 'bracket' },
+      children: [
+        { key: 'content', label: t('sidebar.content'), target: { section: 'bracket' } },
+        { key: 'rules', label: t('sidebar.rules'), target: { section: 'bracket' } },
+        { key: 'bracket_tree', label: t('sidebar.bracket'), target: { section: 'bracket' } },
+      ],
+    },
   ];
 
-  const advancedItems: SidebarItem[] = [
+  const resultsItems: SidebarItem[] = [
     {
-      key: 'livestream',
-      label: t('sidebar.livestream'),
-      icon: Video,
-      target: { section: 'livestream' },
+      key: 'results_overview',
+      label: t('sidebar.standings'),
+      icon: BarChart3,
+      target: { section: 'overview' },
+    },
+  ];
+
+  const systemItems: SidebarItem[] = [
+    {
+      key: 'permissions',
+      label: t('sidebar.permissions'),
+      icon: ShieldCheck,
+      target: { section: 'permissions' },
+      badge: pendingRefereeCount,
     },
     {
       key: 'finance',
@@ -257,17 +242,16 @@ export function TournamentManageSidebar({
       target: { section: 'finance' },
     },
     {
-      key: 'permissions',
-      label: t('sidebar.permissions'),
-      icon: ShieldCheck,
-      target: { section: 'permissions' },
-      badge: pendingRefereeCount,
+      key: 'livestream',
+      label: t('sidebar.livestream'),
+      icon: Video,
+      target: { section: 'livestream' },
     },
   ];
 
   const renderNavGroup = (groupId: string, title: string, items: SidebarItem[]) => (
-    <section aria-labelledby={`manage-nav-${groupId}`}>
-      <p id={`manage-nav-${groupId}`} className="mb-2 px-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{title}</p>
+    <section aria-labelledby={`manage-nav-${groupId}`} className="mb-3 last:mb-0">
+      <p id={`manage-nav-${groupId}`} className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{title}</p>
       <div className="space-y-0.5">
         {items.map((item) => (
           <NavButton
@@ -300,37 +284,12 @@ export function TournamentManageSidebar({
         aria-label={t('sidebar.manageMenu')}
         data-manage-sidebar
         className={cn(
-          'z-50 flex-col gap-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] lg:z-auto lg:flex lg:w-[272px] lg:shrink-0',
+          'z-50 flex-col gap-3 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] lg:z-auto lg:flex lg:w-[250px] lg:shrink-0',
           isOpen
-            ? 'fixed inset-y-0 left-0 flex w-[min(88vw,320px)] overflow-y-auto bg-white p-4 shadow-2xl'
+            ? 'fixed inset-y-0 left-0 flex w-[min(88vw,300px)] overflow-y-auto bg-white p-3 shadow-2xl'
             : 'hidden',
         )}
       >
-        <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
-          <div className="min-w-0">
-            <p className="truncate text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{tournament.category?.name || t('status.sportFallback')}</p>
-            <h1 className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-slate-900">{tournament.name}</h1>
-            <span className={cn('mt-2 inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[10px] font-bold', getTournamentStatusClassName(tournament.status))}>
-                <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-                <span className="truncate">{statusLabel}</span>
-              </span>
-              <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-2.5 text-[10px] text-slate-500">
-                <div className="flex items-start gap-1.5">
-                  <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                  <span className="min-w-0 leading-snug"><span className="font-semibold text-slate-600">{t('sidebar.dateTime')}:</span> {tournamentDate}</span>
-                </div>
-                <div className="flex items-start gap-1.5">
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                  <span className="min-w-0 truncate leading-snug" title={tournamentLocation}><span className="font-semibold text-slate-600">{t('sidebar.location')}:</span> {tournamentLocation}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                  <span className="leading-snug">{t('sidebar.entryFee')}: {tournamentFee}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
         <div className="mb-1 flex items-center justify-between lg:hidden">
           <span className="text-sm font-bold tracking-tight text-slate-900">{t('sidebar.manageMenu')}</span>
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={t('sidebar.closeMenu')}>
@@ -338,29 +297,43 @@ export function TournamentManageSidebar({
           </button>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          {renderNavGroup('management', t('sidebar.managementGroup'), managementItems)}
-          <div className="my-4 border-t border-slate-100" />
-          {renderNavGroup('advanced', t('sidebar.advancedGroup'), advancedItems)}
+        {/* 4 Navigation Groups */}
+        <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs">
+          {renderNavGroup('setup', t('sidebar.setupGroup'), setupItems)}
+          <div className="my-2.5 border-t border-slate-100" />
+          {renderNavGroup('operations', t('sidebar.operationsGroup'), operationsItems)}
+          <div className="my-2.5 border-t border-slate-100" />
+          {renderNavGroup('results', t('sidebar.resultsGroup'), resultsItems)}
+          <div className="my-2.5 border-t border-slate-100" />
+          {renderNavGroup('system', t('sidebar.systemGroup'), systemItems)}
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-3.5 text-slate-900 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-bold">
-            <BarChart3 className="h-4 w-4 text-blue-600" aria-hidden="true" />
-            {t('sidebar.snapshotTitle')}
+        {/* Quick Snapshot footer */}
+        <div className="rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+            <span className="flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
+              {t('sidebar.snapshotTitle')}
+            </span>
+            <span className="text-[11px] font-normal text-slate-400">{divisionCount} nội dung</span>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
-              <p className="text-[10px] text-slate-500">{t('sidebar.divisions')}</p>
-              <p className="mt-0.5 text-sm font-bold text-slate-900">{divisionCount}</p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5 text-center">
+            <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium text-slate-500">{t('sidebar.divisions')}</p>
+              <p className="text-xs font-bold text-slate-900">{divisionCount}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
-              <p className="text-[10px] text-slate-500">{t('sidebar.matches')}</p>
-              <p className="mt-0.5 text-sm font-bold text-slate-900">{matchCount}</p>
+            <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium text-slate-500">{t('sidebar.matches')}</p>
+              <p className="text-xs font-bold text-slate-900">{matchCount}</p>
             </div>
           </div>
-          <a href={`/tournaments/${tournament.id}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700">
-            {t('sidebar.openPublicPage')} <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          <a
+            href={`/tournaments/${tournament.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2.5 flex items-center justify-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            {t('sidebar.openPublicPage')} <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </a>
         </div>
       </aside>

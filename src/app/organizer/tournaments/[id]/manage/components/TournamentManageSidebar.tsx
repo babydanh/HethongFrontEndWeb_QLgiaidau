@@ -240,7 +240,7 @@ export function TournamentManageSidebar({
       key: 'registration',
       label: t('sidebar.registration'),
       icon: UserPlus,
-      target: { section: 'registration', targetId: 'manage-registration-status-card' },
+      target: { section: 'registration' },
       children: [
         { key: 'participants', label: t('sidebar.participants'), target: { section: 'registration', targetId: 'manage-participants-section' } },
         { key: 'approval', label: t('sidebar.approval'), target: { section: 'registration', targetId: 'manage-participants-section' } },
@@ -260,7 +260,7 @@ export function TournamentManageSidebar({
       key: 'bracket',
       label: t('sidebar.bracket'),
       icon: Trophy,
-      target: { section: 'bracket', targetId: 'manage-bracket-workspace' },
+      target: { section: 'bracket' },
       children: [
         { key: 'content', label: t('sidebar.content'), target: { section: 'bracket', targetId: 'manage-bracket-workspace' } },
         { key: 'rules', label: t('sidebar.rules'), target: { section: 'bracket', targetId: 'manage-bracket-workspace' } },

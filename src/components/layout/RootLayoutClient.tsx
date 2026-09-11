@@ -77,6 +77,9 @@ export default function RootLayoutClient({
   // Exclude admin, moderation & auth paths from header/footer
   const hideHeaderFooter = pathname.startsWith('/admin') || pathname.startsWith('/moderation');
   const isGuestRoute = ['/login', '/register'].some((route) => pathname.startsWith(route));
+  // Workspace routes (tournament manage & ops) have dedicated sidebar layout and should not display the global marketing footer
+  const isWorkspaceRoute = /^\/organizer\/tournaments\/[^/]+\/(?:manage|ops)(?:\/|$)/.test(pathname);
+  const hideFooter = hideHeaderFooter || isGuestRoute || isWorkspaceRoute;
 
   return (
     <>
@@ -87,7 +90,7 @@ export default function RootLayoutClient({
       )}>
         {children}
       </main>
-      {!hideHeaderFooter && !isGuestRoute && <Footer />}
+      {!hideFooter && <Footer />}
       {!hideHeaderFooter && !isGuestRoute && <UnifiedChatWidget />}
       <GlobalUserProfileModal />
     </>

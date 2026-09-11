@@ -217,6 +217,8 @@ type QuickFormatConfig = {
 };
 
 const QUICK_FORMAT_OPTIONS = [
+  { key: 'MALE_SINGLES', labelKey: 'formatMaleSingles' },
+  { key: 'FEMALE_SINGLES', labelKey: 'formatFemaleSingles' },
   { key: 'MALE_DOUBLES', labelKey: 'formatMaleDoubles' },
   { key: 'FEMALE_DOUBLES', labelKey: 'formatFemaleDoubles' },
   { key: 'MIXED_DOUBLES', labelKey: 'formatMixedDoubles' },
@@ -499,8 +501,8 @@ export default function QuickTournamentCreate() {
       }
     }
 
+    // Mặc định kết thúc trong cùng ngày với ngày bắt đầu giải lúc 23:59
     const estimatedEnd = new Date(start);
-    estimatedEnd.setDate(estimatedEnd.getDate() + 14);
     estimatedEnd.setHours(23, 59, 0, 0);
 
     const nextEndDate = formatDateTimeInput(estimatedEnd);
@@ -824,10 +826,10 @@ export default function QuickTournamentCreate() {
         startDate: toApiIsoDateTime(values.startDate) ?? undefined,
         endDate: toApiIsoDateTime(values.endDate) ?? undefined,
         durationMinutes: values.startDate && values.endDate
-          ? Math.max(15, Math.round((new Date(values.endDate).getTime() - new Date(values.startDate).getTime()) / 60000))
+          ? Math.min(14400, Math.max(15, Math.round((new Date(values.endDate).getTime() - new Date(values.startDate).getTime()) / 60000)))
           : undefined,
         durationHours: values.startDate && values.endDate
-          ? Number((Math.max(15, Math.round((new Date(values.endDate).getTime() - new Date(values.startDate).getTime()) / 60000)) / 60).toFixed(1))
+          ? Number((Math.min(14400, Math.max(15, Math.round((new Date(values.endDate).getTime() - new Date(values.startDate).getTime()) / 60000))) / 60).toFixed(1))
           : undefined,
         venueName: values.venueName ? values.venueName.trim() : undefined,
         locationAddress: values.locationAddress ? values.locationAddress.trim() : undefined,

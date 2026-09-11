@@ -288,10 +288,10 @@ export default function SmartAiTournamentModal({
         startDate: parsedData.startDate ? new Date(parsedData.startDate).toISOString() : undefined,
         endDate: parsedData.endDate ? new Date(parsedData.endDate).toISOString() : undefined,
         durationMinutes: parsedData.startDate && parsedData.endDate
-          ? Math.max(15, Math.round((new Date(parsedData.endDate).getTime() - new Date(parsedData.startDate).getTime()) / 60000))
+          ? Math.min(14400, Math.max(15, Math.round((new Date(parsedData.endDate).getTime() - new Date(parsedData.startDate).getTime()) / 60000)))
           : undefined,
         durationHours: parsedData.startDate && parsedData.endDate
-          ? Number((Math.max(15, Math.round((new Date(parsedData.endDate).getTime() - new Date(parsedData.startDate).getTime()) / 60000)) / 60).toFixed(1))
+          ? Number((Math.min(14400, Math.max(15, Math.round((new Date(parsedData.endDate).getTime() - new Date(parsedData.startDate).getTime()) / 60000))) / 60).toFixed(1))
           : undefined,
         startTime: parsedData.startTime || undefined,
         registrationStartDate: parsedData.registrationStartDate ? new Date(parsedData.registrationStartDate).toISOString() : undefined,

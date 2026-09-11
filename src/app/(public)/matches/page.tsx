@@ -1206,11 +1206,11 @@ export default function MatchesListPage() {
                         {/* Whole Card Link */}
                         <Link href={`/live/${match.id}`} className="block flex-1">
                           {/* Header trận */}
-                          <div className={`px-3.5 py-2 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} flex items-center justify-between`}>
+                          <div className={`px-3 py-1.5 ${isLive ? 'bg-rose-50/25' : 'bg-slate-50/40'} flex items-center justify-between`}>
                             <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
                             {isLive ? (
                                 <>
-                                  <span className="inline-flex items-center gap-1 bg-rose-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-2xs animate-pulse">
+                                  <span className="inline-flex items-center gap-1 bg-rose-600 text-white font-bold text-[9px] px-1.5 py-0.2 rounded shadow-2xs animate-pulse">
                                     <span className="w-1.5 h-1.5 rounded-full bg-white" />
                                     {translate("statusLive")}
                                   </span>
@@ -1218,14 +1218,14 @@ export default function MatchesListPage() {
                                 </>
                               ) : isFinished ? (
                                 <>
-                                  <span className="inline-flex items-center bg-slate-800 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-2xs">
+                                  <span className="inline-flex items-center bg-slate-800 text-white font-bold text-[9px] px-1.5 py-0.2 rounded shadow-2xs">
                                     {translate("statusFinished")}
                                   </span>
                                   <span className="text-slate-800 font-bold">• {friendlyRoundName}</span>
                                 </>
                               ) : (
                                 <>
-                                  <span className="inline-flex items-center bg-blue-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-2xs">
+                                  <span className="inline-flex items-center bg-blue-600 text-white font-bold text-[9px] px-1.5 py-0.2 rounded shadow-2xs">
                                     {translate("statusScheduled")}
                                   </span>
                                   {match.scheduledAt ? (
@@ -1238,7 +1238,7 @@ export default function MatchesListPage() {
                             </span>
 
                             {isLive && typeof match.viewerCount === 'number' && match.viewerCount > 0 && (
-                              <span className="flex items-center gap-1 text-[9px] font-bold text-white bg-blue-600 shadow-2xs px-2 py-0.5 rounded-full">
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-white bg-blue-600 shadow-2xs px-1.5 py-0.2 rounded-full">
                                 <Eye className="w-3 h-3 text-white animate-pulse" />
                                 <span>{match.viewerCount} {translate("watchingNow")}</span>
                               </span>
@@ -1246,10 +1246,10 @@ export default function MatchesListPage() {
                           </div>
 
                           {/* Chi tiết đấu */}
-                          <div className="p-3 sm:p-3.5 flex flex-col gap-2.5 flex-grow justify-center group-hover:bg-slate-50/30 transition-colors">
-                            <div className="flex flex-col gap-2">
+                          <div className="p-3 flex flex-col gap-2 flex-grow justify-center group-hover:bg-slate-50/20 transition-colors">
+                            <div className="flex flex-col gap-1.5">
                               {/* VĐV / Đội 1 */}
-                              <div className="flex items-center justify-between gap-3 p-2 rounded-md border border-slate-100/70 bg-slate-50/50 transition-all">
+                              <div className="flex items-center justify-between gap-3 p-2 rounded-md bg-slate-50/50 transition-all">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   {renderTeamAvatars(match.participant1, 'bg-blue-50', 'text-blue-700')}
                                   <div className="min-w-0 flex-1">
@@ -1334,7 +1334,7 @@ export default function MatchesListPage() {
                               </div>
 
                               {/* VĐV / Đội 2 */}
-                              <div className="flex items-center justify-between gap-3 p-2 rounded-md border border-slate-100/70 bg-slate-50/50 transition-all">
+                              <div className="flex items-center justify-between gap-3 p-2 rounded-md bg-slate-50/50 transition-all">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   {renderTeamAvatars(match.participant2, 'bg-blue-50', 'text-blue-700')}
                                   <div className="min-w-0 flex-1">
@@ -1435,7 +1435,7 @@ export default function MatchesListPage() {
                         </Link>
 
                         {/* Interactive Footer (Full Hitbox Action Bar) */}
-                        <div className="grid grid-cols-2 bg-slate-50/50 relative z-10">
+                        <div className="grid grid-cols-2 bg-slate-50/40 relative z-10">
                           {/* Cổ vũ Button */}
                           <button
                             onClick={async (e) => {
@@ -1460,9 +1460,9 @@ export default function MatchesListPage() {
                               }
                             }}
                             title={`${translate('cheerLabel')} (${cheerCounts[match.id] ?? match.cheerCount ?? 0})`}
-                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
+                            className="flex items-center justify-center gap-1.5 py-1 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
                           >
-                            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
+                            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
                             <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
                               {translate('cheerLabel')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] ?? match.cheerCount ?? 0})</span>
                             </span>
@@ -1480,7 +1480,7 @@ export default function MatchesListPage() {
                               setIsShareModalOpen(true);
                             }}
                             title={translate("shareMatch")}
-                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
+                            className="flex items-center justify-center gap-1.5 py-1 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
                           >
                             <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />
                             <span className="text-[11px] font-bold text-slate-600 group-hover/share:text-blue-600">

@@ -1023,14 +1023,14 @@ export function BracketTab({
                         </span>
                       </div>
 
-                      {/* 4 Counter Stepper Cards (+ / -) */}
+                      {/* 4 Counter Stepper Cards (+ / - / type directly) */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         {/* 1. SỐ BẢNG ĐẤU */}
                         <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-blue-300 transition-colors">
                           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                             {translate('numberOfGroups')}
                           </span>
-                          <div className="my-2.5 flex items-center justify-between gap-2">
+                          <div className="my-2.5 flex items-center justify-between gap-1.5">
                             <button
                               type="button"
                               onClick={() => {
@@ -1040,14 +1040,28 @@ export function BracketTab({
                                 if (targetCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
                               }}
                               disabled={numGroups <= 2}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Decrease groups"
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <span className="text-base font-bold text-slate-900">
-                              {numGroups}
-                            </span>
+                            <input
+                              type="number"
+                              min={2}
+                              max={32}
+                              value={numGroups}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (!isNaN(val)) {
+                                  const clamped = Math.min(32, Math.max(2, val));
+                                  setNumGroups?.(clamped);
+                                  const targetCount = participantCount > 0 ? participantCount : (isLimitEnabled ? maxParticipants : 0);
+                                  if (targetCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / clamped))));
+                                }
+                              }}
+                              className="w-14 text-center font-bold text-base text-slate-900 bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-md py-0.5 border border-transparent focus:border-blue-400 outline-none transition-all cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              title="Bấm vào để nhập số bảng"
+                            />
                             <button
                               type="button"
                               onClick={() => {
@@ -1057,7 +1071,7 @@ export function BracketTab({
                                 if (targetCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
                               }}
                               disabled={numGroups >= 32}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Increase groups"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -1073,24 +1087,35 @@ export function BracketTab({
                           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                             {translate('teamsPerGroup')}
                           </span>
-                          <div className="my-2.5 flex items-center justify-between gap-2">
+                          <div className="my-2.5 flex items-center justify-between gap-1.5">
                             <button
                               type="button"
                               onClick={() => setTeamsPerGroup?.(Math.max(2, teamsPerGroup - 1))}
                               disabled={teamsPerGroup <= 2}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Decrease teams per group"
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <span className="text-base font-bold text-slate-900">
-                              {teamsPerGroup}
-                            </span>
+                            <input
+                              type="number"
+                              min={2}
+                              max={128}
+                              value={teamsPerGroup}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (!isNaN(val)) {
+                                  setTeamsPerGroup?.(Math.min(128, Math.max(2, val)));
+                                }
+                              }}
+                              className="w-14 text-center font-bold text-base text-slate-900 bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-md py-0.5 border border-transparent focus:border-blue-400 outline-none transition-all cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              title="Bấm vào để nhập số đội mỗi bảng"
+                            />
                             <button
                               type="button"
                               onClick={() => setTeamsPerGroup?.(Math.min(128, teamsPerGroup + 1))}
                               disabled={teamsPerGroup >= 128}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Increase teams per group"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -1111,24 +1136,35 @@ export function BracketTab({
                               Vào K.O
                             </span>
                           </div>
-                          <div className="my-2.5 flex items-center justify-between gap-2">
+                          <div className="my-2.5 flex items-center justify-between gap-1.5">
                             <button
                               type="button"
                               onClick={() => setTeamsAdvancing?.(Math.max(1, teamsAdvancing - 1))}
                               disabled={teamsAdvancing <= 1}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Decrease advancing"
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <span className="text-base font-bold text-slate-900">
-                              {teamsAdvancing}
-                            </span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={Math.min(16, teamsPerGroup - 1)}
+                              value={teamsAdvancing}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (!isNaN(val)) {
+                                  setTeamsAdvancing?.(Math.min(Math.min(16, teamsPerGroup - 1), Math.max(1, val)));
+                                }
+                              }}
+                              className="w-14 text-center font-bold text-base text-slate-900 bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-md py-0.5 border border-transparent focus:border-blue-400 outline-none transition-all cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              title="Bấm vào để nhập số đội đi tiếp"
+                            />
                             <button
                               type="button"
                               onClick={() => setTeamsAdvancing?.(Math.min(teamsPerGroup - 1, Math.min(16, teamsAdvancing + 1)))}
                               disabled={teamsAdvancing >= Math.min(16, teamsPerGroup - 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Increase advancing"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -1148,24 +1184,35 @@ export function BracketTab({
                           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                             {translate('groupStageRounds')}
                           </span>
-                          <div className="my-2.5 flex items-center justify-between gap-2">
+                          <div className="my-2.5 flex items-center justify-between gap-1.5">
                             <button
                               type="button"
                               onClick={() => setGskRoundsToPlay?.(Math.max(1, gskRoundsToPlay - 1))}
                               disabled={gskRoundsToPlay <= 1}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Decrease rounds"
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <span className="text-base font-bold text-slate-900">
-                              {gskRoundsToPlay}
-                            </span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={gskRoundsToPlay}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (!isNaN(val)) {
+                                  setGskRoundsToPlay?.(Math.min(20, Math.max(1, val)));
+                                }
+                              }}
+                              className="w-14 text-center font-bold text-base text-slate-900 bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-md py-0.5 border border-transparent focus:border-blue-400 outline-none transition-all cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              title="Bấm vào để nhập số lượt thi đấu"
+                            />
                             <button
                               type="button"
                               onClick={() => setGskRoundsToPlay?.(Math.min(20, gskRoundsToPlay + 1))}
                               disabled={gskRoundsToPlay >= 20}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0"
                               aria-label="Increase rounds"
                             >
                               <Plus className="h-3.5 w-3.5" />

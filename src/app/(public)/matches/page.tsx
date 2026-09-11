@@ -1063,13 +1063,6 @@ export default function MatchesListPage() {
           )}
       </div>
 
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">{translate("title")}</h2>
-          <p className="mt-0.5 text-xs font-medium text-slate-500">{translate('groupedMatchesHint')}</p>
-        </div>
-      </div>
-
       {/* Danh sách các Giải đấu gom nhóm */}
       {isLoading ? (
         <div className="flex justify-center items-center h-64 text-slate-500 font-bold">{translate("loading")}</div>
@@ -1106,10 +1099,10 @@ export default function MatchesListPage() {
             return (
               <div
                 key={group.tournamentId}
-                className="bg-slate-50/80 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-5"
+                className="bg-slate-50/80 p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4"
               >
                 {/* Header giải đấu */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-3">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/tournaments/${group.tournamentId}`}
@@ -1138,7 +1131,7 @@ export default function MatchesListPage() {
                 </div>
 
                 {/* Grid 1 hàng x 2 trận */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {visibleMatches.map(match => {
                     const isLive = match.status === 'ONGOING';
                     const isFinished = match.status === 'COMPLETED';
@@ -1181,7 +1174,7 @@ export default function MatchesListPage() {
                         key={match.id}
                         whileHover={{ y: -3, scale: 1.005 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                        className={`bg-white rounded-lg border ${
+                        className={`bg-white rounded-md border ${
                           isLive
                             ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]'
                             : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
@@ -1190,7 +1183,7 @@ export default function MatchesListPage() {
                         {/* Whole Card Link */}
                         <Link href={`/live/${match.id}`} className="block flex-1">
                           {/* Header trận */}
-                          <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between`}>
+                          <div className={`px-3.5 py-2 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} flex items-center justify-between`}>
                             <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
                             {isLive ? (
                                 <>
@@ -1230,11 +1223,11 @@ export default function MatchesListPage() {
                           </div>
 
                           {/* Chi tiết đấu */}
-                          <div className="p-4 flex flex-col gap-3 flex-grow justify-center group-hover:bg-slate-50/30 transition-colors">
-                            <div className="flex flex-col gap-2.5">
+                          <div className="p-3 sm:p-3.5 flex flex-col gap-2.5 flex-grow justify-center group-hover:bg-slate-50/30 transition-colors">
+                            <div className="flex flex-col gap-2">
                               {/* VĐV / Đội 1 */}
-                              <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
-                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-3 p-2 rounded-md border border-slate-100/70 bg-slate-50/50 transition-all">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
                                   {renderTeamAvatars(match.participant1, 'bg-blue-50', 'text-blue-700')}
                                   <div className="min-w-0 flex-1">
                                     <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p1Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
@@ -1318,8 +1311,8 @@ export default function MatchesListPage() {
                               </div>
 
                               {/* VĐV / Đội 2 */}
-                              <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
-                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-3 p-2 rounded-md border border-slate-100/70 bg-slate-50/50 transition-all">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
                                   {renderTeamAvatars(match.participant2, 'bg-blue-50', 'text-blue-700')}
                                   <div className="min-w-0 flex-1">
                                     <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
@@ -1404,7 +1397,7 @@ export default function MatchesListPage() {
                             </div>
 
                             {/* Phân môn & Sân */}
-                            <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-2 justify-center pt-1">
+                            <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-2 justify-center pt-0.5">
                               <span className="text-slate-700 whitespace-nowrap">
                                 {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction, { singleMale: translate('singleMale'), singleFemale: translate('singleFemale'), doubleMale: translate('doubleMale'), doubleFemale: translate('doubleFemale'), mixedDoubles: translate('doubleMixed'), singles: translate('matchTypeSingles'), doubles: translate('matchTypeDoubles') })}
                               </span>
@@ -1419,7 +1412,7 @@ export default function MatchesListPage() {
                         </Link>
 
                         {/* Interactive Footer (Full Hitbox Action Bar) */}
-                        <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/50 divide-x divide-slate-100 relative z-10">
+                        <div className="grid grid-cols-2 bg-slate-50/50 relative z-10">
                           {/* Cổ vũ Button */}
                           <button
                             onClick={async (e) => {

@@ -153,8 +153,11 @@ function NavButton({
       {hasChildren && isExpanded ? (
         <div className="mt-0.5 space-y-0.5 animate-in fade-in duration-150">
           {item.children!.map((child) => {
-            const childActive = child.target.section === activeSection &&
-              (child.target.section !== 'basic' || child.target.basicSubTab === basicSubTab);
+            const childActive =
+              child.target.section === activeSection &&
+              (child.target.section === 'basic'
+                ? child.target.basicSubTab === basicSubTab
+                : false);
             return (
               <button
                 key={child.key}

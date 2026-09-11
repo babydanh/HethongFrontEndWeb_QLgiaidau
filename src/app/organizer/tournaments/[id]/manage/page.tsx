@@ -255,19 +255,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     if (target.basicSubTab) s.setBasicSubTab(target.basicSubTab);
     setIsManageSidebarOpen(false);
 
-    // Smoothly scroll down to target element or content area
-    setTimeout(() => {
-      const el = (target.targetId ? document.getElementById(target.targetId) : null) || document.getElementById('manage-content-area');
-      if (el) {
-        const navHeight = 90;
-        const rect = el.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const targetTop = rect.top + scrollTop - navHeight;
-        window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 100);
+    // Only scroll if an explicit deep-target element (targetId) is specified, do not jump/scroll page otherwise
+    if (target.targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(target.targetId!);
+        if (el) {
+          const navHeight = 90;
+          const rect = el.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const targetTop = rect.top + scrollTop - navHeight;
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   const sportPresets = getSportRulePresets(s.sportRuleKind, ruleTranslate);

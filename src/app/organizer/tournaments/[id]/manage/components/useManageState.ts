@@ -410,9 +410,13 @@ export function useManageState(id: string) {
       // The bracket endpoint is group-shaped, so it can omit valid stage matches
       // that already have a schedule. The direct match list below fills that gap.
       const combinedMatches: Match[] = [];
+      let hasAuthoritativeMatchSnapshot = false;
 
       try {
         const fullRes = await tournamentsApi.getTournamentBracket(id);
+        if (fullRes.data?.stages) {
+          hasAuthoritativeMatchSnapshot = true;
+        }
         if (fullRes.data?.stages && fullRes.data.stages.length > 0) {
           const extracted = fullRes.data.stages.flatMap((stage) =>
             (stage.groups || []).flatMap((group) =>
@@ -437,6 +441,7 @@ export function useManageState(id: string) {
 
         bracketResults.forEach((result) => {
           if (result.status === 'fulfilled') {
+            hasAuthoritativeMatchSnapshot = true;
             const { divId, stages } = result.value;
             const extracted = stages.flatMap((stage) =>
               (stage.groups || []).flatMap((group) =>
@@ -460,6 +465,7 @@ export function useManageState(id: string) {
           activeStageOnly: true,
         });
         if (mRes.data && Array.isArray(mRes.data)) {
+          hasAuthoritativeMatchSnapshot = true;
           const directMatchMap = new Map(mRes.data.map((m) => [m.id, m]));
           combinedMatches.forEach((m, idx) => {
             const direct = directMatchMap.get(m.id);
@@ -484,6 +490,7 @@ export function useManageState(id: string) {
       } catch { /* silent */ }
 
       if (requestId === divisionDataRequestRef.current) {
+        if (!hasAuthoritativeMatchSnapshot) return null;
         const snapshotMatches = Array.from(new Map(combinedMatches.map((match) => [match.id, match])).values());
         setMatches((prevMatches) => {
           const prevMap = new Map(prevMatches.map((m) => [m.id, m]));

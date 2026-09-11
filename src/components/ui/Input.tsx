@@ -62,10 +62,11 @@ export interface DateTimePickerProps {
   max?: string;
   placeholder?: string;
   defaultTimeOnEmptySelection?: string;
+  roundToHour?: boolean;
 }
 
 export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
-  ({ name, label, value, onChange, error, className, disabled, min, max, placeholder, defaultTimeOnEmptySelection }, ref) => {
+  ({ name, label, value, onChange, error, className, disabled, min, max, placeholder, defaultTimeOnEmptySelection, roundToHour }, ref) => {
     const translate = useTranslations('Common');
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
@@ -189,10 +190,31 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             disabled={disabled}
             onChange={(e) => {
               const nextValue = e.target.value;
-              if (nextValue && !value && defaultTimeOnEmptySelection && DATE_TIME_LOCAL_PATTERN.test(nextValue)) {
-                const [datePart] = nextValue.split('T');
-                onChange(`${datePart}T${defaultTimeOnEmptySelection}`);
-                return;
+              if (nextValue && DATE_TIME_LOCAL_PATTERN.test(nextValue)) {
+                if (roundToHour) {
+                  const [datePart, timePart] = nextValue.split('T');
+                  const [hStr, mStr] = timePart.split(':');
+                  let h = Number(hStr);
+                  const m = Number(mStr);
+                  if (m > 0) {
+                    h += 1;
+                  }
+                  if (h >= 24) {
+                    const d = new Date(nextValue);
+                    d.setHours(h, 0, 0, 0);
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    onChange(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`);
+                    return;
+                  }
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  onChange(`${datePart}T${pad(h)}:00`);
+                  return;
+                }
+                if (!value && defaultTimeOnEmptySelection) {
+                  const [datePart] = nextValue.split('T');
+                  onChange(`${datePart}T${defaultTimeOnEmptySelection}`);
+                  return;
+                }
               }
               onChange(nextValue);
             }}

@@ -34,7 +34,7 @@ import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { DateTimePicker } from '@/components/ui/Input';
-import { getVietnamNextRoundedIsoMinute, toApiIsoDateTime } from '@/utils/dateTimeInput';
+import { getVietnamNextRoundedIsoMinute, getVietnamFutureRoundedHour, toApiIsoDateTime } from '@/utils/dateTimeInput';
 import Image from 'next/image';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
@@ -427,6 +427,11 @@ export default function QuickTournamentCreate() {
     const hasRegistrationStart = Object.prototype.hasOwnProperty.call(savedDraft ?? {}, 'registrationStart');
     if (!isCurrentDraft && (!hasRegistrationStart || !savedDraft?.registrationStart)) {
       setValue('registrationStart', getVietnamNextRoundedIsoMinute(), { shouldValidate: true, shouldDirty: false });
+    }
+    const hasStartDate = Object.prototype.hasOwnProperty.call(savedDraft ?? {}, 'startDate');
+    if (!isCurrentDraft && (!hasStartDate || !savedDraft?.startDate)) {
+      // Mặc định ngày bắt đầu giải là 7 ngày sau, giờ làm tròn chẵn phút 00
+      setValue('startDate', getVietnamFutureRoundedHour(24 * 7), { shouldValidate: true, shouldDirty: false });
     }
   }, [draftKey, setValue, translate]);
 
@@ -1012,6 +1017,7 @@ export default function QuickTournamentCreate() {
                       className="border-blue-300 bg-white shadow-xs"
                       placeholder={translate('startDatePlaceholder')}
                       defaultTimeOnEmptySelection="00:00"
+                      roundToHour
                     />
                     <p className="mt-1 text-[11px] font-medium text-blue-700/75">
                       {translate('startDatePriorityHint')}
@@ -1019,33 +1025,31 @@ export default function QuickTournamentCreate() {
                   </div>
 
                   <DateTimePicker
+                    name="endDate"
+                    label={`${translate('endDateLabel')} (${translate('optionalLabel')})`}
+                    value={endDate || ''}
+                    onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
+                    error={errors.endDate?.message}
+                    min={startDate || undefined}
+                  />
+
+                  <DateTimePicker
                     name="registrationStart"
                     label={`${translate('registrationStartLabel')} (${translate('optionalLabel')})`}
                     value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
+                    roundToHour
                   />
 
-                  <div className={`overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
-                    <DateTimePicker
-                      name="endDate"
-                      label={`${translate('endDateLabel')} (${translate('optionalLabel')})`}
-                      value={endDate || ''}
-                      onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
-                      error={errors.endDate?.message}
-                    />
-                  </div>
-
-                  <div className={`sm:col-span-2 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
-                    <DateTimePicker
-                      name="registrationEnd"
-                      label={`${translate('registrationEndLabel')} (${translate('optionalLabel')})`}
-                      value={registrationEnd || ''}
-                      onChange={handleRegistrationEndChange}
-                      error={errors.registrationEnd?.message}
-                      max={startDate || undefined}
-                    />
-                  </div>
+                  <DateTimePicker
+                    name="registrationEnd"
+                    label={`${translate('registrationEndLabel')} (${translate('optionalLabel')})`}
+                    value={registrationEnd || ''}
+                    onChange={handleRegistrationEndChange}
+                    error={errors.registrationEnd?.message}
+                    max={startDate || undefined}
+                  />
                 </div>
 
                 {/* Địa điểm thi đấu */}

@@ -216,6 +216,7 @@ export default function Step3ScheduleFees() {
                   min={currentVietnamIsoMinute}
                   onChange={field.onChange}
                   error={errors.registrationStartDate?.message}
+                  roundToHour
                 />
               )}
             />
@@ -254,6 +255,7 @@ export default function Step3ScheduleFees() {
                   min={currentVietnamIsoMinute}
                   onChange={field.onChange}
                   error={errors.startDate?.message}
+                  roundToHour
                 />
               )}
             />

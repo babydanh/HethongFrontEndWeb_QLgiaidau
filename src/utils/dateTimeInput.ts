@@ -64,6 +64,16 @@ export function getVietnamNextRoundedIsoMinute(instant: Date = new Date()): stri
   return formatUtcPartsAsDateTimeLocal(rounded);
 }
 
+/** Return Vietnam wall-clock time rounded up to the next exact hour, plus additional hours ahead. Minute is always 00. */
+export function getVietnamFutureRoundedHour(hoursAhead: number = 0, instant: Date = new Date()): string {
+  const parts = getVietnamDateTimeParts(instant);
+  const rounded = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute));
+  if (parts.minute > 0) rounded.setUTCHours(rounded.getUTCHours() + 1);
+  rounded.setUTCHours(rounded.getUTCHours() + hoursAhead);
+  rounded.setUTCMinutes(0, 0, 0);
+  return formatUtcPartsAsDateTimeLocal(rounded);
+}
+
 /** Serialize a datetime-local value as an absolute API timestamp. */
 export function toApiIsoDateTime(value: string | null | undefined): string | null {
   if (!value) return null;

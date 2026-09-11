@@ -173,7 +173,7 @@ const commonTranslate = useTranslations('Common');
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
     if (tabParam === 'results' && !initialHasResults) {
-      return 'overview';
+      return 'teams';
     }
     if (tabParam === 'overview' || tabParam === 'teams' || tabParam === 'bracket' || tabParam === 'matches' || tabParam === 'sponsors' || tabParam === 'results' || tabParam === 'live') {
       return tabParam as TournamentDetailTab;
@@ -181,7 +181,7 @@ const commonTranslate = useTranslations('Common');
     if (initialHasResults) {
       return 'results';
     }
-    return 'overview';
+    return 'teams';
   });
   const [liveCountsByDivision, setLiveCountsByDivision] = useState<Record<string, number>>({});
   const liveRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -432,14 +432,14 @@ const commonTranslate = useTranslations('Common');
   // automatically redirect activeTab to 'results' (if results exist) or 'overview'
   useEffect(() => {
     if (activeTab === 'live' && liveMatchesCount === 0) {
-      const fallbackTab: TournamentDetailTab = showResultsTab ? 'results' : 'overview';
+      const fallbackTab: TournamentDetailTab = showResultsTab ? 'results' : 'teams';
       Promise.resolve().then(() => {
         setActiveTab(fallbackTab);
       });
       if (typeof window !== 'undefined') {
         const currentUrl = new URL(window.location.href);
         if (currentUrl.searchParams.get('tab') === 'live') {
-          if (fallbackTab === 'overview') {
+          if (fallbackTab === 'teams') {
             currentUrl.searchParams.delete('tab');
           } else {
             currentUrl.searchParams.set('tab', fallbackTab);

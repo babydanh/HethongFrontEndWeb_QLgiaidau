@@ -3340,7 +3340,7 @@
     "cancelled": "Cancelled",
     "notOpen": "Registration not open",
     "notUpdated": "Not updated",
-    "overview": "Overview",
+    "overview": "Introduction",
     "contactInfo": "Contact information",
     "registrationOpensAfter": "Registration opens in",
     "registrationOpened": "Registration is open",
@@ -3379,7 +3379,7 @@
     "noUpcomingMatch": "No upcoming matchup is available.",
     "startsAt": "Starts {date}",
     "overviewDescriptionFallback": "The organizer has not added an overview for this tournament yet.",
-    "teamsTitle": "Teams",
+    "teamsTitle": "Athletes",
     "rosterCountLabel": "Registered profiles",
     "teamSearchPlaceholder": "Search by team or member name...",
     "paymentStatusHeader": "Payment",
@@ -3984,7 +3984,7 @@
       "COMPLETED": "Completed"
     },
     "tabs": {
-      "teams": "Teams",
+      "teams": "Athletes",
       "bracket": "Bracket",
       "matches": "Schedule",
       "activity": "Activity",

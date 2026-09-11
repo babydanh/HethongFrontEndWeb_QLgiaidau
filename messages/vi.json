@@ -3340,7 +3340,7 @@
     "cancelled": "Đã hủy",
     "notOpen": "Chưa mở đăng ký",
     "notUpdated": "Chưa cập nhật",
-    "overview": "Tổng quan",
+    "overview": "Giới thiệu",
     "contactInfo": "Thông tin liên hệ",
     "registrationOpensAfter": "Mở đăng ký sau",
     "registrationOpened": "Đã mở đăng ký",
@@ -3379,7 +3379,7 @@
     "noUpcomingMatch": "Chưa có cặp đấu sắp diễn ra.",
     "startsAt": "Bắt đầu {date}",
     "overviewDescriptionFallback": "Ban tổ chức chưa cập nhật thông tin giới thiệu cho giải đấu này.",
-    "teamsTitle": "Đội tham gia",
+    "teamsTitle": "Vận động viên",
     "rosterCountLabel": "Số lượng hồ sơ",
     "teamSearchPlaceholder": "Tìm theo tên đội hoặc thành viên...",
     "paymentStatusHeader": "Thanh toán",
@@ -3984,7 +3984,7 @@
       "COMPLETED": "Hoàn thành"
     },
     "tabs": {
-      "teams": "Đội tham gia",
+      "teams": "Vận động viên",
       "bracket": "Bảng đấu",
       "matches": "Lịch thi đấu",
       "activity": "Hoạt động",

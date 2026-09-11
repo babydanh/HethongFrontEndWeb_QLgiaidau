@@ -24,6 +24,20 @@ export default async function PrivacyPolicyPage() {
           {t("lastUpdated")}
         </p>
 
+        {/* Link to SportO Cam Policy */}
+        <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/60 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-0.5">
+            <span className="font-bold text-blue-900">📹 Chính sách quyền riêng tư ứng dụng SportO Cam (VNVAR)</span>
+            <p className="text-slate-600">Quy định quyền truy cập Camera, Microphone, Mạng cục bộ và lưu trữ video cho trạm ghi hình thể thao.</p>
+          </div>
+          <a
+            href="/privacy/sporto-cam"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-blue-600 px-3.5 py-2 font-bold text-white shadow-xs hover:bg-blue-700 transition-colors"
+          >
+            Xem chính sách SportO Cam →
+          </a>
+        </div>
+
         <section className="space-y-6 text-sm">
           <div>
             <h2 className="text-lg font-bold text-slate-900 mb-2">{t("section1")}</h2>

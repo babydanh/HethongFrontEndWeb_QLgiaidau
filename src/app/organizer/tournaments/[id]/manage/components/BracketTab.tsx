@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Settings, Save, Trophy, LayoutGrid, Users, Loader2, RefreshCw, Calendar, GitBranch } from 'lucide-react';
+import { Settings, Save, Trophy, LayoutGrid, Users, Loader2, RefreshCw, Calendar, GitBranch, Minus, Plus, Shield, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
@@ -655,63 +655,104 @@ export function BracketTab({
       {/* 2 Cấp độ Cấu hình bên trong tab Bracket */}
       {selectedDivisionId && (
         <>
-          {/* Banner ngang chọn chế độ ghi điểm Lite / Strict */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-bold text-slate-900 text-base">{translate('rulesAndBracketTitle')}</h3>
-                </div>
-                <p className="text-xs text-slate-500 font-semibold">
-                  {presentation.sportLabel}: {isLiteMode ? translate('liteModeLabel') : presentation.scoringLabel}. {isLiteMode ? translate('liteModeDescription') : presentation.presetSummary}
-                </p>
+          {/* MỤC 1: Chế độ tính điểm (Luật trọng tài) */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600 border border-blue-200/80 shadow-2xs">
+                1
               </div>
-
-              {/* Segmented control Lite vs Strict */}
-              <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shrink-0 self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setIsLiteMode(true)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    isLiteMode
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <span>⚡</span> {translate('liteModeLabel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsLiteMode(false)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    !isLiteMode
-                      ? 'bg-slate-800 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <span>🛡️</span> {translate('strictModeLabel')}
-                </button>
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    {translate('rulesAndBracketTitle')}
+                  </h3>
+                  {isLiteMode && (
+                    <Button
+                      onClick={handleSaveMatchConfig}
+                      disabled={isSavingConfig}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 h-7 rounded-lg shrink-0 cursor-pointer shadow-xs transition-all"
+                    >
+                      {isSavingConfig ? translate('saving') : translate('saveLiteMode')}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 font-medium">
+                  {translate('rulesAndBracketSubtitle')}
+                </p>
               </div>
             </div>
 
-            {isLiteMode && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg bg-blue-50/70 p-3.5 border border-blue-100 text-xs text-blue-900 animate-in fade-in duration-200">
-                <div className="flex items-start sm:items-center gap-2">
-                  <span className="text-base leading-none">⚡</span>
-                  <p className="font-medium">
-                    {translate('liteModeNotice', { rule: sportRuleKind === 'TENNIS' ? translate('tennisRule') : translate('flexibleRule') })}
-                  </p>
+            {/* Hai card chọn phong cách tính điểm trực quan */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+              {/* Card Lite (Khuyến dùng) */}
+              <button
+                type="button"
+                onClick={() => setIsLiteMode(true)}
+                className={`relative flex flex-col p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                  isLiteMode
+                    ? 'border-blue-600 bg-blue-50/30 ring-3 ring-blue-500/10 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                        isLiteMode
+                          ? 'border-blue-600 bg-blue-600'
+                          : 'border-slate-300 bg-white'
+                      }`}
+                    >
+                      {isLiteMode && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
+                      <span className="text-sm font-bold text-slate-900">
+                        {translate('liteModeLabel')}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="rounded-md bg-blue-100/80 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-blue-700 uppercase">
+                    {translate('liteRecommended')}
+                  </span>
                 </div>
-                <Button
-                  onClick={handleSaveMatchConfig}
-                  disabled={isSavingConfig}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 h-8 rounded-lg shrink-0 cursor-pointer shadow-xs"
-                >
-                  {isSavingConfig ? translate('saving') : translate('saveLiteMode')}
-                </Button>
-              </div>
-            )}
+                <p className="mt-2 text-xs text-slate-500 leading-relaxed font-normal">
+                  {translate('liteShortDesc')}
+                </p>
+              </button>
+
+              {/* Card Strict (Tiêu chuẩn) */}
+              <button
+                type="button"
+                onClick={() => setIsLiteMode(false)}
+                className={`relative flex flex-col p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                  !isLiteMode
+                    ? 'border-blue-600 bg-blue-50/30 ring-3 ring-blue-500/10 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                      !isLiteMode
+                        ? 'border-blue-600 bg-blue-600'
+                        : 'border-slate-300 bg-white'
+                    }`}
+                  >
+                    {!isLiteMode && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-bold text-slate-900">
+                      {translate('strictModeLabel')}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-slate-500 leading-relaxed font-normal">
+                  {translate('strictShortDesc')}
+                </p>
+              </button>
+            </div>
           </div>
 
           {/* Nội dung cấu hình: 1 cột (nếu Lite) hoặc 2 cột (nếu Strict) */}
@@ -952,51 +993,206 @@ export function BracketTab({
                 ) : isGroupStageKnockout ? (
                   <div className="space-y-4">
                     {renderSuggestionBox(getGSKSuggestion(participantCount))}
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                        <LayoutGrid className="w-5 h-5 text-blue-600" />
-                        {translate('groupStageKnockoutConfigTitle')}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                        {gsStages.length > 0
-                          ? translate('groupStageKnockoutSummary', { groups: numGroups, teams: teamsPerGroup, advancing: teamsAdvancing })
-                          : translate('groupStageKnockoutConfigDescription')}
-                      </p>
+
+                    {/* Tiêu đề mục 2 với số tròn */}
+                    <div className="flex items-start gap-3 pt-1">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600 border border-blue-200/80 shadow-2xs">
+                        2
+                      </div>
+                      <div className="space-y-0.5">
+                        <h3 className="font-bold text-slate-900 text-base">
+                          {translate('groupStageKnockoutConfigTitle')}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">
+                          {translate('groupStageKnockoutSubtitle')}
+                        </p>
+                      </div>
                     </div>
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">{translate('groupStage')}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('numberOfGroups')}</label>
-                          <input
-                            type="number"
-                            min={2}
-                            max={32}
-                            value={numGroups}
-                            onChange={(e) => {
-                              const nextGroups = Math.min(32, Math.max(2, Number(e.target.value) || 2));
-                              setNumGroups?.(nextGroups);
-                              const targetCount = participantCount > 0
-                                ? participantCount
-                                : (isLimitEnabled ? maxParticipants : 0);
-                              if (targetCount > 0) {
-                                setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
-                              }
-                            }}
-                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
-                          />
+
+                    {/* KHUNG GIAI ĐOẠN 1: VÒNG BẢNG */}
+                    <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-blue-600" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            {translate('stage1GroupStage')}
+                          </h4>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsPerGroup')}</label>
-                          <input type="number" min={2} max={128} value={teamsPerGroup} onChange={(e) => setTeamsPerGroup?.(Math.min(128, Math.max(2, Number(e.target.value))))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+                        <span className="text-xs font-semibold text-slate-500">
+                          {translate('totalScale', { count: numGroups * teamsPerGroup })}
+                        </span>
+                      </div>
+
+                      {/* 4 Counter Stepper Cards (+ / -) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {/* 1. SỐ BẢNG ĐẤU */}
+                        <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-blue-300 transition-colors">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                            {translate('numberOfGroups')}
+                          </span>
+                          <div className="my-2.5 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextGroups = Math.max(2, numGroups - 1);
+                                setNumGroups?.(nextGroups);
+                                const targetCount = participantCount > 0 ? participantCount : (isLimitEnabled ? maxParticipants : 0);
+                                if (targetCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
+                              }}
+                              disabled={numGroups <= 2}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Decrease groups"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-base font-bold text-slate-900">
+                              {numGroups}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextGroups = Math.min(32, numGroups + 1);
+                                setNumGroups?.(nextGroups);
+                                const targetCount = participantCount > 0 ? participantCount : (isLimitEnabled ? maxParticipants : 0);
+                                if (targetCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(targetCount / nextGroups))));
+                              }}
+                              disabled={numGroups >= 32}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Increase groups"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-center text-slate-400 font-medium truncate">
+                            {Array.from({ length: Math.min(numGroups, 6) }, (_, i) => String.fromCharCode(65 + i)).join(', ') + (numGroups > 6 ? '...' : '')}
+                          </p>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('teamsAdvancing')}</label>
-                          <input type="number" min={1} max={16} value={teamsAdvancing} onChange={(e) => setTeamsAdvancing?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+
+                        {/* 2. ĐỘI MỖI BẢNG */}
+                        <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-blue-300 transition-colors">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                            {translate('teamsPerGroup')}
+                          </span>
+                          <div className="my-2.5 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setTeamsPerGroup?.(Math.max(2, teamsPerGroup - 1))}
+                              disabled={teamsPerGroup <= 2}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Decrease teams per group"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-base font-bold text-slate-900">
+                              {teamsPerGroup}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setTeamsPerGroup?.(Math.min(128, teamsPerGroup + 1))}
+                              disabled={teamsPerGroup >= 128}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Increase teams per group"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-center text-slate-400 font-medium">
+                            {teamsPerGroup} {translate('teamsPerGroup').toLowerCase()}
+                          </p>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('groupStageRounds')}</label>
-                          <input type="number" min={1} max={20} value={gskRoundsToPlay} onChange={(e) => setGskRoundsToPlay?.(Math.max(1, Number(e.target.value)))} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full" />
+
+                        {/* 3. LẤY ĐI TIẾP */}
+                        <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-blue-300 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                              {translate('teamsAdvancing')}
+                            </span>
+                            <span className="rounded bg-blue-50 px-1.5 py-0.2 text-[9px] font-bold text-blue-600 border border-blue-100">
+                              Vào K.O
+                            </span>
+                          </div>
+                          <div className="my-2.5 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setTeamsAdvancing?.(Math.max(1, teamsAdvancing - 1))}
+                              disabled={teamsAdvancing <= 1}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Decrease advancing"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-base font-bold text-slate-900">
+                              {teamsAdvancing}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setTeamsAdvancing?.(Math.min(teamsPerGroup - 1, Math.min(16, teamsAdvancing + 1)))}
+                              disabled={teamsAdvancing >= Math.min(16, teamsPerGroup - 1)}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Increase advancing"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-center text-slate-400 font-medium">
+                            {teamsAdvancing === 1
+                              ? translate('top1Advancing')
+                              : teamsAdvancing === 2
+                              ? translate('top2Advancing')
+                              : translate('topNAdvancing', { count: teamsAdvancing })}
+                          </p>
+                        </div>
+
+                        {/* 4. SỐ LƯỢT ĐẤU */}
+                        <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-blue-300 transition-colors">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                            {translate('groupStageRounds')}
+                          </span>
+                          <div className="my-2.5 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setGskRoundsToPlay?.(Math.max(1, gskRoundsToPlay - 1))}
+                              disabled={gskRoundsToPlay <= 1}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Decrease rounds"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-base font-bold text-slate-900">
+                              {gskRoundsToPlay}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setGskRoundsToPlay?.(Math.min(20, gskRoundsToPlay + 1))}
+                              disabled={gskRoundsToPlay >= 20}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                              aria-label="Increase rounds"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-center text-slate-400 font-medium truncate">
+                            {gskRoundsToPlay === 1
+                              ? translate('singleLeg')
+                              : gskRoundsToPlay === 2
+                              ? translate('homeAway')
+                              : translate('repeatedLegs', { count: gskRoundsToPlay })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Pill tóm tắt thông minh */}
+                      <div className="flex justify-center pt-1">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-blue-50/50 px-4 py-1.5 text-xs font-semibold text-slate-600 shadow-2xs">
+                          <span>{numGroups} bảng × {teamsAdvancing} suất</span>
+                          <span className="text-blue-600 font-bold">➔</span>
+                          <span className="font-bold text-blue-700">
+                            {translate('toKnockoutSummary', {
+                              groups: numGroups,
+                              advancing: teamsAdvancing,
+                              total: gskAdvancingTotal,
+                            })}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1007,8 +1203,15 @@ export function BracketTab({
                       </div>
                     )}
 
-                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">{translate('knockout')}</p>
+                    {/* KHUNG GIAI ĐOẠN 2: NHÁNH LOẠI TRỰC TIẾP (KNOCKOUT) */}
+                    <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
+                      <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+                        <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                          {translate('stage2Knockout')}
+                        </h4>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{translate('playoffFormat')}</label>
@@ -1025,14 +1228,15 @@ export function BracketTab({
                           </select>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700">
-                        <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
+
+                      <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700 pt-1">
+                        <div className="rounded-lg bg-slate-50 px-3 py-2 border border-slate-200/80">
                           <p className="text-[10px] uppercase text-slate-400">{translate('advancingTeams')}</p>
-                          <p>{translate('teamsCount', { count: gskAdvancingTotal })}</p>
+                          <p className="text-slate-800">{translate('teamsCount', { count: gskAdvancingTotal })}</p>
                         </div>
-                        <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
+                        <div className="rounded-lg bg-slate-50 px-3 py-2 border border-slate-200/80">
                           <p className="text-[10px] uppercase text-slate-400">{translate('knockoutStarts')}</p>
-                          <p>{gskDisplayStartRoundLabel}</p>
+                          <p className="text-slate-800">{gskDisplayStartRoundLabel}</p>
                         </div>
                       </div>
                     </div>

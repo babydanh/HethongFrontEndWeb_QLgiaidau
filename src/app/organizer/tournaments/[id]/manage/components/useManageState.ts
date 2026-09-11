@@ -406,7 +406,9 @@ export function useManageState(id: string) {
         } catch { /* silent */ }
       }
 
-      // Fetch matches from ALL divisions so schedule board has every match properly mapped
+      // Fetch matches from ALL divisions so schedule board has every match properly mapped.
+      // The bracket endpoint is group-shaped, so it can omit valid stage matches
+      // that already have a schedule. The direct match list below fills that gap.
       const combinedMatches: Match[] = [];
 
       try {
@@ -457,46 +459,55 @@ export function useManageState(id: string) {
           limit: 1000,
           activeStageOnly: true,
         });
-        if (mRes.data && Array.isArray(mRes.data) && mRes.data.length > 0) {
+        if (mRes.data && Array.isArray(mRes.data)) {
           const directMatchMap = new Map(mRes.data.map((m) => [m.id, m]));
           combinedMatches.forEach((m, idx) => {
             const direct = directMatchMap.get(m.id);
             if (direct) {
               combinedMatches[idx] = {
                 ...m,
-                courtId: direct.courtId || m.courtId || null,
-                courtName: direct.courtName || m.courtName || null,
-                courtAddress: direct.courtAddress || m.courtAddress || null,
-                scheduledAt: direct.scheduledAt || m.scheduledAt || null,
-                matchConfig: direct.matchConfig || m.matchConfig || null,
+                courtId: direct.courtId !== undefined ? direct.courtId : m.courtId ?? null,
+                courtName: direct.courtName !== undefined ? direct.courtName : m.courtName ?? null,
+                courtAddress: direct.courtAddress !== undefined ? direct.courtAddress : m.courtAddress ?? null,
+                scheduledAt: direct.scheduledAt !== undefined ? direct.scheduledAt : m.scheduledAt ?? null,
+                matchConfig: direct.matchConfig !== undefined ? direct.matchConfig : m.matchConfig ?? null,
               };
               directMatchMap.delete(m.id);
             }
           });
-          // The active bracket is authoritative for tournament matches. Do
-          // not append rows that are missing from it: the generic match list
-          // can contain matches from a soft-deleted stage after a bracket was
-          // regenerated, which would resurrect ghost/TBD cards on the board.
+
+          // activeStageOnly is the server-side guard against matches from
+          // deleted stages. Keep every remaining active match even when the
+          // bracket response did not include its group-shaped row.
+          combinedMatches.push(...directMatchMap.values());
         }
       } catch { /* silent */ }
 
       if (requestId === divisionDataRequestRef.current) {
+        const snapshotMatches = Array.from(new Map(combinedMatches.map((match) => [match.id, match])).values());
         setMatches((prevMatches) => {
           const prevMap = new Map(prevMatches.map((m) => [m.id, m]));
-          return combinedMatches.map((newMatch) => {
+          return snapshotMatches.map((newMatch) => {
             const prev = prevMap.get(newMatch.id);
             return {
               ...newMatch,
-              courtId: newMatch.courtId || prev?.courtId || null,
-              courtName: newMatch.courtName || prev?.courtName || null,
-              courtAddress: newMatch.courtAddress || prev?.courtAddress || null,
-              scheduledAt: newMatch.scheduledAt || prev?.scheduledAt || null,
-              matchConfig: newMatch.matchConfig || prev?.matchConfig || null,
+              courtId: newMatch.courtId !== undefined ? newMatch.courtId : prev?.courtId ?? null,
+              courtName: newMatch.courtName !== undefined ? newMatch.courtName : prev?.courtName ?? null,
+              courtAddress: newMatch.courtAddress !== undefined ? newMatch.courtAddress : prev?.courtAddress ?? null,
+              scheduledAt: newMatch.scheduledAt !== undefined ? newMatch.scheduledAt : prev?.scheduledAt ?? null,
+              matchConfig: newMatch.matchConfig !== undefined ? newMatch.matchConfig : prev?.matchConfig ?? null,
             };
           });
         });
+        return snapshotMatches;
       }
-    } catch { /* Preserve the last successful division snapshot on transient errors. */ }
+      return null;
+    } catch {
+      // Preserve the last successful division snapshot on transient errors.
+      // Returning null tells autosave that this read-after-write was not
+      // authoritative, so its local drafts must remain visible for retry.
+      return null;
+    }
   }, [id]);
 
   const fetchDivisions = useCallback(async (tournamentId: string) => {

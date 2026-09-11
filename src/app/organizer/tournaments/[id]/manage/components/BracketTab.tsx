@@ -50,12 +50,12 @@ interface BracketTabProps {
   currentVenueId?: string;
   onSelectVenue?: (venueId: string) => void;
   defaultDate?: string;
-  onRefetchData?: () => Promise<void>;
+  onRefetchData?: () => Promise<unknown> | void;
   isGeneratingBracket: boolean;
   handleGenerateBracket: () => void;
   handleOpenScheduling: (match: BracketMatch) => void;
   handleOpenRoundModal?: (stage: BracketStage, roundNumber: number) => void;
-  refetchDivisionData?: () => Promise<void>;
+  refetchDivisionData?: () => Promise<unknown> | void;
   onBracketPersisted?: (matches: BracketMatch[]) => void;
 
   // Cấu hình mặc định props

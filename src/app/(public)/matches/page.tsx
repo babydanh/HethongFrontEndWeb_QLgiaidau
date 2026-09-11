@@ -323,13 +323,21 @@ export default function MatchesListPage() {
     isRanked,
   ].join('|');
   const matchesRequestInFlightRef = useRef(false);
+  const matchesRequestKeyRef = useRef<string | null>(null);
   const matchesRefreshQueuedRef = useRef(false);
+  const lastRefreshTriggerAtRef = useRef(0);
+  const hasLoadedMatchesRef = useRef(false);
 
   useEffect(() => {
     const refreshWhenReady = () => {
-      if (document.visibilityState === 'visible') {
-        setMatchesRefreshTick((value) => value + 1);
-      }
+      if (document.visibilityState !== 'visible') return;
+
+      // Returning to the tab can emit visibilitychange and focus together.
+      // Treat that pair as one refresh so the feed does not fetch twice.
+      const now = Date.now();
+      if (now - lastRefreshTriggerAtRef.current < 1500) return;
+      lastRefreshTriggerAtRef.current = now;
+      setMatchesRefreshTick((value) => value + 1);
     };
 
     const interval = window.setInterval(refreshWhenReady, 60000);
@@ -415,11 +423,20 @@ export default function MatchesListPage() {
   // Fetch matches logic supporting initial load and cursor-based "load more"
   const fetchMatches = useCallback(
     async (isLoadMore = false, cursorToUse: string | null = null) => {
-      if (matchesRequestInFlightRef.current && !isLoadMore) {
-        matchesRefreshQueuedRef.current = true;
-        return;
+      const requestKey = isLoadMore
+        ? `load-more:${cursorToUse ?? ''}`
+        : `refresh:${filterKey}`;
+
+      if (!isLoadMore) {
+        if (matchesRequestInFlightRef.current) {
+          if (matchesRequestKeyRef.current !== requestKey) {
+            matchesRefreshQueuedRef.current = true;
+          }
+          return;
+        }
+        matchesRequestInFlightRef.current = true;
+        matchesRequestKeyRef.current = requestKey;
       }
-      matchesRequestInFlightRef.current = true;
 
       // Map lựa chọn nội dung đấu sang matchType + genderRestriction
       let matchType: string | undefined;
@@ -450,7 +467,8 @@ export default function MatchesListPage() {
         if (isLoadMore) {
           setIsLoadingMore(true);
         } else {
-          setIsLoading(true);
+          // Keep the current cards visible while a background refresh runs.
+          setIsLoading(!hasLoadedMatchesRef.current);
         }
         setIsRateLimited(false);
 
@@ -483,6 +501,7 @@ export default function MatchesListPage() {
           setMatches(feed.matches);
           setGroupPages({});
           setVisibleTournamentCount(4);
+          hasLoadedMatchesRef.current = true;
         }
 
         setNextCursor(resNextCursor);
@@ -493,8 +512,11 @@ export default function MatchesListPage() {
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
-        matchesRequestInFlightRef.current = false;
-        if (matchesRefreshQueuedRef.current) {
+        if (!isLoadMore && matchesRequestKeyRef.current === requestKey) {
+          matchesRequestKeyRef.current = null;
+          matchesRequestInFlightRef.current = false;
+        }
+        if (!isLoadMore && matchesRefreshQueuedRef.current) {
           matchesRefreshQueuedRef.current = false;
           setMatchesRefreshTick((value) => value + 1);
         }
@@ -505,6 +527,7 @@ export default function MatchesListPage() {
       startDate,
       endDate,
       debouncedSearchTerm,
+      filterKey,
       selectedCategoryId,
       selectedStatus,
       selectedProvince,

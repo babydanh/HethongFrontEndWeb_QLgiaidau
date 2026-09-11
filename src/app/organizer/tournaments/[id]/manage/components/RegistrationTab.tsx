@@ -168,7 +168,7 @@ interface RegistrationTabProps {
   handleAutoSeed: () => Promise<void>;
   handleSwapSeeds: (participantId1: string, participantId2: string) => Promise<void>;
   handleReorderSeeds?: (reorderedSeeds: { participantId: string; seed: number }[]) => Promise<void>;
-  refetchDivisionData?: () => Promise<void>;
+  refetchDivisionData?: () => Promise<unknown> | void;
 }
 
 // ─── SortableSeedItem (Declared outside to avoid recreation & re-mounting on each parent render) ───
@@ -1671,7 +1671,7 @@ export function RegistrationTab({
           tournament={tournament}
           divisions={divisions}
           selectedDivisionId={selectedDivisionId}
-          onSuccess={() => refetchDivisionData?.()}
+          onSuccess={async () => { await refetchDivisionData?.(); }}
         />
 
       </div>

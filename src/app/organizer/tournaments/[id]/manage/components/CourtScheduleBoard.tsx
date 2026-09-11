@@ -100,7 +100,7 @@ interface CourtScheduleBoardProps {
   isFullscreen?: boolean;
   onOpenMatch: (matchId: string) => void;
   onSaveScheduleDirect?: (matchId: string, courtId: string, scheduledAt: string, silent?: boolean, durationMinutes?: number) => Promise<void>;
-  onRefetchData?: () => Promise<void> | void;
+  onRefetchData?: () => Promise<unknown> | void;
 }
 
 type DraftAssignment = {
@@ -108,6 +108,20 @@ type DraftAssignment = {
   scheduledAt: string;
   durationMinutes?: number;
 };
+
+function normalizeScheduleValue(value?: string | null): string | number | null {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? value : timestamp;
+}
+
+function hasSameScheduleAssignment(
+  actual: { courtId?: string | null; scheduledAt?: string | null },
+  expected: DraftAssignment,
+) {
+  return (actual.courtId || null) === (expected.courtId || null)
+    && normalizeScheduleValue(actual.scheduledAt) === normalizeScheduleValue(expected.scheduledAt);
+}
 
 type AssignmentPickerState = {
   startCourtIndex: number;
@@ -580,6 +594,7 @@ export function CourtScheduleBoard({
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [activeDurationPickerMatchId, setActiveDurationPickerMatchId] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const isSavingDraftRef = useRef(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const effectiveAutoSaveStatus = Object.keys(draftAssignments).length > 0 && autoSaveStatus === 'saved'
     ? 'unsaved'
@@ -653,7 +668,8 @@ export function CourtScheduleBoard({
     [preview],
   );
 
-  const displayMatches = useMemo(() => matches.map((match) => {
+  const displayMatches = useMemo(() => {
+    return matches.map((match) => {
     const tournamentIsCompleted = String(tournamentStatus || '').toUpperCase() === 'COMPLETED';
     const hasNoResolvedParticipants = !match.participant1 && !match.participant2;
     if (tournamentIsCompleted && hasNoResolvedParticipants) return null;
@@ -679,7 +695,8 @@ export function CourtScheduleBoard({
       isPreview: !isExplicitlyUnassigned && !persisted && Boolean(assignment) && !draft,
       isDraft: Boolean(draft),
     };
-  }).filter((item): item is NonNullable<typeof item> => item !== null), [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId, tournamentStatus]);
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [customMatchDurations, defaultStepMinutes, draftAssignments, matches, preview, previewAssignmentByMatchId, tournamentStatus]);
 
   const [customDates, setCustomDates] = useState<string[]>([]);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -1105,9 +1122,10 @@ export function CourtScheduleBoard({
 
   // Handle Save All Drafts (Manual Click or Auto-Save)
   const handleSaveAllDrafts = async (silent = false) => {
-    if (isSavingDraft) return;
+    if (isSavingDraftRef.current) return;
 
     const entries = Object.entries(draftAssignments);
+    const draftsAtSave = new Map(entries);
     const hasRowDurationChanges = Object.keys(rowDurations).length > 0;
 
     if (entries.length === 0 && !hasRowDurationChanges) {
@@ -1119,6 +1137,7 @@ export function CourtScheduleBoard({
       return;
     }
 
+    isSavingDraftRef.current = true;
     setIsSavingDraft(true);
     setAutoSaveStatus('saving');
     try {
@@ -1142,41 +1161,77 @@ export function CourtScheduleBoard({
         }
       }
 
-      // 2. CLEAR LOCAL DRAFTS IMMEDIATELY (Eliminates infinite save loops)
-      setDraftAssignments((prev) => {
-        const next = { ...prev };
-        for (const id of succeededMatchIds) {
-          delete next[id];
-        }
-        return next;
-      });
-
-      // 3. Trigger refetch in background safely
+      // 2. Read-after-write: only remove a draft after the server snapshot
+      // confirms the exact court and timestamp that was saved.
+      let refreshedSnapshot: unknown;
+      let refetchCompleted = !onRefetchData;
       if (onRefetchData) {
         try {
-          await onRefetchData();
+          refreshedSnapshot = await onRefetchData();
+          refetchCompleted = true;
         } catch (e) {
           console.warn('Refetch error:', e);
         }
       }
 
-      setAutoSaveStatus('saved');
+      const confirmedMatchIds = new Set<string>();
+      for (const matchId of succeededMatchIds) {
+        const expected = draftsAtSave.get(matchId);
+        if (!expected) continue;
+
+        // Consumers that do not return a snapshot retain the old API contract;
+        // a successful PATCH is the strongest confirmation available there.
+        if (!onRefetchData || (refetchCompleted && refreshedSnapshot === undefined)) {
+          confirmedMatchIds.add(matchId);
+          continue;
+        }
+
+        if (Array.isArray(refreshedSnapshot)) {
+          const actual = refreshedSnapshot.find((match) => {
+            return Boolean(match && typeof match === 'object' && 'id' in match && match.id === matchId);
+          });
+          if (actual && typeof actual === 'object' && hasSameScheduleAssignment(actual as { courtId?: string | null; scheduledAt?: string | null }, expected)) {
+            confirmedMatchIds.add(matchId);
+          }
+        }
+      }
+
+      // Keep a newer edit made while the save was in flight. This prevents an
+      // older async save from deleting a user's latest local assignment.
+      setDraftAssignments((prev) => {
+        const next = { ...prev };
+        for (const id of confirmedMatchIds) {
+          const expected = draftsAtSave.get(id);
+          const current = next[id];
+          if (expected && current && hasSameScheduleAssignment(current, expected)) {
+            delete next[id];
+          }
+        }
+        return next;
+      });
+
+      const pendingCount = entries.filter(([matchId]) => !confirmedMatchIds.has(matchId)).length;
+      setAutoSaveStatus(pendingCount === 0 ? 'saved' : 'unsaved');
+
       if (!silent) {
         setSaveToast(
-          succeededMatchIds.size > 0
-            ? `Đã lưu thành công ${succeededMatchIds.size} trận đấu!`
-            : 'Đã lưu lịch thi đấu!'
+          confirmedMatchIds.size > 0 && pendingCount > 0
+            ? `Đã lưu ${confirmedMatchIds.size} trận; giữ ${pendingCount} trận để xác nhận lại.`
+            : confirmedMatchIds.size > 0
+              ? `Đã lưu thành công ${confirmedMatchIds.size} trận đấu!`
+              : 'Chưa xác nhận được lịch; các trận vẫn được giữ lại.'
         );
         setTimeout(() => setSaveToast(null), 3000);
       }
     } catch (err) {
       console.error('Failed to save drafts:', err);
-      setAutoSaveStatus('saved');
+      setAutoSaveStatus('unsaved');
       if (!silent) {
-        setSaveToast('Đã lưu dữ liệu lịch.');
+        setSaveToast('Chưa lưu được lịch; các trận vẫn được giữ lại.');
         setTimeout(() => setSaveToast(null), 2500);
       }
     } finally {
+      isSavingDraftRef.current = false;
       setIsSavingDraft(false);
     }
   };
@@ -1190,7 +1245,7 @@ export function CourtScheduleBoard({
     }, 3500);
 
     return () => clearTimeout(timer);
-  }, [draftAssignments]);
+  }, [draftAssignments, autoSaveStatus]);
 
   // Clipboard state for Excel-like Cut (Ctrl+X), Copy (Ctrl+C), Paste (Ctrl+V)
   const [clipboard, setClipboard] = useState<{

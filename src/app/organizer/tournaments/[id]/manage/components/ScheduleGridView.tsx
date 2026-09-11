@@ -49,7 +49,7 @@ export interface ScheduleGridViewProps {
   divisions?: Division[];
   selectedDivisionId?: string;
   onOpenMatch: (matchId: string) => void;
-  onRefetchData?: () => Promise<void>;
+  onRefetchData?: () => Promise<unknown> | void;
   defaultDate?: string;
   venues?: Array<{ id: string; name: string; locationAddress?: string }>;
   currentVenueId?: string;

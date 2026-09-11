@@ -1855,7 +1855,7 @@ const commonTranslate = useTranslations('Common');
                             aria-current={isActive ? 'true' : undefined}
                             aria-expanded={isActive}
                             onClick={() => handleDivisionSelect(division.id)}
-                            className={`group flex min-h-[60px] w-full items-center gap-3 px-3 py-3 text-left transition-all rounded-xl sm:px-4 ${
+                            className={`group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2 text-left transition-all rounded-xl sm:px-3.5 sm:py-2.5 ${
                               isActive
                                 ? 'bg-blue-50/80 text-blue-950 font-bold'
                                 : 'bg-slate-50/60 text-slate-700 hover:bg-slate-100/70 hover:text-slate-900'

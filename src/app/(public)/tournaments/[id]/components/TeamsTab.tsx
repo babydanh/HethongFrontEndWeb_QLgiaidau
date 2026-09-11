@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
-import { ChevronDown, User, Award, ShieldCheck, XCircle, CheckCircle, Search, Clock } from 'lucide-react';
+import { ChevronDown, User, Award, ShieldCheck, XCircle, CheckCircle, Clock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -28,7 +28,6 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [rosterStatus, setRosterStatus] = useState<FootballRosterStatus | null>(null);
   const [rosterAction, setRosterAction] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -50,24 +49,9 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
     fetchParticipants();
   }, [divisionId, tournament.id, tournamentId]);
 
-    const filteredParticipants = useMemo(() => {
-
-    if (!searchQuery.trim()) return participants;
-    const query = searchQuery.toLowerCase().trim();
-
-    return participants.filter((p) => {
-      if (p.teamName && p.teamName.toLowerCase().includes(query)) return true;
-      if (p.members && p.members.length > 0) {
-        return p.members.some((m) => m.fullName && m.fullName.toLowerCase().includes(query));
-      }
-      if (p.registeredBy?.fullName && p.registeredBy.fullName.toLowerCase().includes(query)) return true;
-      return false;
-    });
-    }, [participants, searchQuery]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredParticipants.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(participants.length / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const visibleParticipants = filteredParticipants.slice(
+  const visibleParticipants = participants.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
@@ -120,7 +104,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3.5">
       {visibleRosterStatus?.currentMember?.confirmationStatus === 'PENDING' && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
           <div className="flex items-start gap-3">
@@ -136,48 +120,19 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           </div>
         </div>
       )}
-      {/* Search Input Bar */}
-      <div className="relative w-full max-w-md">
-        <input
-          type="text"
-          placeholder={translate("teamSearchPlaceholder")}
-          value={searchQuery}
-                    onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setPage(1);
-          }}
-
-          className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9.5 shadow-sm"
-        />
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        {searchQuery && (
-          <button
-                        onClick={() => {
-              setSearchQuery('');
-              setPage(1);
-            }}
-
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
-          >
-            ✕
-          </button>
-        )}
-      </div>
-
       {participants.length > 0 ? (
-        filteredParticipants.length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
-            <table className="w-full text-xs sm:text-sm text-left">
-              <thead className="text-[11px] sm:text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-10 sm:w-16">#</th>
-                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">{translate("teamNameHeader")}</th>
-                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">{translate("paymentStatusHeader")}</th>
-                  <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">{translate("detailsHeader")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                                {visibleParticipants.map((team, index) => {
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full text-xs sm:text-sm text-left">
+            <thead className="text-[10px] sm:text-[11px] text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-2.5 py-1.5 sm:px-4 sm:py-2 font-bold w-10 sm:w-14">#</th>
+                <th className="px-2.5 py-1.5 sm:px-4 sm:py-2 font-bold">{translate("teamNameHeader")}</th>
+                <th className="px-2.5 py-1.5 sm:px-4 sm:py-2 font-bold w-28 sm:w-40">{translate("paymentStatusHeader")}</th>
+                <th className="px-2.5 py-1.5 sm:px-4 sm:py-2 font-bold w-14 sm:w-20 text-right">{translate("detailsHeader")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleParticipants.map((team, index) => {
 
                   const members = team.members && team.members.length > 0
                     ? team.members
@@ -215,9 +170,9 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                           isExpandable && 'cursor-pointer',
                         )}
                       >
-                                                <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{(currentPage - 1) * pageSize + index + 1}</td>
+                        <td className="px-2.5 py-2 sm:px-4 sm:py-2.5 font-medium text-slate-950 align-middle">{(currentPage - 1) * pageSize + index + 1}</td>
 
-                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
+                        <td className="px-2.5 py-2 sm:px-4 sm:py-2.5 font-bold text-slate-950 align-middle">
                           <div className="flex min-w-0 flex-wrap items-center gap-1.5 leading-normal sm:gap-2">
                             {!isExpandable ? (
                               <button
@@ -238,33 +193,33 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                 }}
                                 className="flex min-w-0 items-center gap-2 text-left hover:opacity-85 transition-opacity cursor-pointer group"
                               >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 group-hover:border-blue-400 transition-colors" aria-hidden="true">
+                                <span className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 group-hover:border-blue-400 transition-colors" aria-hidden="true">
                                   {inlineSingleAvatar ? (
                                     <img src={inlineSingleAvatar} alt="" className="h-full w-full object-cover" />
                                   ) : (
                                     inlineSingleName.charAt(0).toUpperCase()
                                   )}
                                 </span>
-                                <span className="min-w-0 truncate group-hover:text-blue-600 transition-colors" title={inlineSingleName}>{inlineSingleName}</span>
+                                <span className="min-w-0 truncate text-xs sm:text-sm group-hover:text-blue-600 transition-colors" title={inlineSingleName}>{inlineSingleName}</span>
                               </button>
                             ) : (
-                              <span>{team.teamName}</span>
+                              <span className="text-xs sm:text-sm">{team.teamName}</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
+                        <td className="px-2.5 py-2 sm:px-4 sm:py-2.5 align-middle">
                           <div className="flex flex-wrap items-center gap-2">
                             {team.isPaid ? (
                               <span
                                 title={translate("paymentPaid")}
-                                className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs"
+                                className="inline-flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs"
                               >
                                 <CheckCircle className="w-3.5 h-3.5" />
                               </span>
                             ) : (
                               <span
                                 title={translate("paymentPending")}
-                                className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs"
+                                className="inline-flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs"
                               >
                                 <Clock className="w-3.5 h-3.5" />
                               </span>
@@ -279,7 +234,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                               </Link>
                             )}
                           </div>
-                        </td>                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
+                        </td>
+                        <td className="px-2.5 py-2 sm:px-4 sm:py-2.5 text-right align-middle">
                           {isExpandable ? (
                             <button
                               type="button"
@@ -413,19 +369,14 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                 })}
               </tbody>
             </table>
-                    </div>
+          </div>
         ) : (
           <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
-            {translate("teamsSearchEmpty", { query: searchQuery })}
+            {translate("teamsEmpty")}
           </div>
-        )
-      ) : (
-        <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
-          {translate("teamsEmpty")}
-        </div>
-      )}
+        )}
 
-      {filteredParticipants.length > pageSize && (
+      {participants.length > pageSize && (
         <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
           <button
             type="button"

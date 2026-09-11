@@ -360,6 +360,7 @@ export default function BracketTab({
   bracketSnapshot,
   refreshKey,
   compact = false,
+  hideHonors = false,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const effectiveTournamentId = tournamentId ?? tournament.id;
@@ -560,7 +561,7 @@ export default function BracketTab({
   // ── Main ──
   return (
     <div className="flex flex-col gap-5">
-      {result?.finalized && result.awards.length > 0 && (() => {
+      {!hideHonors && result?.finalized && result.awards.length > 0 && (() => {
         const sortedAwards = [...result.awards].sort((a, b) => a.rank - b.rank);
         return (
           <section className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-b from-amber-50/50 via-white to-slate-50/30 p-4 sm:p-5 shadow-xs">

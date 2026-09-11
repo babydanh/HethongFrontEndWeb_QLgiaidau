@@ -67,6 +67,8 @@ export interface BracketTabProps {
   refreshKey?: string | number;
   /** Compact/lite mode for embedded post widgets (hides redundant toolbars & zoom controls) */
   compact?: boolean;
+  /** Hide honors / official result podium banner (e.g. in organizer editor view) */
+  hideHonors?: boolean;
 }
 
 export function mergeBracketMatches(

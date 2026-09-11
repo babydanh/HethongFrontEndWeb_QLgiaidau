@@ -1626,6 +1626,7 @@ export function BracketTab({
                 knockoutOnly
                 dragHandlers={bracketDragHandlers}
                 bracketSnapshot={bracket}
+                hideHonors
               />
               <DragOverlay dropAnimation={null}>
                 {activeDragSource ? (

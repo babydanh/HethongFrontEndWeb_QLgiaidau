@@ -3,6 +3,7 @@
 import type { SportRuleKind } from '@/types/tournament';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   tournamentsApi, divisionsApi, livestreamApi, LivestreamCamera, Tournament, TournamentFeesConfig, TournamentParticipant,
@@ -37,6 +38,8 @@ import type { StageRoundRuleConfig } from '@/types/tournament';
 import { isLiteTournament } from '@/features/tournaments/lite-qr';
 
 type RoundConfigRecord = Record<string, unknown>;
+type BracketConfigSaveOptions = { silent?: boolean };
+type BracketConfigSaveHandler = (options?: BracketConfigSaveOptions) => Promise<boolean>;
 
 const normalizeRegionLabel = (value: string) =>
   value
@@ -100,6 +103,7 @@ export interface Court {
 export function useManageState(id: string) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const translate = useTranslations('OrganizerManage');
 
   // ── Data ──
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -236,6 +240,17 @@ export function useManageState(id: string) {
   const [rrTiebreakerRule, setRrTiebreakerRule] = useState<'H2H_POINTS' | 'SET_DIFF' | 'POINT_DIFF'>('SET_DIFF');
   const [isSavingRoundRobinConfig, setIsSavingRoundRobinConfig] = useState(false);
   const [bracketTypeState, setBracketTypeState] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'>('SINGLE_ELIMINATION');
+  const bracketConfigSaveHandlersRef = useRef<{
+    match: BracketConfigSaveHandler;
+    roundRobin: BracketConfigSaveHandler;
+    groupStageKnockout: BracketConfigSaveHandler;
+  } | null>(null);
+  const bracketConfigAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bracketConfigAutoSaveReadyRef = useRef(false);
+  const bracketConfigHydrationPendingRef = useRef<string | null>(null);
+  const bracketConfigLastSignatureRef = useRef('');
+  const bracketConfigFailedSignatureRef = useRef<string | null>(null);
+  const bracketConfigAutoSaveInFlightRef = useRef(false);
 
   // Group Stage Knockout config
   const [numGroups, setNumGroups] = useState(2);
@@ -511,8 +526,8 @@ export function useManageState(id: string) {
       return null;
     } catch {
       // Preserve the last successful division snapshot on transient errors.
-      // Returning null tells autosave that this read-after-write was not
-      // authoritative, so its local drafts must remain visible for retry.
+      // Returning null tells the caller that the refresh was unavailable;
+      // a schedule write that already returned 2xx remains authoritative.
       return null;
     }
   }, [id]);
@@ -1024,8 +1039,9 @@ export function useManageState(id: string) {
     }
   };
 
-  const handleSaveMatchConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
+  const handleSaveMatchConfig = async (options?: BracketConfigSaveOptions): Promise<boolean> => {
+    const silent = options?.silent === true;
+    if (!tournament || !selectedDivisionId) { if (!silent) toast.error('Vui lòng chọn nội dung thi đấu'); return false; }
     setIsSavingConfig(true);
     try {
       const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
@@ -1080,7 +1096,7 @@ export function useManageState(id: string) {
         }
       });
       
-      toast.success('Lưu cấu hình thi đấu thành công!');
+      toast.success(silent ? translate('bracketConfigAutoSaved') : 'Lưu cấu hình thi đấu thành công!', { id: silent ? 'bracket-config-autosave' : undefined });
       await fetchDivisions(tournament.id);
       setTournament((current) => current ? {
         ...current,
@@ -1091,12 +1107,14 @@ export function useManageState(id: string) {
           isLite: isSuperLiteTournament,
         }
       } : current);
-    } catch (err) { toast.error(getErrorMessage(err)); }
+      return true;
+    } catch (err) { toast.error(silent ? translate('bracketConfigAutoSaveFailed') : getErrorMessage(err), { id: silent ? 'bracket-config-autosave' : undefined }); return false; }
     finally { setIsSavingConfig(false); }
   };
 
-  const handleSaveRoundRobinConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
+  const handleSaveRoundRobinConfig = async (options?: BracketConfigSaveOptions): Promise<boolean> => {
+    const silent = options?.silent === true;
+    if (!tournament || !selectedDivisionId) { if (!silent) toast.error('Vui lòng chọn nội dung thi đấu'); return false; }
     setIsSavingRoundRobinConfig(true);
     try {
       const selected = divisions.find((division) => division.id === selectedDivisionId);
@@ -1122,9 +1140,10 @@ export function useManageState(id: string) {
           roundsToPlay,
         }),
       });
-      toast.success('Lưu cấu hình vòng bảng thành công!');
+      toast.success(silent ? translate('bracketConfigAutoSaved') : 'Lưu cấu hình vòng bảng thành công!', { id: silent ? 'bracket-config-autosave' : undefined });
       await refetchDivisionData();
-    } catch (err) { toast.error(getErrorMessage(err)); }
+      return true;
+    } catch (err) { toast.error(silent ? translate('bracketConfigAutoSaveFailed') : getErrorMessage(err), { id: silent ? 'bracket-config-autosave' : undefined }); return false; }
     finally { setIsSavingRoundRobinConfig(false); }
   };
 
@@ -1148,12 +1167,13 @@ export function useManageState(id: string) {
     finally { setIsAdvancingStandings(false); }
   };
 
-  const handleSaveGskConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
+  const handleSaveGskConfig = async (options?: BracketConfigSaveOptions): Promise<boolean> => {
+    const silent = options?.silent === true;
+    if (!tournament || !selectedDivisionId) { if (!silent) toast.error('Vui lòng chọn nội dung thi đấu'); return false; }
     const selected = divisions.find((division) => division.id === selectedDivisionId);
     const eligibleParticipants = participants.filter((participant) => participant.teamStatus === 'COMPLETE' && participant.isPaid).length;
-    if (numGroups < 2) { toast.error('Vòng bảng + loại trực tiếp phải có ít nhất 2 bảng'); return; }
-    if (teamsPerGroup < 2) { toast.error('Mỗi bảng phải có ít nhất 2 đội'); return; }
+    if (numGroups < 2) { toast.error('Vòng bảng + loại trực tiếp phải có ít nhất 2 bảng'); return false; }
+    if (teamsPerGroup < 2) { toast.error('Mỗi bảng phải có ít nhất 2 đội'); return false; }
     // The division's registration limit (for example 64) is separate from
     // the current group layout. If the organizer already has more eligible
     // teams than the layout can hold, expand each group to the smallest valid
@@ -1165,7 +1185,7 @@ export function useManageState(id: string) {
     const effectiveTeamsPerGroup = Math.max(teamsPerGroup, requiredTeamsPerGroup);
     if (effectiveTeamsPerGroup > 128) {
       toast.error('Mỗi bảng không thể vượt quá 128 đội. Hãy tăng số bảng hoặc giảm số đội hợp lệ.');
-      return;
+      return false;
     }
     if (effectiveTeamsPerGroup !== teamsPerGroup) {
       setTeamsPerGroup(effectiveTeamsPerGroup);
@@ -1174,11 +1194,11 @@ export function useManageState(id: string) {
     const smallestGroupSize = eligibleParticipants > 0 ? Math.floor(eligibleParticipants / numGroups) : effectiveTeamsPerGroup;
     if (teamsAdvancing < 1 || teamsAdvancing >= smallestGroupSize) {
       toast.error(`Số đội đi tiếp mỗi bảng phải từ 1 đến ${Math.max(1, smallestGroupSize - 1)}`);
-      return;
+      return false;
     }
     if (numGroups * teamsAdvancing > 64) {
       toast.error('Knockout hiện hỗ trợ tối đa 64 đội đi tiếp từ vòng bảng');
-      return;
+      return false;
     }
     setIsSavingGskConfig(true);
     try {
@@ -1210,11 +1230,20 @@ export function useManageState(id: string) {
           },
         }),
       });
-      toast.success('Lưu cấu hình vòng bảng + knockout thành công!');
+      toast.success(silent ? translate('bracketConfigAutoSaved') : 'Lưu cấu hình vòng bảng + knockout thành công!', { id: silent ? 'bracket-config-autosave' : undefined });
       await refetchDivisionData();
-    } catch (err) { toast.error(getErrorMessage(err)); }
+      return true;
+    } catch (err) { toast.error(silent ? translate('bracketConfigAutoSaveFailed') : getErrorMessage(err), { id: silent ? 'bracket-config-autosave' : undefined }); return false; }
     finally { setIsSavingGskConfig(false); }
   };
+
+  useEffect(() => {
+    bracketConfigSaveHandlersRef.current = {
+      match: handleSaveMatchConfig,
+      roundRobin: handleSaveRoundRobinConfig,
+      groupStageKnockout: handleSaveGskConfig,
+    };
+  }, [handleSaveGskConfig, handleSaveMatchConfig, handleSaveRoundRobinConfig]);
 
   const handleSaveFinanceConfig = async () => {
     if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
@@ -2177,11 +2206,19 @@ export function useManageState(id: string) {
   useEffect(() => {
     if (!selectedDivisionId) {
       currentDivisionIdRef.current = '';
+      bracketConfigAutoSaveReadyRef.current = false;
+      bracketConfigHydrationPendingRef.current = null;
+      bracketConfigLastSignatureRef.current = '';
+      bracketConfigFailedSignatureRef.current = null;
       return;
     }
 
     if (currentDivisionIdRef.current !== selectedDivisionId) {
       currentDivisionIdRef.current = selectedDivisionId;
+      bracketConfigAutoSaveReadyRef.current = false;
+      bracketConfigHydrationPendingRef.current = selectedDivisionId;
+      bracketConfigLastSignatureRef.current = '';
+      bracketConfigFailedSignatureRef.current = null;
       const selected = divisions.find((d) => d.id === selectedDivisionId);
       if (selected) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -2192,6 +2229,100 @@ export function useManageState(id: string) {
     void refetchDivisionData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDivisionId]);
+
+  const bracketConfigSignature = JSON.stringify({
+    tournamentId: tournament?.id,
+    selectedDivisionId,
+    bracketTypeState,
+    isLiteMode,
+    isLimitEnabled,
+    maxParticipants,
+    matchType,
+    sportRuleKind,
+    setsToWin,
+    pointsPerSet,
+    winByTwo,
+    maxDeucePoints,
+    superTiebreakEnabled,
+    superTiebreakPoints,
+    tiebreakerMode,
+    roundsToPlay,
+    rrWinPoints,
+    rrLossPoints,
+    rrTiebreakerRule,
+    numGroups,
+    teamsPerGroup,
+    teamsAdvancing,
+    gskPlayoffType,
+    gskSeedingType,
+    gskRoundsToPlay,
+  });
+
+  // Auto-save uses the existing mode-specific handlers so API validation,
+  // authorization and server-side merge behavior stay in one place.
+  useEffect(() => {
+    if (!tournament || !selectedDivisionId || currentDivisionIdRef.current !== selectedDivisionId) return;
+
+    // The division-selection effect has just hydrated the form. Establish the
+    // baseline on the following render instead of persisting server values.
+    if (bracketConfigHydrationPendingRef.current === selectedDivisionId) {
+      bracketConfigHydrationPendingRef.current = null;
+      bracketConfigAutoSaveReadyRef.current = false;
+      bracketConfigLastSignatureRef.current = '';
+      return;
+    }
+
+    if (!bracketConfigAutoSaveReadyRef.current) {
+      bracketConfigAutoSaveReadyRef.current = true;
+      bracketConfigLastSignatureRef.current = bracketConfigSignature;
+      bracketConfigFailedSignatureRef.current = null;
+      return;
+    }
+
+    if (
+      bracketConfigSignature === bracketConfigLastSignatureRef.current ||
+      bracketConfigSignature === bracketConfigFailedSignatureRef.current
+    ) return;
+
+    if (bracketConfigAutoSaveTimerRef.current) clearTimeout(bracketConfigAutoSaveTimerRef.current);
+    bracketConfigFailedSignatureRef.current = null;
+
+    const saveKind = bracketTypeState === 'ROUND_ROBIN'
+      ? 'roundRobin'
+      : bracketTypeState === 'GROUP_STAGE_KNOCKOUT'
+        ? 'groupStageKnockout'
+        : 'match';
+    const signatureAtSchedule = bracketConfigSignature;
+
+    const runAutoSave = async () => {
+      if (bracketConfigAutoSaveInFlightRef.current) {
+        bracketConfigAutoSaveTimerRef.current = setTimeout(() => { void runAutoSave(); }, 250);
+        return;
+      }
+
+      const handler = bracketConfigSaveHandlersRef.current?.[saveKind];
+      if (!handler) return;
+
+      bracketConfigAutoSaveInFlightRef.current = true;
+      try {
+        const saved = await handler({ silent: true });
+        if (saved) {
+          bracketConfigLastSignatureRef.current = signatureAtSchedule;
+        } else {
+          bracketConfigFailedSignatureRef.current = signatureAtSchedule;
+        }
+      } finally {
+        bracketConfigAutoSaveInFlightRef.current = false;
+        bracketConfigAutoSaveTimerRef.current = null;
+      }
+    };
+
+    bracketConfigAutoSaveTimerRef.current = setTimeout(() => { void runAutoSave(); }, 900);
+    return () => {
+      if (bracketConfigAutoSaveTimerRef.current) clearTimeout(bracketConfigAutoSaveTimerRef.current);
+      bracketConfigAutoSaveTimerRef.current = null;
+    };
+  }, [bracketConfigSignature, bracketTypeState, selectedDivisionId, tournament]);
 
   // Province changes intentionally refresh the dependent ward list.
   useEffect(() => {

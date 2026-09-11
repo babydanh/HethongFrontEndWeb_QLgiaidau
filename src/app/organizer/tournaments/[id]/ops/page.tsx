@@ -123,11 +123,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     await syncBracketAndOps();
   };
 
-  const handleBracketSaveMatchConfig = async () => {
-    await bracketManager.handleSaveMatchConfig();
-    await syncBracketAndOps();
-  };
-
   const handleBracketSaveStageDetails = async () => {
     await bracketManager.handleSaveStageDetails();
     await syncBracketAndOps();
@@ -635,8 +630,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           setSuperTiebreakSetIndex={bracketManager.setSuperTiebreakSetIndex}
           superTiebreakPoints={bracketManager.superTiebreakPoints}
           setSuperTiebreakPoints={bracketManager.setSuperTiebreakPoints}
-          isSavingConfig={bracketManager.isSavingConfig}
-          handleSaveMatchConfig={handleBracketSaveMatchConfig}
           bracketTypeState={bracketManager.bracketTypeState}
           setBracketTypeState={bracketManager.setBracketTypeState}
           tiebreakerMode={bracketManager.tiebreakerMode}
@@ -662,10 +655,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           setGskSeedingType={bracketManager.setGskSeedingType}
           gskRoundsToPlay={bracketManager.gskRoundsToPlay}
           setGskRoundsToPlay={bracketManager.setGskRoundsToPlay}
-          handleSaveRoundRobinConfig={bracketManager.handleSaveRoundRobinConfig}
-          isSavingRoundRobinConfig={bracketManager.isSavingRoundRobinConfig}
-          handleSaveGskConfig={bracketManager.handleSaveGskConfig}
-          isSavingGskConfig={bracketManager.isSavingGskConfig}
           handleAdvanceStandings={bracketManager.handleAdvanceStandings}
           isAdvancingStandings={bracketManager.isAdvancingStandings}
           selectedMatchId={focusedMatchId}

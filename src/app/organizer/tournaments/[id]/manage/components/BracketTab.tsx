@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Settings, Save, Trophy, LayoutGrid, Users, Loader2, RefreshCw, Calendar, GitBranch, Minus, Plus, Shield, Zap } from 'lucide-react';
+import { Settings, Trophy, LayoutGrid, Users, RefreshCw, Calendar, GitBranch, Minus, Plus, Shield, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
@@ -83,8 +83,6 @@ interface BracketTabProps {
   setSuperTiebreakSetIndex: (val: number) => void;
   superTiebreakPoints: number;
   setSuperTiebreakPoints: (val: number) => void;
-  isSavingConfig: boolean;
-  handleSaveMatchConfig: () => void;
 
   // Round Robin specific
   tiebreakerMode?: 'split' | 'playoff';
@@ -114,8 +112,6 @@ interface BracketTabProps {
   setRrTiebreaker?: (val: string) => void;
   rrTiebreakerRule?: string;
   setRrTiebreakerRule?: React.Dispatch<React.SetStateAction<'H2H_POINTS' | 'SET_DIFF' | 'POINT_DIFF'>>;
-  handleSaveRoundRobinConfig?: () => Promise<void>;
-  isSavingRoundRobinConfig?: boolean;
 
   // Group Stage Knockout props
   tournamentFormat?: string;
@@ -138,8 +134,6 @@ interface BracketTabProps {
   gskRoundsToPlay?: number;
   setGskRoundsToPlay?: React.Dispatch<React.SetStateAction<number>>;
   divisionRoundConfig?: StageRoundConfig | null;
-  handleSaveGskConfig?: () => Promise<void>;
-  isSavingGskConfig?: boolean;
 }
 
 export function BracketTab({
@@ -178,8 +172,6 @@ export function BracketTab({
   setSuperTiebreakSetIndex,
   superTiebreakPoints,
   setSuperTiebreakPoints,
-  isSavingConfig,
-  handleSaveMatchConfig,
 
   // Round Robin
   tiebreakerMode = 'split',
@@ -189,8 +181,6 @@ export function BracketTab({
   selectedMatchId,
   onSelectMatch,
   onDoubleClickMatch,
-  handleSaveRoundRobinConfig,
-  isSavingRoundRobinConfig,
   isLiteMode, setIsLiteMode,
   // Round Robin scoring
   rrWinPoints = 3,
@@ -214,8 +204,6 @@ export function BracketTab({
   setGskRoundsToPlay,
   divisionRoundConfig,
   isAdvancingStandings = false,
-  handleSaveGskConfig,
-  isSavingGskConfig = false,
   bracketType,
 }: BracketTabProps) {
   const translate = useTranslations('TournamentDetail');
@@ -666,15 +654,6 @@ export function BracketTab({
                   <h3 className="font-bold text-slate-900 text-base">
                     {translate('rulesAndBracketTitle')}
                   </h3>
-                  {isLiteMode && (
-                    <Button
-                      onClick={handleSaveMatchConfig}
-                      disabled={isSavingConfig}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 h-7 rounded-lg shrink-0 cursor-pointer shadow-xs transition-all"
-                    >
-                      {isSavingConfig ? translate('saving') : translate('saveLiteMode')}
-                    </Button>
-                  )}
                 </div>
                 <p className="text-xs text-slate-500 font-medium">
                   {translate('rulesAndBracketSubtitle')}
@@ -895,15 +874,6 @@ export function BracketTab({
                   {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <Button
-                    onClick={handleSaveMatchConfig}
-                    disabled={isSavingConfig}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-md shadow-blue-500/10 cursor-pointer"
-                  >
-                    {isSavingConfig ? translate('saving') : translate('saveDefaultConfiguration')}
-                  </Button>
-                </div>
               </div>
             )}
 
@@ -976,18 +946,6 @@ export function BracketTab({
                           <option value="playoff">{translate('playoffTie')}</option>
                         </select>
                       </div>
-                      {handleSaveRoundRobinConfig && (
-                        <div className="flex justify-end pt-2">
-                          <Button
-                            onClick={handleSaveRoundRobinConfig}
-                            disabled={isSavingRoundRobinConfig}
-                            className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm"
-                          >
-                            {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-                            {translate('saveConfiguration')}
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 ) : isGroupStageKnockout ? (
@@ -1299,14 +1257,6 @@ export function BracketTab({
                       </div>
                     </div>
 
-                    {handleSaveGskConfig && (
-                      <div className="flex justify-end pt-2">
-                        <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm">
-                          {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-                          {translate('saveFormatConfiguration')}
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">

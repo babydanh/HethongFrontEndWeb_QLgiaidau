@@ -891,7 +891,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               superTiebreakEnabled={s.superTiebreakEnabled} setSuperTiebreakEnabled={s.setSuperTiebreakEnabled}
               superTiebreakSetIndex={s.superTiebreakSetIndex} setSuperTiebreakSetIndex={s.setSuperTiebreakSetIndex}
               superTiebreakPoints={s.superTiebreakPoints} setSuperTiebreakPoints={s.setSuperTiebreakPoints}
-              isSavingConfig={s.isSavingConfig} handleSaveMatchConfig={s.handleSaveMatchConfig}
               tiebreakerMode={s.tiebreakerMode} setTiebreakerMode={s.setTiebreakerMode}
               roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay}
               bracketType={s.bracketTypeState}
@@ -907,12 +906,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               gskPlayoffType={s.gskPlayoffType} setGskPlayoffType={s.setGskPlayoffType}
               gskSeedingType={s.gskSeedingType} setGskSeedingType={s.setGskSeedingType}
               gskRoundsToPlay={s.gskRoundsToPlay} setGskRoundsToPlay={s.setGskRoundsToPlay}
-              handleSaveRoundRobinConfig={s.handleSaveRoundRobinConfig}
-              isSavingRoundRobinConfig={s.isSavingRoundRobinConfig}
               handleAdvanceStandings={s.handleAdvanceStandings}
               isAdvancingStandings={s.isAdvancingStandings}
-              handleSaveGskConfig={s.handleSaveGskConfig}
-              isSavingGskConfig={s.isSavingGskConfig}
               isLiteMode={s.isLiteMode}
               setIsLiteMode={s.setIsLiteMode}
               courts={s.courts}

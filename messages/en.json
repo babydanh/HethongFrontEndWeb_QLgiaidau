@@ -7574,6 +7574,8 @@
   },
   "OrganizerManage": {
     "loading": "Loading tournament management configuration...",
+    "bracketConfigAutoSaved": "Rules and bracket configuration saved automatically.",
+    "bracketConfigAutoSaveFailed": "Configuration could not be auto-saved; your changes were kept.",
     "notFoundTitle": "Tournament not found",
     "notFoundDescription": "The tournament does not exist or you do not have permission to manage it.",
     "tabs": {

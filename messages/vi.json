@@ -7578,6 +7578,8 @@
   },
   "OrganizerManage": {
     "loading": "Đang tải cấu hình quản trị...",
+    "bracketConfigAutoSaved": "Đã tự lưu cấu hình luật và sơ đồ thi đấu.",
+    "bracketConfigAutoSaveFailed": "Chưa tự lưu được cấu hình; các thay đổi vẫn được giữ lại.",
     "notFoundTitle": "Không tìm thấy giải đấu",
     "notFoundDescription": "Giải đấu không tồn tại hoặc bạn không có quyền truy cập quản trị.",
     "tabs": {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
@@ -11,12 +11,7 @@ import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronRight, ChevronLeft, Calendar, DollarSign, MapPin } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { regionsApi, type Region } from '@/features/regions/api';
-
-const getCurrentIsoMinute = () => {
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-};
+import { getVietnamCurrentIsoMinute, getVietnamNextRoundedIsoMinute } from '@/utils/dateTimeInput';
 
 const createStep3Schema = (translate: ReturnType<typeof useTranslations>) => z.object({
   startDate: z.string().min(1, translate('validationStartRequired')),
@@ -93,8 +88,9 @@ export default function Step3ScheduleFees() {
   const [allowEntryFees, setAllowEntryFees] = useState(true);
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
-  const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
-  const defaultRegistrationStart = formData.registrationStartDate || getCurrentIsoMinute();
+  const [wardsProvinceCode, setWardsProvinceCode] = useState('');
+  const currentVietnamIsoMinute = getVietnamCurrentIsoMinute();
+  const defaultRegistrationStart = formData.registrationStartDate || getVietnamNextRoundedIsoMinute();
 
   const { register, handleSubmit, control, setValue, setError, setFocus, formState: { errors } } = useForm<Step3Values>({
     resolver: zodResolver(createStep3Schema(translate)),
@@ -111,6 +107,13 @@ export default function Step3ScheduleFees() {
       entryFee: isClubTournament ? '0' : String(formData.entryFee || 0),
     },
   });
+
+  const selectedProvince = useWatch({ control, name: 'province' });
+  const selectedProvinceCode = provinces.find((item) => {
+    const label = item.fullName || item.name;
+    return label === selectedProvince || item.name === selectedProvince;
+  })?.code || '';
+  const wardsForSelectedProvince = wardsProvinceCode === selectedProvinceCode ? wards : [];
 
   useEffect(() => {
     if (validationTarget?.step !== 3) return;
@@ -133,24 +136,20 @@ export default function Step3ScheduleFees() {
   }, []);
 
   useEffect(() => {
-    const province = provinces.find((item) => {
-      const label = item.fullName || item.name;
-      return label === formData.province || item.name === formData.province;
-    });
-    setSelectedProvinceCode(province?.code || '');
-    if (!province) setWards([]);
-  }, [formData.province, provinces]);
-
-  useEffect(() => {
     if (!selectedProvinceCode) {
-      setWards([]);
       return;
     }
     let cancelled = false;
     void regionsApi.getWardsByProvince(selectedProvinceCode).then((items) => {
-      if (!cancelled) setWards(items);
+      if (!cancelled) {
+        setWards(items);
+        setWardsProvinceCode(selectedProvinceCode);
+      }
     }).catch(() => {
-      if (!cancelled) setWards([]);
+      if (!cancelled) {
+        setWards([]);
+        setWardsProvinceCode(selectedProvinceCode);
+      }
     });
     return () => {
       cancelled = true;
@@ -214,7 +213,7 @@ export default function Step3ScheduleFees() {
                   label={translate('registrationStart')}
                   name={field.name}
                   value={field.value || ''}
-                  min={getCurrentIsoMinute()}
+                  min={currentVietnamIsoMinute}
                   onChange={field.onChange}
                   error={errors.registrationStartDate?.message}
                 />
@@ -228,7 +227,7 @@ export default function Step3ScheduleFees() {
                   label={translate('registrationEnd')}
                   name={field.name}
                   value={field.value || ''}
-                  min={getCurrentIsoMinute()}
+                  min={currentVietnamIsoMinute}
                   onChange={field.onChange}
                   error={errors.registrationEndDate?.message}
                 />
@@ -252,7 +251,7 @@ export default function Step3ScheduleFees() {
                   label={translate('competitionStart')}
                   name={field.name}
                   value={field.value || ''}
-                  min={getCurrentIsoMinute()}
+                  min={currentVietnamIsoMinute}
                   onChange={field.onChange}
                   error={errors.startDate?.message}
                 />
@@ -266,7 +265,7 @@ export default function Step3ScheduleFees() {
                   label={translate('competitionEnd')}
                   name={field.name}
                   value={field.value || ''}
-                  min={getCurrentIsoMinute()}
+                  min={currentVietnamIsoMinute}
                   onChange={field.onChange}
                   error={errors.endDate?.message}
                 />
@@ -287,10 +286,9 @@ export default function Step3ScheduleFees() {
               <label className="text-sm font-semibold text-slate-700">{translate('province')}</label>
               <select
                 {...register('province')}
-                onChange={(event) => {
-                  setValue('province', event.target.value, { shouldDirty: true, shouldValidate: true });
-                  setSelectedProvinceCode(event.target.selectedOptions[0]?.dataset.code || '');
-                  setValue('ward', '', { shouldDirty: true });
+                        onChange={(event) => {
+                          setValue('province', event.target.value, { shouldDirty: true, shouldValidate: true });
+                          setValue('ward', '', { shouldDirty: true });
                 }}
                 className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -303,7 +301,7 @@ export default function Step3ScheduleFees() {
               <label className="text-sm font-semibold text-slate-700">{translate('ward')}</label>
               <select {...register('ward')} className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">{translate('wardPlaceholder')}</option>
-                {wards.map((item) => <option key={item.code} value={item.fullName || item.name}>{item.fullName || item.name}</option>)}
+                {wardsForSelectedProvince.map((item) => <option key={item.code} value={item.fullName || item.name}>{item.fullName || item.name}</option>)}
               </select>
             </div>
           </div>

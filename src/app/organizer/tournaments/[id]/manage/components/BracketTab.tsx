@@ -1241,7 +1241,7 @@ export function BracketTab({
       
       {/* Visual bracket tree */}
       {bracket && bracket.stages && bracket.stages.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+        <div id="manage-bracket-tree-section" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-base">{translate('bracketTitle')}</h3>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, DollarSign, Download, ChevronRight, Check, Play, ChevronDown, Activity, Layers } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, Calendar, GitMerge, DollarSign, Download, ChevronRight, Check, Play, ChevronDown, Activity, Layers } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -254,7 +254,20 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     if (target.section !== 'overview') s.setActiveTab(target.section);
     if (target.basicSubTab) s.setBasicSubTab(target.basicSubTab);
     setIsManageSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Smoothly scroll down to target element or content area
+    setTimeout(() => {
+      const el = (target.targetId ? document.getElementById(target.targetId) : null) || document.getElementById('manage-content-area');
+      if (el) {
+        const navHeight = 90;
+        const rect = el.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetTop = rect.top + scrollTop - navHeight;
+        window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const sportPresets = getSportRulePresets(s.sportRuleKind, ruleTranslate);
@@ -511,7 +524,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   (['IN_PROGRESS', 'ONGOING', 'LIVE', 'ACTIVE'].includes(tournament.status)) ? 2 :
                   (isTournamentRegistrationClosed(tournament.status) || isTournamentUpcoming(tournament.status)) ? 1 : 0;
 
-                const stepperSteps = ['Đăng ký', 'Lịch thi đấu', 'Đang diễn ra', 'Hoàn tất'];
+                const stepperSteps = [
+                  { label: 'Đăng ký', icon: Users },
+                  { label: 'Lịch thi đấu', icon: GitMerge },
+                  { label: 'Đang diễn ra', icon: Play },
+                  { label: 'Hoàn tất', icon: Trophy },
+                ];
 
                 return (
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
@@ -535,27 +553,75 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       </span>
                     </div>
 
-                    {/* Mini Stepper Indicators */}
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-                      {stepperSteps.map((stepLabel, idx) => {
+                    {/* Timeline Circular Stepper Indicators */}
+                    <div className="flex items-center bg-slate-50/80 p-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                      {stepperSteps.map((step, idx) => {
                         const isDone = idx < stepIdx || isTournamentCompleted(tournament.status);
                         const isCurrent = idx === stepIdx && !isTournamentCompleted(tournament.status);
+                        const StepIcon = step.icon;
+
                         return (
-                          <div key={stepLabel} className="flex items-center gap-1.5">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                isDone
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : isCurrent
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-slate-100 text-slate-400'
+                          <div key={step.label} className="flex items-center">
+                            <div
+                              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
+                                isCurrent
+                                  ? 'bg-white shadow-xs border border-blue-200/80'
+                                  : isDone
+                                  ? 'hover:bg-white/60'
+                                  : 'opacity-70'
                               }`}
                             >
-                              {isDone ? <Check className="h-2.5 w-2.5 stroke-[3]" /> : idx + 1}
-                              <span>{stepLabel}</span>
-                            </span>
+                              {/* Circular Step Badge */}
+                              <div
+                                className={`relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-transform ${
+                                  isDone
+                                    ? 'bg-emerald-500 text-white shadow-xs shadow-emerald-500/20'
+                                    : isCurrent
+                                    ? 'bg-blue-600 text-white shadow-xs shadow-blue-600/30 ring-3 ring-blue-500/20'
+                                    : 'bg-slate-200 text-slate-500'
+                                }`}
+                              >
+                                {isDone ? (
+                                  <Check className="h-3 w-3 stroke-[3]" />
+                                ) : (
+                                  <span>{idx + 1}</span>
+                                )}
+                              </div>
+
+                              {/* Label & Icon */}
+                              <div className="flex items-center gap-1">
+                                <StepIcon
+                                  className={`h-3 w-3 ${
+                                    isDone
+                                      ? 'text-emerald-600'
+                                      : isCurrent
+                                      ? 'text-blue-600 font-semibold'
+                                      : 'text-slate-400'
+                                  }`}
+                                />
+                                <span
+                                  className={`text-[11px] font-semibold whitespace-nowrap ${
+                                    isCurrent
+                                      ? 'text-blue-700 font-bold'
+                                      : isDone
+                                      ? 'text-slate-700'
+                                      : 'text-slate-400'
+                                  }`}
+                                >
+                                  {step.label}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Connecting Line Between Steps */}
                             {idx < stepperSteps.length - 1 && (
-                              <span className="text-slate-300 text-[10px]">›</span>
+                              <div
+                                className={`h-0.5 w-3 sm:w-4 mx-0.5 rounded-full transition-colors ${
+                                  idx < stepIdx || isTournamentCompleted(tournament.status)
+                                    ? 'bg-emerald-400'
+                                    : 'bg-slate-200'
+                                }`}
+                              />
                             )}
                           </div>
                         );
@@ -688,6 +754,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               )}
             </div>
 
+        <div id="manage-content-area" className="scroll-mt-24">
         {activeSection === 'overview' ? (
           <TournamentManageOverview
             tournament={tournament}
@@ -964,6 +1031,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {activeSection === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
           </div>
         )}
+        </div>
 
         {/* Stage config modal */}
         {s.selectedStage && s.selectedRoundNumber !== null && (

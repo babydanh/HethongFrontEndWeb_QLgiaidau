@@ -7970,6 +7970,7 @@
     "scheduleTitle": "Lịch trình",
     "registrationStartLabel": "Mở đăng ký",
     "startDateLabel": "Bắt đầu giải",
+    "startDatePlaceholder": "dd/mm/yyyy 00:00",
     "startDatePriorityHint": "Ngày thi đấu là thông tin chính của giải.",
     "optionalLabel": "Không bắt buộc",
     "registrationEndLabel": "Đóng đăng ký",

@@ -5,6 +5,8 @@ import * as React from "react"
 import { useTranslations } from 'next-intl';
 import { cn } from "@/utils/cn"
 
+const DATE_TIME_LOCAL_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
@@ -58,10 +60,12 @@ export interface DateTimePickerProps {
   disabled?: boolean;
   min?: string;
   max?: string;
+  placeholder?: string;
+  defaultTimeOnEmptySelection?: string;
 }
 
 export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
-  ({ name, label, value, onChange, error, className, disabled, min, max }, ref) => {
+  ({ name, label, value, onChange, error, className, disabled, min, max, placeholder, defaultTimeOnEmptySelection }, ref) => {
     const translate = useTranslations('Common');
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
@@ -139,7 +143,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
           <input
             value={draft}
             disabled={disabled}
-            placeholder={translate('dateTimePlaceholder')}
+            placeholder={placeholder ?? translate('dateTimePlaceholder')}
             onChange={(event) => {
               const nextDraft = event.target.value;
               setDraft(nextDraft);
@@ -183,7 +187,15 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             min={min}
             max={max}
             disabled={disabled}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              const nextValue = e.target.value;
+              if (nextValue && !value && defaultTimeOnEmptySelection && DATE_TIME_LOCAL_PATTERN.test(nextValue)) {
+                const [datePart] = nextValue.split('T');
+                onChange(`${datePart}T${defaultTimeOnEmptySelection}`);
+                return;
+              }
+              onChange(nextValue);
+            }}
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
             />
           </button>

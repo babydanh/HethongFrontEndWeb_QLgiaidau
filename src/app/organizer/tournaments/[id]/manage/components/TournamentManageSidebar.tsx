@@ -1,14 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { RefObject } from 'react';
 import {
-  BarChart3,
   CalendarDays,
   ChevronDown,
   ChevronRight,
   DollarSign,
-  ExternalLink,
   Info,
   LayoutDashboard,
   MapPin,
@@ -40,6 +39,7 @@ export type ManageBasicSubTab = 'general' | 'branding' | 'prizes' | 'contact' | 
 export interface ManageNavigationTarget {
   section: ManageSection;
   basicSubTab?: ManageBasicSubTab;
+  targetId?: string;
 }
 
 interface TournamentManageSidebarProps {
@@ -74,12 +74,16 @@ function NavButton({
   item,
   activeSection,
   basicSubTab,
+  isExpanded,
+  onToggleExpand,
   onNavigate,
   nested = false,
 }: {
   item: SidebarItem;
   activeSection: ManageSection;
   basicSubTab: ManageBasicSubTab;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   onNavigate: (target: ManageNavigationTarget) => void;
   nested?: boolean;
 }) {
@@ -89,6 +93,22 @@ function NavButton({
     (child.target.section !== 'basic' || child.target.basicSubTab === basicSubTab),
   ) ?? false;
   const isActive = isParentActive || isChildActive;
+  const hasChildren = Boolean(item.children?.length);
+
+  const handleParentClick = (e: React.MouseEvent) => {
+    if (hasChildren) {
+      // Toggle dropdown if clicked and navigate if not active
+      onToggleExpand();
+      onNavigate(item.target);
+    } else {
+      onNavigate(item.target);
+    }
+  };
+
+  const handleChevronClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleExpand();
+  };
 
   return (
     <div>
@@ -96,9 +116,9 @@ function NavButton({
         type="button"
         data-testid={`tab-${item.target.section}`}
         aria-current={isActive ? 'page' : undefined}
-        onClick={() => onNavigate(item.target)}
+        onClick={handleParentClick}
         className={cn(
-          'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
+          'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors cursor-pointer',
           nested ? 'pl-9 text-[13px]' : 'font-semibold',
           isActive
             ? 'bg-blue-50 text-blue-700'
@@ -112,14 +132,27 @@ function NavButton({
             {item.badge}
           </span>
         ) : null}
-        {item.children?.length ? (
-          isParentActive ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+        {hasChildren ? (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={handleChevronClick}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onToggleExpand(); } }}
+            className="rounded p-0.5 hover:bg-slate-200/50 transition-colors"
+            title={isExpanded ? 'Thu gọn' : 'Mở rộng'}
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-600" aria-hidden="true" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-600" aria-hidden="true" />
+            )}
+          </span>
         ) : null}
       </button>
 
-      {item.children?.length && isParentActive ? (
-        <div className="mt-0.5 space-y-0.5">
-          {item.children.map((child) => {
+      {hasChildren && isExpanded ? (
+        <div className="mt-0.5 space-y-0.5 animate-in fade-in duration-150">
+          {item.children!.map((child) => {
             const childActive = child.target.section === activeSection &&
               (child.target.section !== 'basic' || child.target.basicSubTab === basicSubTab);
             return (
@@ -129,11 +162,11 @@ function NavButton({
                 aria-current={childActive ? 'page' : undefined}
                 onClick={() => onNavigate(child.target)}
                 className={cn(
-                  'flex w-full items-center rounded-lg py-1.5 pl-9 pr-2.5 text-left text-[12px] transition-colors',
-                  childActive ? 'font-semibold text-blue-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800',
+                  'flex w-full items-center rounded-lg py-1.5 pl-9 pr-2.5 text-left text-[12px] transition-colors cursor-pointer',
+                  childActive ? 'font-semibold text-blue-700 bg-blue-50/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800',
                 )}
               >
-                <span className={cn('mr-2 h-1.5 w-1.5 rounded-full', childActive ? 'bg-blue-600' : 'bg-slate-300')} aria-hidden="true" />
+                <span className={cn('mr-2 h-1.5 w-1.5 rounded-full', childActive ? 'bg-blue-600 ring-2 ring-blue-100' : 'bg-slate-300')} aria-hidden="true" />
                 <span className="truncate">{child.label}</span>
               </button>
             );
@@ -159,6 +192,21 @@ export function TournamentManageSidebar({
 }: TournamentManageSidebarProps) {
   const t = useTranslations('OrganizerManage');
 
+  // Track expanded state for menu groups with submenus.
+  // Defaults to expanded for the currently active section or commonly accessed ones.
+  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({
+    basic: true,
+    registration: true,
+    bracket: true,
+  });
+
+  const toggleExpand = (key: string) => {
+    setExpandedKeys((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const setupItems: SidebarItem[] = [
     {
       key: 'overview',
@@ -175,7 +223,7 @@ export function TournamentManageSidebar({
         { key: 'general', label: t('sidebar.general'), target: { section: 'basic', basicSubTab: 'general' } },
         { key: 'branding', label: t('sidebar.branding'), target: { section: 'basic', basicSubTab: 'branding' } },
         { key: 'prizes', label: t('sidebar.prizes'), target: { section: 'basic', basicSubTab: 'prizes' } },
-        { key: 'contact', label: t('sidebar.contact'), target: { section: 'basic', basicSubTab: 'contact' } },
+        { key: 'contact', label: t('sidebar.contact'), target: { section: 'basic', basicSubTab: 'contact', targetId: 'manage-contact-info-section' } },
         { key: 'sponsors', label: t('sidebar.sponsors'), target: { section: 'basic', basicSubTab: 'sponsors' } },
       ],
     },
@@ -189,11 +237,11 @@ export function TournamentManageSidebar({
       key: 'registration',
       label: t('sidebar.registration'),
       icon: UserPlus,
-      target: { section: 'registration' },
+      target: { section: 'registration', targetId: 'manage-registration-status-card' },
       children: [
-        { key: 'participants', label: t('sidebar.participants'), target: { section: 'registration' } },
-        { key: 'approval', label: t('sidebar.approval'), target: { section: 'registration' } },
-        { key: 'elo', label: t('sidebar.elo'), target: { section: 'registration' } },
+        { key: 'participants', label: t('sidebar.participants'), target: { section: 'registration', targetId: 'manage-participants-section' } },
+        { key: 'approval', label: t('sidebar.approval'), target: { section: 'registration', targetId: 'manage-participants-section' } },
+        { key: 'elo', label: t('sidebar.elo'), target: { section: 'registration', targetId: 'manage-registration-elo-section' } },
       ],
     },
   ];
@@ -209,11 +257,11 @@ export function TournamentManageSidebar({
       key: 'bracket',
       label: t('sidebar.bracket'),
       icon: Trophy,
-      target: { section: 'bracket' },
+      target: { section: 'bracket', targetId: 'manage-bracket-workspace' },
       children: [
-        { key: 'content', label: t('sidebar.content'), target: { section: 'bracket' } },
-        { key: 'rules', label: t('sidebar.rules'), target: { section: 'bracket' } },
-        { key: 'bracket_tree', label: t('sidebar.bracket'), target: { section: 'bracket' } },
+        { key: 'content', label: t('sidebar.content'), target: { section: 'bracket', targetId: 'manage-bracket-workspace' } },
+        { key: 'rules', label: t('sidebar.rules'), target: { section: 'bracket', targetId: 'manage-bracket-workspace' } },
+        { key: 'bracket_tree', label: t('sidebar.bracket'), target: { section: 'bracket', targetId: 'manage-bracket-tree-section' } },
       ],
     },
   ];
@@ -222,7 +270,7 @@ export function TournamentManageSidebar({
     {
       key: 'results_overview',
       label: t('sidebar.standings'),
-      icon: BarChart3,
+      icon: Trophy,
       target: { section: 'overview' },
     },
   ];
@@ -259,6 +307,8 @@ export function TournamentManageSidebar({
             item={item}
             activeSection={activeSection}
             basicSubTab={basicSubTab}
+            isExpanded={expandedKeys[item.key] ?? (activeSection === item.target.section)}
+            onToggleExpand={() => toggleExpand(item.key)}
             onNavigate={onNavigate}
           />
         ))}
@@ -306,35 +356,6 @@ export function TournamentManageSidebar({
           {renderNavGroup('results', t('sidebar.resultsGroup'), resultsItems)}
           <div className="my-2.5 border-t border-slate-100" />
           {renderNavGroup('system', t('sidebar.systemGroup'), systemItems)}
-        </div>
-
-        {/* Quick Snapshot footer */}
-        <div className="rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-            <span className="flex items-center gap-1.5">
-              <BarChart3 className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-              {t('sidebar.snapshotTitle')}
-            </span>
-            <span className="text-[11px] font-normal text-slate-400">{divisionCount} nội dung</span>
-          </div>
-          <div className="mt-2 grid grid-cols-2 gap-1.5 text-center">
-            <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-medium text-slate-500">{t('sidebar.divisions')}</p>
-              <p className="text-xs font-bold text-slate-900">{divisionCount}</p>
-            </div>
-            <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-medium text-slate-500">{t('sidebar.matches')}</p>
-              <p className="text-xs font-bold text-slate-900">{matchCount}</p>
-            </div>
-          </div>
-          <a
-            href={`/tournaments/${tournament.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2.5 flex items-center justify-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            {t('sidebar.openPublicPage')} <ExternalLink className="h-3 w-3" aria-hidden="true" />
-          </a>
         </div>
       </aside>
     </>

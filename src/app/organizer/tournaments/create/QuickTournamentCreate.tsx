@@ -34,7 +34,7 @@ import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { DateTimePicker } from '@/components/ui/Input';
-import { toApiIsoDateTime } from '@/utils/dateTimeInput';
+import { getVietnamNextRoundedIsoMinute, toApiIsoDateTime } from '@/utils/dateTimeInput';
 import Image from 'next/image';
 import SmartAiTournamentModal from './SmartAiTournamentModal';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
@@ -142,6 +142,8 @@ type QuickValues = {
 };
 
 type QuickMessage = (key: string, values?: Record<string, string | number>) => string;
+type QuickDraft = Partial<QuickValues> & { scheduleDefaultsVersion?: 1 };
+const QUICK_DRAFT_VERSION = 1 as const;
 
 const buildQuickSchema = (translate: QuickMessage) => z.object({
   name: z.string().trim().min(2, translate('validationName')),
@@ -402,23 +404,36 @@ export default function QuickTournamentCreate() {
   useEffect(() => {
     if (typeof window === 'undefined' || draftHydratedRef.current) return;
     draftHydratedRef.current = true;
+    let savedDraft: QuickDraft | null = null;
     try {
       const raw = window.localStorage.getItem(draftKey);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as Partial<QuickValues>;
-      Object.entries(saved).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) setValue(key as keyof QuickValues, value as never, { shouldDirty: false });
-      });
-      toast.success(translate('draftRestored'), { id: 'quick-draft-restored' });
+      if (raw) {
+        const parsed = JSON.parse(raw) as QuickDraft;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          savedDraft = parsed;
+          Object.entries(parsed).forEach(([key, value]) => {
+            if (key === 'scheduleDefaultsVersion') return;
+            if (value !== undefined && value !== null) setValue(key as keyof QuickValues, value as never, { shouldDirty: false });
+          });
+          toast.success(translate('draftRestored'), { id: 'quick-draft-restored' });
+        }
+      }
     } catch {
       window.localStorage.removeItem(draftKey);
+    }
+
+    // A cleared value in an existing draft is intentional; only seed new/older drafts.
+    const isCurrentDraft = savedDraft?.scheduleDefaultsVersion === QUICK_DRAFT_VERSION;
+    const hasRegistrationStart = Object.prototype.hasOwnProperty.call(savedDraft ?? {}, 'registrationStart');
+    if (!isCurrentDraft && (!hasRegistrationStart || !savedDraft?.registrationStart)) {
+      setValue('registrationStart', getVietnamNextRoundedIsoMinute(), { shouldValidate: true, shouldDirty: false });
     }
   }, [draftKey, setValue, translate]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !draftHydratedRef.current) return;
     const timer = window.setTimeout(() => {
-      const draft = { ...(formValues as QuickValues) } as Partial<QuickValues>;
+      const draft: QuickDraft = { ...(formValues as QuickValues), scheduleDefaultsVersion: QUICK_DRAFT_VERSION };
       window.localStorage.setItem(draftKey, JSON.stringify(draft));
     }, 350);
     return () => window.clearTimeout(timer);
@@ -986,7 +1001,7 @@ export default function QuickTournamentCreate() {
                 </div>
 
                 {/* Ngày thi đấu là thông tin chính; đăng ký chỉ là tùy chọn */}
-                <div className="space-y-2.5">
+                <div className="grid items-start gap-2.5 sm:grid-cols-2">
                   <div className="rounded-lg bg-blue-50/55 p-2.5 ring-1 ring-blue-100/80">
                     <DateTimePicker
                       name="startDate"
@@ -995,41 +1010,41 @@ export default function QuickTournamentCreate() {
                       onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                       error={errors.startDate?.message}
                       className="border-blue-300 bg-white shadow-xs"
+                      placeholder={translate('startDatePlaceholder')}
+                      defaultTimeOnEmptySelection="00:00"
                     />
                     <p className="mt-1 text-[11px] font-medium text-blue-700/75">
                       {translate('startDatePriorityHint')}
                     </p>
                   </div>
 
-                  <div className="grid gap-2.5 sm:grid-cols-2">
+                  <DateTimePicker
+                    name="registrationStart"
+                    label={`${translate('registrationStartLabel')} (${translate('optionalLabel')})`}
+                    value={registrationStart || ''}
+                    onChange={handleRegistrationStartChange}
+                    error={errors.registrationStart?.message}
+                  />
+
+                  <div className={`overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                     <DateTimePicker
-                      name="registrationStart"
-                      label={`${translate('registrationStartLabel')} (${translate('optionalLabel')})`}
-                      value={registrationStart || ''}
-                      onChange={handleRegistrationStartChange}
-                      error={errors.registrationStart?.message}
+                      name="endDate"
+                      label={`${translate('endDateLabel')} (${translate('optionalLabel')})`}
+                      value={endDate || ''}
+                      onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
+                      error={errors.endDate?.message}
                     />
+                  </div>
 
-                    <div className={`overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
-                      <DateTimePicker
-                        name="endDate"
-                        label={`${translate('endDateLabel')} (${translate('optionalLabel')})`}
-                        value={endDate || ''}
-                        onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
-                        error={errors.endDate?.message}
-                      />
-                    </div>
-
-                    <div className={`sm:col-span-2 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
-                      <DateTimePicker
-                        name="registrationEnd"
-                        label={`${translate('registrationEndLabel')} (${translate('optionalLabel')})`}
-                        value={registrationEnd || ''}
-                        onChange={handleRegistrationEndChange}
-                        error={errors.registrationEnd?.message}
-                        max={startDate || undefined}
-                      />
-                    </div>
+                  <div className={`sm:col-span-2 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-24 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
+                    <DateTimePicker
+                      name="registrationEnd"
+                      label={`${translate('registrationEndLabel')} (${translate('optionalLabel')})`}
+                      value={registrationEnd || ''}
+                      onChange={handleRegistrationEndChange}
+                      error={errors.registrationEnd?.message}
+                      max={startDate || undefined}
+                    />
                   </div>
                 </div>
 

@@ -7966,6 +7966,7 @@
     "scheduleTitle": "Schedule",
     "registrationStartLabel": "Registration opens",
     "startDateLabel": "Tournament starts",
+    "startDatePlaceholder": "dd/mm/yyyy 00:00",
     "startDatePriorityHint": "The tournament date is the main schedule information.",
     "optionalLabel": "Optional",
     "registrationEndLabel": "Registration closes",

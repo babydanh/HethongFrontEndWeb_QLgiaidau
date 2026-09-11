@@ -666,7 +666,7 @@ export function RegistrationTab({
           </div>
 
           {/* ELO Constraints */}
-          <div className="bg-slate-50/60 border border-slate-100 rounded-lg p-5 space-y-3">
+          <div id="manage-registration-elo-section" className="bg-slate-50/60 border border-slate-100 rounded-lg p-5 space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"

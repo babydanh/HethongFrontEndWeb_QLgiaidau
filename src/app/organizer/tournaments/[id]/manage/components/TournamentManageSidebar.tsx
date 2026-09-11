@@ -269,15 +269,6 @@ export function TournamentManageSidebar({
     },
   ];
 
-  const resultsItems: SidebarItem[] = [
-    {
-      key: 'results_overview',
-      label: t('sidebar.standings'),
-      icon: Trophy,
-      target: { section: 'overview' },
-    },
-  ];
-
   const systemItems: SidebarItem[] = [
     {
       key: 'permissions',
@@ -350,13 +341,11 @@ export function TournamentManageSidebar({
           </button>
         </div>
 
-        {/* 4 Navigation Groups */}
+        {/* Navigation Groups */}
         <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs">
           {renderNavGroup('setup', t('sidebar.setupGroup'), setupItems)}
           <div className="my-2.5 border-t border-slate-100" />
           {renderNavGroup('operations', t('sidebar.operationsGroup'), operationsItems)}
-          <div className="my-2.5 border-t border-slate-100" />
-          {renderNavGroup('results', t('sidebar.resultsGroup'), resultsItems)}
           <div className="my-2.5 border-t border-slate-100" />
           {renderNavGroup('system', t('sidebar.systemGroup'), systemItems)}
         </div>

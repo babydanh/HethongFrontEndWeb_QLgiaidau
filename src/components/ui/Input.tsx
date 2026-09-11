@@ -52,7 +52,7 @@ Input.displayName = "Input";
 
 export interface DateTimePickerProps {
   name?: string;
-  label?: string;
+  label?: React.ReactNode;
   value: string;
   onChange: (val: string) => void;
   error?: string;

@@ -51,6 +51,7 @@ import {
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { getErrorMessage } from '@/utils/error';
 import {
   Modal,
   ModalClose,
@@ -1142,6 +1143,7 @@ export function CourtScheduleBoard({
     setAutoSaveStatus('saving');
     try {
       const succeededMatchIds = new Set<string>();
+      const saveFailures: string[] = [];
       // 1. Save all draft assignments in parallel chunks (eliminates freeze/lag)
       if (onSaveScheduleDirect) {
         const chunkSize = 8;
@@ -1155,6 +1157,7 @@ export function CourtScheduleBoard({
                 succeededMatchIds.add(matchId);
               } catch (e) {
                 console.error(`Failed to save match ${matchId}:`, e);
+                saveFailures.push(getErrorMessage(e));
               }
             })
           );
@@ -1213,7 +1216,15 @@ export function CourtScheduleBoard({
       const pendingCount = entries.filter(([matchId]) => !confirmedMatchIds.has(matchId)).length;
       setAutoSaveStatus(pendingCount === 0 ? 'saved' : 'unsaved');
 
-      if (!silent) {
+      if (saveFailures.length > 0) {
+        const uniqueFailure = [...new Set(saveFailures)][0];
+        setSaveToast(
+          confirmedMatchIds.size > 0
+            ? `Đã lưu ${confirmedMatchIds.size} trận; ${pendingCount} trận chưa lưu: ${uniqueFailure}`
+            : `Chưa lưu được lịch: ${uniqueFailure}`,
+        );
+        setTimeout(() => setSaveToast(null), silent ? 5000 : 4000);
+      } else if (!silent) {
         setSaveToast(
           confirmedMatchIds.size > 0 && pendingCount > 0
             ? `Đã lưu ${confirmedMatchIds.size} trận; giữ ${pendingCount} trận để xác nhận lại.`

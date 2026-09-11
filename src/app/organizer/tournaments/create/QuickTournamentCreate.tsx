@@ -228,6 +228,11 @@ const QUICK_FORMAT_OPTIONS = [
 ] as const;
 
 const DEFAULT_RACKET_FORMAT_OPTIONS = QUICK_FORMAT_OPTIONS.filter((item) => !item.key.startsWith('FOOTBALL_'));
+// Keep singles available in the add-format modal, but do not show them as
+// default cards until the organizer explicitly adds them.
+const DEFAULT_VISIBLE_RACKET_FORMAT_OPTIONS = DEFAULT_RACKET_FORMAT_OPTIONS.filter(
+  (item) => item.key !== 'MALE_SINGLES' && item.key !== 'FEMALE_SINGLES',
+);
 const DEFAULT_FOOTBALL_FORMAT_OPTIONS = QUICK_FORMAT_OPTIONS.filter((item) => item.key.startsWith('FOOTBALL_'));
 const DEFAULT_RACKET_FORMATS: string[] = DEFAULT_RACKET_FORMAT_OPTIONS.map((item) => item.key);
 const DEFAULT_FOOTBALL_FORMATS: string[] = DEFAULT_FOOTBALL_FORMAT_OPTIONS.map((item) => item.key);
@@ -385,7 +390,7 @@ export default function QuickTournamentCreate() {
     maxElo: null,
   });
   const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>(() =>
-    createDefaultFormatConfigs(DEFAULT_RACKET_FORMAT_OPTIONS, translate),
+    createDefaultFormatConfigs(DEFAULT_VISIBLE_RACKET_FORMAT_OPTIONS, translate),
   );
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
@@ -710,7 +715,7 @@ export default function QuickTournamentCreate() {
       setFormatConfigs(createDefaultFormatConfigs(DEFAULT_FOOTBALL_FORMAT_OPTIONS, translate));
     } else {
       setValue('selectedFormats', [], { shouldValidate: false });
-      setFormatConfigs(createDefaultFormatConfigs(DEFAULT_RACKET_FORMAT_OPTIONS, translate));
+      setFormatConfigs(createDefaultFormatConfigs(DEFAULT_VISIBLE_RACKET_FORMAT_OPTIONS, translate));
     }
   };
 
@@ -1012,7 +1017,7 @@ export default function QuickTournamentCreate() {
                   <div className="rounded-lg bg-blue-50/55 p-2.5 ring-1 ring-blue-100/80">
                     <DateTimePicker
                       name="startDate"
-                      label={translate('startDateLabel')}
+                      label={<>{translate('startDateLabel')} <span className="text-rose-500">*</span></>}
                       value={startDate || ''}
                       onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                       error={errors.startDate?.message}
@@ -1028,7 +1033,7 @@ export default function QuickTournamentCreate() {
 
                   <DateTimePicker
                     name="endDate"
-                    label={`${translate('endDateLabel')} (${translate('optionalLabel')})`}
+                    label={translate('endDateLabel')}
                     value={endDate || ''}
                     onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
                     error={errors.endDate?.message}
@@ -1037,7 +1042,7 @@ export default function QuickTournamentCreate() {
 
                   <DateTimePicker
                     name="registrationStart"
-                    label={`${translate('registrationStartLabel')} (${translate('optionalLabel')})`}
+                    label={translate('registrationStartLabel')}
                     value={registrationStart || ''}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
@@ -1046,7 +1051,7 @@ export default function QuickTournamentCreate() {
 
                   <DateTimePicker
                     name="registrationEnd"
-                    label={`${translate('registrationEndLabel')} (${translate('optionalLabel')})`}
+                    label={translate('registrationEndLabel')}
                     value={registrationEnd || ''}
                     onChange={handleRegistrationEndChange}
                     error={errors.registrationEnd?.message}
@@ -1540,9 +1545,6 @@ export default function QuickTournamentCreate() {
               <label htmlFor="tournament-description-editor" className="text-xs font-semibold text-slate-700">
                 {translate('descriptionLabel')}
               </label>
-              <span className="text-[10px] font-medium text-slate-400">
-                ({translate('optionalLabel')})
-              </span>
               {description && (
                 <span className="text-[10px] font-medium text-emerald-600">{translate('descriptionSaved')}</span>
               )}

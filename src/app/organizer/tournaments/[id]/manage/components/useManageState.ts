@@ -1909,10 +1909,22 @@ export function useManageState(id: string) {
       const targetScheduledAt = scheduledAt ? new Date(scheduledAt).toISOString() : null;
 
       const existingMatch = matches.find((m) => m.id === matchId);
-      const existingConfig = existingMatch?.matchConfig || {};
-      const updatedConfig = durationMinutes
-        ? { ...existingConfig, durationMinutes }
-        : existingConfig;
+      const existingConfig =
+        existingMatch?.matchConfig &&
+        typeof existingMatch.matchConfig === 'object' &&
+        !Array.isArray(existingMatch.matchConfig)
+          ? existingMatch.matchConfig
+          : {};
+      const normalizedDuration =
+        durationMinutes !== undefined &&
+        Number.isFinite(durationMinutes) &&
+        durationMinutes > 0
+          ? Math.max(1, Math.trunc(durationMinutes))
+          : undefined;
+      const updatedConfig =
+        normalizedDuration !== undefined
+          ? { ...existingConfig, durationMinutes: normalizedDuration }
+          : existingConfig;
 
       // Optimistically update matches in local state for instant response
       setMatches((prev) =>
@@ -1935,7 +1947,12 @@ export function useManageState(id: string) {
         courtName: targetCourtName,
         courtAddress: venueAddr,
         scheduledAt: targetScheduledAt,
-        matchConfig: Object.keys(updatedConfig).length > 0 ? updatedConfig : undefined,
+        // Scheduling must not re-submit a legacy/stale scoring config. The
+        // API treats this field as an optional patch; send it only when the
+        // board explicitly changed the match duration.
+        ...(normalizedDuration !== undefined
+          ? { matchConfig: { durationMinutes: normalizedDuration } }
+          : {}),
       });
 
       // Auto-extend tournament startDate / endDate when matches are scheduled beyond current range

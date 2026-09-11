@@ -1,25 +1,18 @@
 'use client';
 
 import {
-  Activity,
   CalendarClock,
   CheckCircle2,
   CircleAlert,
-  Download,
-  ExternalLink,
-  FileSpreadsheet,
   MapPin,
   Trophy,
-  Users,
   ChevronRight,
 } from 'lucide-react';
 import type { Division } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
 import type { Tournament, TournamentParticipant } from '@/types/tournament';
-import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 import { formatDate } from '@/utils/format';
-import { exportTournamentResultsExcel } from '@/utils/exportTournament';
 import { useLocale, useTranslations } from 'next-intl';
 
 interface TournamentManageOverviewProps {
@@ -33,42 +26,6 @@ interface TournamentManageOverviewProps {
   onOpenOperations: () => void;
   onSelectDivision?: (divisionId: string) => void;
   onOpenBracket?: () => void;
-}
-
-function MetricCard({
-  label,
-  value,
-  detail,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  icon: typeof Trophy;
-  tone: 'blue' | 'emerald' | 'amber' | 'violet';
-}) {
-  const toneClasses = {
-    blue: 'bg-blue-50 text-blue-700 ring-blue-100',
-    emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-    amber: 'bg-amber-50 text-amber-700 ring-amber-100',
-    violet: 'bg-violet-50 text-violet-700 ring-violet-100',
-  }[tone];
-
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-500">{label}</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
-          <p className="mt-1 truncate text-[11px] font-medium text-slate-500">{detail}</p>
-        </div>
-        <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1', toneClasses)}>
-          <Icon className="h-4 w-4" aria-hidden="true" />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function getTeamName(match: Match, side: 1 | 2) {
@@ -107,40 +64,8 @@ export function TournamentManageOverview({
 
   return (
     <div className="space-y-4">
-      {/* 4 KPI Cards */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label={t('overview.participantsLabel')}
-          value={String(summary?.participantCount ?? participants.length)}
-          detail={divisions.length ? `${divisions.length} nội dung` : t('overview.noDivision')}
-          icon={Users}
-          tone="blue"
-        />
-        <MetricCard
-          label={t('overview.matchProgressLabel')}
-          value={`${completedMatches}/${totalMatches}`}
-          detail={t('overview.matchProgressDetail', { progress, live: liveCount })}
-          icon={Activity}
-          tone="amber"
-        />
-        <MetricCard
-          label={t('overview.divisionsLabel')}
-          value={String(divisions.length)}
-          detail={t('overview.divisionsDetail')}
-          icon={Trophy}
-          tone="emerald"
-        />
-        <MetricCard
-          label={t('overview.courtsLabel')}
-          value={String(courts.length)}
-          detail={courts.length ? t('overview.courtsReady') : t('overview.courtsEmpty')}
-          icon={MapPin}
-          tone="violet"
-        />
-      </div>
-
-      {/* 2-Column Section: Left (Results/Standings) + Right (Quick Actions & Status) */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
+      {/* 2-Column Section: Left (Results/Standings) + Right (Status & Readiness) */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.8fr)]">
         {/* Left Column: Kết quả giải đấu / Trận đấu */}
         <div className="space-y-4">
           {/* Live matches if any */}
@@ -190,24 +115,11 @@ export function TournamentManageOverview({
 
           {/* Results Summary by Division */}
           <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs" aria-labelledby="manage-results-title">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div>
-                <h3 id="manage-results-title" className="text-sm font-bold text-slate-900">
-                  {t('overview.resultsTitle')}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">{t('overview.resultsSubtitle')}</p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
-                disabled={matches.length === 0}
-                className="h-7 text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50"
-              >
-                <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
-                {t('sidebar.exportResults')}
-              </Button>
+            <div className="mb-3">
+              <h3 id="manage-results-title" className="text-sm font-bold text-slate-900">
+                {t('overview.resultsTitle')}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">{t('overview.resultsSubtitle')}</p>
             </div>
 
             {divisions.length > 0 ? (
@@ -271,54 +183,8 @@ export function TournamentManageOverview({
           </section>
         </div>
 
-        {/* Right Column: Tác vụ nhanh & Trạng thái */}
+        {/* Right Column: Trạng thái & Sẵn sàng vận hành */}
         <div className="space-y-4">
-          {/* Quick Actions Card */}
-          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs" aria-labelledby="manage-quick-tasks-title">
-            <h3 id="manage-quick-tasks-title" className="text-sm font-bold text-slate-900 mb-0.5">
-              {t('overview.quickTasksTitle')}
-            </h3>
-            <p className="text-xs text-slate-500 mb-3">{t('overview.quickTasksSubtitle')}</p>
-
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => exportTournamentResultsExcel(tournament.name, matches, locale)}
-                disabled={matches.length === 0}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-2.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                  <span>{t('sidebar.exportResults')}</span>
-                </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-              </button>
-
-              <button
-                type="button"
-                onClick={onOpenBracket}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-2.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-              >
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-amber-600" />
-                  <span>{t('overview.viewStandings')}</span>
-                </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => window.open(`/tournaments/${tournament.id}`, '_blank')}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-2.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-              >
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4 text-blue-600" />
-                  <span>{t('overview.openPublic')}</span>
-                </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-              </button>
-            </div>
-          </section>
 
           {/* Empty / Live state reminder if no live matches */}
           {liveMatches.length === 0 && (

@@ -14,6 +14,7 @@ import type { Tournament, TournamentParticipant } from '@/types/tournament';
 import { cn } from '@/utils/cn';
 import { formatDate } from '@/utils/format';
 import { useLocale, useTranslations } from 'next-intl';
+import { TournamentQuickManagePanel } from './TournamentQuickManagePanel';
 
 interface TournamentManageOverviewProps {
   tournament: Tournament;
@@ -24,6 +25,8 @@ interface TournamentManageOverviewProps {
   courts: Array<{ id: string; courtName: string; status?: string }>;
   statusLabel: string;
   onOpenOperations: () => void;
+  onOpenRegistration: () => void;
+  onOpenSchedule: () => void;
   onSelectDivision?: (divisionId: string) => void;
   onOpenBracket?: () => void;
 }
@@ -50,6 +53,8 @@ export function TournamentManageOverview({
   courts,
   statusLabel,
   onOpenOperations,
+  onOpenRegistration,
+  onOpenSchedule,
   onSelectDivision,
   onOpenBracket,
 }: TournamentManageOverviewProps) {
@@ -64,6 +69,18 @@ export function TournamentManageOverview({
 
   return (
     <div className="space-y-4">
+      <TournamentQuickManagePanel
+        tournament={tournament}
+        participants={participants}
+        divisions={divisions}
+        matches={matches}
+        statusLabel={statusLabel}
+        onOpenRegistration={onOpenRegistration}
+        onOpenSchedule={onOpenSchedule}
+        onOpenBracket={onOpenBracket}
+        onOpenOperations={onOpenOperations}
+      />
+
       {/* 2-Column Section: Left (Results/Standings) + Right (Status & Readiness) */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.8fr)]">
         {/* Left Column: Kết quả giải đấu / Trận đấu */}

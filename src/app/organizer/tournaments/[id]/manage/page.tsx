@@ -765,6 +765,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             courts={s.courts}
             statusLabel={tournamentStatusLabel}
             onOpenOperations={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+            onOpenRegistration={() => handleManageNavigation({ section: 'registration' })}
+            onOpenSchedule={() => handleManageNavigation({ section: 'court_schedule' })}
             onSelectDivision={(divisionId) => s.setSelectedDivisionId(divisionId)}
             onOpenBracket={handleOpenManageBracket}
           />

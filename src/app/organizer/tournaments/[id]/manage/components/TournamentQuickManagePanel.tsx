@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   CalendarDays,
@@ -23,7 +23,7 @@ interface TournamentQuickManagePanelProps {
   statusLabel: string;
   onOpenRegistration: () => void;
   onOpenSchedule: () => void;
-  onOpenBracket?: () => void;
+  onOpenBracket: () => void;
   onOpenOperations: () => void;
 }
 
@@ -48,10 +48,14 @@ export function TournamentQuickManagePanel({
   onOpenOperations,
 }: TournamentQuickManagePanelProps) {
   const t = useTranslations('OrganizerManage');
+  const titleId = useId();
+  const actionsId = `${titleId}-actions`;
   const [isExpanded, setIsExpanded] = useState(true);
-  const participantCount = tournament._summary?.participantCount ?? participants.length;
+  const participantCount = tournament._summary?.participantCount ?? tournament._count?.participants ?? participants.length;
   const scheduledCount = matches.filter((match) => Boolean(match.scheduledAt && match.courtId)).length;
-  const liveCount = tournament._summary?.matchesLive ?? matches.filter((match) => match.status === 'ONGOING').length;
+  const liveCount = matches.length > 0
+    ? matches.filter((match) => match.status === 'ONGOING').length
+    : tournament._summary?.matchesLive ?? 0;
 
   const quickActions: QuickAction[] = [
     {
@@ -76,7 +80,7 @@ export function TournamentQuickManagePanel({
       count: divisions.length,
       icon: GitMerge,
       tone: 'text-amber-700 bg-amber-50 group-hover:bg-amber-100',
-      onClick: onOpenBracket ?? (() => undefined),
+      onClick: onOpenBracket,
     },
     {
       key: 'live',
@@ -89,7 +93,7 @@ export function TournamentQuickManagePanel({
   ];
 
   return (
-    <section className="mb-4 rounded-xl border border-slate-200 bg-white p-3 shadow-xs" aria-labelledby="quick-manage-title">
+    <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs" aria-labelledby={titleId}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -97,7 +101,7 @@ export function TournamentQuickManagePanel({
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 id="quick-manage-title" className="text-sm font-bold text-slate-900">
+              <h2 id={titleId} className="text-sm font-bold text-slate-900">
                 {t('overview.quickManageTitle')}
               </h2>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
@@ -112,7 +116,7 @@ export function TournamentQuickManagePanel({
           type="button"
           onClick={() => setIsExpanded((current) => !current)}
           aria-expanded={isExpanded}
-          aria-controls="quick-manage-actions"
+          aria-controls={actionsId}
           aria-label={t(isExpanded ? 'overview.quickManageCollapse' : 'overview.quickManageExpand')}
           className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -124,7 +128,7 @@ export function TournamentQuickManagePanel({
       </div>
 
       {isExpanded ? (
-        <div id="quick-manage-actions" className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
+        <div id={actionsId} className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (

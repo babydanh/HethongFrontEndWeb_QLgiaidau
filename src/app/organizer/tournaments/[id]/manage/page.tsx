@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, Calendar, GitMerge, DollarSign, Download, ChevronRight, Check, Play, ChevronDown, Activity, Layers } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, DollarSign, Download, ChevronRight, Check, Play, ChevronDown, Activity, Layers } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,

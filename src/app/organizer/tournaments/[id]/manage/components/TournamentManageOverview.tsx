@@ -13,7 +13,7 @@ import type { Match } from '@/types/match';
 import type { Tournament, TournamentParticipant } from '@/types/tournament';
 import { cn } from '@/utils/cn';
 import { formatDate } from '@/utils/format';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { TournamentQuickManagePanel } from './TournamentQuickManagePanel';
 
 interface TournamentManageOverviewProps {
@@ -28,7 +28,7 @@ interface TournamentManageOverviewProps {
   onOpenRegistration: () => void;
   onOpenSchedule: () => void;
   onSelectDivision?: (divisionId: string) => void;
-  onOpenBracket?: () => void;
+  onOpenBracket: () => void;
 }
 
 function getTeamName(match: Match, side: 1 | 2) {
@@ -59,13 +59,8 @@ export function TournamentManageOverview({
   onOpenBracket,
 }: TournamentManageOverviewProps) {
   const t = useTranslations('OrganizerManage');
-  const locale = useLocale();
-  const summary = tournament._summary;
-  const totalMatches = summary?.matchesTotal ?? matches.length;
-  const completedMatches = summary?.matchesCompleted ?? matches.filter((match) => match.status === 'COMPLETED').length;
   const liveMatches = matches.filter((match) => match.status === 'ONGOING');
-  const liveCount = summary?.matchesLive ?? liveMatches.length;
-  const progress = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0;
+  const liveCount = matches.length > 0 ? liveMatches.length : tournament._summary?.matchesLive ?? 0;
 
   return (
     <div className="space-y-4">

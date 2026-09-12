@@ -7665,7 +7665,7 @@
       "quickManageSchedule": "Schedule & courts",
       "quickManageBracket": "Bracket",
       "quickManageLive": "Live operations",
-      "quickManageCount": "{count} items",
+      "quickManageCount": "{count}",
       "quickManageCollapse": "Collapse quick management",
       "quickManageExpand": "Expand quick management",
       "viewStandings": "View standings",

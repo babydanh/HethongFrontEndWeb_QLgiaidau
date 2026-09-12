@@ -308,9 +308,9 @@ export function Header() {
             <Image
               src={BRAND.assets.logoIcon}
               alt={`${BRAND.name} Logo`}
-              width={120}
-              height={36}
-              className="h-6 md:h-7 w-auto object-contain transition-transform duration-200 hover:scale-105"
+              width={160}
+              height={44}
+              className="h-8 md:h-9 w-auto object-contain transition-transform duration-200 hover:scale-105"
             />
           </Link>
 

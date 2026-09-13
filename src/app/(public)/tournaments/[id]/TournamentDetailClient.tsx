@@ -9,7 +9,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentResult, To
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Plus } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Plus, Layers } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -1381,14 +1381,14 @@ const commonTranslate = useTranslations('Common');
             )}
 
             {isOwner && !isTournamentDraft(activeTournament.status) && (
-              <Link
-                href={`/organizer/tournaments/${activeTournament.id}/manage`}
-                className="block w-full"
+              <Button
+                type="button"
+                onClick={() => handleTabSelect('bracket')}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-2xs text-sm cursor-pointer flex items-center justify-center gap-2"
               >
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-sm text-sm">
-                  {translate('manageBracketSchedule') || 'Quản lý nhánh đấu & Lịch trình'}
-                </Button>
-              </Link>
+                <Layers className="w-4 h-4 text-slate-300" />
+                <span>{translate('manageBracketSchedule') || 'Sơ đồ & Nhánh đấu'}</span>
+              </Button>
             )}
           </div>
 
@@ -1422,14 +1422,6 @@ const commonTranslate = useTranslations('Common');
             <Share2 className="w-4 h-4" />
           </Button>
         </div>
-
-        {isOwner && !isTournamentDraft(activeTournament.status) && (
-          <div className="mt-2 bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
-            <p className="text-[11px] text-slate-600 font-medium">
-              {translate('ownerLabel') || 'Bạn là Ban Tổ Chức giải này'}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Entry Fee (if any) */}

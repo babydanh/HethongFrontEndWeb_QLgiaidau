@@ -88,20 +88,20 @@ export function TournamentOwnerTopBar({
         : 0;
 
   const stepperSteps = [
-    { label: '1. Đăng ký', icon: Users },
-    { label: '2. Lịch & Bảng', icon: GitMerge },
-    { label: '3. Đang đấu', icon: Play },
-    { label: '4. Hoàn tất', icon: Trophy },
+    { label: 'Đăng ký', icon: Users },
+    { label: 'Lịch & Bảng', icon: GitMerge },
+    { label: 'Thi đấu', icon: Play },
+    { label: 'Hoàn tất', icon: Trophy },
   ];
 
   return (
-    <div className="mb-4 rounded-2xl border border-blue-200/90 bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 p-3.5 sm:p-4 text-white shadow-md">
+    <div className="mb-4 rounded-xl border border-slate-200/90 bg-white p-3 sm:p-3.5 shadow-xs">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left Side: Owner Badge + Stepper Timeline */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center rounded-lg bg-blue-500/20 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-blue-300 border border-blue-400/30">
-              ⚡ Quản Trị Giải
+        {/* Left Side: Owner Pill + Status + Stepper */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-700 border border-slate-200">
+              Quản trị
             </span>
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${getTournamentStatusClassName(
@@ -113,37 +113,40 @@ export function TournamentOwnerTopBar({
             </span>
           </div>
 
-          {/* Stepper Steps Mini */}
-          <div className="flex items-center bg-white/10 px-2.5 py-1 rounded-xl border border-white/15 backdrop-blur-xs">
+          {/* Stepper Timeline (lấy từ logic và visual của manage/page.tsx) */}
+          <div className="hidden sm:flex items-center bg-slate-50 p-1 rounded-lg border border-slate-200/70">
             {stepperSteps.map((step, idx) => {
               const isDone = idx < stepIdx || isTournamentCompleted(tournament.status);
               const isCurrent =
                 idx === stepIdx && !isTournamentCompleted(tournament.status);
-              const StepIcon = step.icon;
 
               return (
                 <div key={step.label} className="flex items-center">
                   <div
-                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold transition-all ${
+                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
                       isCurrent
-                        ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-400/30'
+                        ? 'bg-white text-blue-600 shadow-2xs border border-blue-200/80 font-bold'
                         : isDone
-                          ? 'text-emerald-400'
+                          ? 'text-emerald-600'
                           : 'text-slate-400 opacity-60'
                     }`}
                   >
-                    {isDone ? (
-                      <Check className="h-3 w-3 text-emerald-400 stroke-[3]" />
-                    ) : (
-                      <StepIcon className="h-3 w-3" />
-                    )}
-                    <span className="hidden sm:inline whitespace-nowrap">
-                      {step.label}
+                    <span
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${
+                        isDone
+                          ? 'bg-emerald-500 text-white'
+                          : isCurrent
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-200 text-slate-500'
+                      }`}
+                    >
+                      {isDone ? <Check className="h-2.5 w-2.5 stroke-[3]" /> : idx + 1}
                     </span>
+                    <span className="whitespace-nowrap">{step.label}</span>
                   </div>
 
                   {idx < stepperSteps.length - 1 && (
-                    <span className="mx-1 text-slate-500 text-xs">›</span>
+                    <span className="mx-1 text-slate-300 text-xs">›</span>
                   )}
                 </div>
               );
@@ -151,21 +154,21 @@ export function TournamentOwnerTopBar({
           </div>
         </div>
 
-        {/* Right Side: Quick Action Buttons */}
+        {/* Right Side: Action Buttons (Đúng theo logic gốc của manage/page.tsx) */}
         <div className="flex items-center flex-wrap gap-2 shrink-0">
-          {/* Main Action: Vận hành live / Nhập điểm */}
+          {/* 1. Nút Vận hành (Live Operations) */}
           <Button
             size="sm"
             onClick={() => {
               window.location.href = `/organizer/tournaments/${tournament.id}/ops`;
             }}
-            className="h-8 bg-blue-500 px-3 text-xs font-bold text-white hover:bg-blue-600 shadow-xs transition-colors"
+            className="h-8 bg-blue-600 px-3 text-xs font-bold text-white hover:bg-blue-700 shadow-xs transition-colors"
           >
-            <Zap className="mr-1.5 h-3.5 w-3.5 text-blue-100" />
-            Vận hành / Nhập điểm
+            <Zap className="mr-1.5 h-3.5 w-3.5 text-blue-200" />
+            Vận hành
           </Button>
 
-          {/* Phase Transition buttons */}
+          {/* 2. Nút chuyển bước theo trạng thái */}
           {tournament.status === 'REGISTRATION_OPEN' && (
             <Button
               size="sm"
@@ -213,40 +216,18 @@ export function TournamentOwnerTopBar({
             </Button>
           )}
 
-          {/* Fallback to full management workspace */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 border-slate-700 bg-slate-800/80 px-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700"
-              >
-                <Settings className="mr-1.5 h-3.5 w-3.5 text-slate-400" />
-                Quản lý nâng cao
-                <ChevronDown className="ml-1 h-3.5 w-3.5 text-slate-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem
-                onClick={() => {
-                  window.location.href = `/organizer/tournaments/${tournament.id}/manage`;
-                }}
-                className="cursor-pointer text-xs font-medium"
-              >
-                <Settings className="mr-2 h-3.5 w-3.5 text-blue-500" />
-                Không gian quản lý chi tiết
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  window.location.href = `/organizer/tournaments/${tournament.id}/manage#manage-bracket-workspace`;
-                }}
-                className="cursor-pointer text-xs font-medium"
-              >
-                <Trophy className="mr-2 h-3.5 w-3.5 text-amber-500" />
-                Cấu hình sơ đồ & Hạt giống
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* 3. Nút Quản lý nâng cao */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              window.location.href = `/organizer/tournaments/${tournament.id}/manage`;
+            }}
+            className="h-8 border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            <Settings className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+            Quản lý nâng cao
+          </Button>
         </div>
       </div>
     </div>

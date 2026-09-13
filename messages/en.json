@@ -7976,6 +7976,34 @@
     "close": "Close",
     "toast": {
       "copiedInvite": "Invite link copied!"
+    },
+    "nextAction": {
+      "flowTitle": "Tournament Roadmap",
+      "flowSubtitle": "Follow the 3 steps below for a seamless tournament execution",
+      "step1Short": "Players",
+      "step2Short": "Bracket",
+      "step3Short": "Matches",
+      "step1Badge": "Step 1: Collect Players",
+      "step1Title": "Share registration link or add players",
+      "step1DescEmpty": "There are no players registered yet. Copy the registration link to share or click 'Add players'.",
+      "step1DescCount": "{count} players registered. Continue collecting or proceed to bracket creation.",
+      "copyLink": "Copy registration link",
+      "copied": "Link copied!",
+      "copySuccess": "Registration link copied to clipboard!",
+      "addPlayerAction": "+ Add players",
+      "step2Badge": "Step 2: Draw Bracket",
+      "step2Title": "Generate bracket & draw matchups",
+      "step2Desc": "{count} players in {divisionCount} division(s). You are ready to generate brackets and schedules.",
+      "viewPlayersAction": "View player list",
+      "generateBracketAction": "Generate bracket & schedule",
+      "step3LiveBadge": "Step 3: Live Tournament",
+      "step3LiveTitle": "Matches in progress - Live scorekeeping",
+      "step3LiveDesc": "{matchCount} total matches. Open live operations to assign courts and enter live scores.",
+      "step3FinishedBadge": "Completed",
+      "step3FinishedTitle": "Tournament successfully completed",
+      "step3FinishedDesc": "All {matchCount} matches are finished. You can review standings and export summary reports.",
+      "viewBracketAction": "View brackets",
+      "enterScoresAction": "Enter scores & manage courts"
     }
   },
   "OrganizerCreatePage": {

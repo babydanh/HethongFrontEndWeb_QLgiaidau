@@ -7980,6 +7980,34 @@
     "close": "Đóng",
     "toast": {
       "copiedInvite": "Đã sao chép link!"
+    },
+    "nextAction": {
+      "flowTitle": "Tiến trình vận hành giải",
+      "flowSubtitle": "Làm theo 3 bước tuần tự dưới đây để giải đấu diễn ra mượt mà nhất",
+      "step1Short": "VĐV",
+      "step2Short": "Sơ đồ",
+      "step3Short": "Thi đấu",
+      "step1Badge": "Bước 1: Thu thập VĐV",
+      "step1Title": "Chia sẻ link đăng ký hoặc thêm danh sách VĐV",
+      "step1DescEmpty": "Giải đấu hiện chưa có VĐV nào. Hãy sao chép liên kết gửi cho người tham gia hoặc nhấn 'Thêm nhanh VĐV'.",
+      "step1DescCount": "Đã có {count} VĐV tham gia. Tiếp tục thu thập thêm hoặc chuẩn bị sang bước tạo sơ đồ thi đấu.",
+      "copyLink": "Sao chép link đăng ký",
+      "copied": "Đã sao chép link!",
+      "copySuccess": "Đã sao chép đường dẫn đăng ký giải đấu!",
+      "addPlayerAction": "+ Thêm nhanh VĐV",
+      "step2Badge": "Bước 2: Xếp nhánh",
+      "step2Title": "Khởi tạo sơ đồ nhánh & Bốc thăm thi đấu",
+      "step2Desc": "Đã có {count} VĐV trong {divisionCount} nội dung thi đấu. Bạn đã sẵn sàng để bốc thăm và tạo nhánh đấu.",
+      "viewPlayersAction": "Xem danh sách VĐV",
+      "generateBracketAction": "Khởi tạo sơ đồ & Lịch đấu",
+      "step3LiveBadge": "Bước 3: Đang thi đấu",
+      "step3LiveTitle": "Trận đấu đang diễn ra - Cập nhật tỉ số trực tiếp",
+      "step3LiveDesc": "Giải đấu hiện có {matchCount} trận. Mở màn hình vận hành để điều phối sân và nhập điểm số theo thời gian thực.",
+      "step3FinishedBadge": "Hoàn tất",
+      "step3FinishedTitle": "Giải đấu đã hoàn thành tốt đẹp",
+      "step3FinishedDesc": "Tất cả {matchCount} trận đấu đã kết thúc. Bạn có thể xem lại bảng kết quả và xuất báo cáo tổng kết.",
+      "viewBracketAction": "Xem sơ đồ nhánh",
+      "enterScoresAction": "Nhập điểm & Điều phối sân"
     }
   },
   "OrganizerCreatePage": {

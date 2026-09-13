@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
 import { getTournamentStatusClassName, normalizeTournamentStatus } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
@@ -147,9 +147,20 @@ function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tour
             )}
           </div>
         </div>
-        <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
-          {statusLabel}
-        </span>
+        <div className="shrink-0 flex items-center gap-2">
+          {roleLabel === 'BTC' && (
+            <Link
+              href={`/organizer/tournaments/${tournament.id}/manage`}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-2xs transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Quản lý</span>
+            </Link>
+          )}
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
+            {statusLabel}
+          </span>
+        </div>
       </div>
     </div>
   );

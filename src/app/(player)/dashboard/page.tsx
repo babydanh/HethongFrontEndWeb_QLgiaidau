@@ -805,10 +805,10 @@ export default function DashboardPage() {
 
               <TournamentListSection
                 title={tournFilter === 'registered' ? translate("registeredTournaments") : tournFilter === 'organized' ? translate("organizedTournaments") : tournFilter === 'followed' ? translate("followedTournaments") : translate("tournamentList")}
-                actionHref="/tournaments"
-                actionLabel={translate("findNewTournament")}
+                actionHref={tournFilter === 'organized' ? "/organizer/tournaments" : "/tournaments"}
+                actionLabel={tournFilter === 'organized' ? "Đến quản lý giải đấu" : translate("findNewTournament")}
                 tournaments={getFilteredTournaments()}
-                roleLabels={participantRoleLabels}
+                roleLabels={{ ...participantRoleLabels, ...organizerRoleLabels }}
                 emptyLabel={translate("noMatchingTournaments")}
                 matchTypeMap={matchTypeMap}
                 partners={partnerMap}

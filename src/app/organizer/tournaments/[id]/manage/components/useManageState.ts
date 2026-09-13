@@ -2174,8 +2174,9 @@ export function useManageState(id: string) {
         }
 
         setDraftStatus('saved');
-      } catch (err) {
-        console.error('Auto-save error:', err);
+      } catch (err: unknown) {
+        const errorData = (err as { response?: { data?: unknown } })?.response?.data;
+        console.error('Auto-save error:', err, errorData);
         setDraftStatus('error');
       }
     }, 1000);

@@ -442,25 +442,146 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
 
   if (s.isLoading) return (
-    <div className="min-h-screen bg-slate-50 py-3 md:py-4">
-      <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-start lg:gap-6" aria-busy="true" aria-live="polite">
-        <div className="hidden w-[272px] shrink-0 space-y-4 lg:block">
-          <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
-          <div className="h-[320px] animate-pulse rounded-xl border border-slate-200 bg-white" />
-          <div className="h-28 animate-pulse rounded-xl border border-slate-200 bg-white" />
+    <div className="bg-slate-50 min-h-screen pb-12 animate-in fade-in duration-200" aria-busy="true" aria-live="polite">
+      <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6 space-y-4">
+        {/* Top Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-28 rounded-lg bg-slate-200 animate-pulse" />
+          <div className="h-8 w-44 rounded-lg bg-slate-200 animate-pulse" />
         </div>
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex min-h-28 items-center justify-center rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <LoadingSpinner className="h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-sm font-semibold text-slate-500">{translate('loading')}</p>
+
+        {/* Main 2-Column Grid Skeleton (matching Desktop 12-col layout) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
+          {/* Left Column: Banner + Tabs Bar + Content Box */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0">
+            {/* Banner Skeleton */}
+            <div className="w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="absolute top-3 right-3 h-8 w-28 rounded-xl bg-slate-300/80 animate-pulse" />
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="h-5 w-48 rounded bg-slate-300/60 animate-pulse" />
+                <div className="h-7 w-24 rounded-lg bg-slate-300/80 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Mobile Right Card Skeleton (Visible on mobile only) */}
+            <div className="block lg:hidden rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-slate-200 animate-pulse shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-5 w-3/4 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-3.5 w-1/2 rounded bg-slate-200 animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            {/* Horizontal Tabs Skeleton */}
+            <div className="flex gap-2 pb-1 overflow-x-auto">
+              <div className="h-10 w-28 rounded-lg bg-blue-600/30 animate-pulse shrink-0" />
+              <div className="h-10 w-32 rounded-lg bg-slate-200 animate-pulse shrink-0" />
+              <div className="h-10 w-28 rounded-lg bg-slate-200 animate-pulse shrink-0" />
+              <div className="h-10 w-32 rounded-lg bg-slate-200 animate-pulse shrink-0" />
+            </div>
+
+            {/* Tab Content Box Skeleton */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-xs min-h-[400px]">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="space-y-2">
+                  <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-3.5 w-64 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="h-8 w-28 rounded-lg bg-slate-200 animate-pulse" />
+              </div>
+
+              {/* Content Grid Skeletons */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <div key={index} className="h-24 rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2 animate-pulse">
+                    <div className="h-3 w-16 rounded bg-slate-200" />
+                    <div className="h-7 w-12 rounded bg-slate-200" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <div className="h-12 w-full rounded-xl bg-slate-100 animate-pulse" />
+                <div className="h-12 w-full rounded-xl bg-slate-100 animate-pulse" />
+                <div className="h-12 w-full rounded-xl bg-slate-100 animate-pulse" />
+              </div>
             </div>
           </div>
-          <div className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-28 animate-pulse rounded-xl border border-slate-200 bg-white" />)}
+
+          {/* Right Column: Metadata Card Skeleton (Desktop only) */}
+          <div className="hidden lg:block lg:col-span-5 xl:col-span-4 space-y-4">
+            {/* Metadata Card Skeleton */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-5 shadow-xs">
+              {/* Header with Avatar and Title */}
+              <div className="flex items-start gap-3.5">
+                <div className="w-16 h-16 rounded-full bg-slate-200 animate-pulse shrink-0 ring-2 ring-slate-100" />
+                <div className="min-w-0 flex-1 space-y-2 pt-1">
+                  <div className="flex gap-1.5">
+                    <div className="h-4 w-16 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-4 w-20 rounded bg-slate-200 animate-pulse" />
+                  </div>
+                  <div className="h-6 w-5/6 rounded bg-slate-200 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Details Rows Skeleton */}
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded bg-slate-200 animate-pulse shrink-0" />
+                  <div className="h-4 w-48 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="w-5 h-5 rounded bg-slate-200 animate-pulse shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 w-40 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-3 w-24 rounded bg-slate-200 animate-pulse" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded bg-slate-200 animate-pulse shrink-0" />
+                  <div className="h-4 w-36 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded bg-slate-200 animate-pulse shrink-0" />
+                  <div className="h-4 w-32 rounded bg-slate-200 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Action Buttons Skeleton */}
+              <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                <div className="h-12 flex-1 rounded-lg bg-blue-600/30 animate-pulse" />
+                <div className="h-12 w-12 rounded-lg bg-slate-200 animate-pulse shrink-0" />
+                <div className="h-12 w-12 rounded-lg bg-slate-200 animate-pulse shrink-0" />
+              </div>
+            </div>
+
+            {/* Contact Card Skeleton */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="h-4 w-36 rounded bg-slate-200 animate-pulse" />
+                <div className="h-4 w-12 rounded bg-slate-200 animate-pulse" />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse shrink-0" />
+                  <div className="h-4 w-32 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse shrink-0" />
+                  <div className="h-4 w-44 rounded bg-slate-200 animate-pulse" />
+                </div>
+              </div>
+              <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-200 animate-pulse shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-3 w-28 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-4 w-36 rounded bg-slate-200 animate-pulse" />
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="h-72 animate-pulse rounded-xl border border-slate-200 bg-white" />
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
@@ -28,14 +29,33 @@ import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
 import { LivestreamTab } from './components/LivestreamTab';
 import { TournamentManageOverview } from './components/TournamentManageOverview';
-import { TournamentManageSidebar, type ManageNavigationTarget, type ManageSection } from './components/TournamentManageSidebar';
+import { type ManageSection } from './components/TournamentManageSidebar';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-import { getTournamentStatusClassName, getTournamentStatusLabel, isTournamentCompleted, isTournamentRegistrationClosed, isTournamentUpcoming } from '@/utils/tournament-status';
-import { formatCurrency, formatDateTime } from '@/utils/format';
+import { getTournamentStatusClassName, getTournamentStatusLabel, isTournamentCompleted, isTournamentRegistrationClosed, isTournamentUpcoming, isTournamentInProgress } from '@/utils/tournament-status';
+import { formatCurrency, formatDateTime, formatDate } from '@/utils/format';
 import { exportTournamentResultsExcel } from '@/utils/exportTournament';
 import { getDivisionBracketLabel, getDivisionMatchLabel, type TournamentDisplayLabels } from '@/utils/tournament-display';
+import { getTournamentLocationLabel } from '@/utils/tournament-location';
+import ShareModal from '@/components/common/ShareModal';
+import { triggerShare } from '@/utils/share.util';
+import CountdownTimer from '@/components/shared/CountdownTimer';
+
+const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+  </svg>
+);
+
+const ZaloIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    <text x="7.5" y="15" fill="currentColor" fontSize="10" fontWeight="900" style={{ fontFamily: 'system-ui' }}>z</text>
+  </svg>
+);
 
 function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -107,7 +127,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const s = useManageState(id);
+  const router = useRouter();
   const translate = useTranslations('OrganizerManage');
+  const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
   const ruleTranslate = useTranslations('TournamentDetail');
   const locale = useLocale();
@@ -151,57 +173,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const courtOperatingEnd = '22:00';
   const [isCourtWorkspaceFullscreen, setIsCourtWorkspaceFullscreen] = useState(false);
   const [activeSection, setActiveSection] = useState<ManageSection>('overview');
-  const [isManageSidebarOpen, setIsManageSidebarOpen] = useState(false);
-  const manageMenuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const sidebarWasOpenRef = useRef(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     const querySection = getManageSectionFromTab(new URLSearchParams(window.location.search).get('tab'));
-    // URL state is an external navigation input; sync it after hydration.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (querySection) setActiveSection(querySection);
   }, [id]);
-
-  useEffect(() => {
-    if (!isManageSidebarOpen) {
-      if (sidebarWasOpenRef.current) manageMenuButtonRef.current?.focus();
-      sidebarWasOpenRef.current = false;
-      return undefined;
-    }
-
-    sidebarWasOpenRef.current = true;
-    const focusableSelector = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])';
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsManageSidebarOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-
-      const sidebar = document.querySelector<HTMLElement>('[data-manage-sidebar]');
-      if (!sidebar) return;
-      const focusable = Array.from(sidebar.querySelectorAll<HTMLElement>(focusableSelector));
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', handleKeyDown);
-    requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-manage-sidebar] button')?.focus());
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isManageSidebarOpen]);
 
   useEffect(() => {
     if (!isCourtWorkspaceFullscreen) return undefined;
@@ -250,24 +227,28 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }, 150);
   };
 
-  const handleManageNavigation = (target: ManageNavigationTarget) => {
-    setActiveSection(target.section);
-    if (target.section !== 'overview') s.setActiveTab(target.section);
-    if (target.basicSubTab) s.setBasicSubTab(target.basicSubTab);
-    setIsManageSidebarOpen(false);
+  const handleManageNavigation = (sectionId: ManageSection) => {
+    setActiveSection(sectionId);
+    if (sectionId !== 'overview') s.setActiveTab(sectionId);
+    const nextParams = new URLSearchParams(window.location.search);
+    if (sectionId === 'overview') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', sectionId);
+    }
+    window.history.replaceState(null, '', `/organizer/tournaments/${id}/manage?${nextParams.toString()}`);
+  };
 
-    // Only scroll if an explicit deep-target element (targetId) is specified, do not jump/scroll page otherwise
-    if (target.targetId) {
-      setTimeout(() => {
-        const el = document.getElementById(target.targetId!);
-        if (el) {
-          const navHeight = 90;
-          const rect = el.getBoundingClientRect();
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-          const targetTop = rect.top + scrollTop - navHeight;
-          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-        }
-      }, 100);
+  const handleShareClick = async () => {
+    if (!s.tournament) return;
+    const shareData = {
+      title: s.tournament.name,
+      text: translate('toast.shareTournament', { name: s.tournament.name }),
+      url: typeof window !== 'undefined' ? `${window.location.origin}/tournaments/${s.tournament.id}` : '',
+    };
+    const sharedNative = await triggerShare(shareData);
+    if (!sharedNative) {
+      setIsShareModalOpen(true);
     }
   };
 
@@ -361,289 +342,417 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     CANCELLED: translate('status.statusCancelled'),
   });
 
-  return (
-    <div className="min-h-screen bg-slate-50 py-3 md:py-4">
-      <div className="w-full">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-          <TournamentManageSidebar
-            tournament={tournament}
-            activeSection={activeSection}
-            basicSubTab={s.basicSubTab}
-            divisionCount={s.divisions.length}
-            pendingRefereeCount={pendingRefereeCount}
-            matchCount={s.matches.length}
-            isOpen={isManageSidebarOpen}
-            menuButtonRef={manageMenuButtonRef}
-            onOpen={() => setIsManageSidebarOpen(true)}
-            onClose={() => setIsManageSidebarOpen(false)}
-            onNavigate={handleManageNavigation}
-          />
+  const renderMetadataCard = () => {
+    const rawLogo = tournament.logoUrl || tournament.organizer?.avatarUrl;
+    const hasTournamentLogo = Boolean(rawLogo && !rawLogo.includes('.svg'));
+    const logoUrl = hasTournamentLogo ? rawLogo : null;
 
-          <main className="min-w-0 flex-1">
-            {/* Consolidated Executive Header Card with Tournament Hero Banner */}
-            <div className="mb-4 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs">
-              {/* Top Hero Banner */}
-              <div className="relative w-full h-[160px] sm:h-[220px] md:h-[280px] bg-slate-100 overflow-hidden border-b border-slate-100">
-                <GalleryCarousel
-                  images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
-                  defaultBanner={tournament.bannerUrl || undefined}
-                  categoryName={tournament.category?.name}
-                  tournamentName={tournament.name}
-                  className="w-full h-full object-cover"
+    const renderOrganizerBlock = () => {
+      const orgAvatar = tournament.organizer?.avatarUrl || '/sporto_v1_with_text.svg';
+      const orgName = tournament.organizer?.fullName || 'Ban Tổ Chức';
+      return (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+            <img src={orgAvatar} alt={orgName} className="w-full h-full object-cover" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ban tổ chức</p>
+            <p className="text-sm font-bold text-slate-900 truncate">{orgName}</p>
+          </div>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">
+            Quản trị viên
+          </span>
+        </div>
+      );
+    };
+
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-4 shadow-xs">
+        {/* Header / Brand with Logo */}
+        {hasTournamentLogo ? (
+          <div className="flex items-start gap-3.5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-2 border-white shadow-md p-0.5 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200/80">
+              <img src={logoUrl || ''} alt={tournament.name} className="w-full h-full object-cover rounded-full" />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+                  isLive ? 'bg-rose-600 text-white' : isCompleted ? 'bg-slate-700 text-white' : 'bg-emerald-600 text-white'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+                  {tournamentStatusLabel}
+                </span>
+
+                {tournament.category?.name && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs">
+                    {tournament.category.name}
+                  </span>
+                )}
+
+                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+                  tournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+                }`}>
+                  {tournament.isRanked ? '⭐ Có xếp hạng' : 'Giải phong trào'}
+                </span>
+              </div>
+
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2">
+                {tournament.name}
+              </h1>
+            </div>
+          </div>
+        ) : (
+          <>
+            {renderOrganizerBlock()}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+                  isLive ? 'bg-rose-600 text-white' : isCompleted ? 'bg-slate-700 text-white' : 'bg-emerald-600 text-white'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+                  {tournamentStatusLabel}
+                </span>
+
+                {tournament.category?.name && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs">
+                    {tournament.category.name}
+                  </span>
+                )}
+
+                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+                  tournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+                }`}>
+                  {tournament.isRanked ? '⭐ Có xếp hạng' : 'Giải phong trào'}
+                </span>
+              </div>
+
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2">
+                {tournament.name}
+              </h1>
+            </div>
+          </>
+        )}
+
+        {/* Key Tournament Details Rows */}
+        <div className="space-y-2.5 pt-3 border-t border-slate-100 text-slate-900 text-xs sm:text-sm">
+          {/* Dates */}
+          <div className="flex items-start gap-2.5">
+            <Calendar className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
+            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug">
+              {tournament.startDate ? (
+                <>
+                  {formatDate(tournament.startDate)}
+                  {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
+                </>
+              ) : 'Chưa xếp ngày'}
+            </p>
+          </div>
+
+          {/* Location */}
+          <div className="flex items-start gap-2.5">
+            <MapPin className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
+            <p className="font-semibold text-slate-800 text-xs sm:text-[13px] leading-relaxed break-words">
+              {locationLabel || 'Chưa cập nhật địa điểm'}
+            </p>
+          </div>
+
+          {/* Divisions Count */}
+          <div className="flex items-center gap-2.5">
+            <Trophy className="w-4 h-4 text-slate-700 shrink-0" />
+            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+              {s.divisions.length} <span className="font-semibold text-slate-700">Nội dung thi đấu</span>
+            </p>
+          </div>
+
+          {/* Participants Count */}
+          <div className="flex items-center gap-2.5">
+            <Users className="w-4 h-4 text-slate-700 shrink-0" />
+            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+              {s.participants.length} <span className="font-semibold text-slate-700">VĐV / Đội tham gia</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Sequential Countdown Timer */}
+        {(() => {
+          const now = new Date();
+          const regStart = tournament.registrationStartDate ? new Date(tournament.registrationStartDate) : null;
+          const regEnd = tournament.registrationEndDate ? new Date(tournament.registrationEndDate) : null;
+          const tourStart = tournament.startDate ? new Date(tournament.startDate) : null;
+          const tourEnd = tournament.endDate ? new Date(tournament.endDate) : null;
+
+          if (regStart && now < regStart) {
+            return (
+              <div className="pt-2 border-t border-slate-100">
+                <CountdownTimer
+                  targetDate={tournament.registrationStartDate!}
+                  labels={{
+                    active: 'Mở đăng ký sau',
+                    expired: 'Đã mở đăng ký',
+                    dayLabel: commonTranslate('countdownDay') || 'ngày',
+                  }}
+                  variant="info"
+                  size="sm"
                 />
               </div>
+            );
+          }
+          if (regEnd && now < regEnd && !tournament.isRegistrationLocked) {
+            return (
+              <div className="pt-2 border-t border-slate-100">
+                <CountdownTimer
+                  targetDate={tournament.registrationEndDate!}
+                  labels={{
+                    active: 'Đóng đăng ký sau',
+                    expired: 'Đã đóng đăng ký',
+                    dayLabel: commonTranslate('countdownDay') || 'ngày',
+                  }}
+                  variant="warning"
+                  size="sm"
+                />
+              </div>
+            );
+          }
+          if (tourStart && now < tourStart) {
+            return (
+              <div className="pt-2 border-t border-slate-100">
+                <CountdownTimer
+                  targetDate={tournament.startDate!}
+                  labels={{
+                    active: 'Khởi tranh sau',
+                    expired: 'Đã khởi tranh',
+                    dayLabel: commonTranslate('countdownDay') || 'ngày',
+                  }}
+                  variant="danger"
+                  size="sm"
+                />
+              </div>
+            );
+          }
+          if (isTournamentInProgress(tournament.status) && tourEnd && now < tourEnd) {
+            return (
+              <div className="pt-2 border-t border-slate-100">
+                <CountdownTimer
+                  targetDate={tournament.endDate!}
+                  labels={{
+                    active: 'Kết thúc sau',
+                    expired: 'Đã kết thúc',
+                    dayLabel: commonTranslate('countdownDay') || 'ngày',
+                  }}
+                  variant="danger"
+                  size="sm"
+                />
+              </div>
+            );
+          }
+          return null;
+        })()}
 
-              <div className="p-4 sm:p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  {/* Left side: Sport + Status Pill + Title + Dot-separated meta */}
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-blue-700 border border-blue-200/80">
-                      {tournament.category?.name || 'Pickleball'}
-                    </span>
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${getTournamentStatusClassName(tournament.status)}`}>
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      {tournamentStatusLabel}
-                    </span>
-                  </div>
+        {/* ORGANIZER ACTION CONTROL BAR */}
+        <div className="pt-2 border-t border-slate-100 space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tác vụ ban tổ chức</p>
+          <div className="grid grid-cols-1 gap-2">
+            {/* Primary Operations Button */}
+            <Button
+              type="button"
+              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            >
+              <Zap className="w-4 h-4 text-amber-300" />
+              <span>{translate('status.operations')}</span>
+            </Button>
 
-                  <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl line-clamp-1">
-                    {tournament.name}
-                  </h1>
+            {/* Dynamic Step Transition Button */}
+            {tournament.status === 'REGISTRATION_OPEN' && (
+              <Button
+                type="button"
+                onClick={() => s.handleTournamentStepTransition('UPCOMING')}
+                disabled={s.isLoading}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Khóa đăng ký</span>
+              </Button>
+            )}
 
-                  {/* Dot-separated meta row */}
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1 text-slate-700">
-                      <CalendarDays className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      {tournament.startDate ? formatDateTime(tournament.startDate) : 'Chưa xếp ngày'}
-                      {tournament.endDate ? ` – ${formatDateTime(tournament.endDate)}` : ''}
-                    </span>
+            {(isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) && (
+              <Button
+                type="button"
+                onClick={s.handleConfirmOpen}
+                disabled={s.isLoading || s.isOpening}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                {s.isOpening ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+                <span>Khai mạc giải đấu</span>
+              </Button>
+            )}
 
-                    {(tournament.venue?.name || tournament.locationAddress) && (
-                      <>
-                        <span className="text-slate-300">·</span>
-                        <span className="inline-flex items-center gap-1 truncate max-w-xs text-slate-700">
-                          <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate">{tournament.venue?.name || tournament.locationAddress}</span>
-                        </span>
-                      </>
-                    )}
+            {['IN_PROGRESS', 'ONGOING', 'LIVE', 'ACTIVE'].includes(tournament.status) && (
+              <Button
+                type="button"
+                onClick={() => s.setIsEndModalOpen(true)}
+                disabled={s.isLoading || s.isEnding}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                {s.isEnding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />}
+                <span>Hoàn tất giải đấu</span>
+              </Button>
+            )}
 
-                    <span className="text-slate-300">·</span>
-                    <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                      <DollarSign className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                      {Number(tournament.entryFee) > 0
-                        ? `${formatCurrency(tournament.entryFee)} / VĐV`
-                        : 'Miễn phí tham gia'}
-                    </span>
-                  </div>
-                </div>
+            {isCompleted && (
+              <Button
+                type="button"
+                onClick={() => exportTournamentResultsExcel(tournament.name, s.matches, locale)}
+                disabled={s.matches.length === 0}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                <span>Xuất kết quả (Excel)</span>
+              </Button>
+            )}
 
-                {/* Right side: Consolidated Action Buttons */}
-                <div className="shrink-0 flex items-center flex-wrap gap-2 pt-1 lg:pt-0">
-                  {/* Primary Operation Button */}
-                  <Button
-                    size="sm"
-                    onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-                    className="h-8 bg-blue-600 px-3 text-xs font-bold text-white hover:bg-blue-700 shadow-sm transition-colors"
-                  >
-                    <Zap className="mr-1.5 h-3.5 w-3.5 text-blue-200" />
-                    {translate('status.operations')}
-                  </Button>
+            {/* View Public Tournament Link */}
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.open(`/tournaments/${tournament.id}`, '_blank')}
+                className="flex-1 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 text-xs font-semibold py-2.5 rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                <span>Xem trang công khai</span>
+              </Button>
 
-                  {/* Dynamic Step Transition Button */}
-                  {(() => {
-                    if (tournament.status === 'REGISTRATION_OPEN') {
-                      return (
-                        <Button
-                          size="sm"
-                          onClick={() => s.handleTournamentStepTransition('UPCOMING')}
-                          disabled={s.isLoading}
-                          className="h-8 bg-amber-500 hover:bg-amber-600 px-3 text-xs font-bold text-white shadow-sm transition-colors"
-                        >
-                          <ChevronRight className="mr-1 h-3.5 w-3.5" /> Khóa đăng ký
-                        </Button>
-                      );
-                    }
-                    if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) {
-                      return (
-                        <Button
-                          size="sm"
-                          onClick={s.handleConfirmOpen}
-                          disabled={s.isLoading || s.isOpening}
-                          className="h-8 bg-emerald-600 hover:bg-emerald-700 px-3 text-xs font-bold text-white shadow-sm transition-colors"
-                        >
-                          <Play className="mr-1 h-3.5 w-3.5 fill-current" /> Khai mạc giải
-                        </Button>
-                      );
-                    }
-                    if (['IN_PROGRESS', 'ONGOING', 'LIVE', 'ACTIVE'].includes(tournament.status)) {
-                      return (
-                        <Button
-                          size="sm"
-                          onClick={() => s.setIsEndModalOpen(true)}
-                          disabled={s.isLoading || s.isEnding}
-                          className="h-8 bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-bold text-white shadow-sm transition-colors"
-                        >
-                          <Trophy className="mr-1 h-3.5 w-3.5" /> Hoàn tất giải
-                        </Button>
-                      );
-                    }
-                    return null;
-                  })()}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleShareClick}
+                title="Chia sẻ giải đấu"
+                className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs rounded-lg shrink-0"
+              >
+                <Share2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
 
-                  {/* Single Primary Export button if completed */}
-                  {isTournamentCompleted(tournament.status) && (
-                    <Button
-                      size="sm"
-                      onClick={() => exportTournamentResultsExcel(tournament.name, s.matches, locale)}
-                      disabled={s.matches.length === 0}
-                      className="h-8 bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm transition-colors disabled:opacity-50"
-                    >
-                      <Download className="mr-1.5 h-3.5 w-3.5" /> Xuất kết quả
-                    </Button>
+        {/* Entry Fee Row */}
+        {Number(tournament.entryFee) > 0 && (
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-slate-700">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Lệ phí cơ bản:</span>
+            <span className="font-black text-blue-600 text-base tracking-tight">
+              {formatCurrency(tournament.entryFee)}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderContactCard = () => {
+    const hasContact = Boolean(
+      tournament.contactInfo &&
+      Object.values(tournament.contactInfo).some((v) => typeof v === 'string' && v.trim().length > 0)
+    );
+
+    if (!hasContact) return null;
+
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
+        <div className="space-y-2.5">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Thông tin liên hệ BTC</span>
+          {tournament.contactInfo?.phone && (
+            <div className="flex items-center gap-2.5">
+              <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+              <span className="text-xs font-semibold text-slate-700">{tournament.contactInfo.phone}</span>
+            </div>
+          )}
+          {tournament.contactInfo?.email && (
+            <div className="flex items-center gap-2.5">
+              <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+              <span className="text-xs font-semibold text-slate-700 truncate">{tournament.contactInfo.email}</span>
+            </div>
+          )}
+          {Object.entries(tournament.contactInfo || {})
+            .filter(([key]) => key !== 'phone' && key !== 'email')
+            .map(([key, val]) => {
+              if (!val) return null;
+              const lowercaseKey = key.toLowerCase();
+              const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
+              let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
+              let iconColor = 'text-slate-400';
+              if (lowercaseKey.includes('instagram')) {
+                IconComponent = InstagramIcon;
+                iconColor = 'text-pink-600';
+              } else if (lowercaseKey.includes('zalo')) {
+                IconComponent = ZaloIcon;
+                iconColor = 'text-blue-600';
+              }
+              return (
+                <div key={key} className="flex items-center gap-2.5">
+                  <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
+                  <span className="text-xs font-bold text-slate-500">{key}:</span>
+                  {isUrl ? (
+                    <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
+                      {val}
+                    </a>
+                  ) : (
+                    <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
                   )}
-
-                  {/* Secondary actions grouped into Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                      >
-                        Khác <ChevronDown className="ml-1 h-3.5 w-3.5 text-slate-500" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                      <DropdownMenuItem onClick={handleOpenManageBracket} className="cursor-pointer text-xs font-medium">
-                        <Trophy className="mr-2 h-3.5 w-3.5 text-amber-500" /> Xem bảng đấu
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="cursor-pointer text-xs font-medium">
-                        <ExternalLink className="mr-2 h-3.5 w-3.5 text-slate-500" /> Trang giải công khai
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-              </div>
+              );
+            })}
+        </div>
+      </div>
+    );
+  };
 
-              {/* Bottom Row: Inline Metrics Chip Strip & Mini Stepper */}
-              {(() => {
-                const totalMatches = s.tournament._summary?.matchesTotal ?? s.matches.length;
-                const completedMatches = s.tournament._summary?.matchesCompleted ?? s.matches.filter((m) => m.status === 'COMPLETED').length;
-                const progress = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0;
+  const isCompleted = isTournamentCompleted(tournament.status);
+  const isLive = isTournamentInProgress(tournament.status);
+  const locationLabel = getTournamentLocationLabel(tournament);
 
-                const stepIdx = isTournamentCompleted(tournament.status) ? 3 :
-                  (['IN_PROGRESS', 'ONGOING', 'LIVE', 'ACTIVE'].includes(tournament.status)) ? 2 :
-                  (isTournamentRegistrationClosed(tournament.status) || isTournamentUpcoming(tournament.status)) ? 1 : 0;
+  return (
+    <div className="bg-slate-50 min-h-screen pb-12">
+      <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6">
 
-                const stepperSteps = [
-                  { label: 'Đăng ký', icon: Users },
-                  { label: 'Lịch thi đấu', icon: GitMerge },
-                  { label: 'Đang diễn ra', icon: Play },
-                  { label: 'Hoàn tất', icon: Trophy },
-                ];
+        {/* Back navigation */}
+        <div className="mb-2.5 sm:mb-3.5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors py-1.5 px-3 rounded-lg hover:bg-slate-200/70 cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>{translate('back') || 'Quay lại'}</span>
+          </button>
 
-                return (
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
-                    {/* Compact Metrics Chips Strip */}
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1 font-medium text-slate-700 border border-slate-200/70">
-                        <Users className="h-3.5 w-3.5 text-blue-600" />
-                        <strong>{s.tournament._summary?.participantCount ?? s.participants.length}</strong> VĐV / đội
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1 font-medium text-slate-700 border border-slate-200/70">
-                        <Activity className="h-3.5 w-3.5 text-amber-600" />
-                        <strong>{completedMatches}/{totalMatches}</strong> trận ({progress}%)
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1 font-medium text-slate-700 border border-slate-200/70">
-                        <Layers className="h-3.5 w-3.5 text-emerald-600" />
-                        <strong>{s.divisions.length}</strong> nội dung
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1 font-medium text-slate-700 border border-slate-200/70">
-                        <MapPin className="h-3.5 w-3.5 text-violet-600" />
-                        <strong>{s.courts.length}</strong> sân
-                      </span>
-                    </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200/80 text-[11px] font-bold text-blue-800 shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              Khu Vực Quản Lý Ban Tổ Chức
+            </span>
+          </div>
+        </div>
 
-                    {/* Timeline Circular Stepper Indicators */}
-                    <div className="flex items-center bg-slate-50/80 p-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      {stepperSteps.map((step, idx) => {
-                        const isDone = idx < stepIdx || isTournamentCompleted(tournament.status);
-                        const isCurrent = idx === stepIdx && !isTournamentCompleted(tournament.status);
-                        const StepIcon = step.icon;
+        {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
+          {/* Left Column: Hero Banner + Mobile Metadata + Stepper + Tabs + Tab Content */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
+            {/* Banner Container */}
+            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+              <GalleryCarousel
+                images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
+                defaultBanner={tournament.bannerUrl || undefined}
+                categoryName={tournament.category?.name}
+                tournamentName={tournament.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
 
-                        return (
-                          <div key={step.label} className="flex items-center">
-                            <div
-                              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
-                                isCurrent
-                                  ? 'bg-white shadow-xs border border-blue-200/80'
-                                  : isDone
-                                  ? 'hover:bg-white/60'
-                                  : 'opacity-70'
-                              }`}
-                            >
-                              {/* Circular Step Badge */}
-                              <div
-                                className={`relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-transform ${
-                                  isDone
-                                    ? 'bg-emerald-500 text-white shadow-xs shadow-emerald-500/20'
-                                    : isCurrent
-                                    ? 'bg-blue-600 text-white shadow-xs shadow-blue-600/30 ring-3 ring-blue-500/20'
-                                    : 'bg-slate-200 text-slate-500'
-                                }`}
-                              >
-                                {isDone ? (
-                                  <Check className="h-3 w-3 stroke-[3]" />
-                                ) : (
-                                  <span>{idx + 1}</span>
-                                )}
-                              </div>
-
-                              {/* Label & Icon */}
-                              <div className="flex items-center gap-1">
-                                <StepIcon
-                                  className={`h-3 w-3 ${
-                                    isDone
-                                      ? 'text-emerald-600'
-                                      : isCurrent
-                                      ? 'text-blue-600 font-semibold'
-                                      : 'text-slate-400'
-                                  }`}
-                                />
-                                <span
-                                  className={`text-[11px] font-semibold whitespace-nowrap ${
-                                    isCurrent
-                                      ? 'text-blue-700 font-bold'
-                                      : isDone
-                                      ? 'text-slate-700'
-                                      : 'text-slate-400'
-                                  }`}
-                                >
-                                  {step.label}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Connecting Line Between Steps */}
-                            {idx < stepperSteps.length - 1 && (
-                              <div
-                                className={`h-0.5 w-3 sm:w-4 mx-0.5 rounded-full transition-colors ${
-                                  idx < stepIdx || isTournamentCompleted(tournament.status)
-                                    ? 'bg-emerald-400'
-                                    : 'bg-slate-200'
-                                }`}
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-              </div>
+            {/* Mobile Metadata Container */}
+            <div className="block lg:hidden space-y-3 sm:space-y-4">
+              {renderMetadataCard()}
             </div>
 
             {/* Checklist & Transition Controls (from Stepper) */}
@@ -787,7 +896,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => handleManageNavigation({ section: tab.id })}
+                    onClick={() => handleManageNavigation(tab.id)}
                     className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-2xs ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-sm font-bold'
@@ -821,8 +930,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             courts={s.courts}
             statusLabel={tournamentStatusLabel}
             onOpenOperations={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-            onOpenRegistration={() => handleManageNavigation({ section: 'registration' })}
-            onOpenSchedule={() => handleManageNavigation({ section: 'court_schedule' })}
+            onOpenRegistration={() => handleManageNavigation('registration')}
+            onOpenSchedule={() => handleManageNavigation('court_schedule')}
             onSelectDivision={(divisionId) => s.setSelectedDivisionId(divisionId)}
             onOpenBracket={handleOpenManageBracket}
           />
@@ -990,7 +1099,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </p>
                 <Button
                   type="button"
-                  onClick={() => handleManageNavigation({ section: 'schedule' })}
+                  onClick={() => handleManageNavigation('schedule')}
                   className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
                 >
                   Thiết lập sân bãi ngay
@@ -1085,6 +1194,20 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         )}
         </div>
+
+        {/* Mobile Contact Container */}
+        <div className="block lg:hidden">
+          {renderContactCard()}
+        </div>
+      </div>
+
+      {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
+      <div className="hidden lg:block lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
+        {renderMetadataCard()}
+        {renderContactCard()}
+      </div>
+    </div>
+  </div>
 
         {/* Stage config modal */}
         {s.selectedStage && s.selectedRoundNumber !== null && (
@@ -1550,9 +1673,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </ModalContent>
           </Modal>
         )}
-          </main>
-        </div>
-      </div>
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={typeof window !== 'undefined' ? `${window.location.origin}/tournaments/${tournament.id}` : ''}
+        title={tournament.name}
+      />
     </div>
   );
 }

@@ -652,8 +652,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               onChecklistNavigate={handleChecklistNavigate}
             />
 
-            {/* Divisions Selector: Only shown when relevant to division-specific tasks */}
-            {['bracket', 'registration', 'court_schedule', 'schedule'].includes(activeSection) && (
+            {/* Divisions Selector: Sleek Horizontal Scrollable Cards */}
             <div id="manage-divisions-section" className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
@@ -754,7 +753,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
               )}
             </div>
-            )}
 
         <div id="manage-content-area" className="scroll-mt-24">
         {activeSection === 'overview' ? (

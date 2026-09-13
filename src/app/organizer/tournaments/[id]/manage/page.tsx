@@ -1223,6 +1223,30 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
+        {/* Progress Stepper & Milestone Checklist - At the very top */}
+        {s.tournament && (
+          <div className="mb-4">
+            <TournamentStepper
+              tournament={s.tournament}
+              onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
+              onNextStep={s.handleTournamentStepTransition}
+              publishFeeAmount={s.publishFeeAmount}
+              isLoading={s.isLoading || s.isPayingPublishFee}
+              onOpenTournament={s.handleConfirmOpen}
+              isOpening={s.isOpening}
+              isEndModalOpen={s.isEndModalOpen}
+              setIsEndModalOpen={s.setIsEndModalOpen}
+              handleConfirmEnd={s.handleConfirmEnd}
+              isEnding={s.isEnding}
+              endChecklist={s.endChecklist}
+              participants={s.participants}
+              divisions={s.divisions}
+              matches={s.matches}
+              onChecklistNavigate={handleChecklistNavigate}
+            />
+          </div>
+        )}
+
         {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
           {/* Left Column: Hero Banner + Mobile Metadata + Stepper + Tabs + Tab Content */}

@@ -929,18 +929,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               {renderMetadataCard()}
             </div>
 
-            {/* Horizontal Tabs Bar (Đặt ngay dưới banner chuẩn phong cách Hình 1) */}
+            {/* Horizontal Tabs Bar (Khớp 100% các tab xem/quản lý: Giới thiệu, Vận động viên, Bảng đấu, Lịch thi đấu) */}
             <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-3 no-scrollbar pb-1">
               {[
                 { id: 'overview' as const, label: 'Giới thiệu', icon: LayoutDashboard },
                 { id: 'registration' as const, label: 'Vận động viên', icon: Users, badge: s.participants.length },
                 { id: 'bracket' as const, label: 'Bảng đấu', icon: Trophy },
                 { id: 'court_schedule' as const, label: 'Lịch thi đấu', icon: CalendarDays },
-                { id: 'basic' as const, label: 'Cài đặt giải', icon: Info },
-                { id: 'schedule' as const, label: 'Sân & Địa điểm', icon: MapPin },
-                { id: 'finance' as const, label: 'Tài chính', icon: DollarSign },
-                { id: 'permissions' as const, label: 'Trọng tài', icon: ShieldCheck, badge: pendingRefereeCount > 0 ? pendingRefereeCount : undefined },
-                { id: 'livestream' as const, label: 'Livestream', icon: Video },
               ].map((tab) => {
                 const isActive = activeSection === tab.id;
                 const TabIcon = tab.icon;
@@ -973,128 +968,106 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
             {/* Tab Content Container - Exact white rounded card from Image 1 */}
             <div id="manage-content-area" className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3.5 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden scroll-mt-24">
-              {/* "NỘI DUNG THI ĐẤU" Accordion / Vertical List - EXACTLY matching Image 1 */}
-              <div className="mb-4" aria-label={translate('divisions.title') || 'Nội dung thi đấu'}>
-                <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {translate('divisions.title') || 'Nội dung thi đấu'}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => { s.resetDivisionEditor(getDefaultDivisionName()); s.setIsCreateDivisionModalOpen(true); }}
-                    disabled={s.divisions.length >= 20 || isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
-                    className="font-bold text-xs flex items-center gap-1 h-7 px-2.5 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 cursor-pointer disabled:opacity-50 shadow-2xs"
-                    title={s.divisions.length >= 20 ? translate('divisions.maxLimitTitle') : translate('divisions.addTitle')}
-                  >
-                    <Plus className="w-3 h-3 text-blue-600" />
-                    <span>Thêm nội dung</span>
-                  </Button>
-                </div>
+              {/* "NỘI DUNG THI ĐẤU" Accordion / Vertical List - Shown on non-overview tabs */}
+              {activeSection !== 'overview' && (
+                <div className="mb-4" aria-label={translate('divisions.title') || 'Nội dung thi đấu'}>
+                  <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      {translate('divisions.title') || 'Nội dung thi đấu'}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { s.resetDivisionEditor(getDefaultDivisionName()); s.setIsCreateDivisionModalOpen(true); }}
+                      disabled={s.divisions.length >= 20 || isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
+                      className="font-bold text-xs flex items-center gap-1 h-7 px-2.5 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 cursor-pointer disabled:opacity-50 shadow-2xs"
+                      title={s.divisions.length >= 20 ? translate('divisions.maxLimitTitle') : translate('divisions.addTitle')}
+                    >
+                      <Plus className="w-3 h-3 text-blue-600" />
+                      <span>Thêm nội dung</span>
+                    </Button>
+                  </div>
 
-                {s.divisions.length > 0 && (
-                  <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-slate-50/40">
-                    {s.divisions.map((div) => {
-                      const isActive = div.id === s.selectedDivisionId;
-                      const divMatches = s.matches.filter((m) => m.divisionId === div.id);
-                      const divCompleted = divMatches.filter((m) => m.status === 'COMPLETED').length;
-                      const divTotal = divMatches.length;
-                      const divParticipantsCount = s.participants.filter(p => p.tournamentDivisionId === div.id || (p as any).divisionId === div.id).length;
-                      const capacityLabel = div.maxParticipants ? `${divParticipantsCount}/${div.maxParticipants}` : `${divParticipantsCount}`;
-                      const BracketIcon = getBracketFormatIcon(div.bracketType);
+                  {s.divisions.length > 0 && (
+                    <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-slate-50/40">
+                      {s.divisions.map((div) => {
+                        const isActive = div.id === s.selectedDivisionId;
+                        const divMatches = s.matches.filter((m) => m.divisionId === div.id);
+                        const divCompleted = divMatches.filter((m) => m.status === 'COMPLETED').length;
+                        const divTotal = divMatches.length;
+                        const divParticipantsCount = s.participants.filter(p => p.tournamentDivisionId === div.id || (p as any).divisionId === div.id).length;
+                        const capacityLabel = div.maxParticipants ? `${divParticipantsCount}/${div.maxParticipants}` : `${divParticipantsCount}`;
+                        const BracketIcon = getBracketFormatIcon(div.bracketType);
 
-                      return (
-                        <div
-                          key={div.id}
-                          className="flex items-center justify-between transition-colors hover:bg-slate-100/60 group"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => s.setSelectedDivisionId(div.id)}
-                            className={`flex min-h-[44px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 cursor-pointer ${
-                              isActive
-                                ? 'bg-blue-50/80 text-blue-950 font-bold'
-                                : 'text-slate-700'
-                            }`}
+                        return (
+                          <div
+                            key={div.id}
+                            className="flex items-center justify-between transition-colors hover:bg-slate-100/60 group"
                           >
-                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                              isActive
-                                ? 'bg-blue-600 text-white shadow-2xs'
-                                : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
-                            }`}>
-                              <BracketIcon className="h-4 w-4" aria-hidden="true" />
-                            </span>
-
-                            <div className="min-w-0 flex-1">
-                              <span className="block truncate text-xs sm:text-sm font-bold">
-                                {getDisplayDivisionName(div)}
-                              </span>
-                            </div>
-
-                            {divTotal > 0 && (
-                              <span className="inline-flex shrink-0 items-center text-[10px] font-semibold text-slate-500 mr-1">
-                                {divCompleted}/{divTotal} trận
-                              </span>
-                            )}
-
-                            <span
-                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-colors ${
-                                isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
+                            <button
+                              type="button"
+                              onClick={() => s.setSelectedDivisionId(div.id)}
+                              className={`flex min-h-[44px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 cursor-pointer ${
+                                isActive
+                                  ? 'bg-blue-50/80 text-blue-950 font-bold'
+                                  : 'text-slate-700'
                               }`}
                             >
-                              <Users className="h-3.5 w-3.5" aria-hidden="true" />
-                              {capacityLabel}
-                            </span>
-                          </button>
+                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                isActive
+                                  ? 'bg-blue-600 text-white shadow-2xs'
+                                  : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
+                              }`}>
+                                <BracketIcon className="h-4 w-4" aria-hidden="true" />
+                              </span>
 
-                          {/* Quick Edit / Delete Controls for Organizer */}
-                          <div className="flex items-center gap-0.5 px-2">
-                            <button
-                              type="button"
-                              onClick={() => s.openDivisionEditor(div)}
-                              disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
-                              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Sửa nội dung"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate text-xs sm:text-sm font-bold">
+                                  {getDisplayDivisionName(div)}
+                                </span>
+                              </div>
+
+                              {divTotal > 0 && (
+                                <span className="inline-flex shrink-0 items-center text-[10px] font-semibold text-slate-500 mr-1">
+                                  {divCompleted}/{divTotal} trận
+                                </span>
+                              )}
+
+                              <span
+                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-colors ${
+                                  isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
+                                }`}
+                              >
+                                <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                                {capacityLabel}
+                              </span>
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => s.requestDeleteDivision(div)}
-                              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                              title="Xóa nội dung"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+
+                            {/* Quick Edit / Delete Controls for Organizer */}
+                            <div className="flex items-center gap-0.5 px-2">
+                              <button
+                                type="button"
+                                onClick={() => s.openDivisionEditor(div)}
+                                disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
+                                className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Sửa nội dung"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => s.requestDeleteDivision(div)}
+                                className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Xóa nội dung"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Tournament Stepper checklist collapsible if in overview */}
-              {activeSection === 'overview' && (
-                <div className="mb-6">
-                  <TournamentStepper
-                    tournament={s.tournament}
-                    onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
-                    onNextStep={s.handleTournamentStepTransition}
-                    publishFeeAmount={s.publishFeeAmount}
-                    isLoading={s.isLoading || s.isPayingPublishFee}
-                    onOpenTournament={s.handleConfirmOpen}
-                    isOpening={s.isOpening}
-                    isEndModalOpen={s.isEndModalOpen}
-                    setIsEndModalOpen={s.setIsEndModalOpen}
-                    handleConfirmEnd={s.handleConfirmEnd}
-                    isEnding={s.isEnding}
-                    endChecklist={s.endChecklist}
-                    participants={s.participants}
-                    divisions={s.divisions}
-                    matches={s.matches}
-                    onChecklistNavigate={handleChecklistNavigate}
-                  />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             {activeSection === 'overview' ? (
@@ -1240,22 +1213,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     </div>
                   )}
                 </div>
-
-                {/* Tournament Quick Manage Dashboard Overview */}
-                <TournamentManageOverview
-                  tournament={tournament}
-                  divisions={s.divisions}
-                  selectedDivisionId={s.selectedDivisionId}
-                  participants={s.participants}
-                  matches={s.matches}
-                  courts={s.courts}
-                  statusLabel={tournamentStatusLabel}
-                  onOpenOperations={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-                  onOpenRegistration={() => handleManageNavigation('registration')}
-                  onOpenSchedule={() => handleManageNavigation('court_schedule')}
-                  onSelectDivision={(divisionId) => s.setSelectedDivisionId(divisionId)}
-                  onOpenBracket={handleOpenManageBracket}
-                />
               </div>
             ) : (
           <div className="space-y-6">

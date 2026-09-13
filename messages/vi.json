@@ -4127,7 +4127,8 @@
     "rallyLabel": "Pha bóng",
     "tennisAutoProgressHint": "Tự tăng theo mốc tennis và tự chốt game khi đủ điều kiện luật.",
     "liteOpenRules": "Luật mở",
-    "liteCurrentScoreLabel": "Tỷ số hiện tại"
+    "liteCurrentScoreLabel": "Tỷ số hiện tại",
+    "liveRuleLabel": "Luật thi đấu"
   },
   "DeleteAccount": {
     "metaTitle": "Yêu cầu xóa tài khoản | Quản lý Giải đấu",

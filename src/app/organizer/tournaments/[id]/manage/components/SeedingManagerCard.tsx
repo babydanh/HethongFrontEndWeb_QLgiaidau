@@ -96,7 +96,7 @@ export function SeedingManagerCard({
   participants,
   onAssignSeedClick,
 }: SeedingManagerCardProps) {
-  const registrationTranslate = useTranslations('tournamentManage.registration');
+  const registrationTranslate = useTranslations('OrganizerRegistration');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const sensors = useSensors(

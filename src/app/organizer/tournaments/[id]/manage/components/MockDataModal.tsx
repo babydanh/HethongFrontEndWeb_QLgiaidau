@@ -40,7 +40,7 @@ export function MockDataModal({
   handleSeedMockData,
   handleClearMockData,
 }: MockDataModalProps) {
-  const registrationTranslate = useTranslations('TournamentManage.registration');
+  const registrationTranslate = useTranslations('OrganizerRegistration');
   const commonTranslate = useTranslations('Common');
 
   const selectedMockDivision = divisions.find((division) => division.id === selectedDivisionId);

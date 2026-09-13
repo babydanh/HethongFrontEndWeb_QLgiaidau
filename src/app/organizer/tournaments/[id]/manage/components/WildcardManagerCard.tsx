@@ -39,8 +39,8 @@ export function WildcardManagerCard({
   participants,
   handleRejectParticipant,
 }: WildcardManagerCardProps) {
-  const registrationTranslate = useTranslations('tournamentManage.registration');
-  const displayTranslate = useTranslations('tournaments.display');
+  const registrationTranslate = useTranslations('OrganizerRegistration');
+  const displayTranslate = useTranslations('TournamentDisplay');
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">

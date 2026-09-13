@@ -4127,7 +4127,8 @@
     "rallyLabel": "Rally",
     "tennisAutoProgressHint": "Automatically advances tennis points and closes the game when the rules are met.",
     "liteOpenRules": "Open rules",
-    "liteCurrentScoreLabel": "Current score"
+    "liteCurrentScoreLabel": "Current score",
+    "liveRuleLabel": "Match rules"
   },
   "DeleteAccount": {
     "metaTitle": "Request account deletion | Tournament Management",

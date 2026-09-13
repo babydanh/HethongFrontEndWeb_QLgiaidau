@@ -278,7 +278,7 @@ export default function Step4ReviewSubmit() {
       toast.success(translate('createdSuccess', { count: divisions.length }));
       reset();
 
-      router.push(`/organizer/tournaments/${tournamentId}/manage`);
+      router.push(`/tournaments/${tournamentId}`);
     } catch (error) {
       submittingRef.current = false;
       if (createdTournamentId) {

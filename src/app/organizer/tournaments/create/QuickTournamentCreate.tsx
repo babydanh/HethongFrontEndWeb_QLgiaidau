@@ -852,7 +852,7 @@ export default function QuickTournamentCreate() {
 
       toast.success(values.visibility === 'PUBLIC' ? translate('createdPendingApproval') : translate('createSuccess'));
       if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
-      router.push(`/organizer/tournaments/${response.id}/manage`);
+      router.push(`/tournaments/${response.id}`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, translate('createFailed')));
     } finally {
@@ -1757,7 +1757,7 @@ export default function QuickTournamentCreate() {
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
         onSuccess={(tournamentId) => {
-          router.push(`/organizer/tournaments/${tournamentId}/manage`);
+          router.push(`/tournaments/${tournamentId}`);
         }}
       />
     </main>

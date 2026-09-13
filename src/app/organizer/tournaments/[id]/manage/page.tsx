@@ -7,8 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3 } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
+import CircularImageCropModal from '@/components/common/CircularImageCropModal';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import { uploadApi } from '@/features/upload/api';
+import { tournamentsApi } from '@/features/tournaments/api';
+import { getErrorMessage } from '@/utils/error';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,6 +193,85 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isCourtWorkspaceFullscreen, setIsCourtWorkspaceFullscreen] = useState(false);
   const [activeSection, setActiveSection] = useState<ManageSection>('overview');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Direct Interactive Editing States for Banner, Logo, and Description
+  const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
+  const logoFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [pendingLogoSrc, setPendingLogoSrc] = useState('');
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isSavingDescInline, setIsSavingDescInline] = useState(false);
+
+  const handleDirectBannerFileChange = async (file: File) => {
+    try {
+      setIsUploadingBanner(true);
+      toast.loading('Đang tải ảnh bìa lên...', { id: 'direct-banner-upload' });
+      const res = await uploadApi.uploadImage(file);
+      if (res && res.url) {
+        s.setBannerUrl(res.url);
+        await tournamentsApi.updateTournament(id, { bannerUrl: res.url });
+        if (s.tournament?.parentId) {
+          await tournamentsApi.updateParentTournament(s.tournament.parentId, { bannerUrl: res.url });
+        }
+        toast.success('Đã cập nhật ảnh bìa giải đấu!', { id: 'direct-banner-upload' });
+        await s.fetchTournamentData();
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err), { id: 'direct-banner-upload' });
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  const handleDirectLogoFileSelect = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setPendingLogoSrc(reader.result);
+        setCropModalOpen(true);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDirectLogoCropConfirm = async (croppedBlob: Blob) => {
+    setCropModalOpen(false);
+    try {
+      toast.loading('Đang cập nhật logo...', { id: 'direct-logo-upload' });
+      const file = new File([croppedBlob], 'tournament_logo.png', { type: 'image/png' });
+      const res = await uploadApi.uploadImage(file);
+      if (res && res.url) {
+        s.setLogoUrl(res.url);
+        await tournamentsApi.updateTournament(id, { logoUrl: res.url });
+        if (s.tournament?.parentId) {
+          await tournamentsApi.updateParentTournament(s.tournament.parentId, { logoUrl: res.url });
+        }
+        toast.success('Đã cập nhật logo giải đấu thành công!', { id: 'direct-logo-upload' });
+        await s.fetchTournamentData();
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err), { id: 'direct-logo-upload' });
+    }
+  };
+
+  const handleSaveDescriptionInline = async () => {
+    try {
+      setIsSavingDescInline(true);
+      toast.loading('Đang lưu nội dung giới thiệu...', { id: 'inline-desc-save' });
+      await tournamentsApi.updateTournament(id, {
+        description: s.description,
+        prizeDescription: s.prizeDescription || null,
+      });
+      toast.success('Lưu nội dung giới thiệu thành công!', { id: 'inline-desc-save' });
+      setIsEditingDescription(false);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err), { id: 'inline-desc-save' });
+    } finally {
+      setIsSavingDescInline(false);
+    }
+  };
 
   useEffect(() => {
     const querySection = getManageSectionFromTab(new URLSearchParams(window.location.search).get('tab'));
@@ -380,40 +464,54 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     return (
       <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-4 shadow-xs">
         {/* Header / Brand with Logo */}
-        {hasTournamentLogo ? (
-          <div className="flex items-start gap-3.5">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-2 border-white shadow-md p-0.5 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200/80">
-              <img src={logoUrl || ''} alt={tournament.name} className="w-full h-full object-cover rounded-full" />
-            </div>
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
-                  isLive ? 'bg-rose-600 text-white' : isCompleted ? 'bg-slate-700 text-white' : 'bg-emerald-600 text-white'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
-                  {tournamentStatusLabel}
-                </span>
+        <div className="flex items-start gap-3.5">
+          {/* Logo Circle with Interactive Edit Overlay */}
+          <div className="relative group shrink-0">
+            <input
+              ref={logoFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleDirectLogoFileSelect(file);
+                  e.target.value = '';
+                }
+              }}
+            />
+            <div
+              onClick={() => logoFileInputRef.current?.click()}
+              title="Nhấn để đổi logo giải đấu"
+              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-2 border-white shadow-md p-0.5 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200/80 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+            >
+              {hasTournamentLogo ? (
+                <img src={logoUrl || ''} alt={tournament.name} className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <Trophy className="w-6 h-6 text-slate-400" />
+                </div>
+              )}
 
-                {tournament.category?.name && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs">
-                    {tournament.category.name}
-                  </span>
-                )}
-
-                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
-                  tournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
-                }`}>
-                  {tournament.isRanked ? '⭐ Có xếp hạng' : 'Giải phong trào'}
-                </span>
+              {/* Hover Camera Overlay */}
+              <div className="absolute inset-0 bg-black/45 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
+                <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-white drop-shadow" />
+                <span className="text-[8px] sm:text-[9px] font-extrabold text-white leading-none mt-0.5">Đổi logo</span>
               </div>
-
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2">
-                {tournament.name}
-              </h1>
             </div>
+
+            {/* Quick Badge Button */}
+            <button
+              type="button"
+              onClick={() => logoFileInputRef.current?.click()}
+              title="Đổi logo giải đấu"
+              className="absolute -bottom-1 -right-1 p-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md border-2 border-white cursor-pointer transition-transform hover:scale-110"
+            >
+              <Camera className="w-3 h-3" />
+            </button>
           </div>
-        ) : (
-          <div className="space-y-2">
+
+          <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
                 isLive ? 'bg-rose-600 text-white' : isCompleted ? 'bg-slate-700 text-white' : 'bg-emerald-600 text-white'
@@ -439,7 +537,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               {tournament.name}
             </h1>
           </div>
-        )}
+        </div>
 
         {/* Key Tournament Details Rows */}
         <div className="space-y-2.5 pt-3 border-t border-slate-100 text-slate-900 text-xs sm:text-sm">
@@ -764,8 +862,22 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
           {/* Left Column: Hero Banner + Mobile Metadata + Stepper + Tabs + Tab Content */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
-            {/* Banner Container */}
-            <div className="relative w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+            {/* Banner Container with Direct Interactive Change Overlay */}
+            <div className="relative group w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+              <input
+                ref={bannerFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleDirectBannerFileChange(file);
+                    e.target.value = '';
+                  }
+                }}
+              />
+
               <GalleryCarousel
                 images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
                 defaultBanner={tournament.bannerUrl || undefined}
@@ -773,6 +885,43 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 tournamentName={tournament.name}
                 className="w-full h-full object-cover"
               />
+
+              {/* Floating Camera Button on Top-Right of Banner */}
+              <div className="absolute top-3 right-3 z-20">
+                <button
+                  type="button"
+                  onClick={() => bannerFileInputRef.current?.click()}
+                  disabled={isUploadingBanner}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-bold shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
+                  title="Thay đổi ảnh bìa giải đấu"
+                >
+                  {isUploadingBanner ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang tải...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Đổi ảnh bìa</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Sub-bar hint on hover at bottom */}
+              <div
+                onClick={() => bannerFileInputRef.current?.click()}
+                className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 pt-8 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+              >
+                <div className="flex items-center gap-2 text-white text-xs font-semibold">
+                  <ImagePlus className="w-4 h-4 text-white drop-shadow" />
+                  <span className="drop-shadow">Nhấp vào bất kỳ đâu trên ảnh để đổi ảnh bìa giải đấu</span>
+                </div>
+                <span className="text-[11px] font-bold text-white bg-blue-600/90 px-2.5 py-1 rounded-lg border border-blue-400/50 shadow-xs">
+                  Chọn ảnh mới
+                </span>
+              </div>
             </div>
 
             {/* Mobile Metadata Container */}
@@ -949,21 +1098,166 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
               )}
             {activeSection === 'overview' ? (
-          <TournamentManageOverview
-            tournament={tournament}
-            divisions={s.divisions}
-            selectedDivisionId={s.selectedDivisionId}
-            participants={s.participants}
-            matches={s.matches}
-            courts={s.courts}
-            statusLabel={tournamentStatusLabel}
-            onOpenOperations={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-            onOpenRegistration={() => handleManageNavigation('registration')}
-            onOpenSchedule={() => handleManageNavigation('court_schedule')}
-            onSelectDivision={(divisionId) => s.setSelectedDivisionId(divisionId)}
-            onOpenBracket={handleOpenManageBracket}
-          />
-        ) : (
+              <div className="space-y-6">
+                {/* Introduction & Description Interactive Card */}
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                        <Edit3 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-900">Bài viết giới thiệu giải đấu</h3>
+                        <p className="text-[11px] text-slate-500 font-medium">Nội dung hiển thị công khai cho vận động viên và khán giả</p>
+                      </div>
+                    </div>
+
+                    {!isEditingDescription ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingDescription(true)}
+                        className="font-bold text-xs flex items-center gap-1.5 h-8 px-3 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 cursor-pointer shadow-2xs"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Sửa bài viết</span>
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            s.setDescription(tournament.description || '');
+                            s.setPrizeDescription(tournament.prizeDescription || '');
+                            setIsEditingDescription(false);
+                          }}
+                          disabled={isSavingDescInline}
+                          className="text-xs h-8 px-3"
+                        >
+                          Hủy
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveDescriptionInline}
+                          disabled={isSavingDescInline}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-3.5 rounded-lg shadow-sm"
+                        >
+                          {isSavingDescInline ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Đang lưu...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-3.5 h-3.5" />
+                              <span>Lưu giới thiệu</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {isEditingDescription ? (
+                    <div className="space-y-4 pt-1 animate-in fade-in duration-150">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Mô tả & Giới thiệu chi tiết giải
+                        </label>
+                        <RichTextEditor
+                          value={s.description}
+                          onChange={s.setDescription}
+                          placeholder="Nhập thông tin giới thiệu, thể lệ, quy định giải đấu..."
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Cơ cấu giải thưởng
+                        </label>
+                        <RichTextEditor
+                          value={s.prizeDescription}
+                          onChange={s.setPrizeDescription}
+                          placeholder="Mô tả các giải thưởng Nhất, Nhì, Ba, hiện kim, huy chương..."
+                        />
+                      </div>
+
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          onClick={handleSaveDescriptionInline}
+                          disabled={isSavingDescInline}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-5 py-2 rounded-xl shadow-md flex items-center gap-2"
+                        >
+                          {isSavingDescInline ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Đang lưu thay đổi...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4" />
+                              <span>Lưu bài viết giới thiệu</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      <section className="prose prose-slate max-w-none text-slate-800 text-xs sm:text-sm leading-relaxed editorjs-content-view">
+                        {s.description || tournament.description ? (
+                          <div dangerouslySetInnerHTML={{ __html: s.description || tournament.description || '' }} />
+                        ) : (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-6 text-center">
+                            <p className="text-xs text-slate-400 font-medium">
+                              Chưa có nội dung giới thiệu giải đấu.
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setIsEditingDescription(true)}
+                              className="mt-2.5 font-bold text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Plus className="w-3.5 h-3.5 mr-1" />
+                              Thêm bài viết giới thiệu
+                            </Button>
+                          </div>
+                        )}
+                      </section>
+
+                      {(s.prizeDescription || tournament.prizeDescription) && (
+                        <section className="border-t border-slate-100 pt-4">
+                          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-900">
+                            Cơ cấu giải thưởng
+                          </h4>
+                          <div
+                            className="prose prose-slate max-w-none text-slate-800 text-xs sm:text-sm leading-relaxed editorjs-content-view"
+                            dangerouslySetInnerHTML={{ __html: s.prizeDescription || tournament.prizeDescription || '' }}
+                          />
+                        </section>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Tournament Quick Manage Dashboard Overview */}
+                <TournamentManageOverview
+                  tournament={tournament}
+                  divisions={s.divisions}
+                  selectedDivisionId={s.selectedDivisionId}
+                  participants={s.participants}
+                  matches={s.matches}
+                  courts={s.courts}
+                  statusLabel={tournamentStatusLabel}
+                  onOpenOperations={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+                  onOpenRegistration={() => handleManageNavigation('registration')}
+                  onOpenSchedule={() => handleManageNavigation('court_schedule')}
+                  onSelectDivision={(divisionId) => s.setSelectedDivisionId(divisionId)}
+                  onOpenBracket={handleOpenManageBracket}
+                />
+              </div>
+            ) : (
           <div className="space-y-6">
         {/* Detail content */}
         {activeSection === 'basic' && <BasicInfoTab id={id} tournament={s.tournament} categories={s.categories}
@@ -1707,6 +2001,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={typeof window !== 'undefined' ? `${window.location.origin}/tournaments/${tournament.id}` : ''}
         title={tournament.name}
+      />
+
+      {/* Direct Interactive Logo Crop Modal */}
+      <CircularImageCropModal
+        isOpen={cropModalOpen}
+        imageSrc={pendingLogoSrc}
+        onClose={() => setCropModalOpen(false)}
+        onConfirm={handleDirectLogoCropConfirm}
       />
     </div>
   );

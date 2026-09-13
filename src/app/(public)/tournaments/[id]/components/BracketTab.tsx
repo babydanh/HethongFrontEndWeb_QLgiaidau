@@ -5,7 +5,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
-import { Archive, LayoutGrid, Maximize2, Trophy, Loader2, Crown, Medal, Sparkles, Zap, Settings } from 'lucide-react';
+import { Archive, LayoutGrid, Maximize2, Trophy, Loader2, Sparkles, Zap, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
@@ -591,7 +591,7 @@ export default function BracketTab({
                 ) : (
                   <>
                     <Zap className="w-3.5 h-3.5 text-blue-200" />
-                    Khởi tạo sơ đồ nhanh (Preset Lite)
+                    Khởi tạo sơ đồ
                   </>
                 )}
               </Button>
@@ -612,106 +612,6 @@ export default function BracketTab({
   // ── Main ──
   return (
     <div className="flex flex-col gap-5">
-      {!hideHonors && result?.finalized && result.awards.length > 0 && (() => {
-        const sortedAwards = [...result.awards].sort((a, b) => a.rank - b.rank);
-        return (
-          <section className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-b from-amber-50/50 via-white to-slate-50/30 p-4 sm:p-5 shadow-xs">
-            {/* Subtle background glow effect */}
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-400/10 blur-3xl" />
-            <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-blue-400/10 blur-3xl" />
-
-            <div className="relative mb-3.5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-amber-100/90 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 shadow-xs ring-2 ring-amber-300/40">
-                  <Trophy className="h-4.5 w-4.5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">{translate('honors')}</p>
-                  <h3 className="text-base font-black text-slate-900 sm:text-lg tracking-tight">{translate('officialResults')}</h3>
-                </div>
-              </div>
-              {resultError && <span className="text-[11px] font-semibold text-slate-400">{translate('syncingAgain')}</span>}
-            </div>
-
-            <div className="relative grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {sortedAwards.map((award) => {
-                const isRank1 = award.rank === 1;
-                const isRank2 = award.rank === 2;
-                const isRank3 = award.rank === 3;
-                const teamName = award.participant?.teamName ?? translate('unknownParticipant');
-                const rankLabel = isRank1
-                  ? (translate('champion') || 'QUÁN QUÂN')
-                  : isRank2
-                  ? (translate('runnerUp') || 'Á QUÂN')
-                  : award.shared
-                  ? translate('sharedRank', { rank: award.rank })
-                  : translate('rank', { rank: award.rank });
-
-                return (
-                  <div
-                    key={`${award.rank}-${award.participant?.participantId ?? teamName}`}
-                    className={cn(
-                      "relative flex flex-col justify-between rounded-xl p-3.5 sm:p-4 transition-all duration-200 hover:scale-[1.015]",
-                      isRank1
-                        ? "border-2 border-amber-300/90 bg-gradient-to-b from-amber-100/60 via-amber-50/30 to-white shadow-xs ring-2 ring-amber-400/20"
-                        : isRank2
-                        ? "border border-slate-300 bg-gradient-to-b from-slate-100/60 via-slate-50/30 to-white shadow-2xs"
-                        : isRank3
-                        ? "border border-amber-200/90 bg-gradient-to-b from-orange-50/50 via-amber-50/20 to-white shadow-2xs"
-                        : "border border-slate-200 bg-white shadow-2xs"
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider",
-                          isRank1
-                            ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-2xs"
-                            : isRank2
-                            ? "bg-slate-200 text-slate-700"
-                            : isRank3
-                            ? "bg-amber-100 text-amber-900"
-                            : "bg-slate-100 text-slate-600"
-                        )}
-                      >
-                        {isRank1 && <Crown className="h-3 w-3" />}
-                        {isRank2 && <Medal className="h-3 w-3" />}
-                        {isRank3 && <Medal className="h-3 w-3" />}
-                        <span>{rankLabel}</span>
-                      </span>
-                      <span
-                        className={cn(
-                          "text-xs font-black tabular-nums",
-                          isRank1 ? "text-amber-600" : isRank2 ? "text-slate-500" : isRank3 ? "text-amber-700" : "text-slate-400"
-                        )}
-                      >
-                        #{award.rank}
-                      </span>
-                    </div>
-
-                    <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "truncate font-black tracking-tight leading-snug",
-                          isRank1 ? "text-base sm:text-lg text-slate-900" : "text-sm sm:text-base text-slate-800"
-                        )}
-                        title={teamName}
-                      >
-                        {teamName}
-                      </p>
-                      {award.participant?.members && award.participant.members.length > 0 && (
-                        <p className="mt-1 truncate text-[11px] font-medium text-slate-500">
-                          {award.participant.members.map((m) => m.fullName).filter(Boolean).join(' • ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })()}
       {resultError && !result && (
         <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {translate('resultsLoadError')}

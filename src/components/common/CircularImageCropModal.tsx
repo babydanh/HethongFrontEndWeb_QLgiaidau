@@ -115,8 +115,8 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
         naturalHeight = 512;
       }
 
-      // Compute rendered size with object-cover style ratio
-      const scaleFactor = Math.max(VIEWPORT_SIZE / naturalWidth, VIEWPORT_SIZE / naturalHeight) * zoom;
+      // Compute rendered size matching object-fit: contain
+      const scaleFactor = Math.min(VIEWPORT_SIZE / naturalWidth, VIEWPORT_SIZE / naturalHeight) * zoom;
       const renderedWidth = naturalWidth * scaleFactor;
       const renderedHeight = naturalHeight * scaleFactor;
 

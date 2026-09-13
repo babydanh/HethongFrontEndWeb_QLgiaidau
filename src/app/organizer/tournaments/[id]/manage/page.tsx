@@ -28,6 +28,9 @@ import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
 import { CourtWorkspace } from './components/CourtWorkspace';
 import { RegistrationTab } from './components/RegistrationTab';
+import { RegistrationFormBuilder } from './components/RegistrationFormBuilder';
+import { WildcardManagerCard } from './components/WildcardManagerCard';
+import { SeedingManagerCard } from './components/SeedingManagerCard';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { FinanceTab } from './components/FinanceTab';
@@ -1498,7 +1501,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       <span>Nhấp để sửa</span>
                     </div>
 
-                    <section className="prose prose-slate max-w-none text-slate-800 text-sm sm:text-base leading-relaxed editorjs-content-view">
+                    <section className="prose prose-slate max-w-none text-slate-800 text-sm sm:text-base leading-relaxed editorjs-content-view max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
                       {s.description || tournament.description ? (
                         <div dangerouslySetInnerHTML={{ __html: s.description || tournament.description || '' }} />
                       ) : (
@@ -1776,16 +1779,74 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         )}
         </div>
 
-        {/* Mobile Contact Container */}
-        <div className="block lg:hidden">
+        {/* Mobile Contact & Registration Management Container */}
+        <div className="block lg:hidden space-y-4">
           {renderContactCard()}
+          {activeSection === 'registration' && s.tournament && (
+            <>
+              <RegistrationFormBuilder tournament={s.tournament} divisions={s.divisions} />
+              <WildcardManagerCard
+                divisions={s.divisions}
+                selectedDivisionId={s.selectedDivisionId}
+                setSelectedDivisionId={s.setSelectedDivisionId}
+                wildcardEmailOrPhone={s.wildcardEmailOrPhone}
+                setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
+                wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone}
+                setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
+                wildcardTeamName={s.wildcardTeamName}
+                setWildcardTeamName={s.setWildcardTeamName}
+                isAssigningWildcard={s.isAssigningWildcard}
+                handleAssignWildcard={s.handleAssignWildcard}
+                participants={s.participants}
+                handleRejectParticipant={s.handleRejectParticipant}
+              />
+              <SeedingManagerCard
+                seedingMethod={s.seedingMethod}
+                setSeedingMethod={s.setSeedingMethod}
+                isAutoSeeding={s.isAutoSeeding}
+                handleAutoSeed={s.handleAutoSeed}
+                handleSwapSeeds={s.handleSwapSeeds}
+                handleReorderSeeds={s.handleReorderSeeds}
+                participants={s.participants}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      {/* Right Column: Organizer, Title, Metadata Card & Actions (Sticky on Desktop) */}
-      <div className="hidden lg:block lg:col-span-5 xl:col-span-4 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] space-y-4 min-w-0">
+      {/* Right Column: Organizer, Title, Metadata Card & Actions (Unlocked, natural scroll) */}
+      <div className="hidden lg:block lg:col-span-5 xl:col-span-4 space-y-4 min-w-0">
         {renderMetadataCard()}
         {renderContactCard()}
+        {activeSection === 'registration' && s.tournament && (
+          <>
+            <RegistrationFormBuilder tournament={s.tournament} divisions={s.divisions} />
+            <WildcardManagerCard
+              divisions={s.divisions}
+              selectedDivisionId={s.selectedDivisionId}
+              setSelectedDivisionId={s.setSelectedDivisionId}
+              wildcardEmailOrPhone={s.wildcardEmailOrPhone}
+              setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
+              wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone}
+              setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
+              wildcardTeamName={s.wildcardTeamName}
+              setWildcardTeamName={s.setWildcardTeamName}
+              isAssigningWildcard={s.isAssigningWildcard}
+              handleAssignWildcard={s.handleAssignWildcard}
+              participants={s.participants}
+              handleRejectParticipant={s.handleRejectParticipant}
+            />
+            <SeedingManagerCard
+              seedingMethod={s.seedingMethod}
+              setSeedingMethod={s.setSeedingMethod}
+              isAutoSeeding={s.isAutoSeeding}
+              handleAutoSeed={s.handleAutoSeed}
+              handleSwapSeeds={s.handleSwapSeeds}
+              handleReorderSeeds={s.handleReorderSeeds}
+              participants={s.participants}
+            />
+          </>
+        )}
       </div>
     </div>
   </div>

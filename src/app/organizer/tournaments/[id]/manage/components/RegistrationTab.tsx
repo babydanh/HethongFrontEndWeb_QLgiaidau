@@ -53,23 +53,6 @@ import {
 import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
 import toast from 'react-hot-toast';
 import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  useSortable,
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface RegistrationProfileAvatarProps {
   name?: string | null;
@@ -172,46 +155,7 @@ interface RegistrationTabProps {
   refetchDivisionData?: () => Promise<unknown> | void;
 }
 
-// ─── SortableSeedItem (Declared outside to avoid recreation & re-mounting on each parent render) ───
-const SortableSeedItem = React.memo(function SortableSeedItem({ p, dragTitle }: { p: TournamentParticipant; dragTitle: string }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
 
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.3 : 1,
-    position: 'relative',
-    zIndex: isDragging ? 50 : undefined,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors select-none ${
-        isDragging
-          ? 'border-blue-300 bg-blue-50/40 shadow-sm'
-          : 'border-slate-100 bg-slate-50/60 hover:bg-slate-50 hover:border-slate-200'
-      }`}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors touch-none"
-          title={dragTitle}
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shrink-0">
-          #{p.seed}
-        </span>
-        <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
-      </div>
-    </div>
-  );
-});
 
 export function RegistrationTab({
   tournament,
@@ -318,7 +262,6 @@ export function RegistrationTab({
   const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
   const [editingSeed, setEditingSeed] = React.useState<string | null>(null);
   const [seedInputValue, setSeedInputValue] = React.useState('');
-  const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
   const [rosterActionId, setRosterActionId] = React.useState<string | null>(null);
   const [locallyLockedRosterIds, setLocallyLockedRosterIds] = React.useState<Set<string>>(new Set());
   const [isReopeningRegistration, setIsReopeningRegistration] = React.useState(false);
@@ -422,54 +365,13 @@ export function RegistrationTab({
     }
   };
 
-  // ─── Seed drag and drop ─────────────────────────────────────────────
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-  );
-
-  const handleSeedDragStart = (event: DragStartEvent) => {
-    setActiveDragId(String(event.active.id));
-  };
-
-  const handleSeedDragCancel = () => {
-    setActiveDragId(null);
-  };
-
-  const handleSeedDragEnd = (event: DragEndEvent) => {
-    setActiveDragId(null);
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const seeded = [...participants]
-      .filter((p) => p.seed != null)
-      .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
-
-    const oldIdx = seeded.findIndex((p) => p.id === active.id);
-    const newIdx = seeded.findIndex((p) => p.id === over.id);
-    if (oldIdx === -1 || newIdx === -1) return;
-
-    const reordered = arrayMove(seeded, oldIdx, newIdx).map((p, idx) => ({
-      participantId: p.id,
-      seed: idx + 1,
-    }));
-
-    if (handleReorderSeeds) {
-      void handleReorderSeeds(reordered);
-    } else {
-      const dragged = seeded[oldIdx];
-      const target = seeded[newIdx];
-      void handleSwapSeeds(dragged.id, target.id);
-    }
-  };
-
   const selectedMockDivision = divisions.find((division) => division.id === selectedDivisionId);
   const canSeedMock = divisions.length === 0 || Boolean(selectedMockDivision);
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
+    <div className="w-full space-y-6 animate-in fade-in duration-200">
       
-      {/* LEFT COLUMN: PUBLISH STATUS & REGISTRATION CONTROL (span-2) */}
-      <div className="lg:col-span-2 space-y-6 min-w-0">
+      {/* REGISTRATION MAIN CONTENT */}
+      <div className="w-full space-y-6 min-w-0">
         
         {/* Publish Status Card */}
         <div id="manage-registration-status-card" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm transition-all">
@@ -1075,294 +977,7 @@ export function RegistrationTab({
         </div>
       </div>
 
-      {/* RIGHT COLUMN: RECRUITMENT & WILDCARDS (span-1) */}
-      <div className="space-y-6 min-w-0">
-        {/* 1. Custom Registration Form Builder */}
-        <RegistrationFormBuilder tournament={tournament} divisions={divisions} />
-
-        {/* 2. Reserved Slots / Wildcards Direct Assignment (Positioned right below form builder) */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-blue-600" /> {registrationTranslate('wildcardTitle')}
-            </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">{registrationTranslate('wildcardDescription')}</p>
-          </div>
-
-          {/* Division Selector */}
-          {divisions.length > 1 && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('contentSelectionLabel')}</label>
-              <div className="grid grid-cols-1 gap-2">
-                {divisions.map((div) => {
-                  const isActive = div.id === selectedDivisionId;
-                  const genderLabel = div.genderRestriction === 'FEMALE'
-                    ? displayTranslate('femaleGender')
-                    : div.genderRestriction === 'MIXED'
-                      ? displayTranslate('mixedGender')
-                      : displayTranslate('maleGender');
-                  const matchLabel = div.matchType === 'SINGLES'
-                    ? displayTranslate('singlesFormat', { gender: genderLabel })
-                    : div.matchType === 'DOUBLES'
-                      ? div.genderRestriction === 'MIXED'
-                        ? displayTranslate('mixedDoublesFormat')
-                        : displayTranslate('doublesFormat', { gender: genderLabel })
-                      : displayTranslate('mixedDoublesFormat');
-                  const bracketLabel = div.bracketType === 'DOUBLE_ELIMINATION' ? displayTranslate('bracketDoubleElimination')
-                    : div.bracketType === 'ROUND_ROBIN' ? displayTranslate('bracketRoundRobin') : displayTranslate('bracketSingleElimination');
-                  const count = div._count?.participants ?? 0;
-                  return (
-                    <button
-                      key={div.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedDivisionId(div.id);
-                        setWildcardPartnerEmailOrPhone('');
-                      }}
-                      className={`relative w-full cursor-pointer rounded-lg border px-4 py-3 text-xs font-bold transition-all text-left ${
-                        isActive
-                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-650 hover:border-emerald-200 hover:text-emerald-700'
-                      }`}
-                    >
-                      <span className="block text-sm font-bold">{div.name}</span>
-                      <span className="block text-[10px] font-semibold text-slate-500 mt-0.5">
-                        {matchLabel} • {bracketLabel} • {registrationTranslate('profilesCount', { count })}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Selected division info */}
-          {(() => {
-            const selDiv = divisions.find(d => d.id === selectedDivisionId);
-            const isDoubles = selDiv?.matchType === 'DOUBLES' || selDiv?.matchType === 'MIXED_DOUBLES';
-            return (
-              <>
-                {/* Player 1 Email */}
-                <Input
-                  label={registrationTranslate('playerEmailPhoneLabel')}
-                  placeholder={registrationTranslate('playerEmailPhonePlaceholder')}
-                  value={wildcardEmailOrPhone}
-                  onChange={(e) => setWildcardEmailOrPhone(e.target.value)}
-                  className="bg-white text-xs h-10"
-                  disabled={isAssigningWildcard}
-                />
-
-                {/* Partner email for doubles */}
-                {isDoubles && (
-                  <Input
-                    label={registrationTranslate('teammateLabel')}
-                    placeholder={registrationTranslate('teammatePlaceholder')}
-                    value={wildcardPartnerEmailOrPhone}
-                    onChange={(e) => setWildcardPartnerEmailOrPhone(e.target.value)}
-                    className="bg-white text-xs h-10"
-                    disabled={isAssigningWildcard}
-                  />
-                )}
-
-                {/* Team Name */}
-                <Input
-                  label={registrationTranslate('wildcardTeamNameLabel')}
-                  placeholder={registrationTranslate('wildcardTeamNamePlaceholder')}
-                  value={wildcardTeamName}
-                  onChange={(e) => setWildcardTeamName(e.target.value)}
-                  className="bg-white text-xs h-10"
-                  disabled={isAssigningWildcard}
-                />
-
-                <Button
-                  onClick={handleAssignWildcard}
-                  disabled={isAssigningWildcard || !wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
-                >
-                  {isAssigningWildcard ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {registrationTranslate('assigningWildcard')}</>
-                  ) : (
-                    <><CheckCircle className="w-3.5 h-3.5" /> {registrationTranslate('assignWildcard')}</>
-                  )}
-                </Button>
-              </>
-            );
-          })()}
-
-          {/* Wildcard Participants List */}
-          {(() => {
-            const wildcards = participants.filter(p => p.isWildcard);
-            if (wildcards.length === 0) return null;
-            return (
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">
-                  {registrationTranslate('assignedWildcards', { count: wildcards.length })}
-                </p>
-                <div className="space-y-2">
-                  {wildcards.map((p) => {
-                    const divName = divisions.find(d => d.id === p.tournamentDivisionId)?.name || '';
-                    return (
-                      <div key={p.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/40 px-3 py-2.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
-                            <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 shrink-0">
-                              {registrationTranslate('wildcardBadge')}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {p.members?.map(m => m.fullName).filter(Boolean).join(', ') || registrationTranslate('noName')}
-                            {divName ? ` • ${divName}` : ''}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (confirm(registrationTranslate('wildcardRemoveConfirm', { name: p.teamName }))) {
-                              // handleRemoveWildcard(p.id)
-                            }
-                          }}
-                          className="ml-2 rounded-lg p-1.5 text-rose-500 hover:bg-rose-100 transition-colors"
-                          title={registrationTranslate('removeWildcard')}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* 3. Seeding */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <Shuffle className="w-4 h-4 text-purple-600" /> {registrationTranslate('seedingTitle')}
-            </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">{registrationTranslate('seedingDescription')}</p>
-          </div>
-
-          {/* Seeding method */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('seedingMethodLabel')}</label>
-            <select
-              value={seedingMethod}
-              onChange={(e) => setSeedingMethod(e.target.value as 'ELO' | 'RANDOM' | 'MANUAL')}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="MANUAL">{registrationTranslate('manualSeeding')}</option>
-              <option value="ELO">{registrationTranslate('eloSeeding')}</option>
-              <option value="RANDOM">{registrationTranslate('randomSeeding')}</option>
-            </select>
-          </div>
-
-          {/* Auto seeding button for ELO or RANDOM */}
-          {(seedingMethod === 'ELO' || seedingMethod === 'RANDOM') && (
-            <Button
-              onClick={handleAutoSeed}
-              disabled={isAutoSeeding || participants.length < 2}
-              className="w-full text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none font-bold"
-            >
-              {isAutoSeeding ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {registrationTranslate('seedingInProgress')}</>
-              ) : (
-                <><Shuffle className="w-3.5 h-3.5" /> {registrationTranslate('autoSeed')}</>
-              )}
-            </Button>
-          )}
-
-          {/* Manual seed list (draggable up/down) */}
-          {seedingMethod === 'MANUAL' && (
-            <div className="space-y-1">
-              {(() => {
-                const seeded = [...participants]
-                  .filter((p) => p.seed != null)
-                  .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
-                const unseeded = [...participants]
-                  .filter((p) => p.seed == null);
-
-                if (participants.length === 0) {
-                  return (
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
-                      <Shuffle className="w-6 h-6 text-slate-300" />
-                      <p className="mt-2 text-sm font-bold text-slate-500">{registrationTranslate('noRegisteredTeams')}</p>
-                    </div>
-                  );
-                }
-
-                const activeDragParticipant = activeDragId
-                  ? participants.find((p) => p.id === activeDragId)
-                  : null;
-
-                return (
-                  <>
-                    {seeded.length > 0 && (
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={handleSeedDragStart}
-                        onDragEnd={handleSeedDragEnd}
-                        onDragCancel={handleSeedDragCancel}
-                      >
-                        <SortableContext items={seeded.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                          <div className="space-y-1">
-                            {seeded.map((p) => (
-                              <SortableSeedItem key={p.id} p={p} dragTitle={registrationTranslate('dragToSort')} />
-                            ))}
-                          </div>
-                        </SortableContext>
-                        <DragOverlay>
-                          {activeDragParticipant ? (
-                            <div className="flex items-center justify-between rounded-lg border border-blue-400 bg-white px-3 py-2.5 shadow-xl ring-2 ring-blue-500/20 select-none">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="p-1 text-blue-600">
-                                  <GripVertical className="w-4 h-4" />
-                                </span>
-                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0 shadow-sm">
-                                  #{activeDragParticipant.seed}
-                                </span>
-                                <span className="text-sm font-bold text-slate-900 truncate">{activeDragParticipant.teamName}</span>
-                              </div>
-                            </div>
-                          ) : null}
-                        </DragOverlay>
-                      </DndContext>
-                    )}
-                    {unseeded.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-dashed border-slate-200">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                          {registrationTranslate('unseededCount', { count: unseeded.length })}
-                        </p>
-                        <div className="space-y-1">
-                          {unseeded.map((p) => (
-                            <div key={p.id} className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2.5">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 text-xs font-bold shrink-0">
-                                  ?
-                                </span>
-                                <span className="text-sm font-bold text-slate-500 truncate">{p.teamName}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleSeedEditStart(p.id, null)}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
-                              >
-                                {registrationTranslate('assignSeed')}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          )}
-        </div>
+      {/* Wildcard and Seeding are now rendered in the main right column of the manage page */}
 
         {selectedParticipant && (
           <Modal open={true} onOpenChange={(open) => { if (!open) setSelectedParticipant(null); }}>
@@ -1604,7 +1219,5 @@ export function RegistrationTab({
         />
 
       </div>
-
-    </div>
   );
 }

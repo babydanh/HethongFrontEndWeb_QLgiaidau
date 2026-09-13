@@ -35,6 +35,7 @@ import {
 } from '@/utils/exportTournament';
 import SmartFormImportModal from './SmartFormImportModal';
 import { RegistrationFormBuilder } from './RegistrationFormBuilder';
+import { MockDataModal } from './MockDataModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
   getParticipantStatusClassName,
@@ -270,6 +271,7 @@ export function RegistrationTab({
   refetchDivisionData,
 }: RegistrationTabProps) {
   const [isSmartImportOpen, setIsSmartImportOpen] = React.useState(false);
+  const [isMockDataModalOpen, setIsMockDataModalOpen] = React.useState(false);
   const [selectedParticipant, setSelectedParticipant] = React.useState<TournamentParticipant | null>(null);
   const registrationFormFields = React.useMemo(
     () => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)).fields,
@@ -912,7 +914,19 @@ export function RegistrationTab({
                   <th className="min-w-[160px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
                   <th className="min-w-[180px] pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
                   <th className="min-w-[100px] pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
-                  <th className="min-w-[120px] pb-3 text-right">{registrationTranslate('paymentHeader')}</th>
+                  <th className="min-w-[130px] pb-3 text-right">
+                    <div className="inline-flex items-center justify-end gap-1.5">
+                      <span>{registrationTranslate('paymentHeader')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsMockDataModalOpen(true)}
+                        title="Thử nghiệm VĐV ảo (chỉ dùng để test)"
+                        className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors border border-blue-200/80 cursor-pointer shadow-2xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1061,240 +1075,12 @@ export function RegistrationTab({
         </div>
       </div>
 
-      {/* RIGHT COLUMN: TESTING & WILDCARDS (span-1) */}
+      {/* RIGHT COLUMN: RECRUITMENT & WILDCARDS (span-1) */}
       <div className="space-y-6 min-w-0">
-        {/* Custom Registration Form Builder */}
+        {/* 1. Custom Registration Form Builder */}
         <RegistrationFormBuilder tournament={tournament} divisions={divisions} />
 
-        {/* Mock Participant Testing Panel */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> {registrationTranslate('mockDataTitle')}
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 font-semibold">
-              {registrationTranslate('mockDataDescription')}
-            </p>
-          </div>
-
-          <div className={`rounded-lg border px-3 py-2 text-xs ${
-            canSeedMock
-              ? 'border-blue-100 bg-blue-50 text-blue-800'
-              : 'border-amber-200 bg-amber-50 text-amber-800'
-          }`}>
-            <span className="font-semibold">{registrationTranslate('selectedDivisionLabel')}: </span>
-            {selectedMockDivision ? (
-              <>
-                <strong>{selectedMockDivision.name}</strong>
-                <span className={`ml-1.5 font-bold px-1.5 py-0.5 rounded text-[10px] ${
-                  selectedMockDivision.matchType === 'SINGLES'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {selectedMockDivision.matchType === 'SINGLES' ? registrationTranslate('singlesMockBadge') : registrationTranslate('doublesMockBadge')}
-                </span>
-              </>
-            ) : divisions.length > 0 ? (
-              <span className="font-bold text-amber-700">{registrationTranslate('selectDivisionWarning')}</span>
-            ) : (
-              <span className="font-semibold">{registrationTranslate('generalFormat', { format: tournament.matchType === 'SINGLES' ? registrationTranslate('singlesShort') : registrationTranslate('doublesShort') })}</span>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('virtualAthletesLabel')}</label>
-              <label className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors">
-                <Upload className="w-3 h-3" />
-                {registrationTranslate('loadFromExcel')}
-                <input
-                  type="file"
-                  accept=".xlsx, .xls, .csv"
-                  className="hidden"
-                  disabled={!canSeedMock || isSeedingMock || isClearingMock}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    try {
-                      const res = await parseParticipantsExcel(file);
-                      const p1Col = res.detectedMapping.player1NameCol || res.headers[0];
-                      const names = res.rows
-                        .map((r) => {
-                          const p1 = r[p1Col];
-                          const p2 = res.detectedMapping.player2NameCol ? r[res.detectedMapping.player2NameCol] : '';
-                          if (p1 && p2) return `${p1}\n${p2}`;
-                          return p1 ? String(p1) : '';
-                        })
-                        .filter(Boolean)
-                        .join('\n');
-                      setMockNamesText(names);
-                      toast.success(registrationTranslate('loadedAthletes', { count: res.rows.length }));
-                    } catch {
-                      toast.error(registrationTranslate('readFileError', { message: commonTranslate('tryAgainLater') }));
-                    }
-                  }}
-                />
-              </label>
-            </div>
-            <Textarea
-              value={mockNamesText}
-              onChange={(e) => setMockNamesText(e.target.value)}
-              placeholder={registrationTranslate('bulkParticipantsPlaceholder')}
-              className="h-32 text-xs resize-none font-semibold text-slate-700"
-              disabled={!canSeedMock || isSeedingMock || isClearingMock}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              onClick={handleSeedMockData}
-              disabled={!canSeedMock || isSeedingMock || isClearingMock || !mockNamesText.trim()}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
-            >
-              {isSeedingMock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              {registrationTranslate('generateVirtualAthletes')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleClearMockData}
-              disabled={!canSeedMock || isSeedingMock || isClearingMock}
-              className="border-rose-250 hover:bg-rose-50 text-rose-600 font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 animate-none"
-            >
-              {isClearingMock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-              {registrationTranslate('clearData')}
-            </Button>
-          </div>
-        </div>
-
-        {/* Seeding */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <Shuffle className="w-4 h-4 text-purple-600" /> {registrationTranslate('seedingTitle')}
-            </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">{registrationTranslate('seedingDescription')}</p>
-          </div>
-
-          {/* Seeding method */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('seedingMethodLabel')}</label>
-            <select
-              value={seedingMethod}
-              onChange={(e) => setSeedingMethod(e.target.value as 'ELO' | 'RANDOM' | 'MANUAL')}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="MANUAL">{registrationTranslate('manualSeeding')}</option>
-              <option value="ELO">{registrationTranslate('eloSeeding')}</option>
-              <option value="RANDOM">{registrationTranslate('randomSeeding')}</option>
-            </select>
-          </div>
-
-          {/* Auto seeding button for ELO or RANDOM */}
-          {(seedingMethod === 'ELO' || seedingMethod === 'RANDOM') && (
-            <Button
-              onClick={handleAutoSeed}
-              disabled={isAutoSeeding || participants.length < 2}
-              className="w-full text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none font-bold"
-            >
-              {isAutoSeeding ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {registrationTranslate('seedingInProgress')}</>
-              ) : (
-                <><Shuffle className="w-3.5 h-3.5" /> {registrationTranslate('autoSeed')}</>
-              )}
-            </Button>
-          )}
-
-          {/* Manual seed list (draggable up/down) */}
-          {seedingMethod === 'MANUAL' && (
-            <div className="space-y-1">
-              {(() => {
-                const seeded = [...participants]
-                  .filter((p) => p.seed != null)
-                  .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
-                const unseeded = [...participants]
-                  .filter((p) => p.seed == null);
-
-                if (participants.length === 0) {
-                  return (
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
-                      <Shuffle className="w-6 h-6 text-slate-300" />
-                      <p className="mt-2 text-sm font-bold text-slate-500">{registrationTranslate('noRegisteredTeams')}</p>
-                    </div>
-                  );
-                }
-
-                const activeDragParticipant = activeDragId
-                  ? participants.find((p) => p.id === activeDragId)
-                  : null;
-
-                return (
-                  <>
-                    {seeded.length > 0 && (
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={handleSeedDragStart}
-                        onDragEnd={handleSeedDragEnd}
-                        onDragCancel={handleSeedDragCancel}
-                      >
-                        <SortableContext items={seeded.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                          <div className="space-y-1">
-                            {seeded.map((p) => (
-                              <SortableSeedItem key={p.id} p={p} dragTitle={registrationTranslate('dragToSort')} />
-                            ))}
-                          </div>
-                        </SortableContext>
-                        <DragOverlay>
-                          {activeDragParticipant ? (
-                            <div className="flex items-center justify-between rounded-lg border border-blue-400 bg-white px-3 py-2.5 shadow-xl ring-2 ring-blue-500/20 select-none">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="p-1 text-blue-600">
-                                  <GripVertical className="w-4 h-4" />
-                                </span>
-                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0 shadow-sm">
-                                  #{activeDragParticipant.seed}
-                                </span>
-                                <span className="text-sm font-bold text-slate-900 truncate">{activeDragParticipant.teamName}</span>
-                              </div>
-                            </div>
-                          ) : null}
-                        </DragOverlay>
-                      </DndContext>
-                    )}
-                    {unseeded.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-dashed border-slate-200">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                          {registrationTranslate('unseededCount', { count: unseeded.length })}
-                        </p>
-                        <div className="space-y-1">
-                          {unseeded.map((p) => (
-                            <div key={p.id} className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2.5">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 text-xs font-bold shrink-0">
-                                  ?
-                                </span>
-                                <span className="text-sm font-bold text-slate-500 truncate">{p.teamName}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleSeedEditStart(p.id, null)}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
-                              >
-                                {registrationTranslate('assignSeed')}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          )}
-        </div>
-
-        {/* Reserved Slots / Wildcards Direct Assignment */}
+        {/* 2. Reserved Slots / Wildcards Direct Assignment (Positioned right below form builder) */}
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
@@ -1448,6 +1234,134 @@ export function RegistrationTab({
               </div>
             );
           })()}
+        </div>
+
+        {/* 3. Seeding */}
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <Shuffle className="w-4 h-4 text-purple-600" /> {registrationTranslate('seedingTitle')}
+            </h3>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">{registrationTranslate('seedingDescription')}</p>
+          </div>
+
+          {/* Seeding method */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{registrationTranslate('seedingMethodLabel')}</label>
+            <select
+              value={seedingMethod}
+              onChange={(e) => setSeedingMethod(e.target.value as 'ELO' | 'RANDOM' | 'MANUAL')}
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="MANUAL">{registrationTranslate('manualSeeding')}</option>
+              <option value="ELO">{registrationTranslate('eloSeeding')}</option>
+              <option value="RANDOM">{registrationTranslate('randomSeeding')}</option>
+            </select>
+          </div>
+
+          {/* Auto seeding button for ELO or RANDOM */}
+          {(seedingMethod === 'ELO' || seedingMethod === 'RANDOM') && (
+            <Button
+              onClick={handleAutoSeed}
+              disabled={isAutoSeeding || participants.length < 2}
+              className="w-full text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none font-bold"
+            >
+              {isAutoSeeding ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {registrationTranslate('seedingInProgress')}</>
+              ) : (
+                <><Shuffle className="w-3.5 h-3.5" /> {registrationTranslate('autoSeed')}</>
+              )}
+            </Button>
+          )}
+
+          {/* Manual seed list (draggable up/down) */}
+          {seedingMethod === 'MANUAL' && (
+            <div className="space-y-1">
+              {(() => {
+                const seeded = [...participants]
+                  .filter((p) => p.seed != null)
+                  .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
+                const unseeded = [...participants]
+                  .filter((p) => p.seed == null);
+
+                if (participants.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+                      <Shuffle className="w-6 h-6 text-slate-300" />
+                      <p className="mt-2 text-sm font-bold text-slate-500">{registrationTranslate('noRegisteredTeams')}</p>
+                    </div>
+                  );
+                }
+
+                const activeDragParticipant = activeDragId
+                  ? participants.find((p) => p.id === activeDragId)
+                  : null;
+
+                return (
+                  <>
+                    {seeded.length > 0 && (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleSeedDragStart}
+                        onDragEnd={handleSeedDragEnd}
+                        onDragCancel={handleSeedDragCancel}
+                      >
+                        <SortableContext items={seeded.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-1">
+                            {seeded.map((p) => (
+                              <SortableSeedItem key={p.id} p={p} dragTitle={registrationTranslate('dragToSort')} />
+                            ))}
+                          </div>
+                        </SortableContext>
+                        <DragOverlay>
+                          {activeDragParticipant ? (
+                            <div className="flex items-center justify-between rounded-lg border border-blue-400 bg-white px-3 py-2.5 shadow-xl ring-2 ring-blue-500/20 select-none">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="p-1 text-blue-600">
+                                  <GripVertical className="w-4 h-4" />
+                                </span>
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0 shadow-sm">
+                                  #{activeDragParticipant.seed}
+                                </span>
+                                <span className="text-sm font-bold text-slate-900 truncate">{activeDragParticipant.teamName}</span>
+                              </div>
+                            </div>
+                          ) : null}
+                        </DragOverlay>
+                      </DndContext>
+                    )}
+                    {unseeded.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-dashed border-slate-200">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                          {registrationTranslate('unseededCount', { count: unseeded.length })}
+                        </p>
+                        <div className="space-y-1">
+                          {unseeded.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 text-xs font-bold shrink-0">
+                                  ?
+                                </span>
+                                <span className="text-sm font-bold text-slate-500 truncate">{p.teamName}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSeedEditStart(p.id, null)}
+                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+                              >
+                                {registrationTranslate('assignSeed')}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {selectedParticipant && (
@@ -1672,6 +1586,21 @@ export function RegistrationTab({
           divisions={divisions}
           selectedDivisionId={selectedDivisionId}
           onSuccess={async () => { await refetchDivisionData?.(); }}
+        />
+
+        <MockDataModal
+          isOpen={isMockDataModalOpen}
+          onClose={() => setIsMockDataModalOpen(false)}
+          tournament={tournament}
+          divisions={divisions}
+          selectedDivisionId={selectedDivisionId}
+          setSelectedDivisionId={setSelectedDivisionId}
+          mockNamesText={mockNamesText}
+          setMockNamesText={setMockNamesText}
+          isSeedingMock={isSeedingMock}
+          isClearingMock={isClearingMock}
+          handleSeedMockData={handleSeedMockData}
+          handleClearMockData={handleClearMockData}
         />
 
       </div>

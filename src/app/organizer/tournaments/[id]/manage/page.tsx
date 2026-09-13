@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3 } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -35,6 +35,9 @@ import { PermissionsTab } from './components/PermissionsTab';
 import { LivestreamTab } from './components/LivestreamTab';
 import { TournamentManageOverview } from './components/TournamentManageOverview';
 import { type ManageSection } from './components/TournamentManageSidebar';
+import { VenueCourtsModal } from './components/VenueCourtsModal';
+import { CreateVenueModal } from './components/CreateVenueModal';
+import { EditVenueModal } from './components/EditVenueModal';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
@@ -269,6 +272,91 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error(getErrorMessage(err), { id: 'inline-desc-save' });
     } finally {
       setIsSavingDescInline(false);
+    }
+  };
+
+  // Quick edit states for Name, Dates, Contact, and Venue/Courts
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  const [isDatesModalOpen, setIsDatesModalOpen] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
+  const [isSavingDates, setIsSavingDates] = useState(false);
+
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [tempPhone, setTempPhone] = useState('');
+  const [tempEmail, setTempEmail] = useState('');
+  const [isSavingContact, setIsSavingContact] = useState(false);
+
+  // Modals for venue & courts management
+  const [selectedVenueForCourts, setSelectedVenueForCourts] = useState<any | null>(null);
+  const [selectedVenueForEdit, setSelectedVenueForEdit] = useState<any | null>(null);
+  const [isCreateVenueOpen, setIsCreateVenueOpen] = useState(false);
+
+  const handleSaveNameDirect = async () => {
+    const trimmed = tempName.trim();
+    if (!trimmed) {
+      toast.error('Tên giải đấu không được để trống!');
+      return;
+    }
+    setIsSavingName(true);
+    try {
+      s.setName(trimmed);
+      await tournamentsApi.updateTournament(id, { name: trimmed });
+      toast.success('Đã cập nhật tên giải đấu!');
+      setIsEditingName(false);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const handleSaveDatesDirect = async () => {
+    if (tempStartDate && tempEndDate && new Date(tempEndDate) <= new Date(tempStartDate)) {
+      toast.error('Ngày kết thúc phải sau ngày khai mạc!');
+      return;
+    }
+    setIsSavingDates(true);
+    try {
+      s.setStartDate(tempStartDate);
+      s.setEndDate(tempEndDate);
+      await tournamentsApi.updateTournament(id, {
+        startDate: tempStartDate ? new Date(tempStartDate).toISOString() : null,
+        endDate: tempEndDate ? new Date(tempEndDate).toISOString() : null,
+      });
+      toast.success('Đã cập nhật thời gian giải đấu!');
+      setIsDatesModalOpen(false);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingDates(false);
+    }
+  };
+
+  const handleSaveContactDirect = async () => {
+    setIsSavingContact(true);
+    try {
+      const nextContact = {
+        ...(s.contactInfo || {}),
+        phone: tempPhone.trim(),
+        email: tempEmail.trim(),
+      };
+      s.setContactInfo(nextContact);
+      await tournamentsApi.updateTournament(id, {
+        contactInfo: nextContact,
+      });
+      toast.success('Đã cập nhật thông tin liên hệ!');
+      setIsContactModalOpen(false);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingContact(false);
     }
   };
 
@@ -532,49 +620,176 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2">
-              {tournament.name}
-            </h1>
+            {/* Title with Quick Inline Edit */}
+            {isEditingName ? (
+              <div className="flex items-center gap-1.5 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveNameDirect();
+                    if (e.key === 'Escape') setIsEditingName(false);
+                  }}
+                  className="flex-1 text-sm font-bold text-slate-900 border border-blue-500 rounded-lg px-2.5 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white"
+                  autoFocus
+                  placeholder="Nhập tên giải đấu..."
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveNameDirect}
+                  disabled={isSavingName}
+                  className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs cursor-pointer disabled:opacity-50"
+                  title="Lưu tên"
+                >
+                  {isSavingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingName(false)}
+                  className="p-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg shadow-xs cursor-pointer"
+                  title="Hủy"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => {
+                  setTempName(tournament.name || '');
+                  setIsEditingName(true);
+                }}
+                className="group/title flex items-start gap-1.5 cursor-pointer rounded-lg p-1 -m-1 hover:bg-slate-100/80 transition-colors"
+                title="Bấm để sửa tên giải đấu"
+              >
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2 flex-1">
+                  {tournament.name}
+                </h1>
+                <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 mt-1" />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Key Tournament Details Rows */}
-        <div className="space-y-2.5 pt-3 border-t border-slate-100 text-slate-900 text-xs sm:text-sm">
-          {/* Dates */}
-          <div className="flex items-start gap-2.5">
-            <Calendar className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug">
-              {tournament.startDate ? (
-                <>
-                  {formatDate(tournament.startDate)}
-                  {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
-                </>
-              ) : 'Chưa xếp ngày'}
-            </p>
+        {/* Key Tournament Details Rows - Clickable and Interactive */}
+        <div className="space-y-2 pt-3 border-t border-slate-100 text-slate-900 text-xs sm:text-sm">
+          {/* Dates - Clickable */}
+          <div
+            onClick={() => {
+              setTempStartDate(tournament.startDate ? new Date(tournament.startDate).toISOString() : '');
+              setTempEndDate(tournament.endDate ? new Date(tournament.endDate).toISOString() : '');
+              setIsDatesModalOpen(true);
+            }}
+            className="group/row flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-blue-50/60 cursor-pointer transition-colors"
+            title="Bấm để thay đổi thời gian giải đấu"
+          >
+            <Calendar className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug flex items-center gap-1.5">
+                <span>
+                  {tournament.startDate ? (
+                    <>
+                      {formatDate(tournament.startDate)}
+                      {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
+                    </>
+                  ) : (
+                    <span className="text-amber-600 font-bold">Chưa xếp ngày thi đấu</span>
+                  )}
+                </span>
+                <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+              </p>
+              <span className="text-[10px] text-slate-400 font-medium">Bấm để chỉnh sửa ngày</span>
+            </div>
           </div>
 
-          {/* Location */}
-          <div className="flex items-start gap-2.5">
-            <MapPin className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-            <p className="font-semibold text-slate-800 text-xs sm:text-[13px] leading-relaxed break-words">
-              {locationLabel || 'Chưa cập nhật địa điểm'}
-            </p>
-          </div>
+          {/* Location & Courts - Detailed status according to manage logic */}
+          {(() => {
+            const defaultVenue = s.tournamentVenues?.find((v) => v.isDefault) || s.tournamentVenues?.[0];
+            const courtCount = defaultVenue?.courts?.length ?? s.courts.length;
+            const hasVenues = (s.tournamentVenues && s.tournamentVenues.length > 0) || Boolean(s.customVenueName || tournament.locationAddress);
 
-          {/* Divisions Count */}
-          <div className="flex items-center gap-2.5">
+            return (
+              <div
+                onClick={() => {
+                  if (defaultVenue) {
+                    setSelectedVenueForCourts(defaultVenue);
+                  } else if (s.tournamentVenues && s.tournamentVenues.length > 0) {
+                    setSelectedVenueForCourts(s.tournamentVenues[0]);
+                  } else {
+                    setIsCreateVenueOpen(true);
+                  }
+                }}
+                className={`group/row flex items-start gap-2.5 p-2 -mx-1.5 rounded-xl border transition-all cursor-pointer ${
+                  !hasVenues || courtCount === 0
+                    ? 'bg-amber-50/70 border-amber-200/90 hover:bg-amber-100/70'
+                    : 'bg-slate-50/50 border-slate-200/80 hover:bg-blue-50/50 hover:border-blue-200'
+                }`}
+                title="Bấm để quản lý địa điểm & tạo sân thi đấu (sân chính, sân phụ)"
+              >
+                <MapPin className={`w-4 h-4 shrink-0 mt-0.5 ${!hasVenues || courtCount === 0 ? 'text-amber-600' : 'text-blue-600'}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] leading-relaxed break-words">
+                      {locationLabel || 'Chưa thiết lập địa điểm'}
+                    </p>
+                    {defaultVenue?.isDefault && (
+                      <span className="rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[9px] px-1.5 py-0.5">
+                        ⭐ Sân chính
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                    {courtCount > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100/80 text-blue-800 font-bold text-[11px]">
+                        <Layers className="w-3 h-3 text-blue-600" />
+                        {courtCount} sân thi đấu
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[10px]">
+                        <AlertTriangle className="w-3 h-3 text-rose-600" />
+                        Chưa có sân • Bấm để tạo sân
+                      </span>
+                    )}
+
+                    <span className="text-[10px] text-blue-600 font-semibold group-hover/row:underline flex items-center gap-0.5">
+                      <Settings className="w-3 h-3" />
+                      Cài đặt sân
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Divisions Count - Clickable to jump to division/bracket tab */}
+          <div
+            onClick={() => handleManageNavigation('bracket')}
+            className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 cursor-pointer transition-colors"
+            title="Bấm để xem và thêm nội dung thi đấu"
+          >
             <Trophy className="w-4 h-4 text-slate-700 shrink-0" />
-            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] flex-1">
               {s.divisions.length} <span className="font-semibold text-slate-700">Nội dung thi đấu</span>
             </p>
+            <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover/row:opacity-100 transition-opacity">
+              Chi tiết &rarr;
+            </span>
           </div>
 
-          {/* Participants Count */}
-          <div className="flex items-center gap-2.5">
+          {/* Participants Count - Clickable to jump to participants tab */}
+          <div
+            onClick={() => handleManageNavigation('registration')}
+            className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 cursor-pointer transition-colors"
+            title="Bấm để xem danh sách vận động viên"
+          >
             <Users className="w-4 h-4 text-slate-700 shrink-0" />
-            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] flex-1">
               {s.participants.length} <span className="font-semibold text-slate-700">Số lượng hồ sơ</span>
             </p>
+            <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover/row:opacity-100 transition-opacity">
+              Xem DS &rarr;
+            </span>
           </div>
         </div>
 
@@ -775,9 +990,24 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
     return (
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
-        {hasContact && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">THÔNG TIN LIÊN HỆ</span>
+          <button
+            type="button"
+            onClick={() => {
+              setTempPhone(tournament.contactInfo?.phone || '');
+              setTempEmail(tournament.contactInfo?.email || '');
+              setIsContactModalOpen(true);
+            }}
+            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+          >
+            <Pencil className="w-3 h-3" />
+            <span>{hasContact ? 'Chỉnh sửa' : 'Thêm liên hệ'}</span>
+          </button>
+        </div>
+
+        {hasContact ? (
           <div className="space-y-2.5">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">THÔNG TIN LIÊN HỆ</span>
             {tournament.contactInfo?.phone && (
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-slate-400 shrink-0" />
@@ -820,10 +1050,22 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 );
               })}
           </div>
+        ) : (
+          <div
+            onClick={() => {
+              setTempPhone(tournament.contactInfo?.phone || '');
+              setTempEmail(tournament.contactInfo?.email || '');
+              setIsContactModalOpen(true);
+            }}
+            className="border border-dashed border-slate-200 rounded-lg p-3 text-center cursor-pointer hover:bg-blue-50/50 hover:border-blue-300 transition-colors"
+          >
+            <p className="text-xs font-bold text-slate-600">+ Bấm để thêm SĐT &amp; Email liên hệ của Ban tổ chức</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Giúp vận động viên dễ dàng liên lạc khi cần hỗ trợ</p>
+          </div>
         )}
 
         {/* ALWAYS show Organizer Block (Người sáng lập giải đấu) at bottom under contact info just like Image 1 */}
-        <div className={hasContact ? "pt-3 border-t border-slate-100" : ""}>
+        <div className="pt-3 border-t border-slate-100">
           {renderOrganizerBlock()}
         </div>
       </div>
@@ -1905,6 +2147,150 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         imageSrc={pendingLogoSrc}
         onClose={() => setCropModalOpen(false)}
         onConfirm={handleDirectLogoCropConfirm}
+      />
+
+      {/* Quick Edit Dates Modal */}
+      <Modal open={isDatesModalOpen} onOpenChange={setIsDatesModalOpen}>
+        <ModalContent className="bg-white rounded-xl p-5 max-w-md">
+          <ModalHeader>
+            <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              Thời gian tổ chức giải đấu
+            </ModalTitle>
+          </ModalHeader>
+          <div className="space-y-4 mt-4">
+            <DateTimePicker
+              label="Ngày khai mạc"
+              value={tempStartDate}
+              onChange={setTempStartDate}
+            />
+            <DateTimePicker
+              label="Ngày bế mạc"
+              value={tempEndDate}
+              onChange={setTempEndDate}
+            />
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDatesModalOpen(false)}
+                className="text-xs"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveDatesDirect}
+                disabled={isSavingDates}
+                className="bg-blue-600 text-white text-xs font-bold px-4"
+              >
+                {isSavingDates ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu thời gian'}
+              </Button>
+            </div>
+          </div>
+        </ModalContent>
+      </Modal>
+
+      {/* Quick Edit Contact Modal */}
+      <Modal open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+        <ModalContent className="bg-white rounded-xl p-5 max-w-md">
+          <ModalHeader>
+            <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Phone className="w-5 h-5 text-blue-600" />
+              Thông tin liên hệ Ban tổ chức
+            </ModalTitle>
+          </ModalHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Số điện thoại / Hotline</label>
+              <input
+                type="tel"
+                value={tempPhone}
+                onChange={(e) => setTempPhone(e.target.value)}
+                placeholder="VD: 0987654321"
+                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Email liên hệ</label>
+              <input
+                type="email"
+                value={tempEmail}
+                onChange={(e) => setTempEmail(e.target.value)}
+                placeholder="VD: btc.giaidau@gmail.com"
+                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsContactModalOpen(false)}
+                className="text-xs"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveContactDirect}
+                disabled={isSavingContact}
+                className="bg-blue-600 text-white text-xs font-bold px-4"
+              >
+                {isSavingContact ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu liên hệ'}
+              </Button>
+            </div>
+          </div>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal Cài đặt Sân của Địa điểm (Tạo sân đơn, tạo hàng loạt, đặt sân chính) */}
+      <VenueCourtsModal
+        isOpen={Boolean(selectedVenueForCourts)}
+        onClose={() => setSelectedVenueForCourts(null)}
+        venue={
+          selectedVenueForCourts
+            ? s.tournamentVenues?.find((v) => v.id === selectedVenueForCourts.id) || selectedVenueForCourts
+            : null
+        }
+        onAddCourt={async (venueId, name) => {
+          await s.handleAddVenueCourtDirect(venueId, name);
+        }}
+        onBatchAddCourts={async (venueId, count, prefix) => {
+          await s.handleAddVenueCourtsBatchDirect(venueId, count, prefix);
+        }}
+        onRemoveCourt={async (venueId, courtId) => {
+          await s.handleRemoveVenueCourtDirect(venueId, courtId);
+        }}
+        onSetDefaultVenue={async (venueId) => {
+          await s.handleSetDefaultTournamentVenue(venueId);
+        }}
+      />
+
+      {/* Modal Tạo Địa điểm & Cụm sân mới */}
+      <CreateVenueModal
+        isOpen={isCreateVenueOpen}
+        onClose={() => setIsCreateVenueOpen(false)}
+        provinces={s.provinces}
+        wards={s.wards}
+        setWards={s.setWards}
+        onCreateVenue={async (data) => {
+          await s.handleCreateTournamentVenue(data);
+          setIsCreateVenueOpen(false);
+        }}
+      />
+
+      {/* Modal Chỉnh sửa Địa điểm */}
+      <EditVenueModal
+        isOpen={Boolean(selectedVenueForEdit)}
+        onClose={() => setSelectedVenueForEdit(null)}
+        venue={selectedVenueForEdit}
+        provinces={s.provinces}
+        wards={s.wards}
+        setWards={s.setWards}
+        onUpdateVenue={async (venueId, data) => {
+          await s.handleUpdateTournamentVenue(venueId, data);
+          setSelectedVenueForEdit(null);
+        }}
       />
     </div>
   );

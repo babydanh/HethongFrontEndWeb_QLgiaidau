@@ -540,6 +540,7 @@ export function useManageState(id: string) {
       if (r.data && Array.isArray(r.data)) {
         setDivisions(r.data);
         divisionsRef.current = r.data;
+        const previousDivisionId = selectedDivisionIdRef.current;
         const reqDiv = searchParams.get('divisionId');
         let nextDivId = '';
         if (reqDiv && r.data.some(d => d.id === reqDiv)) {
@@ -549,7 +550,14 @@ export function useManageState(id: string) {
         }
         setSelectedDivisionId(nextDivId);
         selectedDivisionIdRef.current = nextDivId;
-        void refetchDivisionData(nextDivId, r.data);
+
+        // A changed selection is refreshed by the selectedDivisionId effect
+        // below. Only refresh here when the selection stayed the same (for
+        // example after editing/deleting a division), otherwise the initial
+        // load would start the same bracket/matches chain twice.
+        if (nextDivId && previousDivisionId === nextDivId) {
+          void refetchDivisionData(nextDivId, r.data);
+        }
       } else {
         setDivisions([]);
         divisionsRef.current = [];

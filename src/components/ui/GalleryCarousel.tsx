@@ -14,6 +14,7 @@ interface GalleryCarouselProps {
   categoryName?: string | null;
   tournamentName?: string;
   className?: string;
+  hideZoomHint?: boolean;
 }
 
 export default function GalleryCarousel({
@@ -22,6 +23,7 @@ export default function GalleryCarousel({
   categoryName,
   tournamentName,
   className = '',
+  hideZoomHint = true,
 }: GalleryCarouselProps) {
   const translate = useTranslations('Common');
   const allImages = [
@@ -157,11 +159,13 @@ export default function GalleryCarousel({
           ))}
         </div>
 
-        {/* Zoom Hint Badge on Hover */}
-        <div className="absolute top-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/10 shadow-md">
-          <ZoomIn className="w-3.5 h-3.5 text-white" />
-          <span>{translate('galleryZoomHint')}</span>
-        </div>
+        {/* Zoom Hint Badge on Hover (Hidden by default, user clicks anywhere to zoom) */}
+        {!hideZoomHint && (
+          <div className="absolute top-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/10 shadow-md">
+            <ZoomIn className="w-3.5 h-3.5 text-white" />
+            <span>{translate('galleryZoomHint')}</span>
+          </div>
+        )}
 
         {/* Navigation Arrows */}
         {allImages.length > 1 && (

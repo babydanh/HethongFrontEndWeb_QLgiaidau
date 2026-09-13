@@ -26,12 +26,17 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Reset zoom & pan when image changes
+  // Reset zoom & pan when image changes, and check if cached
   useEffect(() => {
     if (isOpen) {
       setZoom(1);
       setPan({ x: 0, y: 0 });
-      setImgLoaded(false);
+      // Check if the image element is already cached/complete
+      if (imgRef.current?.complete && imgRef.current?.naturalWidth > 0) {
+        setImgLoaded(true);
+      } else {
+        setImgLoaded(false);
+      }
     }
   }, [isOpen, imageSrc]);
 
@@ -205,8 +210,17 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
               ref={imgRef}
               src={imageSrc}
               alt="Crop target"
-              crossOrigin="anonymous"
+              crossOrigin={imageSrc.startsWith('data:') ? undefined : 'anonymous'}
               onLoad={() => setImgLoaded(true)}
+              onError={(e) => {
+                // If crossOrigin fails with CORS error on external image, fallback without crossOrigin
+                const img = e.currentTarget;
+                if (img.getAttribute('crossorigin')) {
+                  img.removeAttribute('crossorigin');
+                  img.src = imageSrc;
+                }
+                setImgLoaded(true);
+              }}
               draggable={false}
               className="max-w-none pointer-events-none select-none transition-transform duration-75"
               style={{

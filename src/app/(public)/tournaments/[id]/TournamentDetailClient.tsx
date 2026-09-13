@@ -9,7 +9,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentResult, To
 import type { Match } from '@/types/match';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Plus, Layers } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Settings } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -23,8 +23,6 @@ import { hasPublishedTournamentResults } from '@/features/tournaments/result-ava
 import RegisterModal from './components/RegisterModal';
 import CommunityTournamentRosterWidget from '@/app/(public)/communities/[id]/components/CommunityTournamentRosterWidget';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { TournamentOwnerTopBar } from './components/TournamentOwnerTopBar';
-import { CreateDivisionInlineModal } from './components/CreateDivisionInlineModal';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import { triggerShare } from '@/utils/share.util';
 import ShareModal from '@/components/common/ShareModal';
@@ -218,7 +216,6 @@ const commonTranslate = useTranslations('Common');
     initialCompletedDivisionIds ?? {}
   );
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
   const [myRegistration, setMyRegistration] = useState<MyRegistrationResponse | null>(null);
   const [isRegistrationStatusLoading, setIsRegistrationStatusLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -641,72 +638,7 @@ const commonTranslate = useTranslations('Common');
     }
   }, [tournament?.communityId]);
 
-  const [isTransitionLoading, setIsTransitionLoading] = useState(false);
 
-  const handleTournamentRefresh = useCallback(async () => {
-    try {
-      const [tourRes, divRes] = await Promise.all([
-        tournamentsApi.getTournamentById(tournamentId),
-        divisionsApi.getDivisions(tournamentId),
-      ]);
-      if (tourRes.data) {
-        setTournament(tourRes.data);
-      }
-      if (divRes.data) {
-        setDivisionsList(divRes.data);
-      }
-    } catch {
-      // Keep existing data if background refresh fails
-    }
-  }, [tournamentId]);
-
-  const handleStepTransition = async (nextStatus: Tournament['status']) => {
-    try {
-      setIsTransitionLoading(true);
-      await tournamentsApi.updateTournament(tournamentId, { status: nextStatus });
-      toast.success('Đã cập nhật trạng thái giải đấu!');
-      await handleTournamentRefresh();
-    } catch (err: unknown) {
-      const errorMsg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Không thể cập nhật trạng thái';
-      toast.error(errorMsg);
-    } finally {
-      setIsTransitionLoading(false);
-    }
-  };
-
-  const handleConfirmOpen = async () => {
-    try {
-      setIsTransitionLoading(true);
-      await tournamentsApi.updateTournament(tournamentId, { status: 'IN_PROGRESS' });
-      toast.success('Giải đấu đã chính thức khởi tranh!');
-      await handleTournamentRefresh();
-    } catch (err: unknown) {
-      const errorMsg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Không thể khai mạc giải';
-      toast.error(errorMsg);
-    } finally {
-      setIsTransitionLoading(false);
-    }
-  };
-
-  const handleConfirmEnd = async () => {
-    try {
-      setIsTransitionLoading(true);
-      await tournamentsApi.updateTournament(tournamentId, { status: 'COMPLETED' });
-      toast.success('Đã hoàn tất giải đấu!');
-      await handleTournamentRefresh();
-    } catch (err: unknown) {
-      const errorMsg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Không thể hoàn tất giải';
-      toast.error(errorMsg);
-    } finally {
-      setIsTransitionLoading(false);
-    }
-  };
 
   const toggleFollow = async () => {
     if (!user?.id || !tournament?.id) return;
@@ -1380,14 +1312,14 @@ const commonTranslate = useTranslations('Common');
               </div>
             )}
 
-            {isOwner && !isTournamentDraft(activeTournament.status) && (
+            {isOwner && (
               <Button
                 type="button"
-                onClick={() => handleTabSelect('bracket')}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-2xs text-sm cursor-pointer flex items-center justify-center gap-2"
+                onClick={() => router.push(`/organizer/tournaments/${activeTournament.id}/manage`)}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer flex items-center justify-center gap-2"
               >
-                <Layers className="w-4 h-4 text-slate-300" />
-                <span>{translate('manageBracketSchedule') || 'Sơ đồ & Nhánh đấu'}</span>
+                <Settings className="w-4 h-4 text-slate-300" />
+                <span>Quản lý giải đấu</span>
               </Button>
             )}
           </div>
@@ -1827,19 +1759,6 @@ const commonTranslate = useTranslations('Common');
           </button>
         </div>
 
-        {/* Live Canvas Management Top Bar for Tournament Owner */}
-        {isOwner && tournament && (
-          <TournamentOwnerTopBar
-            tournament={tournament}
-            participantCount={tournament._summary?.participantCount ?? divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0)}
-            divisionCount={divisionsList.length}
-            onStepTransition={handleStepTransition}
-            onConfirmOpen={handleConfirmOpen}
-            onConfirmEnd={handleConfirmEnd}
-            isLoading={isTransitionLoading}
-          />
-        )}
-
         {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
           {/* Left Column: Hero Banner / Lite Header + Mobile Metadata + Tabs + Tab Content */}
@@ -1923,23 +1842,6 @@ const commonTranslate = useTranslations('Common');
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                         {translate('competitionContentTitle') || 'Nội dung thi đấu'}
                       </span>
-                      {isOwner && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={
-                            divisionsList.length >= 20 ||
-                            isTournamentRegistrationClosed(activeTournament.status) ||
-                            Boolean(activeTournament.isRegistrationLocked) ||
-                            ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(activeTournament.status)
-                          }
-                          onClick={() => setIsCreateDivisionModalOpen(true)}
-                          className="h-7 px-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1 disabled:opacity-50"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>{divisionsList.length >= 20 ? 'Đã đạt giới hạn' : 'Thêm nội dung'}</span>
-                        </Button>
-                      )}
                     </div>
                   {divisionsList.length > 0 && (
                   <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-xl">
@@ -2138,18 +2040,6 @@ const commonTranslate = useTranslations('Common');
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
         title={activeTournament.name}
-      />
-
-      <CreateDivisionInlineModal
-        isOpen={isCreateDivisionModalOpen}
-        onClose={() => setIsCreateDivisionModalOpen(false)}
-        tournament={activeTournament}
-        onDivisionCreated={(newDivision) => {
-          setDivisionsList((prev) => [...prev, newDivision]);
-          setSelectedDivisionId(newDivision.id);
-          setOpenDivisionId(newDivision.id);
-          void handleTournamentRefresh();
-        }}
       />
     </div>
   );

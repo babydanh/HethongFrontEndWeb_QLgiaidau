@@ -15,7 +15,6 @@ import { cn } from '@/utils/cn';
 import { formatDate } from '@/utils/format';
 import { useTranslations } from 'next-intl';
 import { TournamentQuickManagePanel } from './TournamentQuickManagePanel';
-import { TournamentNextActionCard } from './TournamentNextActionCard';
 
 interface TournamentManageOverviewProps {
   tournament: Tournament;
@@ -65,16 +64,6 @@ export function TournamentManageOverview({
 
   return (
     <div className="space-y-4">
-      <TournamentNextActionCard
-        tournament={tournament}
-        participants={participants}
-        divisions={divisions}
-        matches={matches}
-        onOpenRegistration={onOpenRegistration}
-        onOpenBracket={onOpenBracket}
-        onOpenOperations={onOpenOperations}
-      />
-
       <TournamentQuickManagePanel
         tournament={tournament}
         participants={participants}

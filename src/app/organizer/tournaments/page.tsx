@@ -526,9 +526,7 @@ export default function MyTournamentsPage() {
                 isClubLiteTournament(parent) ||
                 isClubLiteTournament(firstDivision);
               const publicHref = `/tournaments/${managementTournamentId}`;
-              const manageHref = isClubLite
-                ? `/lite/tournaments/${managementTournamentId}/manage`
-                : `/organizer/tournaments/${managementTournamentId}/manage`;
+              const manageHref = publicHref;
               const opsHref = `/organizer/tournaments/${managementTournamentId}/ops`;
 
               return (
@@ -658,15 +656,11 @@ export default function MyTournamentsPage() {
                             <button
                               key={div.id}
                               onClick={() => {
-                                const divisionIsClubLite =
-                                  isClubLiteTournament(parent) ||
-                                  isClubLiteTournament(div);
-                                const divisionManageHref = divisionIsClubLite
-                                  ? `/lite/tournaments/${parent.isStandalone ? parent.id : div.id}/manage`
-                                  : parent.isStandalone
-                                    ? `/organizer/tournaments/${parent.id}/manage?divisionId=${div.id}`
-                                    : `/organizer/tournaments/${div.id}/manage`;
-                                router.push(divisionManageHref);
+                                const targetTournamentId = parent.isStandalone ? parent.id : div.id;
+                                const divisionHref = parent.isStandalone
+                                  ? `/tournaments/${parent.id}?divisionId=${div.id}`
+                                  : `/tournaments/${div.id}`;
+                                router.push(divisionHref);
                               }}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-[11px] md:text-xs font-semibold border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all cursor-pointer active:scale-95"
                             >

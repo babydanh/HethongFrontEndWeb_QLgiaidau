@@ -69,6 +69,8 @@ export interface BracketTabProps {
   compact?: boolean;
   /** Hide honors / official result podium banner (e.g. in organizer editor view) */
   hideHonors?: boolean;
+  /** Whether the current viewer is the tournament owner/organizer */
+  isOwner?: boolean;
 }
 
 export function mergeBracketMatches(

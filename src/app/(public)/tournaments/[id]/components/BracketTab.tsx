@@ -5,7 +5,9 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
-import { Archive, LayoutGrid, Maximize2, Trophy, Loader2, Crown, Medal, Sparkles } from 'lucide-react';
+import { Archive, LayoutGrid, Maximize2, Trophy, Loader2, Crown, Medal, Sparkles, Zap, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 import { useTranslations } from 'next-intl';
 import type {
@@ -361,6 +363,7 @@ export default function BracketTab({
   refreshKey,
   compact = false,
   hideHonors = false,
+  isOwner = false,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const effectiveTournamentId = tournamentId ?? tournament.id;
@@ -374,6 +377,7 @@ export default function BracketTab({
     bracketSnapshot?.stages[0]?.id ?? null,
   );
   const [isLoading, setIsLoading] = useState(!hasOwnerSnapshot);
+  const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
 
   const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
   const [result, setResult] = useState<TournamentResult | null>(null);
@@ -547,12 +551,59 @@ export default function BracketTab({
   if (!renderedStages.length) {
     return (
       <div className="space-y-3">
-        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-lg">
-          <Trophy className="w-12 h-12 text-slate-200 mb-3" />
-          <h4 className="font-bold text-slate-600 mb-1">{translate("bracketEmptyTitle")}</h4>
-          <p className="text-slate-400 text-sm text-center max-w-xs">
+        <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed border-slate-200 rounded-2xl bg-white text-center">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 mb-3 shadow-xs">
+            <Trophy className="w-7 h-7" />
+          </div>
+          <h4 className="font-bold text-slate-800 mb-1">{translate("bracketEmptyTitle")}</h4>
+          <p className="text-slate-400 text-xs sm:text-sm text-center max-w-sm mb-4">
             {translate("bracketEmptyDescription")}
           </p>
+
+          {isOwner && (
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <Button
+                type="button"
+                disabled={isGeneratingBracket}
+                onClick={async () => {
+                  setIsGeneratingBracket(true);
+                  try {
+                    toast.loading('Đang khởi tạo sơ đồ thi đấu...', { id: 'inline-bracket-gen' });
+                    await tournamentsApi.generateBracket(effectiveTournamentId, divisionId, 'SEEDED');
+                    toast.success('Khởi tạo sơ đồ thành công!', { id: 'inline-bracket-gen' });
+                    await fetchBracket();
+                  } catch (err: unknown) {
+                    const errorMsg =
+                      (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+                      'Không thể khởi tạo sơ đồ. Vui lòng kiểm tra số lượng đội đăng ký.';
+                    toast.error(errorMsg, { id: 'inline-bracket-gen' });
+                  } finally {
+                    setIsGeneratingBracket(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-xs flex items-center gap-1.5"
+              >
+                {isGeneratingBracket ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Đang khởi tạo...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3.5 h-3.5 text-blue-200" />
+                    Khởi tạo sơ đồ nhanh (Preset Lite)
+                  </>
+                )}
+              </Button>
+              <a
+                href={`/organizer/tournaments/${effectiveTournamentId}/manage#manage-bracket-workspace`}
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3.5 h-9 rounded-xl transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5 text-slate-400" />
+                Cài đặt nâng cao
+              </a>
+            </div>
+          )}
         </div>
       </div>
     );

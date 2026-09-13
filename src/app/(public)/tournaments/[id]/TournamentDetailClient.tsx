@@ -1927,11 +1927,17 @@ const commonTranslate = useTranslations('Common');
                         <Button
                           type="button"
                           size="sm"
+                          disabled={
+                            divisionsList.length >= 20 ||
+                            isTournamentRegistrationClosed(activeTournament.status) ||
+                            Boolean(activeTournament.isRegistrationLocked) ||
+                            ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(activeTournament.status)
+                          }
                           onClick={() => setIsCreateDivisionModalOpen(true)}
-                          className="h-7 px-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1"
+                          className="h-7 px-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1 disabled:opacity-50"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Thêm nội dung</span>
+                          <span>{divisionsList.length >= 20 ? 'Đã đạt giới hạn' : 'Thêm nội dung'}</span>
                         </Button>
                       )}
                     </div>
@@ -2137,7 +2143,7 @@ const commonTranslate = useTranslations('Common');
       <CreateDivisionInlineModal
         isOpen={isCreateDivisionModalOpen}
         onClose={() => setIsCreateDivisionModalOpen(false)}
-        tournamentId={tournament.id}
+        tournament={activeTournament}
         onDivisionCreated={(newDivision) => {
           setDivisionsList((prev) => [...prev, newDivision]);
           setSelectedDivisionId(newDivision.id);

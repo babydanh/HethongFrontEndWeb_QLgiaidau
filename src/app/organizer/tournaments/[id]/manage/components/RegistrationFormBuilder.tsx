@@ -36,6 +36,8 @@ import {
 interface RegistrationFormBuilderProps {
   tournament: Tournament;
   divisions: Division[];
+  variant?: 'card' | 'button';
+  className?: string;
 }
 
 const createField = (label: string): RegistrationField => ({
@@ -63,7 +65,12 @@ const FILE_TYPE_PRESETS = [
   { labelKey: 'fileSpreadsheetPreset', value: '.xlsx,.xls,.csv' },
 ] as const;
 
-export function RegistrationFormBuilder({ tournament, divisions }: RegistrationFormBuilderProps) {
+export function RegistrationFormBuilder({
+  tournament,
+  divisions,
+  variant = 'card',
+  className,
+}: RegistrationFormBuilderProps) {
   const registrationFormTranslate = useTranslations('OrganizerRegistrationForm');
   const initial = useMemo(() => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)), [divisions, tournament.tournamentConfig?.registrationForm]);
   const [config, setConfig] = useState<RegistrationFormConfig>(initial);
@@ -172,38 +179,60 @@ export function RegistrationFormBuilder({ tournament, divisions }: RegistrationF
 
   return (
     <>
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-bold text-slate-900">{registrationFormTranslate('title')}</p>
-            <p className="mt-1 text-xs text-slate-500">{registrationFormTranslate('description')}</p>
+      {variant === 'button' ? (
+        <Button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          disabled={isLocked}
+          variant="outline"
+          className={cn(
+            'inline-flex items-center justify-center gap-1.5 rounded-lg border-blue-200 bg-blue-50/80 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-colors shadow-xs',
+            className
+          )}
+          title={isLocked ? registrationFormTranslate('lockedMessage') : registrationFormTranslate('description')}
+        >
+          <Settings2 className="h-3.5 w-3.5 text-blue-600" />
+          <span>{registrationFormTranslate('setupForm')}</span>
+          {config.fields.length > 0 && (
+            <span className="ml-0.5 rounded-full bg-blue-200/80 px-1.5 py-0.2 text-[10px] font-extrabold text-blue-800">
+              {config.fields.length}
+            </span>
+          )}
+        </Button>
+      ) : (
+        <section className={cn('rounded-xl border border-slate-200 bg-white p-5 shadow-sm', className)}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-900">{registrationFormTranslate('title')}</p>
+              <p className="mt-1 text-xs text-slate-500">{registrationFormTranslate('description')}</p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              disabled={isLocked}
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Settings2 className="h-4 w-4" /> {registrationFormTranslate('setupForm')}
+            </Button>
           </div>
-          <Button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            disabled={isLocked}
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
-          >
-            <Settings2 className="h-4 w-4" /> {registrationFormTranslate('setupForm')}
-          </Button>
-        </div>
-        {isLocked && <p className="mt-3 text-xs font-semibold text-amber-700">{registrationFormTranslate('lockedMessage')}</p>}
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">
-            {registrationFormTranslate('fieldCount', { count: config.fields.length })}
-          </span>
-          <span
-            className={cn(
-              'rounded-full border px-2.5 py-1',
-              config.status === 'PUBLISHED'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-amber-200 bg-amber-50 text-amber-700'
-            )}
-          >
-            {config.status === 'PUBLISHED' ? registrationFormTranslate('inUse') : registrationFormTranslate('draft')}
-          </span>
-        </div>
-      </section>
+          {isLocked && <p className="mt-3 text-xs font-semibold text-amber-700">{registrationFormTranslate('lockedMessage')}</p>}
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">
+              {registrationFormTranslate('fieldCount', { count: config.fields.length })}
+            </span>
+            <span
+              className={cn(
+                'rounded-full border px-2.5 py-1',
+                config.status === 'PUBLISHED'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-amber-200 bg-amber-50 text-amber-700'
+              )}
+            >
+              {config.status === 'PUBLISHED' ? registrationFormTranslate('inUse') : registrationFormTranslate('draft')}
+            </span>
+          </div>
+        </section>
+      )}
 
       {isOpen && (
         <Modal open={isOpen} onOpenChange={setIsOpen}>

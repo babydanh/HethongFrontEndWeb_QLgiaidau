@@ -8677,5 +8677,23 @@
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
     }
+  },
+  "OrganizerManage": {
+    "back": "Back",
+    "notFoundTitle": "Tournament Not Found",
+    "notFoundDescription": "The tournament does not exist or you do not have permission to access it.",
+    "loading": "Loading tournament data...",
+    "status": {
+      "statusDraft": "Draft",
+      "statusPendingApproval": "Pending Approval",
+      "statusPendingDelete": "Pending Delete",
+      "statusUpcoming": "Upcoming",
+      "statusRegistrationOpen": "Registration Open",
+      "statusRegistrationClosed": "Registration Closed",
+      "statusInProgress": "In Progress",
+      "statusCompleted": "Completed",
+      "statusCancelled": "Cancelled",
+      "operations": "Tournament Operations"
+    }
   }
 }

@@ -8681,5 +8681,23 @@
       "COMPLETED": "Hoàn tất",
       "CANCELLED": "Đã hủy"
     }
+  },
+  "OrganizerManage": {
+    "back": "Quay lại",
+    "notFoundTitle": "Không tìm thấy giải đấu",
+    "notFoundDescription": "Giải đấu không tồn tại hoặc bạn không có quyền truy cập.",
+    "loading": "Đang tải dữ liệu...",
+    "status": {
+      "statusDraft": "Bản nháp",
+      "statusPendingApproval": "Chờ duyệt",
+      "statusPendingDelete": "Chờ xóa",
+      "statusUpcoming": "Sắp diễn ra",
+      "statusRegistrationOpen": "Đang mở đăng ký",
+      "statusRegistrationClosed": "Đã đóng đăng ký",
+      "statusInProgress": "Đang diễn ra",
+      "statusCompleted": "Đã kết thúc",
+      "statusCancelled": "Đã hủy",
+      "operations": "Vận hành giải đấu"
+    }
   }
 }

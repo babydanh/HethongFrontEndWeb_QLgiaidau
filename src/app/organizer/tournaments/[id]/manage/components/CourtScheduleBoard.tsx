@@ -80,13 +80,15 @@ interface ScheduleBoardMatch {
   groupName?: string | null;
   status?: string | null;
   winnerId?: string | null;
+  participant1Id?: string | null;
+  participant2Id?: string | null;
   score1?: number | string | null;
   score2?: number | string | null;
   participant1Score?: number | string | null;
   participant2Score?: number | string | null;
   sets?: Array<{ score1?: number | null; score2?: number | null; participant1Score?: number | null; participant2Score?: number | null }>;
-  participant1?: { teamName?: string | null; name?: string | null } | null;
-  participant2?: { teamName?: string | null; name?: string | null } | null;
+  participant1?: { id?: string | null; teamName?: string | null; name?: string | null } | null;
+  participant2?: { id?: string | null; teamName?: string | null; name?: string | null } | null;
 }
 
 interface CourtScheduleBoardProps {
@@ -109,6 +111,112 @@ type DraftAssignment = {
   scheduledAt: string;
   durationMinutes?: number;
 };
+
+type SchedulePlacement = {
+  match: ScheduleBoardMatch;
+  courtId?: string | null;
+  scheduledAt?: string | null;
+  durationMinutes?: number | null;
+};
+
+type SchedulePlacementConflict = {
+  kind: 'court' | 'participant';
+  other: SchedulePlacement;
+  participantName?: string;
+};
+
+type ScheduleParticipantEntry = {
+  key: string;
+  label: string;
+};
+
+function isActiveScheduleStatus(status?: string | null) {
+  const normalized = String(status || '').trim().toUpperCase();
+  // Older schedule payloads may omit status; treat those as active so the UI
+  // does not allow a draft that the API will reject.
+  return !normalized || normalized === 'SCHEDULED' || normalized === 'ONGOING';
+}
+
+function isUsableScheduleParticipantName(value?: string | null) {
+  if (!value) return false;
+  const normalized = value.trim().toLocaleLowerCase();
+  if (!normalized || ['—', '-', '?', 'null', 'undefined'].includes(normalized)) return false;
+  return ![
+    'chưa xác định',
+    'chờ xác định',
+    'tbd',
+    'bye',
+    'đang chờ',
+  ].some((placeholder) => normalized.includes(placeholder));
+}
+
+function getScheduleParticipantEntries(match: ScheduleBoardMatch): ScheduleParticipantEntry[] {
+  const participants = [
+    { id: match.participant1Id || match.participant1?.id, participant: match.participant1 },
+    { id: match.participant2Id || match.participant2?.id, participant: match.participant2 },
+  ];
+
+  return participants.flatMap(({ id, participant }) => {
+    const label = participant?.teamName || participant?.name || null;
+    if (id) return [{ key: `id:${id}`, label: label || 'Đội' }];
+    if (label && isUsableScheduleParticipantName(label)) {
+      return [{ key: `name:${label.trim().toLocaleLowerCase()}`, label }];
+    }
+    return [];
+  });
+}
+
+function getSchedulePlacementConflict(
+  candidate: SchedulePlacement,
+  existingPlacements: SchedulePlacement[],
+  options: { checkCourt?: boolean; ignoredMatchIds?: Set<string> } = {},
+): SchedulePlacementConflict | null {
+  if (!candidate.courtId || !candidate.scheduledAt) return null;
+  const candidateStart = new Date(candidate.scheduledAt).getTime();
+  if (Number.isNaN(candidateStart)) return null;
+
+  const candidateDuration = Math.max(15, Number(candidate.durationMinutes) || 30);
+  const candidateEnd = candidateStart + candidateDuration * 60_000;
+  const candidateParticipants = getScheduleParticipantEntries(candidate.match);
+  const checkCourt = options.checkCourt !== false;
+
+  for (const other of existingPlacements) {
+    if (other.match.id === candidate.match.id || options.ignoredMatchIds?.has(other.match.id)) continue;
+    if (!isActiveScheduleStatus(other.match.status) || !other.scheduledAt) continue;
+
+    const otherStart = new Date(other.scheduledAt).getTime();
+    if (Number.isNaN(otherStart)) continue;
+    const otherDuration = Math.max(15, Number(other.durationMinutes) || 30);
+    const otherEnd = otherStart + otherDuration * 60_000;
+    if (!(candidateStart < otherEnd && candidateEnd > otherStart)) continue;
+
+    if (checkCourt && candidate.courtId === other.courtId) {
+      return { kind: 'court', other };
+    }
+
+    const otherParticipants = getScheduleParticipantEntries(other.match);
+    const sharedParticipant = candidateParticipants.find((participant) =>
+      otherParticipants.some((otherParticipant) => otherParticipant.key === participant.key),
+    );
+    if (sharedParticipant) {
+      return {
+        kind: 'participant',
+        other,
+        participantName: sharedParticipant.label,
+      };
+    }
+  }
+
+  return null;
+}
+
+function getSchedulePlacementConflictMessage(conflict: SchedulePlacementConflict, targetCourtName?: string) {
+  const otherTime = formatMatchTime(conflict.other.scheduledAt);
+  if (conflict.kind === 'participant') {
+    return `${conflict.participantName || 'Một đội'} đã có trận khác lúc ${otherTime}.`;
+  }
+  return `${targetCourtName ? `Sân ${targetCourtName}` : 'Sân'} đã có trận khác lúc ${otherTime}.`;
+}
 
 function normalizeScheduleValue(value?: string | null): string | number | null {
   if (!value) return null;
@@ -822,43 +930,37 @@ export function CourtScheduleBoard({
     const map = new Map<string, { otherCourtName: string; otherTimeStr: string; competitorName: string }[]>();
     const courtNameMap = new Map(courts.map((c) => [c.id, c.courtName]));
 
-    const scheduled = displayMatches.filter((m) => m.courtId && m.scheduledAt);
+    const scheduled = displayMatches.filter(
+      (m) => m.courtId && m.scheduledAt && isActiveScheduleStatus(m.match.status),
+    );
 
     for (let i = 0; i < scheduled.length; i++) {
       const m1 = scheduled[i];
       const t1 = new Date(m1.scheduledAt!).getTime();
-      const dur1 = (draftAssignments[m1.match.id]?.durationMinutes || rowDurations[0] || defaultStepMinutes) * 60_000;
+      const dur1 = Math.max(15, Number(m1.durationMinutes) || defaultStepMinutes) * 60_000;
       const end1 = t1 + dur1;
 
-      const p1Names = [
-        m1.match.participant1?.teamName,
-        m1.match.participant1?.name,
-        m1.match.participant2?.teamName,
-        m1.match.participant2?.name,
-      ].filter((n): n is string => !isPlaceholderCompetitorName(n));
+      const p1Participants = getScheduleParticipantEntries(m1.match);
 
-      if (p1Names.length === 0) continue;
+      if (p1Participants.length === 0) continue;
 
       for (let j = i + 1; j < scheduled.length; j++) {
         const m2 = scheduled[j];
         if (m1.courtId === m2.courtId) continue;
 
         const t2 = new Date(m2.scheduledAt!).getTime();
-        const dur2 = (draftAssignments[m2.match.id]?.durationMinutes || rowDurations[0] || defaultStepMinutes) * 60_000;
+        const dur2 = Math.max(15, Number(m2.durationMinutes) || defaultStepMinutes) * 60_000;
         const end2 = t2 + dur2;
 
         // Strict time overlap: both matches are occurring concurrently during the exact same time
         const isOverlap = Math.max(t1, t2) < Math.min(end1, end2);
         if (!isOverlap) continue;
 
-        const p2Names = [
-          m2.match.participant1?.teamName,
-          m2.match.participant1?.name,
-          m2.match.participant2?.teamName,
-          m2.match.participant2?.name,
-        ].filter((n): n is string => !isPlaceholderCompetitorName(n));
+        const p2Participants = getScheduleParticipantEntries(m2.match);
 
-        const shared = p1Names.find((name) => p2Names.some((n2) => n2.toLowerCase() === name.toLowerCase()));
+        const shared = p1Participants.find((participant) =>
+          p2Participants.some((otherParticipant) => otherParticipant.key === participant.key),
+        );
         if (shared) {
           const c1Name = courtNameMap.get(m1.courtId!) || 'Sân khác';
           const c2Name = courtNameMap.get(m2.courtId!) || 'Sân khác';
@@ -866,18 +968,47 @@ export function CourtScheduleBoard({
           const time2Str = formatMatchTime(m2.scheduledAt);
 
           const list1 = map.get(m1.match.id) || [];
-          list1.push({ otherCourtName: c2Name, otherTimeStr: time2Str, competitorName: shared });
+          list1.push({ otherCourtName: c2Name, otherTimeStr: time2Str, competitorName: shared.label });
           map.set(m1.match.id, list1);
 
           const list2 = map.get(m2.match.id) || [];
-          list2.push({ otherCourtName: c1Name, otherTimeStr: time1Str, competitorName: shared });
+          list2.push({ otherCourtName: c1Name, otherTimeStr: time1Str, competitorName: shared.label });
           map.set(m2.match.id, list2);
         }
       }
     }
 
     return map;
-  }, [displayMatches, draftAssignments, rowDurations, defaultStepMinutes, courts]);
+  }, [displayMatches, defaultStepMinutes, courts]);
+
+  const getScheduledPlacements = (drafts: Record<string, DraftAssignment>): SchedulePlacement[] =>
+    displayMatches.map((item) => {
+      const draft = drafts[item.match.id];
+      return {
+        match: item.match,
+        courtId: draft?.courtId ?? item.courtId,
+        scheduledAt: draft?.scheduledAt ?? item.scheduledAt,
+        durationMinutes: draft?.durationMinutes ?? item.durationMinutes,
+      };
+    });
+
+  const findLocalPlacementConflict = (
+    match: ScheduleBoardMatch,
+    assignment: DraftAssignment,
+    drafts: Record<string, DraftAssignment> = draftAssignments,
+    options: { checkCourt?: boolean; ignoredMatchIds?: Set<string> } = {},
+  ) => {
+    return getSchedulePlacementConflict(
+      {
+        match,
+        courtId: assignment.courtId,
+        scheduledAt: assignment.scheduledAt,
+        durationMinutes: assignment.durationMinutes,
+      },
+      getScheduledPlacements(drafts),
+      options,
+    );
+  };
 
   const handleExportExcel = () => {
     const courtNameMap = new Map(courts.map((c) => [c.id, c.courtName]));
@@ -1144,11 +1275,42 @@ export function CourtScheduleBoard({
     try {
       const succeededMatchIds = new Set<string>();
       const saveFailures: string[] = [];
-      // 1. Save all draft assignments in parallel chunks (eliminates freeze/lag)
+      const draftsForSave = Object.fromEntries(entries) as Record<string, DraftAssignment>;
+      const placementsAtSave = getScheduledPlacements(draftsForSave);
+      const locallyBlockedMatchIds = new Set<string>();
+
+      // Validate the complete local batch first. The API checks every match
+      // against the persisted schedule, while the board also has unsaved
+      // drafts that the API cannot see yet.
+      for (const [matchId, draft] of entries) {
+        const item = displayMatches.find((candidate) => candidate.match.id === matchId);
+        if (!item) continue;
+
+        const conflict = getSchedulePlacementConflict(
+          {
+            match: item.match,
+            courtId: draft.courtId,
+            scheduledAt: draft.scheduledAt,
+            durationMinutes: draft.durationMinutes ?? item.durationMinutes,
+          },
+          placementsAtSave,
+        );
+        if (conflict) {
+          locallyBlockedMatchIds.add(matchId);
+          saveFailures.push(
+            `Trận #${item.match.matchOrder ?? matchId}: ${getSchedulePlacementConflictMessage(conflict, courts.find((court) => court.id === draft.courtId)?.courtName)}`,
+          );
+        }
+      }
+
+      const entriesToSave = entries.filter(([matchId]) => !locallyBlockedMatchIds.has(matchId));
+
+      // 1. Save only locally valid assignments in parallel chunks. Invalid
+      // drafts stay in the board so the organizer can move them and retry.
       if (onSaveScheduleDirect) {
         const chunkSize = 8;
-        for (let i = 0; i < entries.length; i += chunkSize) {
-          const chunk = entries.slice(i, i + chunkSize);
+        for (let i = 0; i < entriesToSave.length; i += chunkSize) {
+          const chunk = entriesToSave.slice(i, i + chunkSize);
           await Promise.all(
             chunk.map(async ([matchId, draft]) => {
               try {
@@ -2507,9 +2669,11 @@ export function CourtScheduleBoard({
     setIsSavingDraft(true);
     try {
       const newDrafts: Record<string, DraftAssignment> = {};
+      const placementErrors = new Map<string, string>();
       let matchIdx = 0;
 
       const { startCourtIndex, endCourtIndex, startRowIndex } = assignmentPicker;
+      const selectedIds = new Set(selectedPickerMatchIds);
 
       // Iterate row-by-row, and within each row, fill left-to-right across courts
       let rIdx = startRowIndex;
@@ -2530,7 +2694,25 @@ export function CourtScheduleBoard({
             continue;
           }
 
-          const duration = customMatchDurations[matchId] || item.durationMinutes || rowInfo.durationMinutes || defaultStepMinutes;
+          const duration = Math.max(
+            15,
+            Number(customMatchDurations[matchId] || item.durationMinutes || rowInfo.durationMinutes || defaultStepMinutes),
+          );
+          const plannedDrafts = { ...draftAssignments, ...newDrafts };
+          const unplacedSelectedIds = new Set(
+            selectedPickerMatchIds.filter((selectedId) => !newDrafts[selectedId]),
+          );
+          const conflict = findLocalPlacementConflict(
+            item.match,
+            { courtId: court.id, scheduledAt: targetTime, durationMinutes: duration },
+            plannedDrafts,
+            { ignoredMatchIds: unplacedSelectedIds },
+          );
+
+          if (conflict) {
+            placementErrors.set(matchId, getSchedulePlacementConflictMessage(conflict, court.courtName));
+            continue;
+          }
 
           newDrafts[matchId] = {
             courtId: court.id,
@@ -2543,12 +2725,24 @@ export function CourtScheduleBoard({
         rIdx++;
       }
 
-      setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
-      pushHistory({ ...draftAssignments, ...newDrafts });
+      if (Object.keys(newDrafts).length > 0) {
+        setDraftAssignments((prev) => ({ ...prev, ...newDrafts }));
+        pushHistory({ ...draftAssignments, ...newDrafts });
+      }
+
+      const unplacedMatchIds = selectedPickerMatchIds.filter((matchId) => !newDrafts[matchId]);
       setAssignmentPicker(null);
       setSelectedPickerMatchIds([]);
       setSelectionRange(null);
-      setSaveToast(`Đã xếp ${matchIdx} trận theo thứ tự từ trái sang phải! Đang tự động lưu...`);
+      const firstUnplacedError = unplacedMatchIds.map((matchId) => placementErrors.get(matchId)).find(Boolean);
+      const firstSkippedError = [...placementErrors.values()][0];
+      setSaveToast(
+        unplacedMatchIds.length > 0
+          ? `Đã xếp ${matchIdx}/${selectedIds.size} trận. ${unplacedMatchIds.length} trận giữ ở hàng chờ: ${firstUnplacedError || 'không còn ô hợp lệ trong vùng chọn.'}`
+          : placementErrors.size > 0
+            ? `Đã xếp ${matchIdx} trận. Bỏ qua ${placementErrors.size} ô bị xung đột: ${firstSkippedError}`
+          : `Đã xếp ${matchIdx} trận theo thứ tự từ trái sang phải! Đang tự động lưu...`,
+      );
       setTimeout(() => setSaveToast(null), 3000);
     } finally {
       setIsSavingDraft(false);
@@ -2576,6 +2770,21 @@ export function CourtScheduleBoard({
     const targetStart = targetRow.startTimestamp;
     const targetDuration = item.durationMinutes || targetRow.durationMinutes || defaultStepMinutes;
     const targetEnd = targetStart + targetDuration * 60_000;
+    const targetScheduledAt = new Date(targetStart).toISOString();
+
+    // A free court is not enough: the same team/player must also be free in
+    // this interval. Check this separately from the same-court swap logic.
+    const participantConflict = findLocalPlacementConflict(
+      item.match,
+      { courtId, scheduledAt: targetScheduledAt, durationMinutes: targetDuration },
+      draftAssignments,
+      { checkCourt: false, ignoredMatchIds: new Set<string>() },
+    );
+    if (participantConflict?.kind === 'participant') {
+      setSaveToast(`Không thể xếp trận: ${getSchedulePlacementConflictMessage(participantConflict, courts.find((court) => court.id === courtId)?.courtName)}`);
+      setTimeout(() => setSaveToast(null), 3500);
+      return;
+    }
 
     // Check if there is already a conflicting match on this court overlapping this time slot
     const conflictingItem = displayMatches.find((m) => {
@@ -2606,7 +2815,7 @@ export function CourtScheduleBoard({
             durationMinutes: oldDuration ?? targetDuration,
           },
         }));
-        setSaveToast(`Đã hoán đổi vị trí 2 trận đấu! Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
+        setSaveToast(`Ô sân đang bị trùng lịch, đã hoán đổi vị trí 2 trận đấu. Bấm "Lưu lịch (Ctrl+S)" để hoàn tất.`);
         setTimeout(() => setSaveToast(null), 3000);
         return;
       } else {
@@ -2650,12 +2859,11 @@ export function CourtScheduleBoard({
     }
 
     // No conflict: Assign directly
-    const scheduledAt = new Date(targetStart).toISOString();
     setDraftAssignments((current) => ({
       ...current,
       [matchId]: {
         courtId,
-        scheduledAt,
+        scheduledAt: targetScheduledAt,
         durationMinutes: targetDuration,
       },
     }));
@@ -3472,8 +3680,16 @@ export function CourtScheduleBoard({
     >
       {/* Toast Notification */}
       {saveToast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-slate-900 text-white px-4 py-2.5 shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <Check className="h-4 w-4 text-emerald-400" />
+        <div role="alert" aria-live="assertive" className={`fixed bottom-6 right-6 z-50 rounded-xl px-4 py-2.5 shadow-2xl border flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-3 duration-200 ${
+          /không|chưa lưu|trùng|lỗi|bận|conflict/i.test(saveToast)
+            ? 'bg-rose-950 text-white border-rose-700'
+            : 'bg-slate-900 text-white border-slate-700'
+        }`}>
+          {/không|chưa lưu|trùng|lỗi|bận|conflict/i.test(saveToast) ? (
+            <AlertTriangle className="h-4 w-4 text-rose-300 shrink-0" />
+          ) : (
+            <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+          )}
           <span>{saveToast}</span>
         </div>
       )}

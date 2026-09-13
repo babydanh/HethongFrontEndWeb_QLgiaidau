@@ -261,7 +261,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.loading('Đang lưu nội dung giới thiệu...', { id: 'inline-desc-save' });
       await tournamentsApi.updateTournament(id, {
         description: s.description,
-        prizeDescription: s.prizeDescription || null,
       });
       toast.success('Lưu nội dung giới thiệu thành công!', { id: 'inline-desc-save' });
       setIsEditingDescription(false);
@@ -1072,37 +1071,24 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               )}
             {activeSection === 'overview' ? (
               <div className="space-y-6">
-                {/* Introduction & Description Interactive Card */}
-                <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-                        <Edit3 className="w-4 h-4" />
+                {/* Introduction & Description - Click to Edit */}
+                {isEditingDescription ? (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                          <Edit3 className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                          Chỉnh sửa giới thiệu giải đấu
+                        </span>
                       </div>
-                      <div>
-                        <h3 className="text-sm sm:text-base font-bold text-slate-900">Bài viết giới thiệu giải đấu</h3>
-                        <p className="text-[11px] text-slate-500 font-medium">Nội dung hiển thị công khai cho vận động viên và khán giả</p>
-                      </div>
-                    </div>
-
-                    {!isEditingDescription ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsEditingDescription(true)}
-                        className="font-bold text-xs flex items-center gap-1.5 h-8 px-3 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 cursor-pointer shadow-2xs"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Sửa bài viết</span>
-                      </Button>
-                    ) : (
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => {
                             s.setDescription(tournament.description || '');
-                            s.setPrizeDescription(tournament.prizeDescription || '');
                             setIsEditingDescription(false);
                           }}
                           disabled={isSavingDescInline}
@@ -1124,95 +1110,48 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                           ) : (
                             <>
                               <Save className="w-3.5 h-3.5" />
-                              <span>Lưu giới thiệu</span>
+                              <span>Lưu</span>
                             </>
                           )}
                         </Button>
                       </div>
-                    )}
+                    </div>
+
+                    <RichTextEditor
+                      value={s.description}
+                      onChange={s.setDescription}
+                      placeholder="Nhập thông tin giới thiệu, thể lệ, quy định giải đấu..."
+                    />
                   </div>
-
-                  {isEditingDescription ? (
-                    <div className="space-y-4 pt-1 animate-in fade-in duration-150">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                          Mô tả & Giới thiệu chi tiết giải
-                        </label>
-                        <RichTextEditor
-                          value={s.description}
-                          onChange={s.setDescription}
-                          placeholder="Nhập thông tin giới thiệu, thể lệ, quy định giải đấu..."
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                          Cơ cấu giải thưởng
-                        </label>
-                        <RichTextEditor
-                          value={s.prizeDescription}
-                          onChange={s.setPrizeDescription}
-                          placeholder="Mô tả các giải thưởng Nhất, Nhì, Ba, hiện kim, huy chương..."
-                        />
-                      </div>
-
-                      <div className="flex justify-end pt-2">
-                        <Button
-                          onClick={handleSaveDescriptionInline}
-                          disabled={isSavingDescInline}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-5 py-2 rounded-xl shadow-md flex items-center gap-2"
-                        >
-                          {isSavingDescInline ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Đang lưu thay đổi...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Save className="w-4 h-4" />
-                              <span>Lưu bài viết giới thiệu</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                ) : (
+                  <div
+                    onClick={() => setIsEditingDescription(true)}
+                    className="group relative cursor-pointer rounded-xl p-2 -m-2 transition-all hover:bg-blue-50/40 hover:ring-1 hover:ring-blue-200"
+                    title="Nhấn vào đây để chỉnh sửa bài viết giới thiệu"
+                  >
+                    {/* Hover hint badge */}
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/90 text-blue-600 border border-blue-200 text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-xs pointer-events-none">
+                      <Edit3 className="w-3 h-3 text-blue-600" />
+                      <span>Nhấp để sửa</span>
                     </div>
-                  ) : (
-                    <div className="space-y-5">
-                      <section className="prose prose-slate max-w-none text-slate-800 text-xs sm:text-sm leading-relaxed editorjs-content-view">
-                        {s.description || tournament.description ? (
-                          <div dangerouslySetInnerHTML={{ __html: s.description || tournament.description || '' }} />
-                        ) : (
-                          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-6 text-center">
-                            <p className="text-xs text-slate-400 font-medium">
-                              Chưa có nội dung giới thiệu giải đấu.
-                            </p>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setIsEditingDescription(true)}
-                              className="mt-2.5 font-bold text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
-                            >
-                              <Plus className="w-3.5 h-3.5 mr-1" />
-                              Thêm bài viết giới thiệu
-                            </Button>
-                          </div>
-                        )}
-                      </section>
 
-                      {(s.prizeDescription || tournament.prizeDescription) && (
-                        <section className="border-t border-slate-100 pt-4">
-                          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-900">
-                            Cơ cấu giải thưởng
-                          </h4>
-                          <div
-                            className="prose prose-slate max-w-none text-slate-800 text-xs sm:text-sm leading-relaxed editorjs-content-view"
-                            dangerouslySetInnerHTML={{ __html: s.prizeDescription || tournament.prizeDescription || '' }}
-                          />
-                        </section>
+                    <section className="prose prose-slate max-w-none text-slate-800 text-sm sm:text-base leading-relaxed editorjs-content-view">
+                      {s.description || tournament.description ? (
+                        <div dangerouslySetInnerHTML={{ __html: s.description || tournament.description || '' }} />
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center">
+                          <p className="text-xs sm:text-sm text-slate-400 font-medium">
+                            Chưa có nội dung giới thiệu giải đấu. Nhấn vào đây để thêm bài viết giới thiệu.
+                          </p>
+                          <span className="mt-2.5 inline-flex items-center gap-1 text-xs font-bold text-blue-600">
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Thêm bài viết giới thiệu</span>
+                          </span>
+                        </div>
                       )}
-                    </div>
-                  )}
-                </div>
+                    </section>
+                  </div>
+                )}
               </div>
             ) : (
           <div className="space-y-6">

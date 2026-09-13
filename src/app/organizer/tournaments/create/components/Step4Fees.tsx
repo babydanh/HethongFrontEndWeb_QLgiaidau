@@ -105,7 +105,7 @@ export default function Step4Fees() {
       // Usually the API returns the created resource inside data object
       const tournamentId = res?.data?.id;
       if (tournamentId) {
-        router.push(`/tournaments/${tournamentId}`);
+        router.push(`/organizer/tournaments/${tournamentId}/manage`);
       } else {
         router.push('/dashboard');
       }

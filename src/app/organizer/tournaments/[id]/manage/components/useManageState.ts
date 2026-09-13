@@ -804,7 +804,7 @@ export function useManageState(id: string) {
     const scoringMode =
       readExplicitScoringMode(selected.roundConfig) ??
       readExplicitScoringMode(tournament?.sportRules) ??
-      (isSuperLiteTournament ? 'LITE' : 'STRICT');
+      'LITE';
     // A legacy division may contain a stale kind from another sport. Never let
     // that override the tournament category when the division is selected.
     const normalizedKind = normalizeSportRuleKindForCategory(rawResolvedRules.kind, selectedCategory);

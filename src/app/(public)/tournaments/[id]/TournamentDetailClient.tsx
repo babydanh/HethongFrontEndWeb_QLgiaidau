@@ -19,7 +19,6 @@ import MatchesTab from './components/MatchesTab';
 import SponsorsTab from './components/SponsorsTab';
 import LiveMatchesTab from './components/LiveMatchesTab';
 import ResultsTab from './components/ResultsTab';
-import { TournamentOwnerTopBar } from './components/TournamentOwnerTopBar';
 import { hasPublishedTournamentResults } from '@/features/tournaments/result-availability';
 import RegisterModal from './components/RegisterModal';
 import CommunityTournamentRosterWidget from '@/app/(public)/communities/[id]/components/CommunityTournamentRosterWidget';
@@ -1745,41 +1744,6 @@ const commonTranslate = useTranslations('Common');
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
       <div className="max-w-screen-2xl mx-auto px-3.5 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6">
-        {/* Owner Management Header Bar with Compact Stepper */}
-        {isOwner && (
-          <TournamentOwnerTopBar
-            tournament={activeTournament}
-            participantCount={divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}
-            divisionCount={divisionsList.length}
-            onStepTransition={async (nextStatus) => {
-              try {
-                await tournamentsApi.updateTournament(activeTournament.id, { status: nextStatus });
-                toast.success('Đã cập nhật trạng thái giải đấu!');
-                window.location.reload();
-              } catch (err) {
-                toast.error('Không thể cập nhật trạng thái');
-              }
-            }}
-            onConfirmOpen={async () => {
-              try {
-                await tournamentsApi.updateTournament(activeTournament.id, { status: 'IN_PROGRESS' });
-                toast.success('Khai mạc giải đấu thành công!');
-                window.location.reload();
-              } catch (err) {
-                toast.error('Không thể khai mạc giải');
-              }
-            }}
-            onConfirmEnd={async () => {
-              try {
-                await tournamentsApi.updateTournament(activeTournament.id, { status: 'COMPLETED' });
-                toast.success('Giải đấu đã hoàn tất!');
-                window.location.reload();
-              } catch (err) {
-                toast.error('Không thể hoàn tất giải');
-              }
-            }}
-          />
-        )}
 
         {/* Back navigation */}
         <div className="mb-2.5 sm:mb-3.5 flex items-center justify-between">
@@ -1872,22 +1836,11 @@ const commonTranslate = useTranslations('Common');
               {/* Compact vertical content rows with inline selected detail */}
               {activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-3" aria-label={translate('competitionContentTitle')}>
-                  {isOwner && (
                     <div className="flex items-center justify-between gap-2 mb-2 px-1">
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        {translate('competitionContentTitle') || 'Nội dung thi đấu'} ({divisionsList.length}/20)
+                        {translate('competitionContentTitle') || 'Nội dung thi đấu'}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          window.location.href = `/organizer/tournaments/${tournament.id}/manage#manage-divisions-section`;
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors cursor-pointer"
-                      >
-                        <span>+ Thêm nội dung</span>
-                      </button>
                     </div>
-                  )}
                   {divisionsList.length > 0 && (
                   <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-xl">
                     {divisionsList.map((division) => {

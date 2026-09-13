@@ -90,7 +90,7 @@ export default function Step2Confirm() {
       toast.success(translate('draftCreated'));
       reset(); // Clear persist storage
       
-      router.push(`/tournaments/${tournamentId}`);
+      router.push(`/organizer/tournaments/${tournamentId}/manage`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

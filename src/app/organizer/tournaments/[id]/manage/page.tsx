@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, DollarSign, Download, ChevronRight, Check, Play, ChevronDown, Activity, Layers } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info } from 'lucide-react';
+import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -379,10 +380,22 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           />
 
           <main className="min-w-0 flex-1">
-            {/* Consolidated Executive Header Card */}
-            <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                {/* Left side: Sport + Status Pill + Title + Dot-separated meta */}
+            {/* Consolidated Executive Header Card with Tournament Hero Banner */}
+            <div className="mb-4 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+              {/* Top Hero Banner */}
+              <div className="relative w-full h-[160px] sm:h-[220px] md:h-[280px] bg-slate-100 overflow-hidden border-b border-slate-100">
+                <GalleryCarousel
+                  images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
+                  defaultBanner={tournament.bannerUrl || undefined}
+                  categoryName={tournament.category?.name}
+                  tournamentName={tournament.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="p-4 sm:p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  {/* Left side: Sport + Status Pill + Title + Dot-separated meta */}
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-blue-700 border border-blue-200/80">
@@ -630,6 +643,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   </div>
                 );
               })()}
+              </div>
             </div>
 
             {/* Checklist & Transition Controls (from Stepper) */}
@@ -754,8 +768,50 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               )}
             </div>
 
-        <div id="manage-content-area" className="scroll-mt-24">
-        {activeSection === 'overview' ? (
+            {/* Horizontal Tabs Bar (Chuẩn phong cách trực quan như trang chi tiết nhưng trang bị đầy đủ nghiệp vụ BTC) */}
+            <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-4 no-scrollbar pb-1">
+              {[
+                { id: 'overview' as const, label: 'Tổng quan', icon: LayoutDashboard },
+                { id: 'registration' as const, label: 'Đăng ký & VĐV', icon: Users, badge: s.participants.length },
+                { id: 'bracket' as const, label: 'Sơ đồ & Bảng đấu', icon: Trophy },
+                { id: 'court_schedule' as const, label: 'Lịch thi đấu & Sân', icon: CalendarDays },
+                { id: 'basic' as const, label: 'Thông tin & Điều lệ', icon: Info },
+                { id: 'schedule' as const, label: 'Địa điểm & Cụm sân', icon: MapPin },
+                { id: 'finance' as const, label: 'Tài chính & Lệ phí', icon: DollarSign },
+                { id: 'permissions' as const, label: 'Trọng tài & Phân quyền', icon: ShieldCheck, badge: pendingRefereeCount > 0 ? pendingRefereeCount : undefined },
+                { id: 'livestream' as const, label: 'Livestream', icon: Video },
+              ].map((tab) => {
+                const isActive = activeSection === tab.id;
+                const TabIcon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleManageNavigation({ section: tab.id })}
+                    className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-2xs ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm font-bold'
+                        : 'bg-white text-slate-700 border border-slate-200/90 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <TabIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                    <span>{tab.label}</span>
+                    {tab.badge != null && (
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div id="manage-content-area" className="scroll-mt-24">
+            {activeSection === 'overview' ? (
           <TournamentManageOverview
             tournament={tournament}
             divisions={s.divisions}

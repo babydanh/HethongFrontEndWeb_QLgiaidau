@@ -1172,8 +1172,8 @@ export function useManageState(id: string) {
     if (!tournament || !selectedDivisionId) { if (!silent) toast.error('Vui lòng chọn nội dung thi đấu'); return false; }
     const selected = divisions.find((division) => division.id === selectedDivisionId);
     const eligibleParticipants = participants.filter((participant) => participant.teamStatus === 'COMPLETE' && participant.isPaid).length;
-    if (numGroups < 2) { toast.error('Vòng bảng + loại trực tiếp phải có ít nhất 2 bảng'); return false; }
-    if (teamsPerGroup < 2) { toast.error('Mỗi bảng phải có ít nhất 2 đội'); return false; }
+    if (numGroups < 2) { if (!silent) toast.error('Vòng bảng + loại trực tiếp phải có ít nhất 2 bảng'); return false; }
+    if (teamsPerGroup < 2) { if (!silent) toast.error('Mỗi bảng phải có ít nhất 2 đội'); return false; }
     // The division's registration limit (for example 64) is separate from
     // the current group layout. If the organizer already has more eligible
     // teams than the layout can hold, expand each group to the smallest valid
@@ -1184,20 +1184,20 @@ export function useManageState(id: string) {
       : teamsPerGroup;
     const effectiveTeamsPerGroup = Math.max(teamsPerGroup, requiredTeamsPerGroup);
     if (effectiveTeamsPerGroup > 128) {
-      toast.error('Mỗi bảng không thể vượt quá 128 đội. Hãy tăng số bảng hoặc giảm số đội hợp lệ.');
+      if (!silent) toast.error('Mỗi bảng không thể vượt quá 128 đội. Hãy tăng số bảng hoặc giảm số đội hợp lệ.');
       return false;
     }
     if (effectiveTeamsPerGroup !== teamsPerGroup) {
       setTeamsPerGroup(effectiveTeamsPerGroup);
-      toast(`Đã tăng số đội mỗi bảng lên ${effectiveTeamsPerGroup} để đủ chỗ cho ${eligibleParticipants} đội hợp lệ.`, { id: 'gsk-capacity-adjusted' });
+      if (!silent) toast(`Đã tăng số đội mỗi bảng lên ${effectiveTeamsPerGroup} để đủ chỗ cho ${eligibleParticipants} đội hợp lệ.`, { id: 'gsk-capacity-adjusted' });
     }
-    const smallestGroupSize = eligibleParticipants > 0 ? Math.floor(eligibleParticipants / numGroups) : effectiveTeamsPerGroup;
-    if (teamsAdvancing < 1 || teamsAdvancing >= smallestGroupSize) {
-      toast.error(`Số đội đi tiếp mỗi bảng phải từ 1 đến ${Math.max(1, smallestGroupSize - 1)}`);
+    const maxAdvancingPerGroup = Math.max(1, effectiveTeamsPerGroup - 1);
+    if (teamsAdvancing < 1 || teamsAdvancing > maxAdvancingPerGroup) {
+      if (!silent) toast.error(`Số đội đi tiếp mỗi bảng phải từ 1 đến ${maxAdvancingPerGroup}`);
       return false;
     }
     if (numGroups * teamsAdvancing > 64) {
-      toast.error('Knockout hiện hỗ trợ tối đa 64 đội đi tiếp từ vòng bảng');
+      if (!silent) toast.error('Knockout hiện hỗ trợ tối đa 64 đội đi tiếp từ vòng bảng');
       return false;
     }
     setIsSavingGskConfig(true);

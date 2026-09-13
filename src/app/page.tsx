@@ -1144,7 +1144,10 @@ export default function HomePage() {
       translations: roundLabelTranslations,
     });
 
-    const courtText = match.courtName || match.tournament?.venueName;
+    const rawCourt = (match.courtName || match.tournament?.venueName || '').trim();
+    const courtText = rawCourt
+      ? rawCourt.replace(/^sân\s+/i, '').split(',')[0].trim()
+      : '';
     const formatText = getFormatLabel(
       (match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined,
       (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined,
@@ -1363,7 +1366,10 @@ export default function HomePage() {
       translations: roundLabelTranslations,
     });
 
-    const courtText = match.courtName || match.tournament?.venueName;
+    const rawCourt = (match.courtName || match.tournament?.venueName || '').trim();
+    const courtText = rawCourt
+      ? rawCourt.replace(/^sân\s+/i, '').split(',')[0].trim()
+      : '';
     const formatText = getFormatLabel(
       (match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined,
       (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined,

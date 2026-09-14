@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Trophy,
@@ -22,7 +22,7 @@ import {
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { Division } from '@/features/tournaments/api';
-import type { SportRuleKind } from '@/types/tournament';
+import type { SportRuleKind, StageRoundRuleConfig } from '@/types/tournament';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
@@ -83,14 +83,22 @@ export interface BracketSetupModalProps {
   // Round Modal Handlers & Configurable rounds
   handleOpenRoundModal?: (stage: import('@/types/tournament').BracketStage, roundNumber: number) => void;
   divisionRoundConfig?: import('@/types/tournament').StageRoundConfig | null;
-  gskConfigurableGroupRounds?: Array<{ stage: import('@/types/tournament').BracketStage; roundNumber: number; name: string; override?: any }>;
-  gskConfigurableRounds?: Array<{ stage: import('@/types/tournament').BracketStage; roundNumber: number; name: string; override?: any }>;
+  gskConfigurableGroupRounds?: Array<{ stage: import('@/types/tournament').BracketStage; roundNumber: number; name: string; override?: StageRoundRuleConfig | null }>;
+  gskConfigurableRounds?: Array<{ stage: import('@/types/tournament').BracketStage; roundNumber: number; name: string; override?: StageRoundRuleConfig | null }>;
   groupStageOverrideSummary?: string | null;
   onOpenGroupStageConfig?: () => void;
 
   // Submission
   isSubmitting: boolean;
   onConfirm: () => Promise<void> | void;
+}
+
+function createEmptyGroupAssignments(groupCount: number): Record<number, ParticipantItem[]> {
+  const groups: Record<number, ParticipantItem[]> = {};
+  for (let i = 0; i < Math.max(0, groupCount); i++) {
+    groups[i] = [];
+  }
+  return groups;
 }
 
 export function BracketSetupModal({
@@ -229,21 +237,25 @@ export function BracketSetupModal({
   }, [participants]);
 
   // Track team assignment: Map groupIndex (0, 1, 2...) -> Array of ParticipantItem
-  const [groupAssignments, setGroupAssignments] = useState<Record<number, ParticipantItem[]>>({});
-  const [unassignedTeams, setUnassignedTeams] = useState<ParticipantItem[]>([]);
+  const [groupAssignments, setGroupAssignments] = useState<Record<number, ParticipantItem[]>>(
+    () => createEmptyGroupAssignments(numGroups),
+  );
+  const [unassignedTeams, setUnassignedTeams] = useState<ParticipantItem[]>(
+    () => [...eligibleParticipants],
+  );
   const [draggedParticipantId, setDraggedParticipantId] = useState<string | null>(null);
 
-  // Initialize pool assignment when modal opens
-  useEffect(() => {
-    if (!open) return;
-
+  const resetPoolAssignments = useCallback((groupCount = numGroups) => {
     setUnassignedTeams([...eligibleParticipants]);
-    const initialGroups: Record<number, ParticipantItem[]> = {};
-    for (let i = 0; i < numGroups; i++) {
-      initialGroups[i] = [];
+    setGroupAssignments(createEmptyGroupAssignments(groupCount));
+  }, [eligibleParticipants, numGroups]);
+
+  const handleModalOpenChange = useCallback((nextOpen: boolean) => {
+    if (nextOpen) {
+      resetPoolAssignments();
     }
-    setGroupAssignments(initialGroups);
-  }, [open, eligibleParticipants, numGroups]);
+    onOpenChange(nextOpen);
+  }, [onOpenChange, resetPoolAssignments]);
 
   // Format participant label
   const getParticipantLabel = (p: ParticipantItem) => {
@@ -279,12 +291,7 @@ export function BracketSetupModal({
 
   // Reset: All teams return to unassigned
   const handleResetToUnassigned = () => {
-    setUnassignedTeams([...eligibleParticipants]);
-    const resetGroups: Record<number, ParticipantItem[]> = {};
-    for (let i = 0; i < numGroups; i++) {
-      resetGroups[i] = [];
-    }
-    setGroupAssignments(resetGroups);
+    resetPoolAssignments();
   };
 
   // Randomize: Distribute all eligible participants randomly and evenly
@@ -330,8 +337,12 @@ export function BracketSetupModal({
     setUnassignedTeams([]);
   };
 
-  // Move a team into a specific group
-  const assignTeamToGroup = (participant: ParticipantItem, targetGroupIndex: number) => {
+  // Move a team into a specific group (optionally at a target index, or append)
+  const assignTeamToGroup = (
+    participant: ParticipantItem,
+    targetGroupIndex: number,
+    targetSlotIndex?: number,
+  ) => {
     setUnassignedTeams((prev) => prev.filter((p) => p.id !== participant.id));
 
     setGroupAssignments((prev) => {
@@ -339,7 +350,13 @@ export function BracketSetupModal({
       for (let i = 0; i < numGroups; i++) {
         const filtered = (prev[i] || []).filter((p) => p.id !== participant.id);
         if (i === targetGroupIndex) {
-          updated[i] = [...filtered, participant];
+          if (typeof targetSlotIndex === 'number' && targetSlotIndex >= 0 && targetSlotIndex <= filtered.length) {
+            const nextList = [...filtered];
+            nextList.splice(targetSlotIndex, 0, participant);
+            updated[i] = nextList;
+          } else {
+            updated[i] = [...filtered, participant];
+          }
         } else {
           updated[i] = filtered;
         }
@@ -364,8 +381,11 @@ export function BracketSetupModal({
   };
 
   // Drag & Drop handlers
-  const handleDragStart = (e: React.DragEvent, participantId: string) => {
+  const handleDragStart = (e: React.DragEvent, participantId: string, fromGroupIndex?: number) => {
     e.dataTransfer.setData('text/plain', participantId);
+    if (typeof fromGroupIndex === 'number') {
+      e.dataTransfer.setData('application/json', JSON.stringify({ participantId, fromGroupIndex }));
+    }
     setDraggedParticipantId(participantId);
   };
 
@@ -374,20 +394,22 @@ export function BracketSetupModal({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDropOnGroup = (e: React.DragEvent, groupIndex: number) => {
+  const handleDropOnGroup = (e: React.DragEvent, groupIndex: number, targetSlotIndex?: number) => {
     e.preventDefault();
+    e.stopPropagation();
     const pId = e.dataTransfer.getData('text/plain') || draggedParticipantId;
     if (!pId) return;
 
     const participant = eligibleParticipants.find((p) => p.id === pId);
     if (participant) {
-      assignTeamToGroup(participant, groupIndex);
+      assignTeamToGroup(participant, groupIndex, targetSlotIndex);
     }
     setDraggedParticipantId(null);
   };
 
   const handleDropOnUnassigned = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const pId = e.dataTransfer.getData('text/plain') || draggedParticipantId;
     if (!pId) return;
 
@@ -412,7 +434,7 @@ export function BracketSetupModal({
   ];
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange}>
+    <Modal open={open} onOpenChange={handleModalOpenChange}>
       <ModalContent className="max-w-7xl w-[96vw] max-h-[94vh] flex flex-col p-0 overflow-hidden bg-slate-50 rounded-2xl shadow-2xl border border-slate-200">
         {/* MODAL HEADER */}
         <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
@@ -562,8 +584,8 @@ export function BracketSetupModal({
                 </div>
               </div>
 
-              {/* Tóm tắt knockout & Xếp hạt giống */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
+              {/* Tóm tắt knockout */}
+              <div className="pt-1 border-t border-slate-100 text-xs">
                 <span className="text-slate-600 font-semibold">
                   {translate('toKnockoutSummary', {
                     groups: numGroups,
@@ -571,17 +593,6 @@ export function BracketSetupModal({
                     total: numGroups * teamsAdvancing,
                   })}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-medium">{translate('seedingType')}:</span>
-                  <select
-                    value={gskSeedingType}
-                    onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')}
-                    className="border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold bg-white text-slate-800 outline-none"
-                  >
-                    <option value="SEEDED">{translate('seededByElo')}</option>
-                    <option value="RANDOM">{translate('randomSeeding')}</option>
-                  </select>
-                </div>
               </div>
             </div>
 
@@ -974,7 +985,7 @@ export function BracketSetupModal({
                 </div>
 
                 {/* Danh sách thẻ đội chưa phân bảng */}
-                <div className="space-y-2 flex-1 overflow-y-auto max-h-[340px] pr-1">
+                <div className="space-y-2 flex-1 overflow-y-auto max-h-[520px] pr-1">
                   {unassignedTeams.length > 0 ? (
                     unassignedTeams.map((team) => (
                       <div
@@ -1011,7 +1022,7 @@ export function BracketSetupModal({
               </div>
 
               {/* CỘT PHẢI (8 cols): Lưới các bảng đấu (Bảng A, B, C, D...) */}
-              <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[420px] overflow-y-auto pr-1">
+              <div className={`lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 ${numGroups > 4 ? 'max-h-[600px] overflow-y-auto pr-1' : ''}`}>
                 {Array.from({ length: numGroups }).map((_, gIdx) => {
                   const groupName = String.fromCharCode(65 + gIdx); // A, B, C, D...
                   const assignedTeams = groupAssignments[gIdx] || [];
@@ -1039,7 +1050,11 @@ export function BracketSetupModal({
                         {assignedTeams.map((team, idx) => (
                           <div
                             key={team.id}
-                            className="p-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 flex items-center justify-between gap-2 text-xs shadow-2xs"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, team.id, gIdx)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDropOnGroup(e, gIdx, idx)}
+                            className="p-2 rounded-lg border border-slate-200 bg-white hover:border-blue-400 hover:shadow-xs flex items-center justify-between gap-2 text-xs shadow-2xs transition-all cursor-grab active:cursor-grabbing group"
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shrink-0">
@@ -1048,21 +1063,31 @@ export function BracketSetupModal({
                               <span className="font-semibold text-slate-800 truncate">
                                 {getParticipantLabel(team)}
                               </span>
+                              {team.eloPoints && (
+                                <span className="text-[9px] font-bold text-blue-600 shrink-0">
+                                  {team.eloPoints}
+                                </span>
+                              )}
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removeTeamFromGroup(team)}
-                              className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                              title={translate('moveToUnassigned')}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 shrink-0" />
+                              <button
+                                type="button"
+                                onClick={() => removeTeamFromGroup(team)}
+                                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                title={translate('moveToUnassigned')}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         ))}
 
                         {/* Droppable Area */}
                         <div
-                          className="flex-1 min-h-[60px] rounded-lg border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 transition-all cursor-pointer p-2"
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDropOnGroup(e, gIdx)}
+                          className="flex-1 min-h-[50px] rounded-lg border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 transition-all cursor-pointer p-2"
                         >
                           <Plus className="w-4 h-4 mb-0.5" />
                           <span className="text-[11px] font-semibold">{translate('dropHere')}</span>

@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronRight,
   DollarSign,
+  Handshake,
   Info,
   LayoutDashboard,
   MapPin,
@@ -32,7 +33,8 @@ export type ManageSection =
   | 'court_schedule'
   | 'livestream'
   | 'finance'
-  | 'permissions';
+  | 'permissions'
+  | 'sponsors';
 
 export type ManageBasicSubTab = 'general' | 'branding' | 'prizes' | 'contact' | 'sponsors';
 
@@ -227,7 +229,7 @@ export function TournamentManageSidebar({
         { key: 'branding', label: t('sidebar.branding'), target: { section: 'basic', basicSubTab: 'branding' } },
         { key: 'prizes', label: t('sidebar.prizes'), target: { section: 'basic', basicSubTab: 'prizes' } },
         { key: 'contact', label: t('sidebar.contact'), target: { section: 'basic', basicSubTab: 'contact', targetId: 'manage-contact-info-section' } },
-        { key: 'sponsors', label: t('sidebar.sponsors'), target: { section: 'basic', basicSubTab: 'sponsors' } },
+        { key: 'sponsors', label: t('sidebar.sponsors'), target: { section: 'sponsors' } },
       ],
     },
     {
@@ -276,6 +278,12 @@ export function TournamentManageSidebar({
       icon: ShieldCheck,
       target: { section: 'permissions' },
       badge: pendingRefereeCount,
+    },
+    {
+      key: 'sponsors',
+      label: t('sidebar.sponsors'),
+      icon: Handshake,
+      target: { section: 'sponsors' },
     },
     {
       key: 'finance',

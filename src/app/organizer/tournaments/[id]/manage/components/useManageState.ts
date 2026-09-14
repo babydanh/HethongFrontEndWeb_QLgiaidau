@@ -133,7 +133,7 @@ export function useManageState(id: string) {
     } catch { /* silent */ }
   }, [id]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'bracket'|'court_schedule'|'livestream'|'finance'|'permissions'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'bracket'|'court_schedule'|'livestream'|'finance'|'permissions'|'sponsors'>('basic');
   const [validationField, setValidationField] = useState<string | null>(null);
   const [basicSubTab, setBasicSubTab] = useState<'general'|'branding'|'prizes'|'contact'|'sponsors'>('general');
   const [referees, setReferees] = useState<TournamentReferee[]>([]);

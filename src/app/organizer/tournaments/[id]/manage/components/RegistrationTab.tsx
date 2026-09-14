@@ -23,6 +23,10 @@ import {
   FileSpreadsheet,
   Download,
   Upload,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Division, tournamentsApi } from '@/features/tournaments/api';
@@ -216,6 +220,8 @@ export function RegistrationTab({
 }: RegistrationTabProps) {
   const [isSmartImportOpen, setIsSmartImportOpen] = React.useState(false);
   const [isMockDataModalOpen, setIsMockDataModalOpen] = React.useState(false);
+  const [isWildcardModalOpen, setIsWildcardModalOpen] = React.useState(false);
+  const [isConfigOpen, setIsConfigOpen] = React.useState(false);
   const [selectedParticipant, setSelectedParticipant] = React.useState<TournamentParticipant | null>(null);
   const registrationFormFields = React.useMemo(
     () => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)).fields,
@@ -373,332 +379,229 @@ export function RegistrationTab({
       {/* REGISTRATION MAIN CONTENT */}
       <div className="w-full space-y-6 min-w-0">
         
-        {/* Publish Status Card */}
-        <div id="manage-registration-status-card" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm transition-all">
-          <h3 className="font-bold text-slate-900 mb-4 text-lg">{registrationTranslate('publicationStatus')}</h3>
-          
-          {isTournamentDraft(tournament.status) ? (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-400">ℹ</span>
-                <p className="text-xs leading-relaxed font-medium">
-                  {registrationTranslate('draftDescription', { status: registrationTranslate('draftStatus') })}
-                </p>
-              </div>
-              {publishFeeAmount > 0 && (
-                <div className="text-xs font-semibold text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  {registrationTranslate('publishFeeDescription', { amount: publishFeeAmount.toLocaleString('vi-VN') })}
-                </div>
-              )}
-              <Button
-                onClick={handlePublish}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full md:w-auto flex items-center justify-center gap-1.5"
-              >
-                <CheckCircle className="w-4 h-4" /> {publishFeeAmount > 0 ? registrationTranslate('payAndPublish') : registrationTranslate('publishTournament')}
-              </Button>
-            </div>
-          ) : isTournamentPendingApproval(tournament.status) ? (
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <span className="mt-0.5 text-lg text-amber-600" aria-hidden="true">⏳</span>
-              <div>
-                <p className="font-bold text-amber-900 text-sm">{registrationTranslate('pendingApprovalTitle')}</p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-800">{registrationTranslate('pendingApprovalDescription')}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-slate-50/60 rounded-lg border border-slate-200">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold text-emerald-950 text-sm">{registrationTranslate('publishedSuccess')}</p>
-                    <p className="text-emerald-700 text-xs mt-1">{registrationTranslate('publishedParticipantDescription')}</p>
-                  </div>
-                </div>
-                
-                {/* Lock list button */}
-                {(isTournamentRegistrationOpen(tournament.status) || registrationLocked) && (
-                  registrationLocked ? (
-                    <Button
-                      onClick={handleReopenRegistration}
-                      disabled={isReopeningRegistration}
-                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
-                    >
-                      {isReopeningRegistration ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      {registrationTranslate('reopenRegistration')}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleOpenLockModal}
-                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
-                    >
-                      <Lock className="w-4 h-4" /> {registrationTranslate('lockListAndCreateBracket')}
-                    </Button>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
-          <div className="flex items-start gap-4 justify-between border-b border-slate-100 pb-5">
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">{registrationTranslate('registrationInfoTitle')}</h3>
-              <p className="mt-1.5 text-xs font-semibold text-slate-455">
-                {registrationTranslate('registrationInfoDescription')}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Column 1: Mode and access */}
-            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-lg">
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{registrationTranslate('accessApprovalTitle')}</h4>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('visibilityLabel')}</label>
-                  <select
-                    value={visibility}
-                    disabled={registrationLocked}
-                    onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  >
-                    <option value="PUBLIC">{registrationTranslate('publicVisibilityOption')}</option>
-                    <option value="PRIVATE">{registrationTranslate('privateVisibilityOption')}</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('registrationModeLabel')}</label>
-                  <select
-                    value={registrationMode}
-                    disabled={registrationLocked}
-                    onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  >
-                    <option value="OPEN">{registrationTranslate('openRegistrationOption')}</option>
-                    <option value="APPROVAL">{registrationTranslate('approvalRegistrationOption')}</option>
-                    <option value="INVITE_ONLY">{registrationTranslate('inviteOnlyRegistrationOption')}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-200/60 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    registrationMode === 'INVITE_ONLY' ? 'bg-amber-500 animate-pulse' :
-                    registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
-                  }`} />
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+        {/* Collapsible Registration Settings Bar */}
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden transition-all">
+          <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-slate-50/80 border-b border-slate-100">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-200/60 shrink-0">
+                <Settings className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-900">{registrationTranslate('registrationConfigToggle')}</span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white border border-slate-200 text-slate-700">
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      registrationMode === 'INVITE_ONLY' ? 'bg-amber-500' :
+                      registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
+                    }`} />
                     {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyStatus')}
                     {registrationMode === 'APPROVAL' && registrationTranslate('manualApprovalStatus')}
                     {registrationMode === 'OPEN' && registrationTranslate('openStatus')}
                   </span>
-                </div>
-                <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
-                  {registrationMode === 'OPEN' && registrationTranslate('openDescription')}
-                  {registrationMode === 'APPROVAL' && registrationTranslate('approvalDescription')}
-                  {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyDescription')}
-                </p>
-              </div>
-            </div>
-
-            {/* Column 2: Registration window */}
-            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-lg flex flex-col justify-between">
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{registrationTranslate('registrationWindowTitle')}</h4>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <DateTimePicker
-                    label={registrationTranslate('registrationOpenLabel')}
-                    value={registrationStartDate}
-                    min={(() => {
-                      const now = new Date();
-                      const pad = (v: number) => String(v).padStart(2, '0');
-                      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-                    })()}
-                    onChange={setRegistrationStartDate}
-                    disabled={registrationLocked}
-                  />
-                  {registrationStartDate && (
-                    <div className="mt-1">
-                      <CountdownTimer
-                        targetDate={registrationStartDate}
-                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="info"
-                        size="sm"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <DateTimePicker
-                    label={registrationTranslate('registrationCloseLabel')}
-                    value={registrationEndDate}
-                    min={registrationStartDate || (() => {
-                      const now = new Date();
-                      const pad = (v: number) => String(v).padStart(2, '0');
-                      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-                    })()}
-                    onChange={setRegistrationEndDate}
-                    disabled={registrationLocked}
-                  />
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white border border-slate-200 text-slate-600">
+                    {visibility === 'PUBLIC' ? registrationTranslate('publicVisibilityOption') : registrationTranslate('privateVisibilityOption')}
+                  </span>
                   {registrationEndDate && (
-                    <div className="mt-1">
-                      <CountdownTimer
-                        targetDate={registrationEndDate}
-                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
-                        variant="warning"
-                        size="sm"
-                      />
-                    </div>
+                    <span className="text-[11px] font-medium text-slate-500">
+                      • {registrationTranslate('registrationCloseLabel')}: <strong className="text-slate-700">{formatDate(registrationEndDate)}</strong>
+                    </span>
                   )}
                 </div>
               </div>
-
-              <p className="text-[11px] text-slate-400 font-semibold leading-relaxed pt-2 border-t border-slate-200/60 mt-3">
-                💡 {registrationTranslate('timelineNotice')}
-              </p>
             </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsConfigOpen(!isConfigOpen)}
+              className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs shrink-0 flex items-center gap-1.5"
+            >
+              <span>{isConfigOpen ? registrationTranslate('hideRegistrationSettings') : registrationTranslate('editRegistrationSettings')}</span>
+              {isConfigOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </Button>
           </div>
 
-          {/* ELO Constraints */}
-          <div id="manage-registration-elo-section" className="bg-slate-50/60 border border-slate-100 rounded-lg p-5 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={eloEnabled}
-                onChange={(e) => setEloEnabled(e.target.checked)}
-                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <div>
-                <span className="text-sm font-bold text-slate-800">{registrationTranslate('eloConstraintTitle')}</span>
-                <p className="text-xs text-slate-500">{registrationTranslate('eloConstraintDescription')}</p>
-              </div>
-            </label>
+          {isConfigOpen && (
+            <div className="p-5 sm:p-6 space-y-6 animate-in slide-in-from-top-2 duration-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Column 1: Mode and access */}
+                <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-4 sm:p-5 rounded-lg">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationTranslate('accessApprovalTitle')}</h4>
 
-            {eloEnabled && (() => {
-              const selDiv = divisions.find(d => d.id === selectedDivisionId);
-              const isDoubles = selDiv?.matchType === 'DOUBLES' || selDiv?.matchType === 'MIXED_DOUBLES';
-              return (
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloMinimum')}</label>
-                  <input type="number" min={0} max={3000} value={eloMin}
-                    onChange={(e) => setEloMin(Math.max(0, Number(e.target.value)))}
-                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloMaximum')}</label>
-                  <input type="number" min={0} max={3000} value={eloMax}
-                    onChange={(e) => setEloMax(Math.max(0, Number(e.target.value)))}
-                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
-                </div>
-                {isDoubles && (
-                  <>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloCombinedMaximum')}</label>
-                    <input type="number" min={0} max={6000} value={eloMaxCombined}
-                      onChange={(e) => setEloMaxCombined(Math.max(0, Number(e.target.value)))}
-                      className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500">{registrationTranslate('eloMaximumGap')}</label>
-                    <input type="number" min={0} max={1000} value={eloMaxGap}
-                      onChange={(e) => setEloMaxGap(Math.max(0, Number(e.target.value)))}
-                      className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
-                  </div>
-                  </>
-                )}
-              </div>
-            )})()}
-          </div>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('visibilityLabel')}</label>
+                      <select
+                        value={visibility}
+                        disabled={registrationLocked}
+                        onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="PUBLIC">{registrationTranslate('publicVisibilityOption')}</option>
+                        <option value="PRIVATE">{registrationTranslate('privateVisibilityOption')}</option>
+                      </select>
+                    </div>
 
-          {(visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY') && (
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{registrationTranslate('quickInviteTitle')}</p>
-                  <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || registrationTranslate('inviteCodeMissing')}</p>
-                  <p className="text-xs font-medium text-slate-600">
-                    {registrationMode === 'INVITE_ONLY'
-                      ? registrationTranslate('inviteOnlyCodeDescription')
-                      : visibility === 'PRIVATE'
-                        ? registrationTranslate('privateTournamentDescription')
-                        : registrationTranslate('shareCodeDescription')}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('registrationModeLabel')}</label>
+                      <select
+                        value={registrationMode}
+                        disabled={registrationLocked}
+                        onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="OPEN">{registrationTranslate('openRegistrationOption')}</option>
+                        <option value="APPROVAL">{registrationTranslate('approvalRegistrationOption')}</option>
+                        <option value="INVITE_ONLY">{registrationTranslate('inviteOnlyRegistrationOption')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 space-y-2">
+                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                      {registrationMode === 'OPEN' && registrationTranslate('openDescription')}
+                      {registrationMode === 'APPROVAL' && registrationTranslate('approvalDescription')}
+                      {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyDescription')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Column 2: Registration window */}
+                <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-4 sm:p-5 rounded-lg flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{registrationTranslate('registrationWindowTitle')}</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <DateTimePicker
+                          label={registrationTranslate('registrationOpenLabel')}
+                          value={registrationStartDate}
+                          min={(() => {
+                            const now = new Date();
+                            const pad = (v: number) => String(v).padStart(2, '0');
+                            return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                          })()}
+                          onChange={setRegistrationStartDate}
+                          disabled={registrationLocked}
+                        />
+                        {registrationStartDate && (
+                          <div className="mt-1">
+                            <CountdownTimer
+                              targetDate={registrationStartDate}
+                              labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
+                              variant="info"
+                              size="sm"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <DateTimePicker
+                          label={registrationTranslate('registrationCloseLabel')}
+                          value={registrationEndDate}
+                          min={registrationStartDate || (() => {
+                            const now = new Date();
+                            const pad = (v: number) => String(v).padStart(2, '0');
+                            return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                          })()}
+                          onChange={setRegistrationEndDate}
+                          disabled={registrationLocked}
+                        />
+                        {registrationEndDate && (
+                          <div className="mt-1">
+                            <CountdownTimer
+                              targetDate={registrationEndDate}
+                              labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
+                              variant="warning"
+                              size="sm"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 font-semibold leading-relaxed pt-2 border-t border-slate-200/60 mt-3">
+                    💡 {registrationTranslate('timelineNotice')}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(tournament.inviteCode || '');
-                        toast.success(registrationTranslate('copyCode'));
-                      }}
-                    className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                  >
-                    {registrationTranslate('copyCode')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleRegenerateInviteCode}
-                    disabled={registrationLocked}
-                    className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                  >
-                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                    {registrationTranslate('regenerateCode')}
-                  </Button>
-                </div>
               </div>
 
-              {isTournamentDraft(tournament.status) && (
-                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">
-                  ⚠️ {registrationTranslate('draftInviteWarning', { status: registrationTranslate('draftStatus') })}
+              {(visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY') && (
+                <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{registrationTranslate('quickInviteTitle')}</p>
+                      <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || registrationTranslate('inviteCodeMissing')}</p>
+                      <p className="text-xs font-medium text-slate-600">
+                        {registrationMode === 'INVITE_ONLY'
+                          ? registrationTranslate('inviteOnlyCodeDescription')
+                          : visibility === 'PRIVATE'
+                            ? registrationTranslate('privateTournamentDescription')
+                            : registrationTranslate('shareCodeDescription')}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(tournament.inviteCode || '');
+                          toast.success(registrationTranslate('copyCode'));
+                        }}
+                        className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
+                      >
+                        {registrationTranslate('copyCode')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleRegenerateInviteCode}
+                        disabled={registrationLocked}
+                        className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
+                      >
+                        <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                        {registrationTranslate('regenerateCode')}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-lg border border-white/80 bg-white/80 p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                      {visibility === 'PRIVATE' ? registrationTranslate('privateRegistrationLink') : registrationTranslate('currentRegistrationLink')}
+                    </p>
+                    <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
+                      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{inviteLink}</p>
+                      <Button
+                        variant="outline"
+                        onClick={onCopyInviteLink}
+                        className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold"
+                      >
+                        {registrationTranslate('copyLink')}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <LiteInviteQr
+                      inviteUrl={inviteLink}
+                      tournamentName={tournament.name}
+                      compact
+                    />
+                  </div>
                 </div>
               )}
 
-              <div className="mt-4 rounded-lg border border-white/80 bg-white/80 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                  {visibility === 'PRIVATE' ? registrationTranslate('privateRegistrationLink') : registrationTranslate('currentRegistrationLink')}
-                </p>
-                <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
-                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{inviteLink}</p>
-                  <Button
-                    variant="outline"
-                    onClick={onCopyInviteLink}
-                    className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold"
-                  >
-                    {registrationTranslate('copyLink')}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <LiteInviteQr
-                  inviteUrl={inviteLink}
-                  tournamentName={tournament.name}
-                  compact
-                />
+              <div className="flex justify-end border-t border-slate-100 pt-4">
+                <Button
+                  onClick={handleSaveRegistrationSettings}
+                  disabled={isSavingConfig || registrationLocked}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
+                >
+                  {isSavingConfig ? registrationTranslate('saving') : registrationTranslate('saveRegistrationInfo')}
+                </Button>
               </div>
             </div>
           )}
-
-          <div className="flex justify-end border-t border-slate-100 pt-5 mt-2">
-            <Button
-              onClick={handleSaveRegistrationSettings}
-              disabled={isSavingConfig || registrationLocked}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
-            >
-              {isSavingConfig ? registrationTranslate('saving') : registrationTranslate('saveRegistrationInfo')}
-            </Button>
-          </div>
         </div>
 
         <div id="manage-participants-section" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5 max-w-full overflow-hidden transition-all">
@@ -710,6 +613,32 @@ export function RegistrationTab({
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsWildcardModalOpen(true)}
+                disabled={registrationLocked}
+                className="border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserPlus className="h-3.5 w-3.5 text-blue-600" />
+                {registrationTranslate('assignWildcard')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleAutoSeed()}
+                disabled={isAutoSeeding || registrationLocked}
+                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                {isAutoSeeding ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                ) : (
+                  <Shuffle className="h-3.5 w-3.5 text-slate-500" />
+                )}
+                {isAutoSeeding ? registrationTranslate('seedingInProgress') : registrationTranslate('autoSeed')}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1226,6 +1155,126 @@ export function RegistrationTab({
           handleSeedMockData={handleSeedMockData}
           handleClearMockData={handleClearMockData}
         />
+
+        {/* Wildcard Assignment Modal */}
+        {isWildcardModalOpen && (
+          <Modal open={isWildcardModalOpen} onOpenChange={setIsWildcardModalOpen}>
+            <ModalContent className="max-w-md bg-white p-0">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <ModalHeader>
+                  <ModalTitle className="text-base font-bold flex items-center gap-2 text-slate-900">
+                    <UserPlus className="w-5 h-5 text-blue-600" />
+                    {registrationTranslate('wildcardTitle')}
+                  </ModalTitle>
+                </ModalHeader>
+                <p className="mt-1 text-xs text-slate-500 font-medium">
+                  {registrationTranslate('wildcardDescription')}
+                </p>
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Division selector if multiple */}
+                {divisions.length > 1 && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      {registrationTranslate('contentSelectionLabel')}
+                    </label>
+                    <select
+                      value={selectedDivisionId}
+                      onChange={(e) => {
+                        setSelectedDivisionId(e.target.value);
+                        setWildcardPartnerEmailOrPhone('');
+                      }}
+                      className="w-full h-10 px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {divisions.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d._count?.participants ?? 0} VĐV)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {(() => {
+                  const currentDivision = divisions.find((d) => d.id === selectedDivisionId);
+                  const isDoubles = currentDivision?.matchType === 'DOUBLES' || currentDivision?.matchType === 'MIXED_DOUBLES';
+                  return (
+                    <div className="space-y-3">
+                      <Input
+                        label={registrationTranslate('playerEmailPhoneLabel')}
+                        placeholder={registrationTranslate('playerEmailPhonePlaceholder')}
+                        value={wildcardEmailOrPhone}
+                        onChange={(e) => setWildcardEmailOrPhone(e.target.value)}
+                        className="bg-white text-xs h-10"
+                        disabled={isAssigningWildcard}
+                      />
+
+                      {isDoubles && (
+                        <Input
+                          label={registrationTranslate('teammateLabel')}
+                          placeholder={registrationTranslate('teammatePlaceholder')}
+                          value={wildcardPartnerEmailOrPhone}
+                          onChange={(e) => setWildcardPartnerEmailOrPhone(e.target.value)}
+                          className="bg-white text-xs h-10"
+                          disabled={isAssigningWildcard}
+                        />
+                      )}
+
+                      <Input
+                        label={registrationTranslate('wildcardTeamNameLabel')}
+                        placeholder={registrationTranslate('wildcardTeamNamePlaceholder')}
+                        value={wildcardTeamName}
+                        onChange={(e) => setWildcardTeamName(e.target.value)}
+                        className="bg-white text-xs h-10"
+                        disabled={isAssigningWildcard}
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3.5 bg-slate-50">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsWildcardModalOpen(false)}
+                  disabled={isAssigningWildcard}
+                  className="border-slate-200 text-slate-700 hover:bg-white text-xs font-bold"
+                >
+                  {registrationTranslate('close')}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await handleAssignWildcard();
+                      setIsWildcardModalOpen(false);
+                    } catch {
+                      // Keep modal open if error
+                    }
+                  }}
+                  disabled={isAssigningWildcard || !wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                >
+                  {isAssigningWildcard ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      {registrationTranslate('assigningWildcard')}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      {registrationTranslate('assignWildcard')}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </ModalContent>
+          </Modal>
+        )}
 
       </div>
   );

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -25,12 +25,11 @@ import { useRouter } from 'next/navigation';
 import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
+import SponsorSettingsPanel from './components/SponsorSettingsPanel';
 import { ScheduleTab } from './components/ScheduleTab';
 import { CourtWorkspace } from './components/CourtWorkspace';
 import { RegistrationTab } from './components/RegistrationTab';
 import { RegistrationFormBuilder } from './components/RegistrationFormBuilder';
-import { WildcardManagerCard } from './components/WildcardManagerCard';
-import { SeedingManagerCard } from './components/SeedingManagerCard';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { FinanceTab } from './components/FinanceTab';
@@ -143,7 +142,7 @@ const getBracketFormatIcon = (format?: string | null) => {
 
 function getManageSectionFromTab(tab: string | null): ManageSection | null {
   if (!tab || tab === 'operations') return null;
-  if (['basic', 'schedule', 'registration', 'bracket', 'court_schedule', 'livestream', 'finance', 'permissions'].includes(tab)) {
+  if (['basic', 'schedule', 'registration', 'bracket', 'court_schedule', 'livestream', 'finance', 'permissions', 'sponsors'].includes(tab)) {
     return tab as Exclude<ManageSection, 'overview'>;
   }
   return null;
@@ -1409,6 +1408,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   { id: 'registration' as const, label: 'Vận động viên', icon: Users, badge: s.participants.length },
                   { id: 'bracket' as const, label: 'Bảng đấu', icon: Trophy },
                   { id: 'court_schedule' as const, label: 'Lịch thi đấu', icon: CalendarDays },
+                  { id: 'sponsors' as const, label: 'Tài trợ', icon: Handshake },
                 ].map((tab) => {
                   const isActive = activeSection === tab.id;
                   const TabIcon = tab.icon;
@@ -1452,8 +1452,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
             {/* Tab Content Container - Exact white rounded card from Image 1 */}
             <div id="manage-content-area" className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3.5 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden scroll-mt-24">
-              {/* "NỘI DUNG THI ĐẤU" Accordion / Vertical List - Shown on non-overview tabs */}
-              {activeSection !== 'overview' && (
+              {/* "NỘI DUNG THI ĐẤU" Accordion / Vertical List - Shown on non-overview/non-sponsors tabs */}
+              {activeSection !== 'overview' && activeSection !== 'sponsors' && (
                 <div className="mb-4" aria-label={translate('divisions.title') || 'Nội dung thi đấu'}>
                   <div className="flex items-center justify-between gap-2 mb-2 px-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -1894,6 +1894,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {activeSection === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
 
         {activeSection === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
+
+        {activeSection === 'sponsors' && (
+          <div className="animate-in fade-in duration-200">
+            <SponsorSettingsPanel tournamentId={id} />
+          </div>
+        )}
           </div>
         )}
         </div>
@@ -1901,35 +1907,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Mobile Contact & Registration Management Container */}
         <div className="block lg:hidden space-y-4">
           {renderContactCard()}
-          {activeSection === 'registration' && s.tournament && (
-            <>
-              <RegistrationFormBuilder tournament={s.tournament} divisions={s.divisions} />
-              <WildcardManagerCard
-                divisions={s.divisions}
-                selectedDivisionId={s.selectedDivisionId}
-                setSelectedDivisionId={s.setSelectedDivisionId}
-                wildcardEmailOrPhone={s.wildcardEmailOrPhone}
-                setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
-                wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone}
-                setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
-                wildcardTeamName={s.wildcardTeamName}
-                setWildcardTeamName={s.setWildcardTeamName}
-                isAssigningWildcard={s.isAssigningWildcard}
-                handleAssignWildcard={s.handleAssignWildcard}
-                participants={s.participants}
-                handleRejectParticipant={s.handleRejectParticipant}
-              />
-              <SeedingManagerCard
-                seedingMethod={s.seedingMethod}
-                setSeedingMethod={s.setSeedingMethod}
-                isAutoSeeding={s.isAutoSeeding}
-                handleAutoSeed={s.handleAutoSeed}
-                handleSwapSeeds={s.handleSwapSeeds}
-                handleReorderSeeds={s.handleReorderSeeds}
-                participants={s.participants}
-              />
-            </>
-          )}
         </div>
       </div>
 
@@ -1937,35 +1914,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       <div className="hidden lg:block lg:col-span-5 xl:col-span-4 space-y-4 min-w-0">
         {renderMetadataCard()}
         {renderContactCard()}
-        {activeSection === 'registration' && s.tournament && (
-          <>
-            <RegistrationFormBuilder tournament={s.tournament} divisions={s.divisions} />
-            <WildcardManagerCard
-              divisions={s.divisions}
-              selectedDivisionId={s.selectedDivisionId}
-              setSelectedDivisionId={s.setSelectedDivisionId}
-              wildcardEmailOrPhone={s.wildcardEmailOrPhone}
-              setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
-              wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone}
-              setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
-              wildcardTeamName={s.wildcardTeamName}
-              setWildcardTeamName={s.setWildcardTeamName}
-              isAssigningWildcard={s.isAssigningWildcard}
-              handleAssignWildcard={s.handleAssignWildcard}
-              participants={s.participants}
-              handleRejectParticipant={s.handleRejectParticipant}
-            />
-            <SeedingManagerCard
-              seedingMethod={s.seedingMethod}
-              setSeedingMethod={s.setSeedingMethod}
-              isAutoSeeding={s.isAutoSeeding}
-              handleAutoSeed={s.handleAutoSeed}
-              handleSwapSeeds={s.handleSwapSeeds}
-              handleReorderSeeds={s.handleReorderSeeds}
-              participants={s.participants}
-            />
-          </>
-        )}
       </div>
     </div>
   </div>

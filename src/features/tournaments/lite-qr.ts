@@ -11,19 +11,16 @@ export function isLiteTournament(t: {
     isLite?: boolean;
     mode?: 'LITE' | 'ADVANCED' | 'STRICT' | string;
     hideAdvancedSettings?: boolean;
-    scoringMode?: 'LITE' | 'FREE' | 'STRICT' | string;
-  } | null;
-  sportRules?: {
-    mode?: 'LITE' | 'STRICT' | string;
   } | null;
 } | null | undefined): boolean {
   if (!t) return false;
   const cfg = t.tournamentConfig;
   if (t.isLite === true) return true;
   if (cfg?.isLite === true) return true;
-  if (cfg?.mode === 'LITE') return true;
-  if (cfg?.scoringMode === 'FREE') return true;
-  if (t.sportRules?.mode === 'LITE') return true;
+  // Legacy records created before the explicit isLite flag are only Lite when
+  // the old UI marker is present as well. `mode`/`scoringMode` alone describe
+  // scoring behavior and may also be used by full/advanced tournaments.
+  if (cfg?.mode === 'LITE' && cfg.hideAdvancedSettings === true) return true;
   return false;
 }
 

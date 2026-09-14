@@ -1067,12 +1067,12 @@ const commonTranslate = useTranslations('Common');
           </>
         )}
 
-      {/* Key Details Rows (Đen đậm, rõ ràng, không dùng màu mè) */}
-      <div className="space-y-2.5 pt-3 border-t border-slate-100 text-slate-900">
+      {/* Key Details Rows */}
+      <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
         {/* Dates */}
         <div className="flex items-start gap-2.5">
-          <Calendar className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-          <p className="font-extrabold text-slate-900 text-sm leading-snug">
+          <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+          <p className="font-semibold text-slate-800 leading-snug">
             {activeTournament.startDate ? (
               <>
                 {formatDate(activeTournament.startDate)}
@@ -1084,25 +1084,29 @@ const commonTranslate = useTranslations('Common');
 
         {/* Location */}
         <div className="flex items-start gap-2.5">
-          <MapPin className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-          <p className="font-semibold text-slate-800 text-xs sm:text-[13px] leading-relaxed break-words" title={getTournamentLocationLabel(activeTournament)}>
+          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+          <p className="font-medium text-slate-600 leading-relaxed break-words" title={getTournamentLocationLabel(activeTournament)}>
             {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
           </p>
         </div>
 
         {/* Divisions Count */}
         <div className="flex items-center gap-2.5">
-          <Trophy className="w-4 h-4 text-slate-700 shrink-0" />
-          <p className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
-            {divisionsList.length || 1} <span className="font-semibold text-slate-700">{translate('competitionContentTitle') || 'Nội dung thi đấu'}</span>
+          <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
+          <p className="text-slate-600">
+            <span className="font-bold text-slate-800">{divisionsList.length || 1}</span>{' '}
+            <span>{translate('competitionContentTitle') || 'Nội dung thi đấu'}</span>
           </p>
         </div>
 
         {/* Participants / Teams Count */}
         <div className="flex items-center gap-2.5">
-          <Users className="w-4 h-4 text-slate-700 shrink-0" />
-          <p className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
-            {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0} <span className="font-semibold text-slate-700">{translate('participantsCount') || 'Số lượng hồ sơ'}</span>
+          <Users className="w-4 h-4 text-slate-400 shrink-0" />
+          <p className="text-slate-600">
+            <span className="font-bold text-slate-800">
+              {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}
+            </span>{' '}
+            <span>{translate('participantsCount') || 'Số lượng hồ sơ'}</span>
           </p>
         </div>
       </div>

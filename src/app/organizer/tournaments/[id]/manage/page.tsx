@@ -973,9 +973,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 cursor-pointer transition-colors"
             title="Bấm để xem và thêm nội dung thi đấu"
           >
-            <Trophy className="w-4 h-4 text-slate-700 shrink-0" />
-            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] flex-1">
-              {s.divisions.length} <span className="font-semibold text-slate-700">Nội dung thi đấu</span>
+            <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
+            <p className="text-xs sm:text-[13px] text-slate-600 flex-1">
+              <span className="font-bold text-slate-800">{s.divisions.length}</span> <span>Nội dung thi đấu</span>
             </p>
             <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover/row:opacity-100 transition-opacity">
               Chi tiết &rarr;
@@ -988,9 +988,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 cursor-pointer transition-colors"
             title="Bấm để xem danh sách vận động viên"
           >
-            <Users className="w-4 h-4 text-slate-700 shrink-0" />
-            <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] flex-1">
-              {s.participants.length} <span className="font-semibold text-slate-700">Số lượng hồ sơ</span>
+            <Users className="w-4 h-4 text-slate-400 shrink-0" />
+            <p className="text-xs sm:text-[13px] text-slate-600 flex-1">
+              <span className="font-bold text-slate-800">{s.participants.length}</span> <span>Số lượng hồ sơ</span>
             </p>
             <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover/row:opacity-100 transition-opacity">
               Xem DS &rarr;

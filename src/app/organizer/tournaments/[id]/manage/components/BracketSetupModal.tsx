@@ -464,7 +464,7 @@ export function BracketSetupModal({
                     </button>
                   </div>
                   <p className="text-[10px] text-center text-slate-400 font-medium">
-                    {teamsPerGroup} {translate('teams').toLowerCase()}
+                    {teamsPerGroup} đội
                   </p>
                 </div>
 
@@ -564,176 +564,154 @@ export function BracketSetupModal({
                 )}
               </div>
 
-              {/* Pickleball Mode Switcher (chỉ khi là môn Pickleball) */}
-              {isPickleballVariant && setSportRuleKind && (
-                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-2.5 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                      {translate('pickleballMode')}
-                    </span>
-                    <span className="text-[9px] font-bold text-emerald-600 bg-white px-1.5 py-0.5 rounded border border-emerald-200">
-                      {sportRuleKind === 'PICKLEBALL_RALLY' ? translate('rallyScoring') : translate('sideOutScoring')}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleSportRuleKindChange('PICKLEBALL_RALLY')}
-                      className={`px-2.5 py-1.5 rounded-lg border text-left text-xs font-bold transition-all cursor-pointer ${
-                        sportRuleKind === 'PICKLEBALL_RALLY'
-                          ? 'border-emerald-500 bg-white text-emerald-900 shadow-2xs ring-1 ring-emerald-300'
-                          : 'border-emerald-200 bg-white/70 text-slate-600 hover:bg-white'
-                      }`}
-                    >
-                      <p className="font-bold leading-tight">{translate('rallyScoring')}</p>
-                      <p className="text-[9px] font-normal text-slate-500 mt-0.5">{translate('rallyScoringDescription')}</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSportRuleKindChange('PICKLEBALL_SIDE_OUT')}
-                      className={`px-2.5 py-1.5 rounded-lg border text-left text-xs font-bold transition-all cursor-pointer ${
-                        sportRuleKind === 'PICKLEBALL_SIDE_OUT'
-                          ? 'border-emerald-500 bg-white text-emerald-900 shadow-2xs ring-1 ring-emerald-300'
-                          : 'border-emerald-200 bg-white/70 text-slate-600 hover:bg-white'
-                      }`}
-                    >
-                      <p className="font-bold leading-tight">{translate('sideOutScoring')}</p>
-                      <p className="text-[9px] font-normal text-slate-500 mt-0.5">{translate('sideOutScoringDescription')}</p>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Danh sách Preset Cards nhanh (cho cả Lite & Strict) */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  {translate('sportPresets')}
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {presets.map((preset) => {
-                    const isSelected =
-                      setsToWin === preset.setsToWin &&
-                      pointsPerSet === preset.pointsPerSet &&
-                      winByTwo === preset.winByTwo;
-                    return (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => applyPreset(preset)}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                          isSelected
-                            ? 'border-blue-600 bg-blue-50/60 shadow-2xs ring-1 ring-blue-400'
-                            : 'border-slate-200 bg-slate-50/50 hover:border-blue-300 hover:bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-1">
-                          <p className="text-xs font-bold text-slate-900 leading-snug">{preset.label}</p>
-                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white text-blue-700 border border-slate-200 shrink-0">
-                            {translate('firstToSets', { sets: preset.setsToWin })} • {preset.pointsPerSet}p
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[10px] text-slate-500 line-clamp-2 leading-relaxed">
-                          {preset.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Chế độ TIÊU CHUẨN (Strict): Hiển thị đầy đủ ô tinh chỉnh số set, điểm, deuce, tiebreak */}
+              {/* Khi ở chế độ TIÊU CHUẨN (Strict): Hiển thị đầy đủ chế độ Pickleball, Presets và các ô tinh chỉnh chi tiết */}
               {!isLiteMode ? (
-                <div className="space-y-3 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('setsToWin')}</label>
-                      <select
-                        value={setsToWin}
-                        onChange={(e) => setSetsToWin?.(Number(e.target.value))}
-                        className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
-                      >
-                        {presentation.setOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">{presentation.setUnitLabel}</label>
-                      <input
-                        type="number"
-                        value={pointsPerSet}
-                        onChange={(e) => setPointsPerSet?.(Number(e.target.value))}
-                        className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Win by 2 & Deuce points */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-                    <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={winByTwo}
-                        onChange={(e) => setWinByTwo?.(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300"
-                      />
-                      <span>{presentation.winByTwoLabel}</span>
-                    </label>
-                    {winByTwo && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-semibold text-slate-400">Max:</span>
-                        <input
-                          type="number"
-                          value={maxDeucePoints}
-                          onChange={(e) => setMaxDeucePoints?.(Number(e.target.value))}
-                          className="w-12 border border-slate-200 rounded px-1.5 py-0.5 text-xs font-bold text-center"
-                        />
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  {/* Pickleball Mode Switcher (chỉ khi là môn Pickleball) */}
+                  {isPickleballVariant && setSportRuleKind && (
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-2.5 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                          {translate('pickleballMode')}
+                        </span>
+                        <span className="text-[9px] font-bold text-emerald-600 bg-white px-1.5 py-0.5 rounded border border-emerald-200">
+                          {sportRuleKind === 'PICKLEBALL_RALLY' ? translate('rallyScoring') : translate('sideOutScoring')}
+                        </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Tiebreak Points (chỉ Tennis hoặc Pickleball Side-Out) */}
-                  {supportsTiebreakInput && (
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-                      <span className="font-bold text-slate-700">{presentation.tiebreakLabel}:</span>
-                      <input
-                        type="number"
-                        value={superTiebreakPoints}
-                        onChange={(e) => setSuperTiebreakPoints?.(Number(e.target.value))}
-                        placeholder={translate('tiebreakPlaceholder', { points: sportRuleKind === 'TENNIS' ? 7 : 11 })}
-                        className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-center"
-                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSportRuleKindChange('PICKLEBALL_RALLY')}
+                          className={`px-2.5 py-1.5 rounded-lg border text-left text-xs font-bold transition-all cursor-pointer ${
+                            sportRuleKind === 'PICKLEBALL_RALLY'
+                              ? 'border-emerald-500 bg-white text-emerald-900 shadow-2xs ring-1 ring-emerald-300'
+                              : 'border-emerald-200 bg-white/70 text-slate-600 hover:bg-white'
+                          }`}
+                        >
+                          <p className="font-bold leading-tight">{translate('rallyScoring')}</p>
+                          <p className="text-[9px] font-normal text-slate-500 mt-0.5">{translate('rallyScoringDescription')}</p>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSportRuleKindChange('PICKLEBALL_SIDE_OUT')}
+                          className={`px-2.5 py-1.5 rounded-lg border text-left text-xs font-bold transition-all cursor-pointer ${
+                            sportRuleKind === 'PICKLEBALL_SIDE_OUT'
+                              ? 'border-emerald-500 bg-white text-emerald-900 shadow-2xs ring-1 ring-emerald-300'
+                              : 'border-emerald-200 bg-white/70 text-slate-600 hover:bg-white'
+                          }`}
+                        >
+                          <p className="font-bold leading-tight">{translate('sideOutScoring')}</p>
+                          <p className="text-[9px] font-normal text-slate-500 mt-0.5">{translate('sideOutScoringDescription')}</p>
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  {/* Tóm tắt cấu hình hiện tại */}
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-2.5 text-[11px] font-semibold text-blue-950 flex items-center justify-between">
-                    <span>
-                      {translate('currentSetup', {
-                        setsToWin,
-                        unit: sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set',
-                        points: pointsPerSet,
-                        target: presentation.setUnitLabel,
-                        margin: winByTwo ? translate('winByTwoShort') : translate('targetClosesSet'),
+                  {/* Danh sách Preset Cards theo môn */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      {translate('sportPresets')}
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {presets.map((preset) => {
+                        const isSelected =
+                          setsToWin === preset.setsToWin &&
+                          pointsPerSet === preset.pointsPerSet &&
+                          winByTwo === preset.winByTwo;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => applyPreset(preset)}
+                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                              isSelected
+                                ? 'border-blue-600 bg-blue-50/60 shadow-2xs ring-1 ring-blue-400'
+                                : 'border-slate-200 bg-slate-50/50 hover:border-blue-300 hover:bg-white'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-1">
+                              <p className="text-xs font-bold text-slate-900 leading-snug">{preset.label}</p>
+                              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white text-blue-700 border border-slate-200 shrink-0">
+                                {translate('firstToSets', { sets: preset.setsToWin })} • {preset.pointsPerSet}p
+                              </span>
+                            </div>
+                            <p className="mt-1 text-[10px] text-slate-500 line-clamp-2 leading-relaxed">
+                              {preset.description}
+                            </p>
+                          </button>
+                        );
                       })}
-                      {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
-                    </span>
-                    <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
-                      {translate('strictModeLabel')}
-                    </span>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                /* Chế độ TỰ DO (Lite): Gọn gàng tuyệt đối, chỉ hiển thị card thông tin tóm tắt preset đã chọn, không bắt nhập lắt nhắt */
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-3 text-xs text-amber-950 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                        <span>Chế độ Tự do (Lite) đang áp dụng:</span>
+
+                  {/* Chi tiết inputs: setsToWin, pointsPerSet, deuce, tiebreak */}
+                  <div className="space-y-3 pt-2 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('setsToWin')}</label>
+                        <select
+                          value={setsToWin}
+                          onChange={(e) => setSetsToWin?.(Number(e.target.value))}
+                          className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                        >
+                          {presentation.setOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </div>
-                      <p className="text-[11px] text-slate-600 font-medium">
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">{presentation.setUnitLabel}</label>
+                        <input
+                          type="number"
+                          value={pointsPerSet}
+                          onChange={(e) => setPointsPerSet?.(Number(e.target.value))}
+                          className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Win by 2 & Deuce points */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                      <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={winByTwo}
+                          onChange={(e) => setWinByTwo?.(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300"
+                        />
+                        <span>{presentation.winByTwoLabel}</span>
+                      </label>
+                      {winByTwo && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-semibold text-slate-400">Max:</span>
+                          <input
+                            type="number"
+                            value={maxDeucePoints}
+                            onChange={(e) => setMaxDeucePoints?.(Number(e.target.value))}
+                            className="w-12 border border-slate-200 rounded px-1.5 py-0.5 text-xs font-bold text-center"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tiebreak Points (chỉ Tennis hoặc Pickleball Side-Out) */}
+                    {supportsTiebreakInput && (
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                        <span className="font-bold text-slate-700">{presentation.tiebreakLabel}:</span>
+                        <input
+                          type="number"
+                          value={superTiebreakPoints}
+                          onChange={(e) => setSuperTiebreakPoints?.(Number(e.target.value))}
+                          placeholder={translate('tiebreakPlaceholder', { points: sportRuleKind === 'TENNIS' ? 7 : 11 })}
+                          className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-center"
+                        />
+                      </div>
+                    )}
+
+                    {/* Tóm tắt cấu hình hiện tại */}
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-2.5 text-[11px] font-semibold text-blue-950 flex items-center justify-between">
+                      <span>
                         {translate('currentSetup', {
                           setsToWin,
                           unit: sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set',
@@ -742,12 +720,28 @@ export function BracketSetupModal({
                           margin: winByTwo ? translate('winByTwoShort') : translate('targetClosesSet'),
                         })}
                         {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
-                      </p>
+                      </span>
+                      <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
+                        {translate('strictModeLabel')}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-extrabold text-amber-700 bg-white px-2 py-0.5 rounded-md border border-amber-200 shrink-0">
-                      {translate('liteModeLabel')}
-                    </span>
                   </div>
+                </div>
+              ) : (
+                /* Khi ở chế độ TỰ DO (Lite): ĐÚNG CHUẨN COMMIT CŨ - KHÔNG CÓ BẤT KỲ CÀI ĐẶT NÀO */
+                <div className="py-6 px-4 rounded-2xl border border-dashed border-amber-200/80 bg-amber-50/40 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
+                    <Zap className="w-5 h-5 fill-amber-500 text-amber-500" />
+                  </div>
+                  <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wide">
+                    {translate('liteModeLabel')} ({translate('liteRecommended')})
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                    {translate('liteShortDesc')}
+                  </p>
+                  <p className="text-[11px] text-amber-700/80 font-medium">
+                    ✓ Điểm số được nhập tự do trong lúc thi đấu mà không bị ràng buộc quy chuẩn cứng.
+                  </p>
                 </div>
               )}
             </div>
@@ -955,7 +949,7 @@ export function BracketSetupModal({
             disabled={isSubmitting}
             className="text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-100"
           >
-            {translate('cancel')}
+            Đóng
           </Button>
 
           <Button

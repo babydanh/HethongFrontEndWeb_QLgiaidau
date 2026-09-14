@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake, Eye, EyeOff } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -202,6 +202,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Direct Interactive Editing States for Banner, Logo, and Description
+  const [isBannerHidden, setIsBannerHidden] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -876,8 +877,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* Key Tournament Details Rows - Clickable and Interactive */}
-        <div className="space-y-2 pt-3 border-t border-slate-100 text-slate-900 text-xs sm:text-sm">
+        {/* Key Tournament Details Rows - Clean & Unified Layout */}
+        <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
           {/* Dates - Clickable */}
           <div
             onClick={() => {
@@ -885,33 +886,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               setTempEndDate(tournament.endDate ? new Date(tournament.endDate).toISOString() : '');
               setIsDatesModalOpen(true);
             }}
-            className="group/row flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-blue-50/60 cursor-pointer transition-colors"
+            className="group/row flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
             title="Bấm để thay đổi thời gian giải đấu"
           >
-            <Calendar className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug flex items-center gap-1.5">
-                <span>
-                  {tournament.startDate ? (
-                    <>
-                      {formatDate(tournament.startDate)}
-                      {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
-                    </>
-                  ) : (
-                    <span className="text-amber-600 font-bold">Chưa xếp ngày thi đấu</span>
-                  )}
-                </span>
-                <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+            <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0 flex items-baseline justify-between gap-2">
+              <p className="font-semibold text-slate-800 leading-snug">
+                {tournament.startDate ? (
+                  <>
+                    {formatDate(tournament.startDate)}
+                    {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
+                  </>
+                ) : (
+                  <span className="text-slate-500 font-normal">Chưa xếp ngày thi đấu</span>
+                )}
               </p>
-              <span className="text-[10px] text-slate-400 font-medium">Bấm để chỉnh sửa ngày</span>
+              <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />
             </div>
           </div>
 
-          {/* Location & Courts - Detailed status according to manage logic */}
+          {/* Location & Courts - Clean row matching detail page */}
           {(() => {
             const defaultVenue = s.tournamentVenues?.find((v) => v.isDefault) || s.tournamentVenues?.[0];
             const courtCount = defaultVenue?.courts?.length ?? s.courts.length;
-            const hasVenues = (s.tournamentVenues && s.tournamentVenues.length > 0) || Boolean(s.customVenueName || tournament.locationAddress);
 
             return (
               <div
@@ -924,44 +921,22 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     setIsCreateVenueOpen(true);
                   }
                 }}
-                className={`group/row flex items-start gap-2.5 p-2 -mx-1.5 rounded-xl border transition-all cursor-pointer ${
-                  !hasVenues || courtCount === 0
-                    ? 'bg-amber-50/70 border-amber-200/90 hover:bg-amber-100/70'
-                    : 'bg-slate-50/50 border-slate-200/80 hover:bg-blue-50/50 hover:border-blue-200'
-                }`}
-                title="Bấm để quản lý địa điểm & tạo sân thi đấu (sân chính, sân phụ)"
+                className="group/row flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                title="Bấm để quản lý địa điểm & sân thi đấu"
               >
-                <MapPin className={`w-4 h-4 shrink-0 mt-0.5 ${!hasVenues || courtCount === 0 ? 'text-amber-600' : 'text-blue-600'}`} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-extrabold text-slate-900 text-xs sm:text-[13px] leading-relaxed break-words">
+                <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-600 leading-relaxed break-words" title={locationLabel}>
                       {locationLabel || 'Chưa thiết lập địa điểm'}
                     </p>
-                    {defaultVenue?.isDefault && (
-                      <span className="rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[9px] px-1.5 py-0.5">
-                        ⭐ Sân chính
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                    {courtCount > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100/80 text-blue-800 font-bold text-[11px]">
-                        <Layers className="w-3 h-3 text-blue-600" />
+                    {courtCount > 0 && (
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
                         {courtCount} sân thi đấu
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[10px]">
-                        <AlertTriangle className="w-3 h-3 text-rose-600" />
-                        Chưa có sân • Bấm để tạo sân
-                      </span>
+                      </p>
                     )}
-
-                    <span className="text-[10px] text-blue-600 font-semibold group-hover/row:underline flex items-center gap-0.5">
-                      <Settings className="w-3 h-3" />
-                      Cài đặt sân
-                    </span>
                   </div>
+                  <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0 mt-1" />
                 </div>
               </div>
             );
@@ -970,30 +945,30 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           {/* Divisions Count - Clickable to jump to division/bracket tab */}
           <div
             onClick={() => handleManageNavigation('bracket')}
-            className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 cursor-pointer transition-colors"
+            className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
             title="Bấm để xem và thêm nội dung thi đấu"
           >
             <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
-            <p className="text-xs sm:text-[13px] text-slate-600 flex-1">
+            <p className="text-slate-600 flex-1">
               <span className="font-bold text-slate-800">{s.divisions.length}</span> <span>Nội dung thi đấu</span>
             </p>
-            <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover/row:opacity-100 transition-opacity">
-              Chi tiết &rarr;
+            <span className="text-[11px] text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity">
+              &rarr;
             </span>
           </div>
 
           {/* Participants Count - Clickable to jump to participants tab */}
           <div
             onClick={() => handleManageNavigation('registration')}
-            className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 cursor-pointer transition-colors"
+            className="group/row flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
             title="Bấm để xem danh sách vận động viên"
           >
             <Users className="w-4 h-4 text-slate-400 shrink-0" />
-            <p className="text-xs sm:text-[13px] text-slate-600 flex-1">
+            <p className="text-slate-600 flex-1">
               <span className="font-bold text-slate-800">{s.participants.length}</span> <span>Số lượng hồ sơ</span>
             </p>
-            <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover/row:opacity-100 transition-opacity">
-              Xem DS &rarr;
+            <span className="text-[11px] text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity">
+              &rarr;
             </span>
           </div>
         </div>
@@ -1575,67 +1550,91 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
           {/* Left Column: Hero Banner + Mobile Metadata + Stepper + Tabs + Tab Content */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
-            {/* Banner Container with Direct Interactive Change Overlay */}
-            <div className="relative group w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
-              <input
-                ref={bannerFileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    handleDirectBannerFileChange(file);
-                    e.target.value = '';
-                  }
-                }}
-              />
+            {/* Banner Container with Direct Interactive Change Overlay & Hide Toggle */}
+            <input
+              ref={bannerFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleDirectBannerFileChange(file);
+                  e.target.value = '';
+                }
+              }}
+            />
 
-              <GalleryCarousel
-                images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
-                defaultBanner={tournament.bannerUrl || undefined}
-                categoryName={tournament.category?.name}
-                tournamentName={tournament.name}
-                className="w-full h-full object-cover"
-              />
-
-              {/* Floating Camera Button on Top-Right of Banner */}
-              <div className="absolute top-3 right-3 z-20">
+            {isBannerHidden ? (
+              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                <span className="text-xs font-medium text-slate-500">Ảnh bìa giải đấu đang ẩn</span>
                 <button
                   type="button"
-                  onClick={() => bannerFileInputRef.current?.click()}
-                  disabled={isUploadingBanner}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-bold shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
-                  title="Thay đổi ảnh bìa giải đấu"
+                  onClick={() => setIsBannerHidden(false)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 shadow-xs transition-colors cursor-pointer"
                 >
-                  {isUploadingBanner ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Đang tải...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Đổi ảnh bìa</span>
-                    </>
-                  )}
+                  <Eye className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Hiện ảnh bìa</span>
                 </button>
               </div>
+            ) : (
+              <div className="relative group w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+                <GalleryCarousel
+                  images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
+                  defaultBanner={tournament.bannerUrl || undefined}
+                  categoryName={tournament.category?.name}
+                  tournamentName={tournament.name}
+                  className="w-full h-full object-cover"
+                />
 
-              {/* Sub-bar hint on hover at bottom */}
-              <div
-                onClick={() => bannerFileInputRef.current?.click()}
-                className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 pt-8 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
-              >
-                <div className="flex items-center gap-2 text-white text-xs font-semibold">
-                  <ImagePlus className="w-4 h-4 text-white drop-shadow" />
-                  <span className="drop-shadow">Nhấp vào bất kỳ đâu trên ảnh để đổi ảnh bìa giải đấu</span>
+                {/* Floating Controls on Top-Right of Banner: Hide Banner & Change Banner */}
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsBannerHidden(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-medium shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
+                    title="Ẩn ảnh bìa"
+                  >
+                    <EyeOff className="w-3.5 h-3.5 text-slate-300" />
+                    <span>Ẩn banner</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => bannerFileInputRef.current?.click()}
+                    disabled={isUploadingBanner}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-bold shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
+                    title="Thay đổi ảnh bìa giải đấu"
+                  >
+                    {isUploadingBanner ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Đang tải...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Đổi ảnh bìa</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <span className="text-[11px] font-bold text-white bg-blue-600/90 px-2.5 py-1 rounded-lg border border-blue-400/50 shadow-xs">
-                  Chọn ảnh mới
-                </span>
+
+                {/* Sub-bar hint on hover at bottom */}
+                <div
+                  onClick={() => bannerFileInputRef.current?.click()}
+                  className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 pt-8 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                >
+                  <div className="flex items-center gap-2 text-white text-xs font-semibold">
+                    <ImagePlus className="w-4 h-4 text-white drop-shadow" />
+                    <span className="drop-shadow">Nhấp vào bất kỳ đâu trên ảnh để đổi ảnh bìa giải đấu</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-white bg-blue-600/90 px-2.5 py-1 rounded-lg border border-blue-400/50 shadow-xs">
+                    Chọn ảnh mới
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Mobile Metadata Container */}
             <div className="block lg:hidden space-y-3 sm:space-y-4">

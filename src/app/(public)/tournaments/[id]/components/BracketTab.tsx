@@ -1,14 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
+import type { Tournament, BracketStage, BracketMatch } from '@/features/tournaments/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
-import { Archive, LayoutGrid, Maximize2, Trophy, Loader2, Sparkles, Zap, Settings } from 'lucide-react';
+import { Archive, LayoutGrid, Maximize2, Trophy, Loader2, Zap, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
-import { cn } from '@/utils/cn';
 import { useTranslations } from 'next-intl';
 import type {
   BracketDragHandlers,
@@ -362,7 +361,6 @@ export default function BracketTab({
   bracketSnapshot,
   refreshKey,
   compact = false,
-  hideHonors = false,
   isOwner = false,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
@@ -380,8 +378,6 @@ export default function BracketTab({
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
 
   const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
-  const [result, setResult] = useState<TournamentResult | null>(null);
-  const [resultError, setResultError] = useState(false);
   const [matchUpdateVersion, setMatchUpdateVersion] = useState(0);
   const [appliedOwnerSnapshot, setAppliedOwnerSnapshot] = useState<typeof bracketSnapshot>(bracketSnapshot);
   const bracketLoadedRef = useRef(hasOwnerSnapshot);
@@ -478,38 +474,12 @@ export default function BracketTab({
     void Promise.resolve().then(() => fetchBracket());
   }, [fetchBracket, matchUpdateVersion, refreshKey]);
 
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    const refreshResult = async () => {
-      try {
-        const response = await tournamentsApi.getTournamentResults(
-          effectiveTournamentId,
-          divisionId,
-        );
-        if (!cancelled && response.data) {
-          setResult(response.data);
-          setResultError(false);
-        }
-      } catch {
-        // Keep the last valid snapshot visible during transient 429/5xx errors.
-        if (!cancelled) setResultError(true);
-      } finally {
-        if (!cancelled) timer = setTimeout(refreshResult, 15000);
-      }
-    };
-
-    void refreshResult();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, [divisionId, effectiveTournamentId]);
-
-  const renderedStages = hasOwnerSnapshot && appliedOwnerSnapshot !== bracketSnapshot
-    ? (knockoutOnly ? (bracketSnapshot?.stages ?? []).filter(isKnockoutStage) : bracketSnapshot?.stages ?? [])
-    : stages;
+  const renderedStages = useMemo(
+    () => hasOwnerSnapshot && appliedOwnerSnapshot !== bracketSnapshot
+      ? (knockoutOnly ? (bracketSnapshot?.stages ?? []).filter(isKnockoutStage) : bracketSnapshot?.stages ?? [])
+      : stages,
+    [appliedOwnerSnapshot, bracketSnapshot, hasOwnerSnapshot, knockoutOnly, stages],
+  );
 
   useEffect(() => {
     if (!selectedMatchId || !renderedStages.length) return;
@@ -517,7 +487,8 @@ export default function BracketTab({
       stage.groups?.some((group) => group.matches?.some((m) => m.id === selectedMatchId)),
     );
     if (stageWithMatch && stageWithMatch.id !== activeStageId) {
-      setActiveStageId(stageWithMatch.id);
+      const nextStageId = stageWithMatch.id;
+      void Promise.resolve().then(() => setActiveStageId(nextStageId));
     }
   }, [activeStageId, renderedStages, selectedMatchId]);
 
@@ -612,12 +583,6 @@ export default function BracketTab({
   // ── Main ──
   return (
     <div className="flex flex-col gap-5">
-      {resultError && !result && (
-        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {translate('resultsLoadError')}
-        </div>
-      )}
-
       {(onScheduleMatch || dragHandlers?.enabled) && (dragHandlers?.enabled ? (
         <OrganizerBracketTray dragHandlers={dragHandlers} translate={translate} />
       ) : (

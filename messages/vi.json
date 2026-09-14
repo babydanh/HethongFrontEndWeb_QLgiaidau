@@ -3375,7 +3375,7 @@
     "resultsTabOfficialTitle": "Kết quả chính thức",
     "resultsTabDescription": "Hiển thị các thứ hạng đã được xác định từ bracket.",
     "resultsTabPendingTitle": "Chưa có thứ hạng được xác nhận",
-    "resultsTabPendingDescription": "Khi trận quyết định có kết quả, Top 1 và Top 2 sẽ hiển thị tại đây.",
+    "resultsTabPendingDescription": "Khi có kết quả, Top 1–4 sẽ hiển thị tại đây.",
     "resultsTabSyncing": "Đang đồng bộ lại kết quả",
     "honors": "Bảng vàng vinh danh",
     "officialResults": "Kết quả chung cuộc",
@@ -5397,6 +5397,8 @@
     "publish": "Công bố giải đấu",
     "pendingApprovalTitle": "Đang chờ duyệt",
     "pendingApprovalDescription": "Giải đấu đã được gửi và đang chờ quản trị viên phê duyệt.",
+    "openRegistrationNow": "Mở đăng ký ngay",
+    "openRegistrationNowTitle": "Mở đăng ký ngay, không chờ ngày đã đặt",
     "steps": {
       "registration": {
         "title": "Đăng ký",
@@ -7772,6 +7774,8 @@
       "startDate": "Khai mạc:",
       "notSet": "Chưa thiết lập",
       "operations": "Vận hành",
+      "openRegistrationNow": "Mở đăng ký ngay",
+      "openRegistrationNowTitle": "Mở đăng ký ngay, không chờ ngày đã đặt",
       "tournamentPage": "Trang giải",
       "statusDraft": "Nháp",
       "statusPendingApproval": "Chờ duyệt công bố",

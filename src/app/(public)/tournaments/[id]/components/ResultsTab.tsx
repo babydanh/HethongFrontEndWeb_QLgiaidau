@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Crown, Loader2, Share2 } from 'lucide-react';
+import { Loader2, Share2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { tournamentsApi, type TournamentResult, type TournamentResultAward } from '@/features/tournaments/api';
 import { hasPublishedTournamentResults } from '@/features/tournaments/result-availability';
@@ -69,84 +69,6 @@ function extractParticipantMembers(participant: AwardParticipant): ParsedMember[
       initials: getPersonInitials(rawName),
     },
   ];
-}
-
-function ParticipantAvatarOnly({
-  participant,
-  rank,
-  size = 'md',
-}: {
-  participant: AwardParticipant;
-  rank: number;
-  size?: 'sm' | 'md' | 'lg';
-}) {
-  const { openUserById } = useUserProfileModalStore();
-  const members = extractParticipantMembers(participant);
-
-  const sizeClasses =
-    size === 'lg'
-      ? 'h-9 w-9 sm:h-11 sm:w-11 text-[10px] sm:text-xs'
-      : size === 'md'
-        ? 'h-7 w-7 sm:h-8.5 sm:w-8.5 text-[9px] sm:text-[10.5px]'
-        : 'h-6 w-6 sm:h-7 sm:w-7 text-[8px] sm:text-[9.5px]';
-
-  const avatarBorder =
-    rank === 1
-      ? 'border-2 border-white ring-2 ring-amber-400'
-      : rank === 2
-        ? 'border-2 border-white ring-2 ring-slate-400'
-        : rank === 3
-          ? 'border-2 border-white ring-2 ring-orange-400'
-          : 'border-2 border-white ring-1 ring-slate-300';
-
-  const fallbackBg =
-    rank === 1
-      ? 'bg-amber-100 text-amber-900'
-      : rank === 2
-        ? 'bg-slate-200 text-slate-800'
-        : rank === 3
-          ? 'bg-orange-100 text-orange-900'
-          : 'bg-slate-100 text-slate-700';
-
-  return (
-    <div className="flex shrink-0 items-center -space-x-1.5 sm:-space-x-2">
-      {members.map((member, index) => {
-        const handleMemberClick = (e: React.MouseEvent) => {
-          e.stopPropagation();
-          if (member.userId) {
-            openUserById(
-              member.userId,
-              member.fullName,
-              member.avatarUrl || null,
-              e.currentTarget.getBoundingClientRect(),
-            );
-          }
-        };
-
-        return member.avatarUrl ? (
-          <img
-            key={member.userId || `${participant.participantId}-${index}`}
-            src={member.avatarUrl}
-            alt={member.fullName}
-            referrerPolicy="no-referrer"
-            onClick={handleMemberClick}
-            className={`${sizeClasses} rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${avatarBorder} shadow-2xs`}
-            title={member.fullName}
-          />
-        ) : (
-          <button
-            key={member.userId || `${participant.participantId}-${index}`}
-            type="button"
-            onClick={handleMemberClick}
-            className={`flex ${sizeClasses} items-center justify-center rounded-full font-black cursor-pointer hover:scale-105 transition-transform ${avatarBorder} shadow-2xs leading-none ${fallbackBg}`}
-            title={member.fullName}
-          >
-            {member.initials}
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 function ParticipantAwardIdentity({
@@ -231,127 +153,6 @@ function ParticipantAwardIdentity({
   );
 }
 
-function ResultMiniPodium({
-  awards,
-  getRankLabel,
-}: {
-  awards: TournamentResultAward[];
-  getRankLabel: (rank: number) => string;
-}) {
-  const gold = awards.find((a) => a.rank === 1);
-  const silver = awards.find((a) => a.rank === 2);
-  const bronzes = awards.filter((a) => a.rank === 3);
-
-  if (!gold) return null;
-
-  return (
-    <div className="rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50/90 via-white to-slate-50/50 p-2 sm:p-5 shadow-2xs mb-1 overflow-hidden">
-      <div className="flex items-end justify-center gap-1.5 sm:gap-4 max-w-md sm:max-w-lg mx-auto pt-1 sm:pt-2">
-        {/* Rank 2 (Silver) - Left */}
-        {silver?.participant ? (
-          <div className="flex-1 min-w-0 max-w-[105px] sm:max-w-[145px] flex flex-col items-center">
-            <div className="flex flex-col items-center mb-1.5 sm:mb-2 w-full px-0.5">
-              <span className="mb-0.5 sm:mb-1 text-[9px] sm:text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                {getRankLabel(2)}
-              </span>
-              <div className="mb-1">
-                <ParticipantAvatarOnly participant={silver.participant} rank={2} size="md" />
-              </div>
-              <p
-                className="text-[10px] sm:text-xs font-bold text-slate-800 truncate w-full text-center leading-tight mt-0.5"
-                title={silver.participant.teamName}
-              >
-                {silver.participant.teamName}
-              </p>
-            </div>
-            {/* Podium Bar */}
-            <div className="w-full h-15 sm:h-20 rounded-t-lg sm:rounded-t-xl bg-gradient-to-t from-slate-200 via-slate-100 to-slate-50 border border-slate-300 flex flex-col items-center justify-center shadow-2xs">
-              <span className="text-lg sm:text-2xl font-black text-slate-500 leading-none">2</span>
-              <span className="text-[7.5px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Á QUÂN</span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 min-w-0 max-w-[105px] sm:max-w-[145px] h-15 sm:h-20 border border-dashed border-slate-200 rounded-t-lg sm:rounded-t-xl bg-slate-50/40" />
-        )}
-
-        {/* Rank 1 (Gold) - Center */}
-        {gold?.participant ? (
-          <div className="flex-[1.15] min-w-0 max-w-[125px] sm:max-w-[165px] flex flex-col items-center -translate-y-1 sm:-translate-y-2">
-            <div className="flex flex-col items-center mb-1.5 sm:mb-2 w-full px-0.5 relative">
-              {/* Crown Floating Badge */}
-              <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-white shadow-md border border-white sm:border-2 -mb-1.5 sm:-mb-2 z-10">
-                <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white drop-shadow-xs" />
-              </div>
-              <div className="mb-1">
-                <ParticipantAvatarOnly participant={gold.participant} rank={1} size="lg" />
-              </div>
-              <span className="text-[9px] sm:text-[10px] font-black uppercase text-amber-600 tracking-wider">
-                {getRankLabel(1)}
-              </span>
-              <p
-                className="text-[11px] sm:text-sm font-extrabold text-amber-950 truncate w-full text-center leading-tight mt-0.5"
-                title={gold.participant.teamName}
-              >
-                {gold.participant.teamName}
-              </p>
-            </div>
-            {/* Podium Bar */}
-            <div className="w-full h-22 sm:h-28 rounded-t-lg sm:rounded-t-xl bg-gradient-to-t from-amber-300/80 via-amber-200/60 to-amber-50 border-1.5 sm:border-2 border-amber-400 flex flex-col items-center justify-center shadow-sm">
-              <span className="text-2xl sm:text-3xl font-black text-amber-700 leading-none">1</span>
-              <span className="text-[8px] sm:text-[10px] font-black text-amber-600 uppercase tracking-wider mt-0.5">QUÁN QUÂN</span>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Rank 3 (Bronze) - Right */}
-        {bronzes.length > 0 ? (
-          <div className="flex-1 min-w-0 max-w-[105px] sm:max-w-[145px] flex flex-col items-center">
-            <div className="flex flex-col items-center mb-1.5 sm:mb-2 w-full px-0.5">
-              <span className="mb-0.5 sm:mb-1 text-[9px] sm:text-[10px] font-black uppercase text-orange-600 tracking-wider">
-                {getRankLabel(3)}
-              </span>
-              <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
-                {bronzes.map((bronze, bIdx) =>
-                  bronze.participant ? (
-                    <ParticipantAvatarOnly
-                      key={bronze.participant.participantId || bIdx}
-                      participant={bronze.participant}
-                      rank={3}
-                      size="md"
-                    />
-                  ) : null,
-                )}
-              </div>
-              <div className="w-full text-center mt-1">
-                {bronzes.map((bronze, bIdx) =>
-                  bronze.participant ? (
-                    <p
-                      key={bronze.participant.participantId || bIdx}
-                      className="text-[9.5px] sm:text-[11px] font-bold text-slate-700 truncate w-full leading-tight"
-                      title={bronze.participant.teamName}
-                    >
-                      {bronze.participant.teamName}
-                    </p>
-                  ) : null,
-                )}
-              </div>
-            </div>
-            {/* Podium Bar */}
-            <div className="w-full h-12 sm:h-16 rounded-t-lg sm:rounded-t-xl bg-gradient-to-t from-orange-200 via-orange-100 to-orange-50 border border-orange-300 flex flex-col items-center justify-center shadow-2xs">
-              <span className="text-base sm:text-xl font-black text-orange-600 leading-none">3</span>
-              <span className="text-[7px] sm:text-[9px] font-bold text-orange-500 uppercase tracking-wider mt-0.5">
-                {bronzes.length > 1 ? 'ĐỒNG HẠNG 3' : 'HẠNG 3'}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 min-w-0 max-w-[105px] sm:max-w-[145px] h-12 sm:h-16 border border-dashed border-slate-200 rounded-t-lg sm:rounded-t-xl bg-slate-50/40" />
-        )}
-      </div>
-    </div>
-  );
-}
-
 function ResultAwardCard({
   award,
   label,
@@ -410,6 +211,26 @@ function ResultAwardCard({
   );
 }
 
+function selectTopFourAwards(awards: TournamentResultAward[]): TournamentResultAward[] {
+  const seenParticipantIds = new Set<string>();
+
+  return awards
+    .filter((award) => award.participant && typeof award.rank === 'number' && award.rank >= 1)
+    .sort((a, b) => a.rank - b.rank)
+    .filter((award) => {
+      const participantId = award.participant?.participantId;
+      if (!participantId || seenParticipantIds.has(participantId)) return false;
+      seenParticipantIds.add(participantId);
+      return true;
+    })
+    .slice(0, 4)
+    .map((award, index) => ({
+      ...award,
+      rank: index + 1,
+      shared: false,
+    }));
+}
+
 export default function ResultsTab({
   tournamentId,
   divisionId,
@@ -422,26 +243,19 @@ export default function ResultsTab({
 
   useEffect(() => {
     let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    const loadResults = async () => {
-      try {
-        const response = await tournamentsApi.getTournamentResults(tournamentId, divisionId);
+    tournamentsApi.getTournamentResults(tournamentId, divisionId)
+      .then((response) => {
         if (active && response.data) setResult(response.data);
-      } catch {
-        // Keep the last confirmed snapshot and let the next bounded refresh retry.
-      } finally {
-        if (active) {
-          setIsLoading(false);
-          timer = setTimeout(loadResults, 15000);
-        }
-      }
-    };
+      })
+      .catch(() => {
+        // Keep the empty state when the one-time snapshot is unavailable.
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
 
-    void loadResults();
     return () => {
       active = false;
-      if (timer) clearTimeout(timer);
     };
   }, [divisionId, tournamentId]);
 
@@ -454,11 +268,9 @@ export default function ResultsTab({
     );
   }
 
-  const rawAwards = (result?.awards ?? [])
-    .filter((award) => award.participant && typeof award.rank === 'number' && award.rank >= 1)
-    .sort((a, b) => a.rank - b.rank);
+  const topFourAwards = selectTopFourAwards(result?.awards ?? []);
 
-  if (!result || !hasPublishedTournamentResults(result) || rawAwards.length === 0) {
+  if (!result || !hasPublishedTournamentResults(result) || topFourAwards.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
         <p className="text-sm font-bold text-slate-700">{translate('resultsTabPendingTitle')}</p>
@@ -467,9 +279,6 @@ export default function ResultsTab({
     );
   }
 
-  const rank3Count = rawAwards.filter((a) => a.rank === 3).length;
-  const isRank3Shared = rank3Count > 1;
-
   const statusTitle = result.finalized
     ? translate('resultsTabOfficialTitle')
     : translate('resultsTabCurrentTitle');
@@ -477,12 +286,12 @@ export default function ResultsTab({
   const getRankLabel = (rank: number) => {
     if (rank === 1) return translate('champion') || 'Quán quân';
     if (rank === 2) return translate('runnerUp') || 'Á quân';
-    if (rank === 3) return isRank3Shared ? 'Đồng hạng 3' : (translate('thirdPlace') || 'Hạng ba');
+    if (rank === 3) return translate('thirdPlace') || 'Hạng ba';
     return translate('rank', { rank }) || `Hạng ${rank}`;
   };
 
   const resultShareTitle = `${statusTitle}: ${tournamentName || translate('resultsTabLabel')}`;
-  const resultShareText = `${resultShareTitle}\n` + rawAwards.map(a => `${getRankLabel(a.rank)}: ${a.participant?.teamName ?? ''}`).join('\n');
+  const resultShareText = `${resultShareTitle}\n` + topFourAwards.map(a => `${getRankLabel(a.rank)}: ${a.participant?.teamName ?? ''}`).join('\n');
   const shareUrl = typeof window !== 'undefined'
     ? (() => {
       const url = new URL(window.location.href);
@@ -515,12 +324,8 @@ export default function ResultsTab({
           </button>
         </div>
 
-        {/* Mini Podium Stage (Bục vinh danh mini: 2 - 1 - 3) */}
-        <ResultMiniPodium awards={rawAwards} getRankLabel={getRankLabel} />
-
-        {/* Detailed 2-column list of result cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
-          {rawAwards.map((award, index) => (
+        <div className="flex flex-col gap-2 sm:gap-2.5">
+          {topFourAwards.map((award, index) => (
             <ResultAwardCard
               key={award.participant?.participantId || `${award.rank}-${index}`}
               award={award}

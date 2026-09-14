@@ -3375,7 +3375,7 @@
     "resultsTabOfficialTitle": "Official results",
     "resultsTabDescription": "Shows rankings already determined from the bracket.",
     "resultsTabPendingTitle": "No confirmed rankings yet",
-    "resultsTabPendingDescription": "Top 1 and Top 2 will appear here when the deciding match has a result.",
+    "resultsTabPendingDescription": "Top 1–4 will appear here when results are available.",
     "resultsTabSyncing": "Syncing results again",
     "honors": "Honors & Podium",
     "officialResults": "Official Results",
@@ -5397,6 +5397,8 @@
     "publish": "Publish tournament",
     "pendingApprovalTitle": "Pending approval",
     "pendingApprovalDescription": "This tournament has been submitted and is waiting for administrator approval.",
+    "openRegistrationNow": "Open registration now",
+    "openRegistrationNowTitle": "Open registration now without waiting for the scheduled date",
     "steps": {
       "registration": {
         "title": "Registration",
@@ -7768,6 +7770,8 @@
       "startDate": "Starts:",
       "notSet": "Not set",
       "operations": "Operations",
+      "openRegistrationNow": "Open registration now",
+      "openRegistrationNowTitle": "Open registration now without waiting for the scheduled date",
       "tournamentPage": "Tournament page",
       "statusDraft": "Draft",
       "statusPendingApproval": "Pending publication approval",

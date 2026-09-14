@@ -34,6 +34,8 @@ interface TournamentStepperProps {
   isLoading?: boolean;
   onOpenTournament?: () => void;
   isOpening?: boolean;
+  onOpenRegistrationNow?: () => void;
+  isOpeningRegistration?: boolean;
   // Phase 3 end modal
   isEndModalOpen?: boolean;
   setIsEndModalOpen?: (open: boolean) => void;
@@ -54,6 +56,7 @@ interface TournamentStepperProps {
 
 export function TournamentStepper({ tournament, headerActions, onPublish, onNextStep, publishFeeAmount = 0, isLoading,
   onOpenTournament, isOpening = false,
+  onOpenRegistrationNow, isOpeningRegistration = false,
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
   participants = [], divisions = [], matches = [],
   onChecklistNavigate,
@@ -89,7 +92,9 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
   const phase2Divs = divisions.length > 0 ? divisions : ((tournament.divisions ?? []) as { id: string; roundConfig?: unknown }[]);
   const phase2PaidCheck = !tournament.entryFee || Number(tournament.entryFee) <= 0 || (participants.length > 0 && participants.every((p) => p.teamStatus === 'COMPLETE' ? (p as { isPaid: boolean }).isPaid !== false : true));
   const phase2BracketCheck = phase2Divs.length > 0 && phase2Divs.some((d) => d.roundConfig && typeof d.roundConfig === 'object' && Object.keys(d.roundConfig as object).length > 0);
-  const phase2RegLocked = tournament.isRegistrationLocked === true || isTournamentRegistrationClosed(tournament.status) || isTournamentUpcoming(tournament.status);
+  // UPCOMING means registration is scheduled, not locked. The organizer must
+  // explicitly open registration before the schedule step can open the event.
+  const phase2RegLocked = tournament.isRegistrationLocked === true || isTournamentRegistrationClosed(tournament.status);
   const phase2HasVenue = !!(tournament.venueId || tournament.venue || (tournament.locationAddress && tournament.locationAddress.trim()));
   const phase2HasSchedule = !!(tournament.startDate);
   const phase2HasMinTeams = participants.length >= 2;
@@ -395,7 +400,28 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
                 </div>
 
                 {isActive && step.actionText && (
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
+                    {idx === 1 &&
+                      onOpenRegistrationNow &&
+                      (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_CLOSED') && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={onOpenRegistrationNow}
+                          disabled={isLoading || isOpening || isOpeningRegistration}
+                          title={translate('openRegistrationNowTitle')}
+                          aria-label={translate('openRegistrationNow')}
+                          className="h-6.5 rounded-full border-emerald-300 bg-white px-2.5 text-[10px] font-bold text-emerald-700 shadow-xs hover:bg-emerald-50 sm:h-7 sm:px-3 sm:text-xs"
+                        >
+                          {isOpeningRegistration ? (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          ) : (
+                            <Play className="mr-1 h-3 w-3 fill-current" />
+                          )}
+                          <span className="truncate">{translate('openRegistrationNow')}</span>
+                        </Button>
+                      )}
                     <Button
                       size="sm"
                       onClick={step.onClick}

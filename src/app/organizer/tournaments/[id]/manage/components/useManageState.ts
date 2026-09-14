@@ -292,6 +292,7 @@ export function useManageState(id: string) {
 
   // ── Phase 2 Open modal ──
   const [isOpening, setIsOpening] = useState(false);
+  const [isOpeningRegistration, setIsOpeningRegistration] = useState(false);
 
   // ── Phase 3 End modal ──
   const [isEndModalOpen, setIsEndModalOpen] = useState(false);
@@ -1522,6 +1523,26 @@ export function useManageState(id: string) {
     finally { setIsLoading(false); }
   };
 
+  const handleOpenRegistrationNow = async () => {
+    if (!tournament || isOpeningRegistration) return;
+    if (!['UPCOMING', 'REGISTRATION_CLOSED'].includes(tournament.status)) {
+      toast.error('Giải chưa ở trạng thái có thể mở đăng ký ngay.');
+      return;
+    }
+
+    setIsOpeningRegistration(true);
+    try {
+      await tournamentsApi.reopenRegistration(id);
+      toast.success('Đã mở đăng ký ngay!');
+      await fetchTournamentData();
+      await refetchDivisionData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsOpeningRegistration(false);
+    }
+  };
+
   const handleOpenLockModal = () => {
     if (!tournament) return;
     if (participants.length < 2) { toast.error('Cần ít nhất 2 đội để chốt'); return; }
@@ -2457,6 +2478,7 @@ export function useManageState(id: string) {
     stageSuperTiebreakPoints, setStageSuperTiebreakPoints,
     isLockModalOpen, setIsLockModalOpen, isLocking, setIsLocking, lockSummary, setLockSummary,
     isOpening, setIsOpening,
+    isOpeningRegistration, setIsOpeningRegistration,
     isEndModalOpen, setIsEndModalOpen, isEnding, setIsEnding, endChecklist, setEndChecklist,
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
@@ -2485,6 +2507,7 @@ export function useManageState(id: string) {
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,
     handlePublish, handlePayPublishFee, handleDeleteTournament, handlePayPlatformFee,
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
+    handleOpenRegistrationNow,
     handleConfirmOpen,
     handleOpenEndModal, handleConfirmEnd,
     handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleReorderSeeds, handleApproveParticipant, handleRejectParticipant, handleKickParticipant,

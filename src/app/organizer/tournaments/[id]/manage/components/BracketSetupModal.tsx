@@ -940,16 +940,11 @@ export function BracketSetupModal({
                 </div>
               ) : (
                 /* Khi ở chế độ TỰ DO (Lite): Tối giản, gọn gàng, không chữ thừa */
-                <div className="py-5 px-4 rounded-xl border border-slate-200 bg-slate-50/60 text-center space-y-1.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-                    <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
-                  </div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                    {translate('liteModeLabel')}
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    {translate('liteShortDesc')}
-                  </p>
+                <div className="py-4 px-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center flex items-center justify-center gap-2">
+                  <Zap className="w-4 h-4 fill-amber-500 text-amber-500 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-600">
+                    {translate('liteModeLabel')} • {translate('liteShortDesc')}
+                  </span>
                 </div>
               )}
             </div>

@@ -1194,7 +1194,7 @@ const commonTranslate = useTranslations('Common');
       <div className="pt-1">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            {!isOwner && !isTournamentDraft(activeTournament.status) && (
+            {!isTournamentDraft(activeTournament.status) && (
               <div>
                 {canResumePayment ? (
                   <Button
@@ -1313,16 +1313,23 @@ const commonTranslate = useTranslations('Common');
             )}
 
             {isOwner && (
-              <Button
-                type="button"
-                onClick={() => router.push(isClubLite
-                  ? `/lite/tournaments/${activeTournament.id}/manage`
-                  : `/organizer/tournaments/${activeTournament.id}/manage`)}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Settings className="w-4 h-4 text-slate-300" />
-                <span>Quản lý giải đấu</span>
-              </Button>
+              <div className={!isTournamentDraft(activeTournament.status) ? "pt-2" : ""}>
+                <Button
+                  type="button"
+                  variant={!isTournamentDraft(activeTournament.status) ? "outline" : "default"}
+                  onClick={() => router.push(isClubLite
+                    ? `/lite/tournaments/${activeTournament.id}/manage`
+                    : `/organizer/tournaments/${activeTournament.id}/manage`)}
+                  className={`w-full font-semibold py-3 rounded-lg text-sm cursor-pointer flex items-center justify-center gap-2 ${
+                    !isTournamentDraft(activeTournament.status)
+                      ? "border-slate-300 text-slate-800 hover:bg-slate-100 shadow-2xs"
+                      : "bg-slate-900 hover:bg-slate-800 text-white shadow-xs"
+                  }`}
+                >
+                  <Settings className="w-4 h-4 text-slate-500" />
+                  <span>Quản lý giải đấu</span>
+                </Button>
+              </div>
             )}
           </div>
 

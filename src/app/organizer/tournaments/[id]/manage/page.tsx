@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -202,7 +202,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Direct Interactive Editing States for Banner, Logo, and Description
-  const [isBannerHidden, setIsBannerHidden] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -1565,60 +1564,38 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               }}
             />
 
-            {isBannerHidden ? (
-              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                <span className="text-xs font-medium text-slate-500">Ảnh bìa giải đấu đang ẩn</span>
+            {/* Banner Container with Direct Interactive Change Overlay */}
+            <div className="relative group w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
+              <GalleryCarousel
+                images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
+                defaultBanner={tournament.bannerUrl || undefined}
+                categoryName={tournament.category?.name}
+                tournamentName={tournament.name}
+                className="w-full h-full object-cover"
+              />
+
+              {/* Floating Camera Button on Top-Right of Banner */}
+              <div className="absolute top-3 right-3 z-20">
                 <button
                   type="button"
-                  onClick={() => setIsBannerHidden(false)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 shadow-xs transition-colors cursor-pointer"
+                  onClick={() => bannerFileInputRef.current?.click()}
+                  disabled={isUploadingBanner}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-bold shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
+                  title="Thay đổi ảnh bìa giải đấu"
                 >
-                  <Eye className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Hiện ảnh bìa</span>
+                  {isUploadingBanner ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang tải...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Đổi ảnh bìa</span>
+                    </>
+                  )}
                 </button>
               </div>
-            ) : (
-              <div className="relative group w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
-                <GalleryCarousel
-                  images={tournament.galleryImages && tournament.galleryImages.length > 0 ? tournament.galleryImages : []}
-                  defaultBanner={tournament.bannerUrl || undefined}
-                  categoryName={tournament.category?.name}
-                  tournamentName={tournament.name}
-                  className="w-full h-full object-cover"
-                />
-
-                {/* Floating Controls on Top-Right of Banner: Hide Banner & Change Banner */}
-                <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsBannerHidden(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-medium shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
-                    title="Ẩn ảnh bìa"
-                  >
-                    <EyeOff className="w-3.5 h-3.5 text-slate-300" />
-                    <span>Ẩn banner</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => bannerFileInputRef.current?.click()}
-                    disabled={isUploadingBanner}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white text-xs font-bold shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer"
-                    title="Thay đổi ảnh bìa giải đấu"
-                  >
-                    {isUploadingBanner ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Đang tải...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-3.5 h-3.5 text-blue-400" />
-                        <span>Đổi ảnh bìa</span>
-                      </>
-                    )}
-                  </button>
-                </div>
 
                 {/* Sub-bar hint on hover at bottom */}
                 <div
@@ -1634,7 +1611,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   </span>
                 </div>
               </div>
-            )}
 
             {/* Mobile Metadata Container */}
             <div className="block lg:hidden space-y-3 sm:space-y-4">

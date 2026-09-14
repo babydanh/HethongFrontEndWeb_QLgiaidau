@@ -80,6 +80,8 @@ export function BasicInfoTab({
   setLogoUrl,
   bannerUrl,
   setBannerUrl,
+  hideFeaturedCardText,
+  setHideFeaturedCardText,
   newGalleryUrl,
   setNewGalleryUrl,
   setIsAddingImage,
@@ -431,6 +433,24 @@ export function BasicInfoTab({
                       <span>{translate('noBanner')}</span>
                     </div>
                   )}
+
+                  {/* Ẩn chữ phủ trên banner công khai */}
+                  <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 transition-colors hover:bg-blue-50">
+                    <input
+                      type="checkbox"
+                      checked={hideFeaturedCardText}
+                      onChange={(e) => setHideFeaturedCardText(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="space-y-0.5 select-none">
+                      <span className="block text-xs font-bold text-slate-900">
+                        {translate('hideBannerText') || 'Ẩn chữ phủ trên banner công khai'}
+                      </span>
+                      <span className="block text-[11px] font-normal leading-relaxed text-slate-500">
+                        {translate('hideBannerTextDescription') || 'Bật tùy chọn này khi banner đã có tên/logo/text thiết kế sẵn. Trang chủ và banner trang chi tiết sẽ không phủ tên giải, badge, ngày giờ hoặc địa điểm lên ảnh.'}
+                      </span>
+                    </span>
+                  </label>
                 </div>
 
                 {/* Gallery */}

@@ -886,6 +886,12 @@ export function BracketTab({
           setWinByTwo={setWinByTwo}
           maxDeucePoints={maxDeucePoints}
           setMaxDeucePoints={setMaxDeucePoints}
+          superTiebreakEnabled={superTiebreakEnabled}
+          setSuperTiebreakEnabled={setSuperTiebreakEnabled}
+          superTiebreakSetIndex={superTiebreakSetIndex}
+          setSuperTiebreakSetIndex={setSuperTiebreakSetIndex}
+          superTiebreakPoints={superTiebreakPoints}
+          setSuperTiebreakPoints={setSuperTiebreakPoints}
           numGroups={numGroups}
           setNumGroups={setNumGroups}
           teamsPerGroup={teamsPerGroup}

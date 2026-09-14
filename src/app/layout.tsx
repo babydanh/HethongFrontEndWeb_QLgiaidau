@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
@@ -8,11 +8,11 @@ import IntlProviderWithFallback from "@/components/layout/IntlProviderWithFallba
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { BRAND } from "@/constants/brand";
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["vietnamese", "latin"],
   display: "swap",
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadataBase = new URL(BRAND.domain);
@@ -135,7 +135,7 @@ export default async function RootLayout({
   ];
 
   return (
-    <html lang={locale} className={`h-full antialiased ${inter.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`h-full antialiased ${plusJakartaSans.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any" />
         <link rel="shortcut icon" href="/favicon.ico" />
@@ -151,7 +151,7 @@ export default async function RootLayout({
           />
         ))}
       </head>
-      <body className={`min-h-full flex flex-col text-slate-900 font-sans ${inter.className}`}>
+      <body className={`min-h-full flex flex-col text-slate-900 font-sans ${plusJakartaSans.className}`}>
         <IntlProviderWithFallback locale={locale} messages={messages}>
           <RootLayoutClient>{children}</RootLayoutClient>
           <Toaster />

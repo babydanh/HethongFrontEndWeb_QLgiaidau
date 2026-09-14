@@ -1,0 +1,232 @@
+﻿/**
+ * Transitions.dev - Curated CSS Transition Patterns
+ * Sourced from https://transitions.dev / github.com/Jakubantalik/transitions.dev
+ * All transitions include semantic CSS variables and prefers-reduced-motion accessibility guards.
+ */
+
+:root {
+  /* Modal */
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Menu Dropdown */
+  --dropdown-open-dur: 250ms;
+  --dropdown-close-dur: 150ms;
+  --dropdown-pre-scale: 0.97;
+  --dropdown-closing-scale: 0.99;
+  --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Tooltip */
+  --tt-in-dur: 150ms;
+  --tt-out-dur: 50ms;
+  --tt-scale: 0.98;
+  --tt-delay: 80ms;
+  --tt-in-ease: ease-out;
+  --tt-out-ease: ease-out;
+  --tt-bg: #0f172a;
+  --tt-fg: #f8fafc;
+
+  /* Tabs Sliding */
+  --tabs-dur: 250ms;
+  --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tabs-text-muted: rgba(15, 23, 42, 0.7);
+  --tabs-text-active: #0f172a;
+  --tabs-bar-bg: #f1f5f9;
+  --tabs-pill-bg: #ffffff;
+
+  /* Card Resize & Panel Reveal */
+  --resize-dur: 300ms;
+  --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --panel-open-dur: 280ms;
+  --panel-close-dur: 200ms;
+  --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Error State Shake */
+  --shake-distance: 6px;
+  --shake-overshoot: 4px;
+  --shake-dur-a: 80ms;
+  --shake-dur-b: 60ms;
+  --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Notification Badge & Number Pop-in */
+  --badge-in-dur: 300ms;
+  --badge-out-dur: 180ms;
+  --badge-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Toggle */
+  --toggle-dur: 350ms;
+  --toggle-travel: 18px;
+  --toggle-ov1: 1.5px;
+  --toggle-ov2: 0px;
+  --toggle-ease: cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+
+/* 1. Modal Open / Close Transition (.t-modal) */
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-open-dur) var(--modal-ease),
+    opacity var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.t-modal.is-open,
+.t-modal[data-state="open"] {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-modal.is-closing,
+.t-modal[data-state="closed"] {
+  transform: scale(var(--modal-scale-close));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-close-dur) var(--modal-ease),
+    opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+/* 2. Dropdown / Menu Open / Close Transition (.t-dropdown) */
+.t-dropdown {
+  transform-origin: top left;
+  transform: scale(var(--dropdown-pre-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-open-dur) var(--dropdown-ease),
+    opacity var(--dropdown-open-dur) var(--dropdown-ease);
+  will-change: transform, opacity;
+}
+.t-dropdown[data-origin="top-right"]     { transform-origin: top right; }
+.t-dropdown[data-origin="top-center"]    { transform-origin: top center; }
+.t-dropdown[data-origin="bottom-left"]   { transform-origin: bottom left; }
+.t-dropdown[data-origin="bottom-right"]  { transform-origin: bottom right; }
+.t-dropdown[data-origin="bottom-center"] { transform-origin: bottom center; }
+
+.t-dropdown.is-open,
+.t-dropdown[data-state="open"] {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-dropdown.is-closing,
+.t-dropdown[data-state="closed"] {
+  transform: scale(var(--dropdown-closing-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-close-dur) var(--dropdown-ease),
+    opacity var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+/* 3. Tooltip Transition (.t-tt) */
+.t-tt-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.t-tt {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 0) scale(var(--tt-scale));
+  transform-origin: 50% 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--tt-bg);
+  color: var(--tt-fg);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--tt-out-dur) var(--tt-out-ease),
+    transform var(--tt-out-dur) var(--tt-out-ease);
+  will-change: transform, opacity;
+  z-index: 50;
+}
+.t-tt-wrap:hover .t-tt,
+.t-tt-wrap:focus-within .t-tt,
+.t-tt.is-open {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  transition:
+    opacity var(--tt-in-dur) var(--tt-in-ease) var(--tt-delay),
+    transform var(--tt-in-dur) var(--tt-in-ease) var(--tt-delay);
+}
+
+/* 4. Card Resize & Smooth Tweening (.t-resize) */
+.t-resize {
+  transition:
+    width var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease),
+    max-height var(--resize-dur) var(--resize-ease);
+  will-change: width, height;
+}
+
+/* 5. Error State Shake (.t-shake) */
+.t-shake {
+  animation: t-shake-kf calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) var(--shake-ease);
+}
+@keyframes t-shake-kf {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(calc(var(--shake-distance) * -1)); }
+  40%  { transform: translateX(var(--shake-distance)); }
+  60%  { transform: translateX(calc(var(--shake-overshoot) * -1)); }
+  80%  { transform: translateX(var(--shake-overshoot)); }
+  100% { transform: translateX(0); }
+}
+
+/* 6. Notification Badge Pop-in (.t-badge-pop) */
+.t-badge-pop {
+  animation: t-badge-spring var(--badge-in-dur) var(--badge-ease) both;
+}
+@keyframes t-badge-spring {
+  0%   { transform: scale(0.3); opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 7. Card Tilt Hover Effect (.t-card-tilt) */
+.t-card-tilt {
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, box-shadow;
+}
+.t-card-tilt:hover {
+  transform: translateY(-3px) scale(1.008);
+}
+
+/* 8. Toggle Switch Bounce (.t-toggle) */
+.t-toggle {
+  transition: background-color 200ms ease;
+}
+.t-toggle-thumb {
+  translate: 0 0;
+  will-change: translate;
+  transition: translate var(--toggle-dur) var(--toggle-ease);
+}
+.t-toggle[data-on="true"] .t-toggle-thumb,
+.t-toggle[aria-checked="true"] .t-toggle-thumb {
+  translate: var(--toggle-travel) 0;
+}
+
+/* Accessibility: Reduced Motion Guard */
+@media (prefers-reduced-motion: reduce) {
+  .t-modal,
+  .t-dropdown,
+  .t-tt,
+  .t-resize,
+  .t-shake,
+  .t-badge-pop,
+  .t-card-tilt,
+  .t-toggle,
+  .t-toggle-thumb {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}

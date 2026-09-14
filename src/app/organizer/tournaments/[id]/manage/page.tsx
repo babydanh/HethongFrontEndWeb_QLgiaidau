@@ -1852,23 +1852,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                               <div className="overflow-hidden">
                                 {isActive && s.tournament && (
                                   <div className="p-3 sm:p-5 bg-white border-t border-slate-200 shadow-inner rounded-b-xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {/* Subheader info of current division inside accordion */}
-                                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                                          <Trophy className="w-4 h-4 text-blue-600" />
-                                          Đang xem: <span className="text-blue-700">{getDisplayDivisionName(div)}</span>
-                                        </span>
-                                      </div>
-                                      <span className="text-xs font-semibold text-slate-400">
-                                        {activeSection === 'registration'
-                                          ? 'Quản lý Vận động viên'
-                                          : activeSection === 'bracket'
-                                          ? 'Quản lý Bảng đấu'
-                                          : 'Quản lý Lịch thi đấu'}
-                                      </span>
-                                    </div>
-
                                     {/* Registration Tab In-Place */}
                                     {activeSection === 'registration' && (
                                       <RegistrationTab

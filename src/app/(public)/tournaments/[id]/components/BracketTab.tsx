@@ -638,15 +638,15 @@ export default function BracketTab({
 
       {/* Stage tabs (only shown when there are genuinely distinct stages, e.g., Group Stage vs Knockout, or differently named brackets) */}
       {shouldShowStageTabs && (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar border-b border-slate-200">
           {renderedStages.map((s) => (
             <button
               key={s.id}
               onClick={() => setActiveStageId(s.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2.5 text-xs font-bold transition-all border-b-2 -mb-[2px] whitespace-nowrap cursor-pointer ${
                 activeStageId === s.id
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
               }`}
             >
               {stageNameLabel(s.name, translate)}

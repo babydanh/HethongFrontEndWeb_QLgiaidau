@@ -1807,25 +1807,26 @@ const commonTranslate = useTranslations('Common');
             )}
 
             {/* Horizontal Tabs */}
-            <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
+            {/* Horizontal Underline Tabs Bar */}
+            <div className="flex overflow-x-auto gap-1 sm:gap-2 mb-2 no-scrollbar border-b border-slate-200">
               {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => handleTabSelect(tab.id)}
-                    className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
+                    className={`px-3 py-2.5 sm:px-4 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                       tab.isLive
                         ? isActive
-                          ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/20'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100/80'
+                          ? 'border-rose-600 text-rose-600'
+                          : 'border-transparent text-rose-600/80 hover:text-rose-700 hover:border-rose-300'
                         : tab.isGolden
                           ? isActive
-                            ? 'bg-amber-500 text-white font-extrabold shadow-sm border border-amber-500 hover:bg-amber-600'
-                            : 'bg-amber-100 text-amber-950 border border-amber-400 font-extrabold shadow-xs hover:bg-amber-200'
+                            ? 'border-amber-500 text-amber-600 font-extrabold'
+                            : 'border-transparent text-amber-700 hover:text-amber-800 hover:border-amber-300'
                           : isActive
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
                     }`}
                   >
                     {tab.isLive && (
@@ -1834,8 +1835,14 @@ const commonTranslate = useTranslations('Common');
                     <span>{tab.label}</span>
                     {tab.badge != null && (
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                          isActive ? 'bg-white text-rose-600' : 'bg-rose-600 text-white'
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                          tab.isLive
+                            ? isActive
+                              ? 'bg-rose-100 text-rose-700'
+                              : 'bg-rose-50 text-rose-600'
+                            : isActive
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-slate-100 text-slate-600'
                         }`}
                       >
                         {tab.badge}

@@ -691,7 +691,7 @@ export default function CommunityDetailPage() {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 mb-6 mt-4 overflow-x-auto hide-scrollbar">
+        <div className="flex items-center gap-1 sm:gap-2 mb-6 mt-4 overflow-x-auto hide-scrollbar border-b border-slate-200">
           {[
             { id: 'overview', label: translate('overviewTab') },
             ...(canViewContent ? [
@@ -703,10 +703,10 @@ export default function CommunityDetailPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`px-5 py-2.5 rounded-lg font-semibold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
+              className={`px-4 py-3 font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 border-b-2 -mb-[2px] cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
               }`}
             >
               {tab.label}
@@ -719,10 +719,10 @@ export default function CommunityDetailPage() {
               <DropdownMenuTrigger asChild>
                 <button
                   aria-label={translate('clubMoreTabs')}
-                  className={`p-2.5 rounded-lg font-semibold text-sm transition-all flex items-center justify-center shrink-0 ${
+                  className={`px-3 py-3 font-bold text-sm transition-all flex items-center justify-center shrink-0 border-b-2 -mb-[2px] cursor-pointer ${
                     ['tournaments', 'gallery', 'rankings', 'moderation', 'settings'].includes(activeTab)
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
                   }`}
                 >
                   <MoreHorizontal className="w-5 h-5" />

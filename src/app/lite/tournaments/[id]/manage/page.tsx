@@ -1063,7 +1063,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         </div>
 
         {/* Tab navigation */}
-        <div className="flex gap-1 bg-white rounded-lg border border-slate-200 shadow-sm p-1 overflow-x-auto">
+        <div className="flex gap-1 sm:gap-2 border-b border-slate-200 overflow-x-auto no-scrollbar">
           {TAB_CONFIG.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -1076,13 +1076,13 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     void fetchParticipants();
                   }
                 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors whitespace-nowrap border-b-2 -mb-[2px] cursor-pointer ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                 {translate(tab.label)}
               </button>
             );

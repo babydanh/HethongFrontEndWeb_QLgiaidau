@@ -1643,8 +1643,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </div>
 
             {/* Horizontal Tabs Bar with Registration Form Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <div className="flex overflow-x-auto gap-1.5 sm:gap-2 no-scrollbar pb-1">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 border-b border-slate-200">
+              <div className="flex overflow-x-auto gap-1 sm:gap-2 no-scrollbar">
                 {[
                   { id: 'overview' as const, label: 'Giới thiệu', icon: LayoutDashboard },
                   { id: 'registration' as const, label: 'Vận động viên', icon: Users, badge: s.participants.length },
@@ -1659,18 +1659,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       key={tab.id}
                       type="button"
                       onClick={() => handleManageNavigation(tab.id)}
-                      className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
+                      className={`px-3 py-2.5 sm:px-4 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-sm font-bold'
-                          : 'bg-white text-slate-700 border border-slate-200/90 hover:bg-slate-50 hover:text-slate-900'
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
                       }`}
                     >
-                      <TabIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                      <TabIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                       <span>{tab.label}</span>
                       {tab.badge != null && (
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
                           }`}
                         >
                           {tab.badge}

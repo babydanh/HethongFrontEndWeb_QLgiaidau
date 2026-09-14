@@ -389,237 +389,81 @@ export function RegistrationTab({
     <div className="w-full space-y-6 animate-in fade-in duration-200">
       
       {/* REGISTRATION MAIN CONTENT */}
-      <div className="w-full space-y-6 min-w-0">
-        
-        {/* Collapsible Registration Settings Bar */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden transition-all">
-          <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-slate-50/80 border-b border-slate-100">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-200/60 shrink-0">
-                <Settings className="w-4 h-4" />
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-slate-900">{registrationTranslate('registrationConfigToggle')}</span>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white border border-slate-200 text-slate-700">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      registrationMode === 'INVITE_ONLY' ? 'bg-amber-500' :
-                      registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
-                    }`} />
-                    {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyStatus')}
-                    {registrationMode === 'APPROVAL' && registrationTranslate('manualApprovalStatus')}
-                    {registrationMode === 'OPEN' && registrationTranslate('openStatus')}
-                  </span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white border border-slate-200 text-slate-600">
-                    {visibility === 'PUBLIC' ? registrationTranslate('publicVisibilityOption') : registrationTranslate('privateVisibilityOption')}
-                  </span>
-                  {registrationEndDate && (
-                    <span className="text-[11px] font-medium text-slate-500">
-                      • {registrationTranslate('registrationCloseLabel')}: <strong className="text-slate-700">{formatDate(registrationEndDate)}</strong>
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsConfigOpen(!isConfigOpen)}
-              className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs shrink-0 flex items-center gap-1.5"
-            >
-              <span>{isConfigOpen ? registrationTranslate('hideRegistrationSettings') : registrationTranslate('editRegistrationSettings')}</span>
-              {isConfigOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </Button>
-          </div>
-
-          {isConfigOpen && (
-            <div className="p-5 sm:p-6 space-y-6 animate-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Column 1: Mode and access */}
-                <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-4 sm:p-5 rounded-lg">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">{registrationTranslate('accessApprovalTitle')}</h4>
-
-                  <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('visibilityLabel')}</label>
-                      <select
-                        value={visibility}
-                        disabled={registrationLocked}
-                        onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      >
-                        <option value="PUBLIC">{registrationTranslate('publicVisibilityOption')}</option>
-                        <option value="PRIVATE">{registrationTranslate('privateVisibilityOption')}</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{registrationTranslate('registrationModeLabel')}</label>
-                      <select
-                        value={registrationMode}
-                        disabled={registrationLocked}
-                        onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
-                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      >
-                        <option value="OPEN">{registrationTranslate('openRegistrationOption')}</option>
-                        <option value="APPROVAL">{registrationTranslate('approvalRegistrationOption')}</option>
-                        <option value="INVITE_ONLY">{registrationTranslate('inviteOnlyRegistrationOption')}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-200/60 space-y-2">
-                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                      {registrationMode === 'OPEN' && registrationTranslate('openDescription')}
-                      {registrationMode === 'APPROVAL' && registrationTranslate('approvalDescription')}
-                      {registrationMode === 'INVITE_ONLY' && registrationTranslate('inviteOnlyDescription')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Column 2: Registration window */}
-                <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-4 sm:p-5 rounded-lg flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{registrationTranslate('registrationWindowTitle')}</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <DateTimePicker
-                          label={registrationTranslate('registrationOpenLabel')}
-                          value={registrationStartDate}
-                          min={(() => {
-                            const now = new Date();
-                            const pad = (v: number) => String(v).padStart(2, '0');
-                            return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-                          })()}
-                          onChange={setRegistrationStartDate}
-                          disabled={registrationLocked}
-                        />
-                        {registrationStartDate && (
-                          <div className="mt-1">
-                            <CountdownTimer
-                              targetDate={registrationStartDate}
-                              labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
-                              variant="info"
-                              size="sm"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <DateTimePicker
-                          label={registrationTranslate('registrationCloseLabel')}
-                          value={registrationEndDate}
-                          min={registrationStartDate || (() => {
-                            const now = new Date();
-                            const pad = (v: number) => String(v).padStart(2, '0');
-                            return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-                          })()}
-                          onChange={setRegistrationEndDate}
-                          disabled={registrationLocked}
-                        />
-                        {registrationEndDate && (
-                          <div className="mt-1">
-                            <CountdownTimer
-                              targetDate={registrationEndDate}
-                              labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
-                              variant="warning"
-                              size="sm"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-slate-400 font-semibold leading-relaxed pt-2 border-t border-slate-200/60 mt-3">
-                    💡 {registrationTranslate('timelineNotice')}
-                  </p>
-                </div>
-              </div>
-
-              {(visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY') && (
-                <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{registrationTranslate('quickInviteTitle')}</p>
-                      <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || registrationTranslate('inviteCodeMissing')}</p>
-                      <p className="text-xs font-medium text-slate-600">
-                        {registrationMode === 'INVITE_ONLY'
-                          ? registrationTranslate('inviteOnlyCodeDescription')
-                          : visibility === 'PRIVATE'
-                            ? registrationTranslate('privateTournamentDescription')
-                            : registrationTranslate('shareCodeDescription')}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          navigator.clipboard.writeText(tournament.inviteCode || '');
-                          toast.success(registrationTranslate('copyCode'));
-                        }}
-                        className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                      >
-                        {registrationTranslate('copyCode')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleRegenerateInviteCode}
-                        disabled={registrationLocked}
-                        className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                      >
-                        <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                        {registrationTranslate('regenerateCode')}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-lg border border-white/80 bg-white/80 p-4">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                      {visibility === 'PRIVATE' ? registrationTranslate('privateRegistrationLink') : registrationTranslate('currentRegistrationLink')}
-                    </p>
-                    <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
-                      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{inviteLink}</p>
-                      <Button
-                        variant="outline"
-                        onClick={onCopyInviteLink}
-                        className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold"
-                      >
-                        {registrationTranslate('copyLink')}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <LiteInviteQr
-                      inviteUrl={inviteLink}
-                      tournamentName={tournament.name}
-                      compact
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end border-t border-slate-100 pt-4">
-                <Button
-                  onClick={handleSaveRegistrationSettings}
-                  disabled={isSavingConfig || registrationLocked}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
-                >
-                  {isSavingConfig ? registrationTranslate('saving') : registrationTranslate('saveRegistrationInfo')}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div id="manage-participants-section" className="space-y-4 max-w-full overflow-hidden transition-all">
-          {/* Control Bar: Góc trái là cài đặt (3-dots), Bên phải là filter lọc tới search sát phải */}
+      <div id="manage-participants-section" className="w-full space-y-4 min-w-0 max-w-full overflow-hidden transition-all">
+          {/* Control Bar: Bên trái là Filter & Search, Bên phải là nút cài đặt (3-dots) */}
           <div className="flex items-center justify-between gap-3 pb-1">
-            {/* Góc trái: 3-dots Dropdown Menu (Cài đặt / Thao tác - borderless, không khung) */}
+            {/* Bên trái: Filter lọc và Search */}
+            <div className="flex items-center gap-2">
+              {/* Filter Dropdown (borderless, không khung) */}
+              {(() => {
+                const filterOptions = [
+                  { value: 'ALL', label: registrationTranslate('filterAll'), count: participantSummary.total },
+                  { value: 'PENDING', label: registrationTranslate('filterPending'), count: participantSummary.pending },
+                  { value: 'COMPLETE', label: registrationTranslate('filterApproved'), count: participantSummary.approved },
+                  { value: 'UNPAID', label: registrationTranslate('unpaidStatus'), count: participantSummary.unpaid },
+                  { value: 'REJECTED', label: registrationTranslate('filterRejected'), count: participantSummary.rejected },
+                ] as const;
+
+                const currentOption = filterOptions.find((opt) => opt.value === filter) || filterOptions[0];
+
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 items-center gap-1.5 px-2.5 rounded-lg hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors cursor-pointer shrink-0"
+                      >
+                        <span>{currentOption.label}</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                          {currentOption.count}
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
+                      {filterOptions.map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.value}
+                          onClick={() => setFilter(opt.value as typeof filter)}
+                          className={cn(
+                            'flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors',
+                            filter === opt.value
+                              ? 'bg-blue-50 text-blue-700 font-bold'
+                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            {filter === opt.value && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            <span className={filter === opt.value ? 'font-bold' : 'font-medium'}>{opt.label}</span>
+                          </span>
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                              filter === opt.value ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                            )}
+                          >
+                            {opt.count}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })()}
+
+              {/* Search Input: bo tròn & height thấp */}
+              <div className="w-full sm:w-60 md:w-64">
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={registrationTranslate('searchTeamMembers')}
+                  icon={<Search className="h-3.5 w-3.5" />}
+                  className="h-8 rounded-full text-xs pl-8 border-slate-200 focus-visible:ring-1"
+                />
+              </div>
+            </div>
+
+            {/* Bên phải: 3-dots Dropdown Menu (Cài đặt / Thao tác - borderless, không khung) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -630,7 +474,7 @@ export function RegistrationTab({
                   <MoreVertical className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
+              <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
                 <DropdownMenuItem
                   disabled={registrationLocked}
                   onClick={() => setIsWildcardModalOpen(true)}
@@ -673,77 +517,6 @@ export function RegistrationTab({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Bên phải: Filter lọc tới search sát phải */}
-            <div className="flex items-center gap-2">
-              {/* Filter Dropdown (borderless, không khung) */}
-              {(() => {
-                const filterOptions = [
-                  { value: 'ALL', label: registrationTranslate('filterAll'), count: participantSummary.total },
-                  { value: 'PENDING', label: registrationTranslate('filterPending'), count: participantSummary.pending },
-                  { value: 'COMPLETE', label: registrationTranslate('filterApproved'), count: participantSummary.approved },
-                  { value: 'UNPAID', label: registrationTranslate('unpaidStatus'), count: participantSummary.unpaid },
-                  { value: 'REJECTED', label: registrationTranslate('filterRejected'), count: participantSummary.rejected },
-                ] as const;
-
-                const currentOption = filterOptions.find((opt) => opt.value === filter) || filterOptions[0];
-
-                return (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex h-8 items-center gap-1.5 px-2.5 rounded-lg hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors cursor-pointer shrink-0"
-                      >
-                        <span>{currentOption.label}</span>
-                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                          {currentOption.count}
-                        </span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
-                      {filterOptions.map((opt) => (
-                        <DropdownMenuItem
-                          key={opt.value}
-                          onClick={() => setFilter(opt.value as typeof filter)}
-                          className={cn(
-                            'flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors',
-                            filter === opt.value
-                              ? 'bg-blue-50 text-blue-700 font-bold'
-                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            {filter === opt.value && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                            <span className={filter === opt.value ? 'font-bold' : 'font-medium'}>{opt.label}</span>
-                          </span>
-                          <span
-                            className={cn(
-                              'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
-                              filter === opt.value ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                            )}
-                          >
-                            {opt.count}
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              })()}
-
-              {/* Search Input: sát phải, height thấp & bo tròn */}
-              <div className="w-full sm:w-60 md:w-64">
-                <Input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder={registrationTranslate('searchTeamMembers')}
-                  icon={<Search className="h-3.5 w-3.5" />}
-                  className="h-8 rounded-full text-xs pl-8 border-slate-200 focus-visible:ring-1"
-                />
-              </div>
-            </div>
           </div>
 
           <div className="w-full max-w-full overflow-x-auto">

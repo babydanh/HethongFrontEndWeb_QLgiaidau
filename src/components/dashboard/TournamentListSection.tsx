@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Settings, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
+import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { getTournamentStatusClassName, normalizeTournamentStatus } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
@@ -114,6 +115,9 @@ function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tour
   const statusLabelKey = normalizedStatus === 'PENDING_APPROVAL' ? 'statusPendingApproval' : normalizedStatus === 'PENDING_DELETE' ? 'statusPendingDelete' : normalizedStatus === 'REGISTRATION_CLOSED' ? 'statusRegistrationClosed' : normalizedStatus === 'CANCELLED' ? 'statusCancelled' : normalizedStatus === 'DRAFT' ? 'statusDraftPlain' : normalizedStatus === 'UPCOMING' ? 'upcoming' : normalizedStatus === 'REGISTRATION_OPEN' ? 'registrationOpen' : normalizedStatus === 'IN_PROGRESS' || normalizedStatus === 'ONGOING' ? 'inProgress' : normalizedStatus === 'COMPLETED' ? 'completed' : 'statusDraftPlain';
   const statusLabel = translate(statusLabelKey);
   const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
+  const manageHref = isClubLiteTournament(tournament)
+    ? `/lite/tournaments/${tournament.id}/manage`
+    : `/organizer/tournaments/${tournament.id}/manage`;
   const sport = tournament.category?.name;
   return (
     <div className="py-3 first:pt-0 last:pb-0">
@@ -150,7 +154,7 @@ function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tour
         <div className="shrink-0 flex items-center gap-2">
           {roleLabel === 'BTC' && (
             <Link
-              href={`/organizer/tournaments/${tournament.id}/manage`}
+              href={manageHref}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-2xs transition-colors"
             >
               <Settings className="w-3.5 h-3.5" />

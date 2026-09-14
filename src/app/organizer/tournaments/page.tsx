@@ -526,7 +526,9 @@ export default function MyTournamentsPage() {
                 isClubLiteTournament(parent) ||
                 isClubLiteTournament(firstDivision);
               const publicHref = `/tournaments/${managementTournamentId}`;
-              const manageHref = `/organizer/tournaments/${managementTournamentId}/manage`;
+              const manageHref = isClubLite
+                ? `/lite/tournaments/${managementTournamentId}/manage`
+                : `/organizer/tournaments/${managementTournamentId}/manage`;
               const opsHref = `/organizer/tournaments/${managementTournamentId}/ops`;
 
               return (

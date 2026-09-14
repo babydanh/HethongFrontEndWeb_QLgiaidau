@@ -18,6 +18,7 @@ export interface Community {
   lat?: number;
   lng?: number;
   status: 'ACTIVE' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejectedReason?: string | null;
   ownerId?: string;
   creatorId?: string;
   myRole?: 'OWNER' | 'MODERATOR' | 'MEMBER';

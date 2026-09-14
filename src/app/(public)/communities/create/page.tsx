@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import {
@@ -49,8 +49,10 @@ type TournamentSport = Parameters<typeof tournamentsApi.createLiteTournament>[0]
 
 export default function CreateCommunityPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const translate = useTranslations('CommunityCreate');
+  const resubmitId = searchParams.get('resubmitId');
 
   const createCommunitySchema = useMemo(
     () =>
@@ -70,6 +72,7 @@ export default function CreateCommunityPage() {
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResubmission, setIsResubmission] = useState(Boolean(resubmitId));
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Image upload & cropping states
@@ -92,6 +95,7 @@ export default function CreateCommunityPage() {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<CreateCommunityFormValues>({
     resolver: zodResolver(createCommunitySchema),
@@ -136,6 +140,51 @@ export default function CreateCommunityPage() {
       })
       .catch(console.error);
   }, [setValue]);
+
+  useEffect(() => {
+    if (!resubmitId) return;
+    let isMounted = true;
+
+    communitiesApi
+      .getCommunityById(resubmitId)
+      .then((res) => {
+        if (!isMounted) return;
+        const community = res.data;
+        if (!community || community.status !== 'REJECTED') {
+          toast.error(translate('resubmitUnavailable'));
+          router.replace('/profile');
+          return;
+        }
+
+        const categoryId = community.categories?.[0]?.id;
+        if (!categoryId) {
+          toast.error(translate('resubmitUnavailable'));
+          router.replace('/profile');
+          return;
+        }
+
+        reset({
+          name: community.name,
+          description: community.description ?? '',
+          categoryIds: [categoryId],
+          visibility: community.visibility ?? 'PUBLIC',
+          joinMode: community.joinMode ?? 'OPEN',
+          logoUrl: community.logoUrl ?? '',
+          bannerUrl: community.bannerUrl ?? '',
+        });
+        setIsResubmission(true);
+      })
+      .catch(() => {
+        if (isMounted) {
+          toast.error(translate('resubmitUnavailable'));
+          router.replace('/profile');
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [reset, resubmitId, router, translate]);
 
   // Logo file selection -> Open Circular Crop Modal
   const handleLogoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,13 +266,15 @@ export default function CreateCommunityPage() {
         bannerUrl: data.bannerUrl?.trim() ? data.bannerUrl : undefined,
       };
 
-      const res = await communitiesApi.createCommunity(payload);
-      toast.success(translate('createSuccess'));
+      const res = isResubmission
+        ? await communitiesApi.resubmitCommunity(resubmitId!, payload)
+        : await communitiesApi.createCommunity(payload);
+      toast.success(translate(isResubmission ? 'resubmitSuccess' : 'createSuccess'));
 
       const responseData = res as { data?: { id?: string }; id?: string };
       const communityId = responseData?.data?.id || responseData?.id;
 
-      if (enableRecurring && communityId && recurringSlots.length > 0) {
+      if (!isResubmission && enableRecurring && communityId && recurringSlots.length > 0) {
         try {
           const selectedCat = categories.find((c) => c.id === data.categoryIds[0]);
           const slug = (selectedCat?.slug || selectedCat?.name || '').toLowerCase();
@@ -263,7 +314,7 @@ export default function CreateCommunityPage() {
         router.push('/communities');
       }
     } catch (error) {
-      toast.error(translate('createError'));
+      toast.error(translate(isResubmission ? 'resubmitError' : 'createError'));
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -285,16 +336,16 @@ export default function CreateCommunityPage() {
               {translate('back')}
             </button>
             <div className="h-4 w-px bg-slate-200" />
-            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
               CLB / Community
             </span>
           </div>
 
           <div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-              {translate('title')}
+              {translate(isResubmission ? 'resubmitTitle' : 'title')}
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">{translate('subtitle')}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{translate(isResubmission ? 'resubmitSubtitle' : 'subtitle')}</p>
           </div>
         </div>
 
@@ -900,11 +951,11 @@ export default function CreateCommunityPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>Đang tạo câu lạc bộ...</span>
+                      <span>{translate(isResubmission ? 'resubmitSubmitting' : 'submitting')}</span>
                     </>
                   ) : (
                     <>
-                      <span>{translate('submit')}</span>
+                      <span>{translate(isResubmission ? 'resubmitSubmit' : 'submit')}</span>
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}

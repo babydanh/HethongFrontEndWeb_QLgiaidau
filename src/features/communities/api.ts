@@ -270,6 +270,9 @@ export const communitiesApi = {
   
   updateCommunity: <T>(id: string, data: T) => 
     api.patch<ApiResponse<Community>>(`/communities/${id}`, data),
+
+  resubmitCommunity: <T>(id: string, data: T) =>
+    api.patch<ApiResponse<Community>>(`/communities/${id}/resubmit`, data),
   
   reviewCommunity: (id: string, data: { status: 'APPROVED' | 'REJECTED', rejectedReason?: string }) => 
     api.patch<ApiResponse<Community>>(`/communities/${id}/review`, data),

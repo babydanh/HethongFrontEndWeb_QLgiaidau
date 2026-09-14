@@ -1029,12 +1029,14 @@ export default function ProfilePage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {createdCommunities.map(community => {
                             const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
+                            const isPending = community.status === 'PENDING';
+                            const isRejected = community.status === 'REJECTED';
                             const roleBadgeLabel = isOwner ? translate("clubOwner") : community.myRole === 'MODERATOR' ? translate("clubModerator") : translate("clubMember");
                             const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200';
 
                             return (
-                              <Link href={`/communities/${community.id}`} key={community.id}>
-                                <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
+                              <div key={community.id} className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50">
+                                <Link href={`/communities/${community.id}`} className="flex min-w-0 flex-1 items-center gap-4">
                                   {Boolean(community.logoUrl?.trim()) && (
                                     <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
                                       <Image
@@ -1053,14 +1055,25 @@ export default function ProfilePage() {
                                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${roleBadgeStyle}`}>
                                         {roleBadgeLabel}
                                       </span>
-                                      <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
-                                        <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                        {community.status === 'ACTIVE' ? translate("clubActive") : translate("clubInactive")}
+                                      <p className={`text-xs flex items-center gap-1 ${isRejected ? 'text-rose-700' : isPending ? 'text-amber-700' : 'text-emerald-600'}`}>
+                                        <span className={`w-2 h-2 rounded-full inline-block ${isRejected ? 'bg-rose-500' : isPending ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                        {isRejected ? translate("clubRejected") : isPending ? translate("clubPending") : translate("clubActive")}
                                       </p>
                                     </div>
+                                    {isRejected && community.rejectedReason && (
+                                      <p className="mt-1 line-clamp-2 text-xs text-rose-700">{community.rejectedReason}</p>
+                                    )}
                                   </div>
-                                </div>
-                              </Link>
+                                </Link>
+                                {isOwner && isRejected && (
+                                  <Link
+                                    href={`/communities/create?resubmitId=${community.id}`}
+                                    className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                  >
+                                    {translate("clubResubmit")}
+                                  </Link>
+                                )}
+                              </div>
                             );
                           })}
                         </div>

@@ -40,6 +40,7 @@ import { type ManageSection } from './components/TournamentManageSidebar';
 import { VenueCourtsModal } from './components/VenueCourtsModal';
 import { CreateVenueModal } from './components/CreateVenueModal';
 import { EditVenueModal } from './components/EditVenueModal';
+import { CreateDivisionModal } from './components/CreateDivisionModal';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
@@ -192,12 +193,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const getDefaultDivisionName = () => {
     const option = s.availableMatchFormatOptions.find((item) => item.value === 'MALE_DOUBLES') ?? s.availableMatchFormatOptions[0];
     return option ? getLocalizedFormatOptionLabel(option.value) : '';
-  };
-  const getDivisionEditorName = () => {
-    const option = s.availableMatchFormatOptions.find((item) => item.value === s.newDivisionMatchType);
-    return option && s.newDivisionName === getLocalizedFormatOptionLabel(option.value)
-      ? getLocalizedFormatOptionLabel(option.value)
-      : s.newDivisionName;
   };
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
   const courtOperatingStart = '08:00';
@@ -2467,99 +2462,31 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         {/* Create Division Modal */}
         {s.isCreateDivisionModalOpen && (
-          <Modal open={s.isCreateDivisionModalOpen} onOpenChange={s.setIsCreateDivisionModalOpen}>
-            <ModalContent className="bg-white rounded-lg p-6">
-            <ModalHeader><ModalTitle className="text-lg font-bold">{s.editingDivision ? translate('createDivision.editTitle') : translate('createDivision.addTitle')}</ModalTitle></ModalHeader>
-              <div className="space-y-4 mt-4">
-                <div><label className="text-xs font-bold text-slate-500">{translate('createDivision.typeLabel')}</label>
-                  <select value={s.newDivisionMatchType} onChange={e => { const value = e.target.value; const option = s.availableMatchFormatOptions.find((item) => item.value === value); s.setNewDivisionMatchType(value); s.setNewDivisionName(option ? getLocalizedFormatOptionLabel(option.value) : ''); }} className="w-full border rounded-lg p-2 text-sm">
-                    {s.availableMatchFormatOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {translate(`createDivision.matchFormat.${option.value}`)}
-                      </option>
-                    ))}
-                  </select></div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500">{translate('createDivision.nameLabel')}</label>
-                  <input
-                    value={getDivisionEditorName()}
-                    onChange={(e) => {
-                      const option = s.availableMatchFormatOptions.find((item) => item.value === s.newDivisionMatchType);
-                      const localizedDefault = option ? getLocalizedFormatOptionLabel(option.value) : '';
-                      s.setNewDivisionName(option && e.target.value === localizedDefault ? localizedDefault : e.target.value);
-                    }}
-                    placeholder={translate('createDivision.namePlaceholder')}
-                    maxLength={255}
-                    className="w-full border rounded-lg p-2 text-sm mt-1"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">{translate('createDivision.nameHint')}</p>
-                </div>
-                <div><label className="text-xs font-bold text-slate-500">{translate('createDivision.bracketLabel')}</label>
-                  <select value={s.newDivisionBracketType} onChange={e => s.setNewDivisionBracketType(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
-<option value="SINGLE_ELIMINATION">{translate('createDivision.singleElimination')}</option>
-                    <option value="DOUBLE_ELIMINATION">{translate('createDivision.doubleElimination')}</option>
-                    <option value="ROUND_ROBIN">{translate('createDivision.roundRobin')}</option>
-                    <option value="GROUP_STAGE_KNOCKOUT">{translate('createDivision.groupStageKnockout')}</option>
-                  </select></div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <input
-                      type="checkbox"
-                      checked={s.newDivisionLimitEnabled}
-                      onChange={(e) => s.setNewDivisionLimitEnabled(e.target.checked)}
-                    />
-                    {translate('createDivision.participantLimit')}
-                  </label>
-                  {s.newDivisionLimitEnabled && (
-                    <>
-                      <label className="text-xs font-semibold text-slate-600">{translate('createDivision.maxCount')}
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={s.newDivisionMaxParticipants}
-                          onChange={(e) => s.setNewDivisionMaxParticipants(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
-                          onBlur={() => {
-                            const parsed = Number(s.newDivisionMaxParticipants);
-                            const normalized = Number.isFinite(parsed) && parsed > 0
-                              ? Math.min(128, Math.max(2, parsed))
-                              : 2;
-                            s.setNewDivisionMaxParticipants(String(normalized));
-                          }}
-                          className="mt-1 w-full border rounded-lg p-2 text-sm"
-                          placeholder="16"
-                        />
-                      </label>
-                      <p className="text-[11px] text-slate-500">{translate('createDivision.participantLimitHint')}</p>
-                    </>
-                  )}
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <input type="checkbox" checked={s.newDivisionEloEnabled} onChange={(e) => s.setNewDivisionEloEnabled(e.target.checked)} />
-                    {translate('createDivision.eloLimit')}
-                  </label>
-                  {s.newDivisionEloEnabled && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className="text-xs font-semibold text-slate-600">{translate('createDivision.minElo')}
-                        <input type="number" min={0} max={3000} value={s.newDivisionMinElo ?? ''} onChange={(e) => s.setNewDivisionMinElo(e.target.value === '' ? null : Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder={translate('createDivision.noLimit')} />
-                      </label>
-                      <label className="text-xs font-semibold text-slate-600">{translate('createDivision.maxElo')}
-                        <input type="number" min={0} max={3000} value={s.newDivisionMaxElo ?? ''} onChange={(e) => s.setNewDivisionMaxElo(e.target.value === '' ? null : Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder={translate('createDivision.noLimit')} />
-                      </label>
-                    </div>
-                  )}
-                  <p className="text-[11px] text-slate-500">{translate('createDivision.eloHint')}</p>
-                </div>
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => { s.setIsCreateDivisionModalOpen(false); s.resetDivisionEditor(); }}>{translate('createDivision.cancel')}</Button>
-                  <Button onClick={s.handleCreateDivision} disabled={s.isCreatingDivision} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-                    {s.isCreatingDivision ? <Loader2 className="w-4 h-4 animate-spin" /> : s.editingDivision ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {s.editingDivision ? translate('createDivision.saveChanges') : translate('createDivision.add')}
-                  </Button>
-                </div>
-              </div>
-            </ModalContent>
-          </Modal>
+          <CreateDivisionModal
+            open={s.isCreateDivisionModalOpen}
+            onOpenChange={s.setIsCreateDivisionModalOpen}
+            editingDivision={s.editingDivision}
+            availableMatchFormatOptions={s.availableMatchFormatOptions}
+            newDivisionMatchType={s.newDivisionMatchType}
+            setNewDivisionMatchType={s.setNewDivisionMatchType}
+            newDivisionName={s.newDivisionName}
+            setNewDivisionName={s.setNewDivisionName}
+            newDivisionBracketType={s.newDivisionBracketType}
+            setNewDivisionBracketType={s.setNewDivisionBracketType}
+            newDivisionEloEnabled={s.newDivisionEloEnabled}
+            setNewDivisionEloEnabled={s.setNewDivisionEloEnabled}
+            newDivisionMinElo={s.newDivisionMinElo}
+            setNewDivisionMinElo={s.setNewDivisionMinElo}
+            newDivisionMaxElo={s.newDivisionMaxElo}
+            setNewDivisionMaxElo={s.setNewDivisionMaxElo}
+            newDivisionMaxParticipants={s.newDivisionMaxParticipants}
+            setNewDivisionMaxParticipants={s.setNewDivisionMaxParticipants}
+            newDivisionLimitEnabled={s.newDivisionLimitEnabled}
+            setNewDivisionLimitEnabled={s.setNewDivisionLimitEnabled}
+            isCreatingDivision={s.isCreatingDivision}
+            onCancel={() => { s.setIsCreateDivisionModalOpen(false); s.resetDivisionEditor(); }}
+            onSubmit={s.handleCreateDivision}
+          />
         )}
 
         {/* Match Schedule Modal */}

@@ -80,6 +80,14 @@ export interface BracketSetupModalProps {
   gskSeedingType?: string;
   setGskSeedingType?: React.Dispatch<React.SetStateAction<'SEEDED' | 'RANDOM'>>;
 
+  // Round Modal Handlers & Configurable rounds
+  handleOpenRoundModal?: (stage: import('@/types/tournament').BracketStage, roundNumber: number) => void;
+  divisionRoundConfig?: import('@/types/tournament').StageRoundConfig | null;
+  gskConfigurableGroupRounds?: Array<{ stage: import('@/types/tournament').BracketStage; roundNumber: number; name: string; override?: any }>;
+  gskConfigurableRounds?: Array<{ stage: import('@/types/tournament').BracketStage; roundNumber: number; name: string; override?: any }>;
+  groupStageOverrideSummary?: string | null;
+  onOpenGroupStageConfig?: () => void;
+
   // Submission
   isSubmitting: boolean;
   onConfirm: () => Promise<void> | void;
@@ -122,6 +130,12 @@ export function BracketSetupModal({
   setGskPlayoffType,
   gskSeedingType = 'SEEDED',
   setGskSeedingType,
+
+  handleOpenRoundModal,
+  gskConfigurableGroupRounds = [],
+  gskConfigurableRounds = [],
+  groupStageOverrideSummary,
+  onOpenGroupStageConfig,
 
   isSubmitting,
   onConfirm,
@@ -724,6 +738,78 @@ export function BracketSetupModal({
                       <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
                         {translate('strictModeLabel')}
                       </span>
+                    </div>
+
+                    {/* CẤU HÌNH TỪNG VÒNG ĐẤU CHI TIẾT (VÒNG BẢNG & KNOCKOUT) TRONG TIÊU CHUẨN */}
+                    <div className="pt-3 border-t border-slate-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Settings className="w-3.5 h-3.5 text-blue-600" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                            {translate('detailedRoundRulesTitle')}
+                          </h4>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400">
+                          Tùy biến từng vòng
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        {translate('detailedRoundRulesDescription')}
+                      </p>
+
+                      <div className="space-y-2">
+                        {/* 1. Toàn bộ vòng bảng */}
+                        <div className="rounded-xl border border-blue-100 bg-slate-50/70 p-3 flex items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-slate-900">{translate('sharedGroupStage')}</span>
+                              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
+                                {translate('allGroupRounds')}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-0.5">
+                              {groupStageOverrideSummary || translate('inheritsFormatRules')}
+                            </p>
+                          </div>
+                          {onOpenGroupStageConfig && (
+                            <button
+                              type="button"
+                              onClick={onOpenGroupStageConfig}
+                              className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-2xs shrink-0 cursor-pointer"
+                            >
+                              {translate('configureRound')}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* 2. Chi tiết từng vòng Knockout (Tứ kết, Bán kết, Chung kết...) */}
+                        {gskConfigurableRounds.length > 0 && (
+                          <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/50 px-3">
+                            {gskConfigurableRounds.map(({ stage, roundNumber, name, override }) => {
+                              const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
+                              return (
+                                <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-800">{name}</p>
+                                    <p className="text-[10px] text-slate-500 font-medium">
+                                      {resolvedOverride
+                                        ? `${translate('firstToSets', { sets: resolvedOverride.setsToWin })}, ${resolvedOverride.pointsPerSet}p`
+                                        : translate('inheritsDefaultRules')}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
+                                    className="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-2xs shrink-0 cursor-pointer"
+                                  >
+                                    {translate('configureRound')}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

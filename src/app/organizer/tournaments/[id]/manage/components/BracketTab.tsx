@@ -902,6 +902,24 @@ export function BracketTab({
           setGskPlayoffType={setGskPlayoffType}
           gskSeedingType={gskSeedingType}
           setGskSeedingType={setGskSeedingType}
+          handleOpenRoundModal={handleOpenRoundModal}
+          divisionRoundConfig={divisionRoundConfig}
+          gskConfigurableGroupRounds={gskConfigurableGroupRounds}
+          gskConfigurableRounds={gskConfigurableRounds}
+          groupStageOverrideSummary={
+            hasGroupStageOverride
+              ? (() => {
+                  const rc = groupStage.id === '__draft_gsk_group__'
+                    ? divisionRoundConfig
+                    : groupStage.roundConfig;
+                  const resolvedRc = rc ? resolveSportRuleView(rc, sportRuleKind) : null;
+                  return resolvedRc
+                    ? `${translate('firstToSets', { sets: resolvedRc.setsToWin })}, ${resolvedRc.pointsPerSet}p`
+                    : translate('inheritsFormatRules');
+                })()
+              : translate('inheritsFormatRules')
+          }
+          onOpenGroupStageConfig={() => handleOpenRoundModal?.(groupStage, 0)}
           isSubmitting={isGeneratingBracket}
           onConfirm={async () => {
             setIsPoolArrangementModalOpen(false);

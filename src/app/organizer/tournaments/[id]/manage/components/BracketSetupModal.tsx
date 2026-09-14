@@ -612,68 +612,34 @@ export function BracketSetupModal({
                 </span>
               </div>
 
-              {/* 2 Lựa chọn cấu hình Knockout: Thể thức & Xếp hạt giống */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* 1. Thể thức Knockout */}
-                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {translate('playoffFormat')}
-                  </span>
-                  <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setGskPlayoffType?.('SINGLE_ELIMINATION')}
-                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        gskPlayoffType === 'SINGLE_ELIMINATION'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      {translate('singleElimination')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGskPlayoffType?.('DOUBLE_ELIMINATION')}
-                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        gskPlayoffType === 'DOUBLE_ELIMINATION'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      {translate('doubleElimination')}
-                    </button>
-                  </div>
-                </div>
-
-                {/* 2. Cách xếp hạt giống */}
-                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {translate('seedingType')}
-                  </span>
-                  <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setGskSeedingType?.('SEEDED')}
-                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        gskSeedingType === 'SEEDED'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      {translate('seededByElo')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGskSeedingType?.('RANDOM')}
-                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        gskSeedingType === 'RANDOM'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      {translate('randomSeeding')}
-                    </button>
-                  </div>
+              {/* Cấu hình Thể thức Knockout (Loại trực tiếp đơn / kép) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {translate('playoffFormat')}
+                </span>
+                <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-lg border border-slate-200 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setGskPlayoffType?.('SINGLE_ELIMINATION')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                      gskPlayoffType === 'SINGLE_ELIMINATION'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {translate('singleElimination')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGskPlayoffType?.('DOUBLE_ELIMINATION')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                      gskPlayoffType === 'DOUBLE_ELIMINATION'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {translate('doubleElimination')}
+                  </button>
                 </div>
               </div>
 

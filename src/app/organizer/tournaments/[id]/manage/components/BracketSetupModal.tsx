@@ -625,10 +625,10 @@ export function BracketSetupModal({
 
               {/* Khi ở chế độ TIÊU CHUẨN (Strict): Hiển thị đầy đủ chế độ Pickleball, Presets và các ô tinh chỉnh chi tiết */}
               {!isLiteMode ? (
-                <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="space-y-3.5 animate-in fade-in duration-200">
                   {/* Pickleball Mode Switcher (chỉ khi là môn Pickleball) */}
                   {isPickleballVariant && setSportRuleKind && (
-                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-2.5 space-y-1.5">
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-2 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
                           {translate('pickleballMode')}
@@ -648,7 +648,6 @@ export function BracketSetupModal({
                           }`}
                         >
                           <p className="font-bold leading-tight">{translate('rallyScoring')}</p>
-                          <p className="text-[9px] font-normal text-slate-500 mt-0.5">{translate('rallyScoringDescription')}</p>
                         </button>
                         <button
                           type="button"
@@ -660,13 +659,12 @@ export function BracketSetupModal({
                           }`}
                         >
                           <p className="font-bold leading-tight">{translate('sideOutScoring')}</p>
-                          <p className="text-[9px] font-normal text-slate-500 mt-0.5">{translate('sideOutScoringDescription')}</p>
                         </button>
                       </div>
                     </div>
                   )}
 
-                  {/* Danh sách Preset Cards theo môn */}
+                  {/* Danh sách Preset Cards theo môn - Gọn gàng chỉ để chọn */}
                   <div className="space-y-1.5">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       {translate('sportPresets')}
@@ -682,21 +680,16 @@ export function BracketSetupModal({
                             key={preset.id}
                             type="button"
                             onClick={() => applyPreset(preset)}
-                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
                               isSelected
-                                ? 'border-blue-600 bg-blue-50/60 shadow-2xs ring-1 ring-blue-400'
+                                ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-400'
                                 : 'border-slate-200 bg-slate-50/50 hover:border-blue-300 hover:bg-white'
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-1">
-                              <p className="text-xs font-bold text-slate-900 leading-snug">{preset.label}</p>
-                              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white text-blue-700 border border-slate-200 shrink-0">
-                                {translate('firstToSets', { sets: preset.setsToWin })} • {preset.pointsPerSet}p
-                              </span>
-                            </div>
-                            <p className="mt-1 text-[10px] text-slate-500 line-clamp-2 leading-relaxed">
-                              {preset.description}
-                            </p>
+                            <p className="text-xs font-bold text-slate-900 leading-snug">{preset.label}</p>
+                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white text-blue-700 border border-slate-200 shrink-0">
+                              {translate('firstToSets', { sets: preset.setsToWin })} • {preset.pointsPerSet}p
+                            </span>
                           </button>
                         );
                       })}
@@ -713,80 +706,98 @@ export function BracketSetupModal({
                           onChange={(e) => setSetsToWin?.(Number(e.target.value))}
                           className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
                         >
-                          {presentation.setOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
+                          <option value={1}>{translate('firstToSets', { sets: 1 })}</option>
+                          <option value={2}>{translate('firstToSets', { sets: 2 })} (BO3)</option>
+                          <option value={3}>{translate('firstToSets', { sets: 3 })} (BO5)</option>
                         </select>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">{presentation.setUnitLabel}</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('pointsPerSet')}</label>
                         <input
                           type="number"
                           value={pointsPerSet}
                           onChange={(e) => setPointsPerSet?.(Number(e.target.value))}
+                          min={1}
+                          max={99}
                           className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
                         />
                       </div>
                     </div>
 
-                    {/* Win by 2 & Deuce points */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-                      <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2 pt-1">
                         <input
                           type="checkbox"
+                          id="winByTwo"
                           checked={winByTwo}
                           onChange={(e) => setWinByTwo?.(e.target.checked)}
-                          className="w-4 h-4 text-blue-600 rounded border-slate-300"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
-                        <span>{presentation.winByTwoLabel}</span>
-                      </label>
+                        <label htmlFor="winByTwo" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                          {translate('winByTwo')}
+                        </label>
+                      </div>
+
                       {winByTwo && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-semibold text-slate-400">Max:</span>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('maxDeucePoints')}</label>
                           <input
                             type="number"
-                            value={maxDeucePoints}
-                            onChange={(e) => setMaxDeucePoints?.(Number(e.target.value))}
-                            className="w-12 border border-slate-200 rounded px-1.5 py-0.5 text-xs font-bold text-center"
+                            value={maxDeucePoints ?? ''}
+                            onChange={(e) => setMaxDeucePoints?.(e.target.value ? Number(e.target.value) : undefined)}
+                            placeholder={translate('noDeuceLimit')}
+                            className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
                           />
                         </div>
                       )}
                     </div>
 
-                    {/* Tiebreak Points (chỉ Tennis hoặc Pickleball Side-Out) */}
                     {supportsTiebreakInput && (
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-                        <span className="font-bold text-slate-700">{presentation.tiebreakLabel}:</span>
-                        <input
-                          type="number"
-                          value={superTiebreakPoints}
-                          onChange={(e) => setSuperTiebreakPoints?.(Number(e.target.value))}
-                          placeholder={translate('tiebreakPlaceholder', { points: sportRuleKind === 'TENNIS' ? 7 : 11 })}
-                          className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-center"
-                        />
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="superTiebreakEnabled" className="text-xs font-bold text-slate-700 cursor-pointer">
+                            {translate('superTiebreak')}
+                          </label>
+                          <input
+                            type="checkbox"
+                            id="superTiebreakEnabled"
+                            checked={superTiebreakEnabled}
+                            onChange={(e) => setSuperTiebreakEnabled?.(e.target.checked)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </div>
+
+                        {superTiebreakEnabled && (
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('tiebreakSet')}</label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={5}
+                                value={superTiebreakSetIndex ?? setsToWin * 2 - 1}
+                                onChange={(e) => setSuperTiebreakSetIndex?.(Number(e.target.value))}
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-xs font-bold bg-white text-slate-800 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('tiebreakPoints')}</label>
+                              <input
+                                type="number"
+                                min={1}
+                                value={superTiebreakPoints}
+                                onChange={(e) => setSuperTiebreakPoints?.(Number(e.target.value))}
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-xs font-bold bg-white text-slate-800 outline-none"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* Tóm tắt cấu hình hiện tại */}
-                    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-2.5 text-[11px] font-semibold text-blue-950 flex items-center justify-between">
-                      <span>
-                        {translate('currentSetup', {
-                          setsToWin,
-                          unit: sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set',
-                          points: pointsPerSet,
-                          target: presentation.setUnitLabel,
-                          margin: winByTwo ? translate('winByTwoShort') : translate('targetClosesSet'),
-                        })}
-                        {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
-                      </span>
-                      <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
-                        {translate('strictModeLabel')}
-                      </span>
-                    </div>
-
-                    {/* CẤU HÌNH TỪNG VÒNG ĐẤU CHI TIẾT (VÒNG BẢNG & KNOCKOUT) TRONG TIÊU CHUẨN */}
-                    <div className="pt-3 border-t border-slate-100 space-y-3">
+                    {/* KHỐI CẤU HÌNH TỪNG VÒNG (ROUND-LEVEL RULES) */}
+                    <div className="pt-3 border-t border-slate-100 space-y-2.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <Settings className="w-3.5 h-3.5 text-blue-600" />
@@ -798,13 +809,10 @@ export function BracketSetupModal({
                           Tùy biến từng vòng
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        {translate('detailedRoundRulesDescription')}
-                      </p>
 
                       <div className="space-y-2">
                         {/* 1. Toàn bộ vòng bảng */}
-                        <div className="rounded-xl border border-blue-100 bg-slate-50/70 p-3 flex items-center justify-between gap-3">
+                        <div className="rounded-xl border border-blue-100 bg-slate-50/70 p-2.5 flex items-center justify-between gap-3">
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs font-bold text-slate-900">{translate('sharedGroupStage')}</span>
@@ -833,7 +841,7 @@ export function BracketSetupModal({
                             {effectiveKnockoutRounds.map(({ stage, roundNumber, name, override }) => {
                               const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
                               return (
-                                <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-3">
+                                <div key={`${stage.id}-${roundNumber}`} className="py-2 flex items-center justify-between gap-3">
                                   <div>
                                     <p className="text-xs font-bold text-slate-800">{name}</p>
                                     <p className="text-[10px] text-slate-500 font-medium">
@@ -859,19 +867,16 @@ export function BracketSetupModal({
                   </div>
                 </div>
               ) : (
-                /* Khi ở chế độ TỰ DO (Lite): ĐÚNG CHUẨN COMMIT CŨ - KHÔNG CÓ BẤT KỲ CÀI ĐẶT NÀO */
-                <div className="py-6 px-4 rounded-2xl border border-dashed border-amber-200/80 bg-amber-50/40 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
-                    <Zap className="w-5 h-5 fill-amber-500 text-amber-500" />
+                /* Khi ở chế độ TỰ DO (Lite): Tối giản, gọn gàng, không chữ thừa */
+                <div className="py-5 px-4 rounded-xl border border-slate-200 bg-slate-50/60 text-center space-y-1.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+                    <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
                   </div>
-                  <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wide">
-                    {translate('liteModeLabel')} ({translate('liteRecommended')})
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                    {translate('liteModeLabel')}
                   </h4>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                  <p className="text-xs text-slate-500">
                     {translate('liteShortDesc')}
-                  </p>
-                  <p className="text-[11px] text-amber-700/80 font-medium">
-                    ✓ Điểm số được nhập tự do trong lúc thi đấu mà không bị ràng buộc quy chuẩn cứng.
                   </p>
                 </div>
               )}

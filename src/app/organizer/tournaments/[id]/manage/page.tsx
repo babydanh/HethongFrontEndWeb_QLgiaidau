@@ -1782,66 +1782,318 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         return (
                           <div
                             key={div.id}
-                            className="flex items-center justify-between transition-colors hover:bg-slate-100/60 group"
+                            id={`manage-division-accordion-${div.id}`}
+                            className="transition-colors hover:bg-slate-100/60 group scroll-mt-28"
                           >
-                            <button
-                              type="button"
-                              onClick={() => s.setSelectedDivisionId(div.id)}
-                              className={`flex min-h-[44px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 cursor-pointer ${
-                                isActive
-                                  ? 'bg-blue-50/80 text-blue-950 font-bold'
-                                  : 'text-slate-700'
-                              }`}
-                            >
-                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                                isActive
-                                  ? 'bg-blue-600 text-white shadow-2xs'
-                                  : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
-                              }`}>
-                                <BracketIcon className="h-4 w-4" aria-hidden="true" />
-                              </span>
-
-                              <div className="min-w-0 flex-1">
-                                <span className="block truncate text-xs sm:text-sm font-bold">
-                                  {getDisplayDivisionName(div)}
-                                </span>
-                              </div>
-
-                              {divTotal > 0 && (
-                                <span className="inline-flex shrink-0 items-center text-[10px] font-semibold text-slate-500 mr-1">
-                                  {divCompleted}/{divTotal} trận
-                                </span>
-                              )}
-
-                              <span
-                                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-colors ${
-                                  isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                aria-expanded={isActive}
+                                onClick={() => {
+                                  if (isActive) {
+                                    s.setSelectedDivisionId('');
+                                  } else {
+                                    s.setSelectedDivisionId(div.id);
+                                    requestAnimationFrame(() => {
+                                      const el = document.getElementById(`manage-division-accordion-${div.id}`);
+                                      if (el) {
+                                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                      }
+                                    });
+                                  }
+                                }}
+                                className={`flex min-h-[44px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 cursor-pointer ${
+                                  isActive
+                                    ? 'bg-blue-50/80 text-blue-950 font-bold'
+                                    : 'text-slate-700'
                                 }`}
                               >
-                                <Users className="h-3.5 w-3.5" aria-hidden="true" />
-                                {capacityLabel}
-                              </span>
-                            </button>
+                                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                  isActive
+                                    ? 'bg-blue-600 text-white shadow-2xs'
+                                    : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
+                                }`}>
+                                  <BracketIcon className="h-4 w-4" aria-hidden="true" />
+                                </span>
 
-                            {/* Quick Edit / Delete Controls for Organizer */}
-                            <div className="flex items-center gap-0.5 px-2">
-                              <button
-                                type="button"
-                                onClick={() => s.openDivisionEditor(div)}
-                                disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
-                                className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                                title="Sửa nội dung"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
+                                <div className="min-w-0 flex-1">
+                                  <span className="block truncate text-xs sm:text-sm font-bold">
+                                    {getDisplayDivisionName(div)}
+                                  </span>
+                                </div>
+
+                                {divTotal > 0 && (
+                                  <span className="inline-flex shrink-0 items-center text-[10px] font-semibold text-slate-500 mr-1">
+                                    {divCompleted}/{divTotal} trận
+                                  </span>
+                                )}
+
+                                <span
+                                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-colors ${
+                                    isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
+                                  }`}
+                                >
+                                  <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                                  {capacityLabel}
+                                </span>
+
+                                <ChevronDown
+                                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                                    isActive ? 'rotate-180 text-blue-600' : ''
+                                  }`}
+                                />
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => s.requestDeleteDivision(div)}
-                                className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="Xóa nội dung"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+
+                              {/* Quick Edit / Delete Controls for Organizer */}
+                              <div className="flex items-center gap-0.5 px-2">
+                                <button
+                                  type="button"
+                                  onClick={() => s.openDivisionEditor(div)}
+                                  disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
+                                  className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                  title="Sửa nội dung"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => s.requestDeleteDivision(div)}
+                                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Xóa nội dung"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Accordion In-Place Content Drawer */}
+                            <div
+                              className={`grid transition-[grid-template-rows] duration-250 ease-in-out ${
+                                isActive ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] pointer-events-none'
+                              }`}
+                            >
+                              <div className="overflow-hidden">
+                                {isActive && s.tournament && (
+                                  <div className="p-3 sm:p-5 bg-white border-t border-slate-200 shadow-inner rounded-b-xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {/* Subheader info of current division inside accordion */}
+                                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                          <Trophy className="w-4 h-4 text-blue-600" />
+                                          Đang xem: <span className="text-blue-700">{getDisplayDivisionName(div)}</span>
+                                        </span>
+                                      </div>
+                                      <span className="text-xs font-semibold text-slate-400">
+                                        {activeSection === 'registration'
+                                          ? 'Quản lý Vận động viên'
+                                          : activeSection === 'bracket'
+                                          ? 'Quản lý Bảng đấu'
+                                          : 'Quản lý Lịch thi đấu'}
+                                      </span>
+                                    </div>
+
+                                    {/* Registration Tab In-Place */}
+                                    {activeSection === 'registration' && (
+                                      <RegistrationTab
+                                        tournament={s.tournament}
+                                        inviteLink={s.inviteLink}
+                                        mockNamesText={s.mockNamesText}
+                                        setMockNamesText={s.setMockNamesText}
+                                        isSeedingMock={s.isSeedingMock}
+                                        isClearingMock={s.isClearingMock}
+                                        wildcardEmailOrPhone={s.wildcardEmailOrPhone}
+                                        setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
+                                        wildcardTeamName={s.wildcardTeamName}
+                                        setWildcardTeamName={s.setWildcardTeamName}
+                                        wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone}
+                                        setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
+                                        isAssigningWildcard={s.isAssigningWildcard}
+                                        divisions={s.divisions}
+                                        selectedDivisionId={div.id}
+                                        setSelectedDivisionId={s.setSelectedDivisionId}
+                                        participants={s.participants}
+                                        activeParticipantActionId={s.activeParticipantActionId}
+                                        visibility={s.visibility}
+                                        setVisibility={s.setVisibility}
+                                        registrationMode={s.registrationMode}
+                                        setRegistrationMode={s.setRegistrationMode}
+                                        registrationStartDate={s.registrationStartDate}
+                                        setRegistrationStartDate={s.setRegistrationStartDate}
+                                        registrationEndDate={s.registrationEndDate}
+                                        setRegistrationEndDate={s.setRegistrationEndDate}
+                                        isSavingConfig={s.isSavingConfig}
+                                        publishFeeAmount={s.publishFeeAmount}
+                                        handlePublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
+                                        handleOpenLockModal={s.handleOpenLockModal}
+                                        handleSaveRegistrationSettings={s.handleSaveRegistrationSettings}
+                                        handleRegenerateInviteCode={s.handleRegenerateInviteCode}
+                                        handleApproveParticipant={s.handleApproveParticipant}
+                                        handleRejectParticipant={s.handleRejectParticipant}
+                                        handleKickParticipant={s.handleKickParticipant}
+                                        handleSeedMockData={s.handleSeedMockData}
+                                        handleClearMockData={s.handleClearMockData}
+                                        handleAssignWildcard={s.handleAssignWildcard}
+                                        eloEnabled={s.eloEnabled}
+                                        setEloEnabled={s.setEloEnabled}
+                                        eloMin={s.eloMin}
+                                        setEloMin={s.setEloMin}
+                                        eloMax={s.eloMax}
+                                        setEloMax={s.setEloMax}
+                                        eloMaxCombined={s.eloMaxCombined}
+                                        setEloMaxCombined={s.setEloMaxCombined}
+                                        eloMaxGap={s.eloMaxGap}
+                                        setEloMaxGap={s.setEloMaxGap}
+                                        seedingMethod={s.seedingMethod}
+                                        setSeedingMethod={s.setSeedingMethod}
+                                        isAutoSeeding={s.isAutoSeeding}
+                                        handleAutoSeed={s.handleAutoSeed}
+                                        handleSwapSeeds={s.handleSwapSeeds}
+                                        handleReorderSeeds={s.handleReorderSeeds}
+                                        refetchDivisionData={s.refetchDivisionData}
+                                        onCopyInviteLink={() => {
+                                          navigator.clipboard.writeText(s.inviteLink);
+                                          toast.success(translate('toast.copiedInvite'));
+                                        }}
+                                      />
+                                    )}
+
+                                    {/* Bracket Tab In-Place */}
+                                    {activeSection === 'bracket' && (
+                                      <div ref={bracketSectionRef} className="space-y-6">
+                                        <BracketTab
+                                          key={div.id}
+                                          tournament={s.tournament}
+                                          bracket={s.bracket}
+                                          selectedDivisionId={div.id}
+                                          participants={s.participants}
+                                          isGeneratingBracket={s.isGeneratingBracket}
+                                          handleGenerateBracket={s.handleGenerateBracket}
+                                          handleOpenScheduling={s.handleOpenScheduling}
+                                          handleOpenRoundModal={s.handleOpenRoundModal}
+                                          refetchDivisionData={s.refetchDivisionData}
+                                          onBracketPersisted={(updatedMatches) =>
+                                            s.setBracket((current) => mergeBracketMatches(current, updatedMatches) ?? current)
+                                          }
+                                          isLimitEnabled={s.isLimitEnabled}
+                                          setIsLimitEnabled={s.setIsLimitEnabled}
+                                          maxParticipants={s.maxParticipants}
+                                          setMaxParticipants={s.setMaxParticipants}
+                                          matchType={s.matchType}
+                                          setMatchType={s.setMatchType}
+                                          availableMatchFormatOptions={s.availableMatchFormatOptions}
+                                          selectedCategory={s.selectedCategory}
+                                          sportRuleKind={s.sportRuleKind}
+                                          setSportRuleKind={s.setSportRuleKind}
+                                          setsToWin={s.setsToWin}
+                                          setSetsToWin={s.setSetsToWin}
+                                          pointsPerSet={s.pointsPerSet}
+                                          setPointsPerSet={s.setPointsPerSet}
+                                          winByTwo={s.winByTwo}
+                                          setWinByTwo={s.setWinByTwo}
+                                          maxDeucePoints={s.maxDeucePoints}
+                                          setMaxDeucePoints={s.setMaxDeucePoints}
+                                          superTiebreakEnabled={s.superTiebreakEnabled}
+                                          setSuperTiebreakEnabled={s.setSuperTiebreakEnabled}
+                                          superTiebreakSetIndex={s.superTiebreakSetIndex}
+                                          setSuperTiebreakSetIndex={s.setSuperTiebreakSetIndex}
+                                          superTiebreakPoints={s.superTiebreakPoints}
+                                          setSuperTiebreakPoints={s.setSuperTiebreakPoints}
+                                          tiebreakerMode={s.tiebreakerMode}
+                                          setTiebreakerMode={s.setTiebreakerMode}
+                                          roundsToPlay={s.roundsToPlay}
+                                          setRoundsToPlay={s.setRoundsToPlay}
+                                          bracketType={s.bracketTypeState}
+                                          setBracketTypeState={s.setBracketTypeState}
+                                          tournamentFormat={s.bracketType ?? undefined}
+                                          rrWinPoints={s.rrWinPoints}
+                                          setRrWinPoints={s.setRrWinPoints}
+                                          rrLossPoints={s.rrLossPoints}
+                                          setRrLossPoints={s.setRrLossPoints}
+                                          rrTiebreakerRule={s.rrTiebreakerRule}
+                                          setRrTiebreakerRule={s.setRrTiebreakerRule}
+                                          numGroups={s.numGroups}
+                                          setNumGroups={s.setNumGroups}
+                                          teamsPerGroup={s.teamsPerGroup}
+                                          setTeamsPerGroup={s.setTeamsPerGroup}
+                                          teamsAdvancing={s.teamsAdvancing}
+                                          setTeamsAdvancing={s.setTeamsAdvancing}
+                                          divisionRoundConfig={
+                                            s.divisions.find((division) => division.id === div.id)?.roundConfig ?? null
+                                          }
+                                          gskPlayoffType={s.gskPlayoffType}
+                                          setGskPlayoffType={s.setGskPlayoffType}
+                                          gskSeedingType={s.gskSeedingType}
+                                          setGskSeedingType={s.setGskSeedingType}
+                                          gskRoundsToPlay={s.gskRoundsToPlay}
+                                          setGskRoundsToPlay={s.setGskRoundsToPlay}
+                                          handleAdvanceStandings={s.handleAdvanceStandings}
+                                          isAdvancingStandings={s.isAdvancingStandings}
+                                          isLiteMode={s.isLiteMode}
+                                          setIsLiteMode={s.setIsLiteMode}
+                                          courts={s.courts}
+                                          divisions={s.divisions}
+                                          venues={s.venues}
+                                          currentVenueId={s.tournament?.venueId || undefined}
+                                          defaultDate={s.startDate}
+                                          onRefetchData={s.refetchDivisionData}
+                                        />
+                                      </div>
+                                    )}
+
+                                    {/* Court Schedule Tab In-Place */}
+                                    {activeSection === 'court_schedule' && (
+                                      <div className="space-y-6">
+                                        {s.courts.length === 0 ? (
+                                          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
+                                            <MapPin className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+                                            <h4 className="text-base font-bold text-slate-800">Chưa có sân thi đấu</h4>
+                                            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                                              Vui lòng qua tab &quot;Địa điểm & Sân&quot; để thiết lập ít nhất 1 sân thi đấu trước khi xếp lịch.
+                                            </p>
+                                            <Button
+                                              type="button"
+                                              onClick={() => handleManageNavigation('schedule')}
+                                              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+                                            >
+                                              Thiết lập sân bãi ngay
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <CourtWorkspace
+                                            tournamentStatus={s.tournament?.status}
+                                            venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
+                                            courts={s.courts}
+                                            divisions={s.divisions}
+                                            matches={divMatches}
+                                            defaultDivisionId={div.id}
+                                            defaultDate={s.startDate}
+                                            defaultOperatingStart={courtOperatingStart}
+                                            defaultOperatingEnd={courtOperatingEnd}
+                                            sportRuleKind={s.sportRuleKind}
+                                            setsToWin={
+                                              s.divisions.find((division) => division.id === div.id)?.roundConfig?.max_sets ?? s.setsToWin
+                                            }
+                                            preview={s.schedulePlanPreview}
+                                            isPreviewing={s.isPreviewingSchedulePlan}
+                                            onPreview={s.handlePreviewSchedulePlan}
+                                            onPreviewWithAi={s.handlePreviewScheduleWithAi}
+                                            aiScheduleIntent={s.aiScheduleIntent}
+                                            isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
+                                            onOpenMatch={(matchId) => {
+                                              const fullMatch = s.matches.find(
+                                                (candidate: (typeof s.matches)[number]) => candidate.id === matchId
+                                              );
+                                              if (fullMatch) s.handleOpenScheduling(fullMatch);
+                                            }}
+                                            onSaveScheduleDirect={s.handleSaveScheduleDirect}
+                                            onRefetchData={s.refetchDivisionData}
+                                          />
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
@@ -1935,270 +2187,167 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 )}
               </div>
             ) : (
-          <div className="space-y-6">
-        {/* Detail content */}
-        {activeSection === 'basic' && <BasicInfoTab id={id} tournament={s.tournament} categories={s.categories}
-          validationField={s.validationField}
-          basicSubTab={s.basicSubTab} setBasicSubTab={s.setBasicSubTab}
-          name={s.name} setName={s.setName} categoryId={s.categoryId} setCategoryId={s.setCategoryId}
-          description={s.description} setDescription={s.setDescription}
-          logoUrl={s.logoUrl} setLogoUrl={s.setLogoUrl} bannerUrl={s.bannerUrl} setBannerUrl={s.setBannerUrl}
-          hideFeaturedCardText={s.hideFeaturedCardText} setHideFeaturedCardText={s.setHideFeaturedCardText}
-          newGalleryUrl={s.newGalleryUrl} setNewGalleryUrl={s.setNewGalleryUrl}
-          isAddingImage={s.isAddingImage} setIsAddingImage={s.setIsAddingImage}
-          prizeDescription={s.prizeDescription} setPrizeDescription={s.setPrizeDescription}
-          contactInfo={s.contactInfo} setContactInfo={s.setContactInfo}
-          isSavingConfig={s.isSavingConfig} isDeleting={s.isDeleting}
-          handleDeleteTournament={s.handleDeleteTournament} handleSaveBasicInfo={s.handleSaveBasicInfo}
-          fetchTournamentData={s.fetchTournamentData}
-          divisions={s.divisions} selectedDivisionId={s.selectedDivisionId}
-          isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
-          maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
-          matchType={s.matchType} setMatchType={s.setMatchType}
-          setsToWin={s.setsToWin} setSetsToWin={s.setSetsToWin}
-          pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
-          winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo} />}
+              <div className="space-y-6">
+                {/* Other Sections when navigated (basic info, venues/courts, finance, livestream, permissions, sponsors) */}
+                {activeSection === 'basic' && (
+                  <BasicInfoTab
+                    id={id}
+                    tournament={s.tournament}
+                    categories={s.categories}
+                    validationField={s.validationField}
+                    basicSubTab={s.basicSubTab}
+                    setBasicSubTab={s.setBasicSubTab}
+                    name={s.name}
+                    setName={s.setName}
+                    categoryId={s.categoryId}
+                    setCategoryId={s.setCategoryId}
+                    description={s.description}
+                    setDescription={s.setDescription}
+                    logoUrl={s.logoUrl}
+                    setLogoUrl={s.setLogoUrl}
+                    bannerUrl={s.bannerUrl}
+                    setBannerUrl={s.setBannerUrl}
+                    hideFeaturedCardText={s.hideFeaturedCardText}
+                    setHideFeaturedCardText={s.setHideFeaturedCardText}
+                    newGalleryUrl={s.newGalleryUrl}
+                    setNewGalleryUrl={s.setNewGalleryUrl}
+                    isAddingImage={s.isAddingImage}
+                    setIsAddingImage={s.setIsAddingImage}
+                    prizeDescription={s.prizeDescription}
+                    setPrizeDescription={s.setPrizeDescription}
+                    contactInfo={s.contactInfo}
+                    setContactInfo={s.setContactInfo}
+                    isSavingConfig={s.isSavingConfig}
+                    isDeleting={s.isDeleting}
+                    handleDeleteTournament={s.handleDeleteTournament}
+                    handleSaveBasicInfo={s.handleSaveBasicInfo}
+                    fetchTournamentData={s.fetchTournamentData}
+                    divisions={s.divisions}
+                    selectedDivisionId={s.selectedDivisionId}
+                    isLimitEnabled={s.isLimitEnabled}
+                    setIsLimitEnabled={s.setIsLimitEnabled}
+                    maxParticipants={s.maxParticipants}
+                    setMaxParticipants={s.setMaxParticipants}
+                    matchType={s.matchType}
+                    setMatchType={s.setMatchType}
+                    setsToWin={s.setsToWin}
+                    setSetsToWin={s.setSetsToWin}
+                    pointsPerSet={s.pointsPerSet}
+                    setPointsPerSet={s.setPointsPerSet}
+                    winByTwo={s.winByTwo}
+                    setWinByTwo={s.setWinByTwo}
+                  />
+                )}
 
-        {activeSection === 'schedule' && (
-          <div className="space-y-6">
-            <ScheduleTab
-              tournament={s.tournament}
-              bracket={s.bracket}
-              venues={s.venues}
-              tournamentVenues={s.tournamentVenues}
-              handleCreateTournamentVenue={s.handleCreateTournamentVenue}
-              handleUpdateTournamentVenue={s.handleUpdateTournamentVenue}
-              handleSetDefaultTournamentVenue={s.handleSetDefaultTournamentVenue}
-              handleDeleteTournamentVenue={s.handleDeleteTournamentVenue}
-              handleAddVenueCourtDirect={s.handleAddVenueCourtDirect}
-              handleAddVenueCourtsBatchDirect={s.handleAddVenueCourtsBatchDirect}
-              handleRemoveVenueCourtDirect={s.handleRemoveVenueCourtDirect}
-              validationField={s.validationField}
-              customVenueName={s.customVenueName}
-              setCustomVenueName={s.setCustomVenueName}
-              customVenueAddress={s.customVenueAddress}
-              setCustomVenueAddress={s.setCustomVenueAddress}
-              provinceCode={s.provinceCode}
-              setProvinceCode={s.setProvinceCode}
-              wardCode={s.wardCode}
-              setWardCode={s.setWardCode}
-              provinces={s.provinces}
-              wards={s.wards}
-              setWards={s.setWards}
-              startDate={s.startDate}
-              setStartDate={s.setStartDate}
-              endDate={s.endDate}
-              setEndDate={s.setEndDate}
-              isSavingConfig={s.isSavingConfig}
-              handleSaveScheduleDetails={s.handleSaveScheduleDetails}
-            />
-          </div>
-        )}
+                {activeSection === 'schedule' && (
+                  <div className="space-y-6">
+                    <ScheduleTab
+                      tournament={s.tournament}
+                      bracket={s.bracket}
+                      venues={s.venues}
+                      tournamentVenues={s.tournamentVenues}
+                      handleCreateTournamentVenue={s.handleCreateTournamentVenue}
+                      handleUpdateTournamentVenue={s.handleUpdateTournamentVenue}
+                      handleSetDefaultTournamentVenue={s.handleSetDefaultTournamentVenue}
+                      handleDeleteTournamentVenue={s.handleDeleteTournamentVenue}
+                      handleAddVenueCourtDirect={s.handleAddVenueCourtDirect}
+                      handleAddVenueCourtsBatchDirect={s.handleAddVenueCourtsBatchDirect}
+                      handleRemoveVenueCourtDirect={s.handleRemoveVenueCourtDirect}
+                      validationField={s.validationField}
+                      customVenueName={s.customVenueName}
+                      setCustomVenueName={s.setCustomVenueName}
+                      customVenueAddress={s.customVenueAddress}
+                      setCustomVenueAddress={s.setCustomVenueAddress}
+                      provinceCode={s.provinceCode}
+                      setProvinceCode={s.setProvinceCode}
+                      wardCode={s.wardCode}
+                      setWardCode={s.setWardCode}
+                      provinces={s.provinces}
+                      wards={s.wards}
+                      setWards={s.setWards}
+                      startDate={s.startDate}
+                      setStartDate={s.setStartDate}
+                      endDate={s.endDate}
+                      setEndDate={s.setEndDate}
+                      isSavingConfig={s.isSavingConfig}
+                      handleSaveScheduleDetails={s.handleSaveScheduleDetails}
+                    />
+                  </div>
+                )}
 
-        {activeSection === 'registration' && <RegistrationTab tournament={s.tournament}
-          inviteLink={s.inviteLink}
-          mockNamesText={s.mockNamesText} setMockNamesText={s.setMockNamesText}
-          isSeedingMock={s.isSeedingMock} isClearingMock={s.isClearingMock}
-          wildcardEmailOrPhone={s.wildcardEmailOrPhone} setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
-          wildcardTeamName={s.wildcardTeamName} setWildcardTeamName={s.setWildcardTeamName}
-          wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone} setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
-          isAssigningWildcard={s.isAssigningWildcard}
-          divisions={s.divisions} selectedDivisionId={s.selectedDivisionId} setSelectedDivisionId={s.setSelectedDivisionId}
-          participants={s.participants}
-          activeParticipantActionId={s.activeParticipantActionId}
-          visibility={s.visibility}
-          setVisibility={s.setVisibility}
-          registrationMode={s.registrationMode}
-          setRegistrationMode={s.setRegistrationMode}
-          registrationStartDate={s.registrationStartDate} setRegistrationStartDate={s.setRegistrationStartDate}
-          registrationEndDate={s.registrationEndDate} setRegistrationEndDate={s.setRegistrationEndDate}
-          isSavingConfig={s.isSavingConfig}
-          publishFeeAmount={s.publishFeeAmount}
-          handlePublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
-          handleOpenLockModal={s.handleOpenLockModal}
-          handleSaveRegistrationSettings={s.handleSaveRegistrationSettings}
-          handleRegenerateInviteCode={s.handleRegenerateInviteCode}
-          handleApproveParticipant={s.handleApproveParticipant}
-          handleRejectParticipant={s.handleRejectParticipant}
-          handleKickParticipant={s.handleKickParticipant}
-          handleSeedMockData={s.handleSeedMockData} handleClearMockData={s.handleClearMockData}
-          handleAssignWildcard={s.handleAssignWildcard}
-          eloEnabled={s.eloEnabled} setEloEnabled={s.setEloEnabled}
-          eloMin={s.eloMin} setEloMin={s.setEloMin}
-          eloMax={s.eloMax} setEloMax={s.setEloMax}
-          eloMaxCombined={s.eloMaxCombined} setEloMaxCombined={s.setEloMaxCombined}
-          eloMaxGap={s.eloMaxGap} setEloMaxGap={s.setEloMaxGap}
-          seedingMethod={s.seedingMethod} setSeedingMethod={s.setSeedingMethod}
-          isAutoSeeding={s.isAutoSeeding}
-          handleAutoSeed={s.handleAutoSeed}
-          handleSwapSeeds={s.handleSwapSeeds}
-          handleReorderSeeds={s.handleReorderSeeds}
-          refetchDivisionData={s.refetchDivisionData}
-          onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success(translate('toast.copiedInvite')); }} />}
+                {/* Global Fullscreen Workspace Dialog */}
+                {s.courts.length > 0 && isCourtWorkspaceFullscreen && (
+                  <div className="fixed inset-0 z-[70] flex min-h-screen flex-col overflow-hidden bg-slate-100" role="dialog" aria-modal="true" aria-labelledby="fullscreen-workspace-title">
+                    <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm md:px-6">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{translate('workspaceFullscreen')}</p>
+                        <h2 id="fullscreen-workspace-title" className="truncate text-base font-bold text-slate-900 md:text-lg">{s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name || translate('venueNotSet')}</h2>
+                      </div>
+                      <Button type="button" variant="outline" onClick={() => setIsCourtWorkspaceFullscreen(false)} className="shrink-0 border-slate-300 bg-white text-slate-800">
+                        <X className="mr-2 h-4 w-4" aria-hidden="true" />
+                        {translate('exitWorkspace')}
+                      </Button>
+                    </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto py-4 md:py-6">
+                      <div className="w-full">
+                        <CourtWorkspace
+                          tournamentStatus={s.tournament?.status}
+                          bracket={s.bracket}
+                          venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
+                          courts={s.courts}
+                          divisions={s.divisions}
+                          matches={s.matches}
+                          defaultDivisionId="all"
+                          defaultDate={s.startDate}
+                          defaultOperatingStart={courtOperatingStart}
+                          defaultOperatingEnd={courtOperatingEnd}
+                          sportRuleKind={s.sportRuleKind}
+                          setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
+                          preview={s.schedulePlanPreview}
+                          isPreviewing={s.isPreviewingSchedulePlan}
+                          onPreview={s.handlePreviewSchedulePlan}
+                          onPreviewWithAi={s.handlePreviewScheduleWithAi}
+                          aiScheduleIntent={s.aiScheduleIntent}
+                          isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
+                          onOpenMatch={(matchId) => {
+                            const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
+                            if (fullMatch) s.handleOpenScheduling(fullMatch);
+                          }}
+                          onSaveScheduleDirect={s.handleSaveScheduleDirect}
+                          onRefetchData={s.refetchDivisionData}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-        {activeSection === 'bracket' && (
-          <div ref={bracketSectionRef} className="space-y-6">
-            <BracketTab key={s.selectedDivisionId || 'no-division'} tournament={s.tournament} bracket={s.bracket}
-              selectedDivisionId={s.selectedDivisionId} participants={s.participants}
-              isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
-              handleOpenScheduling={s.handleOpenScheduling} handleOpenRoundModal={s.handleOpenRoundModal}
-              refetchDivisionData={s.refetchDivisionData}
-              onBracketPersisted={(updatedMatches) => s.setBracket((current) => mergeBracketMatches(current, updatedMatches) ?? current)}
-              isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
-              maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
-              matchType={s.matchType} setMatchType={s.setMatchType}
-              availableMatchFormatOptions={s.availableMatchFormatOptions}
-              selectedCategory={s.selectedCategory}
-              sportRuleKind={s.sportRuleKind} setSportRuleKind={s.setSportRuleKind}
-              setsToWin={s.setsToWin} setSetsToWin={s.setSetsToWin}
-              pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
-              winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo}
-              maxDeucePoints={s.maxDeucePoints} setMaxDeucePoints={s.setMaxDeucePoints}
-              superTiebreakEnabled={s.superTiebreakEnabled} setSuperTiebreakEnabled={s.setSuperTiebreakEnabled}
-              superTiebreakSetIndex={s.superTiebreakSetIndex} setSuperTiebreakSetIndex={s.setSuperTiebreakSetIndex}
-              superTiebreakPoints={s.superTiebreakPoints} setSuperTiebreakPoints={s.setSuperTiebreakPoints}
-              tiebreakerMode={s.tiebreakerMode} setTiebreakerMode={s.setTiebreakerMode}
-              roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay}
-              bracketType={s.bracketTypeState}
-              setBracketTypeState={s.setBracketTypeState}
-              tournamentFormat={s.bracketType ?? undefined}
-              rrWinPoints={s.rrWinPoints} setRrWinPoints={s.setRrWinPoints}
-              rrLossPoints={s.rrLossPoints} setRrLossPoints={s.setRrLossPoints}
-              rrTiebreakerRule={s.rrTiebreakerRule} setRrTiebreakerRule={s.setRrTiebreakerRule}
-              numGroups={s.numGroups} setNumGroups={s.setNumGroups}
-              teamsPerGroup={s.teamsPerGroup} setTeamsPerGroup={s.setTeamsPerGroup}
-              teamsAdvancing={s.teamsAdvancing} setTeamsAdvancing={s.setTeamsAdvancing}
-              divisionRoundConfig={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig ?? null}
-              gskPlayoffType={s.gskPlayoffType} setGskPlayoffType={s.setGskPlayoffType}
-              gskSeedingType={s.gskSeedingType} setGskSeedingType={s.setGskSeedingType}
-              gskRoundsToPlay={s.gskRoundsToPlay} setGskRoundsToPlay={s.setGskRoundsToPlay}
-              handleAdvanceStandings={s.handleAdvanceStandings}
-              isAdvancingStandings={s.isAdvancingStandings}
-              isLiteMode={s.isLiteMode}
-              setIsLiteMode={s.setIsLiteMode}
-              courts={s.courts}
-              divisions={s.divisions}
-              venues={s.venues}
-              currentVenueId={s.tournament?.venueId || undefined}
-              defaultDate={s.startDate}
-              onRefetchData={s.refetchDivisionData}
-            />
-          </div>
-        )}
+                {activeSection === 'finance' && (
+                  <FinanceTab
+                    tournament={s.tournament}
+                    participants={s.participants}
+                    entryFee={s.entryFee}
+                    setEntryFee={s.setEntryFee}
+                    allowEntryFees={s.feesConfig?.allowEntryFees !== false}
+                    isSavingConfig={s.isSavingConfig}
+                    handleSaveFinanceConfig={s.handleSaveFinanceConfig}
+                    handlePayPlatformFee={s.handlePayPlatformFee}
+                    isPayingPlatformFee={s.isPayingPlatformFee}
+                    handleRequestPayout={s.handleRequestPayout}
+                  />
+                )}
 
-        {/* Tab Lịch thi đấu & Xếp sân độc lập */}
-        {activeSection === 'court_schedule' && (
-          <div className="space-y-6">
-            {s.courts.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                <MapPin className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-                <h4 className="text-base font-bold text-slate-800">Chưa có sân thi đấu</h4>
-                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                  Vui lòng qua tab &quot;Địa điểm & Sân&quot; để thiết lập ít nhất 1 sân thi đấu trước khi xếp lịch.
-                </p>
-                <Button
-                  type="button"
-                  onClick={() => handleManageNavigation('schedule')}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
-                >
-                  Thiết lập sân bãi ngay
-                </Button>
+                {activeSection === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
+
+                {activeSection === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
+
+                {activeSection === 'sponsors' && (
+                  <div className="animate-in fade-in duration-200">
+                    <SponsorSettingsPanel tournamentId={id} />
+                  </div>
+                )}
               </div>
-            ) : (
-              <CourtWorkspace
-                tournamentStatus={s.tournament?.status}
-                venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
-                courts={s.courts}
-                divisions={s.divisions}
-                matches={s.matches}
-                defaultDivisionId="all"
-                defaultDate={s.startDate}
-                defaultOperatingStart={courtOperatingStart}
-                defaultOperatingEnd={courtOperatingEnd}
-                sportRuleKind={s.sportRuleKind}
-                setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
-                preview={s.schedulePlanPreview}
-                isPreviewing={s.isPreviewingSchedulePlan}
-                onPreview={s.handlePreviewSchedulePlan}
-                onPreviewWithAi={s.handlePreviewScheduleWithAi}
-                aiScheduleIntent={s.aiScheduleIntent}
-                isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
-                onOpenMatch={(matchId) => {
-                  const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
-                  if (fullMatch) s.handleOpenScheduling(fullMatch);
-                }}
-                onSaveScheduleDirect={s.handleSaveScheduleDirect}
-                onRefetchData={s.refetchDivisionData}
-              />
             )}
           </div>
-        )}
-
-        {/* Global Fullscreen Workspace Dialog */}
-        {s.courts.length > 0 && isCourtWorkspaceFullscreen && (
-          <div className="fixed inset-0 z-[70] flex min-h-screen flex-col overflow-hidden bg-slate-100" role="dialog" aria-modal="true" aria-labelledby="fullscreen-workspace-title">
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm md:px-6">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">{translate('workspaceFullscreen')}</p>
-                <h2 id="fullscreen-workspace-title" className="truncate text-base font-bold text-slate-900 md:text-lg">{s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name || translate('venueNotSet')}</h2>
-              </div>
-              <Button type="button" variant="outline" onClick={() => setIsCourtWorkspaceFullscreen(false)} className="shrink-0 border-slate-300 bg-white text-slate-800">
-                <X className="mr-2 h-4 w-4" aria-hidden="true" />
-                {translate('exitWorkspace')}
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto py-4 md:py-6">
-              <div className="w-full">
-                <CourtWorkspace
-                  tournamentStatus={s.tournament?.status}
-                  bracket={s.bracket}
-                  venueName={s.venues.find((venue) => venue.id === s.tournament?.venueId)?.name}
-                  courts={s.courts}
-                  divisions={s.divisions}
-                  matches={s.matches}
-                  defaultDivisionId="all"
-                  defaultDate={s.startDate}
-                  defaultOperatingStart={courtOperatingStart}
-                  defaultOperatingEnd={courtOperatingEnd}
-                  sportRuleKind={s.sportRuleKind}
-                  setsToWin={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig?.max_sets ?? s.setsToWin}
-                  preview={s.schedulePlanPreview}
-                  isPreviewing={s.isPreviewingSchedulePlan}
-                  onPreview={s.handlePreviewSchedulePlan}
-                  onPreviewWithAi={s.handlePreviewScheduleWithAi}
-                  aiScheduleIntent={s.aiScheduleIntent}
-                  isPlanningScheduleWithAi={s.isPlanningScheduleWithAi}
-                  onOpenMatch={(matchId) => {
-                    const fullMatch = s.matches.find((candidate: (typeof s.matches)[number]) => candidate.id === matchId);
-                    if (fullMatch) s.handleOpenScheduling(fullMatch);
-                  }}
-                  onSaveScheduleDirect={s.handleSaveScheduleDirect}
-                  onRefetchData={s.refetchDivisionData}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSection === 'finance' && <FinanceTab tournament={s.tournament} participants={s.participants}
-          entryFee={s.entryFee} setEntryFee={s.setEntryFee}
-          allowEntryFees={s.feesConfig?.allowEntryFees !== false}
-          isSavingConfig={s.isSavingConfig} handleSaveFinanceConfig={s.handleSaveFinanceConfig}
-          handlePayPlatformFee={s.handlePayPlatformFee} isPayingPlatformFee={s.isPayingPlatformFee}
-          handleRequestPayout={s.handleRequestPayout} />}
-
-        {activeSection === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
-
-        {activeSection === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
-
-        {activeSection === 'sponsors' && (
-          <div className="animate-in fade-in duration-200">
-            <SponsorSettingsPanel tournamentId={id} />
-          </div>
-        )}
-          </div>
-        )}
-        </div>
 
         {/* Mobile Contact & Registration Management Container */}
         <div className="block lg:hidden space-y-4">

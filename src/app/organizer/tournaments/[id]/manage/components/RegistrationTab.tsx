@@ -30,7 +30,6 @@ import {
   Settings,
   SlidersHorizontal,
   MoreVertical,
-  Filter,
   Clock,
   AlertCircle,
   XCircle,
@@ -617,86 +616,12 @@ export function RegistrationTab({
           )}
         </div>
 
-        <div id="manage-participants-section" className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 max-w-full overflow-hidden transition-all">
-          {/* Compact Control Bar: Filter Dropdown on Left, Search & 3-dots Actions on Right */}
+        <div id="manage-participants-section" className="space-y-4 max-w-full overflow-hidden transition-all">
+          {/* Control Bar: 3-dots & Filter Dropdown on Left, Search on Right */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
-            {/* Left: Heading + Vertical Dropdown Filter (Facebook-style) */}
-            <div className="flex items-center gap-3">
-              <h3 className="font-bold text-slate-900 text-base sm:text-lg shrink-0">
-                {registrationTranslate('approvalHeading')}
-              </h3>
-
-              {(() => {
-                const filterOptions = [
-                  { value: 'ALL', label: registrationTranslate('filterAll'), count: participantSummary.total },
-                  { value: 'PENDING', label: registrationTranslate('filterPending'), count: participantSummary.pending },
-                  { value: 'COMPLETE', label: registrationTranslate('filterApproved'), count: participantSummary.approved },
-                  { value: 'UNPAID', label: registrationTranslate('unpaidStatus'), count: participantSummary.unpaid },
-                  { value: 'REJECTED', label: registrationTranslate('filterRejected'), count: participantSummary.rejected },
-                ] as const;
-
-                const currentOption = filterOptions.find((opt) => opt.value === filter) || filterOptions[0];
-
-                return (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex h-9 items-center gap-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-colors cursor-pointer"
-                      >
-                        <Filter className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{currentOption.label}</span>
-                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                          {currentOption.count}
-                        </span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-52 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
-                      {filterOptions.map((opt) => (
-                        <DropdownMenuItem
-                          key={opt.value}
-                          onClick={() => setFilter(opt.value as typeof filter)}
-                          className={cn(
-                            'flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors',
-                            filter === opt.value
-                              ? 'bg-blue-50 text-blue-700 font-bold'
-                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            {filter === opt.value && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                            <span className={filter === opt.value ? 'font-bold' : 'font-medium'}>{opt.label}</span>
-                          </span>
-                          <span
-                            className={cn(
-                              'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
-                              filter === opt.value ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                            )}
-                          >
-                            {opt.count}
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              })()}
-            </div>
-
-            {/* Right: Search Input + 3-Dots Action Menu */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="w-full sm:w-64 md:w-72">
-                <Input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder={registrationTranslate('searchTeamMembers')}
-                  icon={<Search className="h-4 w-4" />}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              {/* 3-dots Dropdown Menu */}
+            {/* Left: 3-dots Action Menu + Filter Options */}
+            <div className="flex items-center gap-2">
+              {/* 3-dots Dropdown Menu (Sát trái) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -707,7 +632,7 @@ export function RegistrationTab({
                     <MoreVertical className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
+                <DropdownMenuContent align="start" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
                   <DropdownMenuItem
                     disabled={registrationLocked}
                     onClick={() => setIsWildcardModalOpen(true)}
@@ -750,18 +675,85 @@ export function RegistrationTab({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {(() => {
+                const filterOptions = [
+                  { value: 'ALL', label: registrationTranslate('filterAll'), count: participantSummary.total },
+                  { value: 'PENDING', label: registrationTranslate('filterPending'), count: participantSummary.pending },
+                  { value: 'COMPLETE', label: registrationTranslate('filterApproved'), count: participantSummary.approved },
+                  { value: 'UNPAID', label: registrationTranslate('unpaidStatus'), count: participantSummary.unpaid },
+                  { value: 'REJECTED', label: registrationTranslate('filterRejected'), count: participantSummary.rejected },
+                ] as const;
+
+                const currentOption = filterOptions.find((opt) => opt.value === filter) || filterOptions[0];
+
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-9 items-center gap-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-colors cursor-pointer"
+                      >
+                        <span>{currentOption.label}</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                          {currentOption.count}
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
+                      {filterOptions.map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.value}
+                          onClick={() => setFilter(opt.value as typeof filter)}
+                          className={cn(
+                            'flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors',
+                            filter === opt.value
+                              ? 'bg-blue-50 text-blue-700 font-bold'
+                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            {filter === opt.value && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            <span className={filter === opt.value ? 'font-bold' : 'font-medium'}>{opt.label}</span>
+                          </span>
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                              filter === opt.value ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                            )}
+                          >
+                            {opt.count}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })()}
+            </div>
+
+            {/* Right: Search Input (Sát phải) */}
+            <div className="w-full sm:w-64 md:w-72">
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={registrationTranslate('searchTeamMembers')}
+                icon={<Search className="h-4 w-4" />}
+                className="h-9 text-xs"
+              />
             </div>
           </div>
 
           <div className="w-full max-w-full overflow-x-auto">
             <table className="w-full min-w-[680px] divide-y divide-slate-100">
               <thead>
-                <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  <th className="min-w-[160px] pb-3 pr-4">{registrationTranslate('teamPairHeader')}</th>
-                  <th className="min-w-[180px] pb-3 pr-4">{registrationTranslate('membersHeader')}</th>
-                  <th className="min-w-[100px] pb-3 pr-4">{registrationTranslate('statusHeader')}</th>
-                  <th className="min-w-[130px] pb-3 text-right">
-                    <div className="inline-flex items-center justify-end gap-1.5">
+                <tr className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700 border-b border-slate-200">
+                  <th className="min-w-[160px] pb-3 pr-4 text-center">{registrationTranslate('teamPairHeader')}</th>
+                  <th className="min-w-[180px] pb-3 pr-4 text-center">{registrationTranslate('membersHeader')}</th>
+                  <th className="min-w-[100px] pb-3 pr-4 text-center">{registrationTranslate('statusHeader')}</th>
+                  <th className="min-w-[130px] pb-3 text-center">
+                    <div className="inline-flex items-center justify-center gap-1.5">
                       <span>{registrationTranslate('paymentHeader')}</span>
                       <button
                         type="button"
@@ -891,7 +883,7 @@ export function RegistrationTab({
                             })}
                           </div>
                         </td>
-                        <td className="py-4 pr-4 align-top">
+                        <td className="py-4 pr-4 align-top text-center">
                           {(() => {
                             const statusLabel = getParticipantStatusLabel(participant.teamStatus, participantStatusLabels);
                             const status = participant.teamStatus;
@@ -945,8 +937,8 @@ export function RegistrationTab({
                             );
                           })()}
                         </td>
-                        <td className="py-4 text-right align-top">
-                          <div className="inline-flex items-center justify-end">
+                        <td className="py-4 align-top text-center">
+                          <div className="inline-flex items-center justify-center">
                             {participant.isPaid ? (
                               <span
                                 className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs"

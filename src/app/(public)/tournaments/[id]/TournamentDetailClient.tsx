@@ -7,7 +7,7 @@ import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { communitiesApi, type Community } from '@/features/communities/api';
 import type { Division, MyRegistrationResponse, Tournament, TournamentResult, TournamentSponsor } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
-import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
+import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Settings } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
@@ -870,7 +870,7 @@ const commonTranslate = useTranslations('Common');
   }
   const registerHref = `/tournaments/${activeTournament.id}/register${registerParams.toString() ? `?${registerParams.toString()}` : ''}`;
 
-  const isClubLite = isClubLiteTournament(activeTournament) || (Boolean(activeTournament.isLite) && Boolean(activeTournament.communityId));
+  const isClubLite = isClubSuperLiteTournament(activeTournament);
 
   const formatDateRange = (start?: string, end?: string) => {
     if (!start && !end) return translate('notUpdated');
@@ -1263,7 +1263,7 @@ const commonTranslate = useTranslations('Common');
                   >
                     <span>{registrationButtonLabel}</span>
                   </Button>
-                ) : isClubLiteTournament(activeTournament) ? (
+                ) : isClubLite ? (
                   activeTournament.inviteCode ? (
                     <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
                       <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm">
@@ -1315,7 +1315,9 @@ const commonTranslate = useTranslations('Common');
             {isOwner && (
               <Button
                 type="button"
-                onClick={() => router.push(`/organizer/tournaments/${activeTournament.id}/manage`)}
+                onClick={() => router.push(isClubLite
+                  ? `/lite/tournaments/${activeTournament.id}/manage`
+                  : `/organizer/tournaments/${activeTournament.id}/manage`)}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer flex items-center justify-center gap-2"
               >
                 <Settings className="w-4 h-4 text-slate-300" />

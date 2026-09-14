@@ -16,7 +16,7 @@ import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { getErrorMessage, getRetryAfterSeconds, isHttpStatusError } from '@/utils/error';
 import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { getUniqueParticipantMembers } from '@/utils/participant-display';
-import { isLiteTournament, isClubLiteTournament } from '@/features/tournaments/lite-qr';
+import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import PublicCourtScheduleBoard, { type PublicCourtItem } from './PublicCourtScheduleBoard';
 import { MatchCardSkeleton } from '@/components/skeletons/MatchCardSkeleton';
 
@@ -192,7 +192,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     }
   );
   
-  const isLite = isLiteTournament(tournament) || isClubLiteTournament(tournament);
+  const isLite = isLiteTournament(tournament);
   
   // States for filtering & View Mode Switcher
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');

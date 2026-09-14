@@ -1,18 +1,23 @@
 const LITE_JOIN_PATH = '/lite/tournaments/join/';
 
-/**
- * Đúng chuẩn phân biệt LOẠI GIẢI: giải lite (nhanh) vs giải nâng cao.
- * Dùng field `isLite` (top-level hoặc trong tournamentConfig) — KHÔNG dùng `mode` (scoring).
- * Fallback an toàn cho giải lite cũ (mode='LITE' + hideAdvancedSettings=true) trước migration.
- */
-export function isLiteTournament(t: {
+type TournamentConfigDiscriminator = {
   isLite?: boolean;
-  tournamentConfig?: {
-    isLite?: boolean;
-    mode?: 'LITE' | 'ADVANCED' | 'STRICT' | string;
-    hideAdvancedSettings?: boolean;
-  } | null;
-} | null | undefined): boolean {
+  mode?: 'LITE' | 'ADVANCED' | 'STRICT' | string;
+  hideAdvancedSettings?: boolean;
+};
+
+type TournamentProductShape = {
+  communityId?: string | null;
+  isLite?: boolean;
+  tournamentConfig?: TournamentConfigDiscriminator | null;
+};
+
+/**
+ * Nhận diện họ sản phẩm Lite/Quick, không phải riêng giao diện Siêu Lite.
+ * `mode` là cấu hình tính điểm nên không được dùng một mình để nhận diện sản phẩm.
+ * `isLite` là cờ sản phẩm chung mà backend dùng cho cả Siêu Lite và Lite/Quick.
+ */
+export function isLiteTournament(t: TournamentProductShape | null | undefined): boolean {
   if (!t) return false;
   const cfg = t.tournamentConfig;
   if (t.isLite === true) return true;
@@ -25,23 +30,40 @@ export function isLiteTournament(t: {
 }
 
 /**
- * Club Lite is the intentionally short, one-tap registration flow.
+ * Nhận diện đúng sản phẩm Siêu Lite.
+ *
+ * Siêu Lite phải có cờ Lite và marker `hideAdvancedSettings=true`. Marker này
+ * là ranh giới backend dùng để nói rằng giải được mở bằng workspace tối giản.
+ * Vì vậy Lite/Quick có division, ELO hoặc gender restriction vẫn là Lite product
+ * nhưng không phải Siêu Lite.
+ */
+export function isSuperLiteTournament(t: TournamentProductShape | null | undefined): boolean {
+  if (!t || t.tournamentConfig?.hideAdvancedSettings !== true) return false;
+
+  const cfg = t.tournamentConfig;
+  const hasExplicitLiteFlag = t.isLite === true || cfg?.isLite === true;
+  const hasLegacyLiteMarker = cfg?.mode === 'LITE';
+  return hasExplicitLiteFlag || hasLegacyLiteMarker;
+}
+
+/**
+ * Club Super Lite is the intentionally short, one-tap registration flow.
  *
  * Public Quick Create still uses the Lite creation API for backwards
  * compatibility, but it must use the normal registration workspace (including
- * partner/roster registration for doubles). Community ownership is the
- * durable discriminator between those two products.
+ * partner/roster registration for doubles). Community ownership plus the
+ * Super Lite marker are the durable discriminators for the compact flow.
  */
-export function isClubLiteTournament(t: {
-  communityId?: string | null;
-  isLite?: boolean;
-  tournamentConfig?: {
-    isLite?: boolean;
-    mode?: 'LITE' | 'ADVANCED' | 'STRICT' | string;
-    hideAdvancedSettings?: boolean;
-  } | null;
-} | null | undefined): boolean {
-  return isLiteTournament(t) && Boolean(t?.communityId);
+export function isClubSuperLiteTournament(t: TournamentProductShape | null | undefined): boolean {
+  return isSuperLiteTournament(t) && Boolean(t?.communityId);
+}
+
+/**
+ * Backward-compatible name for existing route call sites. New code should use
+ * `isClubSuperLiteTournament` when the compact Club workspace is intended.
+ */
+export function isClubLiteTournament(t: TournamentProductShape | null | undefined): boolean {
+  return isClubSuperLiteTournament(t);
 }
 
 export function buildLiteJoinUrl(inviteCode: string, origin: string): string {

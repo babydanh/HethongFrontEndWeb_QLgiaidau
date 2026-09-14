@@ -226,10 +226,10 @@ export function useManageState(id: string) {
   const manageDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'restored' | 'error'>('idle');
 
-  // Product discriminator is independent from the scoring mode. A standard
-  // quick/advanced tournament may use FREE scoring without becoming Super Lite.
-  const isSuperLiteTournament = isLiteTournament(tournament);
-  const tournamentProductMode = isSuperLiteTournament ? 'LITE' : 'STRICT';
+  // Product identity and scoring are independent. Lite/Quick can use the
+  // standard organizer workspace while keeping the Lite scoring preset.
+  const isLiteProduct = isLiteTournament(tournament);
+  const tournamentScoringMode = isLiteMode ? 'LITE' : 'STRICT';
 
   const clearManageDraft = useCallback(() => {
     if (typeof window !== 'undefined') window.localStorage.removeItem(manageDraftKey);
@@ -877,8 +877,8 @@ export function useManageState(id: string) {
         tournamentConfig: {
           ...tournament?.tournamentConfig,
           hideFeaturedCardText,
-          mode: tournamentProductMode,
-          isLite: isSuperLiteTournament,
+          mode: tournamentScoringMode,
+          isLite: isLiteProduct,
         },
       });
       toast.success('Lưu thông tin giải đấu thành công!');
@@ -1101,8 +1101,8 @@ export function useManageState(id: string) {
         sportRules: nextSportRules,
         tournamentConfig: {
           ...tournament.tournamentConfig,
-          mode: tournamentProductMode,
-          isLite: isSuperLiteTournament,
+          mode: tournamentScoringMode,
+          isLite: isLiteProduct,
         }
       });
       
@@ -1113,8 +1113,8 @@ export function useManageState(id: string) {
         sportRules: nextSportRules,
         tournamentConfig: {
           ...(current.tournamentConfig || {}),
-          mode: tournamentProductMode,
-          isLite: isSuperLiteTournament,
+          mode: tournamentScoringMode,
+          isLite: isLiteProduct,
         }
       } : current);
       return true;
@@ -2191,8 +2191,8 @@ export function useManageState(id: string) {
             tournamentConfig: {
               ...tournament?.tournamentConfig,
               hideFeaturedCardText,
-              mode: tournamentProductMode,
-              isLite: isSuperLiteTournament,
+              mode: tournamentScoringMode,
+              isLite: isLiteProduct,
             },
           });
         }
@@ -2239,7 +2239,7 @@ export function useManageState(id: string) {
       // Keep the scoring mode from the rules blob when it is explicit. Only
       // use the product discriminator as a fallback; scoringMode=FREE alone
       // must never turn a Quick/Advanced tournament into Super Lite.
-      mode: (hasExplicitScoringMode ? resolvedRules.mode : tournamentProductMode) as 'LITE' | 'STRICT',
+      mode: (hasExplicitScoringMode ? resolvedRules.mode : tournamentScoringMode) as 'LITE' | 'STRICT',
     };
 
     const normalizedKind = normalizeSportRuleKindForCategory(resolvedWithTournamentMode.kind, selectedCategory);

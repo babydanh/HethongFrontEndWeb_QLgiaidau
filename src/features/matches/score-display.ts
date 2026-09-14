@@ -3,7 +3,7 @@ import {
   resolveSportRuleView,
 } from "@/features/tournaments/sport-rules/normalize";
 import { getSportRulePresentation } from "@/features/tournaments/sport-rules/presentation";
-import { isLiteTournament } from "@/features/tournaments/lite-qr";
+import { isSuperLiteTournament } from "@/features/tournaments/lite-qr";
 import type { ResolvedSportRuleView } from "@/features/tournaments/sport-rules/normalize";
 import type { Match, MatchScore } from "@/types/match";
 import type { SportRuleKind, SportRulesEnvelope } from "@/types/tournament";
@@ -209,7 +209,7 @@ export function resolveMatchSportRules(
       : match.tournament?.sportRules,
     inferredFromTournament ?? fallbackKind,
   );
-  const tournamentIsSuperLite = isLiteTournament(match.tournament);
+  const tournamentIsSuperLite = isSuperLiteTournament(match.tournament);
   const scoringConfig = asRecord(mergedSource.scoring);
   const hasExplicitScoringMode = [
     mergedSource.mode,

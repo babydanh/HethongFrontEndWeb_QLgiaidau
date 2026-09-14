@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Settings, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
-import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
+import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 import { getTournamentStatusClassName, normalizeTournamentStatus } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
@@ -115,7 +115,7 @@ function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tour
   const statusLabelKey = normalizedStatus === 'PENDING_APPROVAL' ? 'statusPendingApproval' : normalizedStatus === 'PENDING_DELETE' ? 'statusPendingDelete' : normalizedStatus === 'REGISTRATION_CLOSED' ? 'statusRegistrationClosed' : normalizedStatus === 'CANCELLED' ? 'statusCancelled' : normalizedStatus === 'DRAFT' ? 'statusDraftPlain' : normalizedStatus === 'UPCOMING' ? 'upcoming' : normalizedStatus === 'REGISTRATION_OPEN' ? 'registrationOpen' : normalizedStatus === 'IN_PROGRESS' || normalizedStatus === 'ONGOING' ? 'inProgress' : normalizedStatus === 'COMPLETED' ? 'completed' : 'statusDraftPlain';
   const statusLabel = translate(statusLabelKey);
   const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
-  const manageHref = isClubLiteTournament(tournament)
+  const manageHref = isClubSuperLiteTournament(tournament)
     ? `/lite/tournaments/${tournament.id}/manage`
     : `/organizer/tournaments/${tournament.id}/manage`;
   const sport = tournament.category?.name;

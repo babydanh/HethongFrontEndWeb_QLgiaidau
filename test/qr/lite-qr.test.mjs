@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
   buildLiteJoinUrl,
   isClubLiteTournament,
+  isClubSuperLiteTournament,
   isLiteTournament,
+  isSuperLiteTournament,
   isScannableJoinUrl,
   isScannableLiteJoinUrl,
 } from '../../src/features/tournaments/lite-qr.ts';
@@ -47,9 +49,40 @@ test('keeps explicit and legacy Lite product detection stable', () => {
     isLiteTournament({ tournamentConfig: { mode: 'LITE', hideAdvancedSettings: true } }),
     true,
   );
-  assert.equal(
-    isClubLiteTournament({ isLite: true, communityId: 'club-1' }),
-    true,
-  );
-  assert.equal(isClubLiteTournament({ isLite: true }), false);
+  assert.equal(isSuperLiteTournament({ isLite: true }), false);
+  assert.equal(isClubLiteTournament({ isLite: true, communityId: 'club-1' }), false);
+  assert.equal(isClubSuperLiteTournament({ isLite: true, communityId: 'club-1' }), false);
+});
+
+test('separates Super Lite from configured Lite/Quick', () => {
+  const superLite = {
+    isLite: true,
+    communityId: 'club-1',
+    tournamentConfig: { isLite: true, mode: 'LITE', hideAdvancedSettings: true },
+  };
+  const configuredLite = {
+    isLite: true,
+    communityId: 'club-1',
+    tournamentConfig: { isLite: true, mode: 'LITE', hideAdvancedSettings: false },
+  };
+
+  assert.equal(isLiteTournament(superLite), true);
+  assert.equal(isSuperLiteTournament(superLite), true);
+  assert.equal(isClubSuperLiteTournament(superLite), true);
+
+  assert.equal(isLiteTournament(configuredLite), true);
+  assert.equal(isSuperLiteTournament(configuredLite), false);
+  assert.equal(isClubSuperLiteTournament(configuredLite), false);
+});
+
+test('keeps advanced product separate even with Lite scoring', () => {
+  const advanced = {
+    communityId: 'club-1',
+    tournamentConfig: { isLite: false, mode: 'LITE', scoringMode: 'FREE' },
+    sportRules: { mode: 'LITE' },
+  };
+
+  assert.equal(isLiteTournament(advanced), false);
+  assert.equal(isSuperLiteTournament(advanced), false);
+  assert.equal(isClubSuperLiteTournament(advanced), false);
 });

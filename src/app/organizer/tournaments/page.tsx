@@ -10,7 +10,7 @@ import {
   OrganizerTournamentDivisionPreview,
   OrganizerTournamentListItem,
 } from "@/features/tournaments/api";
-import { isClubLiteTournament } from "@/features/tournaments/lite-qr";
+import { isClubSuperLiteTournament } from "@/features/tournaments/lite-qr";
 import {
   Calendar,
   ChevronLeft,
@@ -523,8 +523,8 @@ export default function MyTournamentsPage() {
                 ? parent.id
                 : firstDivision?.id || parent.id;
               const isClubLite =
-                isClubLiteTournament(parent) ||
-                isClubLiteTournament(firstDivision);
+                isClubSuperLiteTournament(parent) ||
+                isClubSuperLiteTournament(firstDivision);
               const publicHref = `/tournaments/${managementTournamentId}`;
               const manageHref = isClubLite
                 ? `/lite/tournaments/${managementTournamentId}/manage`

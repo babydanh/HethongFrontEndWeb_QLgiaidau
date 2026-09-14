@@ -3,36 +3,25 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  Trophy,
-  Users,
-  Settings,
-  Sparkles,
-  Minus,
   Plus,
-  Zap,
-  Shield,
   Loader2,
-  CheckCircle2,
-  HelpCircle,
-  Hash,
-  Crown,
   Shuffle,
-  GitBranch,
+  RefreshCw,
+  Sparkles,
+  GripVertical,
+  X,
+  UserCheck,
 } from 'lucide-react';
-import { Modal, ModalContent, ModalHeader, ModalTitle, ModalFooter } from '@/components/ui/Modal';
+import { Modal, ModalContent } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import type { Division } from '@/features/tournaments/api';
-import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
-import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
-import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
-import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
-interface ParticipantItem {
+export interface ParticipantItem {
   id: string;
   teamName?: string;
   registeredBy?: { fullName?: string | null } | null;
+  user?: { fullName?: string | null } | null;
+  partnerUser?: { fullName?: string | null } | null;
   eloPoints?: number;
   seed?: number | null;
   teamStatus?: string;
@@ -46,129 +35,31 @@ export interface BracketSetupModalProps {
   bracketType?: string | null;
   selectedDivision: Division | null;
   participants: unknown[];
-  sportRuleKind: SportRuleKind;
-  setSportRuleKind: (val: SportRuleKind) => void;
-  isLiteMode: boolean;
-  setIsLiteMode: (val: boolean) => void;
-  setsToWin: number;
-  setSetsToWin: (val: number) => void;
-  pointsPerSet: number;
-  setPointsPerSet: (val: number) => void;
-  winByTwo: boolean;
-  setWinByTwo: (val: boolean) => void;
-  maxDeucePoints: number;
-  setMaxDeucePoints: (val: number) => void;
-  superTiebreakEnabled: boolean;
-  setSuperTiebreakEnabled?: (val: boolean) => void;
-  superTiebreakSetIndex?: number | null;
-  setSuperTiebreakSetIndex?: (val: number) => void;
-  superTiebreakPoints: number;
-  setSuperTiebreakPoints: (val: number) => void;
-  // Round Robin
-  roundsToPlay: number;
-  setRoundsToPlay?: (val: number) => void;
-  rrWinPoints: number;
-  setRrWinPoints?: (val: number) => void;
-  rrLossPoints: number;
-  setRrLossPoints?: (val: number) => void;
-  rrTiebreaker: string;
-  setRrTiebreaker?: (val: string) => void;
-  tiebreakerMode: 'split' | 'playoff';
-  setTiebreakerMode?: (val: 'split' | 'playoff') => void;
-  // GSK
   numGroups: number;
   setNumGroups?: React.Dispatch<React.SetStateAction<number>>;
   teamsPerGroup: number;
   setTeamsPerGroup?: React.Dispatch<React.SetStateAction<number>>;
   teamsAdvancing: number;
   setTeamsAdvancing?: React.Dispatch<React.SetStateAction<number>>;
-  gskPlayoffType?: string;
-  setGskPlayoffType?: React.Dispatch<React.SetStateAction<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>>;
   gskSeedingType?: string;
   setGskSeedingType?: React.Dispatch<React.SetStateAction<'SEEDED' | 'RANDOM'>>;
-  gskRoundsToPlay: number;
-  setGskRoundsToPlay?: React.Dispatch<React.SetStateAction<number>>;
-  // Submission
   isSubmitting: boolean;
   onConfirm: () => Promise<void> | void;
 }
 
-// Color accents for groups A, B, C, D...
-const GROUP_COLORS = [
-  { header: 'bg-blue-600 text-white', border: 'border-blue-200', bg: 'bg-blue-50/40', badge: 'bg-blue-100 text-blue-700' },
-  { header: 'bg-emerald-600 text-white', border: 'border-emerald-200', bg: 'bg-emerald-50/40', badge: 'bg-emerald-100 text-emerald-700' },
-  { header: 'bg-purple-600 text-white', border: 'border-purple-200', bg: 'bg-purple-50/40', badge: 'bg-purple-100 text-purple-700' },
-  { header: 'bg-amber-600 text-white', border: 'border-amber-200', bg: 'bg-amber-50/40', badge: 'bg-amber-100 text-amber-700' },
-  { header: 'bg-rose-600 text-white', border: 'border-rose-200', bg: 'bg-rose-50/40', badge: 'bg-rose-100 text-rose-700' },
-  { header: 'bg-indigo-600 text-white', border: 'border-indigo-200', bg: 'bg-indigo-50/40', badge: 'bg-indigo-100 text-indigo-700' },
-  { header: 'bg-teal-600 text-white', border: 'border-teal-200', bg: 'bg-teal-50/40', badge: 'bg-teal-100 text-teal-700' },
-  { header: 'bg-orange-600 text-white', border: 'border-orange-200', bg: 'bg-orange-50/40', badge: 'bg-orange-100 text-orange-700' },
-];
-
 export function BracketSetupModal({
   open,
   onOpenChange,
-  tournamentFormat,
-  bracketType,
   selectedDivision,
   participants,
-  sportRuleKind,
-  setSportRuleKind,
-  isLiteMode,
-  setIsLiteMode,
-  setsToWin,
-  setSetsToWin,
-  pointsPerSet,
-  setPointsPerSet,
-  winByTwo,
-  setWinByTwo,
-  maxDeucePoints,
-  setMaxDeucePoints,
-  superTiebreakEnabled,
-  setSuperTiebreakEnabled,
-  superTiebreakSetIndex,
-  setSuperTiebreakSetIndex,
-  superTiebreakPoints,
-  setSuperTiebreakPoints,
-  roundsToPlay,
-  setRoundsToPlay,
-  rrWinPoints,
-  setRrWinPoints,
-  rrLossPoints,
-  setRrLossPoints,
-  rrTiebreaker,
-  setRrTiebreaker,
-  tiebreakerMode,
-  setTiebreakerMode,
-  numGroups,
+  numGroups = 4,
   setNumGroups,
-  teamsPerGroup,
+  teamsPerGroup: _teamsPerGroup = 4,
   setTeamsPerGroup,
-  teamsAdvancing,
-  setTeamsAdvancing,
-  gskPlayoffType = 'SINGLE_ELIMINATION',
-  setGskPlayoffType,
-  gskSeedingType = 'SEEDED',
-  setGskSeedingType,
-  gskRoundsToPlay,
-  setGskRoundsToPlay,
   isSubmitting,
   onConfirm,
 }: BracketSetupModalProps) {
   const translate = useTranslations('TournamentDetail');
-  const presentation = getSportRulePresentation(sportRuleKind, translate);
-  const presets = getSportRulePresets(sportRuleKind, translate);
-
-  const isGroupStageKnockout =
-    tournamentFormat?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
-    bracketType?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
-    selectedDivision?.bracketType === 'GROUP_STAGE_KNOCKOUT';
-
-  const isRoundRobin =
-    !isGroupStageKnockout &&
-    (tournamentFormat?.toUpperCase() === 'ROUND_ROBIN' ||
-      bracketType?.toUpperCase() === 'ROUND_ROBIN' ||
-      selectedDivision?.bracketType === 'ROUND_ROBIN');
 
   // Filter valid participants
   const eligibleParticipants = useMemo(() => {
@@ -177,54 +68,87 @@ export function BracketSetupModal({
     );
   }, [participants]);
 
-  const participantCount = eligibleParticipants.length;
+  // Track team assignment: Map groupIndex (0, 1, 2...) -> Array of ParticipantItem
+  const [groupAssignments, setGroupAssignments] = useState<Record<number, ParticipantItem[]>>({});
+  // Track unassigned teams
+  const [unassignedTeams, setUnassignedTeams] = useState<ParticipantItem[]>([]);
+  // Dragged participant ID
+  const [draggedParticipantId, setDraggedParticipantId] = useState<string | null>(null);
 
-  // Auto-tune default setting based on participantCount on first open or count change
+  // Initialize pool assignment when modal opens
   useEffect(() => {
     if (!open) return;
-    if (isGroupStageKnockout && participantCount >= 4) {
-      if (participantCount <= 8) {
-        setNumGroups?.(2);
-        setTeamsPerGroup?.(Math.ceil(participantCount / 2));
-        setTeamsAdvancing?.(1);
-      } else if (participantCount <= 16) {
-        setNumGroups?.(2);
-        setTeamsPerGroup?.(Math.ceil(participantCount / 2));
-        setTeamsAdvancing?.(2);
-      } else if (participantCount <= 32) {
-        setNumGroups?.(4);
-        setTeamsPerGroup?.(Math.ceil(participantCount / 4));
-        setTeamsAdvancing?.(2);
-      } else {
-        setNumGroups?.(8);
-        setTeamsPerGroup?.(Math.ceil(participantCount / 8));
-        setTeamsAdvancing?.(2);
-      }
-    }
-  }, [open, participantCount, isGroupStageKnockout, setNumGroups, setTeamsPerGroup, setTeamsAdvancing]);
 
-  // Derived advancing count and display label
-  const totalAdvancing = numGroups * teamsAdvancing;
-  const getKnockoutRoundTitle = (advancingCount: number) => {
-    if (advancingCount <= 2) return translate('stageFinal');
-    if (advancingCount <= 4) return translate('stageSemifinal');
-    if (advancingCount <= 8) return translate('stageQuarterfinal');
-    return translate('roundOf', { round: advancingCount });
+    setUnassignedTeams([...eligibleParticipants]);
+    const initialGroups: Record<number, ParticipantItem[]> = {};
+    for (let i = 0; i < numGroups; i++) {
+      initialGroups[i] = [];
+    }
+    setGroupAssignments(initialGroups);
+  }, [open, eligibleParticipants, numGroups]);
+
+  // Helper to format participant name
+  const getParticipantLabel = (p: ParticipantItem) => {
+    if (p.teamName) return p.teamName;
+    const name1 = p.registeredBy?.fullName || p.user?.fullName;
+    const name2 = p.partnerUser?.fullName;
+    if (name1 && name2) return `${name1} / ${name2}`;
+    if (name1) return name1;
+    return `Đội #${p.id.slice(0, 4)}`;
   };
 
-  // Build list of groups with assigned preview teams (snake or round-robin distribution)
-  const groupDistribution = useMemo(() => {
-    const totalSlots = numGroups * teamsPerGroup;
-    const groups: Array<{ name: string; teams: Array<ParticipantItem | null> }> = [];
+  // Quick pool count selection: 2, 4, 8, 16
+  const handleSelectPoolCount = (count: number) => {
+    setNumGroups?.(count);
+    const newGroups: Record<number, ParticipantItem[]> = {};
+    for (let i = 0; i < count; i++) {
+      newGroups[i] = groupAssignments[i] || [];
+    }
+    // Any teams from removed groups go back to unassigned
+    const returnedTeams: ParticipantItem[] = [];
+    Object.entries(groupAssignments).forEach(([gIdx, teams]) => {
+      if (Number(gIdx) >= count) {
+        returnedTeams.push(...teams);
+      }
+    });
+    setGroupAssignments(newGroups);
+    if (returnedTeams.length > 0) {
+      setUnassignedTeams((prev) => [...prev, ...returnedTeams]);
+    }
+    if (setTeamsPerGroup) {
+      setTeamsPerGroup(Math.max(2, Math.ceil(eligibleParticipants.length / count)));
+    }
+  };
 
+  // Reset: All teams return to unassigned
+  const handleResetToUnassigned = () => {
+    setUnassignedTeams([...eligibleParticipants]);
+    const resetGroups: Record<number, ParticipantItem[]> = {};
     for (let i = 0; i < numGroups; i++) {
-      groups.push({
-        name: String.fromCharCode(65 + i), // A, B, C, D...
-        teams: [],
-      });
+      resetGroups[i] = [];
+    }
+    setGroupAssignments(resetGroups);
+  };
+
+  // Randomize: Distribute all eligible participants randomly and evenly across numGroups
+  const handleRandomize = () => {
+    const shuffled = [...eligibleParticipants].sort(() => Math.random() - 0.5);
+    const newGroups: Record<number, ParticipantItem[]> = {};
+    for (let i = 0; i < numGroups; i++) {
+      newGroups[i] = [];
     }
 
-    // Distribute eligible participants across groups (Seed / ELO order)
+    shuffled.forEach((p, idx) => {
+      const gIndex = idx % numGroups;
+      newGroups[gIndex].push(p);
+    });
+
+    setGroupAssignments(newGroups);
+    setUnassignedTeams([]);
+  };
+
+  // Seed by ELO / Snake seeding
+  const handleSeedByElo = () => {
     const sorted = [...eligibleParticipants].sort((a, b) => {
       if (a.seed && b.seed) return a.seed - b.seed;
       if (a.seed) return -1;
@@ -232,449 +156,311 @@ export function BracketSetupModal({
       return (b.eloPoints ?? 0) - (a.eloPoints ?? 0);
     });
 
-    for (let slotIndex = 0; slotIndex < teamsPerGroup; slotIndex++) {
-      for (let gIndex = 0; gIndex < numGroups; gIndex++) {
-        // Snake order: even rows forward, odd rows reverse for fair seeding
-        const effectiveGroupIndex = slotIndex % 2 === 0 ? gIndex : numGroups - 1 - gIndex;
-        const participantIndex = slotIndex * numGroups + gIndex;
-        const assignedTeam = sorted[participantIndex] ?? null;
-        if (groups[effectiveGroupIndex]) {
-          groups[effectiveGroupIndex].teams.push(assignedTeam);
-        }
-      }
+    const newGroups: Record<number, ParticipantItem[]> = {};
+    for (let i = 0; i < numGroups; i++) {
+      newGroups[i] = [];
     }
 
-    return groups;
-  }, [numGroups, teamsPerGroup, eligibleParticipants]);
+    // Snake seeding distribution
+    sorted.forEach((p, idx) => {
+      const round = Math.floor(idx / numGroups);
+      const isReversed = round % 2 === 1;
+      const pos = idx % numGroups;
+      const gIndex = isReversed ? numGroups - 1 - pos : pos;
+      newGroups[gIndex].push(p);
+    });
 
-  const applyPreset = (preset: (typeof presets)[number]) => {
-    setSetsToWin(preset.setsToWin);
-    setPointsPerSet(preset.pointsPerSet);
-    setWinByTwo(preset.winByTwo);
-    setMaxDeucePoints(preset.maxPoints);
-    setSuperTiebreakEnabled?.(preset.tiebreakPoints !== null);
-    setSuperTiebreakSetIndex?.(preset.setsToWin * 2 - 1);
-    setSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
+    setGroupAssignments(newGroups);
+    setUnassignedTeams([]);
   };
+
+  // Move a team into a specific group
+  const assignTeamToGroup = (participant: ParticipantItem, targetGroupIndex: number) => {
+    setUnassignedTeams((prev) => prev.filter((p) => p.id !== participant.id));
+
+    setGroupAssignments((prev) => {
+      const updated: Record<number, ParticipantItem[]> = {};
+      for (let i = 0; i < numGroups; i++) {
+        const filtered = (prev[i] || []).filter((p) => p.id !== participant.id);
+        if (i === targetGroupIndex) {
+          updated[i] = [...filtered, participant];
+        } else {
+          updated[i] = filtered;
+        }
+      }
+      return updated;
+    });
+  };
+
+  // Move a team back to unassigned from a group
+  const removeTeamFromGroup = (participant: ParticipantItem) => {
+    setGroupAssignments((prev) => {
+      const updated: Record<number, ParticipantItem[]> = {};
+      for (let i = 0; i < numGroups; i++) {
+        updated[i] = (prev[i] || []).filter((p) => p.id !== participant.id);
+      }
+      return updated;
+    });
+    setUnassignedTeams((prev) => {
+      if (prev.some((p) => p.id === participant.id)) return prev;
+      return [...prev, participant];
+    });
+  };
+
+  // Drag & Drop handlers
+  const handleDragStart = (e: React.DragEvent, participantId: string) => {
+    e.dataTransfer.setData('text/plain', participantId);
+    setDraggedParticipantId(participantId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDropOnGroup = (e: React.DragEvent, groupIndex: number) => {
+    e.preventDefault();
+    const pId = e.dataTransfer.getData('text/plain') || draggedParticipantId;
+    if (!pId) return;
+
+    const participant = eligibleParticipants.find((p) => p.id === pId);
+    if (participant) {
+      assignTeamToGroup(participant, groupIndex);
+    }
+    setDraggedParticipantId(null);
+  };
+
+  const handleDropOnUnassigned = (e: React.DragEvent) => {
+    e.preventDefault();
+    const pId = e.dataTransfer.getData('text/plain') || draggedParticipantId;
+    if (!pId) return;
+
+    const participant = eligibleParticipants.find((p) => p.id === pId);
+    if (participant) {
+      removeTeamFromGroup(participant);
+    }
+    setDraggedParticipantId(null);
+  };
+
+  const poolOptions = [2, 4, 8, 16];
+
+  const poolColors = [
+    { title: 'text-rose-600', badge: 'bg-rose-500 text-white', border: 'border-rose-200' },
+    { title: 'text-blue-600', badge: 'bg-blue-500 text-white', border: 'border-blue-200' },
+    { title: 'text-emerald-600', badge: 'bg-emerald-500 text-white', border: 'border-emerald-200' },
+    { title: 'text-amber-600', badge: 'bg-amber-500 text-white', border: 'border-amber-200' },
+    { title: 'text-purple-600', badge: 'bg-purple-500 text-white', border: 'border-purple-200' },
+    { title: 'text-cyan-600', badge: 'bg-cyan-500 text-white', border: 'border-cyan-200' },
+    { title: 'text-pink-600', badge: 'bg-pink-500 text-white', border: 'border-pink-200' },
+    { title: 'text-indigo-600', badge: 'bg-indigo-500 text-white', border: 'border-indigo-200' },
+  ];
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent className="max-w-5xl w-[95vw] rounded-2xl bg-slate-50/90 p-0 overflow-hidden border border-slate-200/90 shadow-2xl flex flex-col max-h-[90vh]">
-        {/* Header Bar */}
-        <div className="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-200/70 shadow-2xs">
-              <Trophy className="h-5 w-5" />
-            </div>
-            <div>
+      <ModalContent className="max-w-6xl w-[96vw] max-h-[92vh] flex flex-col p-0 overflow-hidden bg-slate-50/80 rounded-2xl shadow-2xl border border-slate-200">
+        {/* Header - Matching VNTournament layout */}
+        <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-start justify-between shrink-0">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+              {translate('poolArrangementTitle')}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 font-normal">
+              {translate('poolArrangementSubtitle')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Toolbar: Pool Count Pills & Actions */}
+        <div className="bg-white px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          {/* Group pills: 2 bảng, 4 bảng, 8 bảng, 16 bảng */}
+          <div className="flex items-center gap-2">
+            {poolOptions.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => handleSelectPoolCount(opt)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  numGroups === opt
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <span>{opt} {translate('twoGroups').replace('2 ', '')}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Action buttons: Sắp xếp lại, Xếp ngẫu nhiên, Xếp theo ELO */}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResetToUnassigned}
+              className="text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-100 h-8 flex items-center gap-1.5"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+              <span>{translate('rearrange')}</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRandomize}
+              className="text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-100 h-8 flex items-center gap-1.5"
+            >
+              <Shuffle className="w-3.5 h-3.5 text-blue-600" />
+              <span>{translate('randomize')}</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSeedByElo}
+              className="text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-100 h-8 flex items-center gap-1.5"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{translate('seedByElo')}</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Body: Left Column (Unassigned) + Right Column (Pool Grid) */}
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-0 overflow-y-auto">
+          {/* CỘT TRÁI: Đội chưa phân bảng */}
+          <div
+            onDragOver={handleDragOver}
+            onDrop={handleDropOnUnassigned}
+            className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-4 flex flex-col min-h-[440px] shadow-2xs"
+          >
+            <div className="pb-3 border-b border-slate-100 mb-3">
               <div className="flex items-center gap-2">
-                <ModalTitle className="text-base sm:text-lg font-bold text-slate-900">
-                  {translate('setupBracketModalTitle')}
-                </ModalTitle>
-                <span className="rounded-md bg-blue-100/70 px-2 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
-                  {selectedDivision?.name || translate('divisionDefault')}
-                </span>
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                <h3 className="font-bold text-slate-900 text-sm">
+                  {translate('unassignedTeams', { count: unassignedTeams.length })}
+                </h3>
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                {isGroupStageKnockout
-                  ? translate('groupStageKnockoutSummary', { groups: numGroups, teams: teamsPerGroup, advancing: teamsAdvancing })
-                  : isRoundRobin
-                  ? translate('roundRobinConfigTitle')
-                  : translate('bracketSingleElimination')}
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                {translate('unassignedDescription')}
               </p>
             </div>
-          </div>
-        </div>
 
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-          {/* PHẦN 1: BỘ THIẾT LẬP THỂ THỨC (GỌN GÀNG, ÍT CHỮ) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            {/* Cột trái: Cấu hình bảng đấu & Knockout */}
-            <div className={`space-y-4 ${isGroupStageKnockout ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
-              {isGroupStageKnockout && (
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                        {translate('stage1GroupStage')}
-                      </h4>
+            {/* List of unassigned cards */}
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+              {unassignedTeams.length > 0 ? (
+                unassignedTeams.map((team) => (
+                  <div
+                    key={team.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, team.id)}
+                    className="p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xs transition-all cursor-grab active:cursor-grabbing group relative flex flex-col gap-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                        {translate('freeTag')}
+                      </span>
+                      <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                      {participantCount} {translate('teamsCount', { count: participantCount })} / {numGroups * teamsPerGroup} suất
-                    </span>
-                  </div>
-
-                  {/* 3 Steppers: Số Bảng, Số Đội Mỗi Bảng, Số Đội Đi Tiếp */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* 1. SỐ BẢNG */}
-                    <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-slate-50/50 p-3">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                        {translate('numberOfGroups')}
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-bold text-xs text-rose-900 truncate">
+                        {getParticipantLabel(team)}
                       </span>
-                      <div className="my-2 flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next = Math.max(2, numGroups - 1);
-                            setNumGroups?.(next);
-                            if (participantCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(participantCount / next))));
-                          }}
-                          disabled={numGroups <= 2}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </button>
-                        <span className="text-lg font-bold text-slate-900">{numGroups}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next = Math.min(16, numGroups + 1);
-                            setNumGroups?.(next);
-                            if (participantCount > 0) setTeamsPerGroup?.(Math.min(128, Math.max(2, Math.ceil(participantCount / next))));
-                          }}
-                          disabled={numGroups >= 16}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <span className="text-[10px] text-center text-slate-400 font-medium">
-                        {Array.from({ length: Math.min(numGroups, 6) }, (_, i) => String.fromCharCode(65 + i)).join(', ')}
-                        {numGroups > 6 ? '...' : ''}
-                      </span>
-                    </div>
-
-                    {/* 2. ĐỘI MỖI BẢNG */}
-                    <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-slate-50/50 p-3">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                        {translate('teamsPerGroup')}
-                      </span>
-                      <div className="my-2 flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() => setTeamsPerGroup?.(Math.max(2, teamsPerGroup - 1))}
-                          disabled={teamsPerGroup <= 2}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </button>
-                        <span className="text-lg font-bold text-slate-900">{teamsPerGroup}</span>
-                        <button
-                          type="button"
-                          onClick={() => setTeamsPerGroup?.(Math.min(32, teamsPerGroup + 1))}
-                          disabled={teamsPerGroup >= 32}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <span className="text-[10px] text-center text-slate-400 font-medium">
-                        {teamsPerGroup} {translate('teamsCount', { count: teamsPerGroup })}
-                      </span>
-                    </div>
-
-                    {/* 3. SUẤT ĐI TIẾP MỖI BẢNG */}
-                    <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-slate-50/50 p-3">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                        {translate('teamsAdvancing')}
-                      </span>
-                      <div className="my-2 flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() => setTeamsAdvancing?.(Math.max(1, teamsAdvancing - 1))}
-                          disabled={teamsAdvancing <= 1}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </button>
-                        <span className="text-lg font-bold text-blue-600">{teamsAdvancing}</span>
-                        <button
-                          type="button"
-                          onClick={() => setTeamsAdvancing?.(Math.min(teamsPerGroup - 1, teamsAdvancing + 1))}
-                          disabled={teamsAdvancing >= teamsPerGroup - 1}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <span className="text-[10px] text-center text-blue-600 font-semibold">
-                        Top {teamsAdvancing} mỗi bảng
-                      </span>
+                      {team.eloPoints && (
+                        <span className="text-[10px] font-bold text-blue-600 shrink-0">
+                          {team.eloPoints} ELO
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  {/* Flow Summary Pill */}
-                  <div className="flex items-center justify-between rounded-lg bg-blue-50/70 border border-blue-200/60 px-4 py-2 text-xs font-semibold text-blue-900">
-                    <div className="flex items-center gap-1.5">
-                      <span>{numGroups} bảng × {teamsAdvancing} suất</span>
-                      <span className="text-blue-500 font-bold">➔</span>
-                      <span className="font-bold text-blue-700">
-                        {totalAdvancing} đội vào Knockout ({getKnockoutRoundTitle(totalAdvancing)})
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={gskSeedingType}
-                        onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')}
-                        className="bg-white border border-blue-200 rounded px-2 py-1 text-xs font-bold text-slate-700"
-                      >
-                        <option value="SEEDED">{translate('seededByElo')}</option>
-                        <option value="RANDOM">{translate('randomSeeding')}</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Round Robin simple config (if purely round robin) */}
-              {isRoundRobin && (
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {translate('roundRobinConfigTitle')}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase">{translate('roundsToPlay')}</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={roundsToPlay}
-                        onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold bg-white"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase">{translate('tieHandling')}</label>
-                      <select
-                        value={tiebreakerMode}
-                        onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')}
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold bg-white"
-                      >
-                        <option value="split">{translate('splitTie')}</option>
-                        <option value="playoff">{translate('playoffTie')}</option>
-                      </select>
-                    </div>
-                  </div>
+                ))
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center py-12 text-center text-slate-400">
+                  <UserCheck className="w-8 h-8 text-slate-300 mb-2" />
+                  <p className="text-xs font-semibold">Tất cả đội đã được phân vào bảng!</p>
                 </div>
               )}
             </div>
-
-            {/* Cột phải: Luật tính điểm (Tự do / Tiêu chuẩn) */}
-            <div className={`space-y-4 ${isGroupStageKnockout ? 'lg:col-span-5' : 'lg:col-span-12'}`}>
-              <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    {translate('rulesAndBracketTitle')}
-                  </h4>
-                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setIsLiteMode(true)}
-                      className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        isLiteMode ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                      }`}
-                    >
-                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      {translate('liteModeLabel')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsLiteMode(false)}
-                      className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        !isLiteMode ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                      }`}
-                    >
-                      <Shield className="w-3.5 h-3.5 text-blue-600" />
-                      {translate('strictModeLabel')}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Micro scoring rules */}
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">{translate('setsToWin')}</label>
-                    <select
-                      value={setsToWin}
-                      onChange={(e) => setSetsToWin(Number(e.target.value))}
-                      className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-bold bg-white text-slate-800"
-                    >
-                      {presentation.setOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">{presentation.setUnitLabel}</label>
-                    <input
-                      type="number"
-                      value={pointsPerSet}
-                      onChange={(e) => setPointsPerSet(Number(e.target.value))}
-                      className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-bold bg-white text-slate-800"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <label htmlFor="modal_winByTwo" className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      id="modal_winByTwo"
-                      checked={winByTwo}
-                      onChange={(e) => setWinByTwo(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded border-slate-300"
-                    />
-                    {presentation.winByTwoLabel}
-                  </label>
-                  {winByTwo && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-semibold text-slate-500">Max:</span>
-                      <input
-                        type="number"
-                        value={maxDeucePoints}
-                        onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
-                        className="w-14 border border-slate-200 rounded px-2 py-0.5 text-xs font-bold text-center"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* PHẦN 2: TRỰC QUAN HÓA (VISUAL PREVIEW) THEO LUỒNG VIDEO */}
-          {isGroupStageKnockout && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                    {translate('visualDistributionPreviewTitle')}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span>{translate('topAdvancingBadge', { count: teamsAdvancing })}</span>
-                </div>
-              </div>
+          {/* CỘT PHẢI: Lưới các Bảng đấu (Bảng A, Bảng B, Bảng C, Bảng D...) */}
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-max overflow-y-auto pr-1">
+            {Array.from({ length: numGroups }).map((_, gIdx) => {
+              const groupName = String.fromCharCode(65 + gIdx); // A, B, C, D...
+              const assignedTeams = groupAssignments[gIdx] || [];
+              const color = poolColors[gIdx % poolColors.length];
 
-              {/* Bố cục 2 cột: Bên trái là danh sách VĐV, Bên phải là các Card Bảng đấu */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                {/* CỘT TRÁI (4 cols): DANH SÁCH VẬN ĐỘNG VIÊN */}
-                <div className="lg:col-span-4 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      {translate('participantsList')} ({eligibleParticipants.length})
+              return (
+                <div
+                  key={groupName}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDropOnGroup(e, gIdx)}
+                  className="bg-white rounded-xl border border-slate-200 shadow-2xs flex flex-col overflow-hidden min-h-[200px]"
+                >
+                  {/* Pool Card Header */}
+                  <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <span className={`font-bold text-sm ${color.title}`}>
+                      {translate('groupName', { name: groupName })}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-400">
-                      {gskSeedingType === 'SEEDED' ? 'Hạt giống theo ELO' : 'Xếp ngẫu nhiên'}
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${color.badge}`}>
+                      {assignedTeams.length} {translate('teamsCount', { count: assignedTeams.length }).replace(`${assignedTeams.length} `, '')}
                     </span>
                   </div>
 
-                  <div className="divide-y divide-slate-200/60 max-h-[320px] overflow-y-auto pr-1">
-                    {eligibleParticipants.length > 0 ? (
-                      eligibleParticipants.map((p, idx) => (
-                        <div key={p.id || idx} className="py-2 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200/80 text-[10px] font-bold text-slate-700">
-                              {idx + 1}
-                            </span>
-                            <span className="font-bold text-slate-800 truncate">
-                              {p.teamName || p.registeredBy?.fullName || `Đội ${idx + 1}`}
-                            </span>
-                          </div>
-                          {p.eloPoints && (
-                            <span className="shrink-0 text-[11px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                              {p.eloPoints} ELO
-                            </span>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="py-8 text-center text-xs text-slate-400 font-semibold">
-                        {translate('noParticipantsYet')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* CỘT PHẢI (8 cols): DANH SÁCH CÁC BẢNG ĐẤU MÀU SẮC */}
-                <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[340px] overflow-y-auto pr-1">
-                  {groupDistribution.map((grp, gIdx) => {
-                    const color = GROUP_COLORS[gIdx % GROUP_COLORS.length];
-                    return (
+                  {/* Pool Slots & Droppable Area */}
+                  <div className="p-3 space-y-2 flex-1 flex flex-col justify-start">
+                    {assignedTeams.map((team, idx) => (
                       <div
-                        key={grp.name}
-                        className={`rounded-xl border ${color.border} ${color.bg} overflow-hidden shadow-2xs flex flex-col`}
+                        key={team.id}
+                        className="p-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 flex items-center justify-between gap-2 text-xs shadow-2xs"
                       >
-                        {/* Group Header */}
-                        <div className={`px-3 py-2 flex items-center justify-between ${color.header}`}>
-                          <div className="flex items-center gap-1.5">
-                            <Hash className="w-3.5 h-3.5" />
-                            <span className="font-bold text-xs uppercase tracking-wider">
-                              {translate('groupName', { name: grp.name })}
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                            {grp.teams.filter(Boolean).length}/{teamsPerGroup} {translate('teams')}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="font-semibold text-slate-800 truncate">
+                            {getParticipantLabel(team)}
                           </span>
                         </div>
-
-                        {/* Slots */}
-                        <div className="p-2 space-y-1.5 divide-y divide-slate-100 bg-white/80 flex-1">
-                          {grp.teams.map((team, tIdx) => {
-                            const isAdvancingSlot = tIdx < teamsAdvancing;
-                            return (
-                              <div
-                                key={tIdx}
-                                className={`pt-1.5 first:pt-0 flex items-center justify-between text-xs px-2 py-1 rounded-md transition-colors ${
-                                  isAdvancingSlot ? 'bg-emerald-50/60 border border-emerald-200/50' : ''
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span
-                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] font-bold ${
-                                      isAdvancingSlot ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
-                                    }`}
-                                  >
-                                    {tIdx + 1}
-                                  </span>
-                                  <span className="font-semibold text-slate-800 truncate">
-                                    {team ? (team.teamName || team.registeredBy?.fullName || `Đội #${tIdx + 1}`) : (
-                                      <span className="text-slate-400 italic">{translate('openSlot')}</span>
-                                    )}
-                                  </span>
-                                </div>
-                                {isAdvancingSlot && (
-                                  <span className="text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded shrink-0">
-                                    {translate('advancing')}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeTeamFromGroup(team)}
+                          className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title={translate('moveToUnassigned')}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    );
-                  })}
+                    ))}
+
+                    {/* Droppable zone "Thả ở đây" */}
+                    <div
+                      className="flex-1 min-h-[70px] rounded-lg border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 transition-all cursor-pointer p-3"
+                    >
+                      <Plus className="w-5 h-5 mb-1" />
+                      <span className="text-xs font-semibold">{translate('dropHere')}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+        {/* Footer */}
+        <div className="bg-white px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-sm"
+            className="text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-100"
           >
             {translate('cancel')}
           </Button>
@@ -682,8 +468,8 @@ export function BracketSetupModal({
           <Button
             type="button"
             onClick={onConfirm}
-            disabled={isSubmitting || (!selectedDivision)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 cursor-pointer"
+            disabled={isSubmitting || !selectedDivision}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -693,7 +479,7 @@ export function BracketSetupModal({
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>{translate('confirmAndGenerateBracket')}</span>
+                <span>{translate('completeAndCreateBracket')}</span>
               </>
             )}
           </Button>
@@ -702,3 +488,5 @@ export function BracketSetupModal({
     </Modal>
   );
 }
+
+export default BracketSetupModal;

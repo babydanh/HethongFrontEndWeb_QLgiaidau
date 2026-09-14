@@ -83,7 +83,8 @@ export default function Step2Confirm() {
         matchType,
         genderRestriction: genderRestriction as GenderRestriction,
         maxParticipants: rest.maxParticipants,
-        entryFee: 0,
+        entryFee: null,
+        entryFeeOverrideEnabled: false,
       };
       await divisionsApi.createDivision(tournamentId, divisionInput);
       

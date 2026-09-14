@@ -226,7 +226,12 @@ export interface Division {
   status: string;
   categoryId?: string;
   maxParticipants?: number;
+  /** Effective fee: division override when enabled, otherwise tournament fee. */
   entryFee?: number;
+  /** Raw per-division fee, null when the division inherits the tournament fee. */
+  entryFeeOverride?: number | null;
+  effectiveEntryFee?: number;
+  entryFeeOverrideEnabled?: boolean;
   isConfigOverride?: boolean;
   venueId?: string | null;
   bracketType?:
@@ -254,7 +259,8 @@ export interface CreateDivisionInput {
   matchType: MatchTypeDB;
   genderRestriction?: GenderRestriction | null;
   maxParticipants?: number | null;
-  entryFee?: number;
+  entryFee?: number | null;
+  entryFeeOverrideEnabled?: boolean;
   isConfigOverride?: boolean;
   venueId?: string | null;
   bracketType?: Division["bracketType"];

@@ -50,6 +50,10 @@ export type CreateDivisionModalProps = {
   setNewDivisionMaxParticipants: Setter<string>;
   newDivisionLimitEnabled: boolean;
   setNewDivisionLimitEnabled: Setter<boolean>;
+  newDivisionEntryFeeOverrideEnabled: boolean;
+  setNewDivisionEntryFeeOverrideEnabled: Setter<boolean>;
+  newDivisionEntryFee: string;
+  setNewDivisionEntryFee: Setter<string>;
   isCreatingDivision: boolean;
   onCancel: () => void;
   onSubmit: () => void;
@@ -76,6 +80,10 @@ export function CreateDivisionModal({
   setNewDivisionMaxParticipants,
   newDivisionLimitEnabled,
   setNewDivisionLimitEnabled,
+  newDivisionEntryFeeOverrideEnabled,
+  setNewDivisionEntryFeeOverrideEnabled,
+  newDivisionEntryFee,
+  setNewDivisionEntryFee,
   isCreatingDivision,
   onCancel,
   onSubmit,
@@ -178,7 +186,7 @@ export function CreateDivisionModal({
             </div>
           </section>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
               <label htmlFor="division-limit" className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-700">
                 <input
@@ -247,6 +255,36 @@ export function CreateDivisionModal({
                     className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+              <label htmlFor="division-entry-fee-override" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input
+                  id="division-entry-fee-override"
+                  type="checkbox"
+                  checked={newDivisionEntryFeeOverrideEnabled}
+                  onChange={(event) => setNewDivisionEntryFeeOverrideEnabled(event.target.checked)}
+                  disabled={isCreatingDivision}
+                  className="h-4 w-4 accent-blue-600"
+                />
+                {translate('createDivision.entryFeeOverrideShort')}
+              </label>
+              {newDivisionEntryFeeOverrideEnabled ? (
+                <input
+                  aria-label={translate('createDivision.entryFeeOverrideShort')}
+                  type="text"
+                  inputMode="numeric"
+                  value={newDivisionEntryFee}
+                  onChange={(event) => setNewDivisionEntryFee(event.target.value.replace(/[^0-9]/g, '').slice(0, 12))}
+                  disabled={isCreatingDivision}
+                  placeholder={translate('createDivision.entryFeeOverridePlaceholder')}
+                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              ) : (
+                <p className="mt-2 text-[11px] leading-tight text-slate-500">
+                  {translate('createDivision.entryFeeOverrideHint')}
+                </p>
               )}
             </div>
           </div>

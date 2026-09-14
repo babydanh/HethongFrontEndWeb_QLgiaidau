@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
+import type { Division } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
 import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
 import {
@@ -21,6 +22,7 @@ import toast from 'react-hot-toast';
 interface FinanceTabProps {
   tournament: Tournament;
   participants: TournamentParticipant[];
+  divisions: Division[];
   entryFee: number;
   setEntryFee: (fee: number) => void;
   isSavingConfig: boolean;
@@ -34,6 +36,7 @@ interface FinanceTabProps {
 export function FinanceTab({
   tournament,
   participants,
+  divisions,
   entryFee,
   setEntryFee,
   isSavingConfig,
@@ -47,7 +50,14 @@ export function FinanceTab({
   const locale = useLocale();
   const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const totalPlayers = participants.reduce((sum, p) => sum + (p.members?.length || 0), 0);
-  const totalExpectedFee = entryFee * participants.length;
+  const getParticipantEntryFee = (participant: TournamentParticipant) => {
+    const division = divisions.find((item) => item.id === participant.tournamentDivisionId);
+    return Number(division?.effectiveEntryFee ?? division?.entryFee ?? tournament.entryFee ?? 0);
+  };
+  const totalExpectedFee = participants.reduce(
+    (sum, participant) => sum + getParticipantEntryFee(participant),
+    0,
+  );
   const platformFee = getPlatformFeeBreakdown(
     entryFee,
     tournament.platformFeePercentage,
@@ -58,7 +68,16 @@ export function FinanceTab({
   );
   const totalPlatformFee = participants.reduce((sum, participant) => {
     const playerCount = Math.max(1, participant.members?.length || 0);
-    return sum + Math.min(entryFee, platformFee.feePerPlayer * playerCount);
+    const participantEntryFee = getParticipantEntryFee(participant);
+    const participantPlatformFee = getPlatformFeeBreakdown(
+      participantEntryFee,
+      tournament.platformFeePercentage,
+      {
+        thresholdAmount: tournament.platformFeeThreshold,
+        fixedAmount: tournament.platformFeeFixedAmount,
+      },
+    );
+    return sum + Math.min(participantEntryFee, participantPlatformFee.feePerPlayer * playerCount);
   }, 0);
   const formatMoney = (value: number) => value.toLocaleString(numberLocale);
   const platformFeeRuleDescription = platformFee.ruleType === 'FREE'

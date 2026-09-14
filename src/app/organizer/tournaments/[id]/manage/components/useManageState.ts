@@ -159,6 +159,8 @@ export function useManageState(id: string) {
   const [newDivisionMaxElo, setNewDivisionMaxElo] = useState<number | null>(null);
   const [newDivisionMaxParticipants, setNewDivisionMaxParticipants] = useState('16');
   const [newDivisionLimitEnabled, setNewDivisionLimitEnabled] = useState(true);
+  const [newDivisionEntryFeeOverrideEnabled, setNewDivisionEntryFeeOverrideEnabled] = useState(false);
+  const [newDivisionEntryFee, setNewDivisionEntryFee] = useState('');
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
   const [isDeletingDivision, setIsDeletingDivision] = useState(false);
@@ -837,9 +839,9 @@ export function useManageState(id: string) {
         : (selected.matchType === 'SINGLES' ? MatchTypeUI.MALE_SINGLES : MatchTypeUI.MALE_DOUBLES));
     setMaxParticipants(selected.maxParticipants || 16);
     setIsLimitEnabled(!!selected.maxParticipants);
-    // A division fee is optional. When it is null/undefined, the tournament
-    // fee remains the authoritative fallback; an explicit 0 still means free.
-    setEntryFee(selected.entryFee ?? tournament?.entryFee ?? 0);
+    // FinanceTab edits the tournament-wide fee. A selected division's
+    // effective fee may be an override and must not leak into that field.
+    setEntryFee(Number(tournament?.entryFee ?? 0));
     applyResolvedRuleState(resolvedRules);
     setNumGroups(typeof groupsConfig?.numGroups === 'number' ? groupsConfig.numGroups : 2);
     setTeamsPerGroup(typeof groupsConfig?.teamsPerGroup === 'number' ? groupsConfig.teamsPerGroup : 4);
@@ -1254,13 +1256,13 @@ export function useManageState(id: string) {
   }, [handleSaveGskConfig, handleSaveMatchConfig, handleSaveRoundRobinConfig]);
 
   const handleSaveFinanceConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
+    if (!tournament) { toast.error('Không tìm thấy giải đấu'); return; }
     setIsSavingConfig(true);
     const cleanEntryFee = typeof entryFee === 'number' && !isNaN(entryFee) && entryFee >= 0 ? Math.floor(entryFee) : 0;
     try {
-      await divisionsApi.updateDivision(selectedDivisionId, { entryFee: cleanEntryFee });
+      await tournamentsApi.updateTournament(tournament.id, { entryFee: cleanEntryFee });
       toast.success('Lưu cài đặt tài chính thành công!');
-      await fetchDivisions(tournament.id);
+      await fetchTournamentData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -1294,6 +1296,13 @@ export function useManageState(id: string) {
     setNewDivisionMaxElo(division.maxElo ?? null);
     setNewDivisionMaxParticipants(String(division.maxParticipants ?? 16));
     setNewDivisionLimitEnabled(division.maxParticipants != null);
+    const hasEntryFeeOverride = division.entryFeeOverrideEnabled === true;
+    setNewDivisionEntryFeeOverrideEnabled(hasEntryFeeOverride);
+    setNewDivisionEntryFee(
+      hasEntryFeeOverride
+        ? String(division.entryFeeOverride ?? division.entryFee ?? '')
+        : '',
+    );
     setIsCreateDivisionModalOpen(true);
   };
 
@@ -1308,12 +1317,25 @@ export function useManageState(id: string) {
     setNewDivisionMaxElo(eloEnabled ? eloMax : null);
     setNewDivisionMaxParticipants('16');
     setNewDivisionLimitEnabled(true);
+    setNewDivisionEntryFeeOverrideEnabled(false);
+    setNewDivisionEntryFee('');
   };
 
   const handleCreateDivision = async () => {
     if (!tournament?.id) { toast.error('Không tìm thấy giải đấu'); return; }
     if (!editingDivision && divisions.length >= 20) {
       toast.error('Mỗi giải đấu chỉ được tạo tối đa 20 nội dung thi đấu.');
+      return;
+    }
+    const entryFeeDigits = newDivisionEntryFee.replace(/[^0-9]/g, '');
+    const normalizedEntryFee = newDivisionEntryFeeOverrideEnabled
+      ? entryFeeDigits ? Number(entryFeeDigits) : null
+      : null;
+    if (
+      newDivisionEntryFeeOverrideEnabled &&
+      (normalizedEntryFee === null || !Number.isSafeInteger(normalizedEntryFee))
+    ) {
+      toast.error('Vui lòng nhập lệ phí riêng hợp lệ.');
       return;
     }
     setIsCreatingDivision(true);
@@ -1369,6 +1391,8 @@ export function useManageState(id: string) {
         minElo: newDivisionEloEnabled ? newDivisionMinElo : null,
         maxElo: newDivisionEloEnabled ? newDivisionMaxElo : null,
         maxParticipants: newDivisionLimitEnabled ? normalizedMaxParticipants : null,
+        entryFeeOverrideEnabled: newDivisionEntryFeeOverrideEnabled,
+        entryFee: normalizedEntryFee,
       };
       const res = editingDivision
         ? await divisionsApi.updateDivision(editingDivision.id, divisionPayload)
@@ -2399,6 +2423,8 @@ export function useManageState(id: string) {
     newDivisionEloEnabled, setNewDivisionEloEnabled, newDivisionMinElo, setNewDivisionMinElo, newDivisionMaxElo, setNewDivisionMaxElo,
     newDivisionMaxParticipants, setNewDivisionMaxParticipants,
     newDivisionLimitEnabled, setNewDivisionLimitEnabled,
+    newDivisionEntryFeeOverrideEnabled, setNewDivisionEntryFeeOverrideEnabled,
+    newDivisionEntryFee, setNewDivisionEntryFee,
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,

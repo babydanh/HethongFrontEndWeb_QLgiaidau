@@ -1581,7 +1581,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Main 2-Column Grid (Laptop/Desktop: 2 columns, Mobile: 1 column) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
           {/* Left Column: Hero Banner + Mobile Metadata + Stepper + Tabs + Tab Content */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden">
+          <div className={`${activeSection === 'bracket' ? 'lg:col-span-12' : 'lg:col-span-7 xl:col-span-8'} space-y-3 sm:space-y-4 min-w-0 max-w-full overflow-hidden`}>
             {/* Banner Container with Direct Interactive Change Overlay */}
             <div className="relative group w-full h-[175px] sm:h-[240px] md:h-[380px] lg:h-[440px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-slate-100">
               <input
@@ -2277,6 +2277,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 {activeSection === 'finance' && (
                   <FinanceTab
                     tournament={s.tournament}
+                    divisions={s.divisions}
                     participants={s.participants}
                     entryFee={s.entryFee}
                     setEntryFee={s.setEntryFee}
@@ -2309,7 +2310,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       </div>
 
       {/* Right Column: Organizer, Title, Metadata Card & Actions (Unlocked, natural scroll) */}
-      <div className="hidden lg:block lg:col-span-5 xl:col-span-4 space-y-4 min-w-0">
+      <div className={`${activeSection === 'bracket' ? 'hidden' : 'hidden lg:block lg:col-span-5 xl:col-span-4'} space-y-4 min-w-0`}>
         {renderMetadataCard()}
         {renderContactCard()}
       </div>
@@ -2585,6 +2586,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             setNewDivisionMaxParticipants={s.setNewDivisionMaxParticipants}
             newDivisionLimitEnabled={s.newDivisionLimitEnabled}
             setNewDivisionLimitEnabled={s.setNewDivisionLimitEnabled}
+            newDivisionEntryFeeOverrideEnabled={s.newDivisionEntryFeeOverrideEnabled}
+            setNewDivisionEntryFeeOverrideEnabled={s.setNewDivisionEntryFeeOverrideEnabled}
+            newDivisionEntryFee={s.newDivisionEntryFee}
+            setNewDivisionEntryFee={s.setNewDivisionEntryFee}
             isCreatingDivision={s.isCreatingDivision}
             onCancel={() => { s.setIsCreateDivisionModalOpen(false); s.resetDivisionEditor(); }}
             onSubmit={s.handleCreateDivision}

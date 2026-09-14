@@ -190,6 +190,10 @@ export interface Tournament {
           matches: number;
         };
         maxParticipants?: number;
+        entryFee?: number;
+        entryFeeOverride?: number | null;
+        effectiveEntryFee?: number;
+        entryFeeOverrideEnabled?: boolean;
         inviteCode?: string | null;
       }[]
     | null;

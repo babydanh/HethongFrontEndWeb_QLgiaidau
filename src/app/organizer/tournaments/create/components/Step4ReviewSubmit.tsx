@@ -231,7 +231,10 @@ export default function Step4ReviewSubmit() {
           matchType: div.matchType,
           genderRestriction: div.genderRestriction as GenderRestriction,
           maxParticipants: formData.maxParticipants,
-          entryFee: effectiveEntryFee,
+          // Division fees inherit the tournament fee unless the organizer
+          // explicitly enables a per-division override later.
+          entryFee: null,
+          entryFeeOverrideEnabled: false,
           bracketType: formData.format as
             | 'SINGLE_ELIMINATION'
             | 'DOUBLE_ELIMINATION'

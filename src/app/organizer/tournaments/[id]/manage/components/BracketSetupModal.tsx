@@ -475,126 +475,221 @@ export function BracketSetupModal({
         <div className="p-5 sm:p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
           {/* PHẦN 1: KHỐI CẤU HÌNH THỂ THỨC & LUẬT TÍNH ĐIỂM */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            {/* Cột 1 (7 cols): Cấu hình thể thức vòng bảng */}
-            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
+            {/* Cột 1 (7 cols): Cấu hình thể thức vòng bảng + Nhánh Knockout */}
+            <div className="lg:col-span-7 space-y-5">
+              {/* Thẻ Giai đoạn 1: Vòng bảng */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      {translate('stage1GroupStage')}
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                    {translate('totalScale', { count: numGroups * teamsPerGroup })}
+                  </span>
+                </div>
+
+                {/* 3 Steppers: Số bảng, Số đội mỗi bảng, Số đội đi tiếp */}
+                <div className="grid grid-cols-3 gap-3">
+                  {/* 1. SỐ BẢNG */}
+                  <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      {translate('numberOfGroups')}
+                    </span>
+                    <div className="my-1.5 flex items-center justify-between gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectPoolCount(Math.max(2, numGroups - 1))}
+                        disabled={numGroups <= 2}
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="font-bold text-base text-slate-900">{numGroups}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectPoolCount(Math.min(32, numGroups + 1))}
+                        disabled={numGroups >= 32}
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-center text-slate-400 font-medium truncate">
+                      {Array.from({ length: Math.min(numGroups, 4) }, (_, i) => String.fromCharCode(65 + i)).join(', ') + (numGroups > 4 ? '...' : '')}
+                    </p>
+                  </div>
+
+                  {/* 2. ĐỘI MỖI BẢNG */}
+                  <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      {translate('teamsPerGroup')}
+                    </span>
+                    <div className="my-1.5 flex items-center justify-between gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setTeamsPerGroup?.(Math.max(2, teamsPerGroup - 1))}
+                        disabled={teamsPerGroup <= 2}
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="font-bold text-base text-slate-900">{teamsPerGroup}</span>
+                      <button
+                        type="button"
+                        onClick={() => setTeamsPerGroup?.(Math.min(32, teamsPerGroup + 1))}
+                        disabled={teamsPerGroup >= 32}
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-center text-slate-400 font-medium">
+                      {teamsPerGroup} đội
+                    </p>
+                  </div>
+
+                  {/* 3. LẤY ĐI TIẾP */}
+                  <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {translate('teamsAdvancing')}
+                      </span>
+                      <span className="rounded bg-blue-100/80 px-1 py-0.2 text-[8px] font-bold text-blue-700">
+                        K.O
+                      </span>
+                    </div>
+                    <div className="my-1.5 flex items-center justify-between gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setTeamsAdvancing?.(Math.max(1, teamsAdvancing - 1))}
+                        disabled={teamsAdvancing <= 1}
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="font-bold text-base text-slate-900">{teamsAdvancing}</span>
+                      <button
+                        type="button"
+                        onClick={() => setTeamsAdvancing?.(Math.min(teamsPerGroup - 1, teamsAdvancing + 1))}
+                        disabled={teamsAdvancing >= teamsPerGroup - 1}
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-center text-slate-400 font-medium">
+                      Top {teamsAdvancing} mỗi bảng
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tóm tắt knockout */}
+                <div className="pt-1 border-t border-slate-100 text-xs">
+                  <span className="text-slate-600 font-semibold">
+                    {translate('toKnockoutSummary', {
+                      groups: numGroups,
+                      advancing: teamsAdvancing,
+                      total: numGroups * teamsAdvancing,
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Thẻ Giai đoạn 2: Nhánh loại trực tiếp (Knockout) */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    {translate('stage1GroupStage')}
+                    {translate('stage2Knockout')}
                   </h3>
                 </div>
-                <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                  {translate('totalScale', { count: numGroups * teamsPerGroup })}
+                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md">
+                  {translate('teamsCount', { count: dynamicAdvancingTotal })}
                 </span>
               </div>
 
-              {/* 3 Steppers: Số bảng, Số đội mỗi bảng, Số đội đi tiếp */}
-              <div className="grid grid-cols-3 gap-3">
-                {/* 1. SỐ BẢNG */}
-                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5">
+              {/* 2 Lựa chọn cấu hình Knockout: Thể thức & Xếp hạt giống */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. Thể thức Knockout */}
+                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {translate('numberOfGroups')}
+                    {translate('playoffFormat')}
                   </span>
-                  <div className="my-1.5 flex items-center justify-between gap-1">
+                  <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-lg border border-slate-200">
                     <button
                       type="button"
-                      onClick={() => handleSelectPoolCount(Math.max(2, numGroups - 1))}
-                      disabled={numGroups <= 2}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      onClick={() => setGskPlayoffType?.('SINGLE_ELIMINATION')}
+                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        gskPlayoffType === 'SINGLE_ELIMINATION'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      <Minus className="h-3 w-3" />
+                      {translate('singleElimination')}
                     </button>
-                    <span className="font-bold text-base text-slate-900">{numGroups}</span>
                     <button
                       type="button"
-                      onClick={() => handleSelectPoolCount(Math.min(32, numGroups + 1))}
-                      disabled={numGroups >= 32}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      onClick={() => setGskPlayoffType?.('DOUBLE_ELIMINATION')}
+                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        gskPlayoffType === 'DOUBLE_ELIMINATION'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      <Plus className="h-3 w-3" />
+                      {translate('doubleElimination')}
                     </button>
                   </div>
-                  <p className="text-[10px] text-center text-slate-400 font-medium truncate">
-                    {Array.from({ length: Math.min(numGroups, 4) }, (_, i) => String.fromCharCode(65 + i)).join(', ') + (numGroups > 4 ? '...' : '')}
-                  </p>
                 </div>
 
-                {/* 2. ĐỘI MỖI BẢNG */}
-                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5">
+                {/* 2. Cách xếp hạt giống */}
+                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {translate('teamsPerGroup')}
+                    {translate('seedingType')}
                   </span>
-                  <div className="my-1.5 flex items-center justify-between gap-1">
+                  <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-lg border border-slate-200">
                     <button
                       type="button"
-                      onClick={() => setTeamsPerGroup?.(Math.max(2, teamsPerGroup - 1))}
-                      disabled={teamsPerGroup <= 2}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      onClick={() => setGskSeedingType?.('SEEDED')}
+                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        gskSeedingType === 'SEEDED'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      <Minus className="h-3 w-3" />
+                      {translate('seededByElo')}
                     </button>
-                    <span className="font-bold text-base text-slate-900">{teamsPerGroup}</span>
                     <button
                       type="button"
-                      onClick={() => setTeamsPerGroup?.(Math.min(32, teamsPerGroup + 1))}
-                      disabled={teamsPerGroup >= 32}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                      onClick={() => setGskSeedingType?.('RANDOM')}
+                      className={`px-2 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        gskSeedingType === 'RANDOM'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-center text-slate-400 font-medium">
-                    {teamsPerGroup} đội
-                  </p>
-                </div>
-
-                {/* 3. LẤY ĐI TIẾP */}
-                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      {translate('teamsAdvancing')}
-                    </span>
-                    <span className="rounded bg-blue-100/80 px-1 py-0.2 text-[8px] font-bold text-blue-700">
-                      K.O
-                    </span>
-                  </div>
-                  <div className="my-1.5 flex items-center justify-between gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setTeamsAdvancing?.(Math.max(1, teamsAdvancing - 1))}
-                      disabled={teamsAdvancing <= 1}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="font-bold text-base text-slate-900">{teamsAdvancing}</span>
-                    <button
-                      type="button"
-                      onClick={() => setTeamsAdvancing?.(Math.min(teamsPerGroup - 1, teamsAdvancing + 1))}
-                      disabled={teamsAdvancing >= teamsPerGroup - 1}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
-                    >
-                      <Plus className="h-3 w-3" />
+                      {translate('randomSeeding')}
                     </button>
                   </div>
-                  <p className="text-[10px] text-center text-slate-400 font-medium">
-                    Top {teamsAdvancing} mỗi bảng
-                  </p>
                 </div>
               </div>
 
-              {/* Tóm tắt knockout */}
-              <div className="pt-1 border-t border-slate-100 text-xs">
-                <span className="text-slate-600 font-semibold">
-                  {translate('toKnockoutSummary', {
-                    groups: numGroups,
-                    advancing: teamsAdvancing,
-                    total: numGroups * teamsAdvancing,
-                  })}
-                </span>
-              </div>
+              {/* Tóm tắt các vòng đấu Knockout */}
+              {effectiveKnockoutRounds.length > 0 && (
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">
+                    {translate('knockoutStarts')}: <span className="font-bold text-slate-800">{effectiveKnockoutRounds[0]?.name}</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                    {effectiveKnockoutRounds.length} vòng đấu
+                  </span>
+                </div>
+              )}
             </div>
+          </div>
 
             {/* Cột 2 (5 cols): Cấu hình luật tính điểm (Tự do / Tiêu chuẩn) */}
             <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
@@ -680,7 +775,7 @@ export function BracketSetupModal({
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       {translate('sportPresets')}
                     </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {presets.map((preset) => {
                         const isSelected =
                           setsToWin === preset.setsToWin &&
@@ -691,13 +786,13 @@ export function BracketSetupModal({
                             key={preset.id}
                             type="button"
                             onClick={() => applyPreset(preset)}
-                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-1.5 ${
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
                               isSelected
                                 ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-400'
                                 : 'border-slate-200 bg-slate-50/50 hover:border-blue-300 hover:bg-white'
                             }`}
                           >
-                            <p className="text-xs font-bold text-slate-900 leading-snug truncate">{preset.label}</p>
+                            <p className="text-xs font-bold text-slate-900 leading-snug whitespace-nowrap">{preset.label}</p>
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white text-blue-700 border border-slate-200 shrink-0">
                               {translate('firstToSets', { sets: preset.setsToWin })} • {preset.pointsPerSet}p
                             </span>

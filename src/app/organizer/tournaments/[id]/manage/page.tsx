@@ -867,7 +867,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 className="group/title flex items-start gap-1.5 cursor-pointer rounded-lg p-1 -m-1 hover:bg-slate-100/80 transition-colors"
                 title="Bấm để sửa tên giải đấu"
               >
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug line-clamp-2 flex-1">
                   {tournament.name}
                 </h1>
                 <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 mt-1" />

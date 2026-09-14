@@ -329,8 +329,8 @@ export function Header() {
                 className={cn(
                   'flex h-full items-center border-b-2 text-sm transition-colors',
                   isActive(link.path)
-                    ? 'border-blue-600 font-semibold text-blue-600'
-                    : 'border-transparent font-medium text-slate-500 hover:text-blue-600',
+                    ? 'border-blue-600 font-bold text-blue-600'
+                    : 'border-transparent font-semibold text-slate-700 hover:text-blue-600',
                 )}
               >
                 {link.name}
@@ -741,10 +741,10 @@ export function Header() {
                 key={link.path}
                 href={link.path}
                 className={cn(
-                  'rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200',
+                  'rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200',
                   isActive(link.path)
-                    ? 'bg-blue-50 font-semibold text-blue-600'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600',
+                    ? 'bg-blue-50 font-bold text-blue-600'
+                    : 'text-slate-700 hover:bg-slate-50 hover:text-blue-600',
                 )}
               >
                 {link.name}

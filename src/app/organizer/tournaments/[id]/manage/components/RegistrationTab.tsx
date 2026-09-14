@@ -31,6 +31,9 @@ import {
   SlidersHorizontal,
   MoreVertical,
   Filter,
+  Clock,
+  AlertCircle,
+  XCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -639,7 +642,7 @@ export function RegistrationTab({
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-colors cursor-pointer"
+                        className="inline-flex h-9 items-center gap-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-colors cursor-pointer"
                       >
                         <Filter className="w-3.5 h-3.5 text-slate-400" />
                         <span>{currentOption.label}</span>
@@ -689,6 +692,7 @@ export function RegistrationTab({
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={registrationTranslate('searchTeamMembers')}
                   icon={<Search className="h-4 w-4" />}
+                  className="h-9 text-xs"
                 />
               </div>
 
@@ -698,7 +702,7 @@ export function RegistrationTab({
                   <button
                     type="button"
                     title="Tùy chọn thao tác"
-                    className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 shadow-2xs transition-colors cursor-pointer shrink-0"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 shadow-2xs transition-colors cursor-pointer shrink-0"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
@@ -888,34 +892,78 @@ export function RegistrationTab({
                           </div>
                         </td>
                         <td className="py-4 pr-4 align-top">
-                          <span className={[
-                            'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold whitespace-nowrap',
-                            getParticipantStatusClassName(participant.teamStatus),
-                          ].join(' ')}>
-                            {getParticipantStatusLabel(participant.teamStatus, participantStatusLabels)}
-                          </span>
+                          {(() => {
+                            const statusLabel = getParticipantStatusLabel(participant.teamStatus, participantStatusLabels);
+                            const status = participant.teamStatus;
+                            if (isParticipantApproved(status)) {
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs"
+                                  title={statusLabel}
+                                >
+                                  <Check className="w-4 h-4 stroke-[2.5]" />
+                                </span>
+                              );
+                            }
+                            if (isParticipantPendingApproval(status)) {
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs"
+                                  title={statusLabel}
+                                >
+                                  <Clock className="w-4 h-4 stroke-[2]" />
+                                </span>
+                              );
+                            }
+                            if (isParticipantPendingPartner(status)) {
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs"
+                                  title={statusLabel}
+                                >
+                                  <Users className="w-4 h-4 stroke-[2]" />
+                                </span>
+                              );
+                            }
+                            if (status === 'REJECTED' || status === 'KICKED' || status === 'DISQUALIFIED') {
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs"
+                                  title={statusLabel}
+                                >
+                                  <X className="w-4 h-4 stroke-[2.5]" />
+                                </span>
+                              );
+                            }
+                            return (
+                              <span
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs"
+                                title={statusLabel}
+                              >
+                                <AlertCircle className="w-4 h-4 stroke-[2]" />
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-4 text-right align-top">
                           <div className="inline-flex items-center justify-end">
                             {participant.isPaid ? (
                               <span
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-bold whitespace-nowrap"
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs"
                                 title={
                                   paymentAmount != null
                                     ? `Đã thanh toán: ${Number(paymentAmount).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} ${paymentCurrency}`
                                     : registrationTranslate('paidStatus')
                                 }
                               >
-                                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-                                <span>{registrationTranslate('paidStatus')}</span>
+                                <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
                               </span>
                             ) : (
                               <span
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200/80 text-xs font-medium whitespace-nowrap"
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 border border-slate-200 shadow-2xs"
                                 title={registrationTranslate('unpaidStatus')}
                               >
-                                <X className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
-                                <span>{registrationTranslate('unpaidStatus')}</span>
+                                <X className="w-4 h-4 stroke-[2]" />
                               </span>
                             )}
                           </div>

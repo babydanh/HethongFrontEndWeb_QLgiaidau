@@ -55,7 +55,7 @@ export function TournamentTypeChoiceModal({
             </div>
           </button>
 
-          {/* Advanced option */}
+          {/* Public quick option */}
           <button
             onClick={() => {
               router.push(`/organizer/tournaments/create?communityId=${communityId}`);

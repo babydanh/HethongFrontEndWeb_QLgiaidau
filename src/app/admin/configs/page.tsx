@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
-import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign, ShieldCheck } from 'lucide-react';
+import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign, ShieldCheck, Smartphone } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 
@@ -22,6 +22,22 @@ const PLATFORM_FEE_FIXED_AMOUNT_KEY = 'PLATFORM_FEE_LOW_ENTRY_FIXED_AMOUNT';
 const FEE_RULE_CONFIG_KEYS = [
   PLATFORM_FEE_THRESHOLD_KEY,
   PLATFORM_FEE_FIXED_AMOUNT_KEY,
+] as const;
+
+export const APP_ANDROID_LATEST_KEY = 'APP_ANDROID_LATEST_VERSION';
+export const APP_ANDROID_MIN_KEY = 'APP_ANDROID_MINIMUM_VERSION';
+export const APP_ANDROID_URL_KEY = 'APP_ANDROID_STORE_URL';
+export const APP_IOS_LATEST_KEY = 'APP_IOS_LATEST_VERSION';
+export const APP_IOS_MIN_KEY = 'APP_IOS_MINIMUM_VERSION';
+export const APP_IOS_URL_KEY = 'APP_IOS_STORE_URL';
+
+const APP_VERSION_CONFIG_KEYS = [
+  APP_ANDROID_LATEST_KEY,
+  APP_ANDROID_MIN_KEY,
+  APP_ANDROID_URL_KEY,
+  APP_IOS_LATEST_KEY,
+  APP_IOS_MIN_KEY,
+  APP_IOS_URL_KEY,
 ] as const;
 
 export default function ConfigsPage() {
@@ -60,6 +76,46 @@ export default function ConfigsPage() {
       updatedAt: '',
     },
   }), [translate]);
+
+  const defaultAppVersionConfigs = useMemo<Record<(typeof APP_VERSION_CONFIG_KEYS)[number], SystemConfig>>(() => ({
+    [APP_ANDROID_LATEST_KEY]: {
+      key: APP_ANDROID_LATEST_KEY,
+      value: '1.0.26',
+      description: 'Phiên bản Android mới nhất',
+      updatedAt: '',
+    },
+    [APP_ANDROID_MIN_KEY]: {
+      key: APP_ANDROID_MIN_KEY,
+      value: '1.0.23',
+      description: 'Phiên bản Android tối thiểu bắt buộc',
+      updatedAt: '',
+    },
+    [APP_ANDROID_URL_KEY]: {
+      key: APP_ANDROID_URL_KEY,
+      value: 'https://play.google.com/store/apps/details?id=vn.Sporto.quanlygiaidau',
+      description: 'Đường dẫn Google Play Store',
+      updatedAt: '',
+    },
+    [APP_IOS_LATEST_KEY]: {
+      key: APP_IOS_LATEST_KEY,
+      value: '1.0.6',
+      description: 'Phiên bản iOS mới nhất',
+      updatedAt: '',
+    },
+    [APP_IOS_MIN_KEY]: {
+      key: APP_IOS_MIN_KEY,
+      value: '1.0.0',
+      description: 'Phiên bản iOS tối thiểu bắt buộc',
+      updatedAt: '',
+    },
+    [APP_IOS_URL_KEY]: {
+      key: APP_IOS_URL_KEY,
+      value: 'https://apps.apple.com/vn/app/Sporto/id6795829694',
+      description: 'Đường dẫn Apple App Store',
+      updatedAt: '',
+    },
+  }), []);
+
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConfig, setSelectedConfig] = useState<SystemConfig | null>(null);
@@ -79,6 +135,26 @@ export default function ConfigsPage() {
   const platformFeeFixedAmountConfig =
     configs.find((config) => config.key === PLATFORM_FEE_FIXED_AMOUNT_KEY) ??
     defaultPlatformFeeConfigs[PLATFORM_FEE_FIXED_AMOUNT_KEY];
+
+  const androidLatestConfig =
+    configs.find((config) => config.key === APP_ANDROID_LATEST_KEY) ??
+    defaultAppVersionConfigs[APP_ANDROID_LATEST_KEY];
+  const androidMinConfig =
+    configs.find((config) => config.key === APP_ANDROID_MIN_KEY) ??
+    defaultAppVersionConfigs[APP_ANDROID_MIN_KEY];
+  const androidUrlConfig =
+    configs.find((config) => config.key === APP_ANDROID_URL_KEY) ??
+    defaultAppVersionConfigs[APP_ANDROID_URL_KEY];
+
+  const iosLatestConfig =
+    configs.find((config) => config.key === APP_IOS_LATEST_KEY) ??
+    defaultAppVersionConfigs[APP_IOS_LATEST_KEY];
+  const iosMinConfig =
+    configs.find((config) => config.key === APP_IOS_MIN_KEY) ??
+    defaultAppVersionConfigs[APP_IOS_MIN_KEY];
+  const iosUrlConfig =
+    configs.find((config) => config.key === APP_IOS_URL_KEY) ??
+    defaultAppVersionConfigs[APP_IOS_URL_KEY];
   const getConfigScope = (key: string) => {
     if (key.startsWith('TOURNAMENT_PUBLISH_FEE_')) return translate('scopePublishFee');
     if (key.startsWith('PLATFORM_FEE_PERCENTAGE_')) return translate('scopePlatformFee');
@@ -118,14 +194,21 @@ export default function ConfigsPage() {
             : [...currentConfigs, defaultPlatformFeeConfigs[key]],
         withSandbox,
       );
-      setConfigs(withFeeRules);
+      const withAppVersions = APP_VERSION_CONFIG_KEYS.reduce<SystemConfig[]>(
+        (currentConfigs, key) =>
+          currentConfigs.some((config) => config.key === key)
+            ? currentConfigs
+            : [...currentConfigs, defaultAppVersionConfigs[key]],
+        withFeeRules,
+      );
+      setConfigs(withAppVersions);
     } catch (error: unknown) {
       console.error(error);
       toast.error(translate('loadError'));
     } finally {
       setLoading(false);
     }
-  }, [defaultEntryFeePolicy, defaultSandboxConfig, defaultPlatformFeeConfigs, translate]);
+  }, [defaultEntryFeePolicy, defaultSandboxConfig, defaultPlatformFeeConfigs, defaultAppVersionConfigs, translate]);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -332,6 +415,138 @@ export default function ConfigsPage() {
         </div>
       </section>
 
+      <section className="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+        <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/40 p-6">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-blue-600 p-3 text-white shadow-sm">
+              <Smartphone className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">{translate('appVersionTitle')}</p>
+              <h3 className="mt-1 text-lg font-bold text-slate-900">{translate('appVersionHeading')}</h3>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">{translate('appVersionDescription')}</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-6 p-6 lg:grid-cols-2">
+          {/* Android Card */}
+          <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-5">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-3 w-3 rounded-full bg-emerald-500" />
+                  <h4 className="font-bold text-slate-900">{translate('androidPlatform')}</h4>
+                </div>
+                <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                  Google Play
+                </span>
+              </div>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-slate-200 shadow-sm">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500">{translate('latestVersionLabel')}</p>
+                    <p className="font-mono text-base font-bold text-blue-600">{androidLatestConfig.value}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{translate('latestVersionHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(androidLatestConfig)}
+                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    {translate('editVersion')}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-slate-200 shadow-sm">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500">{translate('minimumVersionLabel')}</p>
+                    <p className="font-mono text-base font-bold text-amber-600">{androidMinConfig.value}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{translate('minimumVersionHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(androidMinConfig)}
+                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    {translate('editVersion')}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-slate-200 shadow-sm">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <p className="text-xs font-medium text-slate-500">{translate('storeUrlLabel')}</p>
+                    <p className="truncate font-mono text-xs text-slate-600 mt-0.5">{androidUrlConfig.value}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(androidUrlConfig)}
+                    className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    {translate('editVersion')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* iOS Card */}
+          <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-5">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-3 w-3 rounded-full bg-blue-500" />
+                  <h4 className="font-bold text-slate-900">{translate('iosPlatform')}</h4>
+                </div>
+                <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                  App Store
+                </span>
+              </div>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-slate-200 shadow-sm">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500">{translate('latestVersionLabel')}</p>
+                    <p className="font-mono text-base font-bold text-blue-600">{iosLatestConfig.value}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{translate('latestVersionHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(iosLatestConfig)}
+                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    {translate('editVersion')}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-slate-200 shadow-sm">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500">{translate('minimumVersionLabel')}</p>
+                    <p className="font-mono text-base font-bold text-amber-600">{iosMinConfig.value}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{translate('minimumVersionHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(iosMinConfig)}
+                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    {translate('editVersion')}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-slate-200 shadow-sm">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <p className="text-xs font-medium text-slate-500">{translate('storeUrlLabel')}</p>
+                    <p className="truncate font-mono text-xs text-slate-600 mt-0.5">{iosUrlConfig.value}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(iosUrlConfig)}
+                    className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    {translate('editVersion')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Main configurations card */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -356,7 +571,7 @@ export default function ConfigsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {configs.filter((config) => ![DEFAULT_ENTRY_FEE_POLICY_KEY, PAYMENT_SANDBOX_CONFIG_KEY, ...FEE_RULE_CONFIG_KEYS].includes(config.key)).map((config) => (
+                {configs.filter((config) => ![DEFAULT_ENTRY_FEE_POLICY_KEY, PAYMENT_SANDBOX_CONFIG_KEY, ...FEE_RULE_CONFIG_KEYS, ...APP_VERSION_CONFIG_KEYS].includes(config.key as any)).map((config) => (
                   <tr key={config.key} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6 font-mono text-blue-600 font-semibold">{config.key}</td>
                     <td className="p-4 font-semibold text-slate-800">{config.value}</td>

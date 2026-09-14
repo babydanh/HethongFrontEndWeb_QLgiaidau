@@ -1328,7 +1328,6 @@ export default function HomePage() {
           <div className="flex items-center gap-1.5 font-medium text-slate-600 uppercase tracking-wider truncate">
             <span className="font-bold text-slate-700">{roundLabel || translate('roundFallback')}</span>
             {formatText && <span className="text-slate-500">• {formatText}</span>}
-            {courtText && <span className="text-slate-500 font-normal normal-case">| {courtText}</span>}
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0 font-bold text-slate-500 text-xs">
@@ -1466,7 +1465,6 @@ export default function HomePage() {
           <div className="flex items-center gap-2 font-bold text-slate-700 uppercase tracking-wider truncate">
             <span>{roundLabel || translate('roundFallback')}</span>
             {formatText && <span>• {formatText}</span>}
-            {courtText && <span className="text-slate-500 font-normal normal-case">| {courtText}</span>}
           </div>
 
           {/* Time Badge (e.g. 14:30) */}

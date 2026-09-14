@@ -86,3 +86,15 @@ test('keeps advanced product separate even with Lite scoring', () => {
   assert.equal(isSuperLiteTournament(advanced), false);
   assert.equal(isClubSuperLiteTournament(advanced), false);
 });
+
+test('fails closed when an explicit false flag conflicts with legacy data', () => {
+  const conflicting = {
+    isLite: false,
+    communityId: 'club-1',
+    tournamentConfig: { mode: 'LITE', hideAdvancedSettings: true },
+  };
+
+  assert.equal(isLiteTournament(conflicting), false);
+  assert.equal(isSuperLiteTournament(conflicting), false);
+  assert.equal(isClubSuperLiteTournament(conflicting), false);
+});

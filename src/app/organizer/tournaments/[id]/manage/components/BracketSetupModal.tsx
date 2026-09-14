@@ -744,8 +744,8 @@ export function BracketSetupModal({
                           <label className="text-[10px] font-bold text-slate-500 uppercase">{translate('maxDeucePoints')}</label>
                           <input
                             type="number"
-                            value={maxDeucePoints ?? ''}
-                            onChange={(e) => setMaxDeucePoints?.(e.target.value ? Number(e.target.value) : undefined)}
+                            value={maxDeucePoints || ''}
+                            onChange={(e) => setMaxDeucePoints?.(e.target.value ? Number(e.target.value) : 0)}
                             placeholder={translate('noDeuceLimit')}
                             className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium bg-white text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
                           />

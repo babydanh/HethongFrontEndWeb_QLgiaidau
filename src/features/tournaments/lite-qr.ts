@@ -20,8 +20,12 @@ type TournamentProductShape = {
 export function isLiteTournament(t: TournamentProductShape | null | undefined): boolean {
   if (!t) return false;
   const cfg = t.tournamentConfig;
-  if (t.isLite === true) return true;
-  if (cfg?.isLite === true) return true;
+  const hasCanonicalLiteFlag =
+    Object.prototype.hasOwnProperty.call(t, 'isLite') ||
+    Object.prototype.hasOwnProperty.call(cfg ?? {}, 'isLite');
+  if (hasCanonicalLiteFlag) {
+    return t.isLite === true || cfg?.isLite === true;
+  }
   // Legacy records created before the explicit isLite flag are only Lite when
   // the old UI marker is present as well. `mode`/`scoringMode` alone describe
   // scoring behavior and may also be used by full/advanced tournaments.
@@ -38,12 +42,11 @@ export function isLiteTournament(t: TournamentProductShape | null | undefined): 
  * nhưng không phải Siêu Lite.
  */
 export function isSuperLiteTournament(t: TournamentProductShape | null | undefined): boolean {
-  if (!t || t.tournamentConfig?.hideAdvancedSettings !== true) return false;
-
-  const cfg = t.tournamentConfig;
-  const hasExplicitLiteFlag = t.isLite === true || cfg?.isLite === true;
-  const hasLegacyLiteMarker = cfg?.mode === 'LITE';
-  return hasExplicitLiteFlag || hasLegacyLiteMarker;
+  return Boolean(
+    t &&
+      t.tournamentConfig?.hideAdvancedSettings === true &&
+      isLiteTournament(t),
+  );
 }
 
 /**

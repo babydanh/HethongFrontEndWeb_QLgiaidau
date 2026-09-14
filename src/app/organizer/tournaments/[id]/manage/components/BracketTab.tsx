@@ -1610,12 +1610,26 @@ export function BracketTab({
           bracketType={bracketType}
           selectedDivision={divisions?.find((d) => d.id === selectedDivisionId) ?? null}
           participants={participants}
+          sportRuleKind={sportRuleKind}
+          setSportRuleKind={setSportRuleKind}
+          isLiteMode={isLiteMode}
+          setIsLiteMode={setIsLiteMode}
+          setsToWin={setsToWin}
+          setSetsToWin={setSetsToWin}
+          pointsPerSet={pointsPerSet}
+          setPointsPerSet={setPointsPerSet}
+          winByTwo={winByTwo}
+          setWinByTwo={setWinByTwo}
+          maxDeucePoints={maxDeucePoints}
+          setMaxDeucePoints={setMaxDeucePoints}
           numGroups={numGroups}
           setNumGroups={setNumGroups}
           teamsPerGroup={teamsPerGroup}
           setTeamsPerGroup={setTeamsPerGroup}
           teamsAdvancing={teamsAdvancing}
           setTeamsAdvancing={setTeamsAdvancing}
+          gskPlayoffType={gskPlayoffType}
+          setGskPlayoffType={setGskPlayoffType}
           gskSeedingType={gskSeedingType}
           setGskSeedingType={setGskSeedingType}
           isSubmitting={isGeneratingBracket}

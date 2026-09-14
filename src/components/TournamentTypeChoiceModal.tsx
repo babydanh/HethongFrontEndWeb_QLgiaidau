@@ -26,8 +26,8 @@ export function TournamentTypeChoiceModal({
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <ModalContent className="sm:max-w-md bg-white rounded-lg p-0">
-        <ModalHeader className="p-6 pb-2">
+      <ModalContent className="sm:max-w-md bg-white rounded-xl p-0">
+        <ModalHeader className="p-5 pb-2">
           <ModalTitle className="text-xl font-semibold text-center">
             {translate('communityTournamentCreateButton')}
           </ModalTitle>
@@ -36,14 +36,14 @@ export function TournamentTypeChoiceModal({
           </p>
         </ModalHeader>
 
-        <div className="p-6 pt-4 space-y-3">
-          {/* Lite option */}
+        <div className="p-5 pt-3 space-y-2.5">
+          {/* Quick option */}
           <button
             onClick={() => {
               router.push(`/communities/${communityId}/create-lite`);
               onClose();
             }}
-            className="w-full rounded-lg border border-slate-200 p-4 text-left hover:border-emerald-400 hover:shadow-sm transition-all group bg-white"
+            className="w-full rounded-lg border border-slate-200 p-3 text-left hover:border-emerald-400 hover:shadow-sm transition-all group bg-white"
           >
             <div>
               <h3 className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
@@ -61,7 +61,7 @@ export function TournamentTypeChoiceModal({
               router.push(`/organizer/tournaments/create?communityId=${communityId}`);
               onClose();
             }}
-            className="w-full rounded-lg border border-slate-200 p-4 text-left hover:border-blue-400 hover:shadow-sm transition-all group bg-white"
+            className="w-full rounded-lg border border-slate-200 p-3 text-left hover:border-blue-400 hover:shadow-sm transition-all group bg-white"
           >
             <div>
               <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
@@ -79,25 +79,20 @@ export function TournamentTypeChoiceModal({
               router.push(`/communities/${communityId}/match-sessions/create`);
               onClose();
             }}
-            className="w-full rounded-lg border border-slate-200 p-4 text-left hover:border-teal-400 hover:shadow-sm transition-all group bg-white"
+            className="w-full rounded-lg border border-slate-200 p-3 text-left hover:border-teal-400 hover:shadow-sm transition-all group bg-white"
           >
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
-                  Buổi Giao Lưu CLB
-                </h3>
-                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-teal-100 text-teal-800 rounded">
-                  GIAO LƯU
-                </span>
-              </div>
+              <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
+                {translate('communitySocialMatchButton')}
+              </h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                Ghép trận tự do, không nhánh đấu, có tính ELO CLB hoặc giao lưu vui vẻ
+                {translate('communitySocialMatchDescription')}
               </p>
             </div>
           </button>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-5 pb-5">
           <button
             onClick={onClose}
             className="w-full py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all"

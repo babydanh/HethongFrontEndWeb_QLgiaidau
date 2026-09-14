@@ -301,6 +301,15 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [tempFacebook, setTempFacebook] = useState('');
   const [isSavingContact, setIsSavingContact] = useState(false);
 
+  // Inline editing state for contact card items
+  const [editingContactKey, setEditingContactKey] = useState<string | null>(null);
+  const [editingContactValue, setEditingContactValue] = useState<string>('');
+  const [isSavingContactItem, setIsSavingContactItem] = useState(false);
+  const [isAddingChannel, setIsAddingChannel] = useState(false);
+  const [newChannelType, setNewChannelType] = useState('zalo');
+  const [newChannelCustomLabel, setNewChannelCustomLabel] = useState('');
+  const [newChannelValue, setNewChannelValue] = useState('');
+
   // Quick edit state for Entry Fee
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [tempEntryFee, setTempEntryFee] = useState(0);
@@ -381,6 +390,76 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error(getErrorMessage(err));
     } finally {
       setIsSavingContact(false);
+    }
+  };
+
+  const handleSaveInlineContactItem = async (key: string, value: string) => {
+    setIsSavingContactItem(true);
+    try {
+      const trimmed = value.trim();
+      const nextContact: Record<string, any> = { ...(s.contactInfo || {}) };
+      if (!trimmed) {
+        delete nextContact[key];
+      } else {
+        nextContact[key] = trimmed;
+      }
+      s.setContactInfo(nextContact);
+      await tournamentsApi.updateTournament(id, { contactInfo: nextContact });
+      toast.success(trimmed ? `Đã lưu ${key}!` : `Đã xóa ${key}!`);
+      setEditingContactKey(null);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingContactItem(false);
+    }
+  };
+
+  const handleDeleteInlineContactItem = async (key: string) => {
+    setIsSavingContactItem(true);
+    try {
+      const nextContact: Record<string, any> = { ...(s.contactInfo || {}) };
+      delete nextContact[key];
+      s.setContactInfo(nextContact);
+      await tournamentsApi.updateTournament(id, { contactInfo: nextContact });
+      toast.success('Đã xóa thông tin liên hệ!');
+      if (editingContactKey === key) setEditingContactKey(null);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingContactItem(false);
+    }
+  };
+
+  const handleAddNewContactChannel = async () => {
+    const finalKey = (newChannelType === 'custom' ? newChannelCustomLabel.trim() : newChannelType).toLowerCase();
+    const finalVal = newChannelValue.trim();
+    if (!finalKey) {
+      toast.error('Vui lòng nhập tên loại liên hệ!');
+      return;
+    }
+    if (!finalVal) {
+      toast.error('Vui lòng nhập số điện thoại hoặc link liên hệ!');
+      return;
+    }
+    setIsSavingContactItem(true);
+    try {
+      const nextContact: Record<string, any> = {
+        ...(s.contactInfo || {}),
+        [finalKey]: finalVal,
+      };
+      s.setContactInfo(nextContact);
+      await tournamentsApi.updateTournament(id, { contactInfo: nextContact });
+      toast.success(`Đã thêm ${finalKey} thành công!`);
+      setIsAddingChannel(false);
+      setNewChannelValue('');
+      setNewChannelCustomLabel('');
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingContactItem(false);
     }
   };
 
@@ -1205,91 +1284,290 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   };
 
   const renderContactCard = () => {
-    const hasContact = Boolean(
-      tournament.contactInfo &&
-      Object.values(tournament.contactInfo).some((v) => typeof v === 'string' && v.trim().length > 0)
+    const contactMap = tournament.contactInfo || {};
+    const socialEntries = Object.entries(contactMap).filter(
+      ([key]) => key !== 'phone' && key !== 'email'
     );
+    const hasAnyContact = Boolean(
+      (contactMap.phone && contactMap.phone.trim()) ||
+      (contactMap.email && contactMap.email.trim()) ||
+      socialEntries.length > 0
+    );
+
+    const renderItemRow = (
+      key: string,
+      label: string,
+      value: string | undefined,
+      IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>>,
+      iconColor: string,
+      placeholder: string
+    ) => {
+      const isEditing = editingContactKey === key;
+      const isUrl = typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'));
+
+      if (isEditing) {
+        return (
+          <div key={key} className="bg-blue-50/50 p-2 rounded-lg border border-blue-200 animate-in fade-in duration-150 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-blue-800 flex items-center gap-1">
+                <IconComponent className={`w-3.5 h-3.5 ${iconColor}`} />
+                {label}
+              </span>
+              <span className="text-[10px] text-slate-400">Enter để lưu, Esc để hủy</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                autoFocus
+                value={editingContactValue}
+                onChange={(e) => setEditingContactValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveInlineContactItem(key, editingContactValue);
+                  } else if (e.key === 'Escape') {
+                    setEditingContactKey(null);
+                  }
+                }}
+                placeholder={placeholder}
+                className="flex-1 text-xs bg-white border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:outline-hidden font-medium text-slate-800"
+              />
+              <button
+                type="button"
+                onClick={() => handleSaveInlineContactItem(key, editingContactValue)}
+                disabled={isSavingContactItem}
+                className="p-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold shrink-0 cursor-pointer"
+                title="Lưu"
+              >
+                {isSavingContactItem ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingContactKey(null)}
+                className="p-1 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded text-xs shrink-0 cursor-pointer"
+                title="Hủy"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      if (!value) return null;
+
+      return (
+        <div
+          key={key}
+          onDoubleClick={() => {
+            setEditingContactKey(key);
+            setEditingContactValue(value || '');
+          }}
+          className="group/item flex items-center justify-between gap-2 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/70 transition-colors cursor-pointer"
+          title="Nhấp đúp (Double-click) để chỉnh sửa trực tiếp"
+        >
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
+            <span className="text-xs font-bold text-slate-500 capitalize shrink-0">{label}:</span>
+            {isUrl ? (
+              <a
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs font-semibold text-blue-600 hover:underline truncate"
+              >
+                {value}
+              </a>
+            ) : (
+              <span className="text-xs font-semibold text-slate-700 truncate">{value}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingContactKey(key);
+                setEditingContactValue(value || '');
+              }}
+              className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+              title="Sửa"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteInlineContactItem(key);
+              }}
+              className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+              title="Xóa"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      );
+    };
 
     return (
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">THÔNG TIN LIÊN HỆ</span>
-          <button
-            type="button"
-            onClick={() => {
-              setTempPhone(tournament.contactInfo?.phone || '');
-              setTempEmail(tournament.contactInfo?.email || '');
-              setTempZalo(tournament.contactInfo?.zalo || '');
-              setTempFacebook(tournament.contactInfo?.facebook || '');
-              setIsContactModalOpen(true);
-            }}
-            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
-          >
-            <Pencil className="w-3 h-3" />
-            <span>{hasContact ? 'Chỉnh sửa' : 'Thêm liên hệ'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingChannel(true);
+                setNewChannelType('zalo');
+                setNewChannelValue('');
+                setNewChannelCustomLabel('');
+              }}
+              className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Thêm</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTempPhone(tournament.contactInfo?.phone || '');
+                setTempEmail(tournament.contactInfo?.email || '');
+                setTempZalo(tournament.contactInfo?.zalo || '');
+                setTempFacebook(tournament.contactInfo?.facebook || '');
+                setIsContactModalOpen(true);
+              }}
+              className="text-[11px] font-medium text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer"
+              title="Mở tất cả cấu hình liên hệ"
+            >
+              <Pencil className="w-2.5 h-2.5" />
+            </button>
+          </div>
         </div>
 
-        {hasContact ? (
-          <div className="space-y-2.5">
-            {tournament.contactInfo?.phone && (
-              <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="text-xs font-semibold text-slate-700">{tournament.contactInfo.phone}</span>
-              </div>
-            )}
-            {tournament.contactInfo?.email && (
-              <div className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="text-xs font-semibold text-slate-700 truncate">{tournament.contactInfo.email}</span>
-              </div>
-            )}
-            {Object.entries(tournament.contactInfo || {})
-              .filter(([key]) => key !== 'phone' && key !== 'email')
-              .map(([key, val]) => {
-                if (!val) return null;
-                const lowercaseKey = key.toLowerCase();
-                const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
-                let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
-                let iconColor = 'text-slate-400';
-                if (lowercaseKey.includes('facebook') || lowercaseKey.includes('fb')) {
-                  IconComponent = FacebookIcon;
-                  iconColor = 'text-blue-600';
-                } else if (lowercaseKey.includes('instagram')) {
-                  IconComponent = InstagramIcon;
-                  iconColor = 'text-pink-600';
-                } else if (lowercaseKey.includes('zalo')) {
-                  IconComponent = ZaloIcon;
-                  iconColor = 'text-blue-600';
-                }
-                return (
-                  <div key={key} className="flex items-center gap-2.5">
-                    <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
-                    <span className="text-xs font-bold text-slate-500 capitalize">{key}:</span>
-                    {isUrl ? (
-                      <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
-                        {val}
-                      </a>
-                    ) : (
-                      <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
-                    )}
-                  </div>
-                );
-              })}
+        {hasAnyContact ? (
+          <div className="space-y-1">
+            {/* Phone */}
+            {renderItemRow('phone', 'SĐT', contactMap.phone, Phone, 'text-emerald-600', '0987654321')}
+
+            {/* Email */}
+            {renderItemRow('email', 'Email', contactMap.email, Mail, 'text-amber-600', 'btc.giaidau@gmail.com')}
+
+            {/* Social channels */}
+            {socialEntries.map(([key, val]) => {
+              if (!val) return null;
+              const lowercaseKey = key.toLowerCase();
+              let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
+              let iconColor = 'text-slate-400';
+              if (lowercaseKey.includes('facebook') || lowercaseKey.includes('fb')) {
+                IconComponent = FacebookIcon;
+                iconColor = 'text-blue-600';
+              } else if (lowercaseKey.includes('instagram')) {
+                IconComponent = InstagramIcon;
+                iconColor = 'text-pink-600';
+              } else if (lowercaseKey.includes('zalo')) {
+                IconComponent = ZaloIcon;
+                iconColor = 'text-blue-600';
+              }
+              return renderItemRow(key, key, val as string, IconComponent, iconColor, 'Nhập đường dẫn / giá trị...');
+            })}
           </div>
         ) : (
           <div
             onClick={() => {
-              setTempPhone(tournament.contactInfo?.phone || '');
-              setTempEmail(tournament.contactInfo?.email || '');
-              setTempZalo(tournament.contactInfo?.zalo || '');
-              setTempFacebook(tournament.contactInfo?.facebook || '');
-              setIsContactModalOpen(true);
+              setIsAddingChannel(true);
+              setNewChannelType('phone');
             }}
             className="border border-dashed border-slate-200 rounded-lg p-3 text-center cursor-pointer hover:bg-blue-50/50 hover:border-blue-300 transition-colors"
           >
-            <p className="text-xs font-bold text-slate-600">+ Bấm để thêm SĐT, Zalo, Facebook &amp; Email</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Giúp vận động viên dễ dàng liên lạc khi cần hỗ trợ</p>
+            <p className="text-xs font-bold text-slate-600">+ Bấm để thêm SĐT, Email, Zalo, Facebook...</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Nhấp đúp vào bất kỳ dòng nào để sửa trực tiếp</p>
+          </div>
+        )}
+
+        {/* Inline Add Channel Form */}
+        {isAddingChannel && (
+          <div className="bg-slate-50 border border-blue-200 rounded-lg p-2.5 space-y-2 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-blue-800">+ Thêm liên hệ mới</span>
+              <button
+                type="button"
+                onClick={() => setIsAddingChannel(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-1.5">
+              <div className="flex gap-1.5">
+                <select
+                  value={newChannelType}
+                  onChange={(e) => setNewChannelType(e.target.value)}
+                  className="text-xs border border-slate-300 rounded px-2 py-1 bg-white font-semibold text-slate-700 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                >
+                  <option value="phone">Số điện thoại</option>
+                  <option value="email">Email</option>
+                  <option value="zalo">Zalo</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">Tiktok</option>
+                  <option value="website">Website</option>
+                  <option value="custom">Tùy chọn...</option>
+                </select>
+                {newChannelType === 'custom' && (
+                  <input
+                    type="text"
+                    placeholder="Tên kênh..."
+                    value={newChannelCustomLabel}
+                    onChange={(e) => setNewChannelCustomLabel(e.target.value)}
+                    className="flex-1 text-xs border border-slate-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                )}
+              </div>
+              <input
+                type="text"
+                autoFocus
+                placeholder={
+                  newChannelType === 'phone'
+                    ? 'Nhập số điện thoại...'
+                    : newChannelType === 'email'
+                    ? 'Nhập email liên hệ...'
+                    : newChannelType === 'zalo'
+                    ? 'SĐT Zalo hoặc link nhóm...'
+                    : 'https://...'
+                }
+                value={newChannelValue}
+                onChange={(e) => setNewChannelValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddNewContactChannel();
+                  } else if (e.key === 'Escape') {
+                    setIsAddingChannel(false);
+                  }
+                }}
+                className="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              />
+            </div>
+            <div className="flex justify-end gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsAddingChannel(false)}
+                className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-200 rounded font-medium cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleAddNewContactChannel}
+                disabled={isSavingContactItem}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-1 cursor-pointer"
+              >
+                {isSavingContactItem ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Thêm'}
+              </button>
+            </div>
           </div>
         )}
 

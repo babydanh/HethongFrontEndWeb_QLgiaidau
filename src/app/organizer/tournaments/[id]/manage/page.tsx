@@ -53,6 +53,12 @@ import ShareModal from '@/components/common/ShareModal';
 import { triggerShare } from '@/utils/share.util';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 
+const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  </svg>
+);
+
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
@@ -291,6 +297,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [tempPhone, setTempPhone] = useState('');
   const [tempEmail, setTempEmail] = useState('');
+  const [tempZalo, setTempZalo] = useState('');
+  const [tempFacebook, setTempFacebook] = useState('');
   const [isSavingContact, setIsSavingContact] = useState(false);
 
   // Quick edit state for Entry Fee
@@ -349,11 +357,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const handleSaveContactDirect = async () => {
     setIsSavingContact(true);
     try {
-      const nextContact = {
+      const nextContact: Record<string, any> = {
         ...(s.contactInfo || {}),
         phone: tempPhone.trim(),
         email: tempEmail.trim(),
+        zalo: tempZalo.trim(),
+        facebook: tempFacebook.trim(),
       };
+      // Clean empty keys if necessary
+      if (!nextContact.zalo) delete nextContact.zalo;
+      if (!nextContact.facebook) delete nextContact.facebook;
+      if (!nextContact.phone) delete nextContact.phone;
+      if (!nextContact.email) delete nextContact.email;
+
       s.setContactInfo(nextContact);
       await tournamentsApi.updateTournament(id, {
         contactInfo: nextContact,
@@ -1203,6 +1219,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             onClick={() => {
               setTempPhone(tournament.contactInfo?.phone || '');
               setTempEmail(tournament.contactInfo?.email || '');
+              setTempZalo(tournament.contactInfo?.zalo || '');
+              setTempFacebook(tournament.contactInfo?.facebook || '');
               setIsContactModalOpen(true);
             }}
             className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
@@ -1234,7 +1252,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
                 let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
                 let iconColor = 'text-slate-400';
-                if (lowercaseKey.includes('instagram')) {
+                if (lowercaseKey.includes('facebook') || lowercaseKey.includes('fb')) {
+                  IconComponent = FacebookIcon;
+                  iconColor = 'text-blue-600';
+                } else if (lowercaseKey.includes('instagram')) {
                   IconComponent = InstagramIcon;
                   iconColor = 'text-pink-600';
                 } else if (lowercaseKey.includes('zalo')) {
@@ -1244,7 +1265,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 return (
                   <div key={key} className="flex items-center gap-2.5">
                     <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
-                    <span className="text-xs font-bold text-slate-500">{key}:</span>
+                    <span className="text-xs font-bold text-slate-500 capitalize">{key}:</span>
                     {isUrl ? (
                       <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
                         {val}
@@ -1261,11 +1282,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             onClick={() => {
               setTempPhone(tournament.contactInfo?.phone || '');
               setTempEmail(tournament.contactInfo?.email || '');
+              setTempZalo(tournament.contactInfo?.zalo || '');
+              setTempFacebook(tournament.contactInfo?.facebook || '');
               setIsContactModalOpen(true);
             }}
             className="border border-dashed border-slate-200 rounded-lg p-3 text-center cursor-pointer hover:bg-blue-50/50 hover:border-blue-300 transition-colors"
           >
-            <p className="text-xs font-bold text-slate-600">+ Bấm để thêm SĐT &amp; Email liên hệ của Ban tổ chức</p>
+            <p className="text-xs font-bold text-slate-600">+ Bấm để thêm SĐT, Zalo, Facebook &amp; Email</p>
             <p className="text-[10px] text-slate-400 mt-0.5">Giúp vận động viên dễ dàng liên lạc khi cần hỗ trợ</p>
           </div>
         )}
@@ -2449,7 +2472,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               Thông tin liên hệ Ban tổ chức
             </ModalTitle>
           </ModalHeader>
-          <div className="space-y-4 mt-4">
+          <div className="space-y-3.5 mt-4">
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Số điện thoại / Hotline</label>
               <input
@@ -2470,23 +2493,62 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <Button
+            <div>
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1">
+                <ZaloIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span>Số điện thoại Zalo hoặc link nhóm Zalo</span>
+              </label>
+              <input
+                type="text"
+                value={tempZalo}
+                onChange={(e) => setTempZalo(e.target.value)}
+                placeholder="VD: 0987654321 hoặc https://zalo.me/g/..."
+                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1">
+                <FacebookIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span>Link Fanpage / Nhóm Facebook</span>
+              </label>
+              <input
+                type="url"
+                value={tempFacebook}
+                onChange={(e) => setTempFacebook(e.target.value)}
+                placeholder="VD: https://facebook.com/..."
+                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+              <button
                 type="button"
-                variant="outline"
-                onClick={() => setIsContactModalOpen(false)}
-                className="text-xs"
+                onClick={() => {
+                  setIsContactModalOpen(false);
+                  handleChecklistNavigate({ tab: 'basic', basicSubTab: 'contact', elementId: 'manage-contact-info-section' });
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
               >
-                Hủy
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSaveContactDirect}
-                disabled={isSavingContact}
-                className="bg-blue-600 text-white text-xs font-bold px-4"
-              >
-                {isSavingContact ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu liên hệ'}
-              </Button>
+                Cài đặt thêm mạng xã hội khác &rarr;
+              </button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="text-xs"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSaveContactDirect}
+                  disabled={isSavingContact}
+                  className="bg-blue-600 text-white text-xs font-bold px-4 cursor-pointer"
+                >
+                  {isSavingContact ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu liên hệ'}
+                </Button>
+              </div>
             </div>
           </div>
         </ModalContent>

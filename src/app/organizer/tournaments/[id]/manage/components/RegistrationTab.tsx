@@ -29,7 +29,15 @@ import {
   ChevronUp,
   Settings,
   SlidersHorizontal,
+  MoreVertical,
+  Filter,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/DropdownMenu';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Division, tournamentsApi } from '@/features/tournaments/api';
 import { formatDate } from '@/utils/format';
@@ -607,101 +615,137 @@ export function RegistrationTab({
         </div>
 
         <div id="manage-participants-section" className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 max-w-full overflow-hidden transition-all">
-          {/* Header & Quick Action Buttons */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h3 className="font-bold text-slate-900 text-base sm:text-lg">{registrationTranslate('approvalHeading')}</h3>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsWildcardModalOpen(true)}
-                disabled={registrationLocked}
-                className="border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <UserPlus className="h-3.5 w-3.5 text-blue-600" />
-                {registrationTranslate('assignWildcard')}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void handleAutoSeed()}
-                disabled={isAutoSeeding || registrationLocked}
-                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                {isAutoSeeding ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
-                ) : (
-                  <Shuffle className="h-3.5 w-3.5 text-slate-500" />
-                )}
-                {isAutoSeeding ? registrationTranslate('seedingInProgress') : registrationTranslate('autoSeed')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => downloadParticipantsTemplateExcel(locale)}
-                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs"
-              >
-                <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
-                {registrationTranslate('excelTemplate')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setIsSmartImportOpen(true)}
-                disabled={registrationLocked}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                {registrationTranslate('importExcel')}
-              </Button>
-            </div>
-          </div>
+          {/* Compact Control Bar: Filter Dropdown on Left, Search & 3-dots Actions on Right */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
+            {/* Left: Heading + Vertical Dropdown Filter (Facebook-style) */}
+            <div className="flex items-center gap-3">
+              <h3 className="font-bold text-slate-900 text-base sm:text-lg shrink-0">
+                {registrationTranslate('approvalHeading')}
+              </h3>
 
-          {/* Sleek Search & Status Filter Pills with embedded counts */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
-            <div className="flex-1 min-w-[200px]">
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={registrationTranslate('searchTeamMembers')}
-                icon={<Search className="h-4 w-4" />}
-              />
+              {(() => {
+                const filterOptions = [
+                  { value: 'ALL', label: registrationTranslate('filterAll'), count: participantSummary.total },
+                  { value: 'PENDING', label: registrationTranslate('filterPending'), count: participantSummary.pending },
+                  { value: 'COMPLETE', label: registrationTranslate('filterApproved'), count: participantSummary.approved },
+                  { value: 'UNPAID', label: registrationTranslate('unpaidStatus'), count: participantSummary.unpaid },
+                  { value: 'REJECTED', label: registrationTranslate('filterRejected'), count: participantSummary.rejected },
+                ] as const;
+
+                const currentOption = filterOptions.find((opt) => opt.value === filter) || filterOptions[0];
+
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-colors cursor-pointer"
+                      >
+                        <Filter className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{currentOption.label}</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                          {currentOption.count}
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
+                      {filterOptions.map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.value}
+                          onClick={() => setFilter(opt.value as typeof filter)}
+                          className={cn(
+                            'flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors',
+                            filter === opt.value
+                              ? 'bg-blue-50 text-blue-700 font-bold'
+                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            {filter === opt.value && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            <span className={filter === opt.value ? 'font-bold' : 'font-medium'}>{opt.label}</span>
+                          </span>
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                              filter === opt.value ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                            )}
+                          >
+                            {opt.count}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })()}
             </div>
-            <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
-              {[
-                { value: 'ALL', label: registrationTranslate('filterAll'), count: participantSummary.total },
-                { value: 'PENDING', label: registrationTranslate('filterPending'), count: participantSummary.pending },
-                { value: 'COMPLETE', label: registrationTranslate('filterApproved'), count: participantSummary.approved },
-                { value: 'UNPAID', label: registrationTranslate('unpaidStatus'), count: participantSummary.unpaid },
-                { value: 'REJECTED', label: registrationTranslate('filterRejected'), count: participantSummary.rejected },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setFilter(option.value as typeof filter)}
-                  className={[
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all cursor-pointer select-none',
-                    filter === option.value
-                      ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-600 hover:text-slate-900 border border-slate-200/50',
-                  ].join(' ')}
-                >
-                  <span>{option.label}</span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      filter === option.value
-                        ? 'bg-white/20 text-white'
-                        : 'bg-white text-slate-700 border border-slate-200/60'
-                    }`}
+
+            {/* Right: Search Input + 3-Dots Action Menu */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="w-full sm:w-64 md:w-72">
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={registrationTranslate('searchTeamMembers')}
+                  icon={<Search className="h-4 w-4" />}
+                />
+              </div>
+
+              {/* 3-dots Dropdown Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    title="Tùy chọn thao tác"
+                    className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 shadow-2xs transition-colors cursor-pointer shrink-0"
                   >
-                    {option.count}
-                  </span>
-                </button>
-              ))}
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 z-50">
+                  <DropdownMenuItem
+                    disabled={registrationLocked}
+                    onClick={() => setIsWildcardModalOpen(true)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 rounded-lg cursor-pointer hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <UserPlus className="h-4 w-4 text-blue-600" />
+                    <span>{registrationTranslate('assignWildcard')}</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    disabled={isAutoSeeding || registrationLocked}
+                    onClick={() => void handleAutoSeed()}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 rounded-lg cursor-pointer hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAutoSeeding ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                    ) : (
+                      <Shuffle className="h-4 w-4 text-slate-500" />
+                    )}
+                    <span>{isAutoSeeding ? registrationTranslate('seedingInProgress') : registrationTranslate('autoSeed')}</span>
+                  </DropdownMenuItem>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  <DropdownMenuItem
+                    onClick={() => downloadParticipantsTemplateExcel(locale)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 rounded-lg cursor-pointer hover:bg-slate-100"
+                  >
+                    <Download className="h-4 w-4 text-slate-500" />
+                    <span>{registrationTranslate('excelTemplate')}</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    disabled={registrationLocked}
+                    onClick={() => setIsSmartImportOpen(true)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 rounded-lg cursor-pointer hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Upload className="h-4 w-4 text-blue-600" />
+                    <span>{registrationTranslate('importExcel')}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

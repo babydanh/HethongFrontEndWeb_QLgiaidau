@@ -434,13 +434,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         entryFee: cleanFee,
       });
 
-      // Synchronize division entry fees if present
-      if (s.divisions && s.divisions.length > 0) {
-        await Promise.allSettled(
-          s.divisions.map((d) => divisionsApi.updateDivision(d.id, { entryFee: cleanFee }))
-        );
-      }
-
       toast.success('Đã cập nhật lệ phí tham gia giải đấu!');
       setIsFeeModalOpen(false);
       await s.fetchTournamentData();

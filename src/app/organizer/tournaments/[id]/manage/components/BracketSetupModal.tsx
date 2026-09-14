@@ -680,7 +680,7 @@ export function BracketSetupModal({
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       {translate('sportPresets')}
                     </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {presets.map((preset) => {
                         const isSelected =
                           setsToWin === preset.setsToWin &&
@@ -691,13 +691,13 @@ export function BracketSetupModal({
                             key={preset.id}
                             type="button"
                             onClick={() => applyPreset(preset)}
-                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-1.5 ${
                               isSelected
                                 ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-400'
                                 : 'border-slate-200 bg-slate-50/50 hover:border-blue-300 hover:bg-white'
                             }`}
                           >
-                            <p className="text-xs font-bold text-slate-900 leading-snug">{preset.label}</p>
+                            <p className="text-xs font-bold text-slate-900 leading-snug truncate">{preset.label}</p>
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white text-blue-700 border border-slate-200 shrink-0">
                               {translate('firstToSets', { sets: preset.setsToWin })} • {preset.pointsPerSet}p
                             </span>

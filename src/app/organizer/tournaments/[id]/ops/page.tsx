@@ -20,6 +20,7 @@ import { getSportLogo } from '@/constants/sports';
 import { getMatchRoundLabel, type RoundLabelTranslations } from '@/utils/match-round-label';
 import type { BracketMatch, LivestreamCamera } from '@/features/tournaments/api';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
+import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 
 const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
   DRAFT: 'statusDraft',
@@ -180,6 +181,14 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     const timer = setTimeout(tryScrollToMatch, 100);
     return () => clearTimeout(timer);
   }, [activePageTab, focusedMatchId, selectedDivisionId]);
+
+  useEffect(() => {
+    if (!tournament || !isClubSuperLiteTournament(tournament)) {
+      return;
+    }
+
+    window.location.replace(`/lite/tournaments/${tournament.id}/manage`);
+  }, [tournament]);
 
   const handleOpsUpdateMatchSchedule = async (
     match: typeof matches[number],
@@ -440,6 +449,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     );
   }
 
+  const configurationHref = isClubSuperLiteTournament(tournament)
+    ? `/lite/tournaments/${tournament.id}/manage`
+    : `/organizer/tournaments/${tournament.id}/manage`;
+
   const buildPublicTournamentUrl = (tab?: 'bracket') => {
     const params = new URLSearchParams();
 
@@ -493,7 +506,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
             <Button
               variant="outline"
               className="border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-lg transition-all"
-              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/manage`; }}
+              onClick={() => { window.location.href = configurationHref; }}
             >
               <Settings className="mr-2 h-4 w-4 text-slate-400" />
               {translate('backToConfiguration')}

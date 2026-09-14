@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake, Eye, EyeOff } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -228,6 +228,32 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error(getErrorMessage(err), { id: 'direct-banner-upload' });
     } finally {
       setIsUploadingBanner(false);
+    }
+  };
+
+  const [isTogglingBannerText, setIsTogglingBannerText] = useState(false);
+  const handleToggleHideBannerText = async () => {
+    const nextVal = !s.hideFeaturedCardText;
+    setIsTogglingBannerText(true);
+    try {
+      s.setHideFeaturedCardText(nextVal);
+      await tournamentsApi.updateTournament(id, {
+        tournamentConfig: {
+          ...s.tournament?.tournamentConfig,
+          hideFeaturedCardText: nextVal,
+        },
+      });
+      toast.success(
+        nextVal
+          ? 'Đã bật chế độ ẩn chữ trên banner công khai'
+          : 'Đã hiển thị lại chữ trên banner công khai'
+      );
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+      s.setHideFeaturedCardText(!nextVal);
+    } finally {
+      setIsTogglingBannerText(false);
     }
   };
 
@@ -1574,8 +1600,38 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 className="w-full h-full object-cover"
               />
 
-              {/* Floating Camera Button on Top-Right of Banner */}
-              <div className="absolute top-3 right-3 z-20">
+              {/* Floating Action Buttons on Top-Right of Banner */}
+              <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                {/* Nút chỉ icon ẩn/hiện chữ banner - rê chuột vào hiện tooltip giải thích */}
+                <button
+                  type="button"
+                  onClick={handleToggleHideBannerText}
+                  disabled={isTogglingBannerText}
+                  className={`p-2 sm:p-2.5 rounded-xl text-white shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95 ${
+                    s.hideFeaturedCardText
+                      ? 'bg-blue-600/90 hover:bg-blue-600 text-white ring-2 ring-blue-400/50'
+                      : 'bg-black/60 hover:bg-black/80 text-white/90 hover:text-white'
+                  }`}
+                  title={
+                    s.hideFeaturedCardText
+                      ? 'Đang ẩn chữ trên banner công khai (Nhấp để hiển thị lại)'
+                      : 'Ẩn chữ phủ trên banner công khai (Dành cho banner đã có thiết kế sẵn)'
+                  }
+                  aria-label={
+                    s.hideFeaturedCardText
+                      ? 'Đang ẩn chữ trên banner công khai'
+                      : 'Ẩn chữ phủ trên banner công khai'
+                  }
+                >
+                  {isTogglingBannerText ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  ) : s.hideFeaturedCardText ? (
+                    <EyeOff className="w-4 h-4 text-white" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-white/80" />
+                  )}
+                </button>
+
                 <button
                   type="button"
                   onClick={() => bannerFileInputRef.current?.click()}

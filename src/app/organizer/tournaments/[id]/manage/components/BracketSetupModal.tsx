@@ -176,6 +176,51 @@ export function BracketSetupModal({
     bracketType?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
     selectedDivision?.bracketType === 'GROUP_STAGE_KNOCKOUT';
 
+  const getKnockoutRoundLabel = (roundIndex: number, totalRounds: number) => {
+    const fromEnd = totalRounds - 1 - roundIndex;
+    if (fromEnd === 0) return translate('stageFinal');
+    if (fromEnd === 1) return translate('stageSemifinal');
+    if (fromEnd === 2) return translate('stageQuarterfinal');
+    if (fromEnd === 3) return translate('roundOf', { round: 16 });
+    if (fromEnd === 4) return translate('roundOf', { round: 32 });
+    if (fromEnd === 5) return translate('roundOf', { round: 64 });
+    return translate('roundOf', { round: 2 ** fromEnd });
+  };
+
+  const getKnockoutBracketSize = (teamCount: number) => {
+    if (teamCount < 2) return 0;
+    return Math.min(64, 2 ** Math.ceil(Math.log2(teamCount)));
+  };
+
+  // Tính số lượng vòng knockout động theo số bảng và số đội đi tiếp hiện tại trên modal
+  const dynamicAdvancingTotal = Math.max(0, numGroups) * Math.max(0, teamsAdvancing);
+  const dynamicBracketSize = getKnockoutBracketSize(dynamicAdvancingTotal);
+  const dynamicRoundCount = dynamicBracketSize > 0 ? Math.log2(dynamicBracketSize) : 0;
+
+  const dynamicPlannedKnockoutRounds = useMemo(() => {
+    if (dynamicRoundCount <= 0) return [];
+    return Array.from({ length: dynamicRoundCount }, (_, idx) => {
+      const roundNumber = idx + 1;
+      return {
+        stage: {
+          id: '__draft_gsk_knockout__',
+          name: translate('draftKnockout'),
+          type: gskPlayoffType ?? 'SINGLE_ELIMINATION',
+          order: 2,
+          groups: [],
+          roundConfig: null,
+        } as import('@/types/tournament').BracketStage,
+        roundNumber,
+        name: getKnockoutRoundLabel(idx, dynamicRoundCount),
+        override: undefined,
+      };
+    });
+  }, [dynamicRoundCount, gskPlayoffType, translate]);
+
+  const effectiveKnockoutRounds = gskConfigurableRounds.length > 0 && gskConfigurableRounds.length === dynamicRoundCount
+    ? gskConfigurableRounds
+    : dynamicPlannedKnockoutRounds;
+
   // Filter valid participants
   const eligibleParticipants = useMemo(() => {
     return (participants as ParticipantItem[]).filter(
@@ -782,10 +827,10 @@ export function BracketSetupModal({
                           )}
                         </div>
 
-                        {/* 2. Chi tiết từng vòng Knockout (Tứ kết, Bán kết, Chung kết...) */}
-                        {gskConfigurableRounds.length > 0 && (
+                        {/* 2. Chi tiết từng vòng Knockout (Vòng 64, 32, 16, Tứ kết, Bán kết, Chung kết...) */}
+                        {effectiveKnockoutRounds.length > 0 && (
                           <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/50 px-3">
-                            {gskConfigurableRounds.map(({ stage, roundNumber, name, override }) => {
+                            {effectiveKnockoutRounds.map(({ stage, roundNumber, name, override }) => {
                               const resolvedOverride = override ? resolveSportRuleView(override, sportRuleKind) : null;
                               return (
                                 <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-3">

@@ -41,10 +41,17 @@ import OverviewTab from './components/OverviewTab';
 import TournamentsTab from './components/TournamentsTab';
 import ClubActivityTab from './components/ClubActivityTab';
 import MembersTab from './components/MembersTab';
+import ClubStatisticsTab from './components/ClubStatisticsTab';
 import GalleryTab from './components/GalleryTab';
 import RankingsTab from './components/RankingsTab';
 import SettingsTab from './components/SettingsTab';
 import ModerationTab from './components/ModerationTab';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/DropdownMenu';
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -56,7 +63,7 @@ export default function CommunityDetailPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'activity' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'activity' | 'members' | 'statistics' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('overview');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // Real membership state
@@ -684,17 +691,14 @@ export default function CommunityDetailPage() {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto gap-2 mb-6 mt-4 hide-scrollbar">
+        <div className="flex items-center gap-2 mb-6 mt-4 overflow-x-auto hide-scrollbar">
           {[
             { id: 'overview', label: translate('overviewTab') },
             ...(canViewContent ? [
               { id: 'activity', label: translate('activityTab') },
-              { id: 'tournaments', label: translate('tournamentsTab') },
               { id: 'members', label: translate('membersTab') },
-              { id: 'gallery', label: translate('galleryTab') },
-              { id: 'rankings', label: translate('rankingsTab') },
+              { id: 'statistics', label: translate('statisticsTab') },
             ] : []),
-            ...(isOwnerOrMod ? [{ id: 'moderation', label: translate('moderationTab') }] : []),
           ].map(tab => (
             <button
               key={tab.id}
@@ -708,17 +712,78 @@ export default function CommunityDetailPage() {
               {tab.label}
             </button>
           ))}
-          {isOwner && (
-             <button
-               onClick={() => setActiveTab('settings')}
-               className={`px-5 py-2.5 rounded-lg font-semibold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
-                activeTab === 'settings'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
-              }`}
-             >
-               {translate("settingsTab")}
-             </button>
+
+          {/* 3-dots Menu for secondary tabs (Giải đấu, Ảnh, Bảng xếp hạng, Điều phối, Cài đặt) */}
+          {(canViewContent || isOwnerOrMod || isOwner) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label={translate('clubMoreTabs')}
+                  className={`p-2.5 rounded-lg font-semibold text-sm transition-all flex items-center justify-center shrink-0 ${
+                    ['tournaments', 'gallery', 'rankings', 'moderation', 'settings'].includes(activeTab)
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
+                  }`}
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-white border border-slate-200/80 rounded-xl shadow-lg p-1.5 z-50">
+                {canViewContent && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => setActiveTab('tournaments')}
+                      className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                        activeTab === 'tournaments' ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>{translate('tournamentsTab')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setActiveTab('gallery')}
+                      className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                        activeTab === 'gallery' ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Share2 className="w-4 h-4 text-sky-500 shrink-0" />
+                      <span>{translate('galleryTab')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setActiveTab('rankings')}
+                      className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                        activeTab === 'rankings' ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <span>{translate('rankingsTab')}</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {isOwnerOrMod && (
+                  <DropdownMenuItem
+                    onClick={() => setActiveTab('moderation')}
+                    className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                      activeTab === 'moderation' ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{translate('moderationTab')}</span>
+                  </DropdownMenuItem>
+                )}
+                {isOwner && (
+                  <DropdownMenuItem
+                    onClick={() => setActiveTab('settings')}
+                    className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                      activeTab === 'settings' ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <SettingsIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span>{translate('settingsTab')}</span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
@@ -754,6 +819,9 @@ export default function CommunityDetailPage() {
                   fetchCommunity();
                 }}
               />
+            )}
+            {activeTab === 'statistics' && canViewContent && (
+              <ClubStatisticsTab communityId={id} clubName={community.name} />
             )}
             {activeTab === 'gallery' && canViewContent && <GalleryTab communityId={id} community={community} isOwnerOrMod={isOwnerOrMod} />}
             {activeTab === 'rankings' && canViewContent && <RankingsTab communityId={id} categories={community?.categories || []} onGoToTournaments={() => setActiveTab('tournaments')} />}

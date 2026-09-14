@@ -289,12 +289,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [tempEndDate, setTempEndDate] = useState('');
   const [isSavingDates, setIsSavingDates] = useState(false);
 
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [tempPhone, setTempPhone] = useState('');
-  const [tempEmail, setTempEmail] = useState('');
-  const [tempZalo, setTempZalo] = useState('');
-  const [tempFacebook, setTempFacebook] = useState('');
-  const [isSavingContact, setIsSavingContact] = useState(false);
+
 
   // Inline editing state for contact card items
   const [editingContactKey, setEditingContactKey] = useState<string | null>(null);
@@ -358,35 +353,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
   };
 
-  const handleSaveContactDirect = async () => {
-    setIsSavingContact(true);
-    try {
-      const nextContact: Record<string, any> = {
-        ...(s.contactInfo || {}),
-        phone: tempPhone.trim(),
-        email: tempEmail.trim(),
-        zalo: tempZalo.trim(),
-        facebook: tempFacebook.trim(),
-      };
-      // Clean empty keys if necessary
-      if (!nextContact.zalo) delete nextContact.zalo;
-      if (!nextContact.facebook) delete nextContact.facebook;
-      if (!nextContact.phone) delete nextContact.phone;
-      if (!nextContact.email) delete nextContact.email;
 
-      s.setContactInfo(nextContact);
-      await tournamentsApi.updateTournament(id, {
-        contactInfo: nextContact,
-      });
-      toast.success('Đã cập nhật thông tin liên hệ!');
-      setIsContactModalOpen(false);
-      await s.fetchTournamentData();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setIsSavingContact(false);
-    }
-  };
 
   const handleSaveInlineContactItem = async (key: string, value: string) => {
     setIsSavingContactItem(true);
@@ -1424,20 +1391,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             >
               <Plus className="w-3 h-3" />
               <span>Thêm</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTempPhone(tournament.contactInfo?.phone || '');
-                setTempEmail(tournament.contactInfo?.email || '');
-                setTempZalo(tournament.contactInfo?.zalo || '');
-                setTempFacebook(tournament.contactInfo?.facebook || '');
-                setIsContactModalOpen(true);
-              }}
-              className="text-[11px] font-medium text-slate-400 hover:text-slate-600 flex items-center gap-0.5 cursor-pointer"
-              title="Mở tất cả cấu hình liên hệ"
-            >
-              <Pencil className="w-2.5 h-2.5" />
             </button>
           </div>
         </div>
@@ -2817,96 +2770,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </ModalContent>
       </Modal>
 
-      {/* Quick Edit Contact Modal */}
-      <Modal open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
-        <ModalContent className="bg-white rounded-xl p-5 max-w-md">
-          <ModalHeader>
-            <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Phone className="w-5 h-5 text-blue-600" />
-              Thông tin liên hệ Ban tổ chức
-            </ModalTitle>
-          </ModalHeader>
-          <div className="space-y-3.5 mt-4">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Số điện thoại / Hotline</label>
-              <input
-                type="tel"
-                value={tempPhone}
-                onChange={(e) => setTempPhone(e.target.value)}
-                placeholder="VD: 0987654321"
-                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Email liên hệ</label>
-              <input
-                type="email"
-                value={tempEmail}
-                onChange={(e) => setTempEmail(e.target.value)}
-                placeholder="VD: btc.giaidau@gmail.com"
-                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1">
-                <ZaloIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>Số điện thoại Zalo hoặc link nhóm Zalo</span>
-              </label>
-              <input
-                type="text"
-                value={tempZalo}
-                onChange={(e) => setTempZalo(e.target.value)}
-                placeholder="VD: 0987654321 hoặc https://zalo.me/g/..."
-                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1">
-                <FacebookIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>Link Fanpage / Nhóm Facebook</span>
-              </label>
-              <input
-                type="url"
-                value={tempFacebook}
-                onChange={(e) => setTempFacebook(e.target.value)}
-                placeholder="VD: https://facebook.com/..."
-                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-              />
-            </div>
 
-            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsContactModalOpen(false);
-                  handleChecklistNavigate({ tab: 'basic', basicSubTab: 'contact', elementId: 'manage-contact-info-section' });
-                }}
-                className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
-              >
-                Cài đặt thêm mạng xã hội khác &rarr;
-              </button>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsContactModalOpen(false)}
-                  className="text-xs"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveContactDirect}
-                  disabled={isSavingContact}
-                  className="bg-blue-600 text-white text-xs font-bold px-4 cursor-pointer"
-                >
-                  {isSavingContact ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu liên hệ'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </ModalContent>
-      </Modal>
 
       {/* Quick Edit Entry Fee Modal */}
       <Modal open={isFeeModalOpen} onOpenChange={setIsFeeModalOpen}>

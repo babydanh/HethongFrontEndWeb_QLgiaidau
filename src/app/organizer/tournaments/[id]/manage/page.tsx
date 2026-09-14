@@ -12,7 +12,7 @@ import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { uploadApi } from '@/features/upload/api';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
 import {
   DropdownMenu,
@@ -49,6 +49,7 @@ import { formatCurrency, formatDateTime, formatDate } from '@/utils/format';
 import { exportTournamentResultsExcel } from '@/utils/exportTournament';
 import { getDivisionBracketLabel, getDivisionMatchLabel, type TournamentDisplayLabels } from '@/utils/tournament-display';
 import { getTournamentLocationLabel } from '@/utils/tournament-location';
+import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
 import ShareModal from '@/components/common/ShareModal';
 import { triggerShare } from '@/utils/share.util';
 import CountdownTimer from '@/components/shared/CountdownTimer';
@@ -293,6 +294,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [tempEmail, setTempEmail] = useState('');
   const [isSavingContact, setIsSavingContact] = useState(false);
 
+  // Quick edit state for Entry Fee
+  const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
+  const [tempEntryFee, setTempEntryFee] = useState(0);
+  const [isSavingFee, setIsSavingFee] = useState(false);
+
   // Modals for venue & courts management
   const [selectedVenueForCourts, setSelectedVenueForCourts] = useState<any | null>(null);
   const [selectedVenueForEdit, setSelectedVenueForEdit] = useState<any | null>(null);
@@ -360,6 +366,32 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error(getErrorMessage(err));
     } finally {
       setIsSavingContact(false);
+    }
+  };
+
+  const handleSaveFeeDirect = async () => {
+    setIsSavingFee(true);
+    const cleanFee = Math.max(0, Math.floor(tempEntryFee || 0));
+    try {
+      s.setEntryFee(cleanFee);
+      await tournamentsApi.updateTournament(id, {
+        entryFee: cleanFee,
+      });
+
+      // Synchronize division entry fees if present
+      if (s.divisions && s.divisions.length > 0) {
+        await Promise.allSettled(
+          s.divisions.map((d) => divisionsApi.updateDivision(d.id, { entryFee: cleanFee }))
+        );
+      }
+
+      toast.success('Đã cập nhật lệ phí tham gia giải đấu!');
+      setIsFeeModalOpen(false);
+      await s.fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingFee(false);
     }
   };
 
@@ -1091,17 +1123,68 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        {/* Entry Fee Row - Matching Image 1 format */}
-        {Number(tournament.entryFee) > 0 && (
-          <div className="pt-3 border-t border-slate-100">
-            <div className="flex items-center justify-between text-slate-700 pt-0.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">LỆ PHÍ THAM GIA:</span>
-              <span className="font-black text-blue-600 text-base sm:text-lg tracking-tight">
-                {formatCurrency(tournament.entryFee)}
-              </span>
+        {/* Entry Fee Row - Always visible with Click to Edit and Platform Fee Breakdown */}
+        {(() => {
+          const currentFee = Number(tournament.entryFee) || 0;
+          const pf = getPlatformFeeBreakdown(
+            currentFee,
+            tournament.platformFeePercentage,
+            {
+              thresholdAmount: tournament.platformFeeThreshold,
+              fixedAmount: tournament.platformFeeFixedAmount,
+            },
+          );
+          const feePerPlayer = pf.feePerPlayer;
+          const netPerPlayer = Math.max(0, currentFee - feePerPlayer);
+
+          return (
+            <div
+              onClick={() => {
+                setTempEntryFee(currentFee);
+                setIsFeeModalOpen(true);
+              }}
+              className="pt-3 border-t border-slate-100 group/fee cursor-pointer hover:bg-blue-50/40 -mx-1 px-1 rounded-lg transition-colors"
+              title="Nhấp vào đây để điều chỉnh lệ phí tham gia và xem chi tiết biểu phí"
+            >
+              <div className="flex items-center justify-between text-slate-700 pt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">LỆ PHÍ THAM GIA:</span>
+                  <Pencil className="w-3 h-3 text-slate-400 group-hover/fee:text-blue-600 transition-colors" />
+                </div>
+                {currentFee > 0 ? (
+                  <span className="font-black text-blue-600 text-base sm:text-lg tracking-tight">
+                    {formatCurrency(currentFee)}
+                  </span>
+                ) : (
+                  <span className="font-bold text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Miễn phí
+                  </span>
+                )}
+              </div>
+
+              {/* Subtitle breakdown: Platform fee & Organizer revenue */}
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium pt-1">
+                <span>
+                  {currentFee > 0 ? (
+                    <>
+                      Phí sàn: <span className="font-semibold text-slate-600">{formatCurrency(feePerPlayer)}</span>
+                      {pf.ruleType === 'PERCENTAGE' && (
+                        <span className="text-[10px] text-slate-400 ml-1">({pf.percentage}%)</span>
+                      )}
+                    </>
+                  ) : (
+                    'Không tính phí sàn'
+                  )}
+                </span>
+                {currentFee > 0 && (
+                  <span className="text-emerald-700 font-semibold">
+                    Thực nhận: {formatCurrency(netPerPlayer)}/VĐV
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     );
   };
@@ -2455,6 +2538,153 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 className="bg-blue-600 text-white text-xs font-bold px-4"
               >
                 {isSavingContact ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu liên hệ'}
+              </Button>
+            </div>
+          </div>
+        </ModalContent>
+      </Modal>
+
+      {/* Quick Edit Entry Fee Modal */}
+      <Modal open={isFeeModalOpen} onOpenChange={setIsFeeModalOpen}>
+        <ModalContent className="bg-white rounded-xl p-5 max-w-md shadow-2xl border border-slate-100">
+          <ModalHeader>
+            <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-emerald-600" />
+              Điều chỉnh lệ phí tham gia giải đấu
+            </ModalTitle>
+          </ModalHeader>
+          <div className="space-y-4 mt-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Lệ phí thu trên mỗi vận động viên (VNĐ)
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  step="10000"
+                  value={tempEntryFee === 0 ? '' : tempEntryFee}
+                  onChange={(e) => setTempEntryFee(Math.max(0, Number(e.target.value) || 0))}
+                  placeholder="0 (Miễn phí)"
+                  className="w-full text-base font-bold text-emerald-700 border border-slate-200 rounded-lg py-2.5 pl-3 pr-10 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  VNĐ
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Increment Buttons */}
+            <div>
+              <div className="text-[11px] font-medium text-slate-500 mb-1.5">Tăng/giảm nhanh:</div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTempEntryFee(0)}
+                  className={`px-2.5 py-1 text-xs rounded-md border font-medium transition-colors ${
+                    tempEntryFee === 0
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Miễn phí (0đ)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTempEntryFee((prev) => prev + 20000)}
+                  className="px-2.5 py-1 text-xs rounded-md border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 font-medium transition-colors"
+                >
+                  +20.000₫
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTempEntryFee((prev) => prev + 50000)}
+                  className="px-2.5 py-1 text-xs rounded-md border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 font-medium transition-colors"
+                >
+                  +50.000₫
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTempEntryFee((prev) => prev + 100000)}
+                  className="px-2.5 py-1 text-xs rounded-md border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 font-medium transition-colors"
+                >
+                  +100.000₫
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTempEntryFee((prev) => prev + 200000)}
+                  className="px-2.5 py-1 text-xs rounded-md border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 font-medium transition-colors"
+                >
+                  +200.000₫
+                </button>
+              </div>
+            </div>
+
+            {/* Platform fee & net breakdown */}
+            {(() => {
+              const modalBreakdown = getPlatformFeeBreakdown(
+                tempEntryFee,
+                tournament.platformFeePercentage,
+                {
+                  thresholdAmount: tournament.platformFeeThreshold,
+                  fixedAmount: tournament.platformFeeFixedAmount,
+                }
+              );
+              const netOrganizer = Math.max(0, tempEntryFee - modalBreakdown.feePerPlayer);
+
+              return (
+                <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3 space-y-2 text-xs">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Lệ phí thu / VĐV:</span>
+                    <span className="font-semibold text-slate-900">
+                      {tempEntryFee > 0 ? `${tempEntryFee.toLocaleString('vi-VN')} ₫` : 'Miễn phí'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="flex items-center gap-1">
+                      Phí sàn / dịch vụ nền tảng:
+                      {modalBreakdown.percentage > 0 && (
+                        <span className="text-[10px] bg-slate-200 text-slate-600 px-1 py-0.2 rounded font-mono">
+                          {modalBreakdown.percentage}%
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-semibold text-amber-700">
+                      {modalBreakdown.feePerPlayer > 0
+                        ? `-${modalBreakdown.feePerPlayer.toLocaleString('vi-VN')} ₫`
+                        : '0 ₫'}
+                    </span>
+                  </div>
+                  <div className="border-t border-slate-200 pt-1.5 flex justify-between items-center font-bold">
+                    <span className="text-emerald-800">BTC thực nhận / VĐV:</span>
+                    <span className="text-sm text-emerald-600">
+                      {netOrganizer.toLocaleString('vi-VN')} ₫
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="text-[11px] text-slate-500 italic bg-amber-50/70 border border-amber-200/60 rounded-md p-2">
+              Lưu ý: Mức phí này sẽ được cập nhật cho toàn bộ giải đấu và đồng bộ tới các nội dung thi đấu hiện có.
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsFeeModalOpen(false)}
+                className="text-xs"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveFeeDirect}
+                disabled={isSavingFee}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4"
+              >
+                {isSavingFee ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu lệ phí'}
               </Button>
             </div>
           </div>

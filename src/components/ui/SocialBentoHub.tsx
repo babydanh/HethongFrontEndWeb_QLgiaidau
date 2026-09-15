@@ -63,16 +63,16 @@ export function AthleteProfileCard({
   const translate = useTranslations('Home');
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden text-center">
+    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs overflow-hidden text-center">
       {/* Blue Top Background */}
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-600 pt-7 pb-10 px-5 relative">
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-600 pt-7 pb-9 px-5 relative">
         <span className="absolute top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20 text-white backdrop-blur-xs tracking-wider">
           {translate('proBadge')}
         </span>
 
         {/* Avatar with B badge */}
         <div className="relative inline-block mx-auto mb-2">
-          <div className="w-18 h-18 rounded-full border-3 border-white overflow-hidden shadow-md bg-white">
+          <div className="w-18 h-18 rounded-full border-3 border-white overflow-hidden shadow-sm bg-white">
             {user?.avatarUrl ? (
               <img
                 src={user.avatarUrl}
@@ -85,7 +85,7 @@ export function AthleteProfileCard({
               </div>
             )}
           </div>
-          <span className="absolute -bottom-1 right-0 w-6 h-6 rounded-full bg-blue-600 text-white font-black text-[11px] flex items-center justify-center border-2 border-white shadow-2xs">
+          <span className="absolute -bottom-1 right-0 w-6 h-6 rounded-full bg-blue-600 text-white font-black text-[11px] flex items-center justify-center border-2 border-white shadow-xs">
             B
           </span>
         </div>
@@ -102,13 +102,13 @@ export function AthleteProfileCard({
       </div>
 
       {/* Stats row */}
-      <div className="px-4 py-4 -mt-3 bg-white rounded-t-2xl relative z-10">
+      <div className="px-4 py-4 -mt-3 bg-white rounded-t-xl relative z-10">
         <div className="grid grid-cols-3 gap-2 py-1 border-b border-slate-100 mb-3.5">
           <div>
             <div className="text-base font-black text-slate-900 leading-none">
               {matchesPlayed || 46}
             </div>
-            <div className="text-[11px] text-slate-600 font-bold mt-1 uppercase">
+            <div className="text-[11px] text-slate-500 font-bold mt-1 uppercase">
               {translate('matchLabel')}
             </div>
           </div>
@@ -116,7 +116,7 @@ export function AthleteProfileCard({
             <div className="text-base font-black text-blue-600 leading-none">
               {winRate || 68}%
             </div>
-            <div className="text-[11px] text-slate-600 font-bold mt-1 uppercase">
+            <div className="text-[11px] text-slate-500 font-bold mt-1 uppercase">
               {translate('wins')}
             </div>
           </div>
@@ -124,7 +124,7 @@ export function AthleteProfileCard({
             <div className="text-base font-black text-emerald-600 leading-none">
               {credibility || 98}%
             </div>
-            <div className="text-[11px] text-slate-600 font-bold mt-1 uppercase">
+            <div className="text-[11px] text-slate-500 font-bold mt-1 uppercase">
               {translate('credibility')}
             </div>
           </div>
@@ -133,7 +133,7 @@ export function AthleteProfileCard({
         <Link
           href="/profile"
           onClick={onViewProfile}
-          className="w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-colors"
+          className="w-full py-2 px-3 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs inline-flex items-center justify-center gap-1.5 hover:underline transition-all"
         >
           <span>{translate('viewProfile')}</span>
         </Link>
@@ -160,15 +160,15 @@ export function SocialMatchFilters({
   ];
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-4.5">
+    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs p-4.5">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-black text-slate-650 uppercase tracking-wider">
+        <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider">
           {translate('filterKicker')}
         </h4>
         <button
           onClick={() => onSelectFilter('all')}
           type="button"
-          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
         >
           <RotateCw className="w-3 h-3" />
           <span>{translate('refresh')}</span>
@@ -183,10 +183,10 @@ export function SocialMatchFilters({
               key={f.id}
               onClick={() => onSelectFilter(f.id)}
               type="button"
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 isSelected
                   ? 'bg-blue-50 text-blue-700 font-extrabold'
-                  : 'text-slate-650 hover:bg-slate-50'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -195,9 +195,9 @@ export function SocialMatchFilters({
                     isSelected ? 'bg-blue-600' : 'bg-slate-300'
                   }`}
                 />
-                <span>{f.label}</span>
+                <span className={isSelected ? '' : 'hover:underline'}>{f.label}</span>
               </div>
-              <span className="text-slate-600 text-[11px]">{f.count}</span>
+              <span className="text-slate-400 text-[11px]">{f.count}</span>
             </button>
           );
         })}
@@ -211,40 +211,45 @@ export function SocialMyClubsCard({
   clubName = 'Hà Anh Pickleball Club',
   memberCount = 151,
   court = 'Sân D-Sport Q7',
+  clubId,
 }: {
   clubName?: string;
   memberCount?: number;
   court?: string;
+  clubId?: string;
 }) {
   const translate = useTranslations('Home');
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-4.5">
+    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs p-4.5">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-black text-slate-650 uppercase tracking-wider">
+        <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider">
           {translate('myClubs')}
         </h4>
         <Link
           href="/communities"
-          className="text-[11px] font-bold text-blue-600 hover:text-blue-700"
+          className="text-[11px] font-bold text-blue-600 hover:underline"
         >
           {translate('viewAll')}
         </Link>
       </div>
 
-      <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100">
+      <Link
+        href={clubId ? `/communities/${clubId}` : '/communities'}
+        className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 border border-slate-100 hover:bg-slate-50/90 transition-all block"
+      >
         <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
-          HA
+          {(clubName.trim().slice(0, 2) || 'CL').toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <h5 className="text-xs font-bold text-slate-900 truncate">
+          <h5 className="text-xs font-bold text-slate-900 truncate hover:underline">
             {clubName}
           </h5>
-          <p className="text-[11px] text-slate-600 truncate mt-0.5">
+          <p className="text-[11px] text-slate-500 truncate mt-0.5">
             {translate('membersCount', { count: memberCount })} • {court}
           </p>
         </div>
-      </div>
+      </Link>
     </div>
   );
 }
@@ -301,9 +306,9 @@ export function SocialFeaturedTournaments({
         </div>
         <Link
           href="/tournaments"
-          className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
         >
-          <span>{translate('viewAllWithCount', { count: 6 })}</span>
+          <span>{translate('viewAllWithCount', { count: Math.max(items.length, 6) })}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -313,13 +318,13 @@ export function SocialFeaturedTournaments({
           <Link
             key={item.id}
             href={`/tournaments/${item.id}`}
-            className="group relative h-40 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all block"
+            className="relative h-40 rounded-2xl overflow-hidden shadow-xs border border-slate-200/50 block group"
           >
             {/* Background Image */}
             <img
               src={item.imageUrl}
               alt={item.name}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
@@ -336,7 +341,7 @@ export function SocialFeaturedTournaments({
 
             {/* Bottom Content */}
             <div className="absolute bottom-3 left-3 right-3 z-10">
-              <h4 className="text-sm font-extrabold text-white group-hover:text-blue-200 transition-colors line-clamp-1 mb-1">
+              <h4 className="text-sm font-extrabold text-white hover:underline line-clamp-1 mb-1">
                 {item.name}
               </h4>
               <div className="flex items-center justify-between text-[11px] text-white/80 font-medium">
@@ -372,16 +377,16 @@ export function SocialDaySelectorStrip({
             key={day.id}
             onClick={() => onSelect(day.id)}
             type="button"
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
               isSelected
-                ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
-                : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200/70 hover:bg-slate-50'
             }`}
           >
             <span>{day.dayLabel}</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                isSelected ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-650'
+                isSelected ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600'
               }`}
             >
               {day.matchCount}
@@ -393,7 +398,7 @@ export function SocialDaySelectorStrip({
   );
 }
 
-// 6. CENTER COLUMN: Pickup Match Item (Row in exact screenshot style)
+// 6. CENTER COLUMN: Pickup Match Item (Row in clean white styling)
 export function SocialPickupRow({
   item,
   onJoin,
@@ -406,7 +411,7 @@ export function SocialPickupRow({
   const remaining = Math.max(0, item.maxSlots - (item.currentSlots + (joined ? 1 : 0)));
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col gap-3">
+    <div className="bg-white rounded-2xl border border-slate-200/70 p-4 shadow-xs flex flex-col gap-3">
       {/* Badges & Slots status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -426,9 +431,9 @@ export function SocialPickupRow({
 
       {/* Time & Venue & Price */}
       <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-slate-700 font-bold truncate">
+        <div className="flex items-center gap-2 text-slate-800 font-bold truncate">
           <span>{item.timeRange}</span>
-          <span className="text-slate-400">•</span>
+          <span className="text-slate-300">•</span>
           <span className="text-slate-600 truncate font-semibold">
             {item.courtLocation}
           </span>
@@ -494,33 +499,42 @@ export function SocialPickupRow({
 }
 
 // 7. RIGHT COLUMN: Your Schedule & Nearby Courts
-export function SocialScheduleAndCourtsWidgets() {
+export function SocialScheduleAndCourtsWidgets({
+  upcomingItem,
+}: {
+  upcomingItem?: {
+    time: string;
+    title: string;
+    location: string;
+    slotsText: string;
+  } | null;
+}) {
   const translate = useTranslations('Home');
 
   return (
     <div className="flex flex-col gap-5">
       {/* Widget A: Lịch đấu của bạn */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-4.5">
+      <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs p-4.5">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-4 h-4 text-blue-600" />
-            <h4 className="text-xs font-black text-slate-800 tracking-wider">
+            <h4 className="text-xs font-black text-slate-850 tracking-wider">
               {translate('myUpcomingMatches')}
             </h4>
           </div>
           <Link
             href="/matches"
-            className="text-[11px] font-bold text-blue-600 hover:text-blue-700"
+            className="text-[11px] font-bold text-blue-600 hover:underline"
           >
             {translate('viewAll')}
           </Link>
         </div>
 
         {/* Schedule Item 1 (Active card with Invite Button) */}
-        <div className="bg-blue-50/60 rounded-2xl p-3.5 border border-blue-100/90 mb-3">
+        <div className="bg-blue-50/50 rounded-xl p-3.5 border border-blue-100 mb-3">
           <div className="flex items-center justify-between mb-1.5">
             <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white">
-              19:30 {translate('tonight')}
+              {upcomingItem?.time || `19:30 ${translate('tonight')}`}
             </span>
             <span className="text-[10px] font-bold text-blue-600 bg-white px-2 py-0.5 rounded-md border border-blue-100">
               {translate('createdTag')}
@@ -528,19 +542,19 @@ export function SocialScheduleAndCourtsWidgets() {
           </div>
 
           <h5 className="text-xs font-extrabold text-slate-900 line-clamp-1 mb-1">
-            Giao lưu Pickleball Hạng B
+            {upcomingItem?.title || 'Giao lưu Pickleball Hạng B'}
           </h5>
-          <p className="text-[11px] text-slate-600 mb-3">
-            D-Sport Q7 • Sân 03
+          <p className="text-[11px] text-slate-500 mb-3">
+            {upcomingItem?.location || 'D-Sport Q7 • Sân 03'}
           </p>
 
-          <div className="flex items-center justify-between pt-2 border-t border-blue-100">
+          <div className="flex items-center justify-between pt-2 border-t border-blue-100/80">
             <span className="text-xs font-black text-slate-700">
-              3/4 <span className="text-[10px] text-slate-650 font-semibold">{translate('playerShort')}</span>
+              {upcomingItem?.slotsText || '3/4'} <span className="text-[10px] text-slate-500 font-semibold">{translate('playerShort')}</span>
             </span>
             <button
               type="button"
-              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-2xs transition-colors"
+              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs transition-colors cursor-pointer"
             >
               {translate('inviteButton')}
             </button>
@@ -548,16 +562,16 @@ export function SocialScheduleAndCourtsWidgets() {
         </div>
 
         {/* Schedule Item 2 (Calendar date block) */}
-        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50/70 transition-colors">
           <div className="w-10 h-10 rounded-xl bg-slate-100 flex flex-col items-center justify-center shrink-0">
             <span className="text-[10px] font-bold text-slate-500 leading-none">20/9</span>
             <span className="text-xs font-black text-slate-800 leading-none mt-0.5">18h</span>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold text-slate-900 truncate">
+            <div className="text-xs font-bold text-slate-900 truncate hover:underline">
               {translate('semiFinalText')}
             </div>
-            <div className="text-[11px] text-slate-600 truncate mt-0.5">
+            <div className="text-[11px] text-slate-500 truncate mt-0.5">
               {translate('courtClub')}
             </div>
           </div>
@@ -565,38 +579,38 @@ export function SocialScheduleAndCourtsWidgets() {
       </div>
 
       {/* Widget B: Sân Trống Gần Bạn */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-4.5">
+      <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs p-4.5">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <h4 className="text-xs font-black text-slate-800 tracking-wider">
+            <h4 className="text-xs font-black text-slate-850 tracking-wider">
               {translate('nearbyCourts')}
             </h4>
           </div>
-          <span className="text-[11px] font-bold text-slate-600">
+          <span className="text-[11px] font-bold text-slate-500">
             {translate('nearbyDistance')}
           </span>
         </div>
 
         <div className="space-y-3">
           {/* Court 1 */}
-          <div className="p-3 rounded-2xl border border-slate-100 hover:border-slate-200 transition-all">
+          <div className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all">
             <div className="flex items-center justify-between mb-1">
               <span className="font-bold text-slate-900 text-xs">D-Sport Q7</span>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                 Còn 2 sân
               </span>
             </div>
-            <div className="text-[11px] text-slate-600 mb-2">
+            <div className="text-[11px] text-slate-500 mb-2">
               20:00 - 22:00 • 1.2 km
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-slate-100">
               <span className="text-xs font-extrabold text-slate-900">
-                160k<span className="text-[10px] text-slate-600 font-normal">{translate('perHour')}</span>
+                160k<span className="text-[10px] text-slate-500 font-normal">{translate('perHour')}</span>
               </span>
               <button
                 type="button"
-                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors"
+                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
               >
                 {translate('bookCourt')}
               </button>
@@ -604,23 +618,23 @@ export function SocialScheduleAndCourtsWidgets() {
           </div>
 
           {/* Court 2 */}
-          <div className="p-3 rounded-2xl border border-slate-100 hover:border-slate-200 transition-all">
+          <div className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all">
             <div className="flex items-center justify-between mb-1">
               <span className="font-bold text-slate-900 text-xs">Khánh Hội Court</span>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                 Còn 1 sân
               </span>
             </div>
-            <div className="text-[11px] text-slate-600 mb-2">
+            <div className="text-[11px] text-slate-500 mb-2">
               21:00 - 22:30 • 2.4 km
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-slate-100">
               <span className="text-xs font-extrabold text-slate-900">
-                140k<span className="text-[10px] text-slate-600 font-normal">{translate('perHour')}</span>
+                140k<span className="text-[10px] text-slate-500 font-normal">{translate('perHour')}</span>
               </span>
               <button
                 type="button"
-                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors"
+                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
               >
                 {translate('bookCourt')}
               </button>

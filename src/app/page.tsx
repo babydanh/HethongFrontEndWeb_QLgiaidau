@@ -1608,8 +1608,51 @@ export default function HomePage() {
   // Homepage display limits are per section. Detail/list pages keep their own pagination.
   const featuredHomepageTournaments = activeTournaments.slice(0, 10);
 
+  // Map real tournaments to the social featured strip format
+  const socialTournaments = useMemo(() => {
+    if (tournaments.length === 0) return undefined;
+    return tournaments.slice(0, 4).map((t) => {
+      const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+      const start = t.startDate ? new Date(t.startDate).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' }) : '';
+      const end = t.endDate ? new Date(t.endDate).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' }) : '';
+      const dateStr = start && end ? `${start} - ${end}` : (start || end || '2026');
+      const sportBadge = (t.category?.name || 'THỂ THAO').toUpperCase();
+      const prize = t.prizeDescription || (t.entryFee ? `${t.entryFee.toLocaleString('vi-VN')} đ` : 'Cúp & Huy chương');
+      const maxPart = t.maxParticipants ? `${t.maxParticipants}` : '32';
+      const currentPart = t._count?.participants != null ? `${t._count.participants}/${maxPart}` : `Còn slot`;
+
+      return {
+        id: t.id,
+        name: t.name,
+        sportBadge,
+        prize,
+        date: dateStr,
+        teamSlots: currentPart,
+        imageUrl: t.bannerUrl || BRAND.assets.defaultFallback,
+      };
+    });
+  }, [tournaments, locale]);
+
+  // Real upcoming match representation for the right sidebar schedule widget
+  const upcomingWidgetData = useMemo(() => {
+    if (upcomingMatches.length === 0) return null;
+    const firstMatch = upcomingMatches[0];
+    const timeStr = firstMatch.scheduledAt
+      ? new Date(firstMatch.scheduledAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+      : `19:30 ${translate('tonight')}`;
+    const p1 = firstMatch.participant1?.teamName || 'Đội 1';
+    const p2 = firstMatch.participant2?.teamName || 'Đội 2';
+    const court = getMatchCourtLabel(firstMatch) || 'Sân chính';
+    return {
+      time: timeStr,
+      title: `${p1} vs ${p2}`,
+      location: court,
+      slotsText: '2/2',
+    };
+  }, [upcomingMatches, locale, translate]);
+
   return (
-    <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
+    <div className="bg-slate-50/50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
 
       {/* Main Content: 3 Columns matching exact SportO Bento Social UI */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -1644,14 +1687,15 @@ export default function HomePage() {
           <SocialMyClubsCard
             clubName={communities[0]?.name || 'Hà Anh Pickleball Club'}
             memberCount={communities[0]?._count?.members || 151}
-            court="Sân D-Sport Q7"
+            court={communities[0]?.locationAddress || 'Sân D-Sport Q7'}
+            clubId={communities[0]?.id}
           />
         </aside>
 
         {/* 2. CENTER COLUMN (6/12): Featured Tournaments, Day Selector, Tonight Matches, Upcoming Schedule */}
         <section className="lg:col-span-6 flex flex-col gap-5 order-1 lg:order-2">
           {/* Community: Featured Tournaments Strip */}
-          <SocialFeaturedTournaments />
+          <SocialFeaturedTournaments tournaments={socialTournaments} />
 
           {/* Day Selector Pill Strip */}
           <SocialDaySelectorStrip
@@ -1669,10 +1713,10 @@ export default function HomePage() {
                   {translate('tonightMatchesHeader')}
                 </h3>
                 <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                  {translate('matchesCount', { count: 3 })}
+                  {translate('matchesCount', { count: pickupMatches.length })}
                 </span>
               </div>
-              <span className="text-xs text-slate-650 font-medium">
+              <span className="text-xs text-slate-500 font-medium">
                 {translate('byTime')}
               </span>
             </div>
@@ -1693,7 +1737,7 @@ export default function HomePage() {
 
           {/* Upcoming Matches Schedule */}
           {(isLoading || upcomingMatches.length > 0) && (
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-4 sm:p-5">
+            <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs p-4 sm:p-5">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-blue-600" />
@@ -1703,7 +1747,7 @@ export default function HomePage() {
                 </div>
                 <Link
                   href="/matches"
-                  className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                  className="text-xs font-bold text-blue-600 hover:underline"
                 >
                   {translate('viewAll')}
                 </Link>
@@ -1721,7 +1765,7 @@ export default function HomePage() {
                   PICKLEBALL
                 </span>
                 <span className="text-xs font-bold text-slate-800 truncate ml-1">
-                  test quản lý
+                  {tournaments[0]?.name || 'Giao lưu thể thao'}
                 </span>
               </div>
 
@@ -1733,7 +1777,7 @@ export default function HomePage() {
               <div className="pt-4 text-center">
                 <Link
                   href="/matches"
-                  className="text-xs font-bold text-slate-700 hover:text-blue-600 inline-flex items-center gap-1.5 transition-colors"
+                  className="text-xs font-bold text-slate-700 hover:text-blue-600 inline-flex items-center gap-1.5 hover:underline transition-all"
                 >
                   <span>{translate('viewAllMatches')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1745,7 +1789,7 @@ export default function HomePage() {
 
         {/* 3. RIGHT COLUMN (3/12): Your Schedule & Nearby Available Courts */}
         <aside className="lg:col-span-3 flex flex-col gap-4.5 order-3">
-          <SocialScheduleAndCourtsWidgets />
+          <SocialScheduleAndCourtsWidgets upcomingItem={upcomingWidgetData} />
 
           {/* Ad Banner Card */}
           <AdBannerCard

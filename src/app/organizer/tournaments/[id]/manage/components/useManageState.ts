@@ -1320,6 +1320,7 @@ export function useManageState(id: string) {
   };
 
   const openDivisionEditor = (division: Division) => {
+    setSelectedDivisionId(division.id);
     const divisionFormatKey: MatchFormatOptionValue = division.matchType === MatchTypeDB.MIXED_DOUBLES || division.genderRestriction === GenderRestriction.MIXED
       ? 'MIXED_DOUBLES'
       : division.matchType === MatchTypeDB.SINGLES
@@ -1359,6 +1360,7 @@ export function useManageState(id: string) {
     setNewDivisionTeamsAdvancing(typeof divisionAdvancementConfig?.teamsAdvancing === 'number' ? divisionAdvancementConfig.teamsAdvancing : 2);
     setNewDivisionPlayoffType(divisionPlayoffConfig?.type === 'DOUBLE_ELIMINATION' ? 'DOUBLE_ELIMINATION' : 'SINGLE_ELIMINATION');
     setNewDivisionSeedingType(divisionPlayoffConfig?.seedingType === 'RANDOM' ? 'RANDOM' : 'SEEDED');
+    applyDivisionFormValues(division);
     setIsCreateDivisionModalOpen(true);
   };
 
@@ -1407,6 +1409,9 @@ export function useManageState(id: string) {
     }
     setIsCreatingDivision(true);
     try {
+      const configuredGroupRounds = newDivisionBracketType === 'ROUND_ROBIN'
+        ? roundsToPlay
+        : gskRoundsToPlay;
       const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
         MALE_SINGLES:{mt:MatchTypeDB.SINGLES,gr:GenderRestriction.MALE}, FEMALE_SINGLES:{mt:MatchTypeDB.SINGLES,gr:GenderRestriction.FEMALE},
         MALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.MALE}, FEMALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.FEMALE},
@@ -1428,7 +1433,7 @@ export function useManageState(id: string) {
         winByTwo: newDivisionWinByTwo,
         maxPoints: newDivisionWinByTwo ? newDivisionMaxDeucePoints : null,
         tiebreakPoints: newDivisionSuperTiebreakEnabled ? newDivisionSuperTiebreakPoints : null,
-        roundsToPlay: 1,
+        roundsToPlay: Math.max(1, Math.min(20, configuredGroupRounds)),
         mode: scoringMode,
       });
       const baseDivisionRoundConfig = editingDivision?.roundConfig
@@ -1443,7 +1448,7 @@ export function useManageState(id: string) {
                 : {}),
               numGroups: Math.max(2, Math.min(32, newDivisionNumGroups)),
               teamsPerGroup: Math.max(2, Math.min(128, newDivisionTeamsPerGroup)),
-              roundsToPlay: 1,
+              roundsToPlay: Math.max(1, Math.min(20, configuredGroupRounds)),
             },
             advancementConfig: {
               ...(baseDivisionRoundConfig.advancementConfig && typeof baseDivisionRoundConfig.advancementConfig === 'object'
@@ -1833,8 +1838,9 @@ export function useManageState(id: string) {
 
   const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
     setSelectedStage(stage); setSelectedRoundNumber(roundNumber);
-    // For draft group stage legs, use 'leg_N' key to avoid collision with knockout round keys
-    const roundKey = stage.id === '__draft_gsk_group__' && roundNumber !== 0
+    // Group-stage legs use 'leg_N' so they cannot collide with knockout round keys.
+    const isGroupStageLeg = stage.type === 'ROUND_ROBIN' && roundNumber !== 0;
+    const roundKey = isGroupStageLeg
       ? `leg_${roundNumber}`
       : roundNumber.toString();
     const rc = roundNumber === 0
@@ -1923,6 +1929,10 @@ export function useManageState(id: string) {
       }
 
       const isStageOverride = selectedRoundNumber === 0;
+      const isGroupStageLeg = selectedStage.type === 'ROUND_ROBIN' && !isStageOverride;
+      const roundKey = isGroupStageLeg
+        ? `leg_${selectedRoundNumber}`
+        : selectedRoundNumber.toString();
 
       await tournamentsApi.updateStage(selectedStage.id, {
         roundConfig: {
@@ -1941,7 +1951,7 @@ export function useManageState(id: string) {
           kind: normalizedKind,
           rounds: isStageOverride ? currentRounds : {
             ...currentRounds,
-            [selectedRoundNumber.toString()]: nextRoundRule,
+            [roundKey]: nextRoundRule,
           },
         },
       });

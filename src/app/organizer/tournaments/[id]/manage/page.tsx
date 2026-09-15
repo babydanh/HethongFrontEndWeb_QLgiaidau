@@ -2662,6 +2662,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             setNewDivisionNumGroups={s.setNewDivisionNumGroups}
             newDivisionTeamsPerGroup={s.newDivisionTeamsPerGroup}
             setNewDivisionTeamsPerGroup={s.setNewDivisionTeamsPerGroup}
+            groupRoundsToPlay={s.newDivisionBracketType === 'ROUND_ROBIN' ? s.roundsToPlay : s.gskRoundsToPlay}
+            setGroupRoundsToPlay={s.newDivisionBracketType === 'ROUND_ROBIN' ? s.setRoundsToPlay : s.setGskRoundsToPlay}
             newDivisionTeamsAdvancing={s.newDivisionTeamsAdvancing}
             setNewDivisionTeamsAdvancing={s.setNewDivisionTeamsAdvancing}
             newDivisionPlayoffType={s.newDivisionPlayoffType}

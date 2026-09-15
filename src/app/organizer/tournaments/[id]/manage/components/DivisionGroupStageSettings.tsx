@@ -14,6 +14,8 @@ type DivisionGroupStageSettingsProps = {
   setNumGroups: Setter<number>;
   teamsPerGroup: number;
   setTeamsPerGroup: Setter<number>;
+  groupRoundsToPlay: number;
+  setGroupRoundsToPlay: Setter<number>;
   teamsAdvancing: number;
   setTeamsAdvancing: Setter<number>;
   playoffType: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION';
@@ -34,6 +36,8 @@ export function DivisionGroupStageSettings({
   setNumGroups,
   teamsPerGroup,
   setTeamsPerGroup,
+  groupRoundsToPlay,
+  setGroupRoundsToPlay,
   teamsAdvancing,
   setTeamsAdvancing,
   playoffType,
@@ -54,10 +58,25 @@ export function DivisionGroupStageSettings({
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-800">{translate('createDivision.stage1Short')}</h4>
           <span className="text-[11px] font-semibold text-slate-500">{translate('createDivision.configuredTeams', { count: numGroups * teamsPerGroup })}</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
             {ruleTranslate('numberOfGroups')}
             <input type="number" min={2} max={32} value={numGroups} onChange={(event) => updateNumber(event.target.value, setNumGroups, 2, 32)} disabled={isCreating} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
+            {ruleTranslate('groupStageRounds')}
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={groupRoundsToPlay}
+              onChange={(event) => {
+                const next = Math.min(20, Math.max(1, Number(event.target.value) || 1));
+                setGroupRoundsToPlay(next);
+              }}
+              disabled={isCreating}
+              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
           </label>
           <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
             {ruleTranslate('teamsPerGroup')}

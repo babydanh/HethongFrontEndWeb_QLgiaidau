@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
@@ -43,6 +43,38 @@ export function GroupCrossMatrixView({
     tiebreakerMode: 'split',
     scoring: getConfiguredStandingsScoring(roundConfig),
   });
+  const matrixPageSize = 4;
+  const matrixPageCount = Math.max(1, Math.ceil(standings.length / matrixPageSize));
+  const [matrixPage, setMatrixPage] = useState(0);
+  const currentMatrixPage = Math.min(matrixPage, matrixPageCount - 1);
+  const matrixStart = currentMatrixPage * matrixPageSize;
+  const visibleColumns = standings.slice(matrixStart, matrixStart + matrixPageSize);
+
+  const matrixPager = matrixPageCount > 1 ? (
+    <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5" aria-label={translate('matrixColumnNavigation')}>
+      <button
+        type="button"
+        onClick={() => setMatrixPage((page) => Math.max(0, page - 1))}
+        disabled={currentMatrixPage === 0}
+        className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label={translate('previousMatrixColumns')}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <span className="min-w-16 text-center text-[11px] font-bold text-slate-600">
+        {matrixStart + 1}–{Math.min(matrixStart + matrixPageSize, standings.length)} / {standings.length}
+      </span>
+      <button
+        type="button"
+        onClick={() => setMatrixPage((page) => Math.min(matrixPageCount - 1, page + 1))}
+        disabled={currentMatrixPage >= matrixPageCount - 1}
+        className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label={translate('nextMatrixColumns')}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  ) : null;
 
   // Quick lookup matrix: matchResult[p1Id][p2Id] = array of per-set score strings
   const scoreMatrix: Record<string, Record<string, string[]>> = {};
@@ -98,6 +130,7 @@ export function GroupCrossMatrixView({
           {displayGroupName}
         </div>
         <div className="flex items-center gap-2">
+          {matrixPager}
           {onLegChange && (
             <div className="flex items-center gap-1.5">
               <button
@@ -131,9 +164,9 @@ export function GroupCrossMatrixView({
             <tr>
               <th className="px-3 py-2.5 text-center w-10">{translate('rankHeader')}</th>
               <th className="px-4 py-2.5 text-left min-w-[180px]">{translate('participantsHeader')}</th>
-              {standings.map((_, idx) => (
-                <th key={idx} className="px-3 py-2.5 text-center w-14 border-l border-slate-100">
-                  {idx + 1}
+              {visibleColumns.map((column, idx) => (
+                <th key={column.participantId} className="w-14 border-l border-slate-100 px-3 py-2.5 text-center">
+                  {matrixStart + idx + 1}
                 </th>
               ))}
               <th className="px-3 py-2.5 text-center w-16 border-l border-slate-200 bg-slate-100/60 font-bold text-slate-700">
@@ -152,7 +185,7 @@ export function GroupCrossMatrixView({
                   <td className="px-4 py-3 font-semibold text-slate-800">
                     {row.teamName}
                   </td>
-                  {standings.map((otherRow) => {
+                  {visibleColumns.map((otherRow) => {
                     const isSelf = row.participantId === otherRow.participantId;
                     const sets = scoreMatrix[row.participantId]?.[otherRow.participantId];
 

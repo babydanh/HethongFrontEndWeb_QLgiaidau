@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { TableProperties } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TableProperties } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
@@ -47,6 +47,8 @@ export function PagedRoundRobinView({
     if (targetMatch) {
       const info = getRoundRobinRoundInfo(targetMatch, matches);
       if (info.leg && info.leg !== activeLeg) {
+        // The selected match is an external selection; keep the visible leg in sync with it.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveLeg(info.leg);
       }
     }
@@ -103,17 +105,27 @@ export function PagedRoundRobinView({
 
   const legSelector = legCount > 1 ? (
     <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100/70 p-0.5" aria-label={translate('selectGroupLeg')}>
-      {Array.from({ length: legCount }, (_, index) => index + 1).map((leg) => (
-        <button
-          key={leg}
-          type="button"
-          onClick={() => changeLeg(leg)}
-          aria-pressed={currentLeg === leg}
-          className={`rounded-md px-2 py-1 text-[11px] font-bold transition-colors cursor-pointer ${currentLeg === leg ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'}`}
-        >
-          {translate('legLabel', { number: leg })}
-        </button>
-      ))}
+      <button
+        type="button"
+        onClick={() => changeLeg(currentLeg - 1)}
+        disabled={currentLeg <= 1}
+        className="rounded-md p-1 text-slate-500 transition-colors hover:bg-white hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label={translate('previousLeg')}
+      >
+        <ChevronLeft className="h-3.5 w-3.5" />
+      </button>
+      <span className="min-w-16 text-center text-[11px] font-bold text-slate-600">
+        {translate('legProgress', { current: currentLeg, total: legCount })}
+      </span>
+      <button
+        type="button"
+        onClick={() => changeLeg(currentLeg + 1)}
+        disabled={currentLeg >= legCount}
+        className="rounded-md p-1 text-slate-500 transition-colors hover:bg-white hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label={translate('nextLeg')}
+      >
+        <ChevronRight className="h-3.5 w-3.5" />
+      </button>
     </div>
   ) : null;
 

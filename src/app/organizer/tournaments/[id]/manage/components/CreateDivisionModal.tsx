@@ -3,21 +3,20 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, Plus, Save, Settings, Zap } from 'lucide-react';
-
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
 import type { Division } from '@/features/tournaments/api';
-import type { SportRuleKind } from '@/types/tournament';
+import type { BracketStage, SportRuleKind, StageRoundConfig } from '@/types/tournament';
 import { cn } from '@/utils/cn';
 import { getBracketQuickSuggestion } from './bracket-setup-view-model';
 import { DivisionConstraintsSection } from './DivisionConstraintsSection';
 import { DivisionGroupStageSettings } from './DivisionGroupStageSettings';
 import { DivisionIdentitySection } from './DivisionIdentitySection';
+import { DivisionRoundRulesSection } from './DivisionRoundRulesSection';
 import { DivisionStrictRulesSection } from './DivisionStrictRulesSection';
 
 type Setter<T> = Dispatch<SetStateAction<T>>;
-
 export type CreateDivisionModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -65,18 +64,22 @@ export type CreateDivisionModalProps = {
   setNewDivisionNumGroups: Setter<number>;
   newDivisionTeamsPerGroup: number;
   setNewDivisionTeamsPerGroup: Setter<number>;
+  groupRoundsToPlay: number;
+  setGroupRoundsToPlay: Setter<number>;
   newDivisionTeamsAdvancing: number;
   setNewDivisionTeamsAdvancing: Setter<number>;
   newDivisionPlayoffType: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION';
   setNewDivisionPlayoffType: Setter<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>;
   newDivisionSeedingType: 'SEEDED' | 'RANDOM';
   setNewDivisionSeedingType: Setter<'SEEDED' | 'RANDOM'>;
+  roundStages: BracketStage[];
+  divisionRoundConfig: StageRoundConfig | null;
+  onOpenRoundModal?: (stage: BracketStage, roundNumber: number) => void;
   participantCount?: number;
   isCreatingDivision: boolean;
   onCancel: () => void;
   onSubmit: () => void;
 };
-
 export function CreateDivisionModal({
   open,
   onOpenChange,
@@ -124,12 +127,17 @@ export function CreateDivisionModal({
   setNewDivisionNumGroups,
   newDivisionTeamsPerGroup,
   setNewDivisionTeamsPerGroup,
+  groupRoundsToPlay,
+  setGroupRoundsToPlay,
   newDivisionTeamsAdvancing,
   setNewDivisionTeamsAdvancing,
   newDivisionPlayoffType,
   setNewDivisionPlayoffType,
   newDivisionSeedingType,
   setNewDivisionSeedingType,
+  roundStages,
+  divisionRoundConfig,
+  onOpenRoundModal,
   participantCount = 0,
   isCreatingDivision,
   onCancel,
@@ -141,7 +149,6 @@ export function CreateDivisionModal({
   const quickSuggestion = isGroupStageKnockout
     ? getBracketQuickSuggestion('GROUP_STAGE_KNOCKOUT', participantCount)
     : null;
-
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent className="max-h-[92vh] max-w-5xl overflow-y-auto rounded-2xl bg-white p-5 sm:p-6">
@@ -207,7 +214,7 @@ export function CreateDivisionModal({
               </button>
             </div>
 
-            {!newDivisionIsLiteMode && (
+            {!newDivisionIsLiteMode && editingDivision && (
               <DivisionStrictRulesSection
                 sportRuleKind={newDivisionSportRuleKind}
                 setSportRuleKind={setNewDivisionSportRuleKind}
@@ -235,6 +242,8 @@ export function CreateDivisionModal({
                 setNumGroups={setNewDivisionNumGroups}
                 teamsPerGroup={newDivisionTeamsPerGroup}
                 setTeamsPerGroup={setNewDivisionTeamsPerGroup}
+                groupRoundsToPlay={groupRoundsToPlay}
+                setGroupRoundsToPlay={setGroupRoundsToPlay}
                 teamsAdvancing={newDivisionTeamsAdvancing}
                 setTeamsAdvancing={setNewDivisionTeamsAdvancing}
                 playoffType={newDivisionPlayoffType}
@@ -243,6 +252,22 @@ export function CreateDivisionModal({
                 setSeedingType={setNewDivisionSeedingType}
                 quickSuggestion={quickSuggestion}
                 isCreating={isCreatingDivision}
+              />
+            )}
+
+            {!newDivisionIsLiteMode && (
+              <DivisionRoundRulesSection
+                bracketType={newDivisionBracketType}
+                roundStages={roundStages}
+                divisionRoundConfig={divisionRoundConfig}
+                maxParticipants={Number(newDivisionMaxParticipants) || 0}
+                groupCount={newDivisionNumGroups}
+                groupRoundsToPlay={groupRoundsToPlay}
+                teamsAdvancing={newDivisionTeamsAdvancing}
+                sportRuleKind={newDivisionSportRuleKind}
+                isSaved={Boolean(editingDivision)}
+                isCreating={isCreatingDivision}
+                onOpenRoundModal={onOpenRoundModal}
               />
             )}
           </section>

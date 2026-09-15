@@ -89,7 +89,7 @@ export default function DoublesRegistrationFlow({
   const [searchedPartner, setSearchedPartner] = useState<UserProfile | null>(null);
   const [isSearchingPartner, setIsSearchingPartner] = useState(false);
   const [partnerSearchError, setPartnerSearchError] = useState('');
-  const [inviteLater, setInviteLater] = useState(false);
+  const [inviteLater, setInviteLater] = useState(true);
   const [rankingConsent, setRankingConsent] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isCheckingInitial, setIsCheckingInitial] = useState(true);

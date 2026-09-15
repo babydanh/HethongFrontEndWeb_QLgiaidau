@@ -339,108 +339,23 @@ export function CreateDivisionModal({
             )}
           </section>
 
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <label htmlFor="division-limit" className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-700">
-                <input
-                  id="division-limit"
-                  type="checkbox"
-                  checked={newDivisionLimitEnabled}
-                  onChange={(event) => setNewDivisionLimitEnabled(event.target.checked)}
-                  disabled={isCreatingDivision}
-                  className="h-4 w-4 accent-blue-600"
-                />
-                {translate('createDivision.participantLimitShort')}
-              </label>
-              {newDivisionLimitEnabled && (
-                <input
-                  aria-label={translate('createDivision.maxCount')}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={newDivisionMaxParticipants}
-                  onChange={(event) => setNewDivisionMaxParticipants(event.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
-                  onBlur={() => {
-                    const parsed = Number(newDivisionMaxParticipants);
-                    const normalized = Number.isFinite(parsed) && parsed > 0 ? Math.min(128, Math.max(2, parsed)) : 2;
-                    setNewDivisionMaxParticipants(String(normalized));
-                  }}
-                  disabled={isCreatingDivision}
-                  className="w-16 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-center text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              )}
-            </div>
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <label htmlFor="division-elo" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <input
-                  id="division-elo"
-                  type="checkbox"
-                  checked={newDivisionEloEnabled}
-                  onChange={(event) => setNewDivisionEloEnabled(event.target.checked)}
-                  disabled={isCreatingDivision}
-                  className="h-4 w-4 accent-blue-600"
-                />
-                {translate('createDivision.eloLimitShort')}
-              </label>
-              {newDivisionEloEnabled && (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <input
-                    aria-label={translate('createDivision.minElo')}
-                    type="number"
-                    min={0}
-                    max={3000}
-                    value={newDivisionMinElo ?? ''}
-                    onChange={(event) => setNewDivisionMinElo(event.target.value === '' ? null : Number(event.target.value))}
-                    disabled={isCreatingDivision}
-                    placeholder={translate('createDivision.noLimit')}
-                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  />
-                  <input
-                    aria-label={translate('createDivision.maxElo')}
-                    type="number"
-                    min={0}
-                    max={3000}
-                    value={newDivisionMaxElo ?? ''}
-                    onChange={(event) => setNewDivisionMaxElo(event.target.value === '' ? null : Number(event.target.value))}
-                    disabled={isCreatingDivision}
-                    placeholder={translate('createDivision.noLimit')}
-                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <label htmlFor="division-entry-fee-override" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <input
-                  id="division-entry-fee-override"
-                  type="checkbox"
-                  checked={newDivisionEntryFeeOverrideEnabled}
-                  onChange={(event) => setNewDivisionEntryFeeOverrideEnabled(event.target.checked)}
-                  disabled={isCreatingDivision}
-                  className="h-4 w-4 accent-blue-600"
-                />
-                {translate('createDivision.entryFeeOverrideShort')}
-              </label>
-              {newDivisionEntryFeeOverrideEnabled ? (
-                <input
-                  aria-label={translate('createDivision.entryFeeOverrideShort')}
-                  type="text"
-                  inputMode="numeric"
-                  value={newDivisionEntryFee}
-                  onChange={(event) => setNewDivisionEntryFee(event.target.value.replace(/[^0-9]/g, '').slice(0, 12))}
-                  disabled={isCreatingDivision}
-                  placeholder={translate('createDivision.entryFeeOverridePlaceholder')}
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              ) : (
-                <p className="mt-2 text-[11px] leading-tight text-slate-500">
-                  {translate('createDivision.entryFeeOverrideHint')}
-                </p>
-              )}
-            </div>
-          </div>
+          <DivisionConstraintsSection
+            maxParticipants={newDivisionMaxParticipants}
+            setMaxParticipants={setNewDivisionMaxParticipants}
+            limitEnabled={newDivisionLimitEnabled}
+            setLimitEnabled={setNewDivisionLimitEnabled}
+            eloEnabled={newDivisionEloEnabled}
+            setEloEnabled={setNewDivisionEloEnabled}
+            minElo={newDivisionMinElo}
+            setMinElo={setNewDivisionMinElo}
+            maxElo={newDivisionMaxElo}
+            setMaxElo={setNewDivisionMaxElo}
+            entryFeeOverrideEnabled={newDivisionEntryFeeOverrideEnabled}
+            setEntryFeeOverrideEnabled={setNewDivisionEntryFeeOverrideEnabled}
+            entryFee={newDivisionEntryFee}
+            setEntryFee={setNewDivisionEntryFee}
+            isCreating={isCreatingDivision}
+          />
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <Button variant="outline" onClick={onCancel} disabled={isCreatingDivision}>

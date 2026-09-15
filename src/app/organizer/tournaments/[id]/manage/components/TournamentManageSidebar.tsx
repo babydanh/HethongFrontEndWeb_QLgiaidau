@@ -34,7 +34,8 @@ export type ManageSection =
   | 'livestream'
   | 'finance'
   | 'permissions'
-  | 'sponsors';
+  | 'sponsors'
+  | 'settings';
 
 export type ManageBasicSubTab = 'general' | 'branding' | 'prizes' | 'contact' | 'sponsors';
 

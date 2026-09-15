@@ -35,6 +35,7 @@ import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
+import { TournamentSettingsTab } from './components/TournamentSettingsTab';
 import { LivestreamTab } from './components/LivestreamTab';
 import { TournamentManageOverview } from './components/TournamentManageOverview';
 import { type ManageSection } from './components/TournamentManageSidebar';
@@ -150,7 +151,7 @@ const getBracketFormatIcon = (format?: string | null) => {
 
 function getManageSectionFromTab(tab: string | null): ManageSection | null {
   if (!tab || tab === 'operations') return null;
-  if (['basic', 'schedule', 'registration', 'bracket', 'court_schedule', 'livestream', 'finance', 'permissions', 'sponsors'].includes(tab)) {
+  if (['basic', 'schedule', 'registration', 'bracket', 'court_schedule', 'livestream', 'finance', 'permissions', 'sponsors', 'settings'].includes(tab)) {
     return tab as Exclude<ManageSection, 'overview'>;
   }
   return null;
@@ -904,33 +905,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             )}
           </div>
         </div>
-
-        <RegistrationSettingsCard
-          visibility={s.visibility}
-          setVisibility={s.setVisibility}
-          registrationMode={s.registrationMode}
-          setRegistrationMode={s.setRegistrationMode}
-          registrationStartDate={s.registrationStartDate}
-          setRegistrationStartDate={s.setRegistrationStartDate}
-          registrationEndDate={s.registrationEndDate}
-          setRegistrationEndDate={s.setRegistrationEndDate}
-          isSaving={s.isSavingConfig}
-          disabled={isTournamentRegistrationClosed(tournament.status) || Boolean(tournament.isRegistrationLocked)}
-          onSave={s.handleSaveRegistrationSettings}
-          inviteLink={s.inviteLink}
-          inviteCode={tournament.inviteCode}
-          tournamentName={tournament.name}
-          onCopyInviteCode={async () => {
-            if (!tournament.inviteCode) return;
-            try {
-              await navigator.clipboard.writeText(tournament.inviteCode);
-              toast.success(translate('toast.copiedInvite'));
-            } catch {
-              toast.error(translate('toast.copyFailed'));
-            }
-          }}
-          onRegenerateInviteCode={s.handleRegenerateInviteCode}
-        />
 
         {/* Key Tournament Details Rows - Clean & Unified Layout */}
         <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
@@ -1712,6 +1686,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   { id: 'bracket' as const, label: 'Bảng đấu', icon: Trophy },
                   { id: 'court_schedule' as const, label: 'Lịch thi đấu', icon: CalendarDays },
                   { id: 'sponsors' as const, label: 'Tài trợ', icon: Handshake },
+                  { id: 'settings' as const, label: '', icon: Settings, iconOnly: true, title: 'Cài đặt giải đấu' },
                 ].map((tab) => {
                   const isActive = activeSection === tab.id;
                   const TabIcon = tab.icon;
@@ -1720,6 +1695,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       key={tab.id}
                       type="button"
                       onClick={() => handleManageNavigation(tab.id)}
+                      title={tab.title || tab.label}
                       className={`px-3 py-2.5 sm:px-4 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                         isActive
                           ? 'border-blue-600 text-blue-600'
@@ -1727,7 +1703,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       }`}
                     >
                       <TabIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                      <span>{tab.label}</span>
+                      {tab.label ? <span>{tab.label}</span> : null}
                       {tab.badge != null && (
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
@@ -1755,8 +1731,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
             {/* Tab Content Container - Exact white rounded card from Image 1 */}
             <div id="manage-content-area" className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3.5 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden scroll-mt-24">
-              {/* "NỘI DUNG THI ĐẤU" Accordion / Vertical List - Shown on non-overview/non-sponsors tabs */}
-              {activeSection !== 'overview' && activeSection !== 'sponsors' && (
+              {/* "NỘI DUNG THI ĐẤU" Accordion / Vertical List - Shown on non-overview/non-sponsors/non-settings tabs */}
+              {activeSection !== 'overview' && activeSection !== 'sponsors' && activeSection !== 'settings' && (
                 <div className="mb-4" aria-label={translate('divisions.title') || 'Nội dung thi đấu'}>
                   <div className="flex items-center justify-between gap-2 mb-2 px-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -2316,6 +2292,35 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 {activeSection === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
 
                 {activeSection === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
+
+                {activeSection === 'settings' && (
+                  <TournamentSettingsTab
+                    id={id}
+                    tournament={s.tournament}
+                    visibility={s.visibility}
+                    setVisibility={s.setVisibility}
+                    registrationMode={s.registrationMode}
+                    setRegistrationMode={s.setRegistrationMode}
+                    registrationStartDate={s.registrationStartDate}
+                    setRegistrationStartDate={s.setRegistrationStartDate}
+                    registrationEndDate={s.registrationEndDate}
+                    setRegistrationEndDate={s.setRegistrationEndDate}
+                    isSavingConfig={s.isSavingConfig}
+                    disabled={isTournamentRegistrationClosed(tournament.status) || Boolean(tournament.isRegistrationLocked)}
+                    handleSaveRegistrationSettings={s.handleSaveRegistrationSettings}
+                    inviteLink={s.inviteLink}
+                    onRegenerateInviteCode={s.handleRegenerateInviteCode}
+                    onCopyInviteCode={async () => {
+                      if (!tournament.inviteCode) return;
+                      try {
+                        await navigator.clipboard.writeText(tournament.inviteCode);
+                        toast.success(translate('toast.copiedInvite'));
+                      } catch {
+                        toast.error(translate('toast.copyFailed'));
+                      }
+                    }}
+                  />
+                )}
 
                 {activeSection === 'sponsors' && (
                   <div className="animate-in fade-in duration-200">

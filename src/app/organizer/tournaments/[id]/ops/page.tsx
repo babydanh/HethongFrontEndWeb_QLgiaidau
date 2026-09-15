@@ -661,7 +661,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           teamsPerGroup={bracketManager.teamsPerGroup}
           setTeamsPerGroup={bracketManager.setTeamsPerGroup}
           teamsAdvancing={bracketManager.teamsAdvancing}
-          setTeamsAdvancing={bracketManager.setTeamsAdvancing}
           gskPlayoffType={bracketManager.gskPlayoffType}
           setGskPlayoffType={bracketManager.setGskPlayoffType}
           gskSeedingType={bracketManager.gskSeedingType}

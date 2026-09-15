@@ -271,7 +271,11 @@ export function RegistrationTab({
 
   const participantSummary = React.useMemo(() => ({
     total: participants.length,
-    pending: participants.filter((participant) => isParticipantPendingApproval(participant.teamStatus)).length,
+    pending: participants.filter(
+      (participant) =>
+        isParticipantPendingApproval(participant.teamStatus) ||
+        isParticipantPendingPartner(participant.teamStatus),
+    ).length,
     approved: participants.filter((participant) => isParticipantApproved(participant.teamStatus)).length,
     unpaid: participants.filter((participant) => !participant.isPaid).length,
     rejected: participants.filter((participant) => participant.teamStatus === 'REJECTED').length,

@@ -43,7 +43,6 @@ export interface BracketSetupModalProps {
   teamsPerGroup: number;
   setTeamsPerGroup?: React.Dispatch<React.SetStateAction<number>>;
   teamsAdvancing: number;
-  setTeamsAdvancing?: React.Dispatch<React.SetStateAction<number>>;
 
   // Submission
   isSubmitting: boolean;
@@ -68,7 +67,6 @@ export function BracketSetupModal({
   teamsPerGroup = 4,
   setTeamsPerGroup,
   teamsAdvancing = 2,
-  setTeamsAdvancing,
   isSubmitting,
   onConfirm,
 }: BracketSetupModalProps) {

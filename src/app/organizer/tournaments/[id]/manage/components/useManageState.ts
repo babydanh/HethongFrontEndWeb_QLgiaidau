@@ -164,6 +164,14 @@ export function useManageState(id: string) {
   // Draft-only bracket settings for the division modal. Keep these separate
   // from the selected division's auto-save state until the user confirms.
   const [newDivisionIsLiteMode, setNewDivisionIsLiteMode] = useState(true);
+  const [newDivisionSportRuleKind, setNewDivisionSportRuleKind] = useState<SportRuleKind>('BADMINTON');
+  const [newDivisionSetsToWin, setNewDivisionSetsToWin] = useState(2);
+  const [newDivisionPointsPerSet, setNewDivisionPointsPerSet] = useState(21);
+  const [newDivisionWinByTwo, setNewDivisionWinByTwo] = useState(true);
+  const [newDivisionMaxDeucePoints, setNewDivisionMaxDeucePoints] = useState(30);
+  const [newDivisionSuperTiebreakEnabled, setNewDivisionSuperTiebreakEnabled] = useState(false);
+  const [newDivisionSuperTiebreakSetIndex, setNewDivisionSuperTiebreakSetIndex] = useState(3);
+  const [newDivisionSuperTiebreakPoints, setNewDivisionSuperTiebreakPoints] = useState(10);
   const [newDivisionNumGroups, setNewDivisionNumGroups] = useState(2);
   const [newDivisionTeamsPerGroup, setNewDivisionTeamsPerGroup] = useState(4);
   const [newDivisionTeamsAdvancing, setNewDivisionTeamsAdvancing] = useState(2);
@@ -352,6 +360,23 @@ export function useManageState(id: string) {
     ?? null;
   const availableMatchFormatOptions = getAllowedMatchFormatOptions(selectedCategory);
   const selectedDivision = divisions.find((d) => d.id === selectedDivisionId);
+
+  const applyNewDivisionScoringDraft = useCallback((rawConfig: unknown, fallbackKind: SportRuleKind) => {
+    const rawRules = resolveSportRuleView(rawConfig, fallbackKind);
+    const normalizedKind = normalizeSportRuleKindForCategory(rawRules.kind, selectedCategory);
+    const resolvedRules = normalizedKind === rawRules.kind
+      ? rawRules
+      : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
+
+    setNewDivisionSportRuleKind(resolvedRules.kind);
+    setNewDivisionSetsToWin(resolvedRules.setsToWin);
+    setNewDivisionPointsPerSet(resolvedRules.pointsPerSet);
+    setNewDivisionWinByTwo(resolvedRules.winByTwo);
+    setNewDivisionMaxDeucePoints(resolvedRules.maxPoints);
+    setNewDivisionSuperTiebreakEnabled(resolvedRules.hasCustomTiebreakTarget);
+    setNewDivisionSuperTiebreakSetIndex(resolvedRules.bestOf);
+    setNewDivisionSuperTiebreakPoints(resolvedRules.tiebreakPoints);
+  }, [selectedCategory]);
   const bracketType = selectedDivision?.bracketType || null;
 
   const getFormatLabel = (mt: string, gr?: string|null) => {
@@ -1323,7 +1348,12 @@ export function useManageState(id: string) {
     const divisionGroupsConfig = divisionRoundConfig?.groupsConfig as Record<string, unknown> | undefined;
     const divisionAdvancementConfig = divisionRoundConfig?.advancementConfig as Record<string, unknown> | undefined;
     const divisionPlayoffConfig = divisionRoundConfig?.playoffConfig as Record<string, unknown> | undefined;
+    const fallbackKind = normalizeSportRuleKindForCategory(
+      inferSportRuleKindFromCategory(selectedCategory),
+      selectedCategory,
+    );
     setNewDivisionIsLiteMode(readExplicitScoringMode(division.roundConfig) !== 'STRICT');
+    applyNewDivisionScoringDraft(division.roundConfig, fallbackKind);
     setNewDivisionNumGroups(typeof divisionGroupsConfig?.numGroups === 'number' ? divisionGroupsConfig.numGroups : 2);
     setNewDivisionTeamsPerGroup(typeof divisionGroupsConfig?.teamsPerGroup === 'number' ? divisionGroupsConfig.teamsPerGroup : 4);
     setNewDivisionTeamsAdvancing(typeof divisionAdvancementConfig?.teamsAdvancing === 'number' ? divisionAdvancementConfig.teamsAdvancing : 2);
@@ -1346,6 +1376,11 @@ export function useManageState(id: string) {
     setNewDivisionEntryFeeOverrideEnabled(false);
     setNewDivisionEntryFee('');
     setNewDivisionIsLiteMode(true);
+    const defaultKind = normalizeSportRuleKindForCategory(
+      inferSportRuleKindFromCategory(selectedCategory),
+      selectedCategory,
+    );
+    applyNewDivisionScoringDraft(buildDefaultSportRules(defaultKind), defaultKind);
     setNewDivisionNumGroups(2);
     setNewDivisionTeamsPerGroup(4);
     setNewDivisionTeamsAdvancing(2);
@@ -1384,25 +1419,21 @@ export function useManageState(id: string) {
       const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
       const generatedName = getFormatLabel(mapped.mt, mapped.gr);
       const divisionName = newDivisionName.trim() || generatedName;
-      const normalizedKind = normalizeSportRuleKindForCategory(
-        inferSportRuleKindFromCategory(selectedCategory),
-        selectedCategory,
-      );
-      const defaultRules = buildDefaultSportRules(normalizedKind);
+      const normalizedKind = normalizeSportRuleKindForCategory(newDivisionSportRuleKind, selectedCategory);
       const scoringMode = (newDivisionIsLiteMode ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT';
-      const defaultRoundConfig = buildStageRoundConfigPayload({
+      const scoringRoundConfig = buildStageRoundConfigPayload({
         kind: normalizedKind,
-        setsToWin: defaultRules.setsToWin,
-        pointsPerSet: defaultRules.pointsPerSet,
-        winByTwo: defaultRules.winByTwo,
-        maxPoints: defaultRules.maxPoints,
-        tiebreakPoints: defaultRules.tiebreakPoints,
+        setsToWin: newDivisionSetsToWin,
+        pointsPerSet: newDivisionPointsPerSet,
+        winByTwo: newDivisionWinByTwo,
+        maxPoints: newDivisionWinByTwo ? newDivisionMaxDeucePoints : null,
+        tiebreakPoints: newDivisionSuperTiebreakEnabled ? newDivisionSuperTiebreakPoints : null,
         roundsToPlay: 1,
         mode: scoringMode,
       });
       const baseDivisionRoundConfig = editingDivision?.roundConfig
-        ? { ...editingDivision.roundConfig, mode: scoringMode }
-        : defaultRoundConfig;
+        ? mergeRoundConfig(editingDivision.roundConfig, scoringRoundConfig)
+        : scoringRoundConfig;
       const divisionRoundConfig = newDivisionBracketType === 'GROUP_STAGE_KNOCKOUT'
         ? {
             ...baseDivisionRoundConfig,

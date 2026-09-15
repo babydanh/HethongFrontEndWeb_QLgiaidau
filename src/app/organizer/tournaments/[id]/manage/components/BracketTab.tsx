@@ -124,7 +124,6 @@ interface BracketTabProps {
   teamsPerGroup?: number;
   setTeamsPerGroup?: React.Dispatch<React.SetStateAction<number>>;
   teamsAdvancing?: number;
-  setTeamsAdvancing?: React.Dispatch<React.SetStateAction<number>>;
   gskPlayoffType?: string;
   setGskPlayoffType?: React.Dispatch<React.SetStateAction<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>>;
   gskSeedingType?: string;
@@ -193,7 +192,6 @@ export function BracketTab({
   teamsPerGroup = 4,
   setTeamsPerGroup,
   teamsAdvancing = 2,
-  setTeamsAdvancing,
   gskPlayoffType,
   setGskPlayoffType,
   gskSeedingType,
@@ -750,7 +748,6 @@ export function BracketTab({
           teamsPerGroup={teamsPerGroup}
           setTeamsPerGroup={setTeamsPerGroup}
           teamsAdvancing={teamsAdvancing}
-          setTeamsAdvancing={setTeamsAdvancing}
           isSubmitting={isGeneratingBracket}
           onConfirm={async () => {
             setIsPoolArrangementModalOpen(false);

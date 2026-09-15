@@ -1983,7 +1983,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                           teamsPerGroup={s.teamsPerGroup}
                                           setTeamsPerGroup={s.setTeamsPerGroup}
                                           teamsAdvancing={s.teamsAdvancing}
-                                          setTeamsAdvancing={s.setTeamsAdvancing}
                                           divisionRoundConfig={
                                             s.divisions.find((division) => division.id === div.id)?.roundConfig ?? null
                                           }

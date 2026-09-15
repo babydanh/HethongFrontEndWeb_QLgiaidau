@@ -17,6 +17,7 @@ import {
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { Division } from '@/features/tournaments/api';
+import type { BracketStage } from '@/types/tournament';
 import { buildBracketSetupViewModel } from './bracket-setup-view-model';
 
 export interface ParticipantItem {
@@ -47,6 +48,7 @@ export interface BracketSetupModalProps {
   // Submission
   isSubmitting: boolean;
   onConfirm: () => Promise<void> | void;
+  bracket?: { stages: BracketStage[] } | null;
 }
 
 function createEmptyGroupAssignments(groupCount: number): Record<number, ParticipantItem[]> {
@@ -55,6 +57,85 @@ function createEmptyGroupAssignments(groupCount: number): Record<number, Partici
     groups[i] = [];
   }
   return groups;
+}
+
+function extractExistingGroupAssignments(
+  bracket: { stages: BracketStage[] } | null | undefined,
+  eligibleParticipants: ParticipantItem[],
+  fallbackGroupCount: number,
+): { assignments: Record<number, ParticipantItem[]>; unassigned: ParticipantItem[]; groupCount: number } {
+  if (!bracket || !bracket.stages || bracket.stages.length === 0) {
+    return {
+      assignments: createEmptyGroupAssignments(fallbackGroupCount),
+      unassigned: [...eligibleParticipants],
+      groupCount: fallbackGroupCount,
+    };
+  }
+
+  // Find round robin or group stage
+  const groupStage =
+    bracket.stages.find((s) => s.type === 'ROUND_ROBIN' || s.type === 'GROUP_STAGE_KNOCKOUT') ||
+    bracket.stages[0];
+
+  const groups = groupStage?.groups;
+  if (!groups || groups.length === 0) {
+    return {
+      assignments: createEmptyGroupAssignments(fallbackGroupCount),
+      unassigned: [...eligibleParticipants],
+      groupCount: fallbackGroupCount,
+    };
+  }
+
+  const participantMap = new Map<string, ParticipantItem>();
+  eligibleParticipants.forEach((p) => {
+    participantMap.set(p.id, p);
+  });
+
+  const assignedSet = new Set<string>();
+  const assignments: Record<number, ParticipantItem[]> = {};
+  const actualGroupCount = groups.length;
+
+  for (let gIdx = 0; gIdx < actualGroupCount; gIdx++) {
+    const group = groups[gIdx];
+    const groupTeamIds: string[] = [];
+    const seenInGroup = new Set<string>();
+
+    (group.matches || []).forEach((m) => {
+      const p1Id = m.participant1?.id || m.participant1Id;
+      const p2Id = m.participant2?.id || m.participant2Id;
+
+      if (p1Id && !seenInGroup.has(p1Id)) {
+        seenInGroup.add(p1Id);
+        groupTeamIds.push(p1Id);
+      }
+      if (p2Id && !seenInGroup.has(p2Id)) {
+        seenInGroup.add(p2Id);
+        groupTeamIds.push(p2Id);
+      }
+    });
+
+    const groupTeams: ParticipantItem[] = [];
+    groupTeamIds.forEach((id) => {
+      assignedSet.add(id);
+      const found = participantMap.get(id);
+      if (found) {
+        groupTeams.push(found);
+      } else {
+        // Fallback placeholder item if not in eligible list
+        groupTeams.push({ id, teamName: `Đội #${id.slice(0, 4)}` });
+      }
+    });
+
+    assignments[gIdx] = groupTeams;
+  }
+
+  const unassigned = eligibleParticipants.filter((p) => !assignedSet.has(p.id));
+
+  return {
+    assignments,
+    unassigned,
+    groupCount: actualGroupCount,
+  };
 }
 
 export function BracketSetupModal({
@@ -69,6 +150,7 @@ export function BracketSetupModal({
   teamsAdvancing = 2,
   isSubmitting,
   onConfirm,
+  bracket,
 }: BracketSetupModalProps) {
   const translate = useTranslations('TournamentDetail');
 
@@ -98,13 +180,24 @@ export function BracketSetupModal({
       : translate('compactKnockoutSummary', { count: bracketSetup.participantCount });
 
   // Track team assignment: Map groupIndex (0, 1, 2...) -> Array of ParticipantItem
-  const [groupAssignments, setGroupAssignments] = useState<Record<number, ParticipantItem[]>>(
-    () => createEmptyGroupAssignments(numGroups),
-  );
-  const [unassignedTeams, setUnassignedTeams] = useState<ParticipantItem[]>(
-    () => [...eligibleParticipants],
-  );
+  const [groupAssignments, setGroupAssignments] = useState<Record<number, ParticipantItem[]>>(() => {
+    const extracted = extractExistingGroupAssignments(bracket, eligibleParticipants, numGroups);
+    return extracted.assignments;
+  });
+  const [unassignedTeams, setUnassignedTeams] = useState<ParticipantItem[]>(() => {
+    const extracted = extractExistingGroupAssignments(bracket, eligibleParticipants, numGroups);
+    return extracted.unassigned;
+  });
   const [draggedParticipantId, setDraggedParticipantId] = useState<string | null>(null);
+
+  const initFromBracketOrEmpty = useCallback(() => {
+    const extracted = extractExistingGroupAssignments(bracket, eligibleParticipants, numGroups);
+    if (extracted.groupCount !== numGroups && setNumGroups) {
+      setNumGroups(extracted.groupCount);
+    }
+    setGroupAssignments(extracted.assignments);
+    setUnassignedTeams(extracted.unassigned);
+  }, [bracket, eligibleParticipants, numGroups, setNumGroups]);
 
   const resetPoolAssignments = useCallback((groupCount = numGroups) => {
     setUnassignedTeams([...eligibleParticipants]);
@@ -113,10 +206,10 @@ export function BracketSetupModal({
 
   const handleModalOpenChange = useCallback((nextOpen: boolean) => {
     if (nextOpen) {
-      resetPoolAssignments();
+      initFromBracketOrEmpty();
     }
     onOpenChange(nextOpen);
-  }, [onOpenChange, resetPoolAssignments]);
+  }, [onOpenChange, initFromBracketOrEmpty]);
 
   // Format participant label
   const getParticipantLabel = (p: ParticipantItem) => {

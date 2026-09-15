@@ -172,7 +172,7 @@ export function useManageState(id: string) {
   const [newDivisionSuperTiebreakEnabled, setNewDivisionSuperTiebreakEnabled] = useState(false);
   const [newDivisionSuperTiebreakSetIndex, setNewDivisionSuperTiebreakSetIndex] = useState(3);
   const [newDivisionSuperTiebreakPoints, setNewDivisionSuperTiebreakPoints] = useState(10);
-  const [newDivisionNumGroups, setNewDivisionNumGroups] = useState(2);
+  const [newDivisionNumGroups, setNewDivisionNumGroups] = useState(4);
   const [newDivisionTeamsPerGroup, setNewDivisionTeamsPerGroup] = useState(4);
   const [newDivisionTeamsAdvancing, setNewDivisionTeamsAdvancing] = useState(2);
   const [newDivisionPlayoffType, setNewDivisionPlayoffType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>('SINGLE_ELIMINATION');
@@ -1355,7 +1355,9 @@ export function useManageState(id: string) {
     );
     setNewDivisionIsLiteMode(readExplicitScoringMode(division.roundConfig) !== 'STRICT');
     applyNewDivisionScoringDraft(division.roundConfig, fallbackKind);
-    setNewDivisionNumGroups(typeof divisionGroupsConfig?.numGroups === 'number' ? divisionGroupsConfig.numGroups : 2);
+    setNewDivisionNumGroups(typeof divisionGroupsConfig?.numGroups === 'number'
+      ? divisionGroupsConfig.numGroups
+      : division.maxParticipants != null && division.maxParticipants >= 16 ? 4 : 2);
     setNewDivisionTeamsPerGroup(typeof divisionGroupsConfig?.teamsPerGroup === 'number' ? divisionGroupsConfig.teamsPerGroup : 4);
     setNewDivisionTeamsAdvancing(typeof divisionAdvancementConfig?.teamsAdvancing === 'number' ? divisionAdvancementConfig.teamsAdvancing : 2);
     setNewDivisionPlayoffType(divisionPlayoffConfig?.type === 'DOUBLE_ELIMINATION' ? 'DOUBLE_ELIMINATION' : 'SINGLE_ELIMINATION');
@@ -1383,7 +1385,7 @@ export function useManageState(id: string) {
       selectedCategory,
     );
     applyNewDivisionScoringDraft(buildDefaultSportRules(defaultKind), defaultKind);
-    setNewDivisionNumGroups(2);
+    setNewDivisionNumGroups(4);
     setNewDivisionTeamsPerGroup(4);
     setNewDivisionTeamsAdvancing(2);
     setNewDivisionPlayoffType('SINGLE_ELIMINATION');

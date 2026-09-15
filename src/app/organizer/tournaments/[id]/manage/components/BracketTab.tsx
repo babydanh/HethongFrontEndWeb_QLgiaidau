@@ -607,34 +607,7 @@ export function BracketTab({
               <h3 className="font-bold text-slate-900 text-base">{translate('bracketTitle')}</h3>
               <p className="text-xs text-slate-500 mt-0.5">{translate('currentBracketDescription')}</p>
             </div>
-            {canResetBracket && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsConfirmResetOpen(true)}
-                disabled={isGeneratingBracket}
-                className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingBracket ? 'animate-spin' : ''}`} />
-                {isGeneratingBracket ? translate('regenerating') : translate('regenerateBracket')}
-              </Button>
-            )}
           </div>
-
-          <ConfirmModal
-            open={isConfirmResetOpen}
-            onOpenChange={setIsConfirmResetOpen}
-            title={translate('regenerateBracketConfirmTitle')}
-            description={translate('regenerateBracketConfirmDescription')}
-            confirmLabel={isGeneratingBracket ? translate('processing') : translate('confirmRegenerate')}
-            cancelLabel={translate('keepCurrentBracket')}
-            variant="danger"
-            isLoading={isGeneratingBracket}
-            onConfirm={() => {
-              setIsConfirmResetOpen(false);
-              handleGenerateBracket();
-            }}
-          />
 
           {/* Group Stage Knockout: show tabs */}
           {isGroupStageKnockout && (
@@ -746,6 +719,7 @@ export function BracketTab({
           teamsPerGroup={teamsPerGroup}
           setTeamsPerGroup={setTeamsPerGroup}
           teamsAdvancing={teamsAdvancing}
+          bracket={bracket}
           isSubmitting={isGeneratingBracket}
           onConfirm={async () => {
             setIsPoolArrangementModalOpen(false);

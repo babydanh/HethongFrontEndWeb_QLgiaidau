@@ -52,18 +52,18 @@ export function DivisionGroupStageSettings({
   const advancingTotal = numGroups * teamsAdvancing;
 
   return (
-    <div className="mt-3 grid gap-3 lg:grid-cols-2">
-      <div className="rounded-xl border border-blue-200 bg-white p-3">
+    <div className="mt-3 grid items-stretch gap-3 lg:grid-cols-2">
+      <div className="flex h-full flex-col rounded-xl border border-blue-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-800">{translate('createDivision.stage1Short')}</h4>
           <span className="text-[11px] font-semibold text-slate-500">{translate('createDivision.configuredTeams', { count: numGroups * teamsPerGroup })}</span>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
+        <div className="grid flex-1 grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
+          <label className="flex min-h-[68px] flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
             {ruleTranslate('numberOfGroups')}
-            <input type="number" min={2} max={32} value={numGroups} onChange={(event) => updateNumber(event.target.value, setNumGroups, 2, 32)} disabled={isCreating} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            <input type="number" min={2} max={32} value={numGroups} onChange={(event) => updateNumber(event.target.value, setNumGroups, 2, 32)} disabled={isCreating} className="mt-auto w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
           </label>
-          <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
+          <label className="flex min-h-[68px] flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
             {ruleTranslate('groupStageRounds')}
             <input
               type="number"
@@ -75,10 +75,10 @@ export function DivisionGroupStageSettings({
                 setGroupRoundsToPlay(next);
               }}
               disabled={isCreating}
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-auto w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
-          <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
+          <label className="flex min-h-[68px] flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
             {ruleTranslate('teamsPerGroup')}
             <input
               type="number"
@@ -91,12 +91,12 @@ export function DivisionGroupStageSettings({
                 setTeamsAdvancing((current) => Math.min(current, Math.max(1, next - 1)));
               }}
               disabled={isCreating}
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-auto w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
-          <label className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
+          <label className="flex min-h-[68px] flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] font-semibold text-slate-600">
             {ruleTranslate('teamsAdvancing')}
-            <input type="number" min={1} max={Math.max(1, teamsPerGroup - 1)} value={teamsAdvancing} onChange={(event) => updateNumber(event.target.value, setTeamsAdvancing, 1, Math.max(1, teamsPerGroup - 1))} disabled={isCreating} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            <input type="number" min={1} max={Math.max(1, teamsPerGroup - 1)} value={teamsAdvancing} onChange={(event) => updateNumber(event.target.value, setTeamsAdvancing, 1, Math.max(1, teamsPerGroup - 1))} disabled={isCreating} className="mt-auto w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
           </label>
         </div>
         <p className="mt-2 text-xs font-semibold text-blue-700">{translate('createDivision.advanceSummary', { groups: numGroups, advancing: teamsAdvancing, total: advancingTotal })}</p>
@@ -110,12 +110,12 @@ export function DivisionGroupStageSettings({
         )}
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-white p-3">
+      <div className="flex h-full flex-col rounded-xl border border-amber-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-800">{translate('createDivision.stage2Short')}</h4>
           <span className="text-[11px] font-semibold text-slate-500">{translate('createDivision.configuredTeams', { count: advancingTotal })}</span>
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-1 flex-col justify-between gap-2">
           <div>
             <span className="mb-1 block text-[11px] font-semibold text-slate-500">{ruleTranslate('playoffFormat')}</span>
             <div className="grid grid-cols-2 gap-2">

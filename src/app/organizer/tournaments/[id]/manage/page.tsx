@@ -1100,7 +1100,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 tournament={tournament}
                 divisions={s.divisions}
                 variant="button"
-                buttonLabel={translate('registrationForm.title') || 'Mẫu đăng ký'}
+                buttonLabel="Mẫu đăng ký"
                 className="w-full justify-center py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-xs text-sm border-0 gap-2 transition-colors cursor-pointer"
                 icon={<FileText className="w-4 h-4 text-white" />}
               />
@@ -2668,6 +2668,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             setNewDivisionPlayoffType={s.setNewDivisionPlayoffType}
             newDivisionSeedingType={s.newDivisionSeedingType}
             setNewDivisionSeedingType={s.setNewDivisionSeedingType}
+            roundStages={s.selectedDivisionId === s.editingDivision?.id ? (s.bracket?.stages ?? []) : []}
+            divisionRoundConfig={s.divisions.find((division) => division.id === s.editingDivision?.id)?.roundConfig ?? s.editingDivision?.roundConfig ?? null}
+            onOpenRoundModal={s.editingDivision ? s.handleOpenRoundModal : undefined}
             participantCount={s.editingDivision ? s.participants.filter((participant) => participant.tournamentDivisionId === s.editingDivision?.id).length : 0}
             isCreatingDivision={s.isCreatingDivision}
             onCancel={() => { s.setIsCreateDivisionModalOpen(false); s.resetDivisionEditor(); }}

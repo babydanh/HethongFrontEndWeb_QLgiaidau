@@ -3272,11 +3272,18 @@
     "bookCourt": "Đặt sân",
     "createdTag": "Đã tạo",
     "inviteButton": "Mời bạn",
-    "semiFinalText": "Bán kết CLB Hà Anh",
+    "semiFinalText": "Bán kết CLB",
     "courtClub": "Sân CLB",
     "tonight": "Tối nay",
     "today": "Hôm nay",
-    "playerShort": "VDV"
+    "playerShort": "VDV",
+    "dayMon": "Thứ 2",
+    "dayTue": "Thứ 3",
+    "dayWed": "Thứ 4",
+    "dayThu": "Thứ 5",
+    "dayFri": "Thứ 6",
+    "daySat": "Thứ 7",
+    "daySun": "Chủ nhật"
   },
   "TeamRegistration": {
     "registrationPermission": "Có quyền đăng ký",

@@ -459,13 +459,21 @@ export default function HomePage() {
   const [activeDayId, setActiveDayId] = useState<string>('day-0');
   const daysList: DayPill[] = useMemo(() => {
     const today = new Date(now);
-    const dayNames = [translate('monday') || 'T2', translate('tuesday') || 'T3', translate('wednesday') || 'T4', translate('thursday') || 'T5', translate('friday') || 'T6', translate('saturday') || 'T7', 'CN'];
+    const dayNames = [
+      translate('dayMon'),
+      translate('dayTue'),
+      translate('dayWed'),
+      translate('dayThu'),
+      translate('dayFri'),
+      translate('daySat'),
+      translate('daySun'),
+    ];
     const counts = [14, 9, 16, 8, 12, 11, 7];
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const dayIndex = (d.getDay() + 6) % 7;
-      const dayLabel = i === 0 ? (translate('statusUpcoming') || 'Hôm nay') : (dayNames[dayIndex] || `T${d.getDay() + 1}`);
+      const dayLabel = i === 0 ? translate('statusUpcoming') : dayNames[dayIndex];
       const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
       return {
         id: `day-${i}`,
@@ -1708,15 +1716,15 @@ export default function HomePage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <h3 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
                   {translate('tonightMatchesHeader')}
                 </h3>
-                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
                   {translate('matchesCount', { count: pickupMatches.length })}
                 </span>
               </div>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-slate-400 font-medium">
                 {translate('byTime')}
               </span>
             </div>
@@ -1737,17 +1745,17 @@ export default function HomePage() {
 
           {/* Upcoming Matches Schedule */}
           {(isLoading || upcomingMatches.length > 0) && (
-            <div className="bg-white rounded-2xl border border-slate-200/70 shadow-xs p-4 sm:p-5">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
-                  <h3 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
+                  <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
                     {translate('upcomingSchedule')}
                   </h3>
                 </div>
                 <Link
                   href="/matches"
-                  className="text-xs font-bold text-blue-600 hover:underline"
+                  className="text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline"
                 >
                   {translate('viewAll')}
                 </Link>
@@ -1755,13 +1763,13 @@ export default function HomePage() {
 
               {/* Tournament tag badge */}
               <div className="mb-3.5 flex items-center gap-1.5">
-                <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-[10px]">
+                <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center font-bold text-[10px]">
                   SP
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-white">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white">
                   {translate('communityBadge')}
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-600 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700">
                   PICKLEBALL
                 </span>
                 <span className="text-xs font-bold text-slate-800 truncate ml-1">

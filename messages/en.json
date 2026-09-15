@@ -3272,11 +3272,18 @@
     "bookCourt": "Book court",
     "createdTag": "Created",
     "inviteButton": "Invite",
-    "semiFinalText": "Ha Anh Club Semifinal",
+    "semiFinalText": "Club Semifinal",
     "courtClub": "Club court",
     "tonight": "Tonight",
     "today": "Today",
-    "playerShort": "PLY"
+    "playerShort": "PLY",
+    "dayMon": "Mon",
+    "dayTue": "Tue",
+    "dayWed": "Wed",
+    "dayThu": "Thu",
+    "dayFri": "Fri",
+    "daySat": "Sat",
+    "daySun": "Sun"
   },
   "TeamRegistration": {
     "registrationPermission": "Can register",

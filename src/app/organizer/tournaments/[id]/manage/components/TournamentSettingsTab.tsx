@@ -133,10 +133,9 @@ export function TournamentSettingsTab({
       </div>
 
       {subSection === 'registration' ? (
-        <div className="space-y-6 max-w-3xl">
-          {/* Box Cấu hình đăng ký */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="space-y-6">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900">
                   {regTranslate('registrationSidebarTitle')}

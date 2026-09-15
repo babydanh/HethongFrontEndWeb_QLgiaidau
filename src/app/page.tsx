@@ -47,9 +47,13 @@ import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/Part
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 import {
-  SocialDayFilterStrip,
-  SocialPickupCard,
-  SocialRightSidebarWidgets,
+  AthleteProfileCard,
+  SocialMatchFilters,
+  SocialMyClubsCard,
+  SocialFeaturedTournaments,
+  SocialDaySelectorStrip,
+  SocialPickupRow,
+  SocialScheduleAndCourtsWidgets,
   type SocialPickupItem,
   type DayPill,
 } from '@/components/ui/SocialBentoHub';
@@ -473,81 +477,41 @@ export default function HomePage() {
     });
   }, [now, translate]);
 
+  const [activeFilterId, setActiveFilterId] = useState<string>('all');
   const pickupMatches: SocialPickupItem[] = useMemo(() => [
     {
       id: 'pickup-1',
-      sport: 'Pickleball',
+      sport: 'PICKLEBALL',
+      sportColorBg: 'bg-blue-50',
+      sportColorText: 'text-blue-700',
       sportTier: 'Hạng B / B+',
-      title: 'Kèo giao lưu buổi tối, tính ELO phong trào',
-      courtName: 'Sân D-Sport Q7',
-      address: 'Huỳnh Tấn Phát, Q.7',
+      courtLocation: 'D-Sport Q7 (Sân 3)',
       timeRange: '19:30 - 21:30',
-      feePerSlot: '55.000đ',
+      feePerSlot: '55k',
       maxSlots: 4,
       currentSlots: 3,
-      isUrgent: true,
-      communityName: 'CLB Pickleball Nam Sài Gòn',
+      urgentText: 'Còn 1 slot',
       players: [
-        { id: 'u1', fullName: 'Nguyễn Minh Quân' },
-        { id: 'u2', fullName: 'Trần Bảo Long' },
-        { id: 'u3', fullName: 'Hoàng Văn Nam' },
+        { id: 'u1', fullName: 'Minh Quân', initialsBg: '#2563eb' },
+        { id: 'u2', fullName: 'Tuấn Long', initialsBg: '#4f46e5' },
+        { id: 'u3', fullName: 'Hải Nam', initialsBg: '#0f172a' },
       ],
     },
     {
       id: 'pickup-2',
-      sport: 'Cầu lông',
-      sportTier: 'Trình trung bình khá',
-      title: 'Đánh đôi nam giao lưu cọ xát 2 tiếng',
-      courtName: 'CLB Cầu Lông Kỳ Hòa',
-      address: 'Sư Vạn Hạnh, Q.10',
-      timeRange: '18:00 - 20:00',
-      feePerSlot: '45.000đ',
+      sport: 'CẦU LÔNG',
+      sportColorBg: 'bg-emerald-50',
+      sportColorText: 'text-emerald-700',
+      sportTier: 'Hạng C+ / B',
+      courtLocation: 'Sân Kỳ Hòa (Sân 5)',
+      timeRange: '20:00 - 22:00',
+      feePerSlot: '45k',
       maxSlots: 4,
       currentSlots: 2,
-      isUrgent: false,
-      communityName: 'CLB Cầu Lông Kỳ Hòa',
+      urgentText: 'Còn 2 slot',
       players: [
-        { id: 'u4', fullName: 'Phạm Đức Anh' },
-        { id: 'u5', fullName: 'Lê Tuấn Tú' },
-      ],
-    },
-    {
-      id: 'pickup-3',
-      sport: 'Tennis',
-      sportTier: 'NTRP 3.0 - 3.5',
-      title: 'Kèo đôi nam nữ cuối tuần vui vẻ, có nước ngọt',
-      courtName: 'Sân Tennis Lan Anh',
-      address: 'Cách Mạng Tháng 8, Q.10',
-      timeRange: '20:00 - 22:00',
-      feePerSlot: '80.000đ',
-      maxSlots: 4,
-      currentSlots: 3,
-      isUrgent: true,
-      communityName: 'Tennis Lan Anh Friends',
-      players: [
-        { id: 'u6', fullName: 'Vũ Hải Đăng' },
-        { id: 'u7', fullName: 'Bùi Thu Hà' },
-        { id: 'u8', fullName: 'Lê Minh Trí' },
-      ],
-    },
-    {
-      id: 'pickup-4',
-      sport: 'Bóng bàn',
-      sportTier: 'Hạng E - D phong trào',
-      title: 'Giao lưu xoay vòng 6 người tính điểm ELO',
-      courtName: 'CLB Bóng Bàn Phú Thọ',
-      address: 'Lý Thường Kiệt, Q.11',
-      timeRange: '18:30 - 20:30',
-      feePerSlot: '35.000đ',
-      maxSlots: 6,
-      currentSlots: 4,
-      isUrgent: false,
-      communityName: 'Bóng Bàn Phú Thọ',
-      players: [
-        { id: 'u9', fullName: 'Đặng Tuấn Kiệt' },
-        { id: 'u10', fullName: 'Ngô Việt Hoàng' },
-        { id: 'u11', fullName: 'Trương Quốc Bảo' },
-        { id: 'u12', fullName: 'Đỗ Hữu Nghĩa' },
+        { id: 'u4', fullName: 'Vũ Đức', initialsBg: '#059669' },
+        { id: 'u5', fullName: 'Quang Huy', initialsBg: '#0284c7' },
       ],
     },
   ], []);
@@ -1647,614 +1611,153 @@ export default function HomePage() {
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Content: 3 Columns matching exact SportO Bento Social UI */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
         <h1 className="sr-only">{translate('seoH1')}</h1>
 
-        {/* Left Column (9/12) */}
-        <div className="lg:col-span-9 flex flex-col gap-8">
-          {/* Sports Selector Bar */}
-          <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
-            <button
-              onClick={() => setSelectedCategoryId('')}
-              className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                selectedCategoryId === ''
-                  ? 'text-white'
-                  : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
-              }`}
-            >
-              {selectedCategoryId === '' && (
-                <motion.div
-                  layoutId="activeCategory"
-                  className="absolute inset-0 bg-action-primary rounded-full z-0"
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5" />
-                {(() => {
-                  try {
-                    const val = translate('allSports');
-                    if (val && !val.startsWith('Home.')) return val;
-                  } catch {
-                    // ignore
-                  }
-                  return translate('allSports');
-                })()}
+        {/* 1. LEFT COLUMN (3/12): Athlete Profile Card, Match Filters, My Clubs */}
+        <aside className="lg:col-span-3 flex flex-col gap-4.5 order-2 lg:order-1">
+          {/* Athlete Profile Card */}
+          <AthleteProfileCard
+            user={user}
+            elo={activeElo || 1511}
+            matchesPlayed={matchesPlayed || 46}
+            winRate={winRate || 68}
+            credibility={98}
+            onViewProfile={() => {
+              if (!user?.id) return;
+              openUserProfile({
+                id: user.id,
+                fullName: user.fullName || translate('user'),
+                avatarUrl: user.avatarUrl,
+              });
+            }}
+          />
+
+          {/* Match Filters */}
+          <SocialMatchFilters
+            activeFilter={activeFilterId}
+            onSelectFilter={setActiveFilterId}
+          />
+
+          {/* My Clubs */}
+          <SocialMyClubsCard
+            clubName={communities[0]?.name || 'Hà Anh Pickleball Club'}
+            memberCount={communities[0]?._count?.members || 151}
+            court="Sân D-Sport Q7"
+          />
+        </aside>
+
+        {/* 2. CENTER COLUMN (6/12): Featured Tournaments, Day Selector, Tonight Matches, Upcoming Schedule */}
+        <section className="lg:col-span-6 flex flex-col gap-5 order-1 lg:order-2">
+          {/* Community: Featured Tournaments Strip */}
+          <SocialFeaturedTournaments />
+
+          {/* Day Selector Pill Strip */}
+          <SocialDaySelectorStrip
+            days={daysList}
+            activeId={activeDayId}
+            onSelect={setActiveDayId}
+          />
+
+          {/* Tonight Matches Header & Pickup Rows */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <h3 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight">
+                  {translate('tonightMatchesHeader')}
+                </h3>
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                  {translate('matchesCount', { count: 3 })}
+                </span>
+              </div>
+              <span className="text-xs text-slate-650 font-medium">
+                {translate('byTime')}
               </span>
-            </button>
-            {categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat)).map((cat) => {
-              const isActive = selectedCategoryId === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    isActive
-                      ? 'text-white'
-                      : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeCategory"
-                      className="absolute inset-0 bg-action-primary rounded-full z-0"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    {(() => {
-                      const logo = getSportLogo(cat.name);
-                      if (logo) return <img src={logo} alt={cat.name} className="w-3.5 h-3.5 object-contain" />;
-                      return <Trophy className="w-3.5 h-3.5" />;
-                    })()}
-                    {getCategoryLabel(cat)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Section 1: Giải đấu nổi bật */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end relative z-[30]">
-              <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h1>
-              <Link href="/tournaments" className="text-xs font-semibold text-content-link hover:underline flex items-center gap-1 relative z-[31]">
-                {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
 
-            {isLoading ? (
-              <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-lg"></div>
-            ) : activeTournaments.length === 0 ? (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-primary-light shadow-[0_10px_30px_rgba(29,95,224,0.18)] min-h-[320px] md:min-h-[420px] flex items-center justify-center text-center px-10 py-14">
-                {/* Watermark racket + shuttlecock */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
-                  <svg viewBox="0 0 200 200" className="w-[400px] h-[400px] md:w-[500px] md:h-[500px]" xmlns="http://www.w3.org/2000/svg">
-                    <g transform="translate(30,20) rotate(-18 80 80)">
-                      <ellipse cx="80" cy="60" rx="46" ry="56" fill="none" stroke="white" strokeWidth="6"/>
-                      <g stroke="white" strokeWidth="1.4" opacity="0.9">
-                        <line x1="80" y1="8" x2="80" y2="112"/>
-                        <line x1="60" y1="10" x2="60" y2="108"/>
-                        <line x1="100" y1="10" x2="100" y2="108"/>
-                        <line x1="42" y1="20" x2="42" y2="96"/>
-                        <line x1="118" y1="20" x2="118" y2="96"/>
-                        <line x1="36" y1="60" x2="124" y2="60"/>
-                        <line x1="38" y1="40" x2="122" y2="40"/>
-                        <line x1="38" y1="80" x2="122" y2="80"/>
-                        <line x1="46" y1="24" x2="114" y2="24"/>
-                        <line x1="46" y1="96" x2="114" y2="96"/>
-                      </g>
-                      <rect x="74" y="112" width="12" height="70" rx="5" fill="white"/>
-                      <rect x="70" y="176" width="20" height="34" rx="7" fill="white"/>
-                    </g>
-                    <g transform="translate(128,118) rotate(20)">
-                      <circle cx="0" cy="0" r="9" fill="white"/>
-                      <path d="M -7 -4 L -26 -34 L -20 -36 L -2 -8 Z" fill="white" opacity="0.95"/>
-                      <path d="M 0 -8 L 0 -40 L 6 -40 L 6 -8 Z" fill="white" opacity="0.95"/>
-                      <path d="M 7 -4 L 26 -34 L 20 -36 L 2 -8 Z" fill="white" opacity="0.95"/>
-                      <path d="M -5 -6 L -14 -30 L -10 -31 L -2 -8 Z" fill="white" opacity="0.7"/>
-                      <path d="M 5 -6 L 14 -30 L 10 -31 L 2 -8 Z" fill="white" opacity="0.7"/>
-                    </g>
-                  </svg>
-                </div>
-                <div className="relative z-10 max-w-md">
-                  <span className="inline-block text-[11px] font-bold tracking-[0.14em] uppercase text-content-link bg-white/70 border border-outline-strong/50 px-3.5 py-1.5 rounded-full mb-5">
-                    {translate('featuredTournaments')}
-                  </span>
-                  <h3 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-3 tracking-tight">
-                    {translate('noUpcomingTournaments')}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-[#0f1b33] font-bold">
-                    {translate('noUpcomingDescription')}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <TournamentHeroBanner
-                tournaments={featuredHomepageTournaments}
-                heightClass="h-[185px] sm:h-[230px] md:h-[280px] lg:h-[330px] xl:h-[380px] 2xl:h-[420px]"
-              />
-            )}
-          </section>
-
-          {/* Section 1.5: Bento Social Sports - Kèo Đấu & Giao Lưu Khám Phá */}
-          <section className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                    <span>{translate('socialFeedTitle')}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700 tracking-wide uppercase">
-                      Bento Feed
-                    </span>
-                  </h2>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {translate('socialFeedSubtitle')}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <Link
-                  href="/tournaments/create"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{translate('createPickupMatch')}</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Day Selector Pill Strip */}
-            <SocialDayFilterStrip
-              days={daysList}
-              activeId={activeDayId}
-              onSelect={setActiveDayId}
-            />
-
-            {/* Pickup Matches Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* List of pickup rows */}
+            <div className="space-y-3">
               {pickupMatches.map((item) => (
-                <SocialPickupCard
+                <SocialPickupRow
                   key={item.id}
                   item={item}
                   onJoin={(p) => {
-                    toast.success(`${translate('slotJoined')}: ${p.title}`);
+                    toast.success(`${translate('slotJoined')}: ${p.courtLocation}`);
                   }}
                 />
               ))}
             </div>
-          </section>
-
-          {/* Section 2: Trận live (Match Feed style) */}
-          {(isLoading || liveMatches.length > 0) && (
-            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
-                  <span className="flex h-2.5 w-2.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
-                  </span>
-                </div>
-              </div>
-              <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
-                {isLoading ? (
-                  <div className="space-y-4">
-                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
-                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className="space-y-4"
-                    >
-                      {visibleLiveTournamentEntries.map(([tournamentName, rawGroup]) => {
-                        const group = rawGroup as GroupMatchesData;
-                        const displayMatches = group.matches;
-                        const matchedTournament = tournaments.find(t => t.id === group.id);
-                        const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
-                        return (
-                          <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
-                            {/* Group Tournament Header */}
-                            <div className="flex items-center justify-between">
-                              <Link
-                                href={group.id ? `/tournaments/${group.id}` : '#'}
-                                className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                              >
-                                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                  <TournamentLogoAvatar src={group.logoUrl || matchedTournament?.logoUrl} alt={group.name} />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
-                                      {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                    </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
-                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
-                                    </span>
-                                  </div>
-                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
-                                    {group.name}
-                                  </h3>
-                                </div>
-                              </Link>
-
-                            </div>
-                            {/* Matches List Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-                              {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </motion.div>
-
-                    {liveMatches.length > HOME_MATCH_LIMIT && (
-                      <div className="flex justify-center pt-1.5">
-                        <Link
-                          href="/matches"
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all"
-                        >
-                          <span>{translate('viewAllMatches')}</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* Section 2.2: Trận đấu vừa kết thúc */}
-          {(isLoading || completedMatches.length > 0) && (
-            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentMatchResults')}</h2>
-              </div>
-              <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
-                {isLoading ? (
-                  <div className="space-y-4">
-                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className="space-y-4"
-                    >
-                      {visibleCompletedTournamentEntries.map(([tournamentName, rawGroup]) => {
-                        const group = rawGroup as GroupMatchesData;
-                        const displayMatches = group.matches;
-                        const matchedTournament = tournaments.find(t => t.id === group.id);
-                        const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
-
-                        return (
-                          <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
-                            {/* Group Tournament Header */}
-                            <div className="flex items-center justify-between">
-                              <Link
-                                href={group.id ? `/tournaments/${group.id}` : '#'}
-                                className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                              >
-                                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                  <TournamentLogoAvatar src={group.logoUrl || matchedTournament?.logoUrl} alt={group.name} />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
-                                      {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                    </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
-                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
-                                    </span>
-                                  </div>
-                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
-                                    {group.name}
-                                  </h3>
-                                </div>
-                              </Link>
-
-                            </div>
-                            {/* Matches List: 2 matches in 2 separate rows (1 match per row) */}
-                            <div className="space-y-2.5">
-                              {displayMatches.map((match) => renderCompletedMatchRow(match, group.matches, matchedTournament ?? null))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </motion.div>
-
-                    {completedMatches.length > HOME_MATCH_LIMIT && (
-                      <div className="flex justify-center pt-1.5">
-                        <Link
-                          href="/matches"
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all"
-                        >
-                          <span>{translate('viewAllMatches')}</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* Section 2.5: Trận đấu sắp diễn ra */}
-          {(isLoading || upcomingMatches.length > 0) && (
-            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('upcomingSchedule')}</h2>
-              </div>
-              <div className="p-2.5 sm:p-4 flex flex-col gap-3 sm:gap-4">
-                {isLoading ? (
-                  <div className="space-y-4">
-                    <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className="space-y-4"
-                    >
-                      {visibleUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
-                        const group = rawGroup as GroupMatchesData;
-                        const displayMatches = group.matches;
-                        const matchedTournament = tournaments.find(t => t.id === group.id);
-                        const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
-
-                        return (
-                          <div key={tournamentName} className="bg-slate-50/50 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 md:p-4 flex flex-col gap-2.5 sm:gap-3">
-                            {/* Group Tournament Header */}
-                            <div className="flex items-center justify-between">
-                              <Link
-                                href={group.id ? `/tournaments/${group.id}` : '#'}
-                                className="flex items-center gap-2.5 sm:gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
-                              >
-                                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-xs">
-                                  <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-white bg-sky-600' : 'text-white bg-slate-600'}`}>
-                                      {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                                    </span>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-white bg-violet-600">
-                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
-                                    </span>
-                                  </div>
-                                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/header:text-content-link transition-colors block leading-tight truncate">
-                                    {group.name}
-                                  </h3>
-                                </div>
-                              </Link>
-
-                            </div>
-                            {/* Matches List: 1 row with 2 matches side-by-side */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
-                              {displayMatches.map((match) => renderUpcomingMatchRow(match, group.matches, matchedTournament ?? null))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </motion.div>
-
-                    {upcomingMatches.length > HOME_MATCH_LIMIT && (
-                      <div className="flex justify-center pt-1.5">
-                        <Link
-                          href="/matches"
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 text-blue-600 font-bold text-xs shadow-2xs hover:shadow-xs transition-all"
-                        >
-                          <span>{translate('viewAllMatches')}</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* Section 4: Giải vừa kết thúc */}
-          {(isLoading || recentCompletedTournaments.length > 0) && (
-            <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentTournaments')}</h2>
-                  <p className="text-[11px] font-medium text-slate-500 mt-0.5">{translate('last14Days')}</p>
-                </div>
-                <Link href="/tournaments" className="text-xs font-semibold text-content-link hover:underline flex items-center gap-1">
-                  {translate('viewAllTournaments')} <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-              <div className="p-4">
-                {isLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
-                    <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {recentCompletedTournaments.slice(0, HOME_MATCH_LIMIT).map((tournament) => (
-                      <HomepageTournamentCard key={tournament.id} tournament={tournament} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
           </div>
 
-          {/* Right Column (3/12) */}
-          <div className="lg:col-span-3 flex flex-col gap-6 lg:sticky lg:top-[calc(var(--app-header-height)+1rem)] lg:self-start">
+          {/* Upcoming Matches Schedule */}
+          {(isLoading || upcomingMatches.length > 0) && (
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-4 sm:p-5">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <h3 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight">
+                    {translate('upcomingSchedule')}
+                  </h3>
+                </div>
+                <Link
+                  href="/matches"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                >
+                  {translate('viewAll')}
+                </Link>
+              </div>
 
-          {!isClient ? (
-             <div className="animate-pulse bg-slate-200 h-[180px] rounded-2xl w-full"></div>
-           ) : !isAuthenticated ? (
-             <motion.div
-               whileHover={{ y: -2 }}
-               className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5 flex flex-col items-center text-center"
-             >
-               <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 shrink-0">
-                 <UserPlus className="w-6 h-6 text-slate-400" />
-               </div>
-               <h3 className="text-sm font-semibold text-slate-900 mb-1">{translate('notSignedIn')}</h3>
-               <p className="text-xs text-slate-500 mb-4">{translate('loginToSee')}</p>
-               <div className="flex flex-col w-full gap-2">
-                 <a href="/login" className="bg-action-primary hover:bg-action-primary-hover text-white font-semibold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
-                   {translate('signInNow')}
-                 </a>
-                 <a href="/register" className="border border-slate-200 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
-                   {translate('signUp')}
-                 </a>
-               </div>
-             </motion.div>
-           ) : (
-             <div className="flex flex-col gap-5">
-               {/* Card 1: User Profile Card */}
-               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-4 flex flex-col items-center text-center relative overflow-hidden">
-                 {/* Sports cover banner background */}
-                 <div className="absolute top-0 left-0 w-full h-16 bg-action-primary" />
+              {/* Tournament tag badge */}
+              <div className="mb-3.5 flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-[10px]">
+                  SP
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-white">
+                  {translate('communityBadge')}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-600 text-white">
+                  PICKLEBALL
+                </span>
+                <span className="text-xs font-bold text-slate-800 truncate ml-1">
+                  test quản lý
+                </span>
+              </div>
 
-                 {/* Avatar */}
-                 <button
-                   type="button"
-                   aria-label={translate('profile')}
-                   onClick={(event) => {
-                     if (!user?.id) return;
-                     openUserProfile(
-                       {
-                         id: user.id,
-                         fullName: user.fullName || translate('user'),
-                         avatarUrl: user.avatarUrl,
-                         highlightRank: activeRankInfo
-                           ? {
-                               eloPoints: activeRankInfo.eloPoints,
-                               tierName: activeRankInfo.tierName,
-                               categoryName: activeRankInfo.categoryName || sportName,
-                               matchesPlayed: activeRankInfo.matchesPlayed,
-                               adminLeaderboardEligible: activeRankInfo.adminLeaderboardEligible,
-                             }
-                           : null,
-                       },
-                       event.currentTarget.getBoundingClientRect(),
-                     );
-                   }}
-                   className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                 >
-                   <RankAvatar
-                     src={user?.avatarUrl}
-                     name={user?.fullName}
-                     elo={hasPublicRank ? activeElo : null}
-                     tierName={displayTier}
-                     categoryName={activeRankInfo?.categoryName || sportName}
-                     matchesPlayed={matchesPlayed}
-                     size="md"
-                     ringClassName="ring-4 z-10 mt-5 transition-transform duration-300 hover:scale-[1.03]"
-                   />
-                 </button>
+              {/* 2x2 Matches Matrix */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {upcomingMatches.slice(0, 4).map((m) => renderUpcomingMatchRow(m, upcomingMatches, null))}
+              </div>
 
-                 {/* Name & Email */}
-                 <button
-                   type="button"
-                   onClick={(event) => {
-                     if (!user?.id) return;
-                     openUserProfile(
-                       {
-                         id: user.id,
-                         fullName: user.fullName || translate('user'),
-                         avatarUrl: user.avatarUrl,
-                       },
-                       event.currentTarget.getBoundingClientRect(),
-                     );
-                   }}
-                   className="mt-2.5 w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                 >
-                   <h3 className="text-base font-semibold text-slate-900 line-clamp-1 leading-snug">
-                     {user?.fullName || translate('user')}
-                   </h3>
-                   <p className="mb-3.5 w-full truncate text-xs text-slate-600 font-medium">
-                     {user?.email}
-                   </p>
-                 </button>
+              <div className="pt-4 text-center">
+                <Link
+                  href="/matches"
+                  className="text-xs font-bold text-slate-700 hover:text-blue-600 inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <span>{translate('viewAllMatches')}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
 
-                 {/* Stats Grid */}
-                 <div className="grid grid-cols-3 w-full gap-2 mt-1 pt-3 border-t border-slate-100">
-                   <div className="flex flex-col items-center">
-                     <span className="text-base font-bold text-slate-900 leading-none">
-                       {matchesPlayed}
-                     </span>
-                     <span className="text-[11px] font-bold text-slate-600 mt-1 uppercase tracking-wider">
-                       {translate('matchLabel')}
-                     </span>
-                   </div>
-                   <div className="flex flex-col items-center border-l border-r border-slate-100">
-                     <span className="text-base font-bold text-slate-900 leading-none">
-                       {matchesWon}
-                     </span>
-                     <span className="text-[11px] font-bold text-slate-600 mt-1 uppercase tracking-wider">
-                       {translate('wins')}
-                     </span>
-                   </div>
-                   <div className="flex flex-col items-center">
-                     <span className="text-base font-bold text-slate-900 leading-none">
-                       {winRate}%
-                     </span>
-                     <span className="text-[11px] font-bold text-slate-600 mt-1 uppercase tracking-wider">
-                       {translate('winRate')}
-                     </span>
-                   </div>
-                 </div>
+        {/* 3. RIGHT COLUMN (3/12): Your Schedule & Nearby Available Courts */}
+        <aside className="lg:col-span-3 flex flex-col gap-4.5 order-3">
+          <SocialScheduleAndCourtsWidgets />
 
-                 {/* CTA */}
-                 <Link href="/profile" className="w-full mt-4">
-                   <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
-                     {translate('profile')}
-                   </button>
-                 </Link>
-               </div>
-
-               {/* Card 2: ELO Progress Card */}
-               <HomepageEloProgressCard
-                 activeRankInfo={activeRankInfo}
-                 categoryRanks={categoryRanks}
-                 eloPoints={eloPoints}
-                 displayTier={displayTier}
-                 peakElo={peakElo}
-                 sportName={sportName}
-                 isAuthenticated={isAuthenticated}
-               />
-             </div>
-           )}
-
-           {/* Bento Social Widgets: Lịch đấu & Sân trống gần bạn */}
-           <SocialRightSidebarWidgets />
-
-           {/* Widget 2 — Banner Ads (Chuẩn IAB 300x250 Medium Rectangle) */}
-           <AdBannerCard
-             slot="HOMEPAGE_SIDEBAR"
-             variant="sidebar"
-             sponsor={translate('promoStore')}
-             title={translate('promoProduct')}
-             description={translate('promoOffer')}
-             href="/tournaments"
-             badgeLabel={translate('advertisement')}
-           />
-
-        </div>
+          {/* Ad Banner Card */}
+          <AdBannerCard
+            slot="HOMEPAGE_SIDEBAR"
+            variant="sidebar"
+            sponsor={translate('promoStore')}
+            title={translate('promoProduct')}
+            description={translate('promoOffer')}
+            href="/tournaments"
+            badgeLabel={translate('advertisement')}
+          />
+        </aside>
       </main>
 
       <ShareModal

@@ -46,6 +46,13 @@ import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
+import {
+  SocialDayFilterStrip,
+  SocialPickupCard,
+  SocialRightSidebarWidgets,
+  type SocialPickupItem,
+  type DayPill,
+} from '@/components/ui/SocialBentoHub';
 
 interface EnrichedTournament {
   id: string;
@@ -443,6 +450,107 @@ export default function HomePage() {
   // Widget States
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [upcomingMatch, setUpcomingMatch] = useState<unknown | null>(null);
+
+  // Bento Social Discovery State
+  const [activeDayId, setActiveDayId] = useState<string>('day-0');
+  const daysList: DayPill[] = useMemo(() => {
+    const today = new Date(now);
+    const dayNames = [translate('monday') || 'T2', translate('tuesday') || 'T3', translate('wednesday') || 'T4', translate('thursday') || 'T5', translate('friday') || 'T6', translate('saturday') || 'T7', 'CN'];
+    const counts = [14, 9, 16, 8, 12, 11, 7];
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const dayIndex = (d.getDay() + 6) % 7;
+      const dayLabel = i === 0 ? (translate('statusUpcoming') || 'Hôm nay') : (dayNames[dayIndex] || `T${d.getDay() + 1}`);
+      const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
+      return {
+        id: `day-${i}`,
+        dayLabel,
+        dateStr,
+        matchCount: counts[i % counts.length],
+        isToday: i === 0,
+      };
+    });
+  }, [now, translate]);
+
+  const pickupMatches: SocialPickupItem[] = useMemo(() => [
+    {
+      id: 'pickup-1',
+      sport: 'Pickleball',
+      sportTier: 'Hạng B / B+',
+      title: 'Kèo giao lưu buổi tối, tính ELO phong trào',
+      courtName: 'Sân D-Sport Q7',
+      address: 'Huỳnh Tấn Phát, Q.7',
+      timeRange: '19:30 - 21:30',
+      feePerSlot: '55.000đ',
+      maxSlots: 4,
+      currentSlots: 3,
+      isUrgent: true,
+      communityName: 'CLB Pickleball Nam Sài Gòn',
+      players: [
+        { id: 'u1', fullName: 'Nguyễn Minh Quân' },
+        { id: 'u2', fullName: 'Trần Bảo Long' },
+        { id: 'u3', fullName: 'Hoàng Văn Nam' },
+      ],
+    },
+    {
+      id: 'pickup-2',
+      sport: 'Cầu lông',
+      sportTier: 'Trình trung bình khá',
+      title: 'Đánh đôi nam giao lưu cọ xát 2 tiếng',
+      courtName: 'CLB Cầu Lông Kỳ Hòa',
+      address: 'Sư Vạn Hạnh, Q.10',
+      timeRange: '18:00 - 20:00',
+      feePerSlot: '45.000đ',
+      maxSlots: 4,
+      currentSlots: 2,
+      isUrgent: false,
+      communityName: 'CLB Cầu Lông Kỳ Hòa',
+      players: [
+        { id: 'u4', fullName: 'Phạm Đức Anh' },
+        { id: 'u5', fullName: 'Lê Tuấn Tú' },
+      ],
+    },
+    {
+      id: 'pickup-3',
+      sport: 'Tennis',
+      sportTier: 'NTRP 3.0 - 3.5',
+      title: 'Kèo đôi nam nữ cuối tuần vui vẻ, có nước ngọt',
+      courtName: 'Sân Tennis Lan Anh',
+      address: 'Cách Mạng Tháng 8, Q.10',
+      timeRange: '20:00 - 22:00',
+      feePerSlot: '80.000đ',
+      maxSlots: 4,
+      currentSlots: 3,
+      isUrgent: true,
+      communityName: 'Tennis Lan Anh Friends',
+      players: [
+        { id: 'u6', fullName: 'Vũ Hải Đăng' },
+        { id: 'u7', fullName: 'Bùi Thu Hà' },
+        { id: 'u8', fullName: 'Lê Minh Trí' },
+      ],
+    },
+    {
+      id: 'pickup-4',
+      sport: 'Bóng bàn',
+      sportTier: 'Hạng E - D phong trào',
+      title: 'Giao lưu xoay vòng 6 người tính điểm ELO',
+      courtName: 'CLB Bóng Bàn Phú Thọ',
+      address: 'Lý Thường Kiệt, Q.11',
+      timeRange: '18:30 - 20:30',
+      feePerSlot: '35.000đ',
+      maxSlots: 6,
+      currentSlots: 4,
+      isUrgent: false,
+      communityName: 'Bóng Bàn Phú Thọ',
+      players: [
+        { id: 'u9', fullName: 'Đặng Tuấn Kiệt' },
+        { id: 'u10', fullName: 'Ngô Việt Hoàng' },
+        { id: 'u11', fullName: 'Trương Quốc Bảo' },
+        { id: 'u12', fullName: 'Đỗ Hữu Nghĩa' },
+      ],
+    },
+  ], []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
@@ -1670,6 +1778,55 @@ export default function HomePage() {
             )}
           </section>
 
+          {/* Section 1.5: Bento Social Sports - Kèo Đấu & Giao Lưu Khám Phá */}
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>{translate('socialFeedTitle')}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700 tracking-wide uppercase">
+                      Bento Feed
+                    </span>
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {translate('socialFeedSubtitle')}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <Link
+                  href="/tournaments/create"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{translate('createPickupMatch')}</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Day Selector Pill Strip */}
+            <SocialDayFilterStrip
+              days={daysList}
+              activeId={activeDayId}
+              onSelect={setActiveDayId}
+            />
+
+            {/* Pickup Matches Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pickupMatches.map((item) => (
+                <SocialPickupCard
+                  key={item.id}
+                  item={item}
+                  onJoin={(p) => {
+                    toast.success(`${translate('slotJoined')}: ${p.title}`);
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+
           {/* Section 2: Trận live (Match Feed style) */}
           {(isLoading || liveMatches.length > 0) && (
             <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
@@ -2082,6 +2239,9 @@ export default function HomePage() {
                />
              </div>
            )}
+
+           {/* Bento Social Widgets: Lịch đấu & Sân trống gần bạn */}
+           <SocialRightSidebarWidgets />
 
            {/* Widget 2 — Banner Ads (Chuẩn IAB 300x250 Medium Rectangle) */}
            <AdBannerCard

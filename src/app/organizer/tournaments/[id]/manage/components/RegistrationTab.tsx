@@ -3,7 +3,7 @@
 import React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
-import { DateTimePicker, Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import {
@@ -26,8 +26,6 @@ import {
   Download,
   Upload,
   ChevronDown,
-  ChevronUp,
-  Settings,
   SlidersHorizontal,
   MoreVertical,
   Clock,
@@ -50,9 +48,7 @@ import {
   parseParticipantsExcel,
 } from '@/utils/exportTournament';
 import SmartFormImportModal from './SmartFormImportModal';
-import { RegistrationFormBuilder } from './RegistrationFormBuilder';
 import { MockDataModal } from './MockDataModal';
-import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
   getParticipantStatusClassName,
   getParticipantStatusLabel,
@@ -68,7 +64,6 @@ import {
 } from '@/utils/tournament-status';
 import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
 import toast from 'react-hot-toast';
-import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
 
 interface RegistrationProfileAvatarProps {
   name?: string | null;
@@ -111,7 +106,6 @@ function RegistrationProfileAvatar({ name, avatarUrl, size = 'sm' }: Registratio
 
 interface RegistrationTabProps {
   tournament: Tournament;
-  inviteLink: string;
   mockNamesText: string;
   setMockNamesText: (val: string) => void;
   isSeedingMock: boolean;
@@ -128,20 +122,9 @@ interface RegistrationTabProps {
   divisions: Division[];
   selectedDivisionId: string;
   setSelectedDivisionId: (val: string) => void;
-  visibility: 'PUBLIC' | 'PRIVATE';
-  setVisibility: (val: 'PUBLIC' | 'PRIVATE') => void;
-  registrationMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
-  setRegistrationMode: (val: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY') => void;
-  registrationStartDate: string;
-  setRegistrationStartDate: (val: string) => void;
-  registrationEndDate: string;
-  setRegistrationEndDate: (val: string) => void;
-  isSavingConfig: boolean;
   publishFeeAmount: number;
   handlePublish: () => void;
   handleOpenLockModal: () => void;
-  handleSaveRegistrationSettings: () => void;
-  handleRegenerateInviteCode: () => void;
   handleApproveParticipant: (participantId: string) => Promise<void>;
   handleRejectParticipant: (participantId: string) => Promise<void>;
   handleKickParticipant?: (participantId: string, reason?: string) => Promise<void>;
@@ -149,7 +132,6 @@ interface RegistrationTabProps {
   handleClearMockData: () => void;
   handleAssignWildcard: () => void;
   handleRemoveWildcard?: (participantId: string) => Promise<void>;
-  onCopyInviteLink: () => void;
   // ELO Constraints
   eloEnabled: boolean;
   setEloEnabled: (val: boolean) => void;
@@ -175,7 +157,6 @@ interface RegistrationTabProps {
 
 export function RegistrationTab({
   tournament,
-  inviteLink,
   mockNamesText,
   setMockNamesText,
   isSeedingMock,
@@ -192,26 +173,14 @@ export function RegistrationTab({
   divisions,
   selectedDivisionId,
   setSelectedDivisionId,
-  visibility,
-  setVisibility,
-  registrationMode,
-  setRegistrationMode,
-  registrationStartDate,
-  setRegistrationStartDate,
-  registrationEndDate,
-  setRegistrationEndDate,
-  isSavingConfig,
   publishFeeAmount,
   handlePublish,
   handleOpenLockModal,
-  handleSaveRegistrationSettings,
-  handleRegenerateInviteCode,
   handleApproveParticipant,
   handleRejectParticipant,
   handleSeedMockData,
   handleClearMockData,
   handleAssignWildcard,
-  onCopyInviteLink,
   eloEnabled,
   setEloEnabled,
   eloMin,
@@ -233,7 +202,6 @@ export function RegistrationTab({
   const [isSmartImportOpen, setIsSmartImportOpen] = React.useState(false);
   const [isMockDataModalOpen, setIsMockDataModalOpen] = React.useState(false);
   const [isWildcardModalOpen, setIsWildcardModalOpen] = React.useState(false);
-  const [isConfigOpen, setIsConfigOpen] = React.useState(false);
   const [selectedParticipant, setSelectedParticipant] = React.useState<TournamentParticipant | null>(null);
   const registrationFormFields = React.useMemo(
     () => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)).fields,
@@ -260,7 +228,6 @@ export function RegistrationTab({
     : 0;
   const locale = useLocale();
   const translate = useTranslations('TournamentDetail');
-  const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
   const registrationTranslate = useTranslations('OrganizerRegistration');
   const participantStatusLabels = {
@@ -387,7 +354,6 @@ export function RegistrationTab({
   const canSeedMock = divisions.length === 0 || Boolean(selectedMockDivision);
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-200">
-      
       {/* REGISTRATION MAIN CONTENT */}
       <div id="manage-participants-section" className="w-full space-y-4 min-w-0 max-w-full overflow-hidden transition-all">
           {/* Control Bar: Bên trái là Filter & Search, Bên phải là nút cài đặt (3-dots) */}
@@ -769,7 +735,6 @@ export function RegistrationTab({
             </div>
           )}
         </div>
-      </div>
 
       {/* Wildcard and Seeding are now rendered in the main right column of the manage page */}
 

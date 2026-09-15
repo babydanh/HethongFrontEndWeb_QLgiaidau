@@ -12,7 +12,7 @@ import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { uploadApi } from '@/features/upload/api';
-import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
+import { tournamentsApi, divisionsApi, type TournamentVenueWithCourts } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
 import {
   DropdownMenu,
@@ -29,6 +29,7 @@ import SponsorSettingsPanel from './components/SponsorSettingsPanel';
 import { ScheduleTab } from './components/ScheduleTab';
 import { CourtWorkspace } from './components/CourtWorkspace';
 import { RegistrationTab } from './components/RegistrationTab';
+import { RegistrationSettingsCard } from './components/RegistrationSettingsCard';
 import { RegistrationFormBuilder } from './components/RegistrationFormBuilder';
 import { BracketTab } from './components/BracketTab';
 import { mergeBracketMatches } from '@/app/(public)/tournaments/[id]/components/bracket/types';
@@ -332,8 +333,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isSavingFee, setIsSavingFee] = useState(false);
 
   // Modals for venue & courts management
-  const [selectedVenueForCourts, setSelectedVenueForCourts] = useState<any | null>(null);
-  const [selectedVenueForEdit, setSelectedVenueForEdit] = useState<any | null>(null);
+  const [selectedVenueForCourts, setSelectedVenueForCourts] = useState<TournamentVenueWithCourts | null>(null);
+  const [selectedVenueForEdit, setSelectedVenueForEdit] = useState<TournamentVenueWithCourts | null>(null);
   const [isCreateVenueOpen, setIsCreateVenueOpen] = useState(false);
 
   const handleSaveNameDirect = async () => {
@@ -385,7 +386,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     setIsSavingContactItem(true);
     try {
       const trimmed = value.trim();
-      const nextContact: Record<string, any> = { ...(s.contactInfo || {}) };
+      const nextContact: Record<string, string | undefined> = { ...(s.contactInfo || {}) };
       if (!trimmed) {
         delete nextContact[key];
       } else {
@@ -406,7 +407,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const handleDeleteInlineContactItem = async (key: string) => {
     setIsSavingContactItem(true);
     try {
-      const nextContact: Record<string, any> = { ...(s.contactInfo || {}) };
+      const nextContact: Record<string, string | undefined> = { ...(s.contactInfo || {}) };
       delete nextContact[key];
       s.setContactInfo(nextContact);
       await tournamentsApi.updateTournament(id, { contactInfo: nextContact });
@@ -433,7 +434,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
     setIsSavingContactItem(true);
     try {
-      const nextContact: Record<string, any> = {
+      const nextContact: Record<string, string | undefined> = {
         ...(s.contactInfo || {}),
         [finalKey]: finalVal,
       };
@@ -472,7 +473,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   useEffect(() => {
     const querySection = getManageSectionFromTab(new URLSearchParams(window.location.search).get('tab'));
-    if (querySection) setActiveSection(querySection);
+    if (querySection) {
+      void Promise.resolve().then(() => setActiveSection(querySection));
+    }
   }, [id]);
 
   useEffect(() => {
@@ -901,6 +904,33 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             )}
           </div>
         </div>
+
+        <RegistrationSettingsCard
+          visibility={s.visibility}
+          setVisibility={s.setVisibility}
+          registrationMode={s.registrationMode}
+          setRegistrationMode={s.setRegistrationMode}
+          registrationStartDate={s.registrationStartDate}
+          setRegistrationStartDate={s.setRegistrationStartDate}
+          registrationEndDate={s.registrationEndDate}
+          setRegistrationEndDate={s.setRegistrationEndDate}
+          isSaving={s.isSavingConfig}
+          disabled={isTournamentRegistrationClosed(tournament.status) || Boolean(tournament.isRegistrationLocked)}
+          onSave={s.handleSaveRegistrationSettings}
+          inviteLink={s.inviteLink}
+          inviteCode={tournament.inviteCode}
+          tournamentName={tournament.name}
+          onCopyInviteCode={async () => {
+            if (!tournament.inviteCode) return;
+            try {
+              await navigator.clipboard.writeText(tournament.inviteCode);
+              toast.success(translate('toast.copiedInvite'));
+            } catch {
+              toast.error(translate('toast.copyFailed'));
+            }
+          }}
+          onRegenerateInviteCode={s.handleRegenerateInviteCode}
+        />
 
         {/* Key Tournament Details Rows - Clean & Unified Layout */}
         <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
@@ -1752,7 +1782,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         const divMatches = s.matches.filter((m) => m.divisionId === div.id);
                         const divCompleted = divMatches.filter((m) => m.status === 'COMPLETED').length;
                         const divTotal = divMatches.length;
-                        const divParticipantsCount = s.participants.filter(p => p.tournamentDivisionId === div.id || (p as any).divisionId === div.id).length;
+                        const divParticipantsCount = s.participants.filter((p) =>
+                          p.tournamentDivisionId === div.id || (p as { divisionId?: string | null }).divisionId === div.id,
+                        ).length;
                         const capacityLabel = div.maxParticipants ? `${divParticipantsCount}/${div.maxParticipants}` : `${divParticipantsCount}`;
                         const BracketIcon = getBracketFormatIcon(div.bracketType);
 
@@ -1856,7 +1888,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                     {activeSection === 'registration' && (
                                       <RegistrationTab
                                         tournament={s.tournament}
-                                        inviteLink={s.inviteLink}
                                         mockNamesText={s.mockNamesText}
                                         setMockNamesText={s.setMockNamesText}
                                         isSeedingMock={s.isSeedingMock}
@@ -1873,20 +1904,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                         setSelectedDivisionId={s.setSelectedDivisionId}
                                         participants={s.participants}
                                         activeParticipantActionId={s.activeParticipantActionId}
-                                        visibility={s.visibility}
-                                        setVisibility={s.setVisibility}
-                                        registrationMode={s.registrationMode}
-                                        setRegistrationMode={s.setRegistrationMode}
-                                        registrationStartDate={s.registrationStartDate}
-                                        setRegistrationStartDate={s.setRegistrationStartDate}
-                                        registrationEndDate={s.registrationEndDate}
-                                        setRegistrationEndDate={s.setRegistrationEndDate}
-                                        isSavingConfig={s.isSavingConfig}
                                         publishFeeAmount={s.publishFeeAmount}
                                         handlePublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
                                         handleOpenLockModal={s.handleOpenLockModal}
-                                        handleSaveRegistrationSettings={s.handleSaveRegistrationSettings}
-                                        handleRegenerateInviteCode={s.handleRegenerateInviteCode}
                                         handleApproveParticipant={s.handleApproveParticipant}
                                         handleRejectParticipant={s.handleRejectParticipant}
                                         handleKickParticipant={s.handleKickParticipant}
@@ -1910,10 +1930,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                         handleSwapSeeds={s.handleSwapSeeds}
                                         handleReorderSeeds={s.handleReorderSeeds}
                                         refetchDivisionData={s.refetchDivisionData}
-                                        onCopyInviteLink={() => {
-                                          navigator.clipboard.writeText(s.inviteLink);
-                                          toast.success(translate('toast.copiedInvite'));
-                                        }}
                                       />
                                     )}
 

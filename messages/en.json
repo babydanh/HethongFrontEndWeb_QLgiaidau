@@ -4785,7 +4785,8 @@
       "matchStatusUpdated": "Match status updated.",
       "scheduleUpdated": "Match schedule updated.",
       "scoreUpdated": "Match score updated.",
-      "operationApplied": "Match operation applied."
+      "operationApplied": "Match operation applied.",
+      "copyFailed": "Unable to copy. Please try again."
     },
     "activityTitle": {
       "participantKicked": "Removed from tournament",
@@ -4917,6 +4918,12 @@
     "currentRegistrationLink": "Current registration link",
     "copyLink": "Copy link",
     "registrationConfigToggle": "Tournament Registration Settings",
+    "registrationSidebarTitle": "Registration",
+    "registrationLockedLabel": "Registration is locked",
+    "publicShort": "Public",
+    "openModeShort": "Open",
+    "approvalModeShort": "Approval",
+    "inviteOnlyModeShort": "Invite only",
     "editRegistrationSettings": "Edit settings",
     "hideRegistrationSettings": "Collapse settings",
     "saveRegistrationInfo": "Save registration information",

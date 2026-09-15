@@ -4785,7 +4785,8 @@
       "matchStatusUpdated": "Đã cập nhật trạng thái trận.",
       "scheduleUpdated": "Đã cập nhật lịch thi đấu.",
       "scoreUpdated": "Đã cập nhật tỷ số trận.",
-      "operationApplied": "Đã áp dụng quyết định nghiệp vụ cho trận."
+      "operationApplied": "Đã áp dụng quyết định nghiệp vụ cho trận.",
+      "copyFailed": "Không thể sao chép. Vui lòng thử lại."
     },
     "activityTitle": {
       "participantKicked": "Loại khỏi giải",
@@ -4917,6 +4918,12 @@
     "currentRegistrationLink": "Đường dẫn đăng ký hiện tại",
     "copyLink": "Sao chép link",
     "registrationConfigToggle": "Cấu hình đăng ký giải",
+    "registrationSidebarTitle": "Đăng ký",
+    "registrationLockedLabel": "Đăng ký đã khóa",
+    "publicShort": "Công khai",
+    "openModeShort": "Tự do",
+    "approvalModeShort": "Xét duyệt",
+    "inviteOnlyModeShort": "Mã mời",
     "editRegistrationSettings": "Chỉnh sửa cấu hình",
     "hideRegistrationSettings": "Thu gọn cấu hình",
     "saveRegistrationInfo": "Lưu thông tin đăng ký",

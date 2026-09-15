@@ -862,10 +862,8 @@ const commonTranslate = useTranslations('Common');
     isRegistrationButtonDisabled = false;
     if (canResumePayment) {
       registrationButtonLabel = '💳 ' + (translate('continuePayment') || 'Thanh toán ngay');
-    } else if (myRegistration?.participant?.teamStatus === 'PENDING_PARTNER') {
-      registrationButtonLabel = '⏳ Chờ ghép cặp · Xem mã mời';
     } else {
-      registrationButtonLabel = (translate('alreadyRegistered') || 'Đã đăng ký') + ' (Xem chi tiết)';
+      registrationButtonLabel = translate('alreadyRegistered') || 'Đã đăng ký';
     }
   } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
@@ -1246,76 +1244,23 @@ const commonTranslate = useTranslations('Common');
             {!isTournamentDraft(activeTournament.status) && (
               <div>
                 {canResumePayment ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        const resumeParticipantId = myRegistration?.participant?.id;
-                        if (resumeParticipantId) {
-                          const checkoutParams = new URLSearchParams({
-                            participantId: resumeParticipantId,
-                            tournamentId,
-                          });
-                          const resumeDivisionId =
-                            myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
-                          if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                          if (inviteCode) checkoutParams.set('invite', inviteCode);
-                          router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                        } else {
-                          router.push(registerHref);
-                        }
-                      }}
-                      className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      {translate('continuePayment') || 'Thanh toán ngay'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleWithdrawClick}
-                      className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold px-3 py-3 rounded-lg text-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
-                      title="Hủy đăng ký / Rút lui"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Rút lui</span>
-                    </Button>
-                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => router.push(registerHref)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-3 rounded-lg shadow-xs text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>{translate('continuePayment') || 'Thanh toán ngay'}</span>
+                  </Button>
                 ) : isRegisteredUser ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      onClick={() => router.push(registerHref)}
-                      className={cn(
-                        "flex-1 flex items-center justify-center gap-2 font-bold py-3 px-3 rounded-lg text-sm shadow-xs transition-all cursor-pointer",
-                        myRegistration?.participant?.teamStatus === 'PENDING_PARTNER'
-                          ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
-                          : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      )}
-                    >
-                      {myRegistration?.participant?.teamStatus === 'PENDING_PARTNER' ? (
-                        <>
-                          <Clock className="w-4 h-4 shrink-0" />
-                          <span className="truncate">Chờ ghép cặp · Xem mã mời & giờ</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4 shrink-0" />
-                          <span className="truncate">{translate('alreadyRegistered') || 'Đã đăng ký'} (Xem hồ sơ)</span>
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleWithdrawClick}
-                      className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold px-3 py-3 rounded-lg text-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
-                      title="Hủy đăng ký / Rút lui"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Rút lui</span>
-                    </Button>
-                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => router.push(registerHref)}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4 shrink-0" />
+                    <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
+                  </Button>
                 ) : isRegistrationOpen && areAllDivisionsFull ? (
                   <Button
                     type="button"

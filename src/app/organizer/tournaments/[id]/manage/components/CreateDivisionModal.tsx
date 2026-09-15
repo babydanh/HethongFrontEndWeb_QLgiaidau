@@ -146,8 +146,12 @@ export function CreateDivisionModal({
   const translate = useTranslations('OrganizerManage');
   const ruleTranslate = useTranslations('TournamentDetail');
   const isGroupStageKnockout = newDivisionBracketType === 'GROUP_STAGE_KNOCKOUT';
+  const parsedMax = Number(newDivisionMaxParticipants);
+  const effectiveCount = participantCount > 0
+    ? participantCount
+    : (newDivisionLimitEnabled && Number.isFinite(parsedMax) && parsedMax > 0 ? parsedMax : 16);
   const quickSuggestion = isGroupStageKnockout
-    ? getBracketQuickSuggestion('GROUP_STAGE_KNOCKOUT', participantCount)
+    ? getBracketQuickSuggestion('GROUP_STAGE_KNOCKOUT', effectiveCount)
     : null;
   return (
     <Modal open={open} onOpenChange={onOpenChange}>

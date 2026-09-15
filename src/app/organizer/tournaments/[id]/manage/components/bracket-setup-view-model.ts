@@ -93,7 +93,7 @@ export function getBracketQuickSuggestion(
   }
 
   if (variant !== 'GROUP_STAGE_KNOCKOUT' || count < 4) return null;
-  if (count <= 8) {
+  if (count <= 6) {
     return {
       translationKey: 'suggestionGroupStageSmall',
       groups: 2,
@@ -101,26 +101,48 @@ export function getBracketQuickSuggestion(
       teamsAdvancing: 1,
     };
   }
-  if (count <= 16) {
+  if (count <= 12) {
+    // 7-12 teams: 2 or 3 groups of 3-4 teams
+    const groups = count <= 8 ? 2 : (count % 3 === 0 ? 3 : (count <= 10 ? 2 : 4));
     return {
-      translationKey: 'suggestionGroupStageMedium',
-      groups: 2,
-      teamsPerGroup: Math.ceil(count / 2),
+      translationKey: 'suggestionGroupStageSmall',
+      groups,
+      teamsPerGroup: Math.ceil(count / groups),
       teamsAdvancing: 2,
     };
   }
-  if (count <= 32) {
+  if (count <= 16) {
+    // 13-16 teams: standard 4 groups of 4 teams, top 2 advance to QF (8 teams)
     return {
-      translationKey: 'suggestionGroupStageLarge',
+      translationKey: 'suggestionGroupStageMedium',
       groups: 4,
       teamsPerGroup: Math.ceil(count / 4),
       teamsAdvancing: 2,
     };
   }
+  if (count <= 24) {
+    // 17-24 teams: 4 groups of 4-6 teams (or 6 groups of 3-4 teams)
+    const groups = count % 6 === 0 ? 6 : 4;
+    return {
+      translationKey: 'suggestionGroupStageLarge',
+      groups,
+      teamsPerGroup: Math.ceil(count / groups),
+      teamsAdvancing: 2,
+    };
+  }
+  if (count <= 32) {
+    // 25-32 teams: standard 8 groups of 4 teams (or 4 groups of 8 teams max) -> 8 groups of 4
+    return {
+      translationKey: 'suggestionGroupStageLarge',
+      groups: 8,
+      teamsPerGroup: Math.ceil(count / 8),
+      teamsAdvancing: 2,
+    };
+  }
   return {
     translationKey: 'suggestionGroupStageMany',
-    groups: 8,
-    teamsPerGroup: Math.ceil(count / 8),
-    teamsAdvancing: 1,
+    groups: Math.min(16, Math.max(8, Math.ceil(count / 4))),
+    teamsPerGroup: 4,
+    teamsAdvancing: 2,
   };
 }

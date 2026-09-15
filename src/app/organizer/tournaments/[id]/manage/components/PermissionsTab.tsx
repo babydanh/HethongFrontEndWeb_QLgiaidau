@@ -40,6 +40,8 @@ interface PermissionsTabProps {
       email?: string;
     } | null;
   } | null;
+  initialSubTab?: 'organizers' | 'referees' | 'viewers';
+  hideSubTabHeader?: boolean;
 }
 
 const roleMap: Record<'organizers' | 'referees' | 'viewers', string> = {
@@ -73,9 +75,16 @@ const refereeStatusMeta: Record<
   },
 };
 
-export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
+export function PermissionsTab({ id, tournament, initialSubTab = 'organizers', hideSubTabHeader = false }: PermissionsTabProps) {
   const translate = useTranslations('OrganizerPermissions');
-  const [subTab, setSubTab] = useState<'organizers' | 'referees' | 'viewers'>('organizers');
+  const [subTab, setSubTab] = useState<'organizers' | 'referees' | 'viewers'>(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [referees, setReferees] = useState<TournamentReferee[]>([]);
   const [refereeFilter, setRefereeFilter] = useState<'all' | 'INVITED' | 'ACCEPTED' | 'DECLINED'>('all');
@@ -195,22 +204,24 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
             {translate('description')}
           </p>
         </div>
-        <div className="flex border-b border-slate-200 gap-6 mt-2">
-          {(['organizers', 'referees', 'viewers'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setSubTab(tab)}
-              className={
-                'pb-3 font-bold text-sm transition-all border-b-2 -mb-[2px] ' +
-                (subTab === tab
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800')
-              }
-            >
-              {tab === 'organizers' ? translate('organizersTab') : tab === 'referees' ? translate('refereesTab') : translate('viewersTab')}
-            </button>
-          ))}
-        </div>
+        {!hideSubTabHeader && (
+          <div className="flex border-b border-slate-200 gap-6 mt-2">
+            {(['organizers', 'referees', 'viewers'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setSubTab(tab)}
+                className={
+                  'pb-3 font-bold text-sm transition-all border-b-2 -mb-[2px] ' +
+                  (subTab === tab
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800')
+                }
+              >
+                {tab === 'organizers' ? translate('organizersTab') : tab === 'referees' ? translate('refereesTab') : translate('viewersTab')}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {subTab === 'referees' ? (

@@ -8780,5 +8780,32 @@
       "COMPLETED": "Hoàn tất",
       "CANCELLED": "Đã hủy"
     }
+  },
+  "OrganizerRegistration": {
+    "registrationSidebarTitle": "Cài đặt đăng ký",
+    "registrationLockedLabel": "Đã khóa đăng ký",
+    "visibilityLabel": "Phạm vi giải đấu",
+    "publicShort": "Công khai",
+    "privateShort": "Riêng tư",
+    "publicRegistrationOption": "Mọi người có thể tìm và đăng ký giải đấu này",
+    "privateRegistrationOption": "Chỉ những người có liên kết hoặc mã mời mới có thể xem và đăng ký",
+    "modeLabel": "Chế độ nhận đăng ký",
+    "openModeShort": "Tự do",
+    "openRegistrationOption": "Người tham gia được duyệt tự động ngay khi hoàn tất đăng ký",
+    "approvalModeShort": "Xét duyệt",
+    "approvalRegistrationOption": "Ban tổ chức sẽ duyệt từng đơn đăng ký trước khi vào danh sách chính thức",
+    "inviteOnlyModeShort": "Mã mời",
+    "inviteOnlyRegistrationOption": "Chỉ người có mã mời hợp lệ mới được phép đăng ký",
+    "scheduleLabel": "Khung thời gian mở đăng ký",
+    "startDateShort": "Thời gian mở",
+    "endDateShort": "Thời gian đóng",
+    "inviteCode": "Mã mời tham gia",
+    "regenerateInviteCode": "Tạo lại mã",
+    "showInviteQr": "Mã QR mời",
+    "saveSettings": "Lưu cài đặt đăng ký",
+    "quickInviteTitle": "Mời nhanh qua mã",
+    "inviteCodeMissing": "Chưa có mã mời",
+    "copyCode": "Sao chép mã mời",
+    "regenerateCode": "Tạo lại mã mời"
   }
 }

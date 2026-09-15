@@ -12,6 +12,7 @@ import {
   Copy,
   RefreshCw,
   Loader2,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DateTimePicker } from '@/components/ui/Input';
@@ -77,7 +78,7 @@ export function TournamentSettingsTab({
   onCopyInviteCode,
 }: TournamentSettingsTabProps) {
   const regTranslate = useTranslations('OrganizerRegistration');
-  const [subSection, setSubSection] = useState<'registration' | 'permissions'>('registration');
+  const [subSection, setSubSection] = useState<'registration' | 'organizers' | 'referees'>('registration');
   const now = React.useMemo(() => getLocalDateTime(new Date()), []);
   const showInviteTools = visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY';
 
@@ -102,12 +103,12 @@ export function TournamentSettingsTab({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Sub-tabs header */}
-      <div className="flex border-b border-slate-200 gap-6">
+      <div className="flex border-b border-slate-200 gap-2 sm:gap-6 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setSubSection('registration')}
           className={cn(
-            'pb-3 font-bold text-sm transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
+            'pb-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
             subSection === 'registration'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -118,16 +119,29 @@ export function TournamentSettingsTab({
         </button>
         <button
           type="button"
-          onClick={() => setSubSection('permissions')}
+          onClick={() => setSubSection('organizers')}
           className={cn(
-            'pb-3 font-bold text-sm transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
-            subSection === 'permissions'
+            'pb-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
+            subSection === 'organizers'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          )}
+        >
+          <Users className="w-4 h-4" />
+          <span>Ban tổ chức</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubSection('referees')}
+          className={cn(
+            'pb-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
+            subSection === 'referees'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           )}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>Mời Trọng tài & Ban tổ chức</span>
+          <span>Trọng tài</span>
         </button>
       </div>
 
@@ -336,8 +350,12 @@ export function TournamentSettingsTab({
           </div>
         </div>
       ) : (
-        /* Nhúng PermissionsTab để mời Trọng tài và Ban tổ chức */
-        <PermissionsTab id={id} tournament={tournament} />
+        /* Nhúng PermissionsTab để mời Trọng tài và Ban tổ chức với logic gốc */
+        <PermissionsTab
+          id={id}
+          tournament={tournament}
+          initialSubTab={subSection === 'referees' ? 'referees' : 'organizers'}
+        />
       )}
     </div>
   );

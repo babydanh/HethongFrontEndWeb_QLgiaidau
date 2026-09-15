@@ -8776,5 +8776,32 @@
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
     }
+  },
+  "OrganizerRegistration": {
+    "registrationSidebarTitle": "Registration settings",
+    "registrationLockedLabel": "Registration locked",
+    "visibilityLabel": "Tournament visibility",
+    "publicShort": "Public",
+    "privateShort": "Private",
+    "publicRegistrationOption": "Anyone can discover and register for this tournament",
+    "privateRegistrationOption": "Only invited participants with link or code can view and register",
+    "modeLabel": "Registration mode",
+    "openModeShort": "Open",
+    "openRegistrationOption": "Participants are automatically approved upon registration",
+    "approvalModeShort": "Approval",
+    "approvalRegistrationOption": "Organizer reviews and approves each entry",
+    "inviteOnlyModeShort": "Invite only",
+    "inviteOnlyRegistrationOption": "Only participants with a valid invite code can register",
+    "scheduleLabel": "Registration schedule",
+    "startDateShort": "Opening date",
+    "endDateShort": "Closing date",
+    "inviteCode": "Invitation code",
+    "regenerateInviteCode": "Regenerate code",
+    "showInviteQr": "Invite QR code",
+    "saveSettings": "Save registration settings",
+    "quickInviteTitle": "Quick invite with code",
+    "inviteCodeMissing": "No invite code",
+    "copyCode": "Copy invite code",
+    "regenerateCode": "Regenerate code"
   }
 }

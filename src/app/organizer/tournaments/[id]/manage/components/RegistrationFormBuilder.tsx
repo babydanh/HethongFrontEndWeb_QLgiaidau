@@ -38,6 +38,8 @@ interface RegistrationFormBuilderProps {
   divisions: Division[];
   variant?: 'card' | 'button';
   className?: string;
+  buttonLabel?: string;
+  icon?: React.ReactNode;
 }
 
 const createField = (label: string): RegistrationField => ({
@@ -70,6 +72,8 @@ export function RegistrationFormBuilder({
   divisions,
   variant = 'card',
   className,
+  buttonLabel,
+  icon,
 }: RegistrationFormBuilderProps) {
   const registrationFormTranslate = useTranslations('OrganizerRegistrationForm');
   const initial = useMemo(() => readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, divisions.map((division) => division.id)), [divisions, tournament.tournamentConfig?.registrationForm]);
@@ -191,8 +195,8 @@ export function RegistrationFormBuilder({
           )}
           title={isLocked ? registrationFormTranslate('lockedMessage') : registrationFormTranslate('description')}
         >
-          <Settings2 className="h-3.5 w-3.5 text-blue-600" />
-          <span>{registrationFormTranslate('setupForm')}</span>
+          {icon ?? <Settings2 className="h-3.5 w-3.5 text-blue-600" />}
+          <span>{buttonLabel || registrationFormTranslate('setupForm')}</span>
           {config.fields.length > 0 && (
             <span className="ml-0.5 rounded-full bg-blue-200/80 px-1.5 py-0.2 text-[10px] font-extrabold text-blue-800">
               {config.fields.length}

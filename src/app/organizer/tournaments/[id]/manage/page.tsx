@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, User, Users, Zap, Pencil, MapPin, CalendarDays, GitMerge, GitBranch, GitFork, RotateCw, DollarSign, Download, ChevronRight, ChevronLeft, Check, Play, ChevronDown, Activity, Layers, Calendar, ArrowUpRight, Share2, Globe, Clock, ShieldCheck, Video, LayoutDashboard, Info, Phone, Mail, Camera, ImagePlus, Save, Edit3, Settings, Handshake, Eye, EyeOff, FileText } from 'lucide-react';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -1095,14 +1095,16 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Action Row - EXACTLY matching Image 1: Main Button + Bookmark Icon + Share Icon */}
         <div className="pt-2">
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer flex items-center justify-center gap-2 transition-colors"
-            >
-              <Zap className="w-4 h-4 text-amber-300" />
-              <span>{translate('status.operations') || 'Vận hành giải đấu'}</span>
-            </Button>
+            <div className="flex-1">
+              <RegistrationFormBuilder
+                tournament={tournament}
+                divisions={s.divisions}
+                variant="button"
+                buttonLabel={translate('registrationForm.title') || 'Mẫu đăng ký'}
+                className="w-full justify-center py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-xs text-sm border-0 gap-2 transition-colors cursor-pointer"
+                icon={<FileText className="w-4 h-4 text-white" />}
+              />
+            </div>
 
             <Button
               type="button"
@@ -1586,6 +1588,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               divisions={s.divisions}
               matches={s.matches}
               onChecklistNavigate={handleChecklistNavigate}
+              headerActions={
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => { window.location.href = `/organizer/tournaments/${s.tournament!.id}/ops`; }}
+                  className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Chuyển sang trang vận hành giải đấu"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                  <span>{translate('status.operations') || 'Vận hành'}</span>
+                </Button>
+              }
             />
           </div>
         )}
@@ -1732,16 +1746,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   );
                 })}
               </div>
-
-              {s.tournament && (
-                <div className="shrink-0 flex items-center">
-                  <RegistrationFormBuilder
-                    tournament={s.tournament}
-                    divisions={s.divisions}
-                    variant="button"
-                  />
-                </div>
-              )}
             </div>
 
             {/* Tab Content Container - Exact white rounded card from Image 1 */}

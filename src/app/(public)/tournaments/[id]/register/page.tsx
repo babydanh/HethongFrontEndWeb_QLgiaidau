@@ -396,7 +396,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(id, bankData, selectedDivisionId || undefined);
+      const targetDivisionId = participant?.tournamentDivisionId || selectedDivisionId || undefined;
+      await tournamentsApi.withdraw(id, bankData, targetDivisionId);
       toast.success(registrationTranslate('withdrawalSuccess'));
       setParticipant(null);
       setIsRegistered(false);
@@ -876,7 +877,18 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       <button
                         key={div.id}
                         type="button"
-                        onClick={() => setSelectedDivisionId(div.id)}
+                        onClick={() => {
+                          if (participant?.tournamentDivisionId && participant.tournamentDivisionId !== div.id) {
+                            const registeredDiv = allDivisions.find((d) => d.id === participant.tournamentDivisionId);
+                            toast.error(
+                              registrationTranslate('activeTeamInOtherDivision', {
+                                name: registeredDiv?.name || 'nội dung khác',
+                              }) || `Bạn đang có đội đã tạo ở nội dung "${registeredDiv?.name || 'khác'}". Vui lòng hủy đăng ký đội hiện tại trước khi chuyển sang nội dung này.`
+                            );
+                            return;
+                          }
+                          setSelectedDivisionId(div.id);
+                        }}
                         disabled={isSubmitting}
                         className={cn(
                           'relative w-full cursor-pointer rounded-xl border p-3.5 text-xs font-bold transition-all text-left',
@@ -1005,6 +1017,15 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     customResponses={customResponses}
                     onCustomResponsesChange={setCustomResponses}
                     registrationFields={registrationFields}
+                    onRegistrationChanged={() => fetchTournament()}
+                    onActiveDivisionChange={(newDivId) => {
+                      if (newDivId) setSelectedDivisionId(newDivId);
+                      else {
+                        setParticipant(null);
+                        setIsRegistered(false);
+                        fetchTournament();
+                      }
+                    }}
                   />
                 ) : isRegistered && participant ? (
                   <div className="space-y-6 animate-in fade-in duration-300">

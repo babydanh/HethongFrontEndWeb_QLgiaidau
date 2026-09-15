@@ -36,6 +36,8 @@ interface Props {
   customResponses?: Record<string, unknown>;
   onCustomResponsesChange?: (updater: (current: Record<string, unknown>) => Record<string, unknown>) => void;
   registrationFields?: RegistrationField[];
+  onRegistrationChanged?: () => void;
+  onActiveDivisionChange?: (divisionId: string | null) => void;
 }
 
 type RegistrationParticipant = TournamentParticipant & {
@@ -68,6 +70,8 @@ export default function DoublesRegistrationFlow({
   customResponses,
   onCustomResponsesChange,
   registrationFields,
+  onRegistrationChanged,
+  onActiveDivisionChange,
 }: Props) {
   const router = useRouter();
   const registrationTranslate = useTranslations('TournamentRegistration');
@@ -403,12 +407,15 @@ export default function DoublesRegistrationFlow({
   const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournamentId, bankData, divisionId);
+      const targetDivisionId = participant?.tournamentDivisionId || divisionId;
+      await tournamentsApi.withdraw(tournamentId, bankData, targetDivisionId);
       toast.success(registrationTranslate('withdrawSuccess'));
       setParticipant(null);
       setTeamName('');
       setStep(1);
       setShowWithdrawModal(false);
+      onActiveDivisionChange?.(null);
+      onRegistrationChanged?.();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

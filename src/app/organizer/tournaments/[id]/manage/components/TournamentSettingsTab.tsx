@@ -78,7 +78,7 @@ export function TournamentSettingsTab({
   onCopyInviteCode,
 }: TournamentSettingsTabProps) {
   const regTranslate = useTranslations('OrganizerRegistration');
-  const [subSection, setSubSection] = useState<'registration' | 'organizers' | 'referees'>('registration');
+  const [subSection, setSubSection] = useState<'registration' | 'permissions'>('registration');
   const now = React.useMemo(() => getLocalDateTime(new Date()), []);
   const showInviteTools = visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY';
 
@@ -119,29 +119,16 @@ export function TournamentSettingsTab({
         </button>
         <button
           type="button"
-          onClick={() => setSubSection('organizers')}
+          onClick={() => setSubSection('permissions')}
           className={cn(
             'pb-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
-            subSection === 'organizers'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          )}
-        >
-          <Users className="w-4 h-4" />
-          <span>Ban tổ chức</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSubSection('referees')}
-          className={cn(
-            'pb-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all border-b-2 -mb-[2px] flex items-center gap-2 cursor-pointer',
-            subSection === 'referees'
+            subSection === 'permissions'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           )}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>Trọng tài</span>
+          <span>Phân quyền</span>
         </button>
       </div>
 
@@ -354,7 +341,6 @@ export function TournamentSettingsTab({
         <PermissionsTab
           id={id}
           tournament={tournament}
-          initialSubTab={subSection === 'referees' ? 'referees' : 'organizers'}
         />
       )}
     </div>

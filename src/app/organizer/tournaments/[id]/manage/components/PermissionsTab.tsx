@@ -196,22 +196,19 @@ export function PermissionsTab({ id, tournament, initialSubTab = 'organizers', h
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
-      <div className="border-b pb-2 flex flex-col gap-4">
+    <div className="space-y-6">
+      <div className="border-b pb-2 flex flex-col gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">{translate('title')}</h2>
-          <p className="text-xs text-slate-500 mt-1 font-semibold">
-            {translate('description')}
-          </p>
+          <h2 className="text-lg font-bold text-slate-900">{translate('title')}</h2>
         </div>
         {!hideSubTabHeader && (
-          <div className="flex border-b border-slate-200 gap-6 mt-2">
+          <div className="flex border-b border-slate-200 gap-6 mt-1">
             {(['organizers', 'referees', 'viewers'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setSubTab(tab)}
                 className={
-                  'pb-3 font-bold text-sm transition-all border-b-2 -mb-[2px] ' +
+                  'pb-2.5 font-bold text-sm transition-all border-b-2 -mb-[2px] cursor-pointer ' +
                   (subTab === tab
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800')
@@ -225,32 +222,27 @@ export function PermissionsTab({ id, tournament, initialSubTab = 'organizers', h
       </div>
 
       {subTab === 'referees' ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-700">{translate('pendingSummary')}</div>
-              <div className="mt-2 text-3xl font-bold text-amber-800">{pendingReferees.length}</div>
-              <div className="mt-1 text-xs text-amber-700">{translate('pendingSummaryDescription')}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-amber-800">{translate('pendingSummary')}</div>
+              <div className="mt-0.5 text-2xl font-extrabold text-amber-900">{pendingReferees.length}</div>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">{translate('acceptedSummary')}</div>
-              <div className="mt-2 text-3xl font-bold text-emerald-800">{acceptedReferees.length}</div>
-              <div className="mt-1 text-xs text-emerald-700">{translate('acceptedSummaryDescription')}</div>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-rose-50/70 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-rose-700">{translate('declinedSummary')}</div>
-              <div className="mt-2 text-3xl font-bold text-rose-800">{declinedReferees.length}</div>
-              <div className="mt-1 text-xs text-rose-700">{translate('declinedSummaryDescription')}</div>
-            </div>
+            <Clock3 className="w-6 h-6 text-amber-500 shrink-0 opacity-80" />
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-600">
-            {refereeFilter === 'INVITED'
-              ? translate('invitedGuidance')
-              : refereeFilter === 'DECLINED'
-                ? translate('declinedGuidance')
-                : refereeFilter === 'ACCEPTED'
-                  ? translate('acceptedGuidance')
-                  : translate('allGuidance')}
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3.5 flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">{translate('acceptedSummary')}</div>
+              <div className="mt-0.5 text-2xl font-extrabold text-emerald-900">{acceptedReferees.length}</div>
+            </div>
+            <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0 opacity-80" />
+          </div>
+          <div className="rounded-lg border border-rose-200 bg-rose-50/50 p-3.5 flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-rose-800">{translate('declinedSummary')}</div>
+              <div className="mt-0.5 text-2xl font-extrabold text-rose-900">{declinedReferees.length}</div>
+            </div>
+            <XCircle className="w-6 h-6 text-rose-500 shrink-0 opacity-80" />
           </div>
         </div>
       ) : null}

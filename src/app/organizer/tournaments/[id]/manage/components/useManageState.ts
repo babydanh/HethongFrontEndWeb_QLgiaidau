@@ -955,7 +955,12 @@ export function useManageState(id: string) {
         return;
       }
       if (startDate && registrationEndDate && new Date(startDate) < new Date(registrationEndDate)) {
-        toast.error('Ngày khai mạc phải sau hạn chốt đăng ký');
+        toast.error('Ngày khai mạc phải sau hạn chót đăng ký');
+        setIsSavingConfig(false);
+        return;
+      }
+      if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+        toast.error('Ngày bế mạc phải sau ngày khai mạc');
         setIsSavingConfig(false);
         return;
       }
@@ -964,6 +969,8 @@ export function useManageState(id: string) {
         visibility,
         registrationStartDate: toApiIsoDateTime(finalRegStart),
         registrationEndDate: toApiIsoDateTime(registrationEndDate),
+        ...(startDate ? { startDate: toApiIsoDateTime(startDate) } : {}),
+        ...(endDate ? { endDate: toApiIsoDateTime(endDate) } : {}),
         tournamentConfig: {
           ...tournament?.tournamentConfig,
           // Club Lite keeps its frictionless OPEN policy by default, but a

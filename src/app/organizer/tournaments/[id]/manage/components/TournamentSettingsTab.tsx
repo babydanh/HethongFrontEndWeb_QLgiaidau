@@ -46,6 +46,10 @@ interface TournamentSettingsTabProps {
   setRegistrationStartDate: (value: string) => void;
   registrationEndDate: string;
   setRegistrationEndDate: (value: string) => void;
+  startDate: string;
+  setStartDate: (value: string) => void;
+  endDate: string;
+  setEndDate: (value: string) => void;
   isSavingConfig: boolean;
   disabled: boolean;
   handleSaveRegistrationSettings: () => void;
@@ -70,6 +74,10 @@ export function TournamentSettingsTab({
   setRegistrationStartDate,
   registrationEndDate,
   setRegistrationEndDate,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   isSavingConfig,
   disabled,
   handleSaveRegistrationSettings,
@@ -230,36 +238,73 @@ export function TournamentSettingsTab({
               </div>
             </div>
 
-            {/* Khung thời gian đăng ký */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
-                <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
-                <span>{regTranslate('scheduleLabel')}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {regTranslate('startDateShort')}
-                  </label>
-                  <DateTimePicker
-                    value={registrationStartDate}
-                    onChange={setRegistrationStartDate}
-                    disabled={disabled}
-                    className="w-full text-xs"
-                    min={now}
-                  />
+            {/* Khung thời gian đăng ký & thi đấu */}
+            <div className="space-y-4 pt-2 border-t border-slate-100">
+              {/* Thời gian mở / đóng đăng ký */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{regTranslate('scheduleLabel')}</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {regTranslate('endDateShort')}
-                  </label>
-                  <DateTimePicker
-                    value={registrationEndDate}
-                    onChange={setRegistrationEndDate}
-                    disabled={disabled}
-                    className="w-full text-xs"
-                    min={registrationStartDate || now}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      {regTranslate('startDateShort')}
+                    </label>
+                    <DateTimePicker
+                      value={registrationStartDate}
+                      onChange={setRegistrationStartDate}
+                      disabled={disabled}
+                      className="w-full text-xs"
+                      min={now}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      {regTranslate('endDateShort')}
+                    </label>
+                    <DateTimePicker
+                      value={registrationEndDate}
+                      onChange={setRegistrationEndDate}
+                      disabled={disabled}
+                      className="w-full text-xs"
+                      min={registrationStartDate || now}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Thời gian tổ chức giải đấu (Ngày khai mạc / bế mạc) */}
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <CalendarDays className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Thời gian tổ chức giải đấu</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Ngày khai mạc
+                    </label>
+                    <DateTimePicker
+                      value={startDate}
+                      onChange={setStartDate}
+                      disabled={disabled}
+                      className="w-full text-xs"
+                      min={registrationEndDate || now}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Ngày bế mạc
+                    </label>
+                    <DateTimePicker
+                      value={endDate}
+                      onChange={setEndDate}
+                      disabled={disabled}
+                      className="w-full text-xs"
+                      min={startDate || now}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

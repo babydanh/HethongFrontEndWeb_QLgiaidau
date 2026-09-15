@@ -2305,6 +2305,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     setRegistrationStartDate={s.setRegistrationStartDate}
                     registrationEndDate={s.registrationEndDate}
                     setRegistrationEndDate={s.setRegistrationEndDate}
+                    startDate={s.startDate}
+                    setStartDate={s.setStartDate}
+                    endDate={s.endDate}
+                    setEndDate={s.setEndDate}
                     isSavingConfig={s.isSavingConfig}
                     disabled={isTournamentRegistrationClosed(tournament.status) || Boolean(tournament.isRegistrationLocked)}
                     handleSaveRegistrationSettings={s.handleSaveRegistrationSettings}

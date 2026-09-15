@@ -46,6 +46,7 @@ import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
+import { PickupMatchCard } from '@/components/ui/PickupMatchCard';
 
 interface EnrichedTournament {
   id: string;
@@ -1533,8 +1534,35 @@ export default function HomePage() {
     return tournaments.filter(t => t.status !== 'COMPLETED');
   }, [tournaments]);
 
+  // Social & Discovery: Kèo siêu lite, pickup match đang mở tìm người
+  const [discoveryFilter, setDiscoveryFilter] = useState<'ALL' | 'PICKUP' | 'LITE' | 'OFFICIAL'>('ALL');
+
+  const openPickupMatches = useMemo(() => {
+    return activeTournaments.filter((t) => {
+      const isLite = t.isLite || t.tournamentConfig?.isLite || t.tournamentConfig?.mode === 'LITE';
+      const maxSlots = t.maxParticipants || 0;
+      const current = t._count?.participants ?? t._summary?.participantCount ?? 0;
+      const hasSlot = maxSlots === 0 || current < maxSlots;
+      const isOpen = t.status === 'UPCOMING' || t.status === 'REGISTRATION_OPEN' || !t.status;
+      return (isLite || t.tournamentType === 'CLUB' || maxSlots <= 16) && isOpen && hasSlot;
+    });
+  }, [activeTournaments]);
+
+  const filteredTournaments = useMemo(() => {
+    if (discoveryFilter === 'PICKUP') {
+      return openPickupMatches;
+    }
+    if (discoveryFilter === 'LITE') {
+      return activeTournaments.filter((t) => t.isLite || t.tournamentConfig?.isLite || t.tournamentConfig?.mode === 'LITE');
+    }
+    if (discoveryFilter === 'OFFICIAL') {
+      return activeTournaments.filter((t) => !t.isLite && t.tournamentConfig?.mode !== 'LITE' && t.tournamentType !== 'CLUB');
+    }
+    return activeTournaments;
+  }, [activeTournaments, discoveryFilter, openPickupMatches]);
+
   // Homepage display limits are per section. Detail/list pages keep their own pagination.
-  const featuredHomepageTournaments = activeTournaments.slice(0, 10);
+  const featuredHomepageTournaments = filteredTournaments.slice(0, 10);
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
@@ -1607,10 +1635,119 @@ export default function HomePage() {
             })}
           </div>
 
+          {/* Discovery Hero Banner & Fast Action Bar */}
+          <div className="rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-800 p-6 sm:p-7 text-white shadow-xl shadow-blue-500/15 relative overflow-hidden">
+            {/* Background glowing decorations */}
+            <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+            <div className="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-cyan-400/15 blur-2xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-3 py-1 text-xs font-bold text-cyan-200 mb-2.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>{translate('discoveryHubTitle')}</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                  {translate('discoveryHubSubtitle')}
+                </h2>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <Link
+                  href="/organizer/tournaments/create"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-blue-700 shadow-md hover:bg-blue-50 hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus className="h-4 w-4 text-blue-600" />
+                  <span>{translate('createPickupMatch')}</span>
+                </Link>
+                <Link
+                  href="/organizer/tournaments/create"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-white/25 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Trophy className="h-4 w-4" />
+                  <span>{translate('createOfficialTournament')}</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Discovery Filter Tabs */}
+            <div className="relative z-10 mt-6 pt-5 border-t border-white/15 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDiscoveryFilter('ALL')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  discoveryFilter === 'ALL'
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                {translate('filterAll')} ({activeTournaments.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiscoveryFilter('PICKUP')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  discoveryFilter === 'PICKUP'
+                    ? 'bg-emerald-400 text-slate-900 shadow-sm'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+                {translate('filterPickupMatches')} ({openPickupMatches.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiscoveryFilter('LITE')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  discoveryFilter === 'LITE'
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                {translate('filterLiteTournaments')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiscoveryFilter('OFFICIAL')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  discoveryFilter === 'OFFICIAL'
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                {translate('filterOfficialTournaments')}
+              </button>
+            </div>
+          </div>
+
+          {/* Section: Kèo giao lưu & Giải Siêu Lite đang mở tìm người */}
+          {(discoveryFilter === 'ALL' || discoveryFilter === 'PICKUP') && openPickupMatches.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {translate('openPickupTitle')}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                    {translate('openPickupDesc')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {openPickupMatches.slice(0, 4).map((match) => (
+                  <PickupMatchCard key={match.id} tournament={match} />
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Section 1: Giải đấu nổi bật */}
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end relative z-[30]">
-              <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h1>
+              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h2>
               <Link href="/tournaments" className="text-xs font-semibold text-content-link hover:underline flex items-center gap-1 relative z-[31]">
                 {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>

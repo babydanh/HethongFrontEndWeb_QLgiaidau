@@ -93,56 +93,45 @@ export function getBracketQuickSuggestion(
   }
 
   if (variant !== 'GROUP_STAGE_KNOCKOUT' || count < 4) return null;
-  if (count <= 6) {
-    return {
-      translationKey: 'suggestionGroupStageSmall',
-      groups: 2,
-      teamsPerGroup: Math.ceil(count / 2),
-      teamsAdvancing: 1,
-    };
+
+  // Thuật toán chuẩn hóa: Ưu tiên mỗi bảng có 4 hoặc 5 đội (tối thiểu 4 đội nếu count >= 8)
+  // Tính số bảng lý tưởng sao cho teamsPerGroup rơi vào khoảng [4, 5]
+  let idealGroups = 2;
+  if (count <= 7) {
+    idealGroups = 2; // 2-3 đội/bảng khi quy mô rất nhỏ < 8
+  } else if (count <= 11) {
+    idealGroups = 2; // 4-5 đội/bảng
+  } else if (count <= 15) {
+    idealGroups = 3; // 4-5 đội/bảng
+  } else if (count <= 22) {
+    idealGroups = 4; // 4-5 đội/bảng (16 đội -> 4 bảng 4 đội, 20 đội -> 4 bảng 5 đội)
+  } else if (count <= 30) {
+    idealGroups = 6; // 4-5 đội/bảng (24 đội -> 6 bảng 4 đội)
+  } else if (count <= 44) {
+    idealGroups = 8; // 4-5 đội/bảng (32 đội -> 8 bảng 4 đội, 40 đội -> 8 bảng 5 đội)
+  } else if (count <= 64) {
+    idealGroups = 12; // 4-5 đội/bảng
+  } else {
+    idealGroups = 16;
   }
-  if (count <= 12) {
-    // 7-12 teams: 2 or 3 groups of 3-4 teams
-    const groups = count <= 8 ? 2 : (count % 3 === 0 ? 3 : (count <= 10 ? 2 : 4));
-    return {
-      translationKey: 'suggestionGroupStageSmall',
-      groups,
-      teamsPerGroup: Math.ceil(count / groups),
-      teamsAdvancing: 2,
-    };
-  }
-  if (count <= 16) {
-    // 13-16 teams: standard 4 groups of 4 teams, top 2 advance to QF (8 teams)
-    return {
-      translationKey: 'suggestionGroupStageMedium',
-      groups: 4,
-      teamsPerGroup: Math.ceil(count / 4),
-      teamsAdvancing: 2,
-    };
-  }
-  if (count <= 24) {
-    // 17-24 teams: 4 groups of 4-6 teams (or 6 groups of 3-4 teams)
-    const groups = count % 6 === 0 ? 6 : 4;
-    return {
-      translationKey: 'suggestionGroupStageLarge',
-      groups,
-      teamsPerGroup: Math.ceil(count / groups),
-      teamsAdvancing: 2,
-    };
-  }
-  if (count <= 32) {
-    // 25-32 teams: standard 8 groups of 4 teams (or 4 groups of 8 teams max) -> 8 groups of 4
-    return {
-      translationKey: 'suggestionGroupStageLarge',
-      groups: 8,
-      teamsPerGroup: Math.ceil(count / 8),
-      teamsAdvancing: 2,
-    };
-  }
+
+  const teamsPerGroup = Math.ceil(count / idealGroups);
+  // Số đội đi tiếp mỗi bảng: thông thường top 2 mỗi bảng vào knockout
+  const teamsAdvancing = idealGroups >= 8 && teamsPerGroup <= 4 ? 2 : 2;
+
+  const translationKey =
+    idealGroups <= 2
+      ? 'suggestionGroupStageSmall'
+      : idealGroups <= 4
+        ? 'suggestionGroupStageMedium'
+        : idealGroups <= 8
+          ? 'suggestionGroupStageLarge'
+          : 'suggestionGroupStageMany';
+
   return {
-    translationKey: 'suggestionGroupStageMany',
-    groups: Math.min(16, Math.max(8, Math.ceil(count / 4))),
-    teamsPerGroup: 4,
-    teamsAdvancing: 2,
+    translationKey,
+    groups: idealGroups,
+    teamsPerGroup,
+    teamsAdvancing,
   };
 }

@@ -101,8 +101,8 @@ export function RoundRobinView({
   return (
     <div className="flex flex-col gap-6">
       {!hideStandings && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+          <div className="bg-slate-50/70 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
             <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
               <span className="w-1.5 h-4 bg-blue-600 rounded-full inline-block" />
               <span>{groupName || translate("standingsTitle")}</span>
@@ -158,9 +158,9 @@ export function RoundRobinView({
           </div>
         )}
  
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold">
+            <thead className="bg-slate-50/80 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold">
               <tr>
                 <th className="px-3 py-3 text-center w-10">#</th>
                 <th className="px-3 py-3 text-left min-w-[130px]">{translate("teamHeader")}</th>
@@ -369,7 +369,7 @@ export function RoundRobinView({
                       <div className="h-px flex-1 bg-slate-200" />
                     </div>
 
-                    <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {scheduleMatches
                         .sort((a, b) => a.matchOrder - b.matchOrder)
                         .map((m) => {

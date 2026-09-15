@@ -368,12 +368,15 @@ export default function BracketTab({
   const effectiveSportRuleKind =
     fallbackSportRuleKind ?? getSportRuleKind(tournament.sportRules);
   const hasOwnerSnapshot = bracketSnapshot !== undefined;
-  const [stages, setStages] = useState<BracketStage[]>(() =>
-    bracketSnapshot?.stages ?? [],
-  );
-  const [activeStageId, setActiveStageId] = useState<string | null>(
-    bracketSnapshot?.stages[0]?.id ?? null,
-  );
+  const [stages, setStages] = useState<BracketStage[]>(() => {
+    const rawStages = bracketSnapshot?.stages ?? [];
+    return knockoutOnly ? rawStages.filter(isKnockoutStage) : rawStages;
+  });
+  const [activeStageId, setActiveStageId] = useState<string | null>(() => {
+    const rawStages = bracketSnapshot?.stages ?? [];
+    const filtered = knockoutOnly ? rawStages.filter(isKnockoutStage) : rawStages;
+    return filtered[0]?.id ?? null;
+  });
   const [isLoading, setIsLoading] = useState(!hasOwnerSnapshot);
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
 
@@ -496,6 +499,7 @@ export default function BracketTab({
   const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage) && !compact);
   const effectiveViewMode = compact ? 'paged' : (activeStageSupportsFullView ? viewMode : 'paged');
   const shouldShowStageTabs =
+    !knockoutOnly &&
     renderedStages.length > 1 &&
     renderedStages.some((s, _, arr) =>
       arr.some(

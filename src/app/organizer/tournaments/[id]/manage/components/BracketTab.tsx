@@ -23,6 +23,7 @@ import { ScheduleGridView } from './ScheduleGridView';
 import type { CourtSetupItem } from './CourtSetup';
 import { BracketSetupModal } from './BracketSetupModal';
 import { RoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/RoundRobinView';
+import { PagedRoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/PagedRoundRobinView';
 import { Tournament, BracketStage, BracketMatch, type SportRuleKind, type StageRoundConfig } from '@/types/tournament';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
@@ -726,7 +727,7 @@ export function BracketTab({
       
       {/* Visual bracket tree */}
       {bracket && bracket.stages && bracket.stages.length > 0 && (
-        <div id="manage-bracket-tree-section" className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+        <div id="manage-bracket-tree-section" className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-base">{translate('bracketTitle')}</h3>
@@ -796,32 +797,26 @@ export function BracketTab({
                 .filter(s => s.type === 'ROUND_ROBIN')
                 .map(stage => (
                   <div key={stage.id}>
-                    {stage.name && (
-                      <h4 className="text-sm font-bold text-slate-700 mb-2">{stage.name}</h4>
-                    )}
-                    <div className="space-y-4">
-                      {(stage.groups ?? []).map((group, groupIndex) => (
-                        <section key={group.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:p-4">
-                          <div className="mb-3 flex items-center gap-2 border-l-4 border-blue-500 pl-3">
-                            <h5 className="text-sm font-bold text-slate-800">
-                              {group.name || translate('groupName', { name: String.fromCharCode(65 + groupIndex) })}
-                            </h5>
-                            <span className="text-xs text-slate-400">
-                              {translate('matchesCount', { count: (group.matches ?? []).length })}
-                            </span>
+                    <div className="space-y-6">
+                      {(stage.groups ?? []).map((group, groupIndex) => {
+                        const formattedGroupName = group.name || translate('groupName', { name: String.fromCharCode(65 + groupIndex) });
+                        return (
+                          <div key={group.id} className="space-y-3">
+                            <PagedRoundRobinView
+                              matches={group.matches ?? []}
+                              groupName={formattedGroupName}
+                              tiebreakerMode={tiebreakerMode}
+                              onScheduleMatch={handleOpenScheduling}
+                              selectedMatchId={selectedMatchId}
+                              onSelectMatch={onSelectMatch}
+                              onDoubleClickMatch={onDoubleClickMatch}
+                              tournamentId={tournament.id}
+                              stageId={stage.id}
+                              roundConfig={stage.roundConfig}
+                            />
                           </div>
-                          <RoundRobinView
-                            matches={group.matches ?? []}
-                            tiebreakerMode={tiebreakerMode}
-                            onScheduleMatch={handleOpenScheduling}
-                            selectedMatchId={selectedMatchId}
-                            onSelectMatch={onSelectMatch}
-                            onDoubleClickMatch={onDoubleClickMatch}
-                            tournamentId={tournament.id}
-                            stageId={stage.id}
-                          />
-                        </section>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

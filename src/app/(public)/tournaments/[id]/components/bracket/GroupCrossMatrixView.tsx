@@ -91,8 +91,8 @@ export function GroupCrossMatrixView({
   });
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+      <div className="bg-slate-50/70 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
         <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
           <span className="w-1.5 h-4 bg-blue-600 rounded-full inline-block" />
           {displayGroupName}

@@ -161,6 +161,14 @@ export function useManageState(id: string) {
   const [newDivisionLimitEnabled, setNewDivisionLimitEnabled] = useState(true);
   const [newDivisionEntryFeeOverrideEnabled, setNewDivisionEntryFeeOverrideEnabled] = useState(false);
   const [newDivisionEntryFee, setNewDivisionEntryFee] = useState('');
+  // Draft-only bracket settings for the division modal. Keep these separate
+  // from the selected division's auto-save state until the user confirms.
+  const [newDivisionIsLiteMode, setNewDivisionIsLiteMode] = useState(true);
+  const [newDivisionNumGroups, setNewDivisionNumGroups] = useState(2);
+  const [newDivisionTeamsPerGroup, setNewDivisionTeamsPerGroup] = useState(4);
+  const [newDivisionTeamsAdvancing, setNewDivisionTeamsAdvancing] = useState(2);
+  const [newDivisionPlayoffType, setNewDivisionPlayoffType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>('SINGLE_ELIMINATION');
+  const [newDivisionSeedingType, setNewDivisionSeedingType] = useState<'SEEDED' | 'RANDOM'>('SEEDED');
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
   const [isDeletingDivision, setIsDeletingDivision] = useState(false);
@@ -1311,6 +1319,16 @@ export function useManageState(id: string) {
         ? String(division.entryFeeOverride ?? division.entryFee ?? '')
         : '',
     );
+    const divisionRoundConfig = division.roundConfig as Record<string, unknown> | null | undefined;
+    const divisionGroupsConfig = divisionRoundConfig?.groupsConfig as Record<string, unknown> | undefined;
+    const divisionAdvancementConfig = divisionRoundConfig?.advancementConfig as Record<string, unknown> | undefined;
+    const divisionPlayoffConfig = divisionRoundConfig?.playoffConfig as Record<string, unknown> | undefined;
+    setNewDivisionIsLiteMode(readExplicitScoringMode(division.roundConfig) !== 'STRICT');
+    setNewDivisionNumGroups(typeof divisionGroupsConfig?.numGroups === 'number' ? divisionGroupsConfig.numGroups : 2);
+    setNewDivisionTeamsPerGroup(typeof divisionGroupsConfig?.teamsPerGroup === 'number' ? divisionGroupsConfig.teamsPerGroup : 4);
+    setNewDivisionTeamsAdvancing(typeof divisionAdvancementConfig?.teamsAdvancing === 'number' ? divisionAdvancementConfig.teamsAdvancing : 2);
+    setNewDivisionPlayoffType(divisionPlayoffConfig?.type === 'DOUBLE_ELIMINATION' ? 'DOUBLE_ELIMINATION' : 'SINGLE_ELIMINATION');
+    setNewDivisionSeedingType(divisionPlayoffConfig?.seedingType === 'RANDOM' ? 'RANDOM' : 'SEEDED');
     setIsCreateDivisionModalOpen(true);
   };
 
@@ -1327,6 +1345,12 @@ export function useManageState(id: string) {
     setNewDivisionLimitEnabled(true);
     setNewDivisionEntryFeeOverrideEnabled(false);
     setNewDivisionEntryFee('');
+    setNewDivisionIsLiteMode(true);
+    setNewDivisionNumGroups(2);
+    setNewDivisionTeamsPerGroup(4);
+    setNewDivisionTeamsAdvancing(2);
+    setNewDivisionPlayoffType('SINGLE_ELIMINATION');
+    setNewDivisionSeedingType('SEEDED');
   };
 
   const handleCreateDivision = async () => {
@@ -1365,7 +1389,7 @@ export function useManageState(id: string) {
         selectedCategory,
       );
       const defaultRules = buildDefaultSportRules(normalizedKind);
-      const scoringMode = (isLiteMode ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT';
+      const scoringMode = (newDivisionIsLiteMode ? 'LITE' : 'STRICT') as 'LITE' | 'STRICT';
       const defaultRoundConfig = buildStageRoundConfigPayload({
         kind: normalizedKind,
         setsToWin: defaultRules.setsToWin,
@@ -1376,9 +1400,34 @@ export function useManageState(id: string) {
         roundsToPlay: 1,
         mode: scoringMode,
       });
-      const divisionRoundConfig = editingDivision?.roundConfig
+      const baseDivisionRoundConfig = editingDivision?.roundConfig
         ? { ...editingDivision.roundConfig, mode: scoringMode }
         : defaultRoundConfig;
+      const divisionRoundConfig = newDivisionBracketType === 'GROUP_STAGE_KNOCKOUT'
+        ? {
+            ...baseDivisionRoundConfig,
+            groupsConfig: {
+              ...(baseDivisionRoundConfig.groupsConfig && typeof baseDivisionRoundConfig.groupsConfig === 'object'
+                ? baseDivisionRoundConfig.groupsConfig
+                : {}),
+              numGroups: Math.max(2, Math.min(32, newDivisionNumGroups)),
+              teamsPerGroup: Math.max(2, Math.min(128, newDivisionTeamsPerGroup)),
+              roundsToPlay: 1,
+            },
+            advancementConfig: {
+              ...(baseDivisionRoundConfig.advancementConfig && typeof baseDivisionRoundConfig.advancementConfig === 'object'
+                ? baseDivisionRoundConfig.advancementConfig
+                : {}),
+              teamsAdvancing: Math.max(1, Math.min(newDivisionTeamsPerGroup - 1, newDivisionTeamsAdvancing)),
+              allowWildcardThird: false,
+              wildcardTeamsAdvancing: 0,
+            },
+            playoffConfig: {
+              type: newDivisionPlayoffType,
+              seedingType: newDivisionSeedingType,
+            },
+          }
+        : baseDivisionRoundConfig;
       const parsedMaxParticipants = Number(newDivisionMaxParticipants);
       const normalizedMaxParticipants = Number.isFinite(parsedMaxParticipants) && parsedMaxParticipants > 0
         ? Math.min(128, Math.max(2, parsedMaxParticipants))
@@ -2453,6 +2502,12 @@ export function useManageState(id: string) {
     newDivisionLimitEnabled, setNewDivisionLimitEnabled,
     newDivisionEntryFeeOverrideEnabled, setNewDivisionEntryFeeOverrideEnabled,
     newDivisionEntryFee, setNewDivisionEntryFee,
+    newDivisionIsLiteMode, setNewDivisionIsLiteMode,
+    newDivisionNumGroups, setNewDivisionNumGroups,
+    newDivisionTeamsPerGroup, setNewDivisionTeamsPerGroup,
+    newDivisionTeamsAdvancing, setNewDivisionTeamsAdvancing,
+    newDivisionPlayoffType, setNewDivisionPlayoffType,
+    newDivisionSeedingType, setNewDivisionSeedingType,
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,

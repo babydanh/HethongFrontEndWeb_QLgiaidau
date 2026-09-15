@@ -12,7 +12,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
-import { Pencil, RefreshCw, Settings, Trophy, Users } from 'lucide-react';
+import { RefreshCw, Settings, Trophy, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
@@ -599,17 +599,6 @@ export function BracketTab({
                 {translate('createBracketAction')}
               </Button>
             )}
-            <button
-              type="button"
-              onClick={() => setIsPoolArrangementModalOpen(true)}
-              disabled={isGeneratingBracket}
-              aria-label={translate('editBracketSetup')}
-              title={translate('editBracketSetup')}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Pencil className="h-4 w-4" />
-              <span className="hidden sm:inline">{translate('editBracketSetup')}</span>
-            </button>
           </div>
         </div>
       )}
@@ -754,56 +743,14 @@ export function BracketTab({
         <BracketSetupModal
           open={isPoolArrangementModalOpen}
           onOpenChange={setIsPoolArrangementModalOpen}
-          tournamentFormat={tournamentFormat}
-          bracketType={bracketType}
           selectedDivision={divisions?.find((d) => d.id === selectedDivisionId) ?? null}
           participants={participants}
-          sportRuleKind={sportRuleKind}
-          setSportRuleKind={setSportRuleKind}
-          isLiteMode={isLiteMode}
-          setIsLiteMode={setIsLiteMode}
-          setsToWin={setsToWin}
-          setSetsToWin={setSetsToWin}
-          pointsPerSet={pointsPerSet}
-          setPointsPerSet={setPointsPerSet}
-          winByTwo={winByTwo}
-          setWinByTwo={setWinByTwo}
-          maxDeucePoints={maxDeucePoints}
-          setMaxDeucePoints={setMaxDeucePoints}
-          superTiebreakEnabled={superTiebreakEnabled}
-          setSuperTiebreakEnabled={setSuperTiebreakEnabled}
-          superTiebreakSetIndex={superTiebreakSetIndex}
-          setSuperTiebreakSetIndex={setSuperTiebreakSetIndex}
-          superTiebreakPoints={superTiebreakPoints}
-          setSuperTiebreakPoints={setSuperTiebreakPoints}
           numGroups={numGroups}
           setNumGroups={setNumGroups}
           teamsPerGroup={teamsPerGroup}
           setTeamsPerGroup={setTeamsPerGroup}
           teamsAdvancing={teamsAdvancing}
           setTeamsAdvancing={setTeamsAdvancing}
-          gskPlayoffType={gskPlayoffType}
-          setGskPlayoffType={setGskPlayoffType}
-          gskSeedingType={gskSeedingType}
-          setGskSeedingType={setGskSeedingType}
-          handleOpenRoundModal={handleOpenRoundModal}
-          divisionRoundConfig={divisionRoundConfig}
-          gskConfigurableGroupRounds={gskConfigurableGroupRounds}
-          gskConfigurableRounds={gskConfigurableRounds}
-          groupStageOverrideSummary={
-            hasGroupStageOverride
-              ? (() => {
-                  const rc = groupStage.id === '__draft_gsk_group__'
-                    ? divisionRoundConfig
-                    : groupStage.roundConfig;
-                  const resolvedRc = rc ? resolveSportRuleView(rc, sportRuleKind) : null;
-                  return resolvedRc
-                    ? `${translate('firstToSets', { sets: resolvedRc.setsToWin })}, ${resolvedRc.pointsPerSet}p`
-                    : translate('inheritsFormatRules');
-                })()
-              : translate('inheritsFormatRules')
-          }
-          onOpenGroupStageConfig={() => handleOpenRoundModal?.(groupStage, 0)}
           isSubmitting={isGeneratingBracket}
           onConfirm={async () => {
             setIsPoolArrangementModalOpen(false);

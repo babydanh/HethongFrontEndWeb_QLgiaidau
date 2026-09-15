@@ -9,7 +9,7 @@ import type { Division, MyRegistrationResponse, Tournament, TournamentResult, To
 import type { Match } from '@/types/match';
 import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Settings } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight, ChevronLeft, CreditCard, CheckCircle, CheckCircle2, Clock, ArrowUpRight, GitBranch, GitFork, GitMerge, RotateCw, Settings, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
@@ -21,6 +21,8 @@ import LiveMatchesTab from './components/LiveMatchesTab';
 import ResultsTab from './components/ResultsTab';
 import { hasPublishedTournamentResults } from '@/features/tournaments/result-availability';
 import RegisterModal from './components/RegisterModal';
+import { WithdrawModal } from '@/components/shared/WithdrawModal';
+import { usersApi } from '@/features/users/api';
 import CommunityTournamentRosterWidget from '@/app/(public)/communities/[id]/components/CommunityTournamentRosterWidget';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
@@ -28,6 +30,7 @@ import { triggerShare } from '@/utils/share.util';
 import ShareModal from '@/components/common/ShareModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { BRAND } from '@/constants/brand';
 import { getSportLogo } from '@/constants/sports';
@@ -221,8 +224,48 @@ const commonTranslate = useTranslations('Common');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [bankInfo, setBankInfo] = useState({ name: '', number: '', accountName: '' });
   const [pendingDivisionId, setPendingDivisionId] = useState<string | null>(null);
   const debouncedDivisionId = useDebounce(pendingDivisionId, 140);
+
+  const handleWithdrawClick = async () => {
+    const isPaid = Boolean(myRegistration?.participant?.isPaid);
+    const entryFee = Number(selectedDivision?.entryFee || activeTournament?.entryFee || 0);
+
+    if (isPaid && entryFee > 0) {
+      try {
+        const freshProfile = await usersApi.getProfile();
+        setBankInfo({
+          name: freshProfile?.bankName || '',
+          number: freshProfile?.bankAccountNumber || '',
+          accountName: freshProfile?.bankAccountName || '',
+        });
+      } catch (err) {
+        console.error('Failed to load profile for bank autofill:', err);
+      }
+      setShowWithdrawModal(true);
+    } else {
+      if (window.confirm(commonTranslate('withdrawConfirm') || 'Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu?')) {
+        try {
+          await tournamentsApi.withdraw(
+            activeTournament?.id || tournamentId,
+            undefined,
+            selectedDivisionId || undefined
+          );
+          toast.success(commonTranslate('withdrawalSuccess') || 'Rút lui thành công!');
+          setMyRegistration(null);
+          // Refetch tournament detail
+          try {
+            const res = await tournamentsApi.getTournamentById(tournamentId);
+            if (res.data) setTournament(res.data);
+          } catch {}
+        } catch (err) {
+          toast.error(getErrorMessage(err));
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1201,38 +1244,58 @@ const commonTranslate = useTranslations('Common');
             {!isTournamentDraft(activeTournament.status) && (
               <div>
                 {canResumePayment ? (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const resumeParticipantId = myRegistration?.participant?.id;
-                      if (resumeParticipantId) {
-                        const checkoutParams = new URLSearchParams({
-                          participantId: resumeParticipantId,
-                          tournamentId,
-                        });
-                        const resumeDivisionId =
-                          myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
-                        if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
-                        if (inviteCode) checkoutParams.set('invite', inviteCode);
-                        router.push(`/payments/checkout?${checkoutParams.toString()}`);
-                      } else {
-                        router.push(registerHref);
-                      }
-                    }}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    {translate('continuePayment') || 'Thanh toán ngay'}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const resumeParticipantId = myRegistration?.participant?.id;
+                        if (resumeParticipantId) {
+                          const checkoutParams = new URLSearchParams({
+                            participantId: resumeParticipantId,
+                            tournamentId,
+                          });
+                          const resumeDivisionId =
+                            myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
+                          if (resumeDivisionId) checkoutParams.set('divisionId', resumeDivisionId);
+                          if (inviteCode) checkoutParams.set('invite', inviteCode);
+                          router.push(`/payments/checkout?${checkoutParams.toString()}`);
+                        } else {
+                          router.push(registerHref);
+                        }
+                      }}
+                      className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 rounded-lg shadow-md cursor-pointer text-sm flex items-center justify-center gap-2"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {translate('continuePayment') || 'Thanh toán ngay'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleWithdrawClick}
+                      className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold px-3 py-3 rounded-lg text-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      title="Hủy đăng ký / Rút lui"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Rút lui</span>
+                    </Button>
+                  </div>
                 ) : isRegisteredUser ? (
-                  <Button
-                    type="button"
-                    disabled
-                    className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
-                  >
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 px-3 rounded-lg text-sm shadow-2xs">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="truncate">{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleWithdrawClick}
+                      className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold px-3 py-3 rounded-lg text-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      title="Hủy đăng ký / Rút lui"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Rút lui</span>
+                    </Button>
+                  </div>
                 ) : isRegistrationOpen && areAllDivisionsFull ? (
                   <Button
                     type="button"
@@ -2060,6 +2123,23 @@ const commonTranslate = useTranslations('Common');
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
         title={activeTournament.name}
+      />
+
+      <WithdrawModal
+        isOpen={showWithdrawModal}
+        onClose={() => setShowWithdrawModal(false)}
+        tournamentId={activeTournament?.id || tournamentId}
+        divisionId={selectedDivisionId || undefined}
+        isPaid={Boolean(myRegistration?.participant?.isPaid)}
+        defaultBankName={bankInfo.name}
+        defaultBankAccountNumber={bankInfo.number}
+        defaultBankAccountName={bankInfo.accountName}
+        onWithdrawSuccess={() => {
+          setMyRegistration(null);
+          void tournamentsApi.getTournamentById(tournamentId).then((res) => {
+            if (res.data) setTournament(res.data);
+          });
+        }}
       />
     </div>
   );

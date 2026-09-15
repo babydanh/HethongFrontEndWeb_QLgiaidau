@@ -10,14 +10,13 @@ import {
   Minus,
   Plus,
   Zap,
-  Shield,
   Loader2,
   Shuffle,
   RefreshCw,
   GripVertical,
   X,
   UserCheck,
-  Hash,
+  ChevronDown,
 } from 'lucide-react';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -27,6 +26,11 @@ import { getSportRulePresentation } from '@/features/tournaments/sport-rules/pre
 import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
+import {
+  buildBracketSetupViewModel,
+  getBracketQuickSuggestion,
+  getQuickPresets,
+} from './bracket-setup-view-model';
 
 export interface ParticipantItem {
   id: string;
@@ -179,11 +183,6 @@ export function BracketSetupModal({
     setSuperTiebreakPoints?.(preset.tiebreakPoints ?? preset.pointsPerSet);
   };
 
-  const isGroupStageKnockout =
-    tournamentFormat?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
-    bracketType?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
-    selectedDivision?.bracketType === 'GROUP_STAGE_KNOCKOUT';
-
   const getKnockoutRoundLabel = (roundIndex: number, totalRounds: number) => {
     const fromEnd = totalRounds - 1 - roundIndex;
     if (fromEnd === 0) return translate('stageFinal');
@@ -236,6 +235,37 @@ export function BracketSetupModal({
     );
   }, [participants]);
 
+  const bracketSetup = buildBracketSetupViewModel({
+    tournamentFormat,
+    bracketType,
+    divisionBracketType: selectedDivision?.bracketType,
+    numGroups,
+    teamsPerGroup,
+    teamsAdvancing,
+    participantCount: eligibleParticipants.length,
+  });
+  const quickPresets = getQuickPresets(presets);
+  const quickSuggestion = bracketSetup.variant === 'GROUP_STAGE_KNOCKOUT'
+    ? getBracketQuickSuggestion(bracketSetup.variant, eligibleParticipants.length)
+    : null;
+  const modalSummary = bracketSetup.variant === 'GROUP_STAGE_KNOCKOUT'
+    ? translate('compactGroupStageSummary', {
+        groups: bracketSetup.groups,
+        teams: bracketSetup.teamsPerGroup,
+        advancing: bracketSetup.teamsAdvancing,
+        total: bracketSetup.advancingTotal,
+      })
+    : bracketSetup.variant === 'ROUND_ROBIN'
+      ? translate('compactRoundRobinSummary', { rounds: bracketSetup.roundsToPlay })
+      : translate('compactKnockoutSummary', { count: bracketSetup.participantCount });
+
+  const handleApplyQuickSuggestion = () => {
+    if (!quickSuggestion) return;
+    if (typeof quickSuggestion.groups === 'number') setNumGroups?.(quickSuggestion.groups);
+    if (typeof quickSuggestion.teamsPerGroup === 'number') setTeamsPerGroup?.(quickSuggestion.teamsPerGroup);
+    if (typeof quickSuggestion.teamsAdvancing === 'number') setTeamsAdvancing?.(quickSuggestion.teamsAdvancing);
+  };
+
   // Track team assignment: Map groupIndex (0, 1, 2...) -> Array of ParticipantItem
   const [groupAssignments, setGroupAssignments] = useState<Record<number, ParticipantItem[]>>(
     () => createEmptyGroupAssignments(numGroups),
@@ -244,6 +274,7 @@ export function BracketSetupModal({
     () => [...eligibleParticipants],
   );
   const [draggedParticipantId, setDraggedParticipantId] = useState<string | null>(null);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const resetPoolAssignments = useCallback((groupCount = numGroups) => {
     setUnassignedTeams([...eligibleParticipants]);
@@ -453,13 +484,7 @@ export function BracketSetupModal({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                {translate('groupStageKnockoutSummary', {
-                  groups: numGroups,
-                  teams: teamsPerGroup,
-                  advancing: teamsAdvancing,
-                })}
-              </p>
+              <p className="text-xs text-slate-500 mt-0.5 font-normal">{modalSummary}</p>
             </div>
           </div>
           <button
@@ -473,6 +498,113 @@ export function BracketSetupModal({
 
         {/* MODAL SCROLLABLE BODY */}
         <div className="p-5 sm:p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
+          {/* Chọn nhanh: Lite luôn đứng trước, preset lấy từ cấu hình môn hiện có */}
+          <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-2.5">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-2xs">
+                  <Settings className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">{translate('quickBracketSetupTitle')}</h3>
+                  <p className="mt-0.5 text-xs text-slate-600">{translate('quickBracketSetupHint')}</p>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-md bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 shadow-2xs">
+                {translate('suggestionForCount', { count: eligibleParticipants.length })}
+              </span>
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => setIsLiteMode?.(true)}
+                className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                  isLiteMode
+                    ? 'border-blue-600 bg-white text-blue-800 shadow-2xs ring-1 ring-blue-300'
+                    : 'border-blue-200 bg-white/70 text-slate-700 hover:border-blue-400'
+                }`}
+              >
+                <span className="flex items-center gap-1.5 text-xs font-bold">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  {translate('liteModeLabel')}
+                </span>
+                <span className="mt-1 block text-[11px] text-slate-500">{translate('liteShortDesc')}</span>
+              </button>
+
+              {quickPresets.map((preset) => {
+                const isSelected = !isLiteMode
+                  && setsToWin === preset.setsToWin
+                  && pointsPerSet === preset.pointsPerSet
+                  && winByTwo === preset.winByTwo;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      setIsLiteMode?.(false);
+                      applyPreset(preset);
+                    }}
+                    className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      isSelected
+                        ? 'border-blue-600 bg-white text-blue-800 shadow-2xs ring-1 ring-blue-300'
+                        : 'border-blue-200 bg-white/70 text-slate-700 hover:border-blue-400'
+                    }`}
+                  >
+                    <span className="block truncate text-xs font-bold">{preset.label}</span>
+                    <span className="mt-1 block text-[11px] text-slate-500">
+                      {translate('firstToSets', { sets: preset.setsToWin })} · {preset.pointsPerSet}p
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {quickSuggestion && (
+              <div className="mt-3 flex flex-col gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-blue-700">
+                    {translate('suggestionForCount', { count: eligibleParticipants.length })}
+                  </p>
+                  <p className="truncate text-xs font-semibold text-slate-700">
+                    {quickSuggestion.groups && quickSuggestion.teamsPerGroup && quickSuggestion.teamsAdvancing
+                      ? translate('compactGroupStageSummary', {
+                          groups: quickSuggestion.groups,
+                          teams: quickSuggestion.teamsPerGroup,
+                          advancing: quickSuggestion.teamsAdvancing,
+                          total: quickSuggestion.groups * quickSuggestion.teamsAdvancing,
+                        })
+                      : translate(quickSuggestion.translationKey)}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleApplyQuickSuggestion}
+                  className="shrink-0 bg-blue-600 text-xs font-bold text-white hover:bg-blue-700"
+                >
+                  {translate('applySuggestion')}
+                </Button>
+              </div>
+            )}
+          </section>
+
+          <button
+            type="button"
+            onClick={() => setIsAdvancedOpen((current) => !current)}
+            aria-expanded={isAdvancedOpen}
+            aria-controls="bracket-advanced-settings"
+            className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 shadow-2xs transition-colors hover:border-blue-300 hover:bg-blue-50/40"
+          >
+            <span className="flex items-center gap-2">
+              <Settings className="h-4 w-4 text-blue-600" />
+              {translate('advancedMode')}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${isAdvancedOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isAdvancedOpen && (
+            <div id="bracket-advanced-settings" className="space-y-6">
           {/* PHẦN 1: KHỐI CẤU HÌNH THỂ THỨC & LUẬT TÍNH ĐIỂM */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* Cột 1 (7 cols): Cấu hình thể thức vòng bảng + Nhánh Knockout */}
@@ -668,31 +800,6 @@ export function BracketSetupModal({
                     {presentation.sportLabel}: {presentation.scoringLabel}
                   </p>
                 </div>
-                {/* Switch Lite / Strict */}
-                {setIsLiteMode && (
-                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setIsLiteMode(true)}
-                      className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        isLiteMode ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                      }`}
-                    >
-                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      {translate('liteModeLabel')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsLiteMode(false)}
-                      className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        !isLiteMode ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                      }`}
-                    >
-                      <Shield className="w-3.5 h-3.5 text-blue-600" />
-                      {translate('strictModeLabel')}
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* Khi ở chế độ TIÊU CHUẨN (Strict): Hiển thị đầy đủ chế độ Pickleball, Presets và các ô tinh chỉnh chi tiết */}
@@ -950,7 +1057,10 @@ export function BracketSetupModal({
             </div>
           </div>
 
-          {/* PHẦN 2: XẾP BẢNG ĐẤU & PHÂN BỔ ĐỘI THEO PHONG CÁCH VIDEO VDTOURNAMENT */}
+            </div>
+          )}
+
+          {/* PHẦN 2: XẾP BẢNG ĐẤU & PHÂN BỔ ĐỘI */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
             {/* Toolbar trên khu vực phân bảng */}
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">

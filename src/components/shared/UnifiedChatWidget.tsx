@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -88,6 +88,13 @@ type RoomAiReply = {
   createdAt: string;
   uiBlocks?: AssistantUiBlock[];
   toolEvents?: AiToolEvent[];
+};
+type ChatImageProps = {
+  src?: string | null;
+  fallbackSrc?: string | null;
+  alt: string;
+  className: string;
+  fallback: ReactNode;
 };
 type TypingEvent = { roomId: string; userId: string; isTyping: boolean };
 type PollOption = {
@@ -216,6 +223,27 @@ function getRoomAvatar(room: InboxRoom, currentUserId?: string): string | null {
   }
   const other = room.participants?.find((p) => p.id !== currentUserId);
   return other?.avatarUrl || null;
+}
+
+function SafeChatImage({ src, fallbackSrc, alt, className, fallback }: ChatImageProps) {
+  const [failedSources, setFailedSources] = useState<string[]>([]);
+  const sources = Array.from(new Set([src, fallbackSrc].filter((value): value is string => Boolean(value))));
+  const activeSource = sources.find((value) => !failedSources.includes(value)) || null;
+
+  if (!activeSource) return <>{fallback}</>;
+
+  return (
+    // Dynamic user/club media URLs are not guaranteed to be configured in next/image.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={activeSource}
+      alt={alt}
+      className={className}
+      onError={() => setFailedSources((current) => (
+        current.includes(activeSource) ? current : [...current, activeSource]
+      ))}
+    />
+  );
 }
 
 function formatDateSeparator(
@@ -1397,12 +1425,30 @@ export default function UnifiedChatWidget() {
           body: JSON.stringify({ message: question, currentUrl: pathname, pageTitle: document.title, isMobile: window.matchMedia('(max-width: 640px)').matches, searchParams: window.location.search }),
         });
         const payload = await response.json().catch(() => ({})) as {
-          reply?: string;
+          reply?: unknown;
+          data?: unknown;
           message?: string;
+          error?: string;
           ui_blocks?: AssistantUiBlock[];
           tool_events?: AiToolEvent[];
         };
-        if (!response.ok) throw new Error(payload.message || 'Không thể kết nối AISportO.');
+        if (!response.ok) {
+          const serverMessage = typeof payload.message === 'string'
+            ? payload.message
+            : typeof payload.error === 'string'
+              ? payload.error
+              : '';
+          throw new Error(serverMessage || `AISportO không khả dụng (${response.status}).`);
+        }
+
+        const nestedData = payload.data && typeof payload.data === 'object'
+          ? payload.data as { reply?: unknown; content?: unknown; message?: unknown }
+          : undefined;
+        const reply = [payload.reply, nestedData?.reply, nestedData?.content, payload.data]
+          .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          ?.trim();
+        if (!reply) throw new Error('AISportO chưa trả về nội dung. Vui lòng thử lại.');
+
         setRoomAiReplies((current) => ({
           ...current,
           [selection.room.id]: [
@@ -1410,7 +1456,7 @@ export default function UnifiedChatWidget() {
             {
               id: `ai-${Date.now()}`,
               question,
-              content: payload.reply || 'AISportO chưa có phản hồi.',
+              content: reply,
               createdAt: new Date().toISOString(),
               uiBlocks: Array.isArray(payload.ui_blocks) ? payload.ui_blocks : [],
               toolEvents: Array.isArray(payload.tool_events) ? payload.tool_events : [],
@@ -1869,20 +1915,19 @@ export default function UnifiedChatWidget() {
                       }`}
                     >
                       <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full">
-                        {avatar ? (
-                          <img
-                            src={avatar}
-                            alt={roomTitle(room, roomLabels, user?.id)}
-
-                            className="h-full w-full object-cover"
-                          />
-                        ) : isClub ? (
-                          <MessageCircle className="h-4 w-4" />
-                        ) : (
-                          <span className="text-xs font-bold">
-                            {roomTitle(room, roomLabels, user?.id).charAt(0).toUpperCase()}
-                          </span>
-                        )}
+                        <SafeChatImage
+                          src={avatar}
+                          fallbackSrc={isClub ? room.communityLogo : null}
+                          alt={roomTitle(room, roomLabels, user?.id)}
+                          className="h-full w-full object-cover"
+                          fallback={isClub ? (
+                            <MessageCircle className="h-4 w-4" />
+                          ) : (
+                            <span className="text-xs font-bold">
+                              {roomTitle(room, roomLabels, user?.id).charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        />
                       </span>
                     </span>
                     <span className="min-w-0 flex-1">
@@ -1950,15 +1995,15 @@ export default function UnifiedChatWidget() {
                     <Bot className="h-4 w-4" />
                   ) : selection.kind === 'SUPPORT' ? (
                     <Headset className="h-4 w-4" />
-                  ) : selectedRoomAvatar ? (
-                    <img
-                      src={selectedRoomAvatar}
-                      alt={selectedTitle}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <MessageCircle className="h-4 w-4" />
-                  )}
+                ) : (
+                  <SafeChatImage
+                    src={selectedRoomAvatar}
+                    fallbackSrc={selectedRoom?.type === 'CLUB' ? selectedRoom.communityLogo : null}
+                    alt={selectedTitle}
+                    className="h-full w-full object-cover"
+                    fallback={<MessageCircle className="h-4 w-4" />}
+                  />
+                )}
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -2503,7 +2548,6 @@ export default function UnifiedChatWidget() {
                               {!message.mine && !isSameSenderAsPrev && (() => {
                                 const memberMeta = clubMembersMap[message.senderId];
                                 const memberTags = memberMeta?.tags || [];
-                                const memberRole = memberMeta?.role;
 
                                 return (
                                   <div className="flex items-center flex-wrap gap-1 mb-1 px-1">
@@ -2512,19 +2556,7 @@ export default function UnifiedChatWidget() {
                                     </span>
                                     {isClubChat && (
                                       <>
-                                        {/* Show owner/moderator role when available */}
-                                        {memberRole === 'OWNER' && (
-                                          <span className="rounded-md bg-amber-100 border border-amber-200/80 px-1.5 py-0.2 text-[9px] font-bold text-amber-900 shadow-2xs">
-                                            {translate('communityOwner')}
-                                          </span>
-                                        )}
-                                        {memberRole === 'MODERATOR' && (
-                                          <span className="rounded-md bg-blue-100 border border-blue-200/80 px-1.5 py-0.2 text-[9px] font-bold text-blue-900 shadow-2xs">
-                                            {translate('communityModerator')}
-                                          </span>
-                                        )}
-
-                                        {/* Show member title tag when available */}
+                                        {/* Show member title tags only; permission roles stay backend-only. */}
                                         {memberTags.map((tag) => {
                                           const preset = clubTagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
                                           return (
@@ -3365,15 +3397,13 @@ export default function UnifiedChatWidget() {
                         className="relative group h-20 w-20 rounded-full border-2 border-blue-500 overflow-hidden shadow-md cursor-pointer bg-slate-100 flex items-center justify-center transition hover:ring-4 hover:ring-blue-100"
                         title={translate('chatUploadClubLogoTitle')}
                       >
-                        {settingsClubAvatar ? (
-                          <img
-                            src={settingsClubAvatar}
-                            alt="Club Logo"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <MessageCircle className="h-8 w-8 text-slate-400" />
-                        )}
+                        <SafeChatImage
+                          src={settingsClubAvatar}
+                          fallbackSrc={selection.kind === 'ROOM' && selection.room.type === 'CLUB' ? selection.room.communityLogo : null}
+                          alt="Club Logo"
+                          className="h-full w-full object-cover"
+                          fallback={<MessageCircle className="h-8 w-8 text-slate-400" />}
+                        />
 
                         {/* Overlay with Camera Icon */}
                         <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition duration-200">

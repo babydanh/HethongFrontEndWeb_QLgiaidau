@@ -12,8 +12,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Settings, Trophy, LayoutGrid, Users, RefreshCw, Calendar, GitBranch, Minus, Plus, Shield, Zap } from 'lucide-react';
+import { Pencil, RefreshCw, Settings, Trophy, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
@@ -26,11 +25,7 @@ import { RoundRobinView } from '@/app/(public)/tournaments/[id]/components/brack
 import { PagedRoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/PagedRoundRobinView';
 import { Tournament, BracketStage, BracketMatch, type SportRuleKind, type StageRoundConfig } from '@/types/tournament';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
-import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
-import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-
-import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
 import type { Category } from '@/features/categories/api';
 import type {
@@ -40,6 +35,7 @@ import type {
   BracketSlot,
 } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { isBracketMatchDragLocked } from '@/app/(public)/tournaments/[id]/components/bracket/match-status';
+import { buildBracketSetupViewModel } from './bracket-setup-view-model';
 
 interface BracketTabProps {
   tournament: Tournament;
@@ -158,7 +154,6 @@ export function BracketTab({
   matchType,
   setMatchType,
   availableMatchFormatOptions,
-  selectedCategory = null,
   sportRuleKind,
   setSportRuleKind,
   setsToWin,
@@ -210,39 +205,6 @@ export function BracketTab({
   bracketType,
 }: BracketTabProps) {
   const translate = useTranslations('TournamentDetail');
-  const presentation = getSportRulePresentation(sportRuleKind, translate);
-  const setUnitLabel = presentation.setUnitLabel;
-  const winByTwoLabel = presentation.winByTwoLabel;
-  const maxScoreLabel = presentation.maxScoreLabel;
-  const isPickleballVariant =
-    sportRuleKind === 'PICKLEBALL_RALLY' ||
-    sportRuleKind === 'PICKLEBALL_SIDE_OUT' ||
-    selectedCategory?.name?.toLowerCase().includes('pickleball') ||
-    selectedCategory?.categoryConfig?.ruleKind?.includes('PICKLEBALL');
-  const supportsTiebreakInput = sportRuleKind === 'TENNIS' || sportRuleKind === 'PICKLEBALL_SIDE_OUT';
-  const presets = getSportRulePresets(sportRuleKind, translate);
-
-  const handleSportRuleKindChange = (nextKind: SportRuleKind) => {
-    const nextRules = resolveSportRuleView(buildDefaultSportRules(nextKind), nextKind);
-    setSportRuleKind(nextKind);
-    setSetsToWin(nextRules.setsToWin);
-    setPointsPerSet(nextRules.pointsPerSet);
-    setWinByTwo(nextRules.winByTwo);
-    setMaxDeucePoints(nextRules.maxPoints);
-    setSuperTiebreakEnabled(nextRules.hasCustomTiebreakTarget);
-    setSuperTiebreakSetIndex(nextRules.bestOf);
-    setSuperTiebreakPoints(nextRules.tiebreakPoints);
-  };
-
-  const applyPreset = (preset: (typeof presets)[number]) => {
-    setSetsToWin(preset.setsToWin);
-    setPointsPerSet(preset.pointsPerSet);
-    setWinByTwo(preset.winByTwo);
-    setMaxDeucePoints(preset.maxPoints);
-    setSuperTiebreakEnabled(preset.tiebreakPoints !== null);
-    setSuperTiebreakSetIndex(preset.setsToWin * 2 - 1);
-    setSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
-  };
 
   const getKnockoutRoundLabel = (roundIndex: number, totalRounds: number, translate: (key: string, values?: { round?: number }) => string) => {
     const fromEnd = totalRounds - 1 - roundIndex;
@@ -487,6 +449,40 @@ export function BracketTab({
   };
   const isTournamentCompleted = tournament.status === 'COMPLETED';
   const canResetBracket = hasBracket && !isTournamentCompleted;
+  const participantCount = useMemo(() => (
+    (participants as Array<Record<string, unknown>>).filter(
+      (participant) => participant?.teamStatus === 'COMPLETE' && participant?.isPaid === true,
+    ).length
+  ), [participants]);
+  const selectedDivision = divisions?.find((division) => division.id === selectedDivisionId) ?? null;
+  const bracketSetup = buildBracketSetupViewModel({
+    tournamentFormat,
+    bracketType,
+    divisionBracketType: selectedDivision?.bracketType,
+    stageTypes: bracket?.stages?.map((stage) => stage.type),
+    numGroups,
+    teamsPerGroup,
+    teamsAdvancing,
+    roundsToPlay: isRoundRobin ? roundsToPlay : gskRoundsToPlay,
+    participantCount,
+  });
+  const bracketFormatLabel = bracketSetup.variant === 'GROUP_STAGE_KNOCKOUT'
+    ? translate('groupStage')
+    : bracketSetup.variant === 'ROUND_ROBIN'
+      ? translate('stageGroupStage')
+      : bracketType?.toUpperCase() === 'DOUBLE_ELIMINATION'
+        ? translate('stageDoubleEliminationLong')
+        : translate('stageSingleEliminationLong');
+  const bracketSummary = bracketSetup.variant === 'GROUP_STAGE_KNOCKOUT'
+    ? translate('compactGroupStageSummary', {
+        groups: bracketSetup.groups,
+        teams: bracketSetup.teamsPerGroup,
+        advancing: bracketSetup.teamsAdvancing,
+        total: bracketSetup.advancingTotal,
+      })
+    : bracketSetup.variant === 'ROUND_ROBIN'
+      ? translate('compactRoundRobinSummary', { rounds: bracketSetup.roundsToPlay })
+      : translate('compactKnockoutSummary', { count: bracketSetup.participantCount });
   const gskAdvancingTotal = Math.max(0, numGroups) * Math.max(0, teamsAdvancing);
   const gskStartRoundLabel =
     gskAdvancingTotal >= 32
@@ -564,164 +560,57 @@ export function BracketTab({
     });
   }, [gskRoundsToPlay, groupStage]);
 
-  const participantCount = useMemo(() => {
-    return (participants as Array<Record<string, unknown>>).filter(
-      (p) => p?.teamStatus === 'COMPLETE' && p?.isPaid === true,
-    ).length;
-  }, [participants]);
-
-  interface SuggestionData {
-    text: string;
-    variant?: 'info' | 'warning';
-    apply: () => void;
-  }
-
-  const getRRSuggestion = (count: number): SuggestionData | null => {
-    if (count < 2) return null;
-    if (count <= 8) return {
-      text: translate('suggestionRoundRobinSmall'),
-      apply: () => { setRoundsToPlay?.(1); setTiebreakerMode?.('split'); },
-    };
-    if (count <= 16) return {
-      text: translate('suggestionRoundRobinMedium'),
-      apply: () => { setRoundsToPlay?.(2); setTiebreakerMode?.('playoff'); },
-    };
-    if (count <= 32) return {
-      text: translate('suggestionRoundRobinLarge'),
-      apply: () => { setRoundsToPlay?.(2); setTiebreakerMode?.('playoff'); },
-    };
-    return {
-      text: translate('suggestionRoundRobinWarning'),
-      variant: 'warning',
-      apply: () => { setRoundsToPlay?.(2); setTiebreakerMode?.('playoff'); },
-    };
-  };
-
-  const getGSKSuggestion = (count: number): SuggestionData | null => {
-    if (count < 4) return null;
-    if (count <= 8) return {
-      text: translate('suggestionGroupStageSmall'),
-      apply: () => { setNumGroups?.(2); setTeamsPerGroup?.(Math.ceil(count / 2)); setTeamsAdvancing?.(1); },
-    };
-    if (count <= 16) return {
-      text: translate('suggestionGroupStageMedium'),
-      apply: () => { setNumGroups?.(2); setTeamsPerGroup?.(Math.ceil(count / 2)); setTeamsAdvancing?.(2); },
-    };
-    if (count <= 32) return {
-      text: translate('suggestionGroupStageLarge'),
-      apply: () => { setNumGroups?.(4); setTeamsPerGroup?.(Math.ceil(count / 4)); setTeamsAdvancing?.(2); },
-    };
-    return {
-      text: translate('suggestionGroupStageMany'),
-      apply: () => { setNumGroups?.(8); setTeamsPerGroup?.(Math.ceil(count / 8)); setTeamsAdvancing?.(1); },
-    };
-  };
-
-  const renderSuggestionBox = (suggestion: SuggestionData | null) => {
-    if (!suggestion) return null;
-    const isWarning = suggestion.variant === 'warning';
-    return (
-      <div className={`rounded-lg border p-4 space-y-2 ${isWarning ? 'border-slate-200 bg-slate-50' : 'border-blue-200 bg-blue-50'}`}>
-        <p className={`text-xs font-bold flex items-center gap-1.5 ${isWarning ? 'text-amber-800' : 'text-blue-700'}`}>
-          <span className="text-base">{isWarning ? '⚠️' : '💡'}</span>
-          {isWarning
-            ? translate('suggestionWarning', { count: participantCount })
-            : translate('suggestionBasedOn', { count: participantCount })
-          }
-        </p>
-        <p className={`text-sm font-semibold ${isWarning ? 'text-amber-900' : 'text-blue-800'}`}>{suggestion.text}</p>
-        <button
-          type="button"
-          onClick={suggestion.apply}
-          className={`text-xs font-bold text-white px-3 py-1.5 rounded-lg transition-colors ${isWarning ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-        >
-          {isWarning ? translate('applySuggestedConfiguration') : translate('applySuggestion')}
-        </button>
-      </div>
-    );
-  };
-
   return (
     <div id="manage-bracket-workspace" className="space-y-6 animate-in fade-in duration-200 transition-all rounded-xl p-1">
 
-      {/* Card tóm tắt thể thức & Nút mở Popup Cấu hình thể thức & Bốc thăm chia bảng */}
+      {/* Tóm tắt gọn, mở cấu hình bằng icon bút */}
       {selectedDivisionId && (
-        <div className="bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/80 rounded-2xl border border-blue-100 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-              <Trophy className="h-5 w-5" />
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-2xs sm:flex-row sm:items-center sm:px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <Trophy className="h-4 w-4" />
             </div>
-            <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base font-bold text-slate-900">
-                  {translate('rulesAndBracketTitle')}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h3 className="max-w-full truncate text-sm font-bold text-slate-900">
+                  {selectedDivision?.name ?? translate('divisionDefault')}
                 </h3>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white border border-blue-200 text-blue-700 shadow-2xs">
+                <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-bold text-blue-700">
+                  {bracketFormatLabel}
+                </span>
+                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">
                   {isLiteMode ? translate('liteModeLabel') : translate('strictModeLabel')}
                 </span>
-                {isGroupStageKnockout ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                    {numGroups} bảng • {teamsAdvancing} đội đi tiếp
-                  </span>
-                ) : isRoundRobin ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Vòng tròn tính điểm
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                    Loại trực tiếp (Knockout)
-                  </span>
-                )}
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                {bracket && bracket.stages && bracket.stages.length > 0
-                  ? 'Bấm nút bên dưới để điều chỉnh thể thức, luật thi đấu hoặc bốc thăm xếp lại hạt giống.'
-                  : 'Thiết lập phong cách tính điểm, số lượng bảng đấu và bốc thăm kéo thả VĐV vào bảng.'}
-              </p>
+              <p className="truncate text-xs font-medium text-slate-500">{bracketSummary}</p>
             </div>
           </div>
 
-          <div className="shrink-0 flex items-center gap-2">
-            <Button
+          <div className="flex shrink-0 items-center justify-end gap-2">
+            {!hasBracket && (
+              <Button
+                type="button"
+                onClick={() => setIsPoolArrangementModalOpen(true)}
+                disabled={participants.length < 2 || isGeneratingBracket}
+                title={participants.length < 2 ? translate('minimumParticipants', { count: 2 }) : undefined}
+                className="bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-blue-700 disabled:cursor-not-allowed"
+              >
+                <Settings className="mr-1.5 h-3.5 w-3.5" />
+                {translate('createBracketAction')}
+              </Button>
+            )}
+            <button
               type="button"
               onClick={() => setIsPoolArrangementModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+              disabled={isGeneratingBracket}
+              aria-label={translate('editBracketSetup')}
+              title={translate('editBracketSetup')}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Settings className="w-4 h-4" />
-              <span>
-                {bracket && bracket.stages && bracket.stages.length > 0
-                  ? 'Thiết lập thể thức & Bốc thăm lại'
-                  : 'Thiết lập thể thức & Bốc thăm chia bảng'}
-              </span>
-            </Button>
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">{translate('editBracketSetup')}</span>
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Giao diện khi chưa có sơ đồ thi đấu */}
-      {(!bracket || !bracket.stages || bracket.stages.length === 0) && (
-        <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-8 sm:p-12 text-center flex flex-col items-center justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 mb-3">
-            <Trophy className="w-7 h-7" />
-          </div>
-          <h4 className="text-base font-bold text-slate-800 mb-1">Chưa khởi tạo sơ đồ thi đấu</h4>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
-            Vui lòng nhấn nút &quot;Thiết lập thể thức &amp; Bốc thăm chia bảng&quot; để mở popup cấu hình thể thức, luật thi đấu và bốc thăm chia bảng trực quan.
-          </p>
-          <Button
-            type="button"
-            onClick={() => setIsPoolArrangementModalOpen(true)}
-            disabled={!selectedDivisionId || participants.length < 2}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 cursor-pointer"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Mở bảng bốc thăm chia bảng</span>
-          </Button>
-          {participants.length < 2 && selectedDivisionId && (
-            <p className="text-[11px] text-amber-600 font-semibold mt-2">
-              ⚠ Cần tối thiểu 2 đội/VĐV hợp lệ để có thể bốc thăm chia bảng.
-            </p>
-          )}
         </div>
       )}
       

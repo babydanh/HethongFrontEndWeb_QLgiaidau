@@ -1857,6 +1857,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                 </button>
                                 <button
                                   type="button"
+                                  onClick={() => {
+                                    s.setSelectedDivisionId(div.id);
+                                    handleManageNavigation('bracket');
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                                  title={ruleTranslate('editBracketSetup')}
+                                  aria-label={ruleTranslate('editBracketSetup')}
+                                >
+                                  <Trophy className="w-3.5 h-3.5" />
+                                  <span className="hidden xl:inline text-[11px] font-bold">{ruleTranslate('editBracketSetup')}</span>
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => s.requestDeleteDivision(div)}
                                   className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                                   title="Xóa nội dung"

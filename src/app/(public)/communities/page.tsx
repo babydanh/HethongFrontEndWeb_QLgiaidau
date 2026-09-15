@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { communitiesApi, Community } from "@/features/communities/api";
 import { JoinCommunityModal } from "@/components/shared/JoinCommunityModal";
@@ -44,6 +44,34 @@ const getCategoryStyles = (name: string) => {
     dot: "bg-white"
   };
 };
+
+function CommunityMediaImage({
+  src,
+  alt,
+  className,
+  fallback,
+}: {
+  src?: string | null;
+  alt: string;
+  className: string;
+  fallback: ReactNode;
+}) {
+  const normalizedSource = src?.split(',')[0]?.trim() || null;
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+
+  if (!normalizedSource || failedSource === normalizedSource) return <>{fallback}</>;
+
+  return (
+    // Community media URLs come from the API and cannot be assumed to match next/image remote patterns.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={normalizedSource}
+      alt={alt}
+      className={className}
+      onError={() => setFailedSource(normalizedSource)}
+    />
+  );
+}
 
 export default function CommunitiesPage() {
   const t = useTranslations("CommunityList");
@@ -195,6 +223,8 @@ export default function CommunitiesPage() {
             const isOwner = user && (community.creatorId === user.id || community.ownerId === user.id);
             const isJoined = user && myCommunityIds.has(community.id);
             const provinceName = provinces.find(p => p.code === community.provinceCode)?.name || t('vietnam');
+            const communityLogo = community.logoUrl?.trim() || null;
+            const communityBanner = community.bannerUrl?.split(',')[0]?.trim() || null;
 
             return (
               <div
@@ -204,36 +234,38 @@ export default function CommunitiesPage() {
               >
                 {/* Header Banner */}
                 <div className="h-48 sm:h-52 bg-slate-50 relative overflow-hidden shrink-0">
-                  {community.bannerUrl ? (
-                    <Image
-                      src={community.bannerUrl.split(',')[0]}
-                      alt="Banner"
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 flex items-center justify-center p-6 group-hover:scale-105 transition-transform duration-700 ease-out">
-                      <Image
-                        src={BRAND.assets.logoFull}
-                        alt={BRAND.name}
-                        fill
-                        className="object-contain p-8 drop-shadow-sm"
-                      />
-                    </div>
-                  )}
+                  <CommunityMediaImage
+                    src={communityBanner}
+                    alt={`${community.name} banner`}
+                    className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    fallback={(
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 flex items-center justify-center p-6 group-hover:scale-105 transition-transform duration-700 ease-out">
+                        <Image
+                          src={BRAND.assets.logoFull}
+                          alt={BRAND.name}
+                          fill
+                          className="object-contain p-8 drop-shadow-sm"
+                        />
+                      </div>
+                    )}
+                  />
                 </div>
 
                 {/* Card Info (White Area) */}
-                <div className={`p-4 ${Boolean(community.logoUrl?.trim()) ? 'pt-2.5' : 'pt-4'} flex flex-col justify-between bg-white`}>
+                <div className={`p-4 ${communityLogo ? 'pt-2.5' : 'pt-4'} flex flex-col justify-between bg-white`}>
                   <div className="flex items-start gap-3 relative">
                     {/* Circular Logo - Half overlap (chỉ hiện khi có logo tải lên, không có thì ẩn hoàn toàn) */}
-                    {Boolean(community.logoUrl?.trim()) && (
+                    {communityLogo && (
                       <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative flex items-center justify-center">
-                        <Image
-                          src={community.logoUrl!}
+                        <CommunityMediaImage
+                          src={communityLogo}
                           alt={community.name}
-                          fill
-                          className="object-cover transition-transform duration-300"
+                          className="h-full w-full object-cover transition-transform duration-300"
+                          fallback={(
+                            <span className="flex h-full w-full items-center justify-center bg-blue-100 text-lg font-bold uppercase text-blue-700">
+                              {community.name.trim().charAt(0) || '?'}
+                            </span>
+                          )}
                         />
                       </div>
                     )}

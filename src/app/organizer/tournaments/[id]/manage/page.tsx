@@ -55,6 +55,7 @@ import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
 import ShareModal from '@/components/common/ShareModal';
 import { triggerShare } from '@/utils/share.util';
 import CountdownTimer from '@/components/shared/CountdownTimer';
+import { toApiIsoDateTime, toDateTimeLocalValue } from '@/utils/dateTimeInput';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -313,11 +314,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isSavingName, setIsSavingName] = useState(false);
 
   const [isDatesModalOpen, setIsDatesModalOpen] = useState(false);
+  const [tempRegistrationStartDate, setTempRegistrationStartDate] = useState('');
+  const [tempRegistrationEndDate, setTempRegistrationEndDate] = useState('');
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
   const [isSavingDates, setIsSavingDates] = useState(false);
-
-
 
   // Inline editing state for contact card items
   const [editingContactKey, setEditingContactKey] = useState<string | null>(null);
@@ -359,19 +360,31 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   };
 
   const handleSaveDatesDirect = async () => {
-    if (tempStartDate && tempEndDate && new Date(tempEndDate) <= new Date(tempStartDate)) {
-      toast.error('Ngày kết thúc phải sau ngày khai mạc!');
+    if (tempRegistrationStartDate && tempRegistrationEndDate && new Date(tempRegistrationEndDate) <= new Date(tempRegistrationStartDate)) {
+      toast.error('Hạn chót đăng ký phải sau ngày mở đăng ký!');
+      return;
+    }
+    if (tempStartDate && tempRegistrationEndDate && new Date(tempStartDate) < new Date(tempRegistrationEndDate)) {
+      toast.error('Ngày khai mạc phải sau hạn chót đăng ký!');
+      return;
+    }
+    if (tempStartDate && tempEndDate && new Date(tempEndDate) < new Date(tempStartDate)) {
+      toast.error('Ngày bế mạc phải sau ngày khai mạc!');
       return;
     }
     setIsSavingDates(true);
     try {
+      s.setRegistrationStartDate(tempRegistrationStartDate);
+      s.setRegistrationEndDate(tempRegistrationEndDate);
       s.setStartDate(tempStartDate);
       s.setEndDate(tempEndDate);
       await tournamentsApi.updateTournament(id, {
-        startDate: tempStartDate ? new Date(tempStartDate).toISOString() : null,
-        endDate: tempEndDate ? new Date(tempEndDate).toISOString() : null,
+        registrationStartDate: toApiIsoDateTime(tempRegistrationStartDate),
+        registrationEndDate: toApiIsoDateTime(tempRegistrationEndDate),
+        startDate: toApiIsoDateTime(tempStartDate),
+        endDate: toApiIsoDateTime(tempEndDate),
       });
-      toast.success('Đã cập nhật thời gian giải đấu!');
+      toast.success('Đã cập nhật thời gian giải đấu thành công!');
       setIsDatesModalOpen(false);
       await s.fetchTournamentData();
     } catch (err) {
@@ -911,8 +924,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           {/* Dates - Clickable */}
           <div
             onClick={() => {
-              setTempStartDate(tournament.startDate ? new Date(tournament.startDate).toISOString() : '');
-              setTempEndDate(tournament.endDate ? new Date(tournament.endDate).toISOString() : '');
+              setTempRegistrationStartDate(toDateTimeLocalValue(tournament.registrationStartDate));
+              setTempRegistrationEndDate(toDateTimeLocalValue(tournament.registrationEndDate));
+              setTempStartDate(toDateTimeLocalValue(tournament.startDate));
+              setTempEndDate(toDateTimeLocalValue(tournament.endDate));
               setIsDatesModalOpen(true);
             }}
             className="group/row flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
@@ -2775,16 +2790,48 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </ModalTitle>
           </ModalHeader>
           <div className="space-y-4 mt-4">
-            <DateTimePicker
-              label="Ngày khai mạc"
-              value={tempStartDate}
-              onChange={setTempStartDate}
-            />
-            <DateTimePicker
-              label="Ngày bế mạc"
-              value={tempEndDate}
-              onChange={setTempEndDate}
-            />
+            {/* Thời gian mở & đóng đăng ký */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
+                <span>Thời gian đăng ký</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <DateTimePicker
+                  label="Ngày mở đăng ký"
+                  value={tempRegistrationStartDate}
+                  onChange={setTempRegistrationStartDate}
+                />
+                <DateTimePicker
+                  label="Hạn chót đăng ký"
+                  value={tempRegistrationEndDate}
+                  onChange={setTempRegistrationEndDate}
+                  min={tempRegistrationStartDate || undefined}
+                />
+              </div>
+            </div>
+
+            {/* Thời gian thi đấu giải */}
+            <div className="space-y-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                <CalendarDays className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Thời gian thi đấu</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <DateTimePicker
+                  label="Ngày khai mạc"
+                  value={tempStartDate}
+                  onChange={setTempStartDate}
+                  min={tempRegistrationEndDate || undefined}
+                />
+                <DateTimePicker
+                  label="Ngày bế mạc"
+                  value={tempEndDate}
+                  onChange={setTempEndDate}
+                  min={tempStartDate || undefined}
+                />
+              </div>
+            </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <Button
                 type="button"

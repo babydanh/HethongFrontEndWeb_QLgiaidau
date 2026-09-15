@@ -8,8 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
 import type { Division } from '@/features/tournaments/api';
+import type { SportRuleKind } from '@/types/tournament';
+import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
+import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
+import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { cn } from '@/utils/cn';
-import { getBracketQuickSuggestion } from './bracket-setup-view-model';
+import { getBracketQuickSuggestion, getQuickPresets } from './bracket-setup-view-model';
 
 type BracketValue = Exclude<Division['bracketType'], null | undefined>;
 
@@ -57,6 +62,22 @@ export type CreateDivisionModalProps = {
   setNewDivisionEntryFee: Setter<string>;
   newDivisionIsLiteMode: boolean;
   setNewDivisionIsLiteMode: Setter<boolean>;
+  newDivisionSportRuleKind: SportRuleKind;
+  setNewDivisionSportRuleKind: Setter<SportRuleKind>;
+  newDivisionSetsToWin: number;
+  setNewDivisionSetsToWin: Setter<number>;
+  newDivisionPointsPerSet: number;
+  setNewDivisionPointsPerSet: Setter<number>;
+  newDivisionWinByTwo: boolean;
+  setNewDivisionWinByTwo: Setter<boolean>;
+  newDivisionMaxDeucePoints: number;
+  setNewDivisionMaxDeucePoints: Setter<number>;
+  newDivisionSuperTiebreakEnabled: boolean;
+  setNewDivisionSuperTiebreakEnabled: Setter<boolean>;
+  newDivisionSuperTiebreakSetIndex: number;
+  setNewDivisionSuperTiebreakSetIndex: Setter<number>;
+  newDivisionSuperTiebreakPoints: number;
+  setNewDivisionSuperTiebreakPoints: Setter<number>;
   newDivisionNumGroups: number;
   setNewDivisionNumGroups: Setter<number>;
   newDivisionTeamsPerGroup: number;
@@ -100,6 +121,22 @@ export function CreateDivisionModal({
   setNewDivisionEntryFee,
   newDivisionIsLiteMode,
   setNewDivisionIsLiteMode,
+  newDivisionSportRuleKind,
+  setNewDivisionSportRuleKind,
+  newDivisionSetsToWin,
+  setNewDivisionSetsToWin,
+  newDivisionPointsPerSet,
+  setNewDivisionPointsPerSet,
+  newDivisionWinByTwo,
+  setNewDivisionWinByTwo,
+  newDivisionMaxDeucePoints,
+  setNewDivisionMaxDeucePoints,
+  newDivisionSuperTiebreakEnabled,
+  setNewDivisionSuperTiebreakEnabled,
+  newDivisionSuperTiebreakSetIndex,
+  setNewDivisionSuperTiebreakSetIndex,
+  newDivisionSuperTiebreakPoints,
+  setNewDivisionSuperTiebreakPoints,
   newDivisionNumGroups,
   setNewDivisionNumGroups,
   newDivisionTeamsPerGroup,
@@ -122,6 +159,35 @@ export function CreateDivisionModal({
     ? getBracketQuickSuggestion('GROUP_STAGE_KNOCKOUT', participantCount)
     : null;
   const advancingTotal = newDivisionNumGroups * newDivisionTeamsAdvancing;
+  const sportRulePresentation = getSportRulePresentation(newDivisionSportRuleKind, ruleTranslate);
+  const sportRulePresets = getQuickPresets(
+    getSportRulePresets(newDivisionSportRuleKind, ruleTranslate),
+    2,
+  );
+  const isPickleballVariant = newDivisionSportRuleKind === 'PICKLEBALL_RALLY' || newDivisionSportRuleKind === 'PICKLEBALL_SIDE_OUT';
+  const supportsTiebreakInput = newDivisionSportRuleKind === 'TENNIS' || newDivisionSportRuleKind === 'PICKLEBALL_SIDE_OUT';
+
+  const applySportRuleKind = (kind: SportRuleKind) => {
+    const resolved = resolveSportRuleView(buildDefaultSportRules(kind), kind);
+    setNewDivisionSportRuleKind(kind);
+    setNewDivisionSetsToWin(resolved.setsToWin);
+    setNewDivisionPointsPerSet(resolved.pointsPerSet);
+    setNewDivisionWinByTwo(resolved.winByTwo);
+    setNewDivisionMaxDeucePoints(resolved.maxPoints);
+    setNewDivisionSuperTiebreakEnabled(resolved.hasCustomTiebreakTarget);
+    setNewDivisionSuperTiebreakSetIndex(resolved.bestOf);
+    setNewDivisionSuperTiebreakPoints(resolved.tiebreakPoints);
+  };
+
+  const applySportPreset = (preset: (typeof sportRulePresets)[number]) => {
+    setNewDivisionSetsToWin(preset.setsToWin);
+    setNewDivisionPointsPerSet(preset.pointsPerSet);
+    setNewDivisionWinByTwo(preset.winByTwo);
+    setNewDivisionMaxDeucePoints(preset.maxPoints);
+    setNewDivisionSuperTiebreakEnabled(preset.tiebreakPoints !== null);
+    setNewDivisionSuperTiebreakSetIndex(preset.setsToWin * 2 - 1);
+    setNewDivisionSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
+  };
 
   const updateNumber = (
     value: string,
@@ -272,6 +338,174 @@ export function CreateDivisionModal({
                 <span className="mt-1 block text-[11px] font-normal text-slate-500">{ruleTranslate('strictShortDesc')}</span>
               </button>
             </div>
+
+            {!newDivisionIsLiteMode && (
+              <div className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">{sportRulePresentation.sportLabel}</p>
+                    <p className="text-[11px] text-slate-500">{sportRulePresentation.scoringLabel}</p>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">Strict</span>
+                </div>
+
+                {isPickleballVariant && (
+                  <div className="grid grid-cols-2 gap-2" role="group" aria-label={ruleTranslate('pickleballMode')}>
+                    {([
+                      ['PICKLEBALL_RALLY', ruleTranslate('rallyScoring')],
+                      ['PICKLEBALL_SIDE_OUT', ruleTranslate('sideOutScoring')],
+                    ] as const).map(([kind, label]) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        aria-pressed={newDivisionSportRuleKind === kind}
+                        disabled={isCreatingDivision}
+                        onClick={() => applySportRuleKind(kind)}
+                        className={cn(
+                          'rounded-lg border px-2.5 py-2 text-left text-xs font-bold transition-colors',
+                          newDivisionSportRuleKind === kind
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                            : 'border-slate-200 text-slate-600 hover:border-emerald-300',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div>
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{ruleTranslate('sportPresets')}</p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {sportRulePresets.map((preset) => {
+                      const selected = newDivisionSetsToWin === preset.setsToWin
+                        && newDivisionPointsPerSet === preset.pointsPerSet
+                        && newDivisionWinByTwo === preset.winByTwo;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          title={preset.description}
+                          aria-pressed={selected}
+                          disabled={isCreatingDivision}
+                          onClick={() => applySportPreset(preset)}
+                          className={cn(
+                            'flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-xs font-bold transition-colors',
+                            selected
+                              ? 'border-blue-500 bg-blue-50 text-blue-800 ring-1 ring-blue-200'
+                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-white',
+                          )}
+                        >
+                          <span className="truncate">{preset.label}</span>
+                          <span className="shrink-0 text-[10px] font-semibold text-slate-500">
+                            {preset.setsToWin}×{preset.pointsPerSet}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-[11px] font-semibold text-slate-600">
+                    {ruleTranslate('setsToWin')}
+                    <select
+                      value={newDivisionSetsToWin}
+                      onChange={(event) => setNewDivisionSetsToWin(Number(event.target.value))}
+                      disabled={isCreatingDivision}
+                      className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      {sportRulePresentation.setOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-[11px] font-semibold text-slate-600">
+                    {sportRulePresentation.setUnitLabel}
+                    <input
+                      type="number"
+                      min={1}
+                      value={newDivisionPointsPerSet}
+                      onChange={(event) => setNewDivisionPointsPerSet(Math.max(1, Number(event.target.value) || 1))}
+                      disabled={isCreatingDivision}
+                      className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={newDivisionWinByTwo}
+                      onChange={(event) => setNewDivisionWinByTwo(event.target.checked)}
+                      disabled={isCreatingDivision}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    {ruleTranslate('winByTwo')}
+                  </label>
+                  {newDivisionWinByTwo ? (
+                    <label className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-[11px] font-semibold text-slate-600">
+                      {ruleTranslate('maxDeucePoints')}
+                      <input
+                        type="number"
+                        min={newDivisionPointsPerSet}
+                        value={newDivisionMaxDeucePoints}
+                        onChange={(event) => setNewDivisionMaxDeucePoints(Math.max(newDivisionPointsPerSet, Number(event.target.value) || newDivisionPointsPerSet))}
+                        disabled={isCreatingDivision}
+                        className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      />
+                    </label>
+                  ) : (
+                    <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-500">
+                      {ruleTranslate('noDeuceLimit')}
+                    </div>
+                  )}
+                </div>
+
+                {supportsTiebreakInput && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={newDivisionSuperTiebreakEnabled}
+                        onChange={(event) => setNewDivisionSuperTiebreakEnabled(event.target.checked)}
+                        disabled={isCreatingDivision}
+                        className="h-4 w-4 accent-blue-600"
+                      />
+                      {ruleTranslate('superTiebreak')}
+                    </label>
+                    {newDivisionSuperTiebreakEnabled && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <label className="text-[11px] font-semibold text-slate-600">
+                          {ruleTranslate('tiebreakSet')}
+                          <input
+                            type="number"
+                            min={1}
+                            max={Math.max(1, newDivisionSetsToWin * 2 - 1)}
+                            value={newDivisionSuperTiebreakSetIndex}
+                            onChange={(event) => setNewDivisionSuperTiebreakSetIndex(Math.max(1, Number(event.target.value) || 1))}
+                            disabled={isCreatingDivision}
+                            className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          />
+                        </label>
+                        <label className="text-[11px] font-semibold text-slate-600">
+                          {ruleTranslate('tiebreakPoints')}
+                          <input
+                            type="number"
+                            min={1}
+                            value={newDivisionSuperTiebreakPoints}
+                            onChange={(event) => setNewDivisionSuperTiebreakPoints(Math.max(1, Number(event.target.value) || 1))}
+                            disabled={isCreatingDivision}
+                            className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {isGroupStageKnockout && (
               <div className="mt-3 grid gap-3 lg:grid-cols-2">

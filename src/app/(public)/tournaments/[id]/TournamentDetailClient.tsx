@@ -859,12 +859,13 @@ const commonTranslate = useTranslations('Common');
   const isUnpaidUser = canResumePayment;
 
   if (isRegisteredUser) {
+    isRegistrationButtonDisabled = false;
     if (canResumePayment) {
       registrationButtonLabel = '💳 ' + (translate('continuePayment') || 'Thanh toán ngay');
-      isRegistrationButtonDisabled = false;
+    } else if (myRegistration?.participant?.teamStatus === 'PENDING_PARTNER') {
+      registrationButtonLabel = '⏳ Chờ ghép cặp · Xem mã mời';
     } else {
-      registrationButtonLabel = translate('alreadyRegistered') || 'Đã đăng ký';
-      isRegistrationButtonDisabled = true;
+      registrationButtonLabel = (translate('alreadyRegistered') || 'Đã đăng ký') + ' (Xem chi tiết)';
     }
   } else if (isRegistrationOpen) {
     if (isRegistrationLocked) {
@@ -897,9 +898,10 @@ const commonTranslate = useTranslations('Common');
   const participantCount = selectedDivision ? (selectedDivision._summary?.participantCount ?? selectedDivision._count?.participants ?? 0) : 0;
   const maxParticipants = selectedDivision ? (selectedDivision.maxParticipants ?? 0) : 0;
   const percentageFilled = maxParticipants > 0 ? Math.min(100, Math.round((participantCount / maxParticipants) * 100)) : 0;
+  const registerDivisionId = myRegistration?.participant?.tournamentDivisionId || selectedDivisionId;
   const registerParams = new URLSearchParams();
-  if (selectedDivisionId) {
-    registerParams.set('divisionId', selectedDivisionId);
+  if (registerDivisionId) {
+    registerParams.set('divisionId', registerDivisionId);
   }
   const inviteCode = searchParams.get('invite');
   const inviteParticipantId = searchParams.get('pid');
@@ -1281,10 +1283,28 @@ const commonTranslate = useTranslations('Common');
                   </div>
                 ) : isRegisteredUser ? (
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 px-3 rounded-lg text-sm shadow-2xs">
-                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="truncate">{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
-                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => router.push(registerHref)}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 font-bold py-3 px-3 rounded-lg text-sm shadow-xs transition-all cursor-pointer",
+                        myRegistration?.participant?.teamStatus === 'PENDING_PARTNER'
+                          ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                          : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      )}
+                    >
+                      {myRegistration?.participant?.teamStatus === 'PENDING_PARTNER' ? (
+                        <>
+                          <Clock className="w-4 h-4 shrink-0" />
+                          <span className="truncate">Chờ ghép cặp · Xem mã mời & giờ</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 shrink-0" />
+                          <span className="truncate">{translate('alreadyRegistered') || 'Đã đăng ký'} (Xem hồ sơ)</span>
+                        </>
+                      )}
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"

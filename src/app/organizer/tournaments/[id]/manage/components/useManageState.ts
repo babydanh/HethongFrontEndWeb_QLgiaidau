@@ -34,7 +34,7 @@ import {
 } from '@/features/tournaments/match-format-options';
 import { getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
 import { toApiIsoDateTime, toDateTimeLocalValue } from '@/utils/dateTimeInput';
-import type { StageRoundRuleConfig } from '@/types/tournament';
+import type { StageRoundConfig, StageRoundRuleConfig } from '@/types/tournament';
 import { isLiteTournament } from '@/features/tournaments/lite-qr';
 
 type RoundConfigRecord = Record<string, unknown>;
@@ -362,7 +362,7 @@ export function useManageState(id: string) {
   const selectedDivision = divisions.find((d) => d.id === selectedDivisionId);
 
   const applyNewDivisionScoringDraft = useCallback((rawConfig: unknown, fallbackKind: SportRuleKind) => {
-    const rawRules = resolveSportRuleView(rawConfig, fallbackKind);
+    const rawRules = resolveSportRuleView(rawConfig as StageRoundConfig | null | undefined, fallbackKind);
     const normalizedKind = normalizeSportRuleKindForCategory(rawRules.kind, selectedCategory);
     const resolvedRules = normalizedKind === rawRules.kind
       ? rawRules
@@ -2534,6 +2534,14 @@ export function useManageState(id: string) {
     newDivisionEntryFeeOverrideEnabled, setNewDivisionEntryFeeOverrideEnabled,
     newDivisionEntryFee, setNewDivisionEntryFee,
     newDivisionIsLiteMode, setNewDivisionIsLiteMode,
+    newDivisionSportRuleKind, setNewDivisionSportRuleKind,
+    newDivisionSetsToWin, setNewDivisionSetsToWin,
+    newDivisionPointsPerSet, setNewDivisionPointsPerSet,
+    newDivisionWinByTwo, setNewDivisionWinByTwo,
+    newDivisionMaxDeucePoints, setNewDivisionMaxDeucePoints,
+    newDivisionSuperTiebreakEnabled, setNewDivisionSuperTiebreakEnabled,
+    newDivisionSuperTiebreakSetIndex, setNewDivisionSuperTiebreakSetIndex,
+    newDivisionSuperTiebreakPoints, setNewDivisionSuperTiebreakPoints,
     newDivisionNumGroups, setNewDivisionNumGroups,
     newDivisionTeamsPerGroup, setNewDivisionTeamsPerGroup,
     newDivisionTeamsAdvancing, setNewDivisionTeamsAdvancing,

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ExternalLink, Handshake, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
+import { ExternalLink, Globe, Handshake, ImageIcon, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -27,13 +27,7 @@ type SponsorDraft = {
   tier: SponsorTier;
   logoUrl: string;
   websiteUrl: string;
-  shortDescription: string;
-  displayOrder: number;
-  status: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   isPublic: boolean;
-  advancedScheduling: boolean;
-  startAt: string;
-  endAt: string;
 };
 
 const emptyDraft = (): SponsorDraft => ({
@@ -41,50 +35,15 @@ const emptyDraft = (): SponsorDraft => ({
   tier: 'GOLD',
   logoUrl: '',
   websiteUrl: '',
-  shortDescription: '',
-  displayOrder: 0,
-  status: 'DRAFT',
   isPublic: true,
-  advancedScheduling: false,
-  startAt: '',
-  endAt: '',
 });
 
-const formatDateTimeInput = (value?: string | null) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const pad = (part: number) => String(part).padStart(2, '0');
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
-const parseDateTimeInput = (value: string) => {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(value.trim());
-  if (!match) return null;
-  const [, day, month, year, hours, minutes] = match;
-  const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), 0, 0);
-  if (
-    date.getFullYear() !== Number(year) ||
-    date.getMonth() !== Number(month) - 1 ||
-    date.getDate() !== Number(day) ||
-    date.getHours() !== Number(hours) ||
-    date.getMinutes() !== Number(minutes)
-  ) return null;
-  return date;
-};
-
 const toDraft = (sponsor: TournamentSponsor): SponsorDraft => ({
-  displayName: sponsor.displayName,
-  tier: sponsor.tier,
-  logoUrl: sponsor.logoUrl,
+  displayName: sponsor.displayName || '',
+  tier: sponsor.tier || 'GOLD',
+  logoUrl: sponsor.logoUrl || '',
   websiteUrl: sponsor.websiteUrl || '',
-  shortDescription: sponsor.shortDescription || '',
-  displayOrder: sponsor.displayOrder,
-  status: sponsor.status === 'ARCHIVED' ? 'HIDDEN' : sponsor.status || 'DRAFT',
-  isPublic: sponsor.isPublic ?? true,
-  advancedScheduling: Boolean(sponsor.startAt || sponsor.endAt),
-  startAt: formatDateTimeInput(sponsor.startAt),
-  endAt: formatDateTimeInput(sponsor.endAt),
+  isPublic: sponsor.status === 'PUBLISHED' && (sponsor.isPublic ?? true),
 });
 
 export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPanelProps) {
@@ -123,37 +82,34 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
       toast.error(translate('sponsors.requiredFields'));
       return false;
     }
-    if (draft.websiteUrl && !/^https?:\/\//i.test(draft.websiteUrl.trim())) {
-      toast.error(translate('sponsors.invalidUrl'));
-      return false;
-    }
-    if (draft.advancedScheduling) {
-      const startAt = draft.startAt ? parseDateTimeInput(draft.startAt) : null;
-      const endAt = draft.endAt ? parseDateTimeInput(draft.endAt) : null;
-      if ((draft.startAt && !startAt) || (draft.endAt && !endAt)) {
-        toast.error(translate('sponsors.invalidDateTime'));
-        return false;
-      }
-      if (startAt && endAt && startAt > endAt) {
-        toast.error(translate('sponsors.invalidDateRange'));
+    if (draft.websiteUrl.trim()) {
+      const normalizedUrl = draft.websiteUrl.trim();
+      if (!/^https?:\/\//i.test(normalizedUrl) && !normalizedUrl.includes('.')) {
+        toast.error(translate('sponsors.invalidUrl'));
         return false;
       }
     }
     return true;
   };
 
-  const toPayload = (draft: SponsorDraft): SponsorPayload => ({
-    displayName: draft.displayName.trim(),
-    tier: draft.tier,
-    logoUrl: draft.logoUrl.trim(),
-    websiteUrl: draft.websiteUrl.trim() || null,
-    shortDescription: draft.shortDescription.trim() || null,
-    displayOrder: Math.max(0, Number(draft.displayOrder) || 0),
-    status: draft.status,
-    isPublic: draft.isPublic,
-    startAt: draft.advancedScheduling && draft.startAt ? parseDateTimeInput(draft.startAt)?.toISOString() ?? null : null,
-    endAt: draft.advancedScheduling && draft.endAt ? parseDateTimeInput(draft.endAt)?.toISOString() ?? null : null,
-  });
+  const toPayload = (draft: SponsorDraft): SponsorPayload => {
+    let website = draft.websiteUrl.trim() || null;
+    if (website && !/^https?:\/\//i.test(website)) {
+      website = `https://${website}`;
+    }
+    return {
+      displayName: draft.displayName.trim(),
+      tier: draft.tier,
+      logoUrl: draft.logoUrl.trim(),
+      websiteUrl: website,
+      shortDescription: null,
+      displayOrder: 0,
+      status: draft.isPublic ? 'PUBLISHED' : 'DRAFT',
+      isPublic: draft.isPublic,
+      startAt: null,
+      endAt: null,
+    };
+  };
 
   const saveSponsor = async (sponsorId: string) => {
     const draft = drafts[sponsorId];
@@ -216,150 +172,227 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
     }
   };
 
-  const getInitials = (name: string) => name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SP';
+  const getInitials = (name: string) =>
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'SP';
 
   const renderPreview = (draft: SponsorDraft) => {
-    const isPubliclyReady = draft.status === 'PUBLISHED' && draft.isPublic;
+    const isPubliclyReady = draft.isPublic;
     const tierStyle = getSponsorTierStyle(draft.tier);
     const tierLabel = translate(`sponsors.tiers.${draft.tier}`);
     const displayName = draft.displayName.trim() || translate('sponsors.previewPlaceholder');
 
     return (
       <aside
-        className={cn('rounded-2xl border p-2.5', tierStyle.surfaceClassName)}
+        className={cn('rounded-2xl border p-3 bg-slate-50/50 flex flex-col justify-between', tierStyle.surfaceClassName)}
         aria-label={translate('sponsors.previewTitle')}
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className={cn('truncate text-[10px] font-black uppercase tracking-[0.12em]', tierStyle.accentClassName)}>
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className={cn('truncate text-[10px] font-black uppercase tracking-wider', tierStyle.accentClassName)}>
               {translate('sponsors.previewTitle')}
-            </p>
-            <p className="mt-0.5 truncate text-[9px] font-medium text-slate-500">
-              {translate('sponsors.previewDescription')}
-            </p>
-          </div>
-          <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
-            {tierLabel}
-          </span>
-        </div>
-
-        <div className={cn('rounded-xl border border-t-2 bg-white p-2.5 shadow-sm', tierStyle.accentBorderClassName)}>
-          <div className="flex flex-col items-center text-center">
-            <SponsorLogo
-              logoUrl={draft.logoUrl}
-              alt={displayName}
-              initials={getInitials(displayName)}
-              className={cn('h-16 w-full max-w-[170px] rounded-lg border p-2', tierStyle.logoFrameClassName)}
-              imageClassName="h-full w-full"
-            />
-            <p className="mt-2 w-full truncate text-xs font-black text-slate-900">{displayName}</p>
-            <span className={cn('mt-1 rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
+            </span>
+            <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
               {tierLabel}
             </span>
           </div>
 
-          {draft.shortDescription.trim() ? (
-            <p className="mt-2 line-clamp-2 text-center text-[10px] font-medium leading-4 text-slate-500">
-              {draft.shortDescription.trim()}
-            </p>
-          ) : null}
-          <div className="mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[9px] font-bold">
-            <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', isPubliclyReady ? 'bg-emerald-500' : 'bg-slate-300')} />
-            <span className={isPubliclyReady ? 'truncate text-emerald-600' : 'truncate text-slate-400'}>
-              {isPubliclyReady
-                ? draft.advancedScheduling
-                  ? translate('sponsors.previewScheduled')
-                  : translate('sponsors.previewAlwaysVisible')
-                : translate('sponsors.previewNotPublic')}
-            </span>
+          <div className={cn('rounded-xl border border-t-2 bg-white p-3 shadow-xs', tierStyle.accentBorderClassName)}>
+            <div className="flex flex-col items-center text-center">
+              <SponsorLogo
+                logoUrl={draft.logoUrl}
+                alt={displayName}
+                initials={getInitials(displayName)}
+                className={cn('h-16 w-full max-w-[170px] rounded-lg border p-2', tierStyle.logoFrameClassName)}
+                imageClassName="h-full w-full"
+              />
+              <p className="mt-2.5 w-full truncate text-xs font-black text-slate-900">{displayName}</p>
+              <span className={cn('mt-1 rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
+                {tierLabel}
+              </span>
+            </div>
           </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[10px] font-semibold">
+          <span className="text-slate-500">Trạng thái:</span>
+          <span className={cn('inline-flex items-center gap-1.5', isPubliclyReady ? 'text-emerald-600' : 'text-slate-400')}>
+            <span className={cn('h-1.5 w-1.5 rounded-full', isPubliclyReady ? 'bg-emerald-500' : 'bg-slate-300')} />
+            {isPubliclyReady ? translate('sponsors.previewAlwaysVisible') : translate('sponsors.previewNotPublic')}
+          </span>
         </div>
       </aside>
     );
   };
 
-  const renderEditor = (draft: SponsorDraft, onChange: (patch: Partial<SponsorDraft>) => void, target: 'new' | string) => (
-    <div className="grid gap-3 md:grid-cols-2">
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.name')}</span>
-        <input value={draft.displayName} onChange={(event) => onChange({ displayName: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" maxLength={160} />
-      </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.tier')}</span>
-        <select value={draft.tier} onChange={(event) => onChange({ tier: event.target.value as SponsorTier })} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium">
-          {SPONSOR_TIERS.map((tier) => <option key={tier} value={tier}>{translate(`sponsors.tiers.${tier}`)}</option>)}
-        </select>
-      </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600 md:col-span-2">
-        <span>{translate('sponsors.logoUrl')}</span>
-        <div className="flex gap-2">
-          <input value={draft.logoUrl} onChange={(event) => onChange({ logoUrl: event.target.value })} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" placeholder="https://..." />
-          <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">
-            {uploadingId === target ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            <span>{translate('sponsors.uploadLogo')}</span>
-            <input type="file" accept="image/*" className="hidden" onChange={(event) => { void uploadLogo(target, event.target.files?.[0]); event.currentTarget.value = ''; }} />
+  const renderEditor = (
+    draft: SponsorDraft,
+    onChange: (patch: Partial<SponsorDraft>) => void,
+    target: 'new' | string
+  ) => {
+    const isUploading = uploadingId === target;
+
+    return (
+      <div className="space-y-4">
+        {/* Upload Logo area */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold text-slate-700">
+            {translate('sponsors.logoUrl')} <span className="text-rose-500">*</span>
+          </label>
+          <div className="flex items-center gap-4">
+            <label className="group relative flex h-20 w-28 shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-amber-400 hover:bg-amber-50/40">
+              {draft.logoUrl ? (
+                <>
+                  <img
+                    src={draft.logoUrl}
+                    alt="Logo"
+                    className="h-full w-full object-contain p-1.5 rounded-lg"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition group-hover:opacity-100">
+                    <Upload className="h-5 w-5 text-white" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-slate-400 group-hover:text-amber-600">
+                  {isUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+                  ) : (
+                    <>
+                      <ImageIcon className="h-6 w-6" />
+                      <span className="text-[10px] font-bold">{translate('sponsors.uploadLogo')}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={isUploading}
+                className="hidden"
+                onChange={(event) => {
+                  void uploadLogo(target, event.target.files?.[0]);
+                  event.currentTarget.value = '';
+                }}
+              />
+            </label>
+
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-slate-600">
+                {draft.logoUrl ? 'Bấm vào ảnh để thay đổi logo mới' : 'Tải lên logo nhà tài trợ (PNG, JPG, SVG)'}
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                Kích thước khuyến nghị: tỷ lệ 16:9 hoặc hình vuông, nền trong suốt.
+              </p>
+              {draft.logoUrl && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ logoUrl: '' })}
+                  className="mt-1 text-[11px] font-semibold text-rose-500 hover:text-rose-600"
+                >
+                  Xóa ảnh
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Col: Name & Tier */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-xs font-bold text-slate-700">
+            <span>{translate('sponsors.name')} <span className="text-rose-500">*</span></span>
+            <input
+              type="text"
+              value={draft.displayName}
+              onChange={(event) => onChange({ displayName: event.target.value })}
+              placeholder="VD: Yonex, Victor, Red Bull..."
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              maxLength={160}
+            />
+          </label>
+
+          <label className="space-y-1 text-xs font-bold text-slate-700">
+            <span>{translate('sponsors.tier')}</span>
+            <select
+              value={draft.tier}
+              onChange={(event) => onChange({ tier: event.target.value as SponsorTier })}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            >
+              {SPONSOR_TIERS.map((tier) => (
+                <option key={tier} value={tier}>
+                  {translate(`sponsors.tiers.${tier}`)}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
-      </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.websiteUrl')}</span>
-        <input value={draft.websiteUrl} onChange={(event) => onChange({ websiteUrl: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" placeholder="https://..." />
-      </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.displayOrder')}</span>
-        <input type="number" min={0} value={draft.displayOrder} onChange={(event) => onChange({ displayOrder: Number(event.target.value) })} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
-      </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600 md:col-span-2">
-        <span>{translate('sponsors.descriptionLabel')}</span>
-        <textarea value={draft.shortDescription} onChange={(event) => onChange({ shortDescription: event.target.value })} className="min-h-20 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" maxLength={500} />
-      </label>
-      <label className="space-y-1 text-xs font-bold text-slate-600">
-        <span>{translate('sponsors.status')}</span>
-        <select value={draft.status} onChange={(event) => onChange({ status: event.target.value as SponsorDraft['status'] })} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium">
-          <option value="DRAFT">{translate('sponsors.statuses.DRAFT')}</option>
-          <option value="PUBLISHED">{translate('sponsors.statuses.PUBLISHED')}</option>
-          <option value="HIDDEN">{translate('sponsors.statuses.HIDDEN')}</option>
-        </select>
-      </label>
-      <label className="flex items-center gap-2 self-end pb-2 text-xs font-bold text-slate-600">
-        <input type="checkbox" checked={draft.isPublic} onChange={(event) => onChange({ isPublic: event.target.checked })} />
-        {translate('sponsors.publicToggle')}
-      </label>
-      <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 md:col-span-2">
-        <input
-          type="checkbox"
-          checked={draft.advancedScheduling}
-          onChange={(event) => onChange({ advancedScheduling: event.target.checked, ...(event.target.checked ? {} : { startAt: '', endAt: '' }) })}
-          className="mt-0.5"
-        />
-        <span>
-          <span className="block">{translate('sponsors.advancedScheduling')}</span>
-          <span className="mt-0.5 block text-[11px] font-medium text-slate-500">{translate('sponsors.advancedSchedulingDescription')}</span>
-        </span>
-      </label>
-      {draft.advancedScheduling && (
-        <>
-          <label className="space-y-1 text-xs font-bold text-slate-600">
-            <span>{translate('sponsors.startAt')}</span>
-            <input type="text" inputMode="numeric" value={draft.startAt} onChange={(event) => onChange({ startAt: event.target.value })} placeholder={translate('sponsors.dateTimePlaceholder')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
-          </label>
-          <label className="space-y-1 text-xs font-bold text-slate-600">
-            <span>{translate('sponsors.endAt')}</span>
-            <input type="text" inputMode="numeric" value={draft.endAt} onChange={(event) => onChange({ endAt: event.target.value })} placeholder={translate('sponsors.dateTimePlaceholder')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium" />
-          </label>
-        </>
-      )}
-    </div>
-  );
+
+        {/* Website link */}
+        <label className="block space-y-1 text-xs font-bold text-slate-700">
+          <span className="flex items-center gap-1.5">
+            <Globe className="h-3.5 w-3.5 text-slate-400" />
+            <span>{translate('sponsors.websiteUrl')}</span>
+            <span className="text-[10px] font-normal text-slate-400">(không bắt buộc)</span>
+          </span>
+          <input
+            type="text"
+            value={draft.websiteUrl}
+            onChange={(event) => onChange({ websiteUrl: event.target.value })}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            placeholder="https://yonex.com hoặc link Facebook"
+          />
+        </label>
+
+        {/* Single Visibility Switch */}
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+          <div>
+            <span className="block text-xs font-bold text-slate-800">Hiển thị công khai</span>
+            <span className="block text-[11px] font-normal text-slate-500">
+              Cho phép hiển thị logo nhà tài trợ này trên trang giải đấu cho mọi người thấy.
+            </span>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={draft.isPublic}
+            onClick={() => onChange({ isPublic: !draft.isPublic })}
+            className={cn(
+              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
+              draft.isPublic ? 'bg-amber-600' : 'bg-slate-200'
+            )}
+          >
+            <span
+              className={cn(
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out',
+                draft.isPublic ? 'translate-x-5' : 'translate-x-0'
+              )}
+            />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section className="space-y-5 border-t border-slate-200 pt-6" aria-labelledby="sponsor-settings-heading">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h4 id="sponsor-settings-heading" className="flex items-center gap-2 text-sm font-black text-slate-800"><Handshake className="h-4 w-4 text-amber-500" />{translate('sponsors.title')}</h4>
-          <p className="mt-1 text-xs font-medium text-slate-500">{translate('sponsors.description')}</p>
+          <h4 id="sponsor-settings-heading" className="flex items-center gap-2 text-sm font-black text-slate-800">
+            <Handshake className="h-4 w-4 text-amber-500" />
+            {translate('sponsors.title')}
+          </h4>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            {translate('sponsors.description')}
+          </p>
         </div>
-        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700">{translate('sponsors.mvpBadge')}</span>
+        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700">
+          {translate('sponsors.mvpBadge')}
+        </span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -367,22 +400,33 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
           const draft = drafts[sponsor.id] || toDraft(sponsor);
           const tierStyle = getSponsorTierStyle(sponsor.tier);
           const sponsorInitials = getInitials(sponsor.displayName);
+
           if (sponsor.status === 'ARCHIVED') {
             return (
-              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-100 p-3 opacity-75 sm:col-span-2 xl:col-span-3" aria-label={translate('sponsors.archived')}>
+              <div
+                key={sponsor.id}
+                className="rounded-xl border border-slate-200 bg-slate-100 p-3 opacity-75 sm:col-span-2 xl:col-span-3"
+                aria-label={translate('sponsors.archived')}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-black text-slate-700">{sponsor.displayName}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">{translate(`sponsors.tiers.${sponsor.tier}`)}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      {translate(`sponsors.tiers.${sponsor.tier}`)}
+                    </p>
                   </div>
-                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-600">{translate('sponsors.archived')}</span>
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-600">
+                    {translate('sponsors.archived')}
+                  </span>
                 </div>
               </div>
             );
           }
+
           if (expandedId !== sponsor.id) {
+            const isPublic = sponsor.status === 'PUBLISHED' && (sponsor.isPublic ?? true);
             return (
-              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs hover:border-slate-300 transition flex flex-col justify-between">
                 <div className="flex flex-col items-center text-center">
                   <SponsorLogo
                     logoUrl={sponsor.logoUrl}
@@ -391,51 +435,150 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
                     className={cn('h-20 w-full max-w-[170px] rounded-lg border p-2', tierStyle.logoFrameClassName)}
                     imageClassName="h-full w-full"
                   />
-                  <p className="mt-2 w-full truncate text-sm font-black text-slate-800" title={sponsor.displayName}>{sponsor.displayName}</p>
-                  <span className={cn('mt-1 max-w-full truncate rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>{translate(`sponsors.tiers.${sponsor.tier}`)}</span>
-                  <span className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">{translate(`sponsors.statuses.${sponsor.status}`)}</span>
-                  <Button type="button" variant="outline" onClick={() => setExpandedId(sponsor.id)} className="mt-2 w-full text-[11px] font-bold">{translate('sponsors.edit')}</Button>
+                  <p className="mt-2.5 w-full truncate text-sm font-black text-slate-800" title={sponsor.displayName}>
+                    {sponsor.displayName}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1.5 flex-wrap justify-center">
+                    <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
+                      {translate(`sponsors.tiers.${sponsor.tier}`)}
+                    </span>
+                    <span className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border',
+                      isPublic ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-500'
+                    )}>
+                      <span className={cn('h-1.5 w-1.5 rounded-full', isPublic ? 'bg-emerald-500' : 'bg-slate-400')} />
+                      {isPublic ? 'Công khai' : 'Bản nháp'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-3 border-t border-slate-100 pt-2.5 flex items-center gap-2">
+                  {sponsor.websiteUrl && (
+                    <a
+                      href={sponsor.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                      title={sponsor.websiteUrl}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setExpandedId(sponsor.id)}
+                    className="h-8 flex-1 text-xs font-bold"
+                  >
+                    {translate('sponsors.edit')}
+                  </Button>
                 </div>
               </div>
             );
           }
+
           return (
-              <div key={sponsor.id} className="rounded-xl border border-blue-200 bg-blue-50/30 p-4 sm:col-span-2 xl:col-span-3">
-              <div className="mb-3 flex justify-end">
-                <button type="button" onClick={() => setExpandedId(null)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.closeEditor')}</button>
+            <div
+              key={sponsor.id}
+              className="rounded-2xl border border-blue-200 bg-blue-50/20 p-4 sm:col-span-2 xl:col-span-3 shadow-xs"
+            >
+              <div className="mb-4 flex items-center justify-between border-b border-blue-100 pb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-blue-700">
+                  {translate('sponsors.edit')}: {sponsor.displayName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(null)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                >
+                  {translate('sponsors.closeEditor')}
+                </button>
               </div>
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
                 <div>{renderEditor(draft, (patch) => updateDraft(sponsor.id, patch), sponsor.id)}</div>
                 {renderPreview(draft)}
               </div>
-              <div className="mt-4 flex flex-wrap justify-end gap-2">
-                {sponsor.websiteUrl && <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-500"><ExternalLink className="h-3.5 w-3.5" />{translate('sponsors.preview')}</a>}
-                <Button type="button" variant="outline" onClick={() => void archiveSponsor(sponsor.id)} disabled={savingId === sponsor.id} className="border-rose-200 text-rose-600"><Trash2 className="mr-1.5 h-4 w-4" />{translate('sponsors.archive')}</Button>
-                <Button type="button" onClick={() => void saveSponsor(sponsor.id)} disabled={savingId === sponsor.id} className="bg-blue-600 text-white"><Save className="mr-1.5 h-4 w-4" />{savingId === sponsor.id ? translate('sponsors.saving') : translate('sponsors.save')}</Button>
+
+              <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-blue-100 pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void archiveSponsor(sponsor.id)}
+                  disabled={savingId === sponsor.id}
+                  className="border-rose-200 text-rose-600 hover:bg-rose-50"
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  {translate('sponsors.archive')}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => void saveSponsor(sponsor.id)}
+                  disabled={savingId === sponsor.id}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <Save className="mr-1.5 h-4 w-4" />
+                  {savingId === sponsor.id ? translate('sponsors.saving') : translate('sponsors.save')}
+                </Button>
               </div>
             </div>
           );
         })}
-        {sponsors.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-xs font-medium text-slate-500 sm:col-span-2 xl:col-span-3">{translate('sponsors.empty')}</p>}
+
+        {sponsors.length === 0 && (
+          <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs font-medium text-slate-500 sm:col-span-2 xl:col-span-3">
+            {translate('sponsors.empty')}
+          </p>
+        )}
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/30 p-4">
         {!isAddFormOpen ? (
-          <Button type="button" onClick={() => setIsAddFormOpen(true)} className="w-full bg-amber-600 text-white hover:bg-amber-700 sm:w-auto">
-            <Plus className="mr-1.5 h-4 w-4" />{translate('sponsors.addTitle')}
+          <Button
+            type="button"
+            onClick={() => setIsAddFormOpen(true)}
+            className="w-full bg-amber-600 text-white hover:bg-amber-700 sm:w-auto"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            {translate('sponsors.addTitle')}
           </Button>
         ) : (
           <>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h5 className="flex items-center gap-2 text-sm font-black text-slate-800"><Plus className="h-4 w-4 text-amber-600" />{translate('sponsors.addTitle')}</h5>
-              <button type="button" onClick={() => setIsAddFormOpen(false)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.cancel')}</button>
+            <div className="mb-4 flex items-center justify-between border-b border-amber-200/60 pb-3">
+              <h5 className="flex items-center gap-2 text-sm font-black text-slate-800">
+                <Plus className="h-4 w-4 text-amber-600" />
+                {translate('sponsors.addTitle')}
+              </h5>
+              <button
+                type="button"
+                onClick={() => setIsAddFormOpen(false)}
+                className="text-xs font-bold text-slate-500 hover:text-slate-800"
+              >
+                {translate('sponsors.cancel')}
+              </button>
             </div>
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div>{renderEditor(newDraft, (patch) => setNewDraft((current) => ({ ...current, ...patch })), 'new')}</div>
+
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div>
+                {renderEditor(
+                  newDraft,
+                  (patch) => setNewDraft((current) => ({ ...current, ...patch })),
+                  'new'
+                )}
+              </div>
               {renderPreview(newDraft)}
             </div>
-            <div className="mt-4 flex justify-end">
-              <Button type="button" onClick={() => void addSponsor()} disabled={isAdding} className="bg-amber-600 text-white hover:bg-amber-700"><Plus className="mr-1.5 h-4 w-4" />{isAdding ? translate('sponsors.adding') : translate('sponsors.add')}</Button>
+
+            <div className="mt-5 flex justify-end border-t border-amber-200/60 pt-3">
+              <Button
+                type="button"
+                onClick={() => void addSponsor()}
+                disabled={isAdding}
+                className="bg-amber-600 text-white hover:bg-amber-700"
+              >
+                <Plus className="mr-1.5 h-4 w-4" />
+                {isAdding ? translate('sponsors.adding') : translate('sponsors.add')}
+              </Button>
             </div>
           </>
         )}

@@ -10,6 +10,8 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
+import { RankAvatar } from '@/components/ui/RankAvatar';
+import { EloTierBadge } from '@/components/ui/EloTierBadge';
 
 interface Props {
   tournament: Tournament;
@@ -335,30 +337,45 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
 
                                   const CardContent = (
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm shrink-0 ${
-                                        avatarSrc 
-                                          ? 'bg-slate-100' 
-                                          : member.role === 'CAPTAIN'
-                                            ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
-                                            : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
-                                      }`}>
-                                        {avatarSrc ? (
-                                          <img src={avatarSrc} alt={member.fullName || ''} className="w-full h-full object-cover" />
-                                        ) : (
-                                          initial
-                                        )}
-                                      </div>
+                                      {member.elo ? (
+                                        <RankAvatar
+                                          src={avatarSrc}
+                                          name={member.fullName || ''}
+                                          elo={member.elo.eloPoints}
+                                          tierName={member.elo.tierName}
+                                          categoryName={tournament.category?.name}
+                                          size="sm"
+                                          className="h-10 w-10 shrink-0"
+                                        />
+                                      ) : (
+                                        <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm shrink-0 ${
+                                          avatarSrc 
+                                            ? 'bg-slate-100' 
+                                            : member.role === 'CAPTAIN'
+                                              ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+                                              : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
+                                        }`}>
+                                          {avatarSrc ? (
+                                            <img src={avatarSrc} alt={member.fullName || ''} className="w-full h-full object-cover" />
+                                          ) : (
+                                            initial
+                                          )}
+                                        </div>
+                                      )}
                                       <div className="min-w-0 flex-1">
                                         <p className="font-bold text-slate-900 text-sm truncate">{member.fullName || translate('teamMember')}</p>
                                         {member.isMock ? (
                                           <p className="text-xs text-slate-400 font-medium mt-0.5">{translate("virtualAthlete")}</p>
                                         ) : member.elo ? (
-                                          <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                            <Award className="w-3.5 h-3.5 text-blue-500" />
-                                            <span>
-                                              {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? translate("eloDoublesLabel") : 'ELO'}
-                                            </span>
-                                          </p>
+                                          <div className="mt-1 flex items-center gap-1.5">
+                                            <EloTierBadge
+                                              elo={member.elo.eloPoints}
+                                              tierName={member.elo.tierName}
+                                              categoryName={tournament.category?.name}
+                                              size="sm"
+                                              showFullName
+                                            />
+                                          </div>
                                         ) : (
                                           <p className="text-[11px] text-slate-400 font-medium mt-0.5">{translate("officialAthlete")}</p>
                                         )}

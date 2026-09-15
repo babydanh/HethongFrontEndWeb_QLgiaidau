@@ -585,25 +585,23 @@ export function BracketTab({
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-2">
-            {!hasBracket && (
-              <Button
-                type="button"
-                onClick={() => setIsPoolArrangementModalOpen(true)}
-                disabled={participants.length < 2 || isGeneratingBracket}
-                title={participants.length < 2 ? translate('minimumParticipants', { count: 2 }) : undefined}
-                className="bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-blue-700 disabled:cursor-not-allowed"
-              >
-                <Settings className="mr-1.5 h-3.5 w-3.5" />
-                {translate('createBracketAction')}
-              </Button>
-            )}
+            <Button
+              type="button"
+              onClick={() => setIsPoolArrangementModalOpen(true)}
+              disabled={participants.length < 2 || isGeneratingBracket}
+              title={participants.length < 2 ? translate('minimumParticipants', { count: 2 }) : undefined}
+              className="bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-blue-700 disabled:cursor-not-allowed"
+            >
+              <Settings className="mr-1.5 h-3.5 w-3.5" />
+              {hasBracket ? (translate('editBracketSetup') || 'Cài đặt sơ đồ') : translate('createBracketAction')}
+            </Button>
           </div>
         </div>
       )}
       
       {/* Visual bracket tree */}
       {bracket && bracket.stages && bracket.stages.length > 0 && (
-        <div id="manage-bracket-tree-section" className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs">
+        <div id="manage-bracket-tree-section" className="space-y-4">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-base">{translate('bracketTitle')}</h3>

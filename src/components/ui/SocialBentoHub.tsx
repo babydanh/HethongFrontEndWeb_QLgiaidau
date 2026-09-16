@@ -124,12 +124,6 @@ export function AthleteProfileCard({
               </div>
             )}
           </div>
-          <span
-            className="absolute -bottom-0.5 right-0 w-4.5 h-4.5 rounded-full text-white font-bold text-[9px] flex items-center justify-center border-2 border-white shadow-2xs"
-            style={{ backgroundColor: rankColor }}
-          >
-            {displayTier.charAt(0).toUpperCase()}
-          </span>
         </div>
 
         <h3 className="text-slate-900 font-bold text-sm tracking-tight truncate max-w-full group-hover:text-blue-600 transition-colors">
@@ -375,7 +369,7 @@ export function SocialMyClubsCard({
                 href={club.id ? `/communities/${club.id}` : '/communities'}
                 className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group"
               >
-                <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-200/80">
+                <div className="w-9 h-9 rounded-full bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-200/80 p-0.5">
                   {hasCustomLogo ? (
                     <img
                       src={club.logoUrl!}
@@ -383,7 +377,11 @@ export function SocialMyClubsCard({
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
-                    <span className="text-slate-700 font-bold text-xs">{initials}</span>
+                    <img
+                      src="/sporto_v1.svg"
+                      alt={club.name || 'SportO'}
+                      className="w-full h-full object-contain p-1"
+                    />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

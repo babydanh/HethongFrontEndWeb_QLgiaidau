@@ -37,20 +37,20 @@ export function TournamentTypeChoiceModal({
         </ModalHeader>
 
         <div className="p-5 pt-3 space-y-2.5">
-          {/* Quick option */}
+          {/* Unified club session: free play or bracket */}
           <button
             onClick={() => {
-              router.push(`/communities/${communityId}/create-lite`);
+              router.push(`/communities/${communityId}/match-sessions/create`);
               onClose();
             }}
-            className="w-full rounded-lg border border-slate-200 p-3 text-left hover:border-emerald-400 hover:shadow-sm transition-all group bg-white"
+            className="w-full rounded-lg border border-slate-200 p-3 text-left hover:border-teal-400 hover:shadow-sm transition-all group bg-white"
           >
             <div>
-              <h3 className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                {translate('communityTournamentLiteLabel')}
+              <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
+                {translate('communitySocialMatchButton')}
               </h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                {translate('communityTournamentLiteDescription')}
+                {translate('communitySocialMatchDescription')}
               </p>
             </div>
           </button>
@@ -73,23 +73,6 @@ export function TournamentTypeChoiceModal({
             </div>
           </button>
 
-          {/* Social match session option */}
-          <button
-            onClick={() => {
-              router.push(`/communities/${communityId}/match-sessions/create`);
-              onClose();
-            }}
-            className="w-full rounded-lg border border-slate-200 p-3 text-left hover:border-teal-400 hover:shadow-sm transition-all group bg-white"
-          >
-            <div>
-              <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
-                {translate('communitySocialMatchButton')}
-              </h3>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {translate('communitySocialMatchDescription')}
-              </p>
-            </div>
-          </button>
         </div>
 
         <div className="px-5 pb-5">

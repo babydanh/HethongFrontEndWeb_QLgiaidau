@@ -41,6 +41,9 @@ export const clubMatchSessionsApi = {
     name?: string;
     description?: string;
     registrationMode: 'SELF' | 'MANAGER_ASSIGN' | 'MIXED';
+    pairingMode?: 'FREE' | 'BRACKET';
+    format?: 'singles' | 'doubles' | 'mixed_doubles';
+    bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     isRanked: boolean;
     maxParticipants?: number;
     startAt?: string;

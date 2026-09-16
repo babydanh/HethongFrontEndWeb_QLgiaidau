@@ -10,7 +10,8 @@ export interface ClubMatchSession {
   description: string | null;
   status: ClubMatchSessionStatus;
   registrationMode: ClubMatchRegistrationMode;
-  pairingMode: 'FREE';
+  pairingMode: 'FREE' | 'BRACKET';
+  bracketTournamentId?: string | null;
   isRanked: boolean;
   maxParticipants: number;
   startAt: string | null;
@@ -29,6 +30,9 @@ export interface ClubMatchSession {
     canJoin?: boolean;
     canWithdraw?: boolean;
     canCreateMatch?: boolean;
+    pairingMode?: 'FREE' | 'BRACKET';
+    bracket?: boolean;
+    bracketTournamentId?: string | null;
   };
   viewerParticipant?: ClubMatchParticipant['participant'] | null;
   viewerPreferences?: {

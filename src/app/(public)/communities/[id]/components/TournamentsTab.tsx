@@ -6,11 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   Trophy,
   Calendar,
-  Loader2,
   Trash2,
   MapPin,
   Users,
-  Swords,
   Plus,
 } from "lucide-react";
 import { ClubTournamentsSkeleton } from "@/components/skeletons/ClubTabSkeletons";
@@ -23,7 +21,6 @@ import { clubMatchSessionsApi } from "@/features/club-match-sessions/api";
 import { categoriesApi, Category } from "@/features/categories/api";
 import { isLiteTournament } from "@/features/tournaments/lite-qr";
 import { getSportLogo } from "@/constants/sports";
-import BRAND from "@/constants/brand";
 import TournamentBannerCover from "@/components/ui/TournamentBannerCover";
 
 import { formatDate, formatDateTime } from "@/utils/format";
@@ -206,6 +203,10 @@ export default function TournamentsTab({
   };
 
   const filteredTournaments = tournaments.filter((t) => {
+    // A unified Buổi giao lưu owns its Lite tournament internally; show it once.
+    if (sessions.some((session) => session.bracketTournamentId === t.id)) {
+      return false;
+    }
     // Hide DRAFT tournaments from non-owners/non-moderators
     if (!isOwnerOrMod && t.status === "DRAFT") {
       return false;
@@ -384,7 +385,11 @@ export default function TournamentsTab({
                     <div
                       key={s.id}
                       onClick={() =>
-                        router.push(`/communities/${communityId}/match-sessions/${s.id}`)
+                        router.push(s.bracketTournamentId
+                          ? (isOwnerOrMod
+                            ? `/lite/tournaments/${s.bracketTournamentId}/manage`
+                            : `/tournaments/${s.bracketTournamentId}`)
+                          : `/communities/${communityId}/match-sessions/${s.id}`)
                       }
                       className="group cursor-pointer bg-white border border-slate-200/90 hover:border-teal-500/80 rounded-lg shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
                     >
@@ -400,7 +405,7 @@ export default function TournamentsTab({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {getSessionStatusBadge(s.status)}
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-600 text-white shadow-2xs">
-                                GIAO LƯU CLB
+                                GIAO LƯU
                               </span>
                             </div>
                           </div>
@@ -443,7 +448,9 @@ export default function TournamentsTab({
                             )}
 
                             <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-semibold border border-slate-200">
-                              Ghép tự do
+                              {s.pairingMode === "BRACKET"
+                                ? sessionTranslate("bracketMode")
+                                : sessionTranslate("freeMode")}
                             </span>
 
                             {s.isRecurring && (

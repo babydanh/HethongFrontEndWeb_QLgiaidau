@@ -406,6 +406,33 @@ export function ClubMatchSessionDetailView({
     { id: 'statistics', label: t('statisticsTab'), icon: <BarChart3 className="h-4 w-4" /> },
   ];
 
+  if (session.pairingMode === 'BRACKET' && session.bracketTournamentId) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-blue-100 bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+              <Trophy className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">{t('bracketMode')}</p>
+              <h1 className="mt-1 text-2xl font-bold text-slate-900">{session.resolvedName}</h1>
+              <p className="mt-2 text-sm text-slate-600">{t('bracketManagedHint')}</p>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href={`/lite/tournaments/${session.bracketTournamentId}/manage`} className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
+              {t('openBracket')}
+            </Link>
+            <Link href={`/communities/${communityId}`} className="inline-flex items-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              {t('backToClub')}
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1280px] space-y-5">

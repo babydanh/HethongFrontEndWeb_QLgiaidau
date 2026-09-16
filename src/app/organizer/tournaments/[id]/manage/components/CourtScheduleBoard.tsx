@@ -4201,19 +4201,6 @@ export function CourtScheduleBoard({
             </div>
           )}
 
-          {/* Fullscreen Toggle */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleToggleFullscreen}
-            className={`h-7 px-2 text-xs font-semibold border-slate-200 rounded-lg flex items-center gap-1 cursor-pointer ${
-              isLocalFullscreen ? 'bg-blue-50 text-blue-700 border-blue-300' : 'hover:bg-slate-50 text-slate-700'
-            }`}
-            title={isLocalFullscreen ? 'Thoát toàn màn hình (Esc)' : 'Mở toàn màn hình để dễ xếp lịch'}
-          >
-            {isLocalFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-blue-600" /> : <Maximize2 className="h-3.5 w-3.5 text-slate-600" />}
-            <span className="hidden text-[11px] xl:inline">{isLocalFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
-          </Button>
 
           <details className="relative">
             <summary className="flex h-7 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 [&::-webkit-details-marker]:hidden" aria-label="Mở thêm công cụ lịch">
@@ -4273,17 +4260,18 @@ export function CourtScheduleBoard({
       ) : (
         <div className="relative flex flex-col flex-1 min-h-0">
           {/* Top Horizontal Scrollbar (luôn cố định ở đầu bảng để cuộn nhanh các sân mà không cần kéo chuột xuống đáy) */}
-          {courts.length > 2 && (
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/90 border border-slate-200 rounded-t-xl border-b-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0 select-none">
-                Thanh cuộn sân:
+          {courts.length >= 2 && (
+            <div className="sticky top-0 z-40 flex items-center gap-2 px-3 py-1.5 bg-slate-100/95 backdrop-blur-xs border border-slate-200 rounded-t-xl border-b-0 shadow-2xs">
+              <span className="text-[11px] font-bold text-slate-600 shrink-0 select-none flex items-center gap-1">
+                <ChevronLeft className="h-3.5 w-3.5 text-slate-400" />
+                <span>Cuộn sân ngang:</span>
               </span>
               <div
                 ref={topScrollContainerRef}
                 onScroll={handleTopScroll}
                 className="flex-1 overflow-x-auto overflow-y-hidden py-1"
                 style={{
-                  scrollbarWidth: 'thin',
+                  scrollbarWidth: 'auto',
                   scrollbarColor: '#94a3b8 #e2e8f0',
                 }}
                 title="Kéo thanh này để cuộn nhanh qua lại giữa các sân thi đấu"
@@ -4296,6 +4284,9 @@ export function CourtScheduleBoard({
                   }}
                 />
               </div>
+              <span className="text-slate-400 shrink-0 select-none">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </span>
             </div>
           )}
 
@@ -4310,9 +4301,9 @@ export function CourtScheduleBoard({
             className={`relative z-10 ${
               isFullscreen || isLocalFullscreen
                 ? 'flex-1 min-h-0'
-                : 'h-[calc(100vh-210px)] min-h-[500px]'
+                : 'h-[calc(100vh-230px)] min-h-[420px]'
             } overflow-x-auto overflow-y-auto ${
-              courts.length > 2 ? 'rounded-b-xl' : 'rounded-xl'
+              courts.length >= 2 ? 'rounded-b-xl' : 'rounded-xl'
             } border border-slate-200 bg-white shadow-xs select-none flex-1`}
             data-schedule-selection-surface="true"
             style={{

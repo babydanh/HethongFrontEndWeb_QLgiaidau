@@ -394,14 +394,6 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 <Plus className="w-4 h-4" /> {translate('communitySocialMatchCreateButton')}
               </Button>
             )}
-            {canCreateClubLite && (
-              <Button
-                onClick={() => router.push(`/communities/${community.id}/create-lite`)}
-                className="font-bold flex items-center gap-2 shadow-sm"
-              >
-                <Plus className="w-4 h-4" /> {translate('communityTournamentQuickButton')}
-              </Button>
-            )}
             {canCreateClubAdvanced && (
               <Button
                 onClick={handleOpenAdvancedTournamentCreate}
@@ -457,11 +449,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => router.push(`/communities/${community.id}/create-lite`)}
+                    onClick={() => router.push(`/communities/${community.id}/match-sessions/create`)}
                     className="text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50 self-start sm:self-auto"
                   >
                     <Plus className="w-3.5 h-3.5 mr-1" />
-                    {translate('communityTournamentQuickButton')}
+                    {translate('communitySocialMatchCreateButton')}
                   </Button>
                 )}
               </div>
@@ -638,10 +630,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             </p>
             {canCreateClubLite && (
               <Button
-                onClick={() => router.push(`/communities/${community.id}/create-lite`)}
+                onClick={() => router.push(`/communities/${community.id}/match-sessions/create`)}
                 className="mt-6"
               >
-                {translate('communityTournamentQuickButton')}
+                {translate('communitySocialMatchCreateButton')}
               </Button>
             )}
           </div>

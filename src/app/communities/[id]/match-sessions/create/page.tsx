@@ -4,13 +4,11 @@ import { FormEvent, use, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
-  Calendar,
   Check,
   ChevronLeft,
   Clock,
   RotateCw,
   Trophy,
-  Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +18,7 @@ import { getErrorMessage } from '@/utils/error';
 
 type DurationOption = 60 | 90 | 120 | 180 | 'custom';
 type CapacityOption = 8 | 16 | 32 | 64 | 'custom';
+type PairingMode = 'FREE' | 'BRACKET';
 
 export default function CreateClubMatchSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -28,6 +27,9 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [pairingMode, setPairingMode] = useState<PairingMode>('FREE');
+  const [format, setFormat] = useState<'singles' | 'doubles' | 'mixed_doubles'>('doubles');
+  const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('group_stage_knockout');
   const [isRanked, setIsRanked] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('18:00');
@@ -63,6 +65,10 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
         endIso = new Date(combined.getTime() + duration * 60_000).toISOString();
       }
     }
+    if (pairingMode === 'BRACKET' && !startIso) {
+      toast.error(t('bracketStartRequired'));
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -71,6 +77,8 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
         name: name.trim() || undefined,
         description: description.trim() || undefined,
         registrationMode: 'MIXED',
+        pairingMode,
+        ...(pairingMode === 'BRACKET' ? { format, bracketType } : {}),
         isRanked,
         maxParticipants,
         startAt: startIso,
@@ -87,7 +95,9 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
           : {}),
       });
       toast.success(t('created'));
-      router.replace(`/communities/${id}/match-sessions/${response.id}`);
+      router.replace(pairingMode === 'BRACKET' && response.bracketTournamentId
+        ? `/lite/tournaments/${response.bracketTournamentId}/manage`
+        : `/communities/${id}/match-sessions/${response.id}`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -114,7 +124,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
               {t('createTitle')}
             </h1>
             <p className="mt-0.5 text-xs text-slate-500">
-              {t('noBracketHint')}
+              {pairingMode === 'BRACKET' ? t('bracketModeHint') : t('freeModeHint')}
             </p>
           </div>
         </div>
@@ -148,6 +158,71 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                 />
               </div>
             </div>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                {t('modeTitle')}
+              </h2>
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">
+                {pairingMode === 'BRACKET' ? t('bracketMode') : t('freeMode')}
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {([
+                { value: 'FREE' as const, title: t('freeMode'), description: t('freeModeDescription') },
+                { value: 'BRACKET' as const, title: t('bracketMode'), description: t('bracketModeDescription') },
+              ]).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setPairingMode(option.value)}
+                  className={`rounded-xl border p-4 text-left transition ${pairingMode === option.value ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 hover:border-blue-300'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-slate-900">{option.title}</span>
+                    {pairingMode === option.value && <Check className="h-4 w-4 text-blue-600" aria-hidden="true" />}
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{option.description}</p>
+                </button>
+              ))}
+            </div>
+
+            {pairingMode === 'BRACKET' && (
+              <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-700">{t('formatTitle')}</label>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {([
+                      ['singles', t('singles')],
+                      ['doubles', t('doubles')],
+                      ['mixed_doubles', t('mixedDoubles')],
+                    ] as const).map(([value, label]) => (
+                      <button key={value} type="button" onClick={() => setFormat(value)} className={`rounded-lg border px-3 py-2 text-xs font-semibold ${format === value ? 'border-blue-500 bg-blue-600 text-white' : 'border-slate-200 text-slate-700 hover:border-blue-300'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-700">{t('bracketTypeTitle')}</label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {([
+                      ['group_stage_knockout', t('groupStageKnockout')],
+                      ['single_elimination', t('singleElimination')],
+                      ['double_elimination', t('doubleElimination')],
+                      ['round_robin', t('roundRobin')],
+                    ] as const).map(([value, label]) => (
+                      <button key={value} type="button" onClick={() => setBracketType(value)} className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold ${bracketType === value ? 'border-blue-500 bg-blue-600 text-white' : 'border-slate-200 text-slate-700 hover:border-blue-300'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">{t('bracketModeHint')}</p>
+              </div>
+            )}
           </section>
 
           {/* Card: Xếp hạng (Bật/Tắt ELO gọn gàng) */}
@@ -325,8 +400,8 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
             </div>
           </section>
 
-          {/* Card: Lặp lại định kỳ (Tùy chọn) */}
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-3">
+          {/* Card: Lặp lại định kỳ (Tùy chọn, chỉ cho ghép tự do) */}
+          {pairingMode === 'FREE' && <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <RotateCw className="h-4 w-4 text-slate-500" />
@@ -410,7 +485,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                 </label>
               </div>
             )}
-          </section>
+          </section>}
 
           {/* Nút hành động */}
           <div className="pt-2 flex items-center justify-end gap-3">

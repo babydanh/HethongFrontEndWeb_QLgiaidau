@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Compass, Newspaper, Check, Trophy } from 'lucide-react';
+import { Compass, Newspaper, Check, Trophy, ChevronRight, ChevronLeft, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSportLogo } from '@/constants/sports';
 import type { Category } from '@/types/category';
@@ -28,6 +28,7 @@ export default function LeftActionDock({
 }: LeftActionDockProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -56,14 +57,71 @@ export default function LeftActionDock({
   return (
     <AnimatePresence>
       {hasMounted && (
-        <motion.aside
-          initial={{ opacity: 0, x: -20, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: -20, scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 350, damping: 26, mass: 0.8 }}
-          aria-label="Thanh điều hướng nhanh"
-          className="fixed left-3.5 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center gap-2 p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg shadow-slate-900/5"
-        >
+        <>
+          {/* =========================================================
+              1. MOBILE TRIGGER TAB (Nút bấm mũi tên sát mép trái trên điện thoại)
+              ========================================================= */}
+          <div className="fixed left-0 top-1/2 -translate-y-1/2 z-40 md:hidden">
+            {!isMobileOpen && (
+              <motion.button
+                type="button"
+                onClick={() => setIsMobileOpen(true)}
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -10, opacity: 0 }}
+                className="flex items-center justify-center w-6 h-12 rounded-r-xl bg-white/95 backdrop-blur-md border-y border-r border-slate-200/90 shadow-md text-slate-600 hover:text-blue-600 cursor-pointer active:scale-95 transition-all"
+                title="Mở menu nhanh"
+                aria-label="Mở menu điều hướng nhanh"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </motion.button>
+            )}
+          </div>
+
+          {/* Backdrop mờ nhẹ trên mobile khi mở dock */}
+          {isMobileOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsMobileOpen(false);
+                setIsHovered(false);
+              }}
+              className="fixed inset-0 bg-slate-900/20 backdrop-blur-2xs z-40 md:hidden"
+            />
+          )}
+
+          {/* =========================================================
+              2. ACTION DOCK CONTAINER (Desktop: cố định; Mobile: trượt ra khi bấm mũi tên)
+              ========================================================= */}
+          <motion.aside
+            initial={{ opacity: 0, x: -20, scale: 0.95 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              scale: 1,
+            }}
+            exit={{ opacity: 0, x: -20, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 26, mass: 0.8 }}
+            aria-label="Thanh điều hướng nhanh"
+            className={`fixed left-3 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2 p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg shadow-slate-900/10 ${
+              isMobileOpen ? 'flex' : 'hidden md:flex'
+            }`}
+          >
+            {/* Nút đóng dock trên Mobile */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileOpen(false);
+                setIsHovered(false);
+              }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center md:hidden text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer mb-1"
+              title="Thu gọn"
+              aria-label="Thu gọn"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
           {/* 1. ICON 1: MÔN THỂ THAO (Chỉ viền mỏng khi active, không tô nền màu bệt) */}
           <div
             className="relative"
@@ -237,6 +295,7 @@ export default function LeftActionDock({
             </span>
           </button>
         </motion.aside>
+        </>
       )}
     </AnimatePresence>
   );

@@ -17,6 +17,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { getRankBorderColor } from '@/components/ui/RankAvatar';
 import { getRankProgressInfo } from '@/utils/rank-style';
+import { getSportLogo } from '@/constants/sports';
 
 export interface SocialPickupItem {
   id: string;
@@ -30,6 +31,11 @@ export interface SocialPickupItem {
   maxSlots: number;
   currentSlots: number;
   urgentText?: string;
+  title?: string;
+  hostName?: string;
+  hostAvatar?: string | null;
+  matchType?: string; // 'Đôi Nam Nữ' | 'Đôi Nam' | 'Đơn'
+  description?: string;
   players: Array<{
     id: string;
     fullName: string;
@@ -543,7 +549,7 @@ export function SocialDaySelectorStrip({
   );
 }
 
-// 6. CENTER COLUMN: Pickup Match Item (Clean White Card, Primary Accent Text Action)
+// 6. CENTER COLUMN: Pickup Match Item (Clean White Card, Rich Social Information)
 export function SocialPickupRow({
   item,
   onJoin,
@@ -554,47 +560,79 @@ export function SocialPickupRow({
   const translate = useTranslations('Home');
   const [joined, setJoined] = useState(false);
   const remaining = Math.max(0, item.maxSlots - (item.currentSlots + (joined ? 1 : 0)));
+  const sportIcon = getSportLogo(item.sport);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 shadow-2xs flex flex-col gap-2.5">
-      {/* Badges & Slots status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
-            {item.sport}
-          </span>
-          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
-            {item.sportTier}
-          </span>
+    <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs hover:border-blue-200/80 hover:shadow-xs transition-all flex flex-col gap-3 group">
+      {/* Top Row: Sport Icon + Badges & Slots Badge */}
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {/* Sport Icon Circle */}
+          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center justify-center shrink-0 shadow-2xs p-1">
+            {sportIcon ? (
+              <img src={sportIcon} alt={item.sport} className="w-5 h-5 object-contain" />
+            ) : (
+              <Trophy className="w-4 h-4 text-blue-600" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+              {item.sport}
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
+              {item.sportTier}
+            </span>
+            {item.matchType && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                {item.matchType}
+              </span>
+            )}
+          </div>
         </div>
-        <span className="text-[11px] font-medium text-amber-700 bg-amber-50/70 border border-amber-200/60 px-2 py-0.5 rounded">
-          {item.urgentText || `Còn ${remaining} slot`}
+
+        {/* Slot status pill */}
+        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 border ${
+          remaining === 0
+            ? 'bg-slate-100 text-slate-500 border-slate-200'
+            : remaining === 1
+            ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
+            : 'bg-amber-50 text-amber-800 border-amber-200'
+        }`}>
+          {item.urgentText || (remaining === 0 ? 'Đã đủ người' : `Còn ${remaining} slot`)}
         </span>
       </div>
 
-      {/* Time & Venue & Price */}
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-slate-800 font-semibold truncate">
-          <span>{item.timeRange}</span>
-          <span className="text-slate-300">•</span>
-          <span className="text-slate-600 truncate font-normal">
-            {item.courtLocation}
-          </span>
+      {/* Main Info: Title / Time & Venue */}
+      <div>
+        {item.title && (
+          <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 mb-1.5">
+            {item.title}
+          </h4>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span>{item.timeRange}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-600 truncate">
+            <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="truncate" title={item.courtLocation}>{item.courtLocation}</span>
+          </div>
         </div>
-        <span className="font-bold text-blue-600 text-sm shrink-0">
-          {item.feePerSlot}
-        </span>
       </div>
 
-      {/* Players avatars & Text-only Vào slot button in primary brand color */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center -space-x-1.5">
+      {/* Bottom Row: Players Joined + Price + Action Button */}
+      <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 gap-3">
+        {/* Players List with Avatars & Slot Indicator */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center -space-x-1.5 shrink-0">
             {item.players.map((p, idx) => (
               <div
                 key={p.id || idx}
-                className="w-6.5 h-6.5 rounded-full border-2 border-white bg-slate-100 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center text-[9px] font-bold text-slate-700"
+                className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center text-[10px] font-bold text-slate-700"
                 style={{ backgroundColor: p.initialsBg || '#e2e8f0' }}
+                title={p.fullName}
               >
                 {p.avatarUrl ? (
                   <img
@@ -608,33 +646,47 @@ export function SocialPickupRow({
               </div>
             ))}
             {remaining > 0 && (
-              <div className="w-6.5 h-6.5 rounded-full border border-dashed border-blue-300 bg-blue-50/50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
+              <div className="w-7 h-7 rounded-full border border-dashed border-blue-400 bg-blue-50/70 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
                 +
               </div>
             )}
           </div>
-          <span className="text-[11px] font-medium text-slate-500 tabular-nums">
-            {item.currentSlots + (joined ? 1 : 0)}/{item.maxSlots}
-          </span>
+          <div className="text-[11px] text-slate-500 min-w-0">
+            <span className="font-semibold text-slate-700">{item.currentSlots + (joined ? 1 : 0)}</span>/{item.maxSlots} người
+            {item.hostName && (
+              <span className="hidden sm:inline text-slate-400 ml-1.5">• Chủ kèo: <strong className="text-slate-600 font-medium">{item.hostName}</strong></span>
+            )}
+          </div>
         </div>
 
-        {joined ? (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
-            <Check className="w-3.5 h-3.5" />
-            <span>{translate('slotJoined')}</span>
-          </span>
-        ) : (
-          <button
-            onClick={() => {
-              setJoined(true);
-              onJoin?.(item);
-            }}
-            type="button"
-            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer py-1 px-1.5"
-          >
-            {translate('joinSlot')}
-          </button>
-        )}
+        {/* Price & Action */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-right">
+            <div className="font-extrabold text-blue-600 text-sm leading-none">
+              {item.feePerSlot}
+            </div>
+            <span className="text-[10px] text-slate-400 font-medium">/ người</span>
+          </div>
+
+          {joined ? (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+              <Check className="w-3.5 h-3.5" />
+              <span>Đã vào kèo</span>
+            </span>
+          ) : (
+            <button
+              onClick={() => {
+                setJoined(true);
+                onJoin?.(item);
+              }}
+              type="button"
+              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs hover:shadow transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>{translate('joinSlot')}</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

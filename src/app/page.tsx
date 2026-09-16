@@ -462,21 +462,25 @@ export default function HomePage() {
   const daysList: DayPill[] = useMemo(() => {
     const today = new Date(now);
     const dayNames = [
-      translate('dayMon'),
-      translate('dayTue'),
-      translate('dayWed'),
-      translate('dayThu'),
-      translate('dayFri'),
-      translate('daySat'),
-      translate('daySun'),
+      'T2',
+      'T3',
+      'T4',
+      'T5',
+      'T6',
+      'T7',
+      'CN',
     ];
     const counts = [14, 9, 16, 8, 12, 11, 7];
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      const dayIndex = (d.getDay() + 6) % 7;
-      const dayLabel = i === 0 ? translate('statusUpcoming') : dayNames[dayIndex];
-      const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
+      // JS getDay(): 0 = Sun, 1 = Mon ... 6 = Sat
+      const dayOfWeekIndex = (d.getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+      const dayPrefix = dayNames[dayOfWeekIndex];
+      const dayNum = String(d.getDate()).padStart(2, '0');
+      const monthNum = String(d.getMonth() + 1).padStart(2, '0');
+      const dayLabel = `${dayPrefix} ${dayNum}/${monthNum}`;
+      const dateStr = `${dayNum}/${monthNum}`;
       return {
         id: `day-${i}`,
         dayLabel,
@@ -485,17 +489,20 @@ export default function HomePage() {
         isToday: i === 0,
       };
     });
-  }, [now, translate]);
+  }, [now]);
 
   const [activeFilterId, setActiveFilterId] = useState<string>('all');
   const pickupMatches: SocialPickupItem[] = useMemo(() => [
     {
       id: 'pickup-1',
+      title: 'Kèo giao lưu buổi tối D-Sport Q7 • Đánh đôi',
       sport: 'PICKLEBALL',
       sportColorBg: 'bg-blue-50',
       sportColorText: 'text-blue-700',
       sportTier: 'Hạng B / B+',
-      courtLocation: 'D-Sport Q7 (Sân 3)',
+      matchType: 'Đôi Nam Nữ',
+      hostName: 'Minh Quân',
+      courtLocation: 'D-Sport Q7 (Sân 3), TP.HCM',
       timeRange: '19:30 - 21:30',
       feePerSlot: '55k',
       maxSlots: 4,
@@ -509,11 +516,14 @@ export default function HomePage() {
     },
     {
       id: 'pickup-2',
+      title: 'Đánh đôi phong trào Kỳ Hòa • Bao cầu xịn',
       sport: 'CẦU LÔNG',
       sportColorBg: 'bg-emerald-50',
       sportColorText: 'text-emerald-700',
       sportTier: 'Hạng C+ / B',
-      courtLocation: 'Sân Kỳ Hòa (Sân 5)',
+      matchType: 'Đôi Nam',
+      hostName: 'Vũ Đức',
+      courtLocation: 'Sân Kỳ Hòa (Sân 5), Q.10',
       timeRange: '20:00 - 22:00',
       feePerSlot: '45k',
       maxSlots: 4,
@@ -522,6 +532,27 @@ export default function HomePage() {
       players: [
         { id: 'u4', fullName: 'Vũ Đức', initialsBg: '#059669' },
         { id: 'u5', fullName: 'Quang Huy', initialsBg: '#0284c7' },
+      ],
+    },
+    {
+      id: 'pickup-3',
+      title: 'Giao lưu cuối tuần NTRP 3.0 - 3.5 • Sân mái che',
+      sport: 'TENNIS',
+      sportColorBg: 'bg-amber-50',
+      sportColorText: 'text-amber-700',
+      sportTier: 'NTRP 3.0 - 3.5',
+      matchType: 'Đôi',
+      hostName: 'Hoàng Bách',
+      courtLocation: 'CLB Quần Vợt Lan Anh, Q.10',
+      timeRange: '18:00 - 20:00',
+      feePerSlot: '80k',
+      maxSlots: 4,
+      currentSlots: 3,
+      urgentText: 'Còn 1 slot',
+      players: [
+        { id: 'u6', fullName: 'Hoàng Bách', initialsBg: '#d97706' },
+        { id: 'u7', fullName: 'Thành Trung', initialsBg: '#7c3aed' },
+        { id: 'u8', fullName: 'Đình Trọng', initialsBg: '#0284c7' },
       ],
     },
   ], []);

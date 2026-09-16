@@ -174,10 +174,10 @@ export function SocialMatchFilters({
               key={f.id}
               onClick={() => onSelectFilter(f.id)}
               type="button"
-              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-none cursor-pointer ${
                 isSelected
                   ? 'bg-blue-50/70 text-blue-700 font-bold'
-                  : 'text-slate-600 hover:text-blue-600 font-medium hover:bg-slate-50/60'
+                  : 'text-slate-600 font-medium'
               }`}
             >
               <div className="flex items-center gap-2">

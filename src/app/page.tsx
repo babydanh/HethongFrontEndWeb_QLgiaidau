@@ -1711,7 +1711,7 @@ export default function HomePage() {
             className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
               selectedCategoryId === ''
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-650 border border-slate-200/70 shadow-2xs hover:border-slate-300 hover:text-slate-900'
+                : 'bg-white text-slate-650 border border-slate-200/70 shadow-2xs'
             }`}
           >
             <Trophy className="w-3.5 h-3.5" />
@@ -1728,7 +1728,7 @@ export default function HomePage() {
                 className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-white text-slate-650 border border-slate-200/70 shadow-2xs hover:border-slate-300 hover:text-slate-900'
+                    : 'bg-white text-slate-650 border border-slate-200/70 shadow-2xs'
                 }`}
               >
                 {logo ? (

@@ -102,16 +102,12 @@ export function AthleteProfileCard({
           </div>
         </div>
         {/* Stats row skeleton */}
-        <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-slate-100 mt-3">
+        <div className="grid grid-cols-2 gap-2 py-2.5 border-t border-slate-100 mt-3">
           <div className="flex flex-col items-center">
             <div className="h-3.5 bg-slate-200 rounded w-8 mb-1" />
             <div className="h-2 bg-slate-200 rounded w-10" />
           </div>
-          <div className="border-x border-slate-100 flex flex-col items-center">
-            <div className="h-3.5 bg-slate-200 rounded w-8 mb-1" />
-            <div className="h-2 bg-slate-200 rounded w-10" />
-          </div>
-          <div className="flex flex-col items-center">
+          <div className="border-l border-slate-100 flex flex-col items-center">
             <div className="h-3.5 bg-slate-200 rounded w-8 mb-1" />
             <div className="h-2 bg-slate-200 rounded w-10" />
           </div>
@@ -201,7 +197,7 @@ export function AthleteProfileCard({
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-slate-100 mt-3">
+      <div className="grid grid-cols-2 gap-2 py-2.5 border-t border-slate-100 mt-3">
         <div>
           <div className="text-sm font-bold text-slate-800 leading-none">
             {matchesPlayed}
@@ -210,15 +206,7 @@ export function AthleteProfileCard({
             {translate('matchLabel')}
           </div>
         </div>
-        <div className="border-x border-slate-100">
-          <div className="text-sm font-bold text-blue-600 leading-none">
-            {winRate}%
-          </div>
-          <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
-            {translate('wins')}
-          </div>
-        </div>
-        <div>
+        <div className="border-l border-slate-100">
           <div className="text-sm font-bold text-emerald-600 leading-none">
             {credibility ?? 100}%
           </div>

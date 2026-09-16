@@ -1744,13 +1744,25 @@ export default function HomePage() {
 
         {/* 2. CENTER COLUMN: Featured Tournaments Banner, Day Selector, Tonight Matches, Upcoming Schedule (flex-1 expansive) */}
         <section className="flex-1 min-w-0 w-full flex flex-col gap-3.5 order-1 lg:order-2">
-          {/* Featured Tournament Hero Banner (Logic cũ: 1 Banner lớn thay thế 4 ảnh card) */}
-          <div className="rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm bg-white">
+          {/* Section: Giải đấu nổi bật */}
+          <section className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                {translate('featuredTournaments')}
+              </h2>
+              <Link
+                href="/tournaments"
+                className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
+              >
+                {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
             <TournamentHeroBanner
               tournaments={activeTournaments.length > 0 ? activeTournaments : tournaments}
-              heightClass="h-[220px] sm:h-[280px] md:h-[340px] lg:h-[400px] xl:h-[460px] 2xl:h-[480px]"
+              heightClass="h-[180px] sm:h-[220px] md:h-[260px] lg:h-[280px]"
             />
-          </div>
+          </section>
 
           {/* Day Selector Pill Strip */}
           <SocialDaySelectorStrip

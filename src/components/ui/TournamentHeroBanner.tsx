@@ -55,7 +55,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
 
   useEffect(() => {
     const handleResize = () => {
-      setSlideWidth(100);
+      setSlideWidth(window.innerWidth >= 768 ? 96.5 : 92);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -239,9 +239,12 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
           return (
             <div
               key={tournament.id}
-              className="flex-shrink-0 w-full"
+              className="flex-shrink-0 px-1 sm:px-1.5"
+              style={{
+                width: `${slideWidth}%`,
+              }}
             >
-              <div className={`w-full ${heightClass} relative overflow-hidden bg-slate-100 dark:bg-slate-900 transition-all duration-500`}>
+              <div className={`w-full ${heightClass} rounded-lg relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md bg-slate-100 dark:bg-slate-900 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
                 {/* Background Image / Gradient */}
                 <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100 group-hover:scale-105 pointer-events-none select-none">
                   <TournamentBannerCover
@@ -251,7 +254,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                     priority={index === 0}
                   />
                   {!hideFeaturedCardText && (
-                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/35 to-transparent pointer-events-none" />
                   )}
                 </div>
 
@@ -264,10 +267,10 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                 />
 
                 {!hideFeaturedCardText && (
-                <div className="absolute bottom-3 sm:bottom-5 left-4 sm:left-6 right-14 sm:right-24 z-20 pointer-events-none max-w-xl flex flex-col gap-1 sm:gap-1.5">
+                <div className="absolute bottom-2.5 sm:bottom-4 left-3 sm:left-5 right-12 sm:right-20 z-20 pointer-events-none max-w-xl flex flex-col gap-1 sm:gap-1.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {tournament.category?.name && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20 shadow-xs">
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded border border-white/20 shadow-xs">
                         {(() => {
                           const logo = getSportLogo(tournament.category?.name);
                           return logo ? (
@@ -280,22 +283,22 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
                     {getStatusBadge(tournament.status)}
                   </div>
 
-                  <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white tracking-tight leading-snug line-clamp-1 drop-shadow-md">
+                  <h2 className="text-sm sm:text-lg md:text-xl font-bold text-white tracking-tight leading-tight line-clamp-1 [text-shadow:_0_1.5px_4px_rgba(0,0,0,0.85)]">
                     {tournament.name}
                   </h2>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-100 font-medium drop-shadow-sm">
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-100 font-medium [text-shadow:_0_1px_3px_rgba(0,0,0,0.85)]">
                     {tournament.startDate && (
-                      <span className="flex items-center gap-1.5 shrink-0">
+                      <span className="flex items-center gap-1 shrink-0">
                         <Calendar className="w-3.5 h-3.5 inline-block drop-shadow" /> {new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                         {tournament.endDate && ` - ${new Date(tournament.endDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`}
                       </span>
                     )}
-                    {tournament.status === 'UPCOMING' && tournament.registrationStartDate && (
+                    {tournament.registrationStartDate && (
                       <CountdownTimer targetDate={tournament.registrationStartDate} daysLabel={(days) => translate('daysRemaining', { days })} />
                     )}
                     {getTournamentShortLocation(tournament) && (
-                      <span className="flex items-center gap-1.5 line-clamp-1">
+                      <span className="flex items-center gap-1 line-clamp-1">
                         <MapPin className="w-3.5 h-3.5 inline-block drop-shadow" /> {getTournamentShortLocation(tournament)}
                       </span>
                     )}

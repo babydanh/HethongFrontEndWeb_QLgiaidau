@@ -1218,24 +1218,24 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-colors duration-150 cursor-pointer ${
+                        className={`group flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-none cursor-pointer ${
                           isSelected
                             ? 'border-blue-600 bg-blue-50/30 ring-1 ring-blue-600/30'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70'
+                            : 'border-slate-200 bg-white'
                         }`}
                       >
                         <div
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150 ${
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-none ${
                             isSelected
                               ? 'border-blue-600 bg-blue-600 text-white'
-                              : 'border-slate-200 bg-slate-50 text-slate-500 group-hover:border-slate-300 group-hover:bg-white group-hover:text-slate-800'
+                              : 'border-slate-200 bg-slate-50 text-slate-500'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className={`block text-xs truncate transition-colors ${
-                            isSelected ? 'font-semibold text-blue-900' : 'font-medium text-slate-700 group-hover:text-slate-900'
+                          <span className={`block text-xs truncate ${
+                            isSelected ? 'font-semibold text-blue-900' : 'font-medium text-slate-700'
                           }`}>
                             {translate(opt.labelKey)}
                           </span>
@@ -1268,10 +1268,10 @@ export default function QuickTournamentCreate() {
                           key={num}
                           type="button"
                           onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
-                          className={`rounded-lg border px-2.5 py-1 text-xs transition-colors duration-150 cursor-pointer ${
+                          className={`rounded-lg border px-2.5 py-1 text-xs transition-none cursor-pointer ${
                             isCurrent
                               ? 'border-blue-600 bg-blue-600 text-white font-semibold shadow-xs'
-                              : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
+                              : 'border-slate-200 bg-white text-slate-700 font-medium'
                           }`}
                         >
                           {num}
@@ -1386,10 +1386,10 @@ export default function QuickTournamentCreate() {
                       return (
                         <div
                           key={formatId}
-                          className={`group flex items-center justify-between rounded-xl border px-3 py-2 transition-colors duration-150 ${
+                          className={`flex items-center justify-between rounded-xl border px-3 py-2 transition-none ${
                             isSelected
                               ? 'border-blue-600 bg-blue-50/30 text-blue-950 ring-1 ring-blue-600/20'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/70'
+                              : 'border-slate-200 bg-white text-slate-700'
                           }`}
                         >
                           <button
@@ -1399,15 +1399,15 @@ export default function QuickTournamentCreate() {
                             className="flex min-w-0 flex-1 items-center gap-2.5 text-left cursor-pointer"
                           >
                             <span
-                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md border text-[10px] font-bold leading-none transition-colors duration-150 ${
-                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white group-hover:border-slate-400'
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md border text-[10px] font-bold leading-none transition-none ${
+                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected ? '✓' : ''}
                             </span>
                             <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                               {/* Tên nội dung thi đấu */}
-                              <span className={`truncate text-xs transition-colors ${isSelected ? 'font-semibold text-slate-900' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
+                              <span className={`truncate text-xs ${isSelected ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
                                 {config.label}
                               </span>
 

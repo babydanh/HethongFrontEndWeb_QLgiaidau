@@ -135,7 +135,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <div className={`w-full ${heightClass} rounded-[20px] bg-[#a9c9fb] flex flex-col justify-center items-center text-center p-8 md:p-14 shadow-lg shadow-blue-500/15 relative overflow-hidden min-h-[185px] md:min-h-[400px]`}>
+      <div className={`w-full ${heightClass} rounded-lg bg-[#a9c9fb] flex flex-col justify-center items-center text-center p-4 sm:p-6 md:p-8 shadow-sm relative overflow-hidden`}>
         {/* Faint racket + shuttlecock background icon watermark */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] md:w-[600px] h-[350px] md:h-[600px] opacity-[0.16] pointer-events-none z-0">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -173,14 +173,14 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[18
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-[520px] flex flex-col items-center">
-          <span className="inline-block text-[12px] font-bold tracking-[0.14em] uppercase text-[#1d5fe0] bg-white/70 border border-[#1d5fe0]/20 px-3.5 py-1.5 rounded-full mb-5 shadow-sm">
+        <div className="relative z-10 max-w-[480px] flex flex-col items-center px-4">
+          <span className="inline-block text-[11px] font-bold tracking-[0.12em] uppercase text-[#1d5fe0] bg-white/70 border border-[#1d5fe0]/20 px-3 py-1 rounded-full mb-2.5 sm:mb-3 shadow-xs">
             {translate('badminton')}
           </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-4 tracking-tight leading-snug">
+          <h1 className="text-lg sm:text-2xl font-extrabold text-[#0f1b33] mb-1.5 sm:mb-2 tracking-tight leading-snug">
             {translate('noUpcomingTournaments')}
           </h1>
-          <p className="text-sm md:text-base leading-relaxed text-[#5b6b85] font-normal">
+          <p className="text-xs sm:text-sm leading-relaxed text-[#5b6b85] font-normal line-clamp-2 sm:line-clamp-none">
             {translate('noUpcomingDescription')}
           </p>
         </div>

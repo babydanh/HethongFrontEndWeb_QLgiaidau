@@ -56,6 +56,7 @@ import {
   SocialScheduleAndCourtsWidgets,
   type SocialPickupItem,
   type DayPill,
+  type MyClubItem,
 } from '@/components/ui/SocialBentoHub';
 
 interface EnrichedTournament {
@@ -432,6 +433,7 @@ export default function HomePage() {
   const [now, setNow] = useState(() => Date.now());
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [myClubs, setMyClubs] = useState<MyClubItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -663,11 +665,16 @@ export default function HomePage() {
           ? rankingsApi.getUserRankings(user.id)
           : Promise.resolve(null);
 
-        const [tRes, cRes, publicMatchesRes, userRankRes] = await Promise.allSettled([
+        const myCommunitiesPromise = isAuthenticated && user?.id
+          ? communitiesApi.getMyCommunities().catch(() => null)
+          : Promise.resolve(null);
+
+        const [tRes, cRes, publicMatchesRes, userRankRes, myCommRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
           publicMatchesPromise,
           userRankingsPromise,
+          myCommunitiesPromise,
         ] as const);
 
         const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
@@ -753,6 +760,39 @@ export default function HomePage() {
           setUserRankings(userRankRes.value);
         } else {
           setUserRankings(null);
+        }
+
+        // ── Process My Communities (Created & Joined) ──
+        if (myCommRes.status === 'fulfilled' && myCommRes.value?.data) {
+          const createdList = (myCommRes.value.data.created || []).map((c) => ({
+            id: c.id,
+            name: c.name,
+            role: 'OWNER' as const,
+            memberCount: c._count?.members,
+            court: c.locationAddress,
+            logoUrl: c.logoUrl,
+          }));
+          const joinedList = (myCommRes.value.data.joined || []).map((c) => ({
+            id: c.id,
+            name: c.name,
+            role: (c.myRole || 'MEMBER') as string,
+            memberCount: c._count?.members,
+            court: c.locationAddress,
+            logoUrl: c.logoUrl,
+          }));
+
+          // Avoid duplicate club entries
+          const seenIds = new Set<string>();
+          const combinedClubs: MyClubItem[] = [];
+          [...createdList, ...joinedList].forEach((club) => {
+            if (!seenIds.has(club.id)) {
+              seenIds.add(club.id);
+              combinedClubs.push(club);
+            }
+          });
+          setMyClubs(combinedClubs);
+        } else {
+          setMyClubs([]);
         }
 
         // ── ĐỢT 4 (sau 900ms): ranked tournament matches (chỉ fetch nếu tìm thấy) ──
@@ -1693,6 +1733,8 @@ export default function HomePage() {
 
           {/* My Clubs */}
           <SocialMyClubsCard
+            clubs={myClubs}
+            isAuthenticated={isAuthenticated}
             clubName={communities[0]?.name || 'Hà Anh Pickleball Club'}
             memberCount={communities[0]?._count?.members || 151}
             court={communities[0]?.locationAddress || 'Sân D-Sport Q7'}
@@ -1703,10 +1745,10 @@ export default function HomePage() {
         {/* 2. CENTER COLUMN: Featured Tournaments Banner, Day Selector, Tonight Matches, Upcoming Schedule (flex-1 expansive) */}
         <section className="flex-1 min-w-0 w-full flex flex-col gap-3.5 order-1 lg:order-2">
           {/* Featured Tournament Hero Banner (Logic cũ: 1 Banner lớn thay thế 4 ảnh card) */}
-          <div className="rounded-xl overflow-hidden border border-slate-200/80 shadow-2xs bg-white">
+          <div className="rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm bg-white">
             <TournamentHeroBanner
               tournaments={activeTournaments.length > 0 ? activeTournaments : tournaments}
-              heightClass="h-[180px] sm:h-[220px] md:h-[260px] lg:h-[280px]"
+              heightClass="h-[220px] sm:h-[280px] md:h-[340px] lg:h-[400px] xl:h-[460px] 2xl:h-[480px]"
             />
           </div>
 

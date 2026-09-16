@@ -199,13 +199,27 @@ export function SocialMatchFilters({
   );
 }
 
+export interface MyClubItem {
+  id: string;
+  name: string;
+  role?: 'OWNER' | 'MODERATOR' | 'MEMBER' | string;
+  memberCount?: number;
+  court?: string;
+  logoUrl?: string | null;
+}
+
 // 3. LEFT COLUMN: My Clubs (CLB Của Bạn)
 export function SocialMyClubsCard({
+  clubs = [],
+  isAuthenticated = false,
+  // Backward compatibility fallback props
   clubName = 'Hà Anh Pickleball Club',
   memberCount = 151,
   court = 'Sân D-Sport Q7',
   clubId,
 }: {
+  clubs?: MyClubItem[];
+  isAuthenticated?: boolean;
   clubName?: string;
   memberCount?: number;
   court?: string;
@@ -213,12 +227,53 @@ export function SocialMyClubsCard({
 }) {
   const translate = useTranslations('Home');
 
+  // If clubs array is provided, use it; otherwise fallback to single club if provided
+  const displayClubs: MyClubItem[] = clubs.length > 0
+    ? clubs
+    : (isAuthenticated ? [] : [{
+        id: clubId || '',
+        name: clubName,
+        memberCount: memberCount,
+        court: court,
+        role: 'MEMBER',
+      }]);
+
+  const getRoleBadge = (role?: string) => {
+    const r = (role || 'MEMBER').toUpperCase();
+    if (r === 'OWNER') {
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 shrink-0">
+          Chủ nhiệm
+        </span>
+      );
+    }
+    if (r === 'MODERATOR' || r === 'ADMIN') {
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200/60 shrink-0">
+          Quản trị
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/60 shrink-0">
+        Thành viên
+      </span>
+    );
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5">
-      <div className="flex items-center justify-between mb-2.5">
-        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-          {translate('myClubs')}
-        </h4>
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5 flex flex-col gap-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+            {translate('myClubs')}
+          </h4>
+          {displayClubs.length > 0 && (
+            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full">
+              {displayClubs.length}
+            </span>
+          )}
+        </div>
         <Link
           href="/communities"
           className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
@@ -227,22 +282,56 @@ export function SocialMyClubsCard({
         </Link>
       </div>
 
-      <Link
-        href={clubId ? `/communities/${clubId}` : '/communities'}
-        className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all block"
-      >
-        <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-          {(clubName.trim().slice(0, 2) || 'CL').toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h5 className="text-xs font-semibold text-slate-800 truncate hover:text-blue-600 hover:underline">
-            {clubName}
-          </h5>
-          <p className="text-[11px] text-slate-500 truncate mt-0.5">
-            {translate('membersCount', { count: memberCount })} • {court}
+      {displayClubs.length === 0 ? (
+        <div className="p-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-center flex flex-col items-center justify-center gap-1.5">
+          <p className="text-xs text-slate-500">
+            {isAuthenticated ? 'Bạn chưa tham gia CLB nào' : 'Đăng nhập để xem CLB của bạn'}
           </p>
+          <Link
+            href="/communities"
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline mt-0.5"
+          >
+            Khám phá CLB ngay <ArrowRight className="w-3 h-3" />
+          </Link>
         </div>
-      </Link>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {displayClubs.slice(0, 4).map((club) => {
+            const initials = (club.name.trim().slice(0, 2) || 'CL').toUpperCase();
+            return (
+              <Link
+                key={club.id || club.name}
+                href={club.id ? `/communities/${club.id}` : '/communities'}
+                className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative">
+                  {club.logoUrl ? (
+                    <img
+                      src={club.logoUrl}
+                      alt={club.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <h5 className="text-xs font-semibold text-slate-800 truncate group-hover:text-blue-600">
+                      {club.name}
+                    </h5>
+                    {getRoleBadge(club.role)}
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                    {club.memberCount !== undefined && translate('membersCount', { count: club.memberCount })}
+                    {club.court && ` • ${club.court}`}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

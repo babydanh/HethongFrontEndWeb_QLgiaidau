@@ -88,6 +88,10 @@ jobs:
             cd /usr/local/lsws/sporto.asia
             echo \"$GITHUB_TOKEN\" | docker login ghcr.io -u $ACTOR --password-stdin
             docker pull ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:latest
-            docker compose up -d --force-recreate --no-deps frontend
+            docker compose stop frontend || true
+            docker compose rm -f frontend || true
+            docker rm -f qlgiaidau-frontend || true
+            docker ps -a --filter \"name=frontend\" --format \"{{.ID}}\" | xargs -r docker rm -f || true
+            docker compose up -d --no-deps frontend
             docker image prune -f
           '"

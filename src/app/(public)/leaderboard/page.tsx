@@ -294,7 +294,17 @@ export default function LeaderboardPage() {
                     params.provinceCode = selectedProvinceCode;
                 }
                 const res = await rankingsApi.getRankings(params);
-                setRankings(res.data || []);
+                const rawItems = res.data || [];
+                const seen = new Set<string>();
+                const uniqueRankings: PlayerRanking[] = [];
+                for (const r of rawItems) {
+                  const key = r.user?.id || (r.user1 && r.user2 ? `${r.user1.id}_${r.user2.id}` : r.id);
+                  if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueRankings.push(r);
+                  }
+                }
+                setRankings(uniqueRankings);
             } catch (error) {
                 console.error("Failed to fetch rankings", error);
                 setRankings([]);

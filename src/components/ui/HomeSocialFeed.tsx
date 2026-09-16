@@ -8,12 +8,21 @@ import {
   ArrowRight,
   CalendarDays,
   Check,
+  CheckCircle2,
   Clock3,
+  Flame,
+  Info,
   MapPin,
+  MessageCircle,
+  Phone,
+  Send,
   Share2,
   ShieldCheck,
+  Sparkles,
+  UserCheck,
   UserPlus,
   UsersRound,
+  X,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -39,6 +48,14 @@ interface JoinedPlayer {
   avatarUrl?: string | null;
 }
 
+interface HostContact {
+  name: string;
+  phone?: string;
+  zalo?: string;
+  avatarUrl?: string | null;
+  role?: string;
+}
+
 export interface ActivityFeedItem {
   id: string;
   type: ActivityEventType;
@@ -53,6 +70,9 @@ export interface ActivityFeedItem {
   description: string;
   bannerUrl?: string;
   club: ClubIdentity;
+  host?: HostContact;
+  courtDetails?: string;
+  rules?: string[];
   slots?: {
     current: number;
     max: number;
@@ -177,6 +197,19 @@ function createMockActivities(today: Date): ActivityFeedItem[] {
         initials: 'HA',
         verified: true,
       },
+      host: {
+        name: 'Trần Hà Anh',
+        role: 'Chủ nhiệm CLB',
+        phone: '0908 123 456',
+        zalo: '0908123456',
+        avatarUrl: null,
+      },
+      courtDetails: 'Sân 3 cụm thảm tiêu chuẩn, bóng Wilson Dura Fast 40, nước uống miễn phí.',
+      rules: [
+        'Vui vẻ, hòa đồng, tôn trọng quyết định của trọng tài tự do.',
+        'Đến trước giờ khởi động 10 phút.',
+        'Thanh toán tiền sân cuối buổi qua chuyển khoản hoặc tiền mặt.',
+      ],
       slots: {
         current: 3,
         max: 4,
@@ -207,6 +240,19 @@ function createMockActivities(today: Date): ActivityFeedItem[] {
         initials: 'LA',
         verified: true,
       },
+      host: {
+        name: 'Nguyễn Quốc Hùng',
+        role: 'Đội trưởng / Host',
+        phone: '0912 345 678',
+        zalo: '0912345678',
+        avatarUrl: null,
+      },
+      courtDetails: 'Sân cứng Lan Anh sân số 2, đèn chuẩn thi đấu, bóng mới Head Pro.',
+      rules: [
+        'Trình độ tương đương NTRP 3.0 - 3.5 để giao lưu cân kèo.',
+        'Chơi đôi xoay tua, mỗi trận 1 set chạm 6.',
+        'Chia sẻ chi phí sân và banh đều nhau.',
+      ],
       slots: {
         current: 6,
         max: 8,
@@ -353,6 +399,272 @@ function ShareButton({ onShare }: { onShare: () => void }) {
   );
 }
 
+// ── Session Detail Popup Modal ──────────────────────────────────────────────
+function SessionDetailModal({
+  item,
+  isJoined,
+  onClose,
+  onJoin,
+}: {
+  item: ActivityFeedItem;
+  isJoined: boolean;
+  onClose: () => void;
+  onJoin: () => void;
+}) {
+  const slots = item.slots;
+  const isFull = slots ? slots.current >= slots.max : false;
+  const [note, setNote] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSendRequest = () => {
+    if (!isFull && !isJoined) {
+      onJoin();
+    }
+    setSubmitted(true);
+    toast.success('Đã gửi yêu cầu tham gia thành công!');
+  };
+
+  const initials = (name: string) =>
+    name.split(' ').filter(Boolean).slice(-2).map((p) => p[0]).join('').toUpperCase();
+
+  return (
+    // Backdrop
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      aria-modal="true"
+      role="dialog"
+      aria-label={item.title}
+    >
+      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col">
+
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 pt-4 pb-3 rounded-t-2xl">
+          <div className="flex items-start gap-3">
+            <ClubAvatarInline club={item.club} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-slate-900 truncate">{item.club.name}</span>
+                {item.club.verified && (
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-label="Đã xác minh" />
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">{item.sport} · {item.sportTier}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+              aria-label="Đóng"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <h2 className="mt-2.5 text-base font-bold text-slate-950 leading-snug">{item.title}</h2>
+          {slots && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                isFull ? 'border-slate-200 bg-slate-100 text-slate-600' : 'border-amber-200 bg-amber-50 text-amber-700'
+              }`}>
+                <Flame className="h-3 w-3" />
+                {getMissingLabel(slots.current, slots.max)}
+              </span>
+              <span className="text-xs text-slate-500">{slots.current}/{slots.max} người</span>
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 px-4 py-3 space-y-4">
+
+          {/* Meta info */}
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-700">
+              <Clock3 className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+              <span className="font-semibold">{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-slate-700">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-blue-500 mt-0.5" />
+              <span>{item.location}</span>
+            </div>
+            {slots && (
+              <div className="flex items-center gap-2 text-xs text-slate-700">
+                <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                <span className="font-bold text-emerald-700">{slots.feePerSlot}/người · Chia tiền sân</span>
+              </div>
+            )}
+            {item.courtDetails && (
+              <div className="flex items-start gap-2 text-xs text-slate-600">
+                <Info className="h-3.5 w-3.5 shrink-0 text-slate-400 mt-0.5" />
+                <span>{item.courtDetails}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+          </div>
+
+          {/* Rules */}
+          {item.rules && item.rules.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-slate-700 mb-1.5">Quy định buổi chơi</p>
+              <ul className="space-y-1">
+                {item.rules.map((rule, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-blue-500 mt-0.5" />
+                    {rule}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Joined players */}
+          {slots && slots.joinedPlayers.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-slate-700 mb-2">Đã tham gia ({slots.current}/{slots.max})</p>
+              <div className="flex flex-wrap gap-2">
+                {slots.joinedPlayers.map((p, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span
+                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white shadow-sm"
+                      style={{ backgroundColor: p.initialsBg }}
+                    >
+                      {getInitials(p.name)}
+                    </span>
+                    <span className="text-xs text-slate-600">{p.name.split(' ').pop()}</span>
+                  </div>
+                ))}
+                {/* Empty slots */}
+                {Array.from({ length: Math.max(slots.max - slots.current, 0) }).map((_, i) => (
+                  <div key={`empty-${i}`} className="flex items-center gap-1.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-[10px] text-slate-400">
+                      ?
+                    </span>
+                    <span className="text-xs text-slate-400">Trống</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Host contact */}
+          {item.host && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+              <p className="text-xs font-bold text-slate-700 mb-2">Liên hệ với host</p>
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-sm font-bold text-white shadow-sm"
+                  style={item.host.avatarUrl ? { backgroundImage: `url(${item.host.avatarUrl})`, backgroundSize: 'cover' } : {}}
+                >
+                  {!item.host.avatarUrl && initials(item.host.name)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-slate-900 leading-none">{item.host.name}</p>
+                  {item.host.role && <p className="text-[11px] text-slate-500 mt-0.5">{item.host.role}</p>}
+                </div>
+              </div>
+              {(item.host.phone || item.host.zalo) && (
+                <div className="mt-3 flex gap-2">
+                  {item.host.phone && (
+                    <a
+                      href={`tel:${item.host.phone.replace(/\s/g, '')}`}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                      Gọi điện
+                    </a>
+                  )}
+                  {item.host.zalo && (
+                    <a
+                      href={`https://zalo.me/${item.host.zalo}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      Nhắn Zalo
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Note input */}
+          {!submitted && !isJoined && !isFull && (
+            <div>
+              <label className="text-xs font-bold text-slate-700 mb-1.5 block">
+                Ghi chú khi gửi yêu cầu <span className="font-normal text-slate-400">(không bắt buộc)</span>
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Ví dụ: Tôi chơi trình 2.8, thích vui vẻ..."
+                rows={2}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none"
+              />
+            </div>
+          )}
+
+          {/* Submitted success */}
+          {(submitted || isJoined) && (
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+              <p className="text-xs font-semibold text-emerald-700">Đã gửi yêu cầu tham gia thành công!</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-4 py-3 flex gap-2 rounded-b-2xl">
+          {!submitted && !isJoined && !isFull ? (
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 inline-flex items-center justify-center rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Để sau
+              </button>
+              <button
+                type="button"
+                onClick={handleSendRequest}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98]"
+              >
+                <Send className="h-4 w-4" />
+                Gửi yêu cầu
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 inline-flex items-center justify-center rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
+            >
+              Đóng
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Inline club avatar for modal (no "size" prop needed)
+function ClubAvatarInline({ club }: { club: ClubIdentity }) {
+  return (
+    <div
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700"
+      style={club.avatarUrl ? { backgroundImage: `url(${club.avatarUrl})`, backgroundSize: 'cover' } : {}}
+    >
+      {!club.avatarUrl && club.initials}
+    </div>
+  );
+}
+
 function PickupCard({
   item,
   reducedMotion,
@@ -367,6 +679,7 @@ function PickupCard({
   onShare: () => void;
 }) {
   if (!item.slots) return null;
+  const [showModal, setShowModal] = useState(false);
 
   const { current, max, feePerSlot, joinedPlayers } = item.slots;
   const isFull = current >= max;
@@ -374,72 +687,84 @@ function PickupCard({
   const joinedLabel = isJoined ? 'Đã vào slot' : isFull ? 'Đã đủ' : 'Vào slot';
 
   return (
-    <EventShell reducedMotion={reducedMotion}>
-      <div className="space-y-3 p-3.5 sm:p-4">
-        <div className="flex items-start justify-between gap-3">
-          <ClubIdentityRow item={item} />
-          <span
-            className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
-              isFull
-                ? 'border-slate-200 bg-slate-100 text-slate-600'
-                : 'border-amber-200 bg-amber-50 text-amber-700'
-            }`}
-          >
-            {statusLabel}
-          </span>
-        </div>
-
-        <div className="space-y-1.5">
-          <h3 className="text-sm font-bold leading-snug text-slate-950 sm:text-base">{item.title}</h3>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
-              <Clock3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-              {item.startTime} - {item.endTime}
-            </span>
-            <span className="text-slate-300" aria-hidden="true">•</span>
-            <span className="inline-flex min-w-0 items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-              <span className="truncate">{item.location}</span>
-            </span>
-            <span className="text-slate-300" aria-hidden="true">•</span>
-            <span className="font-bold text-slate-800">{feePerSlot}/người</span>
-          </div>
-        </div>
-
-        <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.description}</p>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-          <div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}>
-            <div className="flex -space-x-2">
-              {joinedPlayers.slice(0, max).map((player, index) => (
-                <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />
-              ))}
-            </div>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
-              <UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-              {current}/{max} đã vào
-            </span>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <ShareButton onShare={onShare} />
-            <button
-              type="button"
-              onClick={onJoin}
-              disabled={isFull || isJoined}
-              className={`inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98] ${
-                isFull || isJoined
-                  ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                  : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+    <>
+      {showModal && (
+        <SessionDetailModal
+          item={item}
+          isJoined={isJoined}
+          onClose={() => setShowModal(false)}
+          onJoin={() => { onJoin(); }}
+        />
+      )}
+      <EventShell reducedMotion={reducedMotion}>
+        <div className="space-y-3 p-3.5 sm:p-4">
+          <div className="flex items-start justify-between gap-3">
+            <ClubIdentityRow item={item} />
+            <span
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                isFull
+                  ? 'border-slate-200 bg-slate-100 text-slate-600'
+                  : 'border-amber-200 bg-amber-50 text-amber-700'
               }`}
             >
-              {isJoined ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}
-              {joinedLabel}
-            </button>
+              {statusLabel}
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="text-sm font-bold leading-snug text-slate-950 sm:text-base">{item.title}</h3>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+                <Clock3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                {item.startTime} - {item.endTime}
+              </span>
+              <span className="text-slate-300" aria-hidden="true">•</span>
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <span className="truncate">{item.location}</span>
+              </span>
+              <span className="text-slate-300" aria-hidden="true">•</span>
+              <span className="font-bold text-slate-800">{feePerSlot}/người</span>
+            </div>
+          </div>
+
+          <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.description}</p>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+            <div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}>
+              <div className="flex -space-x-2">
+                {joinedPlayers.slice(0, max).map((player, index) => (
+                  <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />
+                ))}
+              </div>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
+                <UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                {current}/{max} đã vào
+              </span>
+            </div>
+
+            <div className="ml-auto flex items-center gap-2">
+              <ShareButton onShare={onShare} />
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                disabled={isFull && !isJoined}
+                className={`inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98] ${
+                  isJoined
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : isFull
+                    ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                    : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+                }`}
+              >
+                {isJoined ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}
+                {joinedLabel}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </EventShell>
+      </EventShell>
+    </>
   );
 }
 

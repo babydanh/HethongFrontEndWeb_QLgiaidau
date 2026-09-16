@@ -450,6 +450,7 @@ export default function HomePage() {
   const feedRefreshQueuedRef = useRef(false);
   const [feedRefreshTick, setFeedRefreshTick] = useState(0);
   const [mainView, setMainView] = useState<MainViewMode>('EXPLORE');
+  const [matchStatusTab, setMatchStatusTab] = useState<'UPCOMING' | 'LIVE' | 'COMPLETED'>('UPCOMING');
   const pickupsSectionRef = useRef<HTMLDivElement>(null);
 
   const handleScrollToPickups = () => {
@@ -1854,133 +1855,195 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* Day Selector Pill Strip */}
-          <SocialDaySelectorStrip
-            days={daysList}
-            activeId={activeDayId}
-            onSelect={setActiveDayId}
-          />
-
-          {/* Tonight Matches Header & Pickup Rows */}
-          <div ref={pickupsSectionRef} className="space-y-2.5 scroll-mt-20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                <h3 className="text-xs sm:text-sm font-bold text-slate-850 tracking-tight">
-                  {translate('tonightMatchesHeader')}
-                </h3>
-                <span className="text-[11px] font-semibold text-blue-650 bg-blue-50/80 px-2 py-0.5 rounded-full">
-                  {translate('matchesCount', { count: pickupMatches.length })}
-                </span>
+          {/* Match Status Tabs: Sắp diễn ra | Đang diễn ra | Đã kết thúc */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-3.5 sm:p-4 space-y-3.5">
+            {/* Tab Headers */}
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 flex-wrap gap-2">
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setMatchStatusTab('UPCOMING')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    matchStatusTab === 'UPCOMING'
+                      ? 'bg-white text-blue-600 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Sắp diễn ra {upcomingMatches.length > 0 && `(${upcomingMatches.length})`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMatchStatusTab('LIVE')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    matchStatusTab === 'LIVE'
+                      ? 'bg-white text-rose-600 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {liveMatches.length > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
+                  )}
+                  Đang diễn ra {liveMatches.length > 0 && `(${liveMatches.length})`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMatchStatusTab('COMPLETED')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    matchStatusTab === 'COMPLETED'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Đã kết thúc {completedMatches.length > 0 && `(${completedMatches.length})`}
+                </button>
               </div>
-              <span className="text-xs text-slate-400 font-normal">
-                {translate('byTime')}
-              </span>
+
+              <Link
+                href="/matches"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                {translate('viewAll')}
+              </Link>
             </div>
 
-            {/* List of pickup rows */}
-            <div className="space-y-2.5">
-              {pickupMatches.map((item) => (
-                <SocialPickupRow
-                  key={item.id}
-                  item={item}
-                  onJoin={(p) => {
-                    toast.success(`${translate('slotJoined')}: ${p.courtLocation}`);
-                  }}
-                />
-              ))}
+            {/* Tab 1: SẮP DIỄN RA */}
+            {matchStatusTab === 'UPCOMING' && (
+              <div className="space-y-3">
+                {visibleUpcomingTournamentEntries.length > 0 ? (
+                  visibleUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
+                    const group = rawGroup as GroupMatchesData;
+                    const displayMatches = group.matches;
+                    const matchedTournament = tournaments.find((t) => t.id === group.id);
+                    const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
+
+                    return (
+                      <div
+                        key={tournamentName}
+                        className="bg-slate-50/50 rounded-xl p-2.5 sm:p-3.5 flex flex-col gap-2.5"
+                      >
+                        <Link
+                          href={group.id ? `/tournaments/${group.id}` : '#'}
+                          className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
+                        >
+                          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200/80 bg-white relative shrink-0 shadow-xs">
+                            <TournamentLogoAvatar
+                              src={group.logoUrl || matchedTournament?.logoUrl}
+                              alt={group.name}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                              <span
+                                className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                                  isRanked
+                                    ? 'text-white bg-sky-600'
+                                    : 'text-white bg-slate-600'
+                                }`}
+                              >
+                                {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                              </span>
+                              <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white bg-violet-600">
+                                <LiveMatchSportLabel
+                                  match={group.matches[0]}
+                                  tournament={matchedTournament}
+                                  tournamentName={group.name}
+                                  translate={translate}
+                                />
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-900 group-hover/header:text-blue-600 truncate">
+                              {group.name}
+                            </h4>
+                          </div>
+                        </Link>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {displayMatches.map((m) =>
+                            renderUpcomingMatchRow(m, group.matches, matchedTournament ?? null)
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="py-12 text-center text-slate-400 text-xs">
+                    Hiện chưa có trận đấu nào sắp diễn ra
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: ĐANG DIỄN RA */}
+            {matchStatusTab === 'LIVE' && (
+              <div className="space-y-3">
+                {visibleLiveTournamentEntries.length > 0 ? (
+                  visibleLiveTournamentEntries.map(([tournamentName, rawGroup]) => {
+                    const group = rawGroup as GroupMatchesData;
+                    const displayMatches = group.matches;
+                    const matchedTournament = tournaments.find((t) => t.id === group.id);
+
+                    return (
+                      <div
+                        key={tournamentName}
+                        className="bg-slate-50/50 rounded-xl p-2.5 sm:p-3.5 flex flex-col gap-2.5"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {displayMatches.map((m) =>
+                            renderMatchCard(m, false, group.matches, matchedTournament ?? null)
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="py-12 text-center text-slate-400 text-xs">
+                    Hiện không có trận đấu trực tiếp nào đang diễn ra
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 3: ĐÃ KẾT THÚC */}
+            {matchStatusTab === 'COMPLETED' && (
+              <div className="space-y-3">
+                {visibleCompletedTournamentEntries.length > 0 ? (
+                  visibleCompletedTournamentEntries.map(([tournamentName, rawGroup]) => {
+                    const group = rawGroup as GroupMatchesData;
+                    const displayMatches = group.matches;
+                    const matchedTournament = tournaments.find((t) => t.id === group.id);
+
+                    return (
+                      <div
+                        key={tournamentName}
+                        className="bg-slate-50/50 rounded-xl p-2.5 sm:p-3.5 flex flex-col gap-2.5"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {displayMatches.map((m) =>
+                            renderCompletedMatchRow(m, group.matches, matchedTournament ?? null)
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="py-12 text-center text-slate-400 text-xs">
+                    Chưa có kết quả trận đấu nào vừa hoàn thành
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* View All Button */}
+            <div className="pt-2 text-center border-t border-slate-100">
+              <Link
+                href="/matches"
+                className="text-xs font-bold text-slate-700 hover:text-blue-600 inline-flex items-center gap-1.5 hover:underline transition-all"
+              >
+                <span>{translate('viewAllMatches')}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
-
-          {/* Upcoming Matches Schedule */}
-          {(isLoading || upcomingMatches.length > 0) && (
-            <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5 sm:p-4">
-              <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-850 tracking-tight">
-                    {translate('upcomingSchedule')}
-                  </h3>
-                </div>
-                <Link
-                  href="/matches"
-                  className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
-                >
-                  {translate('viewAll')}
-                </Link>
-              </div>
-
-              {visibleUpcomingTournamentEntries.map(([tournamentName, rawGroup]) => {
-                const group = rawGroup as GroupMatchesData;
-                const displayMatches = group.matches;
-                const matchedTournament = tournaments.find((t) => t.id === group.id);
-                const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
-
-                return (
-                  <div
-                    key={tournamentName}
-                    className="bg-slate-50/50 rounded-xl p-2.5 sm:p-3.5 mb-3 flex flex-col gap-2.5"
-                  >
-                    {/* Tournament Header */}
-                    <Link
-                      href={group.id ? `/tournaments/${group.id}` : '#'}
-                      className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
-                    >
-                      <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200/80 bg-white relative shrink-0 shadow-xs">
-                        <TournamentLogoAvatar
-                          src={group.logoUrl || matchedTournament?.logoUrl}
-                          alt={group.name}
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                          <span
-                            className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
-                              isRanked
-                                ? 'text-white bg-sky-600'
-                                : 'text-white bg-slate-600'
-                            }`}
-                          >
-                            {isRanked ? translate('rankedBadge') : translate('communityBadge')}
-                          </span>
-                          <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white bg-violet-600">
-                            <LiveMatchSportLabel
-                              match={group.matches[0]}
-                              tournament={matchedTournament}
-                              tournamentName={group.name}
-                              translate={translate}
-                            />
-                          </span>
-                        </div>
-                        <h4 className="text-xs font-bold text-slate-900 group-hover/header:text-blue-600 truncate">
-                          {group.name}
-                        </h4>
-                      </div>
-                    </Link>
-
-                    {/* 2x2 Matches Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {displayMatches.map((m) =>
-                        renderUpcomingMatchRow(m, group.matches, matchedTournament ?? null)
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {upcomingMatches.length > HOME_MATCH_LIMIT && (
-                <div className="pt-2 text-center">
-                  <Link
-                    href="/matches"
-                    className="text-xs font-bold text-slate-700 hover:text-blue-600 inline-flex items-center gap-1.5 hover:underline transition-all"
-                  >
-                    <span>{translate('viewAllMatches')}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
             </>
           )}
         </section>

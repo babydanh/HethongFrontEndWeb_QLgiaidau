@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
 import { toDateLocalValue } from '@/utils/dateTimeInput';
+import { normalizeProfileGender } from '@/utils/gender';
 import CircularImageCropModal from '@/components/common/CircularImageCropModal';
 
 // Zod Schemas matching backend constraints
@@ -81,7 +82,7 @@ export default function EditProfilePage() {
 
   // Modals state
   const [isGenderModalOpen, setIsGenderModalOpen] = useState(false);
-  const [requestGender, setRequestGender] = useState('Nam');
+  const [requestGender, setRequestGender] = useState('MALE');
   const [isSubmittingGenderRequest, setIsSubmittingGenderRequest] = useState(false);
 
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -183,7 +184,7 @@ export default function EditProfilePage() {
 
       phone: user?.phoneNumber || '',
       dateOfBirth: toDateLocalValue(user?.dateOfBirth),
-      gender: user?.gender || '',
+      gender: normalizeProfileGender(user?.gender) || '',
       address: user?.address || '',
       provinceCode: user?.provinceCode || '',
       bio: user?.bio || '',
@@ -214,7 +215,7 @@ export default function EditProfilePage() {
 
         phone: user.phoneNumber || '',
         dateOfBirth: toDateLocalValue(user.dateOfBirth),
-        gender: user.gender || '',
+        gender: normalizeProfileGender(user.gender) || '',
         address: user.address || '',
         provinceCode: user.provinceCode || '',
         bio: user.bio || '',
@@ -247,7 +248,9 @@ export default function EditProfilePage() {
 
         phoneNumber: trimSpaces(data.phone || ''),
         dateOfBirth: data.dateOfBirth || undefined,
-        gender: user?.isGenderLocked ? undefined : (data.gender || undefined),
+        gender: user?.isGenderLocked
+          ? undefined
+          : (normalizeProfileGender(data.gender) || undefined),
         address: data.address ? trimSpaces(data.address) : undefined,
         provinceCode: data.provinceCode || undefined,
         bio: data.bio ? trimSpaces(data.bio) : undefined,
@@ -364,7 +367,7 @@ export default function EditProfilePage() {
       setIsSubmittingGenderRequest(true);
       await usersApi.createChangeRequest({
         requestType: 'GENDER',
-        newValue: requestGender,
+        newValue: normalizeProfileGender(requestGender) || requestGender,
       });
       toast.success(translate('profileGenderRequestSuccess'));
       setIsGenderModalOpen(false);
@@ -673,9 +676,9 @@ export default function EditProfilePage() {
                         {...profileForm.register('gender')}
                       >
                         <option value="">{translate('notSelected')}</option>
-                        <option value="Nam">{translate('male')}</option>
-                        <option value="Nữ">{translate('female')}</option>
-                        <option value="Khác">{translate('other')}</option>
+                        <option value="MALE">{translate('male')}</option>
+                        <option value="FEMALE">{translate('female')}</option>
+                        <option value="OTHER">{translate('other')}</option>
                       </select>
                       {user?.isGenderLocked ? (
                         <p className="text-xs font-semibold text-blue-600 mt-1 flex items-center justify-between">
@@ -683,7 +686,7 @@ export default function EditProfilePage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setRequestGender(user?.gender || 'Nam');
+                              setRequestGender(normalizeProfileGender(user?.gender) || 'MALE');
                               setIsGenderModalOpen(true);
                             }}
                             className="text-amber-700 hover:text-amber-800 underline active:scale-95 transition-all outline-none font-bold"
@@ -1158,9 +1161,9 @@ export default function EditProfilePage() {
                 onChange={(e) => setRequestGender(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
               >
-                <option value="Nam">{translate('male')}</option>
-                <option value="Nữ">{translate('female')}</option>
-                <option value="Khác">{translate('other')}</option>
+                <option value="MALE">{translate('male')}</option>
+                <option value="FEMALE">{translate('female')}</option>
+                <option value="OTHER">{translate('other')}</option>
               </select>
             </div>
 

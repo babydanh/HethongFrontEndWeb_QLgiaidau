@@ -33,6 +33,7 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
+import { normalizeProfileGender } from '@/utils/gender';
 
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
@@ -877,7 +878,15 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
                       <span className="text-slate-500 font-medium">{translate("gender")}</span>
-                      <span className="text-slate-900 font-semibold">{profileData?.gender || translate("notUpdated")}</span>
+                      <span className="text-slate-900 font-semibold">
+                        {(() => {
+                          const gender = normalizeProfileGender(profileData?.gender);
+                          if (gender === 'MALE') return translate('male');
+                          if (gender === 'FEMALE') return translate('female');
+                          if (gender === 'OTHER') return translate('other');
+                          return profileData?.gender || translate('notUpdated');
+                        })()}
+                      </span>
                     </div>
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
                       <span className="text-slate-500 font-medium">{translate("addressLabel")}</span>

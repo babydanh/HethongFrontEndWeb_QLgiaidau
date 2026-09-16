@@ -46,6 +46,7 @@ import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
+import LeftActionDock from '@/components/layout/LeftActionDock';
 import {
   AthleteProfileCard,
   SocialMatchFilters,
@@ -447,6 +448,11 @@ export default function HomePage() {
   const feedRequestInFlightRef = useRef(false);
   const feedRefreshQueuedRef = useRef(false);
   const [feedRefreshTick, setFeedRefreshTick] = useState(0);
+  const pickupsSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToPickups = () => {
+    pickupsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Ranked Tournament State
   const [rankedTournament, setRankedTournament] = useState<Tournament | null>(null);
@@ -1762,55 +1768,17 @@ export default function HomePage() {
   return (
     <div className="bg-slate-50/50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
 
-      {/* Sports Selector Bar */}
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 pt-3 pb-1">
-        <div className="flex items-center overflow-x-auto gap-2 py-1 no-scrollbar">
-          <button
-            onClick={() => setSelectedCategoryId('')}
-            type="button"
-            className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              selectedCategoryId === ''
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-650 border border-slate-200/70 shadow-2xs'
-            }`}
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>{translate('allSports')}</span>
-          </button>
-          {categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat)).map((cat) => {
-            const isActive = selectedCategoryId === cat.id;
-            const logo = getSportLogo(cat.name || cat.slug);
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategoryId(cat.id)}
-                type="button"
-                className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-white text-slate-650 border border-slate-200/70 shadow-2xs'
-                }`}
-              >
-                {logo ? (
-                  <span className="w-3.5 h-3.5 relative shrink-0">
-                    <Image
-                      src={logo}
-                      alt={cat.name}
-                      width={14}
-                      height={14}
-                      className={`w-3.5 h-3.5 object-contain ${isActive ? 'brightness-0 invert' : ''}`}
-                    />
-                  </span>
-                ) : null}
-                <span>{getCategoryLabel(cat)}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Floating 3-Action Dock (Sát mép trái màn hình) */}
+      <LeftActionDock
+        categories={categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat))}
+        selectedCategoryId={selectedCategoryId}
+        onSelectCategory={setSelectedCategoryId}
+        getCategoryLabel={getCategoryLabel}
+        onScrollToPickups={handleScrollToPickups}
+      />
 
       {/* Main Content: 3 Columns with sleek sidebars and expansive center social feed */}
-      <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-2.5 flex flex-col lg:flex-row items-start gap-3.5">
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-3.5 flex flex-col lg:flex-row items-start gap-3.5">
         <h1 className="sr-only">{translate('seoH1')}</h1>
 
         {/* 1. LEFT COLUMN: Athlete Profile Card, Match Filters, My Clubs (sleek width ~260px) */}
@@ -1883,7 +1851,7 @@ export default function HomePage() {
           />
 
           {/* Tonight Matches Header & Pickup Rows */}
-          <div className="space-y-2.5">
+          <div ref={pickupsSectionRef} className="space-y-2.5 scroll-mt-20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />

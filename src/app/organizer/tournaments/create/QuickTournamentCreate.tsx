@@ -973,10 +973,10 @@ export default function QuickTournamentCreate() {
                             setValue('sport', value, { shouldValidate: true, shouldDirty: true });
                             handleSportChange(value);
                           }}
-                          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer bg-white ${
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all duration-150 cursor-pointer ${
                             isSelected
-                              ? 'border-blue-600 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
-                              : 'border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900'
+                              ? 'border-blue-600 bg-blue-50/40 text-blue-700 ring-1 ring-blue-600/30 shadow-xs font-semibold'
+                              : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50/80 hover:shadow-xs hover:text-slate-900 active:scale-[0.98]'
                           }`}
                         >
                           {sportIcon ? (
@@ -1218,23 +1218,25 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-center gap-2 rounded-lg border p-2 text-left transition cursor-pointer bg-white ${
+                        className={`group flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-all duration-150 cursor-pointer ${
                           isSelected
-                            ? 'border-blue-600 shadow-2xs ring-1 ring-blue-600/30'
-                            : 'border-slate-200 hover:border-slate-400'
+                            ? 'border-blue-600 bg-blue-50/30 ring-1 ring-blue-600/30 shadow-xs'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 hover:shadow-xs active:scale-[0.99]'
                         }`}
                       >
                         <div
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition ${
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150 ${
                             isSelected
-                              ? 'border-blue-600 bg-blue-600 text-white'
-                              : 'border-slate-200 bg-slate-50 text-slate-500 group-hover:text-slate-800'
+                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                              : 'border-slate-200 bg-slate-50 text-slate-500 group-hover:border-slate-300 group-hover:bg-white group-hover:text-slate-800'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className={`block text-xs font-bold truncate transition ${isSelected ? 'text-blue-900' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                          <span className={`block text-xs truncate transition-colors ${
+                            isSelected ? 'font-semibold text-blue-900' : 'font-medium text-slate-700 group-hover:text-slate-900'
+                          }`}>
                             {translate(opt.labelKey)}
                           </span>
                         </div>
@@ -1266,10 +1268,10 @@ export default function QuickTournamentCreate() {
                           key={num}
                           type="button"
                           onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
-                          className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                          className={`rounded-lg border px-2.5 py-1 text-xs transition-all duration-150 cursor-pointer ${
                             isCurrent
-                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                              ? 'border-blue-600 bg-blue-600 text-white font-semibold shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95'
                           }`}
                         >
                           {num}
@@ -1384,45 +1386,45 @@ export default function QuickTournamentCreate() {
                       return (
                         <div
                           key={formatId}
-                          className={`group flex items-center justify-between rounded-lg border px-3 py-1.5 transition-all bg-white ${
+                          className={`group flex items-center justify-between rounded-xl border px-3 py-2 transition-all duration-150 ${
                             isSelected
-                              ? 'border-blue-600 text-slate-900 shadow-2xs ring-1 ring-blue-600/20'
-                              : 'border-slate-200 text-slate-700 hover:border-slate-400'
+                              ? 'border-blue-600 bg-blue-50/30 text-blue-950 shadow-xs ring-1 ring-blue-600/20'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/80 hover:shadow-xs active:scale-[0.99]'
                           }`}
                         >
                           <button
                             type="button"
                             data-testid={`format-option-${formatId}`}
                             onClick={() => toggleFormat(formatId)}
-                            className="flex min-w-0 flex-1 items-center gap-2 text-left cursor-pointer"
+                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left cursor-pointer"
                           >
                             <span
-                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold leading-none transition-colors ${
-                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md border text-[10px] font-bold leading-none transition-colors duration-150 ${
+                                isSelected ? 'border-blue-600 bg-blue-600 text-white shadow-2xs' : 'border-slate-300 bg-white group-hover:border-slate-400'
                               }`}
                             >
                               {isSelected ? '✓' : ''}
                             </span>
                             <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                               {/* Tên nội dung thi đấu */}
-                              <span className="truncate text-xs font-bold text-slate-900">
+                              <span className={`truncate text-xs transition-colors ${isSelected ? 'font-semibold text-slate-900' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
                                 {config.label}
                               </span>
 
                               {/* Badges tinh gọn */}
-                              <div className="flex items-center gap-1 shrink-0">
+                              <div className="flex items-center gap-1.5 shrink-0">
                                 <span
                                   title={bracketTitle}
-                                  className="inline-flex items-center justify-center h-5 w-5 rounded bg-slate-100/90 text-slate-600 border border-slate-200/80 shadow-2xs"
+                                  className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-slate-100 text-slate-500 border border-slate-200/80"
                                 >
                                   <BracketIcon className="h-3 w-3" />
                                 </span>
 
                                 <span
                                   title={`${translate('participantLimitUnit')}: ${participantCount}`}
-                                  className="inline-flex items-center gap-1 rounded bg-slate-100/90 border border-slate-200/80 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 shadow-2xs"
+                                  className="inline-flex items-center gap-1 rounded-md bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 text-[11px] font-medium text-slate-600"
                                 >
-                                  <Users className="h-3 w-3 text-slate-500" />
+                                  <Users className="h-3 w-3 text-slate-400" />
                                   <span>{participantCount}</span>
                                 </span>
                               </div>
@@ -1457,7 +1459,7 @@ export default function QuickTournamentCreate() {
                 <button
                   type="button"
                   onClick={() => openFormatModal()}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-2.5 py-1.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-2 text-xs font-medium text-blue-600 transition-colors hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" /> {translate('addFormat')}
                 </button>

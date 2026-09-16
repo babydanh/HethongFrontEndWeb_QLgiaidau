@@ -1912,11 +1912,7 @@ const commonTranslate = useTranslations('Common');
                             aria-current={isActive ? 'true' : undefined}
                             aria-expanded={isActive}
                             onClick={() => handleDivisionSelect(division.id)}
-                            className={`group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2 text-left transition-all rounded-xl sm:px-3.5 sm:py-2.5 ${
-                              isActive
-                                ? 'bg-blue-50/80 text-blue-950 font-bold'
-                                : 'bg-slate-50/60 text-slate-700 hover:bg-slate-100/70 hover:text-slate-900'
-                            }`}
+                            className="group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2 text-left transition-all rounded-xl sm:px-3.5 sm:py-2.5 bg-transparent"
                           >
                             {(() => {
                               const divisionObj = division as unknown as Record<string, unknown>;
@@ -1927,8 +1923,8 @@ const commonTranslate = useTranslations('Common');
                               return (
                                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
                                   isActive
-                                    ? 'bg-blue-600 text-white shadow-2xs'
-                                    : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
+                                    ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs'
+                                    : 'bg-slate-50 text-slate-500 border border-slate-200/80'
                                 }`}>
                                   <BracketIcon className="h-4 w-4" aria-hidden="true" />
                                 </span>
@@ -1951,7 +1947,13 @@ const commonTranslate = useTranslations('Common');
                                 }
                                 return (
                                   <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm font-bold sm:text-base">{displayName}</span>
+                                    <span className={`inline-block truncate text-sm sm:text-base ${
+                                      isActive
+                                        ? 'font-bold text-blue-600 underline underline-offset-4 decoration-2 decoration-blue-600'
+                                        : 'font-semibold text-slate-700'
+                                    }`}>
+                                      {displayName}
+                                    </span>
                                   </span>
                                 );
                               })()}
@@ -1974,9 +1976,7 @@ const commonTranslate = useTranslations('Common');
                             )}
                             <span
                               aria-label={`${translate('participantsCount')}: ${participantCapacity}`}
-                              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold sm:text-sm transition-colors ${
-                                isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
-                              }`}
+                              className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold sm:text-sm text-slate-600 border border-slate-200/80 bg-white"
                             >
                               <Users className="h-3.5 w-3.5" aria-hidden="true" />
                               {participantCapacity}

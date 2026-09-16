@@ -214,7 +214,7 @@ function ResultAwardCard({
 function selectTopFourAwards(awards: TournamentResultAward[]): TournamentResultAward[] {
   const seenParticipantIds = new Set<string>();
 
-  return awards
+  const validAwards = awards
     .filter((award) => award.participant && typeof award.rank === 'number' && award.rank >= 1)
     .sort((a, b) => a.rank - b.rank)
     .filter((award) => {
@@ -223,12 +223,33 @@ function selectTopFourAwards(awards: TournamentResultAward[]): TournamentResultA
       seenParticipantIds.add(participantId);
       return true;
     })
-    .slice(0, 4)
-    .map((award, index) => ({
-      ...award,
-      rank: index + 1,
-      shared: false,
-    }));
+    .slice(0, 4);
+
+  // If there are awards at index 2 & 3 (3rd & 4th teams):
+  // In single elimination / knockout without 3rd place playoff, or where backend marked them shared / rank 3,
+  // both are tied 3rd (Đồng Hạng Ba) with rank = 3.
+  const hasExplicitRankFour = validAwards.some((a) => a.rank === 4 && !a.shared);
+
+  return validAwards.map((award, index) => {
+    if (index === 0) {
+      return { ...award, rank: 1, shared: false };
+    }
+    if (index === 1) {
+      return { ...award, rank: 2, shared: false };
+    }
+    // For index 2 and index 3:
+    // If backend marked award as rank 3 or if there's no explicit 3rd-place decider separating them,
+    // they are both Tied 3rd Place (Đồng hạng 3).
+    if (index === 2 || index === 3) {
+      const isTiedThird = !hasExplicitRankFour || award.rank === 3 || award.shared;
+      return {
+        ...award,
+        rank: isTiedThird ? 3 : award.rank,
+        shared: isTiedThird ? true : award.shared,
+      };
+    }
+    return award;
+  });
 }
 
 export default function ResultsTab({
@@ -283,15 +304,20 @@ export default function ResultsTab({
     ? translate('resultsTabOfficialTitle')
     : translate('resultsTabCurrentTitle');
 
-  const getRankLabel = (rank: number) => {
-    if (rank === 1) return translate('champion') || 'Quán quân';
-    if (rank === 2) return translate('runnerUp') || 'Á quân';
-    if (rank === 3) return translate('thirdPlace') || 'Hạng ba';
-    return translate('rank', { rank }) || `Hạng ${rank}`;
+  const getRankLabel = (award: TournamentResultAward) => {
+    if (award.rank === 1) return translate('champion') || 'Quán quân';
+    if (award.rank === 2) return translate('runnerUp') || 'Á quân';
+    if (award.rank === 3) {
+      if (award.shared) {
+        return translate('sharedRank', { rank: 3 }) || 'Đồng hạng 3';
+      }
+      return translate('thirdPlace') || 'Hạng ba';
+    }
+    return translate('rank', { rank: award.rank }) || `Hạng ${award.rank}`;
   };
 
   const resultShareTitle = `${statusTitle}: ${tournamentName || translate('resultsTabLabel')}`;
-  const resultShareText = `${resultShareTitle}\n` + topFourAwards.map(a => `${getRankLabel(a.rank)}: ${a.participant?.teamName ?? ''}`).join('\n');
+  const resultShareText = `${resultShareTitle}\n` + topFourAwards.map(a => `${getRankLabel(a)}: ${a.participant?.teamName ?? ''}`).join('\n');
   const shareUrl = typeof window !== 'undefined'
     ? (() => {
       const url = new URL(window.location.href);
@@ -329,7 +355,7 @@ export default function ResultsTab({
             <ResultAwardCard
               key={award.participant?.participantId || `${award.rank}-${index}`}
               award={award}
-              label={getRankLabel(award.rank)}
+              label={getRankLabel(award)}
               rank={award.rank}
             />
           ))}
